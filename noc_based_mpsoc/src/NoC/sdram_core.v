@@ -1,5 +1,7 @@
 `include "../define.v"
 module sdram_core #(
+	parameter TOPOLOGY				=	"TORUS", // "MESH" or "TORUS"  
+	parameter ROUTE_ALGRMT			=	"XY",		//"XY" or "MINIMAL"
 	parameter VC_NUM_PER_PORT 		=	2,
 	parameter PYLD_WIDTH 			=	32,
 	parameter BUFFER_NUM_PER_VC	=	16,
@@ -85,7 +87,8 @@ sdram sdram_inst
 
 
 ext_ram_nic #(
-	
+	.TOPOLOGY				(TOPOLOGY),
+	.ROUTE_ALGRMT			(ROUTE_ALGRMT),
 	.VC_NUM_PER_PORT 		(VC_NUM_PER_PORT ),
 	.PYLD_WIDTH 			(PYLD_WIDTH),
 	.BUFFER_NUM_PER_VC	(BUFFER_NUM_PER_VC),

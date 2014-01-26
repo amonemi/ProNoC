@@ -1119,6 +1119,7 @@ set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME testbench_noc -section_id
 set_global_assignment -name EDA_TEST_BENCH_FILE src/testbench_noc.v -section_id testbench
 set_global_assignment -name EDA_TEST_BENCH_FILE src/testbench.v -section_id testbench
 set_global_assignment -name EDA_TEST_BENCH_FILE src/testbench_noc.v -section_id testbench_noc
+set_global_assignment -name VERILOG_FILE src/NoC/route_compute.v
 set_global_assignment -name VERILOG_FILE src/top_de115.v
 set_global_assignment -name VERILOG_FILE src/NoC/ext_ram_nic.v
 set_global_assignment -name VERILOG_FILE src/NoC/sdram_core.v
@@ -1126,7 +1127,6 @@ set_global_assignment -name VERILOG_FILE src/IP_core/sdram/synthesis/submodules/
 set_global_assignment -name VERILOG_FILE src/IP_core/sdram/synthesis/submodules/sdram_sdram_controller.v
 set_global_assignment -name VERILOG_FILE src/IP_core/sdram/synthesis/submodules/altera_reset_controller.v
 set_global_assignment -name VERILOG_FILE src/IP_core/sdram/synthesis/sdram.v
-set_global_assignment -name VERILOG_FILE src/NoC/xy.v
 set_global_assignment -name VERILOG_FILE src/NoC/tasks.v
 set_global_assignment -name VERILOG_FILE src/NoC/switch_in.v
 set_global_assignment -name VERILOG_FILE src/NoC/sw_sep_alloc.v
@@ -1139,8 +1139,6 @@ set_global_assignment -name VERILOG_FILE src/NoC/ni.v
 set_global_assignment -name VERILOG_FILE src/NoC/MUX.v
 set_global_assignment -name VERILOG_FILE src/NoC/min_number.v
 set_global_assignment -name VERILOG_FILE src/NoC/mask.v
-set_global_assignment -name VERILOG_FILE src/NoC/look_ahead_xy.v
-set_global_assignment -name VERILOG_FILE src/NoC/look_ahead_routing.v
 set_global_assignment -name VERILOG_FILE src/NoC/fwft_fifo.v
 set_global_assignment -name VERILOG_FILE src/NoC/fifo_buffer.v
 set_global_assignment -name VERILOG_FILE src/NoC/dual_port_ram.v

@@ -31,7 +31,7 @@
 /*	
 	
 	
-	// the routers address in mesh topology
+	// the routers address in mesh/torus topology
 	CORE_NUM
 	(x,y)
 	
@@ -79,7 +79,8 @@ module aeMB_mpsoc #(
 		Defining it as "testbench" will remove the processors 
 		in simulation. Hence, the simulation time will be decreased. The tasks to control
 		NI pins are written in tasks.V file */
-		
+	parameter TOPOLOGY					=	`TOPOLOGY_DEF,
+	parameter ROUTE_ALGRMT				=	`ROUTE_ALGRMT_DEF, //"XY" or "MINIMAL" 
 	parameter VC_NUM_PER_PORT 			=	`VC_NUM_PER_PORT_DEF ,
 	parameter PYLD_WIDTH 				=	`PYLD_WIDTH_DEF,
 	parameter BUFFER_NUM_PER_VC		=	`BUFFER_NUM_PER_VC_DEF,
@@ -208,6 +209,8 @@ generate
 	if( SDRAM_EN	==	1 && x == SDRAM_SW_X_ADDR	&& y ==  SDRAM_SW_Y_ADDR) begin : sdram_gen
 		
 			sdram_core #(
+				.TOPOLOGY					(TOPOLOGY),
+				.ROUTE_ALGRMT				(ROUTE_ALGRMT),
 				.VC_NUM_PER_PORT			(VC_NUM_PER_PORT),
 				.PYLD_WIDTH 				(PYLD_WIDTH),
 				.BUFFER_NUM_PER_VC		(BUFFER_NUM_PER_VC),
@@ -260,6 +263,8 @@ generate
 				.AEMB_DWB 					(AEMB_DWB), ///< DATA bus width
 				.NI_CTRL_SIMULATION		(NI_CTRL_SIMULATION),
 				.NOC_S_ADDR_WIDTH			(NOC_S_ADDR_WIDTH),
+				.TOPOLOGY					(TOPOLOGY),  
+				.ROUTE_ALGRMT				(ROUTE_ALGRMT),		//"XY" or "MINIMAL"
 				.VC_NUM_PER_PORT			(VC_NUM_PER_PORT),
 				.PYLD_WIDTH 				(PYLD_WIDTH),
 				.BUFFER_NUM_PER_VC		(BUFFER_NUM_PER_VC),
@@ -310,6 +315,8 @@ generate
 		end
 	
 		router#(
+				.TOPOLOGY					(TOPOLOGY), // "MESH" or "TORUS"  
+				.ROUTE_ALGRMT				(ROUTE_ALGRMT),	
 				.VC_NUM_PER_PORT			(VC_NUM_PER_PORT),
 				.BUFFER_NUM_PER_VC		(BUFFER_NUM_PER_VC),
 				.PORT_NUM					(PORT_NUM),
@@ -350,9 +357,15 @@ generate
 		assign	router_credit_in_array	[`SELECT_WIRE(x,y,1,VC_NUM_PER_PORT)]	= router_credit_out_array	[`SELECT_WIRE((x+1),y,3,VC_NUM_PER_PORT)];
 		assign	router_wr_in_en_array	[`CORE_NUM(x,y)][1]							= router_wr_out_en_array	[`CORE_NUM((x+1),y)][3];
 	end else begin
-		assign	router_flit_in_array 	[`SELECT_WIRE(x,y,1,FLIT_WIDTH)] 		=	{FLIT_WIDTH{1'b0}};
-		assign	router_credit_in_array	[`SELECT_WIRE(x,y,1,VC_NUM_PER_PORT)]	=	{VC_NUM_PER_PORT{1'b0}};
-		assign	router_wr_in_en_array	[`CORE_NUM(x,y)][1]							=	1'b0;
+		if(TOPOLOGY == "MESH") begin 
+			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,1,FLIT_WIDTH)] 		=	{FLIT_WIDTH{1'b0}};
+			assign	router_credit_in_array	[`SELECT_WIRE(x,y,1,VC_NUM_PER_PORT)]	=	{VC_NUM_PER_PORT{1'b0}};
+			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][1]							=	1'b0;
+		end else if(TOPOLOGY == "TORUS") begin
+			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,1,FLIT_WIDTH)] 		=	router_flit_out_array 	[`SELECT_WIRE(0,y,3,FLIT_WIDTH)];
+			assign	router_credit_in_array	[`SELECT_WIRE(x,y,1,VC_NUM_PER_PORT)]	=	router_credit_out_array	[`SELECT_WIRE(0,y,3,VC_NUM_PER_PORT)];
+			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][1]							=	router_wr_out_en_array	[`CORE_NUM(0,y)][3];
+		end //topology
 	end 
 		
 	
@@ -361,31 +374,49 @@ generate
 		assign	router_credit_in_array	[`SELECT_WIRE(x,y,2,VC_NUM_PER_PORT)]	=  router_credit_out_array	[`SELECT_WIRE(x,(y-1),4,VC_NUM_PER_PORT)];
 		assign	router_wr_in_en_array	[`CORE_NUM(x,y)][2]							=	router_wr_out_en_array	[`CORE_NUM(x,(y-1))][4];
 	end else begin 
-		assign 	router_flit_in_array 	[`SELECT_WIRE(x,y,2,FLIT_WIDTH)]			=	{FLIT_WIDTH{1'b0}};
-		assign	router_credit_in_array	[`SELECT_WIRE(x,y,2,VC_NUM_PER_PORT)]	=	{VC_NUM_PER_PORT{1'b0}};
-		assign	router_wr_in_en_array	[`CORE_NUM(x,y)][2]							=	1'b0;
-	end
+		if(TOPOLOGY == "MESH") begin 
+			assign 	router_flit_in_array 	[`SELECT_WIRE(x,y,2,FLIT_WIDTH)]			=	{FLIT_WIDTH{1'b0}};
+			assign	router_credit_in_array	[`SELECT_WIRE(x,y,2,VC_NUM_PER_PORT)]	=	{VC_NUM_PER_PORT{1'b0}};
+			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][2]							=	1'b0;
+		end else if(TOPOLOGY == "TORUS") begin
+			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,2,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE(x,(Y_NODE_NUM-1),4,FLIT_WIDTH)];
+			assign	router_credit_in_array	[`SELECT_WIRE(x,y,2,VC_NUM_PER_PORT)]	=  router_credit_out_array	[`SELECT_WIRE(x,(Y_NODE_NUM-1),4,VC_NUM_PER_PORT)];
+			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][2]							=	router_wr_out_en_array	[`CORE_NUM(x,(Y_NODE_NUM-1))][4];
+		end//topology
+	end//y>0
 	
 	
 	if(x>0)begin
 		assign	router_flit_in_array 	[`SELECT_WIRE(x,y,3,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE((x-1),y,1,FLIT_WIDTH)] ;
 		assign	router_credit_in_array	[`SELECT_WIRE(x,y,3,VC_NUM_PER_PORT)]	=  router_credit_out_array	[`SELECT_WIRE((x-1),y,1,VC_NUM_PER_PORT)] ;
 		assign	router_wr_in_en_array	[`CORE_NUM(x,y)][3]							=	router_wr_out_en_array	[`CORE_NUM((x-1),y)][1];
-	
 	end else begin
+		if(TOPOLOGY == "MESH") begin 
 			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,3,FLIT_WIDTH)]			=  {FLIT_WIDTH{1'b0}};
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,3,VC_NUM_PER_PORT)]	=	{VC_NUM_PER_PORT{1'b0}};
 			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][3]							=	1'b0;
-		end	
+		end else if(TOPOLOGY == "TORUS") begin
+			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,3,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE((X_NODE_NUM-1),y,1,FLIT_WIDTH)] ;
+			assign	router_credit_in_array	[`SELECT_WIRE(x,y,3,VC_NUM_PER_PORT)]	=  router_credit_out_array	[`SELECT_WIRE((X_NODE_NUM-1),y,1,VC_NUM_PER_PORT)] ;
+			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][3]							=	router_wr_out_en_array	[`CORE_NUM((X_NODE_NUM-1),y)][1];
+		end//topology
+	end	
 	
 	if(y	<	Y_NODE_NUM-1)begin
 		assign	router_flit_in_array 	[`SELECT_WIRE(x,y,4,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE(x,(y+1),2,FLIT_WIDTH)];
 		assign	router_credit_in_array	[`SELECT_WIRE(x,y,4,VC_NUM_PER_PORT)]	= 	router_credit_out_array	[`SELECT_WIRE(x,(y+1),2,VC_NUM_PER_PORT)];
 		assign	router_wr_in_en_array	[`CORE_NUM(x,y)][4]							=	router_wr_out_en_array	[`CORE_NUM(x,(y+1))][2];
 	end else 	begin
-		assign	router_flit_in_array 	[`SELECT_WIRE(x,y,4,FLIT_WIDTH)]			=  {FLIT_WIDTH{1'b0}};
-		assign	router_credit_in_array	[`SELECT_WIRE(x,y,4,VC_NUM_PER_PORT)]	=	{VC_NUM_PER_PORT{1'b0}};
-		assign	router_wr_in_en_array	[`CORE_NUM(x,y)][4]							=	1'b0;
+		if(TOPOLOGY == "MESH") begin 
+			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,4,FLIT_WIDTH)]			=  {FLIT_WIDTH{1'b0}};
+			assign	router_credit_in_array	[`SELECT_WIRE(x,y,4,VC_NUM_PER_PORT)]	=	{VC_NUM_PER_PORT{1'b0}};
+			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][4]							=	1'b0;
+		end else if(TOPOLOGY == "TORUS") begin
+			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,4,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE(x,0,2,FLIT_WIDTH)];
+			assign	router_credit_in_array	[`SELECT_WIRE(x,y,4,VC_NUM_PER_PORT)]	= 	router_credit_out_array	[`SELECT_WIRE(x,0,2,VC_NUM_PER_PORT)];
+			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][4]							=	router_wr_out_en_array	[`CORE_NUM(x,0)][2];
+		
+		end//topology
 	end	
 	
 	//connection to the ip_core

@@ -42,7 +42,8 @@ parameter 	NI_CTRL_SIMULATION		=	"aeMB";
 		Defining it as "testbench" will remove the processors 
 		in simulation. Hence, the simulation time will be decreased. The tasks to control
 		NI pins are written in tasks.v file */
-	
+	parameter TOPOLOGY					=	`TOPOLOGY_DEF;
+	parameter ROUTE_ALGRMT				=	`ROUTE_ALGRMT_DEF;
 	parameter X_NODE_NUM					=	`X_NODE_NUM_DEF;
 	parameter Y_NODE_NUM					=	`Y_NODE_NUM_DEF;
 	parameter PORT_NUM					=	5;
@@ -122,6 +123,8 @@ generate
 
 aeMB_mpsoc #(
 	.NI_CTRL_SIMULATION		(NI_CTRL_SIMULATION),
+	.TOPOLOGY					(TOPOLOGY),
+	.ROUTE_ALGRMT				(ROUTE_ALGRMT),
 	.X_NODE_NUM					(X_NODE_NUM),
 	.Y_NODE_NUM					(Y_NODE_NUM),
 	.AEMB_RAM_WIDTH_IN_WORD	(AEMB_RAM_WIDTH_IN_WORD),
