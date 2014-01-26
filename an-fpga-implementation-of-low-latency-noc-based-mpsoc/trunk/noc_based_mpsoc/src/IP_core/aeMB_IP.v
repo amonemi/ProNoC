@@ -60,6 +60,8 @@ module aeMB_IP #(
    parameter AEMB_MUL = 1, ///< optional multiplier
 	
 	// noc parameter
+	parameter TOPOLOGY				=	"TORUS", // "MESH" or "TORUS"  
+	parameter ROUTE_ALGRMT			=	"XY",		//"XY" or "MINIMAL"
 	parameter VC_NUM_PER_PORT 		=	2,
 	parameter PYLD_WIDTH 			=	32,
 	parameter BUFFER_NUM_PER_VC	=	16,
@@ -353,6 +355,8 @@ generate
 		if(NOC_EN) begin	: noc_gen
 		
 		ni #(
+		.TOPOLOGY				(TOPOLOGY), 
+		.ROUTE_ALGRMT			(ROUTE_ALGRMT),
 		.VC_NUM_PER_PORT		(VC_NUM_PER_PORT),
 		.PYLD_WIDTH 			(PYLD_WIDTH),
 		.BUFFER_NUM_PER_VC	(BUFFER_NUM_PER_VC),

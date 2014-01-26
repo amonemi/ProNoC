@@ -35,7 +35,10 @@ The NoC router `define for  generate a mech topology. The following `defines wil
 a 4X4 noC 
 
 ********************************************************************/	
-
+//define the topology: "MESH" or "TORUS"
+`define						TOPOLOGY_DEF						"MESH" 
+//define the routing algorithm : "XY" or "MINIMAL"		
+`define						ROUTE_ALGRMT_DEF					"XY"						
 // The number of virtual channel (VC) for each individual physical channel. this value must be power of 2. The typical value is two and four.
 `define 						VC_NUM_PER_PORT_DEF 				2
 

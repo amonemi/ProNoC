@@ -30,6 +30,8 @@
 
 
 module router#(
+	parameter TOPOLOGY					=	"TORUS", // "MESH" or "TORUS"  
+	parameter ROUTE_ALGRMT				=	"XY",		//"XY" or "MINIMAL"
 	parameter VC_NUM_PER_PORT			=	2,
 	parameter BUFFER_NUM_PER_VC		=	4,
 	parameter PORT_NUM					=	5,
@@ -319,8 +321,10 @@ module router#(
 			);
 	
 		
-		//look ahead routing module	
-		look_ahead_routing #(
+		//look ahead routing module
+		look_ahead_routing_sync #(
+			.TOPOLOGY					(TOPOLOGY),
+			.ROUTE_ALGRMT				(ROUTE_ALGRMT),	
 			.PORT_NUM					(PORT_NUM),
 			.X_NODE_NUM					(X_NODE_NUM),
 			.Y_NODE_NUM					(Y_NODE_NUM),	

@@ -40,6 +40,8 @@
 
 
 module ni #(
+	parameter TOPOLOGY				=	"TORUS", // "MESH" or "TORUS"  
+	parameter ROUTE_ALGRMT			=	"XY",		//"XY" or "MINIMAL"
 	parameter VC_NUM_PER_PORT 		=	2,
 	parameter PYLD_WIDTH 			=	32,
 	parameter BUFFER_NUM_PER_VC	=	16,
@@ -571,16 +573,17 @@ rd_vc_arbiter
 
 
 
- xy #(
+ route_compute  #(
+	.ROUTE_TYPE					("NORMAL"),
+	.TOPOLOGY					(TOPOLOGY),
+	.ROUTE_ALGRMT				(ROUTE_ALGRMT),
 	.PORT_NUM					(PORT_NUM),
 	.X_NODE_NUM					(X_NODE_NUM),
 	.Y_NODE_NUM					(Y_NODE_NUM),
 	.SW_X_ADDR					(SW_X_ADDR),
-	.SW_Y_ADDR					(SW_Y_ADDR),
-	.SENDER_PORT				(NIC_CONNECT_PORT)	 // 0:Local  1:East, 2:North, 3:West, 4:South 
-	
+	.SW_Y_ADDR					(SW_Y_ADDR)
 	)
-	th_xy_rout
+	the_normal_routting
 	(
 	.dest_x_node_in			(dest_x_addr),
 	.dest_y_node_in			(dest_y_addr),
