@@ -30,6 +30,8 @@
 
 module cross_bar #(
 	parameter VC_NUM_PER_PORT			=	4,
+	parameter X_NODE_NUM					=	3,
+	parameter Y_NODE_NUM					=	3,
 	parameter PORT_NUM					=	5,
 	parameter PYLD_WIDTH 				=	32,
 	parameter FLIT_TYPE_WIDTH			=	2,
@@ -52,8 +54,10 @@ module cross_bar #(
 	output[FLIT_ARRAY_WIDTH-1			:	0]		flit_out_array
 );	
 	`LOG2
-	localparam	MUX_IN_WIDTH	=	FLIT_ARRAY_WIDTH-FLIT_WIDTH;
-	localparam	PORT_SEL_BCD_WIDTH =log2(PORT_SEL_WIDTH);
+	localparam	MUX_IN_WIDTH				=	FLIT_ARRAY_WIDTH-FLIT_WIDTH;
+	localparam	PORT_SEL_BCD_WIDTH		=	log2(PORT_SEL_WIDTH);
+	localparam  X_NODE_NUM_WIDTH			=	log2(X_NODE_NUM);
+	localparam  Y_NODE_NUM_WIDTH			=	log2(Y_NODE_NUM);
 	
 	wire [MUX_IN_WIDTH-1					:	0]		flit_in_mux_array 	[PORT_NUM-1		:	0];	
 	wire [PORT_NUM-1						:	0]		header_flit;

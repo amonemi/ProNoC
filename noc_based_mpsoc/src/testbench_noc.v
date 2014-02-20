@@ -54,26 +54,59 @@ module testbench_noc ();
 	parameter CPU_ADR_WIDTH 			=	AEMB_DWB-2;
 	parameter CPU_ADDR_ARRAY_WIDTH 	=	CPU_ADR_WIDTH * TOTAL_ROUTERS_NUM;
 	parameter CPU_DATA_ARRAY_WIDTH	=	32 * TOTAL_ROUTERS_NUM;
-	parameter RAM_EN						=	1;					
-	parameter NOC_EN						=	1;
-	parameter GPIO_EN						=	1;
-	parameter GPIO_PORT_WIDTH			=	1;
-	parameter GPIO_PORT_NUM				=	1;
+	
+	parameter RAM_EN_ARRAY				=	"Def:1";
+	parameter NOC_EN_ARRAY				=	"Def:1";
+	parameter GPIO_EN_ARRAY				=	"Def:1";
+	parameter EXT_INT_EN_ARRAY			=	"IP0_0:1;Def:0";
+	parameter TIMER_EN_ARRAY			=	"IP0_0:1;Def:0";
+	parameter INT_CTRL_EN_ARRAY		=	"IP0_0:1;Def:0";
+	
+	//gpio parameters 
+	parameter IO_EN_ARRAY				=	"Def:0";
+	parameter I_EN_ARRAY					=	"Def:0";
+	parameter O_EN_ARRAY					=	"IP0_1:0;Def:1";
+	parameter EXT_INT_NUM_ARRAY		=	"IP0_0:3;Def:0";//max 32
+	
+	parameter IO_PORT_WIDTH_ARRAY		=	"Def:1";
+	parameter I_PORT_WIDTH_ARRAY		=	"Def:0";
+	parameter O_PORT_WIDTH_ARRAY		=	"IP0_0:7,7,7,7,7,7,7,7;IP0_1:0;Def:1";
+	
+	
 	
 	localparam X_NODE_NUM_WIDTH		=	log2(X_NODE_NUM);
 	localparam Y_NODE_NUM_WIDTH		=	log2(Y_NODE_NUM);
 	localparam PORT_NUM_BCD_WIDTH		=	log2(PORT_NUM);
 	
+	//generate the base addresses
 	`define	ADD_BUS_LOCALPARAM			1
+	localparam 	RAM_EN			=			1;
+	localparam 	NOC_EN			=			1;
+	localparam 	GPIO_EN			=			1;
+	localparam 	EXT_INT_EN		=			1;
+	localparam 	TIMER_EN			=			1;
+	localparam 	INT_CTRL_EN		=			1;
+	
+	
 	`include "parameter.v"
 	
-	
+	`define ADD_FUNCTION 		1
+	`include "my_functions.v"
+		
 		
 		`LOG2
 
-	reg reset ,clk;
-	wire[TOTAL_ROUTERS_NUM-1			:0] 		led;
-
+	localparam TOTAL_EXT_INT_NUM		=	end_loc_in_array(X_NODE_NUM-1,Y_NODE_NUM-1,X_NODE_NUM,EXT_INT_NUM_ARRAY)+1;
+	localparam TOTAL_IO_WIDTH			=	end_loc_in_array(X_NODE_NUM-1,Y_NODE_NUM-1,X_NODE_NUM,IO_PORT_WIDTH_ARRAY)+1;
+	localparam TOTAL_I_WIDTH			=  end_loc_in_array(X_NODE_NUM-1,Y_NODE_NUM-1,X_NODE_NUM,I_PORT_WIDTH_ARRAY)+1;
+	localparam TOTAL_O_WIDTH			=  end_loc_in_array(X_NODE_NUM-1,Y_NODE_NUM-1,X_NODE_NUM,O_PORT_WIDTH_ARRAY)+1;	
+		
+		
+	reg 		reset ,clk;
+	reg		[TOTAL_EXT_INT_NUM-1				:0]	ext_int_i;
+	wire		[TOTAL_IO_WIDTH-1					:0]	gpio_io;
+	reg		[TOTAL_I_WIDTH-1					:0]	gpio_i;
+	wire		[TOTAL_O_WIDTH-1					:0]	gpio_o;
 
 	
 	
@@ -111,7 +144,7 @@ generate
 	end
 endgenerate
 
-	wire  [12								:0] 		sdram_addr;        // sdram_wire.addr
+		wire  [12								:0] 		sdram_addr;        // sdram_wire.addr
 		wire  [1									:0]  		sdram_ba;          //           .ba
 		wire         										sdram_cas_n;       //           .cas_n
 		wire         										sdram_cke;         //           .cke
@@ -155,18 +188,30 @@ aeMB_mpsoc #(
 	.AEMB_RAM_WIDTH_IN_WORD	(AEMB_RAM_WIDTH_IN_WORD),
 	.AEMB_DWB					(AEMB_DWB),	
 	.SDRAM_EN					(SDRAM_EN),
-	.RAM_EN						(RAM_EN),					
-	.NOC_EN						(NOC_EN),
-	.GPIO_EN						(GPIO_EN),
-	.GPIO_PORT_WIDTH			(GPIO_PORT_WIDTH),
-	.GPIO_PORT_NUM				(GPIO_PORT_NUM)
+	.RAM_EN_ARRAY				(RAM_EN_ARRAY),
+	.NOC_EN_ARRAY				(NOC_EN_ARRAY),
+	.GPIO_EN_ARRAY				(GPIO_EN_ARRAY),
+	.EXT_INT_EN_ARRAY			(EXT_INT_EN_ARRAY),
+	.TIMER_EN_ARRAY			(TIMER_EN_ARRAY),
+	.INT_CTRL_EN_ARRAY		(INT_CTRL_EN_ARRAY),
+	.IO_EN_ARRAY				(IO_EN_ARRAY),
+	.I_EN_ARRAY					(I_EN_ARRAY),
+	.O_EN_ARRAY					(O_EN_ARRAY),
+	.EXT_INT_NUM_ARRAY		(EXT_INT_NUM_ARRAY),
+	.IO_PORT_WIDTH_ARRAY		(IO_PORT_WIDTH_ARRAY),
+	.I_PORT_WIDTH_ARRAY		(I_PORT_WIDTH_ARRAY),
+	.O_PORT_WIDTH_ARRAY		(O_PORT_WIDTH_ARRAY)
+	
 	
 )
 	aeMB_mpsoc_inst
 (
-	.reset						(reset) ,	// reg  
-	.clk							(clk) ,	// reg  
-	.led							(led), 	// wire 
+	.reset						(reset),	// reg  
+	.clk							(clk),	// reg 
+	.ext_int_i					(ext_int_i),
+	.gpio_io						(gpio_io),
+	.gpio_i						(gpio_i),
+	.gpio_o						(gpio_o),
 	
 	
 	.sdram_addr					(sdram_addr) ,	// wire [12:0] sdram_addr

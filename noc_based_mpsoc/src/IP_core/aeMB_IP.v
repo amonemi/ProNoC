@@ -19,6 +19,7 @@
 	
 	
 	Purpose:
+	SoC with one aeMB processor, wishbone bus,ni,ext_int, gpio and timer
 	
 
 	Info: monemi@fkegraduate.utm.my
@@ -35,18 +36,67 @@ module aeMB_IP #(
 	parameter NI_CTRL_SIMULATION			=	"aeMB", 
 	parameter AEMB_RAM_WIDTH_IN_WORD		=	`AEMB_RAM_WIDTH_IN_WORD_DEF,
 	parameter RAM_EN							=	1,
-	parameter NOC_EN							=	1,
+	parameter NOC_EN							=	0,
 	parameter GPIO_EN							=	1,
-	parameter GPIO_PORT_NUM					=	8,
-	parameter GPIO_PORT_WIDTH				=	7,
-	parameter GPIO_WIDTH						=	GPIO_PORT_NUM	* GPIO_PORT_WIDTH,	
+	parameter EXT_INT_EN						=	1,
+	parameter TIMER_EN						=	1,
+	parameter INT_CTRL_EN					=	1,
+	
+//wishbone bus parameters
 	parameter DATA_WIDTH						=	32,	// maximum data width
 	parameter ADDR_WIDTH						=	32,
 	parameter SEL_WIDTH						=	4,
 	parameter TAG_WIDTH						=	3,    // CTI
 	
+	//external int parameters
+	parameter EXT_INT_NUM					=	3,//max 32
+	parameter EXT_INT_ADDR_WIDTH			=	3,
+
+//timet parameters
+	parameter TIMER_ADDR_WIDTH				=3,
+	parameter TIMER_INT_NUM					=1,
+
+//int_ctrl parameters 
+	parameter INT_CTRL_INT_NUM				=	(EXT_INT_EN*EXT_INT_NUM) + 	(TIMER_EN * TIMER_INT_NUM),
+	parameter INT_CTRL_ADDR_WIDTH			=3,
 	
-	//aeMB parameter
+//gpio parameters 
+	parameter IO_EN							=	0,
+	parameter I_EN								=	0,
+	parameter O_EN								=	1,
+	
+	parameter IO_PORT_WIDTH					=	"0",
+	parameter I_PORT_WIDTH					=	"0",
+	parameter O_PORT_WIDTH					=	"7,7,7,7,7,7,7,7",
+	
+	parameter IO_WIDTH						=(IO_EN)? 		sum_of_all(IO_PORT_WIDTH)	: 1,
+	parameter I_WIDTH							=(I_EN )? 		sum_of_all(I_PORT_WIDTH)	: 1,
+	parameter O_WIDTH							=(O_EN )? 		sum_of_all(O_PORT_WIDTH)	: 1,
+	parameter EXT_INT_WIDTH					=(EXT_INT_EN)?	EXT_INT_NUM						: 1,
+	
+	parameter GPIO_ADDR_WIDTH				=	15,
+	
+
+	
+// noc parameter
+	parameter TOPOLOGY				=	"TORUS", // "MESH" or "TORUS"  
+	parameter ROUTE_ALGRMT			=	"XY",		//"XY" or "MINIMAL"
+	parameter VC_NUM_PER_PORT 		=	2,
+	parameter PYLD_WIDTH 			=	32,
+	parameter BUFFER_NUM_PER_VC	=	16,
+	parameter PORT_NUM				=	5,
+	parameter X_NODE_NUM				=	4,
+	parameter Y_NODE_NUM				=	3,
+	parameter SW_X_ADDR				=	0,
+	parameter SW_Y_ADDR				=	0,
+	parameter NOC_S_ADDR_WIDTH		=	3,
+	parameter CORE_NUMBER			=	`CORE_NUM(SW_X_ADDR,SW_Y_ADDR),	
+	parameter NIC_CONNECT_PORT		=	0, // 0:Local  1:East, 2:North, 3:West, 4:South 
+	parameter FLIT_TYPE_WIDTH		=	2,
+	parameter VC_ID_WIDTH			=	VC_NUM_PER_PORT,
+	parameter FLIT_WIDTH				=	PYLD_WIDTH+FLIT_TYPE_WIDTH+VC_ID_WIDTH,
+	
+//aeMB parameters
 	parameter AEMB_IWB = 32, ///< INST bus width
    parameter AEMB_DWB = 32, ///< DATA bus width
    parameter AEMB_XWB = 7, ///< XCEL bus width
@@ -57,29 +107,16 @@ module aeMB_IP #(
 
    // OPTIONAL HARDWARE
    parameter AEMB_BSF = 1, ///< optional barrel shift
-   parameter AEMB_MUL = 1, ///< optional multiplier
-	
-	// noc parameter
-	parameter TOPOLOGY				=	"TORUS", // "MESH" or "TORUS"  
-	parameter ROUTE_ALGRMT			=	"XY",		//"XY" or "MINIMAL"
-	parameter VC_NUM_PER_PORT 		=	2,
-	parameter PYLD_WIDTH 			=	32,
-	parameter BUFFER_NUM_PER_VC	=	16,
-	parameter PORT_NUM				=	5,
-	parameter X_NODE_NUM				=	4,
-	parameter Y_NODE_NUM				=	3,
-	parameter SW_X_ADDR				=	2,
-	parameter SW_Y_ADDR				=	1,
-	parameter NOC_S_ADDR_WIDTH		=	3,
-	parameter CORE_NUMBER			=	`CORE_NUM(SW_X_ADDR,SW_Y_ADDR),	
-	parameter NIC_CONNECT_PORT		=	0, // 0:Local  1:East, 2:North, 3:West, 4:South 
-	parameter FLIT_TYPE_WIDTH		=	2,
-	parameter VC_ID_WIDTH			=	VC_NUM_PER_PORT,
-	parameter FLIT_WIDTH				=	PYLD_WIDTH+FLIT_TYPE_WIDTH+VC_ID_WIDTH
+   parameter AEMB_MUL = 1 ///< optional multiplier
 	
 )(
-	input 	clk,reset_in,sys_int_i,sys_ena_i,
-	output	[GPIO_WIDTH-1:0] gpio,
+	input 	clk,reset_in,sys_ena_i,
+	
+	input		[EXT_INT_WIDTH-1			:0]	ext_int_i,
+	inout 	[IO_WIDTH-1					:0]	gpio_io,
+	input		[I_WIDTH-1					:0]	gpio_i,
+	output	[O_WIDTH-1					:0]	gpio_o,
+	
 	
 	// NOC interfaces
 	output	[FLIT_WIDTH-1				:0] 	flit_out,     
@@ -114,6 +151,9 @@ module aeMB_IP #(
 `define		ADD_BUS_LOCALPARAM	1
 `include 	"../parameter.v"
 
+`define ADD_FUNCTION 		1
+`include "../my_functions.v"
+
 //synthesis translate_off 
 	`define 	SIMULATION_CODE		1
 //synthesis translate_on
@@ -141,7 +181,10 @@ module aeMB_IP #(
 	
 	
 
-
+	wire 														sys_int_i,timer_irq;
+	wire 	[EXT_INT_NUM-1						:	0	]	ext_int_o;
+	wire  [INT_CTRL_INT_NUM-1				:	0	]	int_ctrl_in;
+	
 	wire  [SLAVE_ADDR_ARRAY_WIDTH-1		:	0	]	bus_slave_adr_o;
 	wire	[SLAVE_DATA_ARRAY_WIDTH-1		:	0	]	bus_slave_dat_o;
 	wire	[SLAVE_SEL_ARRAY_WIDTH-1		:	0	]	bus_slave_sel_o;
@@ -332,12 +375,18 @@ generate
 	
 	if(GPIO_EN) begin : gpio_gen
 
-	localparam GPIO_ADDR_WIDTH	=	(GPIO_PORT_NUM==1) ? 2 : log2(GPIO_PORT_NUM*2);
-	output_port #(
-			.PORT_NUM	(GPIO_PORT_NUM),
-			.PORT_WIDTH	(GPIO_PORT_WIDTH)
+	
+		gpio #(
+			.DATA_WIDTH		(DATA_WIDTH),
+			.SEL_WIDTH		(SEL_WIDTH),
+			.IO_EN			(IO_EN),
+			.I_EN				(I_EN),
+			.O_EN				(O_EN),
+			.IO_PORT_WIDTH	(IO_PORT_WIDTH),
+			.I_PORT_WIDTH	(I_PORT_WIDTH),
+			.O_PORT_WIDTH	(O_PORT_WIDTH)
 		)
-		the_seven_segment
+		the_gpio
 		(
 			.clk			(clk),
 			.reset		(reset),
@@ -348,62 +397,156 @@ generate
 			.sa_we_i		(slave_we_i		[GPIO_ID]),
 			.sa_ack_o	(slave_ack_o	[GPIO_ID]),
 			.sa_dat_o	(slave_dat_o	[GPIO_ID]),
-			.gpio_out	(gpio	)
+			.gpio_io		(gpio_io),
+			.gpio_i		(gpio_i),
+			.gpio_o		(gpio_o)
 		);
 	
-		end //GPIO_EN
-		if(NOC_EN) begin	: noc_gen
-		
+	end //GPIO_EN
+	else begin 
+		assign	gpio_io		= {IO_WIDTH{1'bX}};
+		assign	gpio_o		= {O_WIDTH{1'bX}};
+	end
+	
+	
+	if(NOC_EN) begin	: noc_gen
+	
 		ni #(
-		.TOPOLOGY				(TOPOLOGY), 
-		.ROUTE_ALGRMT			(ROUTE_ALGRMT),
-		.VC_NUM_PER_PORT		(VC_NUM_PER_PORT),
-		.PYLD_WIDTH 			(PYLD_WIDTH),
-		.BUFFER_NUM_PER_VC	(BUFFER_NUM_PER_VC),
-		.PORT_NUM				(PORT_NUM),
-		.X_NODE_NUM				(X_NODE_NUM),
-		.Y_NODE_NUM				(Y_NODE_NUM),
-		.SW_X_ADDR				(SW_X_ADDR),
-		.SW_Y_ADDR				(SW_Y_ADDR),
-		.NIC_CONNECT_PORT		(NIC_CONNECT_PORT),
-		.RAM_WIDTH_IN_WORD	(AEMB_RAM_WIDTH_IN_WORD),
-		.W_DATA_WIDTH			(DATA_WIDTH	),
-		.WS_ADDR_WIDTH			(NOC_S_ADDR_WIDTH)	
-	)
-	ni_inst
-	(
-		.reset				(reset),
-		.clk					(clk) ,	
-		.flit_out			(flit_out) ,	
-		.flit_out_wr		(flit_out_wr) ,	
-		.credit_in			(credit_in) ,
-		.flit_in				(flit_in) ,	
-		.flit_in_wr			(flit_in_wr) ,	
-		.credit_out			(credit_out) ,	
+			.TOPOLOGY				(TOPOLOGY), 
+			.ROUTE_ALGRMT			(ROUTE_ALGRMT),
+			.VC_NUM_PER_PORT		(VC_NUM_PER_PORT),
+			.PYLD_WIDTH 			(PYLD_WIDTH),
+			.BUFFER_NUM_PER_VC	(BUFFER_NUM_PER_VC),
+			.PORT_NUM				(PORT_NUM),
+			.X_NODE_NUM				(X_NODE_NUM),
+			.Y_NODE_NUM				(Y_NODE_NUM),
+			.SW_X_ADDR				(SW_X_ADDR),
+			.SW_Y_ADDR				(SW_Y_ADDR),
+			.NIC_CONNECT_PORT		(NIC_CONNECT_PORT),
+			.RAM_WIDTH_IN_WORD	(AEMB_RAM_WIDTH_IN_WORD),
+			.W_DATA_WIDTH			(DATA_WIDTH	),
+			.WS_ADDR_WIDTH			(NOC_S_ADDR_WIDTH)	
+		)
+		ni_inst
+		(
+			.reset				(reset),
+			.clk					(clk) ,	
+			.flit_out			(flit_out) ,	
+			.flit_out_wr		(flit_out_wr) ,	
+			.credit_in			(credit_in) ,
+			.flit_in				(flit_in) ,	
+			.flit_in_wr			(flit_in_wr) ,	
+			.credit_out			(credit_out) ,	
+			
+			.s_dat_i				(slave_dat_i	[NOC_S_ID]) ,	
+			.s_addr_i			(slave_addr_i	[NOC_S_ID][`NOC_S_ADDR_RANG]) ,
+			.s_stb_i				(slave_stb_i 	[NOC_S_ID]) ,	
+			.s_we_i				(slave_we_i 	[NOC_S_ID]) ,	
+			.s_dat_o				(slave_dat_o 	[NOC_S_ID]) ,	
+			.s_ack_o				(slave_ack_o	[NOC_S_ID]) ,	
+			
+			.m_sel_o				(master_sel_o	[NOC_M_ID]), 
+			.m_dat_o				(master_dat_o	[NOC_M_ID]) ,
+			.m_addr_o			(master_adr_o	[NOC_M_ID][AEMB_RAM_WIDTH_IN_WORD-1		: 0]) ,	
+			.m_cti_o				(master_tag_o	[NOC_M_ID]) ,	
+			.m_stb_o				(master_stb_o	[NOC_M_ID]) ,
+			.m_cyc_o				(master_cyc_o	[NOC_M_ID]) ,	
+			.m_we_o				(master_wre_o	[NOC_M_ID]) ,	
+			.m_dat_i				(master_dat_i	[NOC_M_ID]) ,	
+			.m_ack_i				(master_ack_i	[NOC_M_ID]) 	
+		);
+
+		assign master_adr_o [NOC_M_ID] [ADDR_WIDTH-1	:	AEMB_RAM_WIDTH_IN_WORD] = {ADDR_WIDTH-AEMB_RAM_WIDTH_IN_WORD{1'b0}};
+	end // NOC_EN 
+	else begin 
+		assign	flit_out		={FLIT_WIDTH{1'bX}};
+		assign	flit_out_wr	=	1'bX;
+		assign	credit_out	={VC_NUM_PER_PORT{1'bX}};	
+	end
+	
+	if(EXT_INT_EN) begin : ext_in_gen
 		
-		.s_dat_i				(slave_dat_i	[NOC_S_ID]) ,	
-		.s_addr_i			(slave_addr_i	[NOC_S_ID][`NOC_S_ADDR_RANG]) ,
-		.s_stb_i				(slave_stb_i 	[NOC_S_ID]) ,	
-		.s_we_i				(slave_we_i 	[NOC_S_ID]) ,	
-		.s_dat_o				(slave_dat_o 	[NOC_S_ID]) ,	
-		.s_ack_o				(slave_ack_o	[NOC_S_ID]) ,	
+	
+		ext_int #(
+			.EXT_INT_NUM	(EXT_INT_NUM),//max 32
+			.ADDR_WIDTH		(EXT_INT_ADDR_WIDTH)
+		)the_ext_int
+		(
+		.clk			(clk),
+		.reset		(reset),
+		.sa_dat_i	(slave_dat_i	[EXT_INT_ID][EXT_INT_NUM-1		:0]) ,
+		.sa_sel_i	(slave_sel_i	[EXT_INT_ID]),
+		.sa_addr_i	(slave_addr_i	[EXT_INT_ID][EXT_INT_ADDR_WIDTH-1	:0]) ,
+		.sa_stb_i	(slave_stb_i 	[EXT_INT_ID]) ,	
+		.sa_we_i		(slave_we_i 	[EXT_INT_ID]) ,	
+		.sa_dat_o	(slave_dat_o 	[EXT_INT_ID][EXT_INT_NUM-1		:0]) ,	
+		.sa_ack_o	(slave_ack_o	[EXT_INT_ID]) ,	
 		
-		.m_sel_o				(master_sel_o	[NOC_M_ID]), 
-		.m_dat_o				(master_dat_o	[NOC_M_ID]) ,
-		.m_addr_o			(master_adr_o	[NOC_M_ID][AEMB_RAM_WIDTH_IN_WORD-1		: 0]) ,	
-		.m_cti_o				(master_tag_o	[NOC_M_ID]) ,	
-		.m_stb_o				(master_stb_o	[NOC_M_ID]) ,
-		.m_cyc_o				(master_cyc_o	[NOC_M_ID]) ,	
-		.m_we_o				(master_wre_o	[NOC_M_ID]) ,	
-		.m_dat_i				(master_dat_i	[NOC_M_ID]) ,	
-		.m_ack_i				(master_ack_i	[NOC_M_ID]) 	
-	);
+		
+		
+		.ext_int_i	(ext_int_i),  
+		.ext_int_o 	(ext_int_o)//output to the interrupt controller
+	
+);
+	
+	assign slave_dat_o [EXT_INT_ID][DATA_WIDTH-1	:EXT_INT_NUM] = {(DATA_WIDTH-EXT_INT_NUM){1'b0}};
+	
+	end // EXT_INT_EN
+	
+	if(TIMER_EN) begin :timer_gen
+	//	wire 	timer_irq;
+		
+		timer #(
+			.ADDR_WIDTH	(TIMER_ADDR_WIDTH)
+		)
+		the_timer
+		(
+			.clk			(clk),
+			.reset		(reset),
+			.sa_dat_i	(slave_dat_i	[TIMER_ID]) ,
+			.sa_sel_i	(slave_sel_i	[TIMER_ID]),
+			.sa_addr_i	(slave_addr_i	[TIMER_ID][TIMER_ADDR_WIDTH-1	:0]) ,
+			.sa_stb_i	(slave_stb_i 	[TIMER_ID]) ,	
+			.sa_we_i		(slave_we_i 	[TIMER_ID]) ,	
+			.sa_dat_o	(slave_dat_o 	[TIMER_ID]) ,	
+			.sa_ack_o	(slave_ack_o	[TIMER_ID]),
+			.irq			(timer_irq)
+		);
+	
+	end //TIMER_EN
+	
+	if(INT_CTRL_EN) begin	: int_ctrl_gen 
+		int_ctrl #(
+			.INT_NUM		(INT_CTRL_INT_NUM),
+			.DATA_WIDTH	(DATA_WIDTH),
+			.ADDR_WIDTH	(INT_CTRL_ADDR_WIDTH)
+		)
+		int_ctrl_gen	
+		(
+			.clk			(clk),
+			.reset		(reset),
+			.sa_dat_i	(slave_dat_i	[INT_CTRL_ID]) ,
+			.sa_sel_i	(slave_sel_i	[INT_CTRL_ID]),
+			.sa_addr_i	(slave_addr_i	[INT_CTRL_ID][INT_CTRL_ADDR_WIDTH-1	:0]) ,
+			.sa_stb_i	(slave_stb_i 	[INT_CTRL_ID]) ,	
+			.sa_we_i		(slave_we_i 	[INT_CTRL_ID]) ,	
+			.sa_dat_o	(slave_dat_o 	[INT_CTRL_ID]) ,	
+			.sa_ack_o	(slave_ack_o	[INT_CTRL_ID]),
+			
+			.int_i		(int_ctrl_in),
+			.int_o		(sys_int_i)
+		);
+		if(EXT_INT_EN && TIMER_EN) 	assign int_ctrl_in	=	{timer_irq,ext_int_o};	
+		else if(EXT_INT_EN)				assign int_ctrl_in	=	ext_int_o;	
+		else 									assign int_ctrl_in	=	timer_irq;	
+	
+	
+	end //INT_CTRL_EN
+	else begin 
+		assign sys_int_i= 1'b0;
+	
+	end
 
-assign master_adr_o [NOC_M_ID] [ADDR_WIDTH-1	:	AEMB_RAM_WIDTH_IN_WORD] = {ADDR_WIDTH-AEMB_RAM_WIDTH_IN_WORD{1'b0}};
-
-
-
-		end // NOC_EN
 endgenerate
 
  wishbone_bus #(
@@ -411,6 +554,10 @@ endgenerate
 	.RAM_EN					(RAM_EN),
 	.NOC_EN					(NOC_EN),
 	.GPIO_EN					(GPIO_EN),
+	.EXT_INT_EN				(EXT_INT_EN),
+	.TIMER_EN				(TIMER_EN),
+	.INT_CTRL_EN			(INT_CTRL_EN),
+	
 	.MASTER_NUM_			(MASTER_NUM),
 	.SLAVE_NUM_				(SLAVE_NUM),				
 	.ADDR_WIDTH				(ADDR_WIDTH),	

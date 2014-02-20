@@ -72,7 +72,7 @@ module ext_ram_nic #(
 	localparam PORT_NUM_BCD_WIDTH			=	log2(PORT_NUM);
 	localparam X_NODE_NUM_WIDTH			=	log2(X_NODE_NUM);
 	localparam Y_NODE_NUM_WIDTH			=	log2(Y_NODE_NUM);
-	localparam HDR_ZERO_NUM					=	(32 - (2*(X_NODE_NUM_WIDTH+Y_NODE_NUM_WIDTH)) - PORT_NUM_BCD_WIDTH);
+	localparam HDR_ZERO_NUM					=	(32 - (4*`X_Y_ADDR_WIDTH_IN_HDR) - PORT_NUM_BCD_WIDTH);
 	
 	localparam STATUSE_NUM					=	8;
 	localparam IDEAL							=	1;
@@ -104,6 +104,7 @@ module ext_ram_nic #(
 	reg												src_en,addr_capture_en, pck_size_en,pck_size_dec;
 	reg	[X_NODE_NUM_WIDTH-1			:0]	dest_x_addr,dest_x_addr_next;
 	reg 	[Y_NODE_NUM_WIDTH-1			:0]	dest_y_addr,dest_y_addr_next;
+	wire	[`X_Y_ADDR_WIDTH_IN_HDR-1	:0]	dest_x_addr_hdr,dest_y_addr_hdr;
 	reg												wr_reg,wr_reg_next;	// 1 : write, 0 : read
 	reg												ack_reg,ack_reg_next; // 1: ack required 0: no need 
 	reg												ovc_wr;
@@ -132,7 +133,7 @@ module ext_ram_nic #(
 	
 	assign in_vc_num					=  flit_in			[`FLIT_IN_VC_LOC			];
 	//assign fifo_vc_num				=	fifo_flit_out	[`FLIT_IN_VC_LOC			];
-	//assign fifo_hdr_flg				=	fifo_flit_out	[`FLIT_HDR_FLG_LOC		];
+	//assign fifo_hdr_flg			=	fifo_flit_out	[`FLIT_HDR_FLG_LOC		];
 	assign fifo_tail_flg				=	fifo_flit_out	[`FLIT_TAIL_FLAG_LOC		];
 	
 	assign cand_ivc_selected		=	|candidate_ivc;
@@ -141,12 +142,22 @@ module ext_ram_nic #(
 	assign all_ovc_full				=	& full_ovc;
 	assign cand_ovc_full				=	|(full_ovc & cand_ovc) ;
 	assign flit_out_wr				=	(ram_readdatavalid | wr_hdr | wr_tail);
-	assign flit_out					=	(wr_hdr) ? {`HDR_FLIT,cand_ovc,port_num,dest_x_addr,dest_y_addr,SW_X_ADDR[X_NODE_NUM_WIDTH-1 : 0],SW_Y_ADDR[Y_NODE_NUM_WIDTH-1 : 0],{HDR_ZERO_NUM	{1'b0}}}: 
+	assign flit_out					=	(wr_hdr) ? {`HDR_FLIT,cand_ovc,port_num,dest_x_addr_hdr,dest_y_addr_hdr,SW_X_ADDR[`X_Y_ADDR_WIDTH_IN_HDR-1 : 0],SW_Y_ADDR[`X_Y_ADDR_WIDTH_IN_HDR-1 : 0],{HDR_ZERO_NUM	{1'b0}}}: 
 															  {flit_type,cand_ovc,ram_readdata};
 	assign flit_type					= (wr_tail ||(rd_valid_counter == 1 && rd_busy)) ?	`TAIL_FLIT	: `BODY_FLIT;									  
 	assign ram_address				= addr_counter;
 	assign credit_out					=(fifo_rd) ? 	candidate_ivc : {VC_NUM_PER_PORT{1'b0}};
-	assign ram_byteenable_n		= 4'd0;	
+	assign ram_byteenable_n			= 4'd0;	
+	
+	generate 
+		if(X_NODE_NUM_WIDTH == `X_Y_ADDR_WIDTH_IN_HDR) assign dest_x_addr_hdr = dest_x_addr;
+		else 		assign dest_x_addr_hdr = {{(`X_Y_ADDR_WIDTH_IN_HDR-X_NODE_NUM_WIDTH){1'b0}},dest_x_addr};
+	
+		if(Y_NODE_NUM_WIDTH == `X_Y_ADDR_WIDTH_IN_HDR) assign dest_y_addr_hdr = dest_y_addr;
+		else 		assign dest_y_addr_hdr = {{(`X_Y_ADDR_WIDTH_IN_HDR-Y_NODE_NUM_WIDTH){1'b0}},dest_y_addr};
+	endgenerate
+	
+
 	//assign fifo_not_empty & ~ivc_busy;
 	
 	fifo_buffer #(

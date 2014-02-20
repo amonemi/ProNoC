@@ -1,7 +1,7 @@
 // synthesis translate_off
 task automatic cpu_write_data	(
-	input [X_NODE_NUM_WIDTH-1		:	0] src_x_addr,
-	input [Y_NODE_NUM_WIDTH-1		:	0] src_y_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1		:	0] src_x_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1		:	0] src_y_addr,
 	input	[CPU_ADR_WIDTH-1			:	0] addr_i,
 	input [31							:	0]	data_i
 );
@@ -23,8 +23,8 @@ task automatic cpu_write_data	(
 endtask
 
 task automatic cpu_read_data	(
-	input [X_NODE_NUM_WIDTH-1		:	0] src_x_addr,
-	input [Y_NODE_NUM_WIDTH-1		:	0] src_y_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1		:	0] src_x_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1		:	0] src_y_addr,
 	input	[CPU_ADR_WIDTH-1			  :	0] addr_i,
 	output[31                  : 0] data_o
 	
@@ -46,10 +46,10 @@ endtask
 
 				
 task automatic send_pck(
-	input [X_NODE_NUM_WIDTH-1		:	0] src_x_addr,
-	input [Y_NODE_NUM_WIDTH-1		:	0] src_y_addr,
-	input [X_NODE_NUM_WIDTH-1		:	0] des_x_addr,
-	input [Y_NODE_NUM_WIDTH-1		:	0] des_y_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1		:	0] src_x_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1		:	0] src_y_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1		:	0] des_x_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1		:	0] des_y_addr,
 	input [`NI_PCK_SIZE_WIDTH-1	:	0]	pck_size,
 	input [`NI_PTR_WIDTH-1			:	0]	pck_ptr
 
@@ -74,8 +74,8 @@ endtask
 
 
 task automatic send_pck_cmd (
-	input [X_NODE_NUM_WIDTH-1		:	0] src_x_addr,
-	input [Y_NODE_NUM_WIDTH-1		:	0] src_y_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1		:	0] src_x_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1		:	0] src_y_addr,
 	input [`NI_PCK_SIZE_WIDTH-1	:	0]	pck_size,
 	input [`NI_PTR_WIDTH-1			: 	0]	pck_ptr
 	
@@ -92,10 +92,10 @@ endtask
 ////////////////////////////////////
 
 task automatic write_hdr (
-	input [X_NODE_NUM_WIDTH-1	:	0] src_x_addr,
-	input [Y_NODE_NUM_WIDTH-1	:	0] src_y_addr,
-	input [X_NODE_NUM_WIDTH-1	:	0] des_x_addr,
-	input [Y_NODE_NUM_WIDTH-1	:	0] des_y_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] src_x_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] src_y_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] des_x_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] des_y_addr,
 	input [`NI_PTR_WIDTH-1		:	0]	pck_ptr
 
 
@@ -106,7 +106,7 @@ task automatic write_hdr (
 	
 	begin : hdr1
 		addr_i = pck_ptr>>2;
-		data_i = {{PORT_NUM_BCD_WIDTH{1'b0}},des_x_addr,des_y_addr,{(32-PORT_NUM_BCD_WIDTH-X_NODE_NUM_WIDTH-Y_NODE_NUM_WIDTH){1'b0}}};	
+		data_i = {{PORT_NUM_BCD_WIDTH{1'b0}},des_x_addr,des_y_addr,{(32-PORT_NUM_BCD_WIDTH-`X_Y_ADDR_WIDTH_IN_HDR-`X_Y_ADDR_WIDTH_IN_HDR){1'b0}}};	
 		cpu_write_data	( src_x_addr, src_y_addr, addr_i,data_i);
 		
 	end
@@ -115,8 +115,8 @@ endtask
 ///////////////////////////////////
 
 task automatic recive_pck(
-	input [X_NODE_NUM_WIDTH-1	:	0] src_x_addr,
-	input [Y_NODE_NUM_WIDTH-1	:	0] src_y_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] src_x_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] src_y_addr,
 	input [12						:	0]	pck_size,
 	input [18						:	0]	pck_ptr
 
@@ -148,15 +148,15 @@ endtask
 /*
 	
 task automatic write_prog_hdr (
-	input [X_NODE_NUM_WIDTH-1	:	0] src_x_addr,
-	input [Y_NODE_NUM_WIDTH-1	:	0] src_y_addr,
-	input [X_NODE_NUM_WIDTH-1	:	0] des_x_addr,
-	input [Y_NODE_NUM_WIDTH-1	:	0] des_y_addr
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] src_x_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] src_y_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] des_x_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] des_y_addr
 
 );
 	begin : hdr2
 	ni_s_addr_i	[`CORE_NUM(src_x_addr,src_y_addr)]	= SLAVE_WR_PCK_ADDR; 
-	ram_data[`CORE_NUM(src_x_addr,src_y_addr)]= {{PORT_NUM_BCD_WIDTH{1'b0}},des_x_addr,des_y_addr,{(32-PORT_NUM_BCD_WIDTH-X_NODE_NUM_WIDTH-Y_NODE_NUM_WIDTH-1){1'b0}}, 1'b1	};	
+	ram_data[`CORE_NUM(src_x_addr,src_y_addr)]= {{PORT_NUM_BCD_WIDTH{1'b0}},des_x_addr,des_y_addr,{(32-PORT_NUM_BCD_WIDTH-`X_Y_ADDR_WIDTH_IN_HDR-`X_Y_ADDR_WIDTH_IN_HDR-1){1'b0}}, 1'b1	};	
 	ram_addr[`CORE_NUM(src_x_addr,src_y_addr)]=	0;
 	@ (posedge clk) # 1 ram_we[`CORE_NUM(src_x_addr,src_y_addr)] = 1'b1;
 	@ (posedge clk) # 1 ram_we[`CORE_NUM(src_x_addr,src_y_addr)] = 1'b0;
@@ -168,10 +168,10 @@ endtask
 ///////////////////////////////////////////////
 
 task automatic send_prog_pck(
-	input [X_NODE_NUM_WIDTH-1	:	0] src_x_addr,
-	input [Y_NODE_NUM_WIDTH-1	:	0] src_y_addr,
-	input [X_NODE_NUM_WIDTH-1	:	0] des_x_addr,
-	input [Y_NODE_NUM_WIDTH-1	:	0] des_y_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] src_x_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] src_y_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] des_x_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] des_y_addr,
 	input [12						:	0]	pck_size,
 	input [18						:	0]	pck_ptr
 
@@ -189,8 +189,8 @@ endtask
 ////////////////////////////////////////////////
 
 task automatic update_cmd_mem (
-	input [X_NODE_NUM_WIDTH-1	:	0] des_x_addr,
-	input [Y_NODE_NUM_WIDTH-1	:	0] des_y_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] des_x_addr,
+	input [`X_Y_ADDR_WIDTH_IN_HDR-1	:	0] des_y_addr,
 	input [31						:	0] jtag_mem_start_addr,
 	input [31						:	0] pckt_size,
 	input [31						:	0] sdram_start_addr
@@ -198,7 +198,7 @@ task automatic update_cmd_mem (
 	begin : update
 		@(posedge clk) # 1 cmd_we			=  1'b1;
 		cmd_addr = 1;
-		cmd_data ={{(32-X_NODE_NUM_WIDTH-Y_NODE_NUM_WIDTH){1'b0}},des_x_addr,des_y_addr}; 
+		cmd_data ={{(32-`X_Y_ADDR_WIDTH_IN_HDR-`X_Y_ADDR_WIDTH_IN_HDR){1'b0}},des_x_addr,des_y_addr}; 
 		
 		@(posedge clk) # 1 cmd_we			=  1'b1;
 		cmd_addr = 2;

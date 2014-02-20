@@ -38,7 +38,7 @@
 
 set_global_assignment -name FAMILY "Cyclone IV E"
 set_global_assignment -name DEVICE EP4CE115F29C7
-set_global_assignment -name TOP_LEVEL_ENTITY top_de115
+set_global_assignment -name TOP_LEVEL_ENTITY MPSoC_top
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 13.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "17:41:22  DECEMBER 25, 2013"
 set_global_assignment -name LAST_QUARTUS_VERSION 13.0
@@ -1107,20 +1107,25 @@ set_location_assignment PIN_V24 -to HSMC_CLKOUT_N2
 set_instance_assignment -name IO_STANDARD LVDS -to HSMC_CLKOUT_N2
 set_location_assignment PIN_G24 -to HSMC_CLKOUT_N1
 set_instance_assignment -name IO_STANDARD LVDS -to HSMC_CLKOUT_N1
+set_global_assignment -name EDA_TEST_BENCH_NAME testbench_soc -section_id eda_simulation
+set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id testbench_soc
+set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME testbench_soc -section_id testbench_soc
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name EDA_TEST_BENCH_NAME testbench -section_id eda_simulation
-set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id testbench
-set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME testbench -section_id testbench
+set_global_assignment -name EDA_TEST_BENCH_NAME testbench_mpsoc -section_id eda_simulation
+set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id testbench_mpsoc
+set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME testbench_mpsoc -section_id testbench_mpsoc
 set_global_assignment -name EDA_TEST_BENCH_NAME testbench_noc -section_id eda_simulation
 set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id testbench_noc
 set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME testbench_noc -section_id testbench_noc
-set_global_assignment -name EDA_TEST_BENCH_FILE src/testbench_noc.v -section_id testbench
-set_global_assignment -name EDA_TEST_BENCH_FILE src/testbench.v -section_id testbench
-set_global_assignment -name EDA_TEST_BENCH_FILE src/testbench_noc.v -section_id testbench_noc
+set_global_assignment -name VERILOG_FILE src/IP_core/reset_jtag.v
+set_global_assignment -name VERILOG_FILE src/MPSoC_top.v
+set_global_assignment -name VERILOG_FILE src/IP_core/int_ctrl.v
+set_global_assignment -name VERILOG_FILE src/IP_core/ext_int.v
+set_global_assignment -name VERILOG_FILE src/IP_core/timer.v
+set_global_assignment -name VERILOG_FILE src/SoC_IP_top.v
 set_global_assignment -name VERILOG_FILE src/NoC/route_compute.v
-set_global_assignment -name VERILOG_FILE src/top_de115.v
 set_global_assignment -name VERILOG_FILE src/NoC/ext_ram_nic.v
 set_global_assignment -name VERILOG_FILE src/NoC/sdram_core.v
 set_global_assignment -name VERILOG_FILE src/IP_core/sdram/synthesis/submodules/sdram_up_clocks_0.v
@@ -1185,3 +1190,7 @@ set_global_assignment -name VERILOG_FILE src/IP_core/aeMB_mpsoc.v
 set_global_assignment -name VERILOG_FILE src/IP_core/bus_addr_cmp.v
 set_global_assignment -name SDC_FILE clk50.sdc
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_global_assignment -name EDA_TEST_BENCH_FILE src/testbench_noc.v -section_id testbench_soc
+set_global_assignment -name EDA_TEST_BENCH_FILE src/testbench_soc.v -section_id testbench_soc
+set_global_assignment -name EDA_TEST_BENCH_FILE src/testbench_mpsoc.v -section_id testbench_mpsoc
+set_global_assignment -name EDA_TEST_BENCH_FILE src/testbench_noc.v -section_id testbench_noc
