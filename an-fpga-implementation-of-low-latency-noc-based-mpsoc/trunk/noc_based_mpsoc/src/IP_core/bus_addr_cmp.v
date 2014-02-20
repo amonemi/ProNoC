@@ -2,6 +2,10 @@ module bus_addr_cmp #(
 	parameter	RAM_EN		=	1,
 	parameter 	NOC_EN		=	1,
 	parameter 	GPIO_EN		=	1,
+	parameter 	EXT_INT_EN	=	1,
+	parameter 	TIMER_EN		=	1,
+	parameter 	INT_CTRL_EN	=	1,
+	
 	parameter  	ADDR_PERFIX_	=	8,
 	parameter	SLAVE_NUM_	=	3	 
 	)
@@ -32,6 +36,18 @@ module bus_addr_cmp #(
 				end else if(k == GPIO_ID) begin 
 					assign   base_start_addr [k] = GPIO_ADDR_START;
 					assign	base_end_addr 	 [k] = GPIO_ADDR_START+ GPIO_BK_NUM;
+								
+				end else if(k == EXT_INT_ID) begin 
+					assign   base_start_addr [k] = EXT_INT_ADDR_START;
+					assign	base_end_addr 	 [k] = EXT_INT_ADDR_START+ EXT_INT_BK_NUM;
+								
+				end else if(k == TIMER_ID) begin 
+					assign   base_start_addr [k] = TIMER_ADDR_START;
+					assign	base_end_addr 	 [k] = TIMER_ADDR_START+ TIMER_BK_NUM;
+								
+				end else if(k == INT_CTRL_ID) begin 
+					assign   base_start_addr [k] = INT_CTRL_ADDR_START;
+					assign	base_end_addr 	 [k] = INT_CTRL_ADDR_START+ INT_CTRL_BK_NUM;
 				end  
 				
 				

@@ -35,6 +35,10 @@ module wishbone_bus #(
 	parameter RAM_EN							=	1,
 	parameter NOC_EN							=	0,
 	parameter GPIO_EN							=	1,
+	parameter EXT_INT_EN						=	1,
+	parameter TIMER_EN						=	1,
+	parameter INT_CTRL_EN					=	1,
+	
 	parameter GPIO_WIDTH						=	56,
 	parameter MASTER_NUM_					=	4,		//number of master port
 	parameter SLAVE_NUM_						=	4,		//number of slave port
@@ -173,6 +177,10 @@ bus_addr_cmp #(
 	.RAM_EN			(RAM_EN),
 	.NOC_EN			(NOC_EN),
 	.GPIO_EN			(GPIO_EN),
+	.EXT_INT_EN		(EXT_INT_EN),
+	.TIMER_EN		(TIMER_EN),
+	.INT_CTRL_EN	(INT_CTRL_EN),
+	
 	.ADDR_PERFIX_	(ADDR_PERFIX),
 	.SLAVE_NUM_		(SLAVE_NUM)	 
 	)

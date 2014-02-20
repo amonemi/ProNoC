@@ -31,28 +31,41 @@
 
 
 `ifdef	ADD_BUS_LOCALPARAM
-
-	localparam MASTER_NUM					=	2+NOC_EN;		//number of master port
-	localparam SLAVE_NUM						=	RAM_EN + GPIO_EN	+ NOC_EN ;		//number of slave port
+	localparam ADDR_PERFIX		=	8;
 	
-	localparam	ADDR_PERFIX		=	8;
+	// Total number of master port in wishbone bus. The aeMB has two master port. To add new device 
+	// update its as : MASTER_NUM		=	2+NOC_EN + (NEW_DEV_EN * number of master port the new device has)
+	localparam MASTER_NUM			=	2+NOC_EN;		//number of master port
+	
+	//Total number of slave port. 
+	// To add new device, update its as : SLAVE_NUM		=	old_value + (NEW_DEV_EN * number of slave port the new device has)
+	localparam SLAVE_NUM				=	RAM_EN + GPIO_EN	+ NOC_EN	+ EXT_INT_EN + TIMER_EN + INT_CTRL_EN;		
+	
 
 	// addrees range  definition 
+	localparam	RAM_ADDR_START			=	8'H00;		// 32'H00000000	to 32'H3FFFFFFF
+	localparam	RAM_BK_NUM				=	8'H3F;	
 
-	localparam	RAM_ADDR_START	=	8'H00;		// 32'H00000000	to 32'H3FFFFFFF
-	localparam	RAM_BK_NUM		=	8'H3F;	
+	
+	localparam	NOC_ADDR_START			=	8'H40;		// 32'H40000000	to 32'H40FFFFFF
+	localparam	NOC_BK_NUM				=	8'H01;
+	
+	localparam	GPIO_ADDR_START		=	8'H41;		// 32'H41000000	to 32'H41FFFFFF
+	localparam	GPIO_BK_NUM				=	8'H01;	 
+	
+	
+	localparam	EXT_INT_ADDR_START	=	8'H42;		// 32'H42000000	to 32'H42FFFFFF
+	localparam	EXT_INT_BK_NUM			=	8'H01;
 
-	
-	localparam	NOC_ADDR_START	=	8'H40	;		// 32'H40000000	to 32'H40FFFFFF
-	localparam	NOC_BK_NUM		=	8'H01;
-	
-	localparam	GPIO_ADDR_START=	8'H41;		// 32'H41000000	to 32'H41FFFFFF
-	localparam	GPIO_BK_NUM		=	8'H01		;	 
-	
-	
-	
+	localparam	TIMER_ADDR_START		=	8'H43;		// 32'H43000000	to 32'H43FFFFFF
+	localparam	TIMER_BK_NUM			=	8'H01;
 
-	// salve and master coonection port definition 
+	localparam	INT_CTRL_ADDR_START	=	8'H44;		// 32'H44000000	to 32'H44FFFFFF
+	localparam	INT_CTRL_BK_NUM		=	8'H01;
+	//add new device addr range here
+	
+	
+	// salve and master conection port definition 
 
 
 	localparam	RAM_ID			=	0;
@@ -63,8 +76,18 @@
 	
 	localparam	GPIO_ID			=	(	GPIO_EN	) ? NOC_S_ID_E	+	1	:	255;
 	localparam	GPIO_ID_E		=	NOC_S_ID_E	+	GPIO_EN ;
-		
-		
+	
+	localparam	EXT_INT_ID		=	(EXT_INT_EN)	?	GPIO_ID_E +1	:	255;
+	localparam	EXT_INT_ID_E	=	GPIO_ID_E	+	EXT_INT_EN;
+	
+	localparam	TIMER_ID			=	(TIMER_EN)	?	EXT_INT_ID_E +1	:	255;
+	localparam	TIMER_ID_E		=	EXT_INT_ID_E	+	TIMER_EN;
+	
+	localparam	INT_CTRL_ID		=	(INT_CTRL_EN)	?	TIMER_ID_E +1	:	255;
+	localparam	INT_CTRL_ID_E	=	TIMER_ID_E	+	INT_CTRL_EN;	
+	
+	//localparam	NEW_ID		=	(NEW_EN)	?	LAST_ID_E +1	:	255;
+	//localparam	NEW_ID_E	=	LAST_ID_E	+	NEW_EN;	
 	
 	//master device number
 	localparam	IWB_ID			=	0;

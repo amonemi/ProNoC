@@ -2,7 +2,7 @@
 
 	rm -Rf ram/*.mif
 	rm -Rf ../simulation/modelsim/sw/ram/*.mif
-	cd code
+	cd mpsoc_code
 for i in $(ls *.c); do
         echo item: $i
 	cp $i	../compile/code.c
@@ -11,5 +11,5 @@ for i in $(ls *.c); do
 	cp	out/ram0.mif	../ram/${i%.*}.mif
 	cp	out/ram0.mif	../../simulation/modelsim/sw/ram/${i%.*}.mif
 	rm	code.c	
-        cd ../code
+        cd ../mpsoc_code
 done

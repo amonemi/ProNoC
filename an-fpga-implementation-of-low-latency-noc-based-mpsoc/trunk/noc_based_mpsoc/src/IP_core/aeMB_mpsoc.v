@@ -70,7 +70,6 @@ south = 4
 `include "../define.v"
 
 
-
 module aeMB_mpsoc #(
 	parameter NI_CTRL_SIMULATION		=	"aeMB", 
 	/*"aeMB" or "testbench". 
@@ -79,18 +78,19 @@ module aeMB_mpsoc #(
 		Defining it as "testbench" will remove the processors 
 		in simulation. Hence, the simulation time will be decreased. The tasks to control
 		NI pins are written in tasks.V file */
+	//noc parameter 
 	parameter TOPOLOGY					=	`TOPOLOGY_DEF,
 	parameter ROUTE_ALGRMT				=	`ROUTE_ALGRMT_DEF, //"XY" or "MINIMAL" 
 	parameter VC_NUM_PER_PORT 			=	`VC_NUM_PER_PORT_DEF ,
 	parameter PYLD_WIDTH 				=	`PYLD_WIDTH_DEF,
 	parameter BUFFER_NUM_PER_VC		=	`BUFFER_NUM_PER_VC_DEF,
-	
 	parameter X_NODE_NUM					=	`X_NODE_NUM_DEF,
 	parameter Y_NODE_NUM					=	`Y_NODE_NUM_DEF,
 	parameter AEMB_RAM_WIDTH_IN_WORD	=	`AEMB_RAM_WIDTH_IN_WORD_DEF,
 	parameter NOC_S_ADDR_WIDTH			=	`NOC_S_ADDR_WIDTH_DEF,
 	parameter SW_OUTPUT_REGISTERED	=	0,// 1: registered , 0 not registered
-		
+	
+	// external sdram parameter
 	parameter SDRAM_EN					=	`SDRAM_EN_DEF,//  0 : disabled  1: enabled 
 	parameter SDRAM_SW_X_ADDR			=	`SDRAM_SW_X_ADDR_DEF,
 	parameter SDRAM_SW_Y_ADDR			=	`SDRAM_SW_Y_ADDR_DEF,
@@ -98,19 +98,35 @@ module aeMB_mpsoc #(
 	parameter SDRAM_ADDR_WIDTH			=	`SDRAM_ADDR_WIDTH_DEF,
 	parameter CAND_VC_SEL_MODE			=	0,
 	
-	//aeMB parameter
-	parameter RAM_EN						=	1,					
-	parameter NOC_EN						=	1,
-	parameter GPIO_EN						=	1,
-	parameter GPIO_PORT_WIDTH			=	1,
-	parameter GPIO_PORT_NUM				=	1,
+	// processors parameter
+	//parameter DEV_EN_ARRAY	="IPn:[the specefic value for nth IP];Def:[default value for the rest of IPs]"
+	parameter RAM_EN_ARRAY				=	"Def:1",
+	parameter NOC_EN_ARRAY				=	"Def:1",
+	parameter GPIO_EN_ARRAY				=	"Def:1",
+	parameter EXT_INT_EN_ARRAY			=	"IP0_0:1;Def:0",
+	parameter TIMER_EN_ARRAY			=	"IP0_0:1;Def:0",
+	parameter INT_CTRL_EN_ARRAY		=	"IP0_0:1;Def:0",
+	
+	//gpio parameters 
+	parameter IO_EN_ARRAY				=	"IP0_0:1;Def:0",
+	parameter I_EN_ARRAY					=	"Def:0",
+	parameter O_EN_ARRAY					=	"IP0_1:0;Def:1",
+	parameter EXT_INT_NUM_ARRAY		=	"IP0_0:3;Def:0",//max 32
+	
+	parameter IO_PORT_WIDTH_ARRAY		=	"Def:1",
+	parameter I_PORT_WIDTH_ARRAY		=	"Def:0",
+	parameter O_PORT_WIDTH_ARRAY		=	"IP0_0:7,7,7,7,7,7,7,7;IP0_1:0;Def:1",
+	parameter TOTAL_EXT_INT_NUM		=	end_loc_in_array(X_NODE_NUM-1,Y_NODE_NUM-1,X_NODE_NUM,EXT_INT_NUM_ARRAY)+1,
+	parameter TOTAL_IO_WIDTH			=	end_loc_in_array(X_NODE_NUM-1,Y_NODE_NUM-1,X_NODE_NUM,IO_PORT_WIDTH_ARRAY)+1,
+	parameter TOTAL_I_WIDTH				=  end_loc_in_array(X_NODE_NUM-1,Y_NODE_NUM-1,X_NODE_NUM,I_PORT_WIDTH_ARRAY)+1,
+	parameter TOTAL_O_WIDTH				=  end_loc_in_array(X_NODE_NUM-1,Y_NODE_NUM-1,X_NODE_NUM,O_PORT_WIDTH_ARRAY)+1,
+		
+	
+	
 	parameter AEMB_IWB 					= 32, ///< INST bus width
    parameter AEMB_DWB 					= 32, ///< DATA bus width
 	
-	//parameter JTAG_INTERFACE_EN		=	1, // if disabled the jtag can just send packet but can not recieve any packet
-	//parameter JTAG_SW_X_ADDR			=	0,
-	//parameter JTAG_SW_Y_ADDR			=	0,
-	//parameter JTAG_ni_CONNECT_PORT	=	0,
+	
 	
 	parameter PORT_NUM					=	5,
 	parameter FLIT_TYPE_WIDTH			=	2,
@@ -124,13 +140,17 @@ module aeMB_mpsoc #(
 	parameter CPU_ADR_WIDTH 			=	AEMB_DWB-2,
 	parameter CPU_ADDR_ARRAY_WIDTH 	=	CPU_ADR_WIDTH * TOTAL_ROUTERS_NUM,
 	parameter CPU_DATA_ARRAY_WIDTH	=	32 * TOTAL_ROUTERS_NUM
-	//parameter RAM_ARRAY_ADDR_WIDTH	=	M_ADDR_SIZE*TOTAL_ROUTERS_NUM
+
 	
 )(
 		
 	input														reset,
 	input 													clk,
-	output	[TOTAL_ROUTERS_NUM-1			:0]		led,
+	input		[TOTAL_EXT_INT_NUM-1				:0]	ext_int_i,
+	inout 	[TOTAL_IO_WIDTH-1					:0]	gpio_io,
+	input		[TOTAL_I_WIDTH-1					:0]	gpio_i,
+	output	[TOTAL_O_WIDTH-1					:0]	gpio_o,
+	
 	
 	output  [12									:0] 		sdram_addr,        // sdram_wire.addr
 	output  [1									:0]  		sdram_ba,          //           .ba
@@ -167,8 +187,11 @@ module aeMB_mpsoc #(
 	);
 	
 	
+`define ADD_FUNCTION 		1
+`include "../my_functions.v"
 
 
+wire [TOTAL_O_WIDTH-1			:	0] gpio_o_array [TOTAL_ROUTERS_NUM-1			:0];
 			
 wire [FLIT_ARRAY_WIDTH-1		:	0] router_flit_in_array 	[TOTAL_ROUTERS_NUM-1			:0];
 wire [PORT_NUM-1					:	0] router_wr_in_en_array	[TOTAL_ROUTERS_NUM-1			:0];	
@@ -189,10 +212,10 @@ wire [VC_NUM_PER_PORT-1			:	0]	ni_credit_out 				[TOTAL_ROUTERS_NUM-1			:0];
 //synthesis translate_off 
 //In case we want to handle NI interface using testbench not aeMB 
 	
-	wire 	[AEMB_DWB-1						:2] 		cpu_adr_i		[TOTAL_ROUTERS_NUM-1			:0];	
-   wire	[31								:0] 		cpu_dat_i		[TOTAL_ROUTERS_NUM-1			:0];			
-   wire 	[3									:0] 		cpu_sel_i		[TOTAL_ROUTERS_NUM-1			:0];			
-	wire 	[31								:0]		cpu_dat_o		[TOTAL_ROUTERS_NUM-1			:0];			
+	wire 	[AEMB_DWB-1				:	2] cpu_adr_i		[TOTAL_ROUTERS_NUM-1			:0];	
+   wire	[31						:	0] cpu_dat_i		[TOTAL_ROUTERS_NUM-1			:0];			
+   wire 	[3							:	0] cpu_sel_i		[TOTAL_ROUTERS_NUM-1			:0];			
+	wire 	[31						:	0] cpu_dat_o		[TOTAL_ROUTERS_NUM-1			:0];			
  
  //synthesis translate_on
 
@@ -205,6 +228,28 @@ generate
 
 	for	(x=0;	x<X_NODE_NUM; x=x+1) begin :x_loop
 		for	(y=0;	y<Y_NODE_NUM;	y=y+1) begin: y_loop
+			localparam	RAM_EN			= s2i(ip_value(x,y,RAM_EN_ARRAY));					
+			localparam	NOC_EN			= s2i(ip_value(x,y,NOC_EN_ARRAY));    
+			localparam	GPIO_EN			= s2i(ip_value(x,y,GPIO_EN_ARRAY));    
+			localparam	EXT_INT_EN		= s2i(ip_value(x,y,EXT_INT_EN_ARRAY));  
+			localparam	EXT_INT_NUM		= s2i(ip_value(x,y,EXT_INT_NUM_ARRAY));  	
+			localparam	TIMER_EN			= s2i(ip_value(x,y,TIMER_EN_ARRAY));    
+			localparam	INT_CTRL_EN		= s2i(ip_value(x,y,INT_CTRL_EN_ARRAY));    
+			localparam	IO_EN				= s2i(ip_value(x,y,IO_EN_ARRAY));    
+			localparam	I_EN				= s2i(ip_value(x,y,I_EN_ARRAY));    
+			localparam	O_EN				= s2i(ip_value(x,y,O_EN_ARRAY));    
+			localparam	IO_PORT_WIDTH	= ip_value(x,y,IO_PORT_WIDTH_ARRAY);    
+			localparam	I_PORT_WIDTH	= ip_value(x,y,I_PORT_WIDTH_ARRAY);    
+			localparam 	O_PORT_WIDTH	= ip_value(x,y,O_PORT_WIDTH_ARRAY);    
+			localparam 	EXT_INT_END  	= end_loc_in_array	(x,y,X_NODE_NUM,EXT_INT_NUM_ARRAY);
+			localparam	EXT_INT_STRT 	= start_loc_in_array	(x,y,X_NODE_NUM,EXT_INT_NUM_ARRAY);
+			localparam	IO_END  			= end_loc_in_array	(x,y,X_NODE_NUM,IO_PORT_WIDTH_ARRAY);
+			localparam	IO_STRT 			= start_loc_in_array	(x,y,X_NODE_NUM,IO_PORT_WIDTH_ARRAY);
+			localparam	I_END  	 		= end_loc_in_array	(x,y,X_NODE_NUM,I_PORT_WIDTH_ARRAY);
+			localparam	I_STRT  			= start_loc_in_array	(x,y,X_NODE_NUM,I_PORT_WIDTH_ARRAY);
+			localparam	O_END   			= end_loc_in_array	(x,y,X_NODE_NUM,O_PORT_WIDTH_ARRAY);
+			localparam	O_STRT  			= start_loc_in_array	(x,y,X_NODE_NUM,O_PORT_WIDTH_ARRAY);
+			localparam	IP_NUM			= `CORE_NUM(x,y);
 		
 	if( SDRAM_EN	==	1 && x == SDRAM_SW_X_ADDR	&& y ==  SDRAM_SW_Y_ADDR) begin : sdram_gen
 		
@@ -230,13 +275,13 @@ generate
 				.clk							(clk) ,
 				
 				// NOC interfaces
-				.flit_out					(ni_flit_out				[`CORE_NUM(x,y)]),	
-				.flit_out_wr				(ni_flit_out_wr			[`CORE_NUM(x,y)]),	
-				.credit_in					(ni_credit_in				[`CORE_NUM(x,y)]), 
+				.flit_out					(ni_flit_out				[IP_NUM]),	
+				.flit_out_wr				(ni_flit_out_wr			[IP_NUM]),	
+				.credit_in					(ni_credit_in				[IP_NUM]), 
 				
-				.flit_in						(ni_flit_in				[`CORE_NUM(x,y)]),	
-				.flit_in_wr					(ni_flit_in_wr			[`CORE_NUM(x,y)]),	
-				.credit_out					(ni_credit_out			[`CORE_NUM(x,y)]) ,
+				.flit_in						(ni_flit_in				[IP_NUM]),	
+				.flit_in_wr					(ni_flit_in_wr			[IP_NUM]),	
+				.credit_out					(ni_credit_out			[IP_NUM]) ,
 				
 				.sdram_addr					(sdram_addr) ,	
 				.sdram_ba					(sdram_ba) ,	
@@ -252,13 +297,22 @@ generate
 	
 	end else begin : aeMB_core_gen 
 
-
 		aeMB_IP #(
-				.RAM_EN						(RAM_EN),					
+				.RAM_EN						(RAM_EN),
 				.NOC_EN						(NOC_EN),
 				.GPIO_EN						(GPIO_EN),
-				.GPIO_PORT_WIDTH			(GPIO_PORT_WIDTH),
-				.GPIO_PORT_NUM				(GPIO_PORT_NUM),
+				.EXT_INT_EN					(EXT_INT_EN),
+				.TIMER_EN					(TIMER_EN),
+				.INT_CTRL_EN				(INT_CTRL_EN),
+				.IO_EN						(IO_EN),
+				.I_EN							(I_EN),
+				.O_EN							(O_EN),
+				.IO_PORT_WIDTH				(IO_PORT_WIDTH),
+				.I_PORT_WIDTH				(I_PORT_WIDTH),
+				.O_PORT_WIDTH				(O_PORT_WIDTH),
+				.EXT_INT_NUM				(EXT_INT_NUM),				
+				
+								
 				.AEMB_IWB  					(AEMB_IWB), ///< INST bus width
 				.AEMB_DWB 					(AEMB_DWB), ///< DATA bus width
 				.NI_CTRL_SIMULATION		(NI_CTRL_SIMULATION),
@@ -276,35 +330,41 @@ generate
 				.SW_Y_ADDR					(y),
 				.NIC_CONNECT_PORT			(0),		// 0:Local  1:East, 2:North, 3:West, 4:South 
 				.AEMB_RAM_WIDTH_IN_WORD	(AEMB_RAM_WIDTH_IN_WORD),
-				.CORE_NUMBER				(`CORE_NUM(x,y))
+				.CORE_NUMBER				(IP_NUM)
 			)
 			ip_core
 			(
 				.reset_in					(reset) ,	
 				.clk							(clk) ,
-				.sys_int_i					(1'b0),
 				.sys_ena_i					(1'b1),
-				.gpio							(led							[`CORE_NUM(x,y)]),
-	
+				
+			//	.ext_int_i					(`assign_mpsoc_pin(ext_int_i,x,y,EXT_INT_NUM_ARRAY)),	//((end_loc_in_array(x,y,X_NODE_NUM,EXT_INT_NUM_ARRAY)+1 != start_loc_in_array(x,y,X_NODE_NUM,EXT_INT_NUM_ARRAY))? ext_int_i	[end_loc_in_array(x,y,X_NODE_NUM,EXT_INT_NUM_ARRAY)	:start_loc_in_array(x,y,X_NODE_NUM,EXT_INT_NUM_ARRAY)]:'hx),
+			//	.gpio_io						(`assign_mpsoc_pin(gpio_io,x,y,IO_PORT_WIDTH_ARRAY)),//(		[end_loc_in_array(x,y,X_NODE_NUM,IO_PORT_WIDTH_ARRAY) :start_loc_in_array(x,y,X_NODE_NUM,IO_PORT_WIDTH_ARRAY)]),
+			//	.gpio_i						(`assign_mpsoc_pin(gpio_i,x,y,I_PORT_WIDTH_ARRAY)),//[end_loc_in_array(x,y,X_NODE_NUM,I_PORT_WIDTH_ARRAY)	:start_loc_in_array(x,y,X_NODE_NUM,I_PORT_WIDTH_ARRAY)]),
+			//	.gpio_o						(`assign_mpsoc_pin(gpio_o,x,y,O_PORT_WIDTH_ARRAY)),	//(gpio_o		[end_loc_in_array(x,y,X_NODE_NUM,O_PORT_WIDTH_ARRAY)	:start_loc_in_array(x,y,X_NODE_NUM,O_PORT_WIDTH_ARRAY)]),
+				.ext_int_i					(ext_int_i[EXT_INT_END: EXT_INT_STRT]),
+				.gpio_io						(gpio_io	[IO_END		:	IO_STRT]),
+				.gpio_i						(gpio_i	[I_END		:	I_STRT]),
+				.gpio_o						(gpio_o_array[IP_NUM][O_END-O_STRT	:	0]),//((O_EN) ? gpio_o	[O_END		:	O_STRT]: 1'bZ)),
 				// NOC interfaces
 	
-				.flit_out					(ni_flit_out				[`CORE_NUM(x,y)]),	
-				.flit_out_wr				(ni_flit_out_wr			[`CORE_NUM(x,y)]),	
-				.credit_in					(ni_credit_in				[`CORE_NUM(x,y)]), 
+				.flit_out					(ni_flit_out				[IP_NUM]),	
+				.flit_out_wr				(ni_flit_out_wr			[IP_NUM]),	
+				.credit_in					(ni_credit_in				[IP_NUM]), 
 				
-				.flit_in						(ni_flit_in					[`CORE_NUM(x,y)]),	
-				.flit_in_wr					(ni_flit_in_wr				[`CORE_NUM(x,y)]),	
-				.credit_out					(ni_credit_out				[`CORE_NUM(x,y)]) 
+				.flit_in						(ni_flit_in					[IP_NUM]),	
+				.flit_in_wr					(ni_flit_in_wr				[IP_NUM]),	
+				.credit_out					(ni_credit_out				[IP_NUM]) 
 				//synthesis translate_off
 				,
-				.cpu_dat_i					(cpu_dat_i			 		[`CORE_NUM(x,y)]),	
-				.cpu_sel_i					(cpu_sel_i					[`CORE_NUM(x,y)]),
-				.cpu_adr_i					(cpu_adr_i					[`CORE_NUM(x,y)]),	
-				.cpu_stb_i					(cpu_stb_i					[`CORE_NUM(x,y)]),	
-				.cpu_wre_i					(cpu_wre_i					[`CORE_NUM(x,y)]),
-				.cpu_cyc_i					(cpu_cyc_i					[`CORE_NUM(x,y)]),
-				.cpu_dat_o					(cpu_dat_o					[`CORE_NUM(x,y)]),	
-				.cpu_ack_o					(cpu_ack_o					[`CORE_NUM(x,y)])
+				.cpu_dat_i					(cpu_dat_i			 		[IP_NUM]),	
+				.cpu_sel_i					(cpu_sel_i					[IP_NUM]),
+				.cpu_adr_i					(cpu_adr_i					[IP_NUM]),	
+				.cpu_stb_i					(cpu_stb_i					[IP_NUM]),	
+				.cpu_wre_i					(cpu_wre_i					[IP_NUM]),
+				.cpu_cyc_i					(cpu_cyc_i					[IP_NUM]),
+				.cpu_dat_o					(cpu_dat_o					[IP_NUM]),	
+				.cpu_ack_o					(cpu_ack_o					[IP_NUM])
 				
 				//synthesis translate_on
 			
@@ -312,6 +372,8 @@ generate
 				
 			
 			); 
+			if(O_EN)	assign gpio_o	[O_END		:	O_STRT] = gpio_o_array[IP_NUM][O_END-O_STRT	:	0];
+			
 		end
 	
 		router#(
@@ -332,12 +394,12 @@ generate
 		)
 		the_router
 		(
-			.wr_in_en_array				(router_wr_in_en_array		[`CORE_NUM(x,y)]),
-			.flit_in_array					(router_flit_in_array		[`CORE_NUM(x,y)]),
-			.credit_out_array				(router_credit_out_array	[`CORE_NUM(x,y)]),
-			.wr_out_en_array				(router_wr_out_en_array		[`CORE_NUM(x,y)]),
-			.flit_out_array				(router_flit_out_array		[`CORE_NUM(x,y)]),
-			.credit_in_array				(router_credit_in_array		[`CORE_NUM(x,y)]),
+			.wr_in_en_array				(router_wr_in_en_array		[IP_NUM]),
+			.flit_in_array					(router_flit_in_array		[IP_NUM]),
+			.credit_out_array				(router_credit_out_array	[IP_NUM]),
+			.wr_out_en_array				(router_wr_out_en_array		[IP_NUM]),
+			.flit_out_array				(router_flit_out_array		[IP_NUM]),
+			.credit_in_array				(router_credit_in_array		[IP_NUM]),
 			.clk								(clk),
 			.reset							(reset)
 		);
@@ -355,16 +417,16 @@ generate
 	if(x	<	X_NODE_NUM-1) begin
 		assign	router_flit_in_array 	[`SELECT_WIRE(x,y,1,FLIT_WIDTH)] 		= router_flit_out_array 	[`SELECT_WIRE((x+1),y,3,FLIT_WIDTH)];
 		assign	router_credit_in_array	[`SELECT_WIRE(x,y,1,VC_NUM_PER_PORT)]	= router_credit_out_array	[`SELECT_WIRE((x+1),y,3,VC_NUM_PER_PORT)];
-		assign	router_wr_in_en_array	[`CORE_NUM(x,y)][1]							= router_wr_out_en_array	[`CORE_NUM((x+1),y)][3];
+		assign	router_wr_in_en_array	[IP_NUM][1]							= router_wr_out_en_array	[`CORE_NUM((x+1),y)][3];
 	end else begin
 		if(TOPOLOGY == "MESH") begin 
 			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,1,FLIT_WIDTH)] 		=	{FLIT_WIDTH{1'b0}};
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,1,VC_NUM_PER_PORT)]	=	{VC_NUM_PER_PORT{1'b0}};
-			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][1]							=	1'b0;
+			assign	router_wr_in_en_array	[IP_NUM][1]							=	1'b0;
 		end else if(TOPOLOGY == "TORUS") begin
 			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,1,FLIT_WIDTH)] 		=	router_flit_out_array 	[`SELECT_WIRE(0,y,3,FLIT_WIDTH)];
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,1,VC_NUM_PER_PORT)]	=	router_credit_out_array	[`SELECT_WIRE(0,y,3,VC_NUM_PER_PORT)];
-			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][1]							=	router_wr_out_en_array	[`CORE_NUM(0,y)][3];
+			assign	router_wr_in_en_array	[IP_NUM][1]							=	router_wr_out_en_array	[`CORE_NUM(0,y)][3];
 		end //topology
 	end 
 		
@@ -372,16 +434,16 @@ generate
 	if(y>0) begin
 		assign	router_flit_in_array 	[`SELECT_WIRE(x,y,2,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE(x,(y-1),4,FLIT_WIDTH)];
 		assign	router_credit_in_array	[`SELECT_WIRE(x,y,2,VC_NUM_PER_PORT)]	=  router_credit_out_array	[`SELECT_WIRE(x,(y-1),4,VC_NUM_PER_PORT)];
-		assign	router_wr_in_en_array	[`CORE_NUM(x,y)][2]							=	router_wr_out_en_array	[`CORE_NUM(x,(y-1))][4];
+		assign	router_wr_in_en_array	[IP_NUM][2]							=	router_wr_out_en_array	[`CORE_NUM(x,(y-1))][4];
 	end else begin 
 		if(TOPOLOGY == "MESH") begin 
 			assign 	router_flit_in_array 	[`SELECT_WIRE(x,y,2,FLIT_WIDTH)]			=	{FLIT_WIDTH{1'b0}};
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,2,VC_NUM_PER_PORT)]	=	{VC_NUM_PER_PORT{1'b0}};
-			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][2]							=	1'b0;
+			assign	router_wr_in_en_array	[IP_NUM][2]							=	1'b0;
 		end else if(TOPOLOGY == "TORUS") begin
 			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,2,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE(x,(Y_NODE_NUM-1),4,FLIT_WIDTH)];
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,2,VC_NUM_PER_PORT)]	=  router_credit_out_array	[`SELECT_WIRE(x,(Y_NODE_NUM-1),4,VC_NUM_PER_PORT)];
-			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][2]							=	router_wr_out_en_array	[`CORE_NUM(x,(Y_NODE_NUM-1))][4];
+			assign	router_wr_in_en_array	[IP_NUM][2]							=	router_wr_out_en_array	[`CORE_NUM(x,(Y_NODE_NUM-1))][4];
 		end//topology
 	end//y>0
 	
@@ -389,55 +451,55 @@ generate
 	if(x>0)begin
 		assign	router_flit_in_array 	[`SELECT_WIRE(x,y,3,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE((x-1),y,1,FLIT_WIDTH)] ;
 		assign	router_credit_in_array	[`SELECT_WIRE(x,y,3,VC_NUM_PER_PORT)]	=  router_credit_out_array	[`SELECT_WIRE((x-1),y,1,VC_NUM_PER_PORT)] ;
-		assign	router_wr_in_en_array	[`CORE_NUM(x,y)][3]							=	router_wr_out_en_array	[`CORE_NUM((x-1),y)][1];
+		assign	router_wr_in_en_array	[IP_NUM][3]							=	router_wr_out_en_array	[`CORE_NUM((x-1),y)][1];
 	end else begin
 		if(TOPOLOGY == "MESH") begin 
 			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,3,FLIT_WIDTH)]			=  {FLIT_WIDTH{1'b0}};
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,3,VC_NUM_PER_PORT)]	=	{VC_NUM_PER_PORT{1'b0}};
-			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][3]							=	1'b0;
+			assign	router_wr_in_en_array	[IP_NUM][3]							=	1'b0;
 		end else if(TOPOLOGY == "TORUS") begin
 			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,3,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE((X_NODE_NUM-1),y,1,FLIT_WIDTH)] ;
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,3,VC_NUM_PER_PORT)]	=  router_credit_out_array	[`SELECT_WIRE((X_NODE_NUM-1),y,1,VC_NUM_PER_PORT)] ;
-			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][3]							=	router_wr_out_en_array	[`CORE_NUM((X_NODE_NUM-1),y)][1];
+			assign	router_wr_in_en_array	[IP_NUM][3]							=	router_wr_out_en_array	[`CORE_NUM((X_NODE_NUM-1),y)][1];
 		end//topology
 	end	
 	
 	if(y	<	Y_NODE_NUM-1)begin
 		assign	router_flit_in_array 	[`SELECT_WIRE(x,y,4,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE(x,(y+1),2,FLIT_WIDTH)];
 		assign	router_credit_in_array	[`SELECT_WIRE(x,y,4,VC_NUM_PER_PORT)]	= 	router_credit_out_array	[`SELECT_WIRE(x,(y+1),2,VC_NUM_PER_PORT)];
-		assign	router_wr_in_en_array	[`CORE_NUM(x,y)][4]							=	router_wr_out_en_array	[`CORE_NUM(x,(y+1))][2];
+		assign	router_wr_in_en_array	[IP_NUM][4]							=	router_wr_out_en_array	[`CORE_NUM(x,(y+1))][2];
 	end else 	begin
 		if(TOPOLOGY == "MESH") begin 
 			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,4,FLIT_WIDTH)]			=  {FLIT_WIDTH{1'b0}};
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,4,VC_NUM_PER_PORT)]	=	{VC_NUM_PER_PORT{1'b0}};
-			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][4]							=	1'b0;
+			assign	router_wr_in_en_array	[IP_NUM][4]							=	1'b0;
 		end else if(TOPOLOGY == "TORUS") begin
 			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,4,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE(x,0,2,FLIT_WIDTH)];
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,4,VC_NUM_PER_PORT)]	= 	router_credit_out_array	[`SELECT_WIRE(x,0,2,VC_NUM_PER_PORT)];
-			assign	router_wr_in_en_array	[`CORE_NUM(x,y)][4]							=	router_wr_out_en_array	[`CORE_NUM(x,0)][2];
+			assign	router_wr_in_en_array	[IP_NUM][4]							=	router_wr_out_en_array	[`CORE_NUM(x,0)][2];
 		
 		end//topology
 	end	
 	
 	//connection to the ip_core
-	assign		router_flit_in_array 	[`SELECT_WIRE(x,y,0,FLIT_WIDTH)]			=	ni_flit_out		[`CORE_NUM(x,y)];
-	assign		router_credit_in_array	[`SELECT_WIRE(x,y,0,VC_NUM_PER_PORT)]	=	ni_credit_out		[`CORE_NUM(x,y)];
-	assign		router_wr_in_en_array	[`CORE_NUM(x,y)][0]							=	ni_flit_out_wr	[`CORE_NUM(x,y)];
+	assign		router_flit_in_array 	[`SELECT_WIRE(x,y,0,FLIT_WIDTH)]			=	ni_flit_out		[IP_NUM];
+	assign		router_credit_in_array	[`SELECT_WIRE(x,y,0,VC_NUM_PER_PORT)]	=	ni_credit_out		[IP_NUM];
+	assign		router_wr_in_en_array	[IP_NUM][0]							=	ni_flit_out_wr	[IP_NUM];
 		
 	
-	assign		ni_flit_in				[`CORE_NUM(x,y)] = router_flit_out_array 	[`SELECT_WIRE(x,y,0,FLIT_WIDTH)];
-	assign		ni_flit_in_wr 			[`CORE_NUM(x,y)] = router_wr_out_en_array	[`CORE_NUM(x,y)][0];
-	assign		ni_credit_in			[`CORE_NUM(x,y)] = router_credit_out_array[`SELECT_WIRE(x,y,0,VC_NUM_PER_PORT)];
+	assign		ni_flit_in				[IP_NUM] = router_flit_out_array 	[`SELECT_WIRE(x,y,0,FLIT_WIDTH)];
+	assign		ni_flit_in_wr 			[IP_NUM] = router_wr_out_en_array	[IP_NUM][0];
+	assign		ni_credit_in			[IP_NUM] = router_credit_out_array	[`SELECT_WIRE(x,y,0,VC_NUM_PER_PORT)];
 	
 		
 
 
 //synthesis translate_off
 	
-	assign cpu_adr_i	 			[`CORE_NUM(x,y)]		=	cpu_adr_i_array 	[(`CORE_NUM(x,y)+1)*(CPU_ADR_WIDTH)-1			: `CORE_NUM(x,y)*CPU_ADR_WIDTH];
-	assign cpu_dat_i				[`CORE_NUM(x,y)]		=  cpu_dat_i_array 	[(`CORE_NUM(x,y)+1)*32-1			: `CORE_NUM(x,y)*32	];
-	assign cpu_sel_i				[`CORE_NUM(x,y)]		=	cpu_sel_i_array [(`CORE_NUM(x,y)+1)*4-1			: `CORE_NUM(x,y)*4	];
-	assign cpu_dat_o_array	[(`CORE_NUM(x,y)+1)*32-1	: `CORE_NUM(x,y)*32] = cpu_dat_o	[`CORE_NUM(x,y)];
+	assign cpu_adr_i	 			[IP_NUM]		=	cpu_adr_i_array 	[(IP_NUM+1)*(CPU_ADR_WIDTH)-1			: IP_NUM*CPU_ADR_WIDTH];
+	assign cpu_dat_i				[IP_NUM]		=  cpu_dat_i_array 	[(IP_NUM+1)*32-1			: IP_NUM*32	];
+	assign cpu_sel_i				[IP_NUM]		=	cpu_sel_i_array [(IP_NUM+1)*4-1			: IP_NUM*4	];
+	assign cpu_dat_o_array		[(IP_NUM+1)*32-1	: IP_NUM*32] = cpu_dat_o	[IP_NUM];
 	
 //synthesis	translate_on	
 	

@@ -206,6 +206,8 @@ module router#(
 	//cross_bar 
 	cross_bar #(
 		.VC_NUM_PER_PORT				(VC_NUM_PER_PORT),
+		.X_NODE_NUM						(X_NODE_NUM),
+		.Y_NODE_NUM						(Y_NODE_NUM),
 		.PORT_NUM						(PORT_NUM),
 		.PYLD_WIDTH 					(PYLD_WIDTH),
 		.FLIT_TYPE_WIDTH				(FLIT_TYPE_WIDTH)

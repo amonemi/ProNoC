@@ -13,25 +13,25 @@ RAMSIZE="3FFF" #for aeMB ramwith of 12
 INPUT="custom_crt/crt0.s custom_crt/crtinit.s"
 
 mb-g++ $XILFLAGS $CXXFLAGS $LNKFLAGS $LIBFLAGS $INCFLAGS -specs=aemb.specs $INPUT $@ -o $ELFFILE && \
-echo "xgcc=$?" && \
+#echo "xgcc=$?" && \
 
 
 # Create a text listing of the compiled code
 mb-objdump -dDSCz $ELFFILE > $ELFFILE.dump && \
-echo "dump=$?" && \
+#echo "dump=$?" && \
 
 # Convert the ELF file to an SREC file
 mb-objcopy  -O  srec $ELFFILE $ELFFILE.srec && \
-echo "copy=$?" && \
+#echo "copy=$?" && \
 
 # Generate a Verilog VMEM file from the SREC file
 srec_cat $ELFFILE.srec -fill 0xFF -within $ELFFILE.srec --range-pad 4 -o out/dump.vmem -vmem 32 && \
-echo "srec=$?" && \
+#echo "srec=$?" && \
 
 
 # Convert the ELF file to an IHEX file
 mb-objcopy -O ihex $ELFFILE $ELFFILE.ihex && \
-echo "copy2ihex=$?" && \
+#echo "copy2ihex=$?" && \
 
 # Generate a MIF file from the IHEX file
 ihex/ihex2mif -f $ELFFILE.ihex -e $RAMSIZE -o out/ram0.mif && \

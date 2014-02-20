@@ -28,7 +28,7 @@
 										 must be updated by cpu in the first word of the packet 
 		3-status register: provide information about the current status of the router 
 	
-		status_reg	=	{all_vcs_full,any_vc_has_data,rd_no_pck_err,rd_ovr_size_err,rd_done,wr_done};
+		status_reg		 =	{all_vcs_full,any_vc_has_data,rd_no_pck_err,rd_ovr_size_err,rd_done,wr_done};
 		RD/WR registers ={pck_size_next,memory_ptr_next}
 	
 	Info: monemi@fkegraduate.utm.my
@@ -121,19 +121,21 @@ module ni #(
 	localparam	SLAVE_WR_PCK_ADDR	=	1;
 	localparam	SLAVE_STATUS_ADDR	=	2;
 	
-	localparam	NUMBER_OF_STATUS	=	6;
+	localparam	NUMBER_OF_STATUS	=	7;
 	localparam  IDEAL					=	1;
 	localparam	READ_MEM_PCK_HDR	=	2;
 	localparam 	ASSIGN_PORT_VC		=	4;
-	localparam	WR_ON_FIFO			=	8;
-	localparam	WR_ON_RAM			=	16;
-	localparam	PROG_WR				=	32;
+	localparam  SEND_HDR				=	8;
+	localparam	WR_ON_FIFO			=	16;
+	localparam	WR_ON_RAM			=	32;
+	localparam	PROG_WR				=	64;
 	localparam  PORT_NUM_BCD_WIDTH	=	log2(PORT_NUM);
 	
 	
 	
 	localparam X_NODE_NUM_WIDTH	=	log2(X_NODE_NUM);
 	localparam Y_NODE_NUM_WIDTH	=	log2(Y_NODE_NUM);
+	
 	
 	
 	
@@ -263,8 +265,8 @@ module ni #(
 	assign	flit_out						=	{wr_flit_type,cand_wr_vc,m_pyld};
 	
 	//assign 	s_waitrequest				=	s_write & (ps!= IDEAL ) & (s_address==SLAVE_RD_PCK_ADDR | s_address==SLAVE_WR_PCK_ADDR );	
-	assign	dest_x_addr					=	m_readdata[32-PORT_NUM_BCD_WIDTH-1						:		32-PORT_NUM_BCD_WIDTH-X_NODE_NUM_WIDTH ];
-	assign	dest_y_addr					=	m_readdata[32-PORT_NUM_BCD_WIDTH-X_NODE_NUM_WIDTH-1	:		32-PORT_NUM_BCD_WIDTH-X_NODE_NUM_WIDTH-Y_NODE_NUM_WIDTH ];
+	assign	dest_x_addr					=	m_readdata[`DES_X_ADDR_LOC ];
+	assign	dest_y_addr					=	m_readdata[`DES_Y_ADDR_LOC ];
 	assign	m_pyld						=	(port_num_en_del	)? {port_num_reg,m_readdata[32-PORT_NUM_BCD_WIDTH-1:	0]}	:	m_readdata;
 	
 	
@@ -278,7 +280,7 @@ module ni #(
 	//status register
 	assign	status_reg					=	{all_vcs_full,any_vc_has_data,rd_no_pck_err,rd_ovr_size_err,rd_done,wr_done};
 	assign 	s_readdata					=   status_reg;
-	assign	prog_mode_en_next 		= 	flit_in_hdr_flg & (flit_in [`JTAG_PROG_LOC]== 1'b1);
+	assign	prog_mode_en_next 		= 	flit_in_hdr_flg & (flit_in [`FLIT_IN_WR_RAM_LOC]== 1'b1);
 	
 	generate 
 		if(WM_ADDR_WIDTH		>	 PTR_WIDTH) 		assign	m_address					=	memory_ptr+counter+(~m_waitrequest & read_burst);
@@ -448,22 +450,22 @@ module ni #(
 			end //READ_MEM_PCK_HDR:
 			ASSIGN_PORT_VC	: begin
 				if(~m_waitrequest) begin 
-						ns						=	WR_ON_FIFO;
+						ns						=	SEND_HDR;
 						rd_mem_en			= 	1'b1;
 						counter_increase	=	1'b1;
 						cand_wr_vc_en		=	1'b1;
 						port_num_en			=	1'b1;
 						hdr_write_next		=	1'b1;
-				end else rd_mem_en	= 1'b1;
+				end else rd_mem_en		=  1'b1;
 			end
-						
+			SEND_HDR: begin 
+						ns						=	WR_ON_FIFO;
+						wr_flit_type		= 	HDR_FLIT;
+						hdr_write_next		=	1'b0;
+						flit_out_wr			=	1'b1;
+			end 			
 			WR_ON_FIFO:	begin 
 					read_burst			=	1'b1;
-					if(hdr_write)begin 
-							wr_flit_type		= 	HDR_FLIT	;
-							hdr_write_next		=	1'b0;
-							flit_out_wr			=	1'b1;
-					end 
 					if(!m_waitrequest) begin 
 						if(pck_eq_counter) begin
 							flit_out_wr		=	1'b1;
