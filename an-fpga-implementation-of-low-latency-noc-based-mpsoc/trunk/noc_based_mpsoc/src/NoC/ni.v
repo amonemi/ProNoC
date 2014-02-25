@@ -267,7 +267,8 @@ module ni #(
 	//assign 	s_waitrequest				=	s_write & (ps!= IDEAL ) & (s_address==SLAVE_RD_PCK_ADDR | s_address==SLAVE_WR_PCK_ADDR );	
 	assign	dest_x_addr					=	m_readdata[`DES_X_ADDR_LOC ];
 	assign	dest_y_addr					=	m_readdata[`DES_Y_ADDR_LOC ];
-	assign	m_pyld						=	(port_num_en_del	)? {port_num_reg,m_readdata[32-PORT_NUM_BCD_WIDTH-1:	0]}	:	m_readdata;
+	assign	m_pyld						=	(port_num_en_del	)? {port_num_reg,m_readdata[`FLIT_IN_DES_LOC],SW_X_ADDR[`X_Y_ADDR_WIDTH_IN_HDR-1:0],
+	SW_Y_ADDR[`X_Y_ADDR_WIDTH_IN_HDR-1:0],m_readdata[32-PORT_NUM_BCD_WIDTH-(4*`X_Y_ADDR_WIDTH_IN_HDR)-1:	0]}	:	m_readdata;
 	
 	
 	assign flit_in_hdr_flg				=	flit_in	 	[`FLIT_HDR_FLG_LOC	];

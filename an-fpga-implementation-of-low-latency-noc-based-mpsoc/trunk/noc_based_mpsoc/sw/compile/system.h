@@ -80,7 +80,10 @@ bit
 	#define INTC_IAR	(*((volatile unsigned int *) (INT_CTRL_BASE+8	)))
 	#define INTC_IPR	(*((volatile unsigned int *) (INT_CTRL_BASE+12	)))
 
-	
+	//SHARED RAM 
+	#define RAM_X 			2
+	#define RAM_Y			2
+	#define RAM_ADDR core_addr(RAM_X, RAM_Y) 	
 
 
 	//NOC 
@@ -102,14 +105,82 @@ bit
 	
 
 	#define core_addr(DES_X, DES_Y) 		((DES_X << X_Y_ADDR_WIDTH_IN_HDR) + DES_Y)<<(32-3-(2*X_Y_ADDR_WIDTH_IN_HDR))	
-	inline void  send_pck (unsigned int * pck_buffer, unsigned int pck_size){
-		NIC_WR = (unsigned int) (& pck_buffer [0]) + (pck_size<<NI_PTR_WIDTH);
-	}
-	inline void  save_pck	(unsigned int * pck_buffer, unsigned int pck_size){
-		NIC_RD = (unsigned int) (& pck_buffer [0]) + (pck_size<<NI_PTR_WIDTH);
-	}
+	
 	#define wait_for_sending_pck()			while (!(NIC_ST & NIC_WR_DONE_LOC))
+
 	#define wait_for_getting_pck()			while (!(NIC_ST & NIC_HAS_PCK_LOC))
+
+/*****************************************
+void  send_pck (unsigned int * pck_buffer, unsigned int data_size);
+sending a packet through NoC network;
+(unsigned int des_x,unsigned int des_y : destination core address;
+unsigned int * pck_buffer : the buffer which hold the packet; The data must start from buff[1];
+unsigned int data_size     : the size of data which wanted to be sent out in word = packet_size-1;
+unsigned int flags   : (ack_flag <<1) | wr_flag; must be set just for ram only
+
+****************************************/
+	inline void  send_pck (unsigned int des_x,unsigned int des_y,unsigned int * pck_buffer, unsigned int data_size, unsigned int flags){
+		pck_buffer [0]		= 	core_addr(des_x, des_y) | flags ;
+		NIC_WR = (unsigned int) (& pck_buffer [0]) + (data_size<<NI_PTR_WIDTH);
+	}
+
+/*******************************************
+void  save_pck	(unsigned int * pck_buffer, unsigned int buffer_size);
+save a received packet on pck_buffer
+unsigned int * pck_buffer: the buffer for storing the packet; The read data start from buff[1]; 
+********************************************/
+	inline void  save_pck	(unsigned int * pck_buffer, unsigned int buffer_size){
+		NIC_RD = (unsigned int) (& pck_buffer [0]) + (buffer_size<<NI_PTR_WIDTH);
+	}
+	
+
+/**************************
+void write_on_ram_with_ack(unsigned int * buffer, unsigned int start_address,unsigned int size);
+write a block of data on shared ram. The command wait until the ack packet is received.  
+unsigned int * buffer : the buffer which holding the write data. The write packet start from buff[2];
+unsigned int start_address : the shared ram start address which the write packet is going to be written; 
+unsigned int size: the size of packet in word
+**************************/
+void write_on_ram_with_ack(unsigned int * buffer, unsigned int start_address,unsigned int size){
+	unsigned int ack_buff[3];	
+	buffer[1] = start_address;	
+	send_pck (RAM_X,RAM_Y,buffer,size+1,0x3);	//send write request packet
+	wait_for_sending_pck();		
+	wait_for_getting_pck();		//wait for ack paket from sdram
+	save_pck (ack_buff,3);
+}
+
+/**************************
+void write_on_ram_no_ack(unsigned int * buffer, unsigned int start_address,unsigned int size);
+write a block of data on shared ram. The command wait until the write packet is sent out from ni.  
+unsigned int * buffer : the buffer which holding the write data. The write packet start from buff[2];
+unsigned int start_address : the shared ram start address which the write packet is going to be written; 
+unsigned int size: the size of write data in word
+**************************/
+void write_on_ram_no_ack(unsigned int * buffer, unsigned int start_address,unsigned int size){
+	buffer[1] = start_address;
+	send_pck (RAM_X,RAM_Y,buffer,size+1,0x1);	//send write request packet
+	wait_for_sending_pck();
+}
+
+/**************************
+void read_from_ram(unsigned int * buffer,unsigned int start_address,unsigned int size );
+read a block of data from shared ram. The command wait until the read packet is saved on buffer.  
+unsigned int * buffer : the buffer for storing the read data. The read data start from buff[1];
+unsigned int start_address : the shared ram start address of read data in word; 
+unsigned int size: the size of read data in word
+**************************/
+
+
+void read_from_ram(unsigned int * buffer,unsigned int start_address,unsigned int size ){
+	buffer[1] = start_address;
+	buffer[2] = size;
+	send_pck (RAM_X,RAM_Y,buffer,2,0x00);
+	wait_for_sending_pck();
+	wait_for_getting_pck();
+	save_pck (buffer,size+1);
+}
+
 
 
 

@@ -180,8 +180,8 @@ to work with new values.
 	 `define 			FLIT_IN_X_SRC_LOC					`FLIT_IN_X_SRC_END-1			:		`FLIT_IN_X_SRC_STRT	
 	 `define 			FLIT_IN_Y_SRC_LOC					`FLIT_IN_Y_SRC_END-1			:		`FLIT_IN_Y_SRC_STRT			
 	
-	 
-	 
+	 `define 			FLIT_IN_DES_LOC					`FLIT_IN_PORT_SEL_STRT-1   : 		`FLIT_IN_Y_DES_STRT
+	 `define 			FLIT_IN_SRC_LOC               `FLIT_IN_Y_DES_STRT-1		:     `FLIT_IN_Y_SRC_STRT	
 	 
 	`define 			FLIT_IN_PYLD_LOC					`FLIT_IN_PORT_SEL_END-1		:		0
 	`define 			FLIT_IN_AFTER_PORT_LOC			`FLIT_IN_X_DES_END-1			:		0
