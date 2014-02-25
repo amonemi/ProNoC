@@ -8,7 +8,7 @@ unsigned int buffer [BUFFER_SIZE];
 
 #define DES_X	2
 #define DES_Y	1
-#define DES_ADDR core_addr(DES_X, DES_Y) 		
+	
 
 void delay(unsigned int);
 
@@ -24,8 +24,7 @@ int main()
  
 	while(1){
 		for (i=1;i<BUFFER_SIZE;i++) buffer [i] = i;
-		buffer [0]= DES_ADDR ;
-		send_pck (buffer,BUFFER_SIZE);
+		send_pck (DES_X,DES_Y,buffer,2,0x00);
 		wait_for_sending_pck();
 
 	 }
