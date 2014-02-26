@@ -234,12 +234,12 @@ module ni #(
 	wire [Y_NODE_NUM_WIDTH-1: 0]		dest_y_addr;
 	wire [PORT_NUM_BCD_WIDTH-1	: 0]	port_num;
 	reg  [PORT_NUM_BCD_WIDTH-1	: 0]	port_num_reg,port_num_reg_next;
-	reg										port_num_en,port_num_en_del;
+	reg										port_num_en;
 	//reg										flit_out_wr_next;
 	reg										prog_mode_en,prog_mode_en_delay;
 	wire										prog_mode_en_next;
 	
-	reg										hdr_write,hdr_write_next;
+	reg										hdr_write;
 	reg										read_burst;
 	
 	
@@ -267,7 +267,7 @@ module ni #(
 	//assign 	s_waitrequest				=	s_write & (ps!= IDEAL ) & (s_address==SLAVE_RD_PCK_ADDR | s_address==SLAVE_WR_PCK_ADDR );	
 	assign	dest_x_addr					=	m_readdata[`DES_X_ADDR_LOC ];
 	assign	dest_y_addr					=	m_readdata[`DES_Y_ADDR_LOC ];
-	assign	m_pyld						=	(port_num_en_del	)? {port_num_reg,m_readdata[`FLIT_IN_DES_LOC],SW_X_ADDR[`X_Y_ADDR_WIDTH_IN_HDR-1:0],
+	assign	m_pyld						=	(hdr_write)? {port_num_reg,m_readdata[`FLIT_IN_DES_LOC],SW_X_ADDR[`X_Y_ADDR_WIDTH_IN_HDR-1:0],
 	SW_Y_ADDR[`X_Y_ADDR_WIDTH_IN_HDR-1:0],m_readdata[32-PORT_NUM_BCD_WIDTH-(4*`X_Y_ADDR_WIDTH_IN_HDR)-1:	0]}	:	m_readdata;
 	
 	
@@ -318,12 +318,12 @@ module ni #(
 			rd_no_pck_err		<=	1'b0;
 			rd_ovr_size_err	<= 1'b0;
 		//	wr_mem_en			<= 1'b0;
-			port_num_en_del	<=	1'b0;
+		//	port_num_en_del	<=	1'b0;
 		//	flit_out_wr			<= 1'b0;
 			any_vc_has_data	<= 1'b0;
 			prog_mode_en		<= 1'b0;
 			prog_mode_en_delay<= 1'b0;
-			hdr_write			<= 1'b0;
+			//hdr_write			<= 1'b0;
 			m_ack_i_delayed	<=	1'b0;
 			s_ack_o				<= 1'b0;
 			
@@ -339,12 +339,12 @@ module ni #(
 			rd_no_pck_err		<=	rd_no_pck_err_next;
 			rd_ovr_size_err	<= rd_ovr_size_err_next;
 		//	wr_mem_en			<= wr_mem_en_next;
-			port_num_en_del	<= port_num_en;
+		//	port_num_en_del	<= port_num_en;
 		//	flit_out_wr			<= flit_out_wr_next;
 			any_vc_has_data	<= | ififo_vc_not_empty;
 			prog_mode_en		<= prog_mode_en_next;
 			prog_mode_en_delay<= prog_mode_en;
-			hdr_write			<= hdr_write_next;
+			//hdr_write			<= hdr_write_next;
 			m_ack_i_delayed	<=	m_ack_i;
 			s_ack_o				<= s_ack_o_next;
 		end//els reset
@@ -395,7 +395,7 @@ module ni #(
 		memory_ptr_next		= memory_ptr;
 		pck_size_next			= pck_size;
 		wr_flit_type			= BDY_FLIT;	
-		hdr_write_next			= 1'b0;
+		hdr_write				= 1'b0;
 		last_rw					= 1'b0;
 		read_burst				= 1'b0;
 		case(ps)
@@ -456,13 +456,12 @@ module ni #(
 						counter_increase	=	1'b1;
 						cand_wr_vc_en		=	1'b1;
 						port_num_en			=	1'b1;
-						hdr_write_next		=	1'b1;
 				end else rd_mem_en		=  1'b1;
 			end
 			SEND_HDR: begin 
 						ns						=	WR_ON_FIFO;
 						wr_flit_type		= 	HDR_FLIT;
-						hdr_write_next		=	1'b0;
+						hdr_write			=	1'b1;
 						flit_out_wr			=	1'b1;
 			end 			
 			WR_ON_FIFO:	begin 
