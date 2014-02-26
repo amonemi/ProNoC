@@ -41,7 +41,7 @@
 
 	`include "../define.v"
 
-	`define PORT_WIDTH(PORT,i)				 extract_value(PORT,i)
+	`define PORT_WIDTH(PORT,i)				 	 extract_value(PORT,i)
 	`define PORT_LOC_START(PORT,i)			 start_loc(PORT,i)
 	`define PORT_LOC_END(PORT,i)				`PORT_LOC_START(PORT,i)+ `PORT_WIDTH(PORT,i) -1'b1
 	`define PORT_LOC(PORT,i)					`PORT_LOC_END(PORT,i)	: `PORT_LOC_START(PORT,i)
@@ -151,7 +151,7 @@ module gpio #(
 		assign io_addr	=	addr_gpio_type	==	IO_ADDR_NUM;
 	
 		for(i=0; i<IO_PORT_NUM ; i=i+1'b1) begin : internal_reg_blk0
-			
+			if(`PORT_WIDTH(IO_PORT_WIDTH,i)) begin
 				always @ (posedge clk or posedge reset) begin
 					if(reset) begin 
 						io_dir	[`PORT_LOC(IO_PORT_WIDTH,i)]	<= {`PORT_WIDTH(IO_PORT_WIDTH,i){1'b0}};
@@ -173,7 +173,7 @@ module gpio #(
 				for(j=0;j<`PORT_WIDTH(IO_PORT_WIDTH,i); j=j+1'b1) begin: out_pin_assign0
 					assign gpio_io[`PORT_LOC_START(IO_PORT_WIDTH,i)+j]	=	(io_dir[`PORT_LOC_START(IO_PORT_WIDTH,i)+j])	? 	io_write	[`PORT_LOC_START(IO_PORT_WIDTH,i)+j]	:	1'bZ;
 				end
-					
+			end//if
 		end//for
 		
 		assign read_mux_in[IO_ADDR_NUM]		=	io_read_mux_in[addr_gpio_port ][addr_gpio_reg];
@@ -210,7 +210,7 @@ module gpio #(
 		assign o_addr	=	addr_gpio_type==O_ADDR_NUM	;
 	
 		for(i=0; i<O_PORT_NUM ; i=i+1'b1) begin : internal_reg_blk2
-			
+			if(`PORT_WIDTH(O_PORT_WIDTH,i)) begin
 				always @ (posedge clk or posedge reset) begin
 					if(reset) begin 
 						o_write	[`PORT_LOC(O_PORT_WIDTH,i)]	<=	{`PORT_WIDTH(O_PORT_WIDTH,i){1'b0}};	
@@ -228,7 +228,7 @@ module gpio #(
 				for(j=0;j<`PORT_WIDTH(O_PORT_WIDTH,i); j=j+1'b1) begin: out_pin_assign2
 					assign gpio_o[`PORT_LOC_START(O_PORT_WIDTH,i)+j]	=	o_write	[`PORT_LOC_START(O_PORT_WIDTH,i)+j];
 				end
-					
+			end//if		
 		end//for
 		
 		assign read_mux_in[O_ADDR_NUM]		=	o_read_mux_in[addr_gpio_port  ];
