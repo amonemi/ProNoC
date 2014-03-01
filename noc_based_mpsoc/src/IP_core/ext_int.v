@@ -17,7 +17,7 @@ module ext_int #(
 	output 	reg								sa_ack_o,
 	//interrupt ports
 	input 	[EXT_INT_NUM-1		:	0]		ext_int_i,  
-	output	[EXT_INT_NUM-1		:	0]		ext_int_o //output to the interrupt controller
+	output										ext_int_o //output to the interrupt controller
 	
 );
 
@@ -93,7 +93,7 @@ module ext_int #(
 			
 	
 	assign sa_dat_o = read;
-	assign ext_int_o= isr;
+	assign ext_int_o = |isr;
 		
 	
 endmodule

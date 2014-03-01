@@ -23,8 +23,8 @@
 	#define GPIO_READ_REG			8
 
 	
-	#define GPIO_TYPE_LOC_START		 (GPIO_ADDR_REG_WIDTH + GPIO_ADDR_PORT_WIDTH)
-	#define GPIO_PORT_LOC_START		 (GPIO_ADDR_REG_WIDTH+2)
+	#define GPIO_TYPE_LOC_START		(GPIO_ADDR_REG_WIDTH + GPIO_ADDR_PORT_WIDTH)
+	#define GPIO_PORT_LOC_START		(GPIO_ADDR_REG_WIDTH+2)
 
 	
 	#define	GPIO_IO_BASE			(GPIO_BASE  + (GPIO_IO_TYPE_NUM		<<	GPIO_TYPE_LOC_START))
@@ -42,18 +42,18 @@
 	#define gpio_o_wr(port_num,val)		gpio_o_wr_reg(port_num)=val
 
 	//EXT_INT
-	#define EXT_INT_GER   		(*((volatile unsigned int *) (EXT_INT_BASE	)))
-	#define EXT_INT_IER_RISE	(*((volatile unsigned int *) (EXT_INT_BASE+4	)))
-	#define EXT_INT_IER_FALL	(*((volatile unsigned int *) (EXT_INT_BASE+8	)))
-	#define EXT_INT_ISR 		(*((volatile unsigned int *) (EXT_INT_BASE+12	)))
-	#define EXT_INT_RD   		(*((volatile unsigned int *) (EXT_INT_BASE+16	)))
+	#define EXT_INT_GER	   		(*((volatile unsigned int *) (EXT_INT_BASE	)))
+	#define EXT_INT_IER_RISE		(*((volatile unsigned int *) (EXT_INT_BASE+4	)))
+	#define EXT_INT_IER_FALL		(*((volatile unsigned int *) (EXT_INT_BASE+8	)))
+	#define EXT_INT_ISR 			(*((volatile unsigned int *) (EXT_INT_BASE+12	)))
+	#define EXT_INT_RD   			(*((volatile unsigned int *) (EXT_INT_BASE+16	)))
 	
 	
 	
 
 	//TIMER
 	
-	#define TCSR0	   	(*((volatile unsigned int *) (TIMER_BASE	)))
+	#define TCSR0	   			(*((volatile unsigned int *) (TIMER_BASE	)))
 		
 /*
 //timer control register
@@ -65,50 +65,56 @@ bit
 1	:	int_enble_on_cmp_value
 0	:	timer enable 
 */	
-	#define TLR0	   	(*((volatile unsigned int *) (TIMER_BASE+4	)))
-	#define TCMP0	   	(*((volatile unsigned int *) (TIMER_BASE+8	)))
+	#define TLR0	   			(*((volatile unsigned int *) (TIMER_BASE+4	)))
+	#define TCMP0	   			(*((volatile unsigned int *) (TIMER_BASE+8	)))
 	
-	#define TIMER_EN		1
-	#define TIMER_INT_EN		2
-	#define TIMER_RST_ON_CMP	4
+	#define TIMER_EN			(1 << 0)
+	#define TIMER_INT_EN			(1 << 1)
+	#define TIMER_RST_ON_CMP		(1 << 2)
 	
 
 	//INT CONTROLLER
 
-	#define INTC_MER	(*((volatile unsigned int *) (INT_CTRL_BASE	)))
-	#define INTC_IER	(*((volatile unsigned int *) (INT_CTRL_BASE+4	)))
-	#define INTC_IAR	(*((volatile unsigned int *) (INT_CTRL_BASE+8	)))
-	#define INTC_IPR	(*((volatile unsigned int *) (INT_CTRL_BASE+12	)))
-
+	#define INTC_MER			(*((volatile unsigned int *) (INT_CTRL_BASE	)))
+	#define INTC_IER			(*((volatile unsigned int *) (INT_CTRL_BASE+4	)))
+	#define INTC_IAR			(*((volatile unsigned int *) (INT_CTRL_BASE+8	)))
+	#define INTC_IPR			(*((volatile unsigned int *) (INT_CTRL_BASE+12	)))
+	
+	#define NI_INT				(1 << 0)
+	#define TIMER_INT			(1 << 1)
+	#define EXT_INT				(1 << 2)
+	
 	//SHARED RAM 
-	#define RAM_X 			2
-	#define RAM_Y			2
-	#define RAM_ADDR core_addr(RAM_X, RAM_Y) 	
+	#define RAM_X 				2
+	#define RAM_Y				2
+	#define RAM_ADDR 			core_addr(RAM_X, RAM_Y) 	
 
 
 	//NOC 
-	#define X_Y_ADDR_WIDTH_IN_HDR			4
-	#define NI_PTR_WIDTH				19
-	#define	NI_PCK_SIZE_WIDTH			13
-	#define	NIC_WR_DONE_LOC				1<<0
-	#define	NIC_RD_DONE_LOC				1<<1
-	#define NIC_RD_OVR_ERR_LOC			1<<2
-	#define	NIC_RD_NPCK_ERR_LOC			1<<3
-	#define	NIC_HAS_PCK_LOC				1<<4
-	
+	#define X_Y_ADDR_WIDTH_IN_HDR		4
+	#define NI_PTR_WIDTH			19
+	#define	NI_PCK_SIZE_WIDTH		13
+
+	#define	NIC_WR_DONE_LOC			(1<<0)
+	#define	NIC_RD_DONE_LOC			(1<<1)
+	#define NIC_RD_OVR_ERR_LOC		(1<<2)
+	#define	NIC_RD_NPCK_ERR_LOC		(1<<3)
+	#define	NIC_HAS_PCK_LOC			(1<<4)
+	#define	NIC_ISR				(1<<5)
+		
+
+	#define NIC_RD			   	(*((volatile unsigned int *) (NOC_BASE	)))
+	#define NIC_WR			   	(*((volatile unsigned int *) (NOC_BASE+4)))
+	#define NIC_ST	   			(*((volatile unsigned int *) (NOC_BASE+8)))
+
 	
 
-	#define NIC_RD	   	(*((volatile unsigned int *) (NOC_BASE	)))
-	#define NIC_WR	   	(*((volatile unsigned int *) (NOC_BASE+4)))
-	#define NIC_ST	   	(*((volatile unsigned int *) (NOC_BASE+8)))
-
+	#define core_addr(DES_X, DES_Y)		((DES_X << X_Y_ADDR_WIDTH_IN_HDR) + DES_Y)<<(32-3-(2*X_Y_ADDR_WIDTH_IN_HDR))	
 	
+	#define wait_for_sending_pck()		while (!(NIC_ST & NIC_WR_DONE_LOC))
+	#define wait_for_reading_pck()		while (!(NIC_ST & NIC_RD_DONE_LOC))
 
-	#define core_addr(DES_X, DES_Y) 		((DES_X << X_Y_ADDR_WIDTH_IN_HDR) + DES_Y)<<(32-3-(2*X_Y_ADDR_WIDTH_IN_HDR))	
-	
-	#define wait_for_sending_pck()			while (!(NIC_ST & NIC_WR_DONE_LOC))
-
-	#define wait_for_getting_pck()			while (!(NIC_ST & NIC_HAS_PCK_LOC))
+	#define wait_for_getting_pck()		while (!(NIC_ST & NIC_HAS_PCK_LOC))
 
 /*****************************************
 void  send_pck (unsigned int * pck_buffer, unsigned int data_size);
@@ -122,6 +128,8 @@ unsigned int flags   : (ack_flag <<1) | wr_flag; must be set just for ram only
 	inline void  send_pck (unsigned int des_x,unsigned int des_y,unsigned int * pck_buffer, unsigned int data_size, unsigned int flags){
 		pck_buffer [0]		= 	core_addr(des_x, des_y) | flags ;
 		NIC_WR = (unsigned int) (& pck_buffer [0]) + (data_size<<NI_PTR_WIDTH);
+		wait_for_sending_pck();
+
 	}
 
 /*******************************************
@@ -131,6 +139,7 @@ unsigned int * pck_buffer: the buffer for storing the packet; The read data star
 ********************************************/
 	inline void  save_pck	(unsigned int * pck_buffer, unsigned int buffer_size){
 		NIC_RD = (unsigned int) (& pck_buffer [0]) + (buffer_size<<NI_PTR_WIDTH);
+		wait_for_reading_pck();
 	}
 	
 
@@ -145,7 +154,6 @@ void write_on_ram_with_ack(unsigned int * buffer, unsigned int start_address,uns
 	unsigned int ack_buff[3];	
 	buffer[1] = start_address;	
 	send_pck (RAM_X,RAM_Y,buffer,size+1,0x3);	//send write request packet
-	wait_for_sending_pck();		
 	wait_for_getting_pck();		//wait for ack paket from sdram
 	save_pck (ack_buff,3);
 }
@@ -160,7 +168,7 @@ unsigned int size: the size of write data in word
 void write_on_ram_no_ack(unsigned int * buffer, unsigned int start_address,unsigned int size){
 	buffer[1] = start_address;
 	send_pck (RAM_X,RAM_Y,buffer,size+1,0x1);	//send write request packet
-	wait_for_sending_pck();
+	
 }
 
 /**************************
@@ -176,7 +184,6 @@ void read_from_ram(unsigned int * buffer,unsigned int start_address,unsigned int
 	buffer[1] = start_address;
 	buffer[2] = size;
 	send_pck (RAM_X,RAM_Y,buffer,2,0x00);
-	wait_for_sending_pck();
 	wait_for_getting_pck();
 	save_pck (buffer,size+1);
 }

@@ -205,6 +205,8 @@ to work with new values.
 	`define 	NI_RD_OVR_ERR_LOC			2
 	`define	NI_RD_NPCK_ERR_LOC		3
 	`define	NI_HAS_PCK_LOC				4
+	`define  NI_ALL_VCS_FULL_LOC		5
+	`define  NI_ISR_LOC					6
 	
 	`define	NI_PTR_WIDTH				19
 	`define	NI_PCK_SIZE_WIDTH			13
