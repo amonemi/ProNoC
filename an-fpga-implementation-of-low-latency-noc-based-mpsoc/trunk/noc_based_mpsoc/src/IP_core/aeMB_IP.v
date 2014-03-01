@@ -57,7 +57,7 @@ module aeMB_IP #(
 	parameter TIMER_INT_NUM					=1,
 
 //int_ctrl parameters 
-	parameter INT_CTRL_INT_NUM				=	(EXT_INT_EN*EXT_INT_NUM) + 	(TIMER_EN * TIMER_INT_NUM),
+	parameter INT_CTRL_INT_NUM				=3, //ext_int,timer,ni  
 	parameter INT_CTRL_ADDR_WIDTH			=3,
 	
 //gpio parameters 
@@ -180,9 +180,9 @@ module aeMB_IP #(
 
 	
 	
-
-	wire 														sys_int_i,timer_irq;
-	wire 	[EXT_INT_NUM-1						:	0	]	ext_int_o;
+	//intrrupts signals
+	wire 														sys_int_i,timer_irq,ni_irq,ext_int_irq;
+	
 	wire  [INT_CTRL_INT_NUM-1				:	0	]	int_ctrl_in;
 	
 	wire  [SLAVE_ADDR_ARRAY_WIDTH-1		:	0	]	bus_slave_adr_o;
@@ -453,7 +453,8 @@ generate
 			.m_cyc_o				(master_cyc_o	[NOC_M_ID]) ,	
 			.m_we_o				(master_wre_o	[NOC_M_ID]) ,	
 			.m_dat_i				(master_dat_i	[NOC_M_ID]) ,	
-			.m_ack_i				(master_ack_i	[NOC_M_ID]) 	
+			.m_ack_i				(master_ack_i	[NOC_M_ID]) ,
+			.irq					(ni_irq)
 		);
 
 		assign master_adr_o [NOC_M_ID] [ADDR_WIDTH-1	:	AEMB_RAM_WIDTH_IN_WORD] = {ADDR_WIDTH-AEMB_RAM_WIDTH_IN_WORD{1'b0}};
@@ -462,6 +463,7 @@ generate
 		assign	flit_out		={FLIT_WIDTH{1'bX}};
 		assign	flit_out_wr	=	1'bX;
 		assign	credit_out	={VC_NUM_PER_PORT{1'bX}};	
+		assign	ni_irq		=	1'b0;
 	end
 	
 	if(EXT_INT_EN) begin : ext_in_gen
@@ -472,26 +474,25 @@ generate
 			.ADDR_WIDTH		(EXT_INT_ADDR_WIDTH)
 		)the_ext_int
 		(
-		.clk			(clk),
-		.reset		(reset),
-		.sa_dat_i	(slave_dat_i	[EXT_INT_ID][EXT_INT_NUM-1		:0]) ,
-		.sa_sel_i	(slave_sel_i	[EXT_INT_ID]),
-		.sa_addr_i	(slave_addr_i	[EXT_INT_ID][EXT_INT_ADDR_WIDTH-1	:0]) ,
-		.sa_stb_i	(slave_stb_i 	[EXT_INT_ID]) ,	
-		.sa_we_i		(slave_we_i 	[EXT_INT_ID]) ,	
-		.sa_dat_o	(slave_dat_o 	[EXT_INT_ID][EXT_INT_NUM-1		:0]) ,	
-		.sa_ack_o	(slave_ack_o	[EXT_INT_ID]) ,	
-		
-		
-		
-		.ext_int_i	(ext_int_i),  
-		.ext_int_o 	(ext_int_o)//output to the interrupt controller
+			.clk			(clk),
+			.reset		(reset),
+			.sa_dat_i	(slave_dat_i	[EXT_INT_ID][EXT_INT_NUM-1		:0]) ,
+			.sa_sel_i	(slave_sel_i	[EXT_INT_ID]),
+			.sa_addr_i	(slave_addr_i	[EXT_INT_ID][EXT_INT_ADDR_WIDTH-1	:0]) ,
+			.sa_stb_i	(slave_stb_i 	[EXT_INT_ID]) ,	
+			.sa_we_i		(slave_we_i 	[EXT_INT_ID]) ,	
+			.sa_dat_o	(slave_dat_o 	[EXT_INT_ID][EXT_INT_NUM-1		:0]) ,	
+			.sa_ack_o	(slave_ack_o	[EXT_INT_ID]) ,	
+						
+			.ext_int_i	(ext_int_i),  
+			.ext_int_o 	(ext_int_irq)//output to the interrupt controller
+		);
 	
-);
+		assign slave_dat_o [EXT_INT_ID][DATA_WIDTH-1	:EXT_INT_NUM] = {(DATA_WIDTH-EXT_INT_NUM){1'b0}};
 	
-	assign slave_dat_o [EXT_INT_ID][DATA_WIDTH-1	:EXT_INT_NUM] = {(DATA_WIDTH-EXT_INT_NUM){1'b0}};
-	
-	end // EXT_INT_EN
+	end else begin // EXT_INT_EN
+		assign ext_int_irq = 1'b0;
+	end
 	
 	if(TIMER_EN) begin :timer_gen
 	//	wire 	timer_irq;
@@ -513,13 +514,18 @@ generate
 			.irq			(timer_irq)
 		);
 	
-	end //TIMER_EN
+	end else begin //TIMER_EN
+		assign timer_irq	= 1'b0;
+	end
 	
 	if(INT_CTRL_EN) begin	: int_ctrl_gen 
 		int_ctrl #(
-			.INT_NUM		(INT_CTRL_INT_NUM),
-			.DATA_WIDTH	(DATA_WIDTH),
-			.ADDR_WIDTH	(INT_CTRL_ADDR_WIDTH)
+			.NOC_EN			(NOC_EN),
+			.EXT_INT_EN		(EXT_INT_EN),
+			.TIMER_EN		(TIMER_EN),
+			.INT_NUM			(INT_CTRL_INT_NUM),
+			.DATA_WIDTH		(DATA_WIDTH),
+			.ADDR_WIDTH		(INT_CTRL_ADDR_WIDTH)
 		)
 		int_ctrl_gen	
 		(
@@ -536,11 +542,8 @@ generate
 			.int_i		(int_ctrl_in),
 			.int_o		(sys_int_i)
 		);
-		if(EXT_INT_EN && TIMER_EN) 	assign int_ctrl_in	=	{timer_irq,ext_int_o};	
-		else if(EXT_INT_EN)				assign int_ctrl_in	=	ext_int_o;	
-		else 									assign int_ctrl_in	=	timer_irq;	
-	
-	
+		 	assign int_ctrl_in	=	{ext_int_irq,timer_irq,ni_irq};	
+		
 	end //INT_CTRL_EN
 	else begin 
 		assign sys_int_i= 1'b0;

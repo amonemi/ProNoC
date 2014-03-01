@@ -25,7 +25,7 @@ int main()
 	while(1){
 		for (i=1;i<BUFFER_SIZE;i++) buffer [i] = i;
 		send_pck (DES_X,DES_Y,buffer,2,0x00);
-		wait_for_sending_pck();
+		
 
 	 }
 

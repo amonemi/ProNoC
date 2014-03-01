@@ -28,7 +28,7 @@
 										 must be updated by cpu in the first word of the packet 
 		3-status register: provide information about the current status of the router 
 	
-		status_reg		 =	{all_vcs_full,any_vc_has_data,rd_no_pck_err,rd_ovr_size_err,rd_done,wr_done};
+		status_reg		 =	{ni_isr,all_vcs_full,any_vc_has_data,rd_no_pck_err,rd_ovr_size_err,rd_done,wr_done};
 		RD/WR registers ={pck_size_next,memory_ptr_next}
 	
 	Info: monemi@fkegraduate.utm.my
@@ -104,7 +104,10 @@ module ni #(
 	output												m_we_o,
 
 	input		[W_DATA_WIDTH-1				:	0]	m_dat_i,
-	input													m_ack_i	
+	input													m_ack_i,	
+	
+	//intruupt interface
+	output 									  			irq
 	
 	
 ); 
@@ -178,6 +181,7 @@ module ni #(
 	assign 	s_ack_o_next	=	s_chipselect & (~s_ack_o);
 	assign	m_cti_o			=	(m_stb_o)	?	((last_rw)? 3'b111 :	3'b010) : 3'b000;
 	
+	reg 										ni_isr,ni_isr_next;
 	
 		
 	reg [NUMBER_OF_STATUS-1	:	0]		ps,ns;
@@ -246,6 +250,8 @@ module ni #(
 	wire 	[VC_NUM_PER_PORT-1	:0]	full_vc;
 	wire 	[VC_NUM_PER_PORT-1	:0]	cand_wr_vc;
 	
+	assign	irq							= ni_isr;
+	
 	assign	all_vcs_full  				=	& full_vc;
 	assign	cand_wr_vc_full			=	| ( full_vc & cand_wr_vc);
 			
@@ -279,7 +285,7 @@ module ni #(
 	
 	
 	//status register
-	assign	status_reg					=	{all_vcs_full,any_vc_has_data,rd_no_pck_err,rd_ovr_size_err,rd_done,wr_done};
+	assign	status_reg					=	{ni_isr,all_vcs_full,any_vc_has_data,rd_no_pck_err,rd_ovr_size_err,rd_done,wr_done};
 	assign 	s_readdata					=   status_reg;
 	assign	prog_mode_en_next 		= 	flit_in_hdr_flg & (flit_in [`FLIT_IN_WR_RAM_LOC]== 1'b1);
 	
@@ -326,6 +332,7 @@ module ni #(
 			//hdr_write			<= 1'b0;
 			m_ack_i_delayed	<=	1'b0;
 			s_ack_o				<= 1'b0;
+			ni_isr				<= 1'b0;
 			
 		end else begin //if reset
 			ps						<=	ns;
@@ -347,6 +354,7 @@ module ni #(
 			//hdr_write			<= hdr_write_next;
 			m_ack_i_delayed	<=	m_ack_i;
 			s_ack_o				<= s_ack_o_next;
+			ni_isr				<= ni_isr_next;			
 		end//els reset
 	end//always
 	
@@ -532,7 +540,15 @@ module ni #(
 	end
 	
 	
-		
+	//isr_register handeling
+	always @(*) begin
+		ni_isr_next	= ni_isr;
+		if(any_vc_has_data) ni_isr_next = 1'b1;
+		if(s_chipselect & 	s_write & (s_address == SLAVE_STATUS_ADDR) & s_writedata[`NI_ISR_LOC]) ni_isr_next = 1'b0;
+	end
+
+
+	
 	
  fifo_buffer #(
 	.VC_NUM_PER_PORT			(VC_NUM_PER_PORT),

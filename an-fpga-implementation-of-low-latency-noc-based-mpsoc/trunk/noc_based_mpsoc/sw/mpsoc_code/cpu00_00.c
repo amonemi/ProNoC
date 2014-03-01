@@ -4,20 +4,18 @@
 #include "system.h"
 
 
-#define	 EXT_INT_EN		1
-#define  TIMER_EN		1
-#define  EXT_INT_NUM		3
 
-#define TIMER_INT 	(1<<(EXT_INT_NUM*EXT_INT_EN))
+
 #define EXT_INT_1	(1<<0)
 #define EXT_INT_2	(1<<1)
 #define EXT_INT_3	(1<<2)
 
-#define EXT_INT_ALL	(EXT_INT_1 | EXT_INT_2 | EXT_INT_3) 	//	((1<<EXT_INT_NUM)-1)
+
 
 const unsigned int seven_seg_tab [16] = {0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x6F,0x77,0x7C,0x39,0x5E, 0x79,0x71};
 
 void delay(unsigned int);
+void ni_ISR ( void );
 void timer_ISR( void );
 void ext_int_ISR( void );
 
@@ -39,12 +37,13 @@ void aemb_enable_interrupt ()
 void myISR( void ) __attribute__ ((interrupt_handler));
 
 
-unsigned int i;
+unsigned int i=0;
 
 void myISR( void )
 {
+	if( INTC_IPR & NI_INT )		ni_ISR();
 	if( INTC_IPR & TIMER_INT )	timer_ISR();
-	if( INTC_IPR & EXT_INT_ALL )	ext_int_ISR(); 
+	if( INTC_IPR & EXT_INT)		ext_int_ISR(); 
 	INTC_IAR = INTC_IPR;		// Acknowledge Interrupts
 }
 
@@ -62,13 +61,24 @@ void timer_ISR( void )
 void ext_int_ISR( void )
 {
 // Do Stuff Here
-	if(INTC_IPR & EXT_INT_1)	i=0xDEADBEAF;	
-	if(INTC_IPR & EXT_INT_2)	i=0x12345678;
-	if(INTC_IPR & EXT_INT_3)	i=0xAAAAAAAA;
+	if(EXT_INT_ISR  & EXT_INT_1)	i=0xDEADBEAF;	
+	if(EXT_INT_ISR  & EXT_INT_2)	i=0x12345678;
+	if(EXT_INT_ISR  & EXT_INT_3)	i=0xAAAAAAAA;
 	EXT_INT_ISR 	= EXT_INT_ISR;
 // Clear any pending button interrupts
 }
 
+unsigned int ni_buffer	[32];
+
+void ni_ISR( void )
+{
+// Do Stuff Here
+	 save_pck	(ni_buffer, 32);
+	 i		+= 0x11111111;
+	 NIC_ST 	= NIC_ST;
+	 
+// Clear any pending button interrupts
+}
 
 
 int main()
@@ -79,14 +89,14 @@ int main()
 		
 	
 	
-	EXT_INT_IER_RISE=EXT_INT_ALL;
-	EXT_INT_GER =0x3;
+	EXT_INT_IER_RISE = EXT_INT_1 | EXT_INT_2 | EXT_INT_3;
+	EXT_INT_GER      =	0x3;
 
 	TCMP0	=	50000000;
 	TCSR0   =	( TIMER_EN | TIMER_INT_EN | TIMER_RST_ON_CMP);
 
-	INTC_IER=EXT_INT_ALL|TIMER_INT;
-	INTC_MER=0x3;	
+	INTC_IER=	EXT_INT | TIMER_INT | NI_INT;
+	INTC_MER=	0x3;	
 
 	
 	
