@@ -14,6 +14,7 @@ module sdram_core #(
 	parameter NIC_CONNECT_PORT		=	0, // 0:Local  1:East, 2:North, 3:West, 4:South 
 	parameter SDRAM_ADDR_WIDTH		=	25,
 	parameter CAND_VC_SEL_MODE		=	0,
+	parameter CONGESTION_WIDTH		=	8,
 	parameter VC_ID_WIDTH			=	VC_NUM_PER_PORT,
 	parameter FLIT_WIDTH				=	PYLD_WIDTH+FLIT_TYPE_WIDTH+VC_ID_WIDTH,
 	parameter CORE_NUMBER			=	`CORE_NUM(SW_X_ADDR,SW_Y_ADDR)
@@ -26,7 +27,8 @@ module sdram_core #(
 		output	[FLIT_WIDTH-1				:0] 	flit_out,     
 		output 			  			   				flit_out_wr,   
 		input 	[VC_NUM_PER_PORT-1		:0]	credit_in,
-	
+		input 	[CONGESTION_WIDTH-1		:0]	congestion_cmp_i,
+		
 		input		[FLIT_WIDTH-1				:0] 	flit_in,     
 		input 	    			   					flit_in_wr,   
 		output 	[VC_NUM_PER_PORT-1		:0]	credit_out,
@@ -112,7 +114,7 @@ ext_ram_nic #(
 		.flit_out					(flit_out),     
 		.flit_out_wr				(flit_out_wr),   
 		.credit_in					(credit_in),
-	
+		.congestion_cmp_i			(congestion_cmp_i),
 		.flit_in						(flit_in),     
 		.flit_in_wr					(flit_in_wr),   
 		.credit_out					(credit_out),

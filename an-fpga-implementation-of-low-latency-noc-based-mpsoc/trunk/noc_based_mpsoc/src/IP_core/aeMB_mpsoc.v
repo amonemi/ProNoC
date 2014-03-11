@@ -190,6 +190,7 @@ module aeMB_mpsoc #(
 `define ADD_FUNCTION 		1
 `include "../my_functions.v"
 
+localparam 	CONGESTION_WIDTH	=	8;
 
 wire [TOTAL_O_WIDTH-1			:	0] gpio_o_array [TOTAL_ROUTERS_NUM-1			:0];
 			
@@ -199,6 +200,8 @@ wire [CREDIT_ARRAY_WIDTH-1		:	0] router_credit_out_array	[TOTAL_ROUTERS_NUM-1			
 wire [PORT_NUM-1					:	0]	router_wr_out_en_array	[TOTAL_ROUTERS_NUM-1			:0];
 wire [FLIT_ARRAY_WIDTH-1		:	0] router_flit_out_array 	[TOTAL_ROUTERS_NUM-1			:0];
 wire [CREDIT_ARRAY_WIDTH-1		:	0]	router_credit_in_array	[TOTAL_ROUTERS_NUM-1			:0];
+wire [CONGESTION_WIDTH+1		:	2]	router_congestion_cmp_i	[TOTAL_ROUTERS_NUM-1			:0];
+wire [CONGESTION_WIDTH+1		:	2]	router_congestion_cmp_o	[TOTAL_ROUTERS_NUM-1			:0];
 
 
 wire [FLIT_WIDTH-1				:	0]	ni_flit_out					[TOTAL_ROUTERS_NUM-1			:0];   
@@ -206,7 +209,8 @@ wire [TOTAL_ROUTERS_NUM-1		:	0]	ni_flit_out_wr;
 wire [VC_NUM_PER_PORT-1			:	0]	ni_credit_in 				[TOTAL_ROUTERS_NUM-1			:0];
 wire [FLIT_WIDTH-1				:	0]	ni_flit_in 					[TOTAL_ROUTERS_NUM-1			:0];   
 wire [TOTAL_ROUTERS_NUM-1		:	0]	ni_flit_in_wr;  
-wire [VC_NUM_PER_PORT-1			:	0]	ni_credit_out 				[TOTAL_ROUTERS_NUM-1			:0];					
+wire [VC_NUM_PER_PORT-1			:	0]	ni_credit_out 				[TOTAL_ROUTERS_NUM-1			:0];	
+wire [CONGESTION_WIDTH-1		:	0]	ni_congestion_cmp_i		[TOTAL_ROUTERS_NUM-1			:0];
 
 
 //synthesis translate_off 
@@ -278,6 +282,7 @@ generate
 				.flit_out					(ni_flit_out				[IP_NUM]),	
 				.flit_out_wr				(ni_flit_out_wr			[IP_NUM]),	
 				.credit_in					(ni_credit_in				[IP_NUM]), 
+				.congestion_cmp_i			(ni_congestion_cmp_i		[IP_NUM]),
 				
 				.flit_in						(ni_flit_in				[IP_NUM]),	
 				.flit_in_wr					(ni_flit_in_wr			[IP_NUM]),	
@@ -354,7 +359,8 @@ generate
 				
 				.flit_in						(ni_flit_in					[IP_NUM]),	
 				.flit_in_wr					(ni_flit_in_wr				[IP_NUM]),	
-				.credit_out					(ni_credit_out				[IP_NUM]) 
+				.credit_out					(ni_credit_out				[IP_NUM]),
+				.congestion_cmp_i			(ni_congestion_cmp_i		[IP_NUM])
 				//synthesis translate_off
 				,
 				.cpu_dat_i					(cpu_dat_i			 		[IP_NUM]),	
@@ -400,6 +406,8 @@ generate
 			.wr_out_en_array				(router_wr_out_en_array		[IP_NUM]),
 			.flit_out_array				(router_flit_out_array		[IP_NUM]),
 			.credit_in_array				(router_credit_in_array		[IP_NUM]),
+			.congestion_cmp_o				(router_congestion_cmp_o	[IP_NUM]),
+			.congestion_cmp_i				(router_congestion_cmp_i	[IP_NUM]),
 			.clk								(clk),
 			.reset							(reset)
 		);
@@ -418,15 +426,18 @@ generate
 		assign	router_flit_in_array 	[`SELECT_WIRE(x,y,1,FLIT_WIDTH)] 		= router_flit_out_array 	[`SELECT_WIRE((x+1),y,3,FLIT_WIDTH)];
 		assign	router_credit_in_array	[`SELECT_WIRE(x,y,1,VC_NUM_PER_PORT)]	= router_credit_out_array	[`SELECT_WIRE((x+1),y,3,VC_NUM_PER_PORT)];
 		assign	router_wr_in_en_array	[IP_NUM][1]							= router_wr_out_en_array	[`CORE_NUM((x+1),y)][3];
+		assign	router_congestion_cmp_i [`SELECT_WIRE(x,y,1,2)]  = router_congestion_cmp_o [`SELECT_WIRE((x+1),y,3,2)];
 	end else begin
 		if(TOPOLOGY == "MESH") begin 
 			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,1,FLIT_WIDTH)] 		=	{FLIT_WIDTH{1'b0}};
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,1,VC_NUM_PER_PORT)]	=	{VC_NUM_PER_PORT{1'b0}};
 			assign	router_wr_in_en_array	[IP_NUM][1]							=	1'b0;
+			assign	router_congestion_cmp_i [`SELECT_WIRE(x,y,1,2)]  = 2'b0;
 		end else if(TOPOLOGY == "TORUS") begin
 			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,1,FLIT_WIDTH)] 		=	router_flit_out_array 	[`SELECT_WIRE(0,y,3,FLIT_WIDTH)];
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,1,VC_NUM_PER_PORT)]	=	router_credit_out_array	[`SELECT_WIRE(0,y,3,VC_NUM_PER_PORT)];
 			assign	router_wr_in_en_array	[IP_NUM][1]							=	router_wr_out_en_array	[`CORE_NUM(0,y)][3];
+			assign	router_congestion_cmp_i [`SELECT_WIRE(x,y,1,2)]  = router_congestion_cmp_o [`SELECT_WIRE(0,y,3,2)];
 		end //topology
 	end 
 		
@@ -434,16 +445,19 @@ generate
 	if(y>0) begin
 		assign	router_flit_in_array 	[`SELECT_WIRE(x,y,2,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE(x,(y-1),4,FLIT_WIDTH)];
 		assign	router_credit_in_array	[`SELECT_WIRE(x,y,2,VC_NUM_PER_PORT)]	=  router_credit_out_array	[`SELECT_WIRE(x,(y-1),4,VC_NUM_PER_PORT)];
-		assign	router_wr_in_en_array	[IP_NUM][2]							=	router_wr_out_en_array	[`CORE_NUM(x,(y-1))][4];
+		assign	router_wr_in_en_array	[IP_NUM][2]										=	router_wr_out_en_array	[`CORE_NUM(x,(y-1))][4];
+		assign	router_congestion_cmp_i [`SELECT_WIRE(x,y,2,2)]  					= 	router_congestion_cmp_o [`SELECT_WIRE(x,(y-1),4,2)];
 	end else begin 
 		if(TOPOLOGY == "MESH") begin 
 			assign 	router_flit_in_array 	[`SELECT_WIRE(x,y,2,FLIT_WIDTH)]			=	{FLIT_WIDTH{1'b0}};
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,2,VC_NUM_PER_PORT)]	=	{VC_NUM_PER_PORT{1'b0}};
 			assign	router_wr_in_en_array	[IP_NUM][2]							=	1'b0;
+			assign	router_congestion_cmp_i [`SELECT_WIRE(x,y,2,2)]  					= 	2'b00;
 		end else if(TOPOLOGY == "TORUS") begin
 			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,2,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE(x,(Y_NODE_NUM-1),4,FLIT_WIDTH)];
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,2,VC_NUM_PER_PORT)]	=  router_credit_out_array	[`SELECT_WIRE(x,(Y_NODE_NUM-1),4,VC_NUM_PER_PORT)];
-			assign	router_wr_in_en_array	[IP_NUM][2]							=	router_wr_out_en_array	[`CORE_NUM(x,(Y_NODE_NUM-1))][4];
+			assign	router_wr_in_en_array	[IP_NUM][2]										=	router_wr_out_en_array	[`CORE_NUM(x,(Y_NODE_NUM-1))][4];
+			assign	router_congestion_cmp_i [`SELECT_WIRE(x,y,2,2)]  					= 	router_congestion_cmp_o [`SELECT_WIRE(x,(Y_NODE_NUM-1),4,2)];
 		end//topology
 	end//y>0
 	
@@ -451,33 +465,38 @@ generate
 	if(x>0)begin
 		assign	router_flit_in_array 	[`SELECT_WIRE(x,y,3,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE((x-1),y,1,FLIT_WIDTH)] ;
 		assign	router_credit_in_array	[`SELECT_WIRE(x,y,3,VC_NUM_PER_PORT)]	=  router_credit_out_array	[`SELECT_WIRE((x-1),y,1,VC_NUM_PER_PORT)] ;
-		assign	router_wr_in_en_array	[IP_NUM][3]							=	router_wr_out_en_array	[`CORE_NUM((x-1),y)][1];
+		assign	router_wr_in_en_array	[IP_NUM][3]										=	router_wr_out_en_array	[`CORE_NUM((x-1),y)][1];
+		assign	router_congestion_cmp_i [`SELECT_WIRE(x,y,3,2)]  					= 	router_congestion_cmp_o [`SELECT_WIRE((x-1),y,1,2)];
 	end else begin
 		if(TOPOLOGY == "MESH") begin 
 			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,3,FLIT_WIDTH)]			=  {FLIT_WIDTH{1'b0}};
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,3,VC_NUM_PER_PORT)]	=	{VC_NUM_PER_PORT{1'b0}};
-			assign	router_wr_in_en_array	[IP_NUM][3]							=	1'b0;
+			assign	router_wr_in_en_array	[IP_NUM][3]										=	1'b0;
+			assign	router_congestion_cmp_i [`SELECT_WIRE(x,y,3,2)]  					= 	2'b00;
 		end else if(TOPOLOGY == "TORUS") begin
 			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,3,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE((X_NODE_NUM-1),y,1,FLIT_WIDTH)] ;
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,3,VC_NUM_PER_PORT)]	=  router_credit_out_array	[`SELECT_WIRE((X_NODE_NUM-1),y,1,VC_NUM_PER_PORT)] ;
-			assign	router_wr_in_en_array	[IP_NUM][3]							=	router_wr_out_en_array	[`CORE_NUM((X_NODE_NUM-1),y)][1];
+			assign	router_wr_in_en_array	[IP_NUM][3]										=	router_wr_out_en_array	[`CORE_NUM((X_NODE_NUM-1),y)][1];
+			assign	router_congestion_cmp_i [`SELECT_WIRE(x,y,3,2)]  					= 	router_congestion_cmp_o [`SELECT_WIRE((X_NODE_NUM-1),y,1,2)];
 		end//topology
 	end	
 	
 	if(y	<	Y_NODE_NUM-1)begin
 		assign	router_flit_in_array 	[`SELECT_WIRE(x,y,4,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE(x,(y+1),2,FLIT_WIDTH)];
 		assign	router_credit_in_array	[`SELECT_WIRE(x,y,4,VC_NUM_PER_PORT)]	= 	router_credit_out_array	[`SELECT_WIRE(x,(y+1),2,VC_NUM_PER_PORT)];
-		assign	router_wr_in_en_array	[IP_NUM][4]							=	router_wr_out_en_array	[`CORE_NUM(x,(y+1))][2];
+		assign	router_wr_in_en_array	[IP_NUM][4]										=	router_wr_out_en_array	[`CORE_NUM(x,(y+1))][2];
+		assign	router_congestion_cmp_i [`SELECT_WIRE(x,y,4,2)]  					= 	router_congestion_cmp_o [`SELECT_WIRE(x,(y+1),2,2)];
 	end else 	begin
 		if(TOPOLOGY == "MESH") begin 
 			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,4,FLIT_WIDTH)]			=  {FLIT_WIDTH{1'b0}};
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,4,VC_NUM_PER_PORT)]	=	{VC_NUM_PER_PORT{1'b0}};
-			assign	router_wr_in_en_array	[IP_NUM][4]							=	1'b0;
+			assign	router_wr_in_en_array	[IP_NUM][4]										=	1'b0;
+			assign	router_congestion_cmp_i [`SELECT_WIRE(x,y,4,2)]  					= 	2'b00;	
 		end else if(TOPOLOGY == "TORUS") begin
 			assign	router_flit_in_array 	[`SELECT_WIRE(x,y,4,FLIT_WIDTH)]			=	router_flit_out_array 	[`SELECT_WIRE(x,0,2,FLIT_WIDTH)];
 			assign	router_credit_in_array	[`SELECT_WIRE(x,y,4,VC_NUM_PER_PORT)]	= 	router_credit_out_array	[`SELECT_WIRE(x,0,2,VC_NUM_PER_PORT)];
-			assign	router_wr_in_en_array	[IP_NUM][4]							=	router_wr_out_en_array	[`CORE_NUM(x,0)][2];
-		
+			assign	router_wr_in_en_array	[IP_NUM][4]										=	router_wr_out_en_array	[`CORE_NUM(x,0)][2];
+			assign	router_congestion_cmp_i [`SELECT_WIRE(x,y,4,2)]  					= 	router_congestion_cmp_o [`SELECT_WIRE(x,0,2,2)];
 		end//topology
 	end	
 	
@@ -490,7 +509,7 @@ generate
 	assign		ni_flit_in				[IP_NUM] = router_flit_out_array 	[`SELECT_WIRE(x,y,0,FLIT_WIDTH)];
 	assign		ni_flit_in_wr 			[IP_NUM] = router_wr_out_en_array	[IP_NUM][0];
 	assign		ni_credit_in			[IP_NUM] = router_credit_out_array	[`SELECT_WIRE(x,y,0,VC_NUM_PER_PORT)];
-	
+	assign		ni_congestion_cmp_i	[IP_NUM] = router_congestion_cmp_o  [IP_NUM]; //local congestion
 		
 
 
@@ -498,7 +517,7 @@ generate
 	
 	assign cpu_adr_i	 			[IP_NUM]		=	cpu_adr_i_array 	[(IP_NUM+1)*(CPU_ADR_WIDTH)-1			: IP_NUM*CPU_ADR_WIDTH];
 	assign cpu_dat_i				[IP_NUM]		=  cpu_dat_i_array 	[(IP_NUM+1)*32-1			: IP_NUM*32	];
-	assign cpu_sel_i				[IP_NUM]		=	cpu_sel_i_array [(IP_NUM+1)*4-1			: IP_NUM*4	];
+	assign cpu_sel_i				[IP_NUM]		=	cpu_sel_i_array 	[(IP_NUM+1)*4-1			: IP_NUM*4	];
 	assign cpu_dat_o_array		[(IP_NUM+1)*32-1	: IP_NUM*32] = cpu_dat_o	[IP_NUM];
 	
 //synthesis	translate_on	

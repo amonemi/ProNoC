@@ -95,6 +95,7 @@ module aeMB_IP #(
 	parameter FLIT_TYPE_WIDTH		=	2,
 	parameter VC_ID_WIDTH			=	VC_NUM_PER_PORT,
 	parameter FLIT_WIDTH				=	PYLD_WIDTH+FLIT_TYPE_WIDTH+VC_ID_WIDTH,
+	parameter CONGESTION_WIDTH		=	8,
 	
 //aeMB parameters
 	parameter AEMB_IWB = 32, ///< INST bus width
@@ -122,6 +123,7 @@ module aeMB_IP #(
 	output	[FLIT_WIDTH-1				:0] 	flit_out,     
 	output 		    			   				flit_out_wr,   
 	input 	[VC_NUM_PER_PORT-1		:0]	credit_in,
+	input 	[CONGESTION_WIDTH-1		:0]	congestion_cmp_i,
 	
 	input		[FLIT_WIDTH-1				:0] 	flit_in,     // Data in
 	input 	    			   					flit_in_wr,   // Write enable
@@ -434,6 +436,7 @@ generate
 			.flit_out			(flit_out) ,	
 			.flit_out_wr		(flit_out_wr) ,	
 			.credit_in			(credit_in) ,
+			.congestion_cmp_i	(congestion_cmp_i),
 			.flit_in				(flit_in) ,	
 			.flit_in_wr			(flit_in_wr) ,	
 			.credit_out			(credit_out) ,	
@@ -518,6 +521,8 @@ generate
 		assign timer_irq	= 1'b0;
 	end
 	
+	assign int_ctrl_in	=	{ext_int_irq,timer_irq,ni_irq};	
+	
 	if(INT_CTRL_EN) begin	: int_ctrl_gen 
 		int_ctrl #(
 			.NOC_EN			(NOC_EN),
@@ -542,7 +547,7 @@ generate
 			.int_i		(int_ctrl_in),
 			.int_o		(sys_int_i)
 		);
-		 	assign int_ctrl_in	=	{ext_int_irq,timer_irq,ni_irq};	
+		 	
 		
 	end //INT_CTRL_EN
 	else begin 

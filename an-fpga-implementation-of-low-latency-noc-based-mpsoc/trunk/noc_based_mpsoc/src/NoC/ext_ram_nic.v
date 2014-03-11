@@ -38,6 +38,7 @@ module ext_ram_nic #(
 	parameter NIC_CONNECT_PORT		=	0, // 0:Local  1:East, 2:North, 3:West, 4:South 
 	parameter RAM_ADDR_WIDTH		=	25,
 	parameter CAND_VC_SEL_MODE		=	0, // 0: use arbieration between not full vcs, 1: select the vc with the most availble free space
+	parameter CONGESTION_WIDTH		=	8,
 	parameter VC_ID_WIDTH			=	VC_NUM_PER_PORT,
 	parameter FLIT_WIDTH				=	PYLD_WIDTH+FLIT_TYPE_WIDTH+VC_ID_WIDTH,
 	parameter CORE_NUMBER			=	`CORE_NUM(SW_X_ADDR,SW_Y_ADDR)
@@ -51,7 +52,7 @@ module ext_ram_nic #(
 		output	[FLIT_WIDTH-1				:0] 	flit_out,     
 		output 			  			   				flit_out_wr,   
 		input 	[VC_NUM_PER_PORT-1		:0]	credit_in,
-	
+		input 	[CONGESTION_WIDTH-1		:0]	congestion_cmp_i,
 		input		[FLIT_WIDTH-1				:0] 	flit_in,     
 		input 	    			   					flit_in_wr,   
 		output 	[VC_NUM_PER_PORT-1		:0]	credit_out,
@@ -214,7 +215,6 @@ module ext_ram_nic #(
 
 
  route_compute  #(
-	.ROUTE_TYPE					("NORMAL"),
 	.TOPOLOGY					(TOPOLOGY),
 	.ROUTE_ALGRMT				(ROUTE_ALGRMT),
 	.PORT_NUM					(PORT_NUM),
@@ -225,8 +225,10 @@ module ext_ram_nic #(
 	)
 	the_normal_routting
 	(
+	.congestion_cmp_i			(congestion_cmp_i),
 	.dest_x_node_in			(dest_x_addr),
 	.dest_y_node_in			(dest_y_addr),
+	.in_port_num_i				({PORT_NUM_BCD_WIDTH{1'b0}}), //conventional routing
 	.port_num_out				(port_num_next)
 	);
 	

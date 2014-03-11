@@ -96,6 +96,7 @@ module switch_in #(
 	//interface to look over head routing module
 	output 	[X_NODE_NUM_WIDTH-1			:0]	dest_x_addr,
 	output	[Y_NODE_NUM_WIDTH-1			:0]	dest_y_addr,
+	output	[PORT_NUM_BCD_WIDTH-1		:0]	in_port_num,
 	input		[PORT_NUM_BCD_WIDTH-1		:0]	look_ahead_port_sel_in,	
 		
 	//global
@@ -151,7 +152,7 @@ module switch_in #(
 	wire		[CANDIDATE_OVCS_WIDTH-1		:0]	candidate_ovc_released,candidate_ovc_alloc_granted;
 	wire		[ALL_LK_PORT_NUM_WIDTH-1	:0]	look_ahead_mux_in;
 	//wire 	[CANDIDATE_OVCS_WIDTH-1		:0]	vc_alloc_req_array;
-	wire		[PORT_NUM_BCD_WIDTH-1		:0]	in_port_num;
+	
 	//wire 		[OVCS_WIDTH-1					:0]	all_ovcs;
 	wire 		[OVCS_BCD_WIDTH-1				:0]	all_ovcs_bcd;
 	wire		[VC_NUM_PER_PORT-1			:0]	tail_fifo_wr;

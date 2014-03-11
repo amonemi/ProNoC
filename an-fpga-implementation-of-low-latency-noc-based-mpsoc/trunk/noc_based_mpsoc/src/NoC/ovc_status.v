@@ -1,5 +1,5 @@
 /**********************************************************************
-	File: sw_alloc_first_arbiter.v 
+	File: ovc_status.v 
 	
 	Copyright (C) 2013  Alireza Monemi
 
@@ -64,6 +64,7 @@ module ovc_status#(
 	output		[CANDIDATE_OVCS_BCD_WIDTH-1:		0]	candidate_bcd_ovc_array,
    output  reg	[PORT_NUM-1						:		0]	ovc_available_array,
 	input 		[PORT_SEL_ARRAY_WIDTH-1		:		0]	ovc_alloc_in_port_array,
+	output		[3									:		0]	congestion_cmp,
 	input															clk,
 	input															reset
 );
@@ -72,6 +73,16 @@ module ovc_status#(
 	//check if assigned ovc is full or not
 	localparam	MUX_IN_WIDTH			=	VC_NUM_PER_PORT	*PORT_SEL_WIDTH;
 	localparam	ACCUM_WIDTH				=	log2(VC_NUM_PER_PORT+1);
+	
+	localparam  W_VS_S	=	3;
+	localparam  W_VS_N	=	2;
+	localparam  E_VS_N	=	1;
+	localparam  E_VS_S	=	0;
+	
+	
+		
+	
+	
 	wire [PORT_SEL_BCD_WIDTH-1			:	0]	port_sel_bcd	[TOTAL_VC_NUM-1	:0];
 	//wire [VC_NUM_PER_PORT-1				:	0]	vc_sel	[TOTAL_VC_NUM-1	:0];
 	wire [VC_NUM_BCD_WIDTH-1			:	0]	vc_sel_bcd	[TOTAL_VC_NUM-1	:0];
@@ -302,6 +313,8 @@ module ovc_status#(
 				assign port_has_no_avb_vc[i]			=	number_of_avb_vc[i] == 0;
 				assign port_has_one_avb_vc[i]			=	number_of_avb_vc[i] == 1;
 				
+			
+				
 			always @(*)begin
 				available_vcs_per_port[i]		=1'b1;
 				if(port_has_no_avb_vc[i]) 	  available_vcs_per_port[i]= 1'b0;
@@ -310,11 +323,17 @@ module ovc_status#(
 		
 		end
 		
-		
+	
 		
 		
 	endgenerate
 	
+	   
+		assign congestion_cmp[W_VS_S] = number_of_avb_vc[`WEST_PORT] >= number_of_avb_vc[`SOUTH_PORT]; 
+		assign congestion_cmp[W_VS_N] = number_of_avb_vc[`WEST_PORT] >= number_of_avb_vc[`NORTH_PORT];
+		assign congestion_cmp[E_VS_N] = number_of_avb_vc[`EAST_PORT] >= number_of_avb_vc[`NORTH_PORT];
+		assign congestion_cmp[E_VS_S] = number_of_avb_vc[`EAST_PORT] >= number_of_avb_vc[`SOUTH_PORT];
+		
 	
 	wide_or #(
 		.IN_ARRAY_WIDTH 	(OVC_RLS_ARRAY_WIDTH), 
