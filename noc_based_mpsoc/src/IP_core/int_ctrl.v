@@ -41,8 +41,8 @@ module int_ctrl #(
 	
 	wire [INT_NUM-1:0]  sa_dat_i_masked, int_i_masked;
 	
-	assign sa_dat_i_masked = sa_dat_i & 	DATA_BUS_MASK;
-	assign int_i_masked    = int_i 	 & 	DATA_BUS_MASK;
+	assign sa_dat_i_masked = sa_dat_i & 	DATA_BUS_MASK [INT_NUM-1:0];
+	assign int_i_masked    = int_i 	 & 	DATA_BUS_MASK [INT_NUM-1:0];
 	always@(*) begin 
 		mer_next			= mer;
 		ier_next			= ier;

@@ -37,8 +37,8 @@ a 3X3 noC
 ********************************************************************/	
 //define the topology: "MESH" or "TORUS"
 `define						TOPOLOGY_DEF						"MESH" 
-//define the routing algorithm : "XY" or "MINIMAL"		
-`define						ROUTE_ALGRMT_DEF					"XY"						
+//define the routing algorithm : "XY_CLASSIC" or "BALANCE_DOR" or "SUDO_XY"	
+`define						ROUTE_ALGRMT_DEF					"XY_CLASSIC"						
 // The number of virtual channel (VC) for each individual physical channel. this value must be power of 2. The typical value is two and four.
 `define 						VC_NUM_PER_PORT_DEF 				2
 
@@ -133,6 +133,13 @@ the maximum port width is 32
 Do not change the rest of definition, otherwise u need to adjast the other verilog codes 
 to work with new values.
 ************************************************************/
+	`define 				LOCAL_PORT 							0
+	`define				EAST_PORT							1
+	`define				NORTH_PORT							2
+	`define 				WEST_PORT							3
+	`define				SOUTH_PORT							4
+	
+	
 	`define X_Y_ADDR_WIDTH_IN_HDR			4
 	
 	`define X_ADDR_END						(32-(PORT_NUM_BCD_WIDTH+(`X_Y_ADDR_WIDTH_IN_HDR-X_NODE_NUM_WIDTH)))

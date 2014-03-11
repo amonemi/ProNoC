@@ -47,7 +47,9 @@ module router#(
 	parameter FLIT_WIDTH					=	PYLD_WIDTH+ FLIT_TYPE_WIDTH+VC_ID_WIDTH,
 	parameter FLIT_ARRAY_WIDTH			=	FLIT_WIDTH 			*	PORT_NUM,
 	parameter CREDIT_ARRAY_WIDTH		=	VC_NUM_PER_PORT	*	PORT_NUM,
-	parameter VC_FULL_WIDTH				=  VC_NUM_PER_PORT	*	2 
+	parameter VC_FULL_WIDTH				=  VC_NUM_PER_PORT	*	2,
+	parameter CONGESTION_WIDTH			=	8
+
 	
 	)
 	(
@@ -57,6 +59,8 @@ module router#(
 	output[PORT_NUM-1					:	0]		wr_out_en_array,
 	output[FLIT_ARRAY_WIDTH-1		:	0]		flit_out_array,
 	input [CREDIT_ARRAY_WIDTH-1	:	0]		credit_in_array,
+	output[CONGESTION_WIDTH-1		:	0]		congestion_cmp_o,
+	input [CONGESTION_WIDTH-1		:	0]		congestion_cmp_i,
 	input												clk,
 	input												reset
 	);
@@ -95,6 +99,7 @@ module router#(
 	wire [PORT_NUM-1							:0]	sw_any_vc_granted;
 	wire [X_NODE_NUM_WIDTH-1				:0]	sw_dest_x_addr					[PORT_NUM-1					:	0];
 	wire [Y_NODE_NUM_WIDTH-1				:0]	sw_dest_y_addr					[PORT_NUM-1					:	0];
+	wire [PORT_NUM_BCD_WIDTH-1				:0]	sw_in_port_num					[PORT_NUM-1					:	0];
 	wire [FLIT_WIDTH-1						:0]	sw_flit_in						[PORT_NUM-1					:	0];
 	wire [VC_NUM_PER_PORT-1					:0]	sw_credit_out					[PORT_NUM-1					:	0];
 	wire [FLIT_WIDTH-1						:0]	sw_flit_out						[PORT_NUM-1					:	0];
@@ -119,10 +124,12 @@ module router#(
 	wire [STATUS_WIDTH_PER_SW-1			:0]	sw_assigned_ovcs_status		[PORT_NUM-1					:	0];
 	wire [PORT_SEL_WIDTH-1					:0]	sw_granted_port 				[PORT_NUM-1					:	0];
 	wire [PORT_SEL_WIDTH-1					:0]	sw_ovc_alloc_in_port			[PORT_NUM-1					:	0];
-	
+
 	wire [X_NODE_NUM_WIDTH-1				:0]	lk_dest_x_addr					[PORT_NUM-1					:	0];
 	wire [Y_NODE_NUM_WIDTH-1				:0]	lk_dest_y_addr					[PORT_NUM-1					:	0];
 	wire [PORT_NUM_BCD_WIDTH-1				:0]	lk_port_sel_out				[PORT_NUM-1					:	0];	
+	wire [CONGESTION_WIDTH-1				:0]	lk_congestion_cmp				[PORT_NUM-1					:	0];	
+	wire [PORT_NUM_BCD_WIDTH-1				:0]	lk_in_port_num					[PORT_NUM-1					:	0];	
 	
 	wire [FLIT_WIDTH-1						:0]	ou_flit_in						[PORT_NUM-1					:	0];
 	wire [FLIT_WIDTH-1						:0]	ou_flit_out						[PORT_NUM-1					:	0];
@@ -149,6 +156,7 @@ module router#(
 	wire [OVC_WR_ARRAY_WIDTH-1				:0]	st_ovc_write_array;
 	wire [OVC_ALLOC_ARRAY_WIDTH-1			:0]	st_vc_alloc_array;
 	wire [PORT_SEL_ARRAY_WIDTH-1			:0]	st_ovc_alloc_in_port_array;
+	wire [3										:0]	st_congestion_cmp;
 	
 	wire [LOOK_AHEAD_ARRAY_WIDTH-1		:0]	cr_look_ahead_port_sel_array;
 	wire [PORT_SEL_ARRAY_WIDTH-1			:0]	cr_port_sel_array;
@@ -199,6 +207,7 @@ module router#(
 		.candidate_bcd_ovc_array	(st_candidate_bcd_ovc_array),
 		.ovc_available_array			(st_ovc_available_array),
 		.ovc_alloc_in_port_array	(st_ovc_alloc_in_port_array),
+		.congestion_cmp				(st_congestion_cmp),
 		.clk								(clk),
 		.reset							(reset)
 	);
@@ -242,6 +251,8 @@ module router#(
 		
 		assign lk_dest_x_addr[i]				=	sw_dest_x_addr[i];
 		assign lk_dest_y_addr[i]				=	sw_dest_y_addr[i];
+		assign lk_congestion_cmp[i]			=	congestion_cmp_i;
+		assign lk_in_port_num[i]				=	sw_in_port_num[i];
 		assign ou_flit_in[i]						=	cr_flit_out_array				[(i+1)*FLIT_WIDTH-1			:	i*FLIT_WIDTH];
 		
 		assign credit_out_array					[(i+1)*VC_NUM_PER_PORT-1			:	i*VC_NUM_PER_PORT			]	= 	sw_credit_out		[i];
@@ -314,6 +325,7 @@ module router#(
 			//interface to look over head routing module
 				.dest_x_addr				(sw_dest_x_addr[i]),
 				.dest_y_addr				(sw_dest_y_addr[i]),
+				.in_port_num				(sw_in_port_num[i]),
 				.look_ahead_port_sel_in	(sw_look_ahead_port_sel_in[i]),	
 			
 			//global
@@ -336,8 +348,10 @@ module router#(
 		)
 		the_look_ahead_routing
 		(
+			.congestion_cmp_i			(lk_congestion_cmp[i]),
 			.dest_x_node_in			(lk_dest_x_addr[i]),
 			.dest_y_node_in			(lk_dest_y_addr[i]),
+			.in_port_num_i				(lk_in_port_num[i]),
 			.port_num_out				(lk_port_sel_out[i]),
 			.clk							(clk),
 			.reset						(reset)
@@ -370,8 +384,20 @@ module router#(
 		.bcd_code		(sw_ovc_bcd[i]),
 		.one_hot_code	(sw_ovc[i])
 	 );
-
 	
+	localparam  W_VS_S	=	3;
+	localparam  W_VS_N	=	2;
+	localparam  E_VS_N	=	1;
+	localparam  E_VS_S	=	0;
+	
+		assign congestion_cmp_o = {st_congestion_cmp[W_VS_N],st_congestion_cmp[E_VS_N], //to the S
+											st_congestion_cmp[E_VS_N],st_congestion_cmp[E_VS_S], //to the W
+											st_congestion_cmp[W_VS_S],st_congestion_cmp[E_VS_S], //to the N
+											st_congestion_cmp[W_VS_N],st_congestion_cmp[W_VS_S]  //to the E
+											};
+											
+											
+		
 		
 		
 		for(j=0;j<PORT_NUM;j=j+1)begin : port_loop2

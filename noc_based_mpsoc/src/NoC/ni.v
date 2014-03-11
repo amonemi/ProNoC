@@ -56,7 +56,7 @@ module ni #(
 	parameter VC_ID_WIDTH			=	VC_NUM_PER_PORT,
 	parameter FLIT_WIDTH				=	PYLD_WIDTH+FLIT_TYPE_WIDTH+VC_ID_WIDTH,
 	parameter CAND_VC_SEL_MODE		=	0,	// 0: use arbieration between not full vcs, 1: select the vc with moast availble free space
-	
+	parameter CONGESTION_WIDTH		=	8,
 	
 	//wishbone port parameters
 	parameter RAM_WIDTH_IN_WORD		=	13,
@@ -65,6 +65,7 @@ module ni #(
 	parameter WM_ADDR_WIDTH				=	RAM_WIDTH_IN_WORD,
 	parameter W_CTI_WIDTH				=	3,
 	parameter SEL_WIDTH					=	4
+	
 	
 	)
 	(
@@ -81,7 +82,7 @@ module ni #(
 	input		[FLIT_WIDTH-1					:0] 	flit_in,   
 	input 	    			   						flit_in_wr,   
 	output reg	[VC_NUM_PER_PORT-1		:0]	credit_out,		
-
+	input 	[CONGESTION_WIDTH-1			:0]	congestion_cmp_i,
 
 	//wishbone slave interface signals
 	input		[W_DATA_WIDTH-1			:	0]		s_dat_i,
@@ -592,7 +593,6 @@ rd_vc_arbiter
 
 
  route_compute  #(
-	.ROUTE_TYPE					("NORMAL"),
 	.TOPOLOGY					(TOPOLOGY),
 	.ROUTE_ALGRMT				(ROUTE_ALGRMT),
 	.PORT_NUM					(PORT_NUM),
@@ -603,8 +603,10 @@ rd_vc_arbiter
 	)
 	the_normal_routting
 	(
+	.congestion_cmp_i			(congestion_cmp_i),
 	.dest_x_node_in			(dest_x_addr),
 	.dest_y_node_in			(dest_y_addr),
+	.in_port_num_i				({PORT_NUM_BCD_WIDTH{1'b0}}), //conventional routing
 	.port_num_out				(port_num)
 	);
 	
