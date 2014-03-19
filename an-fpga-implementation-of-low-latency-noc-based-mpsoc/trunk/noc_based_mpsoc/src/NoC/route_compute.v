@@ -29,7 +29,7 @@
 	BALANCE_DOR: The packet always move to the dimension with higher 
 					differences value. 
 					 
-	SUDO_XY : its an adaptive version of classic xy.  First one dimension in x 
+	ADAPTIVE_XY : its an adaptive version of classic xy.  First one dimension in x 
 				 and another in y with less number of nodes is selected then the 
 				 packet is forwarded to the dimension with less congestion.  
 	
@@ -44,7 +44,7 @@
 
 module look_ahead_routing_sync #(
 	parameter TOPOLOGY					=	"TORUS", // "MESH" or "TORUS"  
-	parameter ROUTE_ALGRMT				=	"XY_CLASSIC",		//"XY_CLASSIC" or "BALANCE_DOR" or "SUDO_XY"
+	parameter ROUTE_ALGRMT				=	"XY_CLASSIC",		//"XY_CLASSIC" or "BALANCE_DOR" or "ADAPTIVE_XY"
 	parameter PORT_NUM					=	5,
 	parameter X_NODE_NUM					=	4,
 	parameter Y_NODE_NUM					=	3,
@@ -124,7 +124,7 @@ endmodule
 ***************************************************/
 module conventional_routing #(
 	parameter TOPOLOGY					=	"TORUS", // "MESH" or "TORUS"  
-	parameter ROUTE_ALGRMT				=	"BALANCE_DOR",//"XY_CLASSIC" or "BALANCE_DOR" or "SUDO_XY"
+	parameter ROUTE_ALGRMT				=	"BALANCE_DOR",//"XY_CLASSIC" or "BALANCE_DOR" or "ADAPTIVE_XY"
 	parameter PORT_NUM					=	5,
 	parameter X_NODE_NUM					=	4,
 	parameter Y_NODE_NUM					=	4,
@@ -177,13 +177,13 @@ module conventional_routing #(
 			.port_num_out						(port_num_out)// one extra bit will be removed by switch_in latter
 			);
 		
-		end else if (ROUTE_ALGRMT	==	"SUDO_XY") begin : sudo_routing_blk
-			sudo_xy_routing #(
+		end else if (ROUTE_ALGRMT	==	"ADAPTIVE_XY") begin : sudo_routing_blk
+			ADAPTIVE_XY_routing #(
 				.TOPOLOGY	(TOPOLOGY),
 				.PORT_NUM	(PORT_NUM),
 				.X_NODE_NUM	(X_NODE_NUM),
 				.Y_NODE_NUM	(Y_NODE_NUM)
-			) sudo_xy
+			) ADAPTIVE_XY
 			(
 			.congestion_cmp_i					(congestion_cmp_i),
 			.current_router_x_addr			(current_router_x_addr),
@@ -210,7 +210,7 @@ endmodule
 
 module route_compute #(
 	parameter TOPOLOGY					=	"TORUS", // "MESH" or "TORUS"  
-	parameter ROUTE_ALGRMT				=	"BALANCE_DOR",//"XY_CLASSIC" or "BALANCE_DOR" or "SUDO_XY"
+	parameter ROUTE_ALGRMT				=	"BALANCE_DOR",//"XY_CLASSIC" or "BALANCE_DOR" or "ADAPTIVE_XY"
 	parameter PORT_NUM					=	5,
 	parameter X_NODE_NUM					=	4,
 	parameter Y_NODE_NUM					=	4,
@@ -257,14 +257,18 @@ module route_compute #(
 	localparam  E_VS_N	=	1;
 	localparam  E_VS_S	=	0;
 	
-	localparam EAST_PORT_W_VS_S 	=	0;
-	localparam EAST_PORT_W_VS_N 	=	1;
-	localparam NORTH_PORT_E_VS_S 	=	2;
-	localparam NORTH_PORT_W_VS_S 	=	3;
-	localparam WEST_PORT_E_VS_S 	=	4;
-	localparam WEST_PORT_E_VS_N 	=	5;
-	localparam SOUTH_PORT_E_VS_N 	=	6;
-	localparam SOUTH_PORT_W_VS_N 	=	7;
+	
+	
+	localparam EAST_PORT_E_VS_S 	=	0;
+	localparam EAST_PORT_E_VS_N 	=	1;
+	localparam NORTH_PORT_E_VS_N 	=	2;
+	localparam NORTH_PORT_W_VS_N 	=	3;
+	localparam WEST_PORT_W_VS_S 	=	4;
+	localparam WEST_PORT_W_VS_N 	=	5;
+	localparam SOUTH_PORT_E_VS_S 	=	6;
+	localparam SOUTH_PORT_W_VS_S 	=	7;
+	
+	
 	
 	
 											
@@ -274,33 +278,36 @@ module route_compute #(
 				LOCAL :begin 
 					next_router_x_addr= CURRENT_X_ADDR;
 					next_router_y_addr= CURRENT_Y_ADDR;
-					dst_congestion		= {congestion_cmp_i[EAST_PORT_W_VS_S],congestion_cmp_i[EAST_PORT_W_VS_N ],congestion_cmp_i[WEST_PORT_E_VS_N ],congestion_cmp_i[NORTH_PORT_E_VS_S]};
+					dst_congestion		= {congestion_cmp_i[WEST_PORT_W_VS_S],congestion_cmp_i[WEST_PORT_W_VS_N ],congestion_cmp_i[EAST_PORT_E_VS_N ],congestion_cmp_i[EAST_PORT_E_VS_S]};
 				end
 					
 				EAST:	begin	
 					next_router_x_addr= (SW_X_ADDR==LAST_X_ADDR ) ? {X_NODE_NUM_WIDTH{1'b0}} : CURRENT_X_ADDR+1'b1;
 					next_router_y_addr=  CURRENT_Y_ADDR;	
-					dst_congestion		= {congestion_cmp_i[EAST_PORT_W_VS_S],congestion_cmp_i[EAST_PORT_W_VS_N],2'b00};
+					dst_congestion		= {2'b00,congestion_cmp_i[EAST_PORT_E_VS_N],congestion_cmp_i[EAST_PORT_E_VS_S]};
+					
 				end
 				NORTH:	begin	
 					next_router_x_addr= CURRENT_X_ADDR;
 					next_router_y_addr= (SW_Y_ADDR==0)? LAST_Y_ADDR  : CURRENT_Y_ADDR-1'b1;
-					dst_congestion		= {congestion_cmp_i[NORTH_PORT_W_VS_S],2'b00,congestion_cmp_i[NORTH_PORT_E_VS_S]};
+					dst_congestion		= {1'b0,congestion_cmp_i[NORTH_PORT_W_VS_N],congestion_cmp_i[NORTH_PORT_E_VS_N],1'b0};
+					
 				end
 				WEST:		begin 
 					next_router_x_addr= (SW_X_ADDR==0) ? LAST_X_ADDR  : CURRENT_X_ADDR-1'b1;
 					next_router_y_addr=  CURRENT_Y_ADDR;
-					dst_congestion		= {2'b00,congestion_cmp_i[WEST_PORT_E_VS_N],congestion_cmp_i[WEST_PORT_E_VS_S]};
+					dst_congestion		= {congestion_cmp_i[WEST_PORT_W_VS_S],congestion_cmp_i[WEST_PORT_W_VS_N],2'b00};
 				end
 				SOUTH:	begin
 					next_router_x_addr= CURRENT_X_ADDR;
 					next_router_y_addr= (SW_Y_ADDR== LAST_Y_ADDR ) ? {Y_NODE_NUM_WIDTH{1'b0}}: CURRENT_Y_ADDR+1'b1;
-					dst_congestion		= {1'b0,congestion_cmp_i[SOUTH_PORT_W_VS_N],congestion_cmp_i[SOUTH_PORT_E_VS_N],1'b0};
+					dst_congestion		= {congestion_cmp_i[SOUTH_PORT_W_VS_S],2'b00,congestion_cmp_i[SOUTH_PORT_E_VS_S]};
+							
 				end
 				default begin 
 					next_router_x_addr= {X_NODE_NUM_WIDTH{1'bX}};
 					next_router_y_addr= {Y_NODE_NUM_WIDTH{1'bX}};
-					dst_congestion		= {congestion_cmp_i[EAST_PORT_W_VS_S],congestion_cmp_i[EAST_PORT_W_VS_N ],congestion_cmp_i[WEST_PORT_E_VS_N ],congestion_cmp_i[NORTH_PORT_E_VS_S]};
+					dst_congestion		= {congestion_cmp_i[WEST_PORT_W_VS_S],congestion_cmp_i[WEST_PORT_W_VS_N ],congestion_cmp_i[EAST_PORT_E_VS_N ],congestion_cmp_i[EAST_PORT_E_VS_S]};
 				end
 			endcase
 		end//always
@@ -743,12 +750,12 @@ module bdor_routing #(
 	
 	/********************************
 	
-				sudo_xy 
+				ADAPTIVE_XY 
 	
 	
 	********************************/
 	
-	module sudo_xy_routing #(
+	module ADAPTIVE_XY_routing #(
 	parameter TOPOLOGY					=	"MESH",//"TORUS"
 	parameter PORT_NUM					=	5,
 	parameter X_NODE_NUM					=	4,
@@ -771,11 +778,11 @@ module bdor_routing #(
 	`LOG2
 	generate
 	if(TOPOLOGY == "MESH") begin 
-			sudo_xy_mesh_routing #(
+			ADAPTIVE_XY_mesh_routing #(
 				.PORT_NUM	(PORT_NUM),
 				.X_NODE_NUM	(X_NODE_NUM),
 				.Y_NODE_NUM	(Y_NODE_NUM)	
-			)sudo_xy_mesh
+			)ADAPTIVE_XY_mesh
 			(
 				.congestion_cmp_i			(congestion_cmp_i),
 				.current_router_x_addr	(current_router_x_addr),
@@ -786,11 +793,11 @@ module bdor_routing #(
 			);
 	
 		end else if(TOPOLOGY == "TORUS") begin
-			sudo_xy_torus_routing #(
+			ADAPTIVE_XY_torus_routing #(
 				.PORT_NUM	(PORT_NUM),
 				.X_NODE_NUM	(X_NODE_NUM),
 				.Y_NODE_NUM	(Y_NODE_NUM)	
-			)sudo_xy_mesh
+			)ADAPTIVE_XY_mesh
 			(
 				.congestion_cmp_i			(congestion_cmp_i),
 				.current_router_x_addr	(current_router_x_addr),
@@ -807,13 +814,13 @@ module bdor_routing #(
 	
 	/********************************
 	
-				sudo_xy_mesh_routing
+				ADAPTIVE_XY_mesh_routing
 	
 	
 	********************************/
 	
 	
-	module sudo_xy_mesh_routing #(
+	module ADAPTIVE_XY_mesh_routing #(
 		parameter TOPOLOGY					=	"TORUS", // "MESH" or "TORUS"  
 		parameter PORT_NUM					=	5,
 		parameter X_NODE_NUM					=	4,
@@ -909,12 +916,12 @@ module bdor_routing #(
 
 	/**********************************
 	
-		sudo_xy_torus_routing
+		ADAPTIVE_XY_torus_routing
 	
 	***********************************/
 	
 	
-module sudo_xy_torus_routing #(
+module ADAPTIVE_XY_torus_routing #(
 	parameter PORT_NUM					=	5,
 	parameter X_NODE_NUM					=	4,
 	parameter Y_NODE_NUM					=	3,

@@ -80,7 +80,7 @@ module aeMB_mpsoc #(
 		NI pins are written in tasks.V file */
 	//noc parameter 
 	parameter TOPOLOGY					=	`TOPOLOGY_DEF,
-	parameter ROUTE_ALGRMT				=	`ROUTE_ALGRMT_DEF, //"XY" or "MINIMAL" 
+	parameter ROUTE_ALGRMT				=	`ROUTE_ALGRMT_DEF, 
 	parameter VC_NUM_PER_PORT 			=	`VC_NUM_PER_PORT_DEF ,
 	parameter PYLD_WIDTH 				=	`PYLD_WIDTH_DEF,
 	parameter BUFFER_NUM_PER_VC		=	`BUFFER_NUM_PER_VC_DEF,
