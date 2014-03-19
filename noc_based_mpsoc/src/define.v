@@ -37,7 +37,7 @@ a 3X3 noC
 ********************************************************************/	
 //define the topology: "MESH" or "TORUS"
 `define						TOPOLOGY_DEF						"MESH" 
-//define the routing algorithm : "XY_CLASSIC" or "BALANCE_DOR" or "SUDO_XY"	
+//define the routing algorithm : "XY_CLASSIC" or "BALANCE_DOR" or "ADAPTIVE_XY"	
 `define						ROUTE_ALGRMT_DEF					"XY_CLASSIC"						
 // The number of virtual channel (VC) for each individual physical channel. this value must be power of 2. The typical value is two and four.
 `define 						VC_NUM_PER_PORT_DEF 				2
