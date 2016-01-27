@@ -1,0 +1,23 @@
+$HashRef = bless( {
+                    'connection_num' => 'single connection',
+                    'name' => 'interrupt_cpu',
+                    'description' => 'interrupt signal between interrupt controller and cpu',
+                    'modules' => {
+                                   'int_ctrl' => {}
+                                 },
+                    'ports' => {
+                                 'int_o' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'int_i',
+                                              'connect_type' => 'input',
+                                              'range' => '',
+                                              'name' => 'int_o',
+                                              'connect_range' => '',
+                                              'type' => 'output'
+                                            }
+                               },
+                    'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/int_ctrl/int_ctrl.v',
+                    'module_name' => 'int_ctrl',
+                    'type' => 'socket',
+                    'category' => 'interrupt'
+                  }, 'intfc_gen' );

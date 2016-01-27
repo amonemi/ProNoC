@@ -1,0 +1,76 @@
+$clk_source = bless( {
+                       'hdl_files' => [
+                                        '/mpsoc/src_peripheral/reset_sync/altera_reset_synchronizer.v',
+                                        '/mpsoc/src_peripheral/reset_sync/clk_source.v'
+                                      ],
+                       'ip_name' => 'clk_source',
+                       'description' => 'clk source',
+                       'modules' => {
+                                      'clk_source' => {}
+                                    },
+                       'plugs' => {
+                                    'reset' => {
+                                               '0' => {
+                                                        'name' => 'reset'
+                                                      },
+                                               'value' => 1,
+                                               'type' => 'num'
+                                             },
+                                    'clk' => {
+                                             '0' => {
+                                                      'name' => 'clk'
+                                                    },
+                                             'value' => 1,
+                                             'type' => 'num'
+                                           }
+                                  },
+                       'ports' => {
+                                    'clk_out' => {
+                                                   'intfc_port' => 'clk_o',
+                                                   'intfc_name' => 'socket:clk[0]',
+                                                   'range' => '',
+                                                   'type' => 'output'
+                                                 },
+                                    'reset_out' => {
+                                                     'intfc_port' => 'reset_o',
+                                                     'intfc_name' => 'socket:reset[0]',
+                                                     'range' => '',
+                                                     'type' => 'output'
+                                                   },
+                                    'clk_in' => {
+                                                  'intfc_port' => 'clk_i',
+                                                  'intfc_name' => 'plug:clk[0]',
+                                                  'range' => '',
+                                                  'type' => 'input'
+                                                },
+                                    'reset_in' => {
+                                                    'intfc_port' => 'reset_i',
+                                                    'intfc_name' => 'plug:reset[0]',
+                                                    'range' => '',
+                                                    'type' => 'input'
+                                                  }
+                                  },
+                       'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/reset_sync/clk_source.v',
+                       'sockets' => {
+                                      'clk' => {
+                                                 'clk' => {},
+                                                 'connection_num' => 'multi connection',
+                                                 'value' => 1,
+                                                 '0' => {
+                                                          'name' => 'clk'
+                                                        },
+                                                 'type' => 'num'
+                                               },
+                                      'reset' => {
+                                                   'reset' => {},
+                                                   'connection_num' => 'multi connection',
+                                                   'value' => 1,
+                                                   '0' => {
+                                                            'name' => 'reset'
+                                                          },
+                                                   'type' => 'num'
+                                                 }
+                                    },
+                       'module_name' => 'clk_source',
+                       'category' => 'source'
+                     }, 'ip_gen' );

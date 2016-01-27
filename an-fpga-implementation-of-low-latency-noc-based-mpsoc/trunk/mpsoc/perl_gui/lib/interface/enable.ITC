@@ -1,0 +1,25 @@
+$HashRef = bless( {
+                    'connection_num' => 'single connection',
+                    'name' => 'enable',
+                    'modules' => {
+                                   'clk_socket' => {},
+                                   'wb_master_socket' => {},
+                                   'wb_slave_socket' => {},
+                                   'reset_socket' => {}
+                                 },
+                    'ports' => {
+                                 'clk_o' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'enable_o',
+                                              'connect_type' => 'output',
+                                              'range' => '',
+                                              'name' => 'enable_i',
+                                              'connect_range' => '',
+                                              'type' => 'input'
+                                            }
+                               },
+                    'file_name' => '/home/alireza/Mywork/mpsoc/perl_gui/lib/verilog/bus.v',
+                    'module_name' => 'clk_socket',
+                    'type' => 'plug',
+                    'category' => 'source'
+                  }, 'intfc_gen' );

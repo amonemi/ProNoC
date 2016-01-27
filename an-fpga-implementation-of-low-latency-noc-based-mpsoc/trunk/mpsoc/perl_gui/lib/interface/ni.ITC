@@ -1,0 +1,85 @@
+$HashRef = bless( {
+                    'connection_num' => 'single connection',
+                    'name' => 'ni',
+                    'modules' => {
+                                   'ni' => {}
+                                 },
+                    'ports' => {
+                                 'current_y' => {
+                                                  'outport_type' => 'concatenate',
+                                                  'connect_name' => 'current_y',
+                                                  'connect_type' => 'output',
+                                                  'range' => 'Yw-1:0',
+                                                  'name' => 'current_y',
+                                                  'connect_range' => 'Yw-1:0',
+                                                  'type' => 'input'
+                                                },
+                                 'flit_in' => {
+                                                'outport_type' => 'concatenate',
+                                                'connect_name' => 'flit_in',
+                                                'connect_type' => 'output',
+                                                'range' => 'Fw-1:0',
+                                                'name' => 'flit_in',
+                                                'connect_range' => 'Fw-1:0',
+                                                'type' => 'input'
+                                              },
+                                 'current_x' => {
+                                                  'outport_type' => 'concatenate',
+                                                  'connect_name' => 'current_x',
+                                                  'connect_type' => 'output',
+                                                  'range' => 'Xw-1:0',
+                                                  'name' => 'current_x',
+                                                  'connect_range' => 'Xw-1:0',
+                                                  'type' => 'input'
+                                                },
+                                 'credit_out' => {
+                                                   'outport_type' => 'concatenate',
+                                                   'connect_name' => 'credit_out',
+                                                   'connect_type' => 'input',
+                                                   'range' => 'V-1:0',
+                                                   'name' => 'credit_out',
+                                                   'connect_range' => 'V-1:0',
+                                                   'type' => 'output'
+                                                 },
+                                 'flit_out' => {
+                                                 'outport_type' => 'concatenate',
+                                                 'connect_name' => 'flit_out',
+                                                 'connect_type' => 'input',
+                                                 'range' => 'Fw-1:0',
+                                                 'name' => 'flit_out',
+                                                 'connect_range' => 'Fw-1:0',
+                                                 'type' => 'output'
+                                               },
+                                 'credit_in' => {
+                                                  'outport_type' => 'concatenate',
+                                                  'connect_name' => 'credit_in',
+                                                  'connect_type' => 'output',
+                                                  'range' => 'V-1:0',
+                                                  'name' => 'credit_in',
+                                                  'connect_range' => 'V-1:0',
+                                                  'type' => 'input'
+                                                },
+                                 'flit_in_wr' => {
+                                                   'outport_type' => 'concatenate',
+                                                   'connect_name' => 'flit_in_wr',
+                                                   'connect_type' => 'output',
+                                                   'range' => '',
+                                                   'name' => 'flit_in_wr',
+                                                   'connect_range' => '',
+                                                   'type' => 'input'
+                                                 },
+                                 'flit_out_wr' => {
+                                                    'outport_type' => 'concatenate',
+                                                    'connect_name' => 'flit_out_wr',
+                                                    'connect_type' => 'input',
+                                                    'range' => '',
+                                                    'name' => 'flit_out_wr',
+                                                    'connect_range' => '',
+                                                    'type' => 'output'
+                                                  }
+                               },
+                    'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/ni/ni.v',
+                    'module_name' => 'ni',
+                    'type' => 'socket',
+                    'category' => 'NoC'
+                  }, 'intfc_gen' );

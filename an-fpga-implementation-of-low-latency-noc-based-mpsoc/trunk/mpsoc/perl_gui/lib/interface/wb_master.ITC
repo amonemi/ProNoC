@@ -1,0 +1,116 @@
+$HashRef = bless( {
+                    'connection_num' => 'single connection',
+                    'name' => 'wb_master',
+                    'description' => 'wish bone bus master interface',
+                    'modules' => {
+                                   'clk_socket' => {},
+                                   'wb_master_socket' => {},
+                                   'wb_slave_socket' => {},
+                                   'reset_socket' => {}
+                                 },
+                    'ports' => {
+                                 'err_o' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'err_i',
+                                              'connect_type' => 'input',
+                                              'range' => '',
+                                              'name' => 'err_o',
+                                              'connect_range' => '',
+                                              'type' => 'output'
+                                            },
+                                 'stb_i' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'stb_o',
+                                              'connect_type' => 'output',
+                                              'range' => '',
+                                              'name' => 'stb_i',
+                                              'connect_range' => '',
+                                              'type' => 'input'
+                                            },
+                                 'cyc_i' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'cyc_o',
+                                              'connect_type' => 'output',
+                                              'range' => '',
+                                              'name' => 'cyc_i',
+                                              'connect_range' => '',
+                                              'type' => 'input'
+                                            },
+                                 'dat_i' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'dat_o',
+                                              'connect_type' => 'output',
+                                              'range' => 'Dw-1      :   0',
+                                              'name' => 'dat_i',
+                                              'connect_range' => 'Dw-1      :   0',
+                                              'type' => 'input'
+                                            },
+                                 'ack_o' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'ack_i',
+                                              'connect_type' => 'input',
+                                              'range' => '',
+                                              'name' => 'ack_o',
+                                              'connect_range' => '',
+                                              'type' => 'output'
+                                            },
+                                 'rty_o' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'rty_i',
+                                              'connect_type' => 'input',
+                                              'range' => '',
+                                              'name' => 'rty_o',
+                                              'connect_range' => '',
+                                              'type' => 'output'
+                                            },
+                                 'tag_i' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'tag_o',
+                                              'connect_type' => 'output',
+                                              'range' => 'TAGw-1    :   0',
+                                              'name' => 'tag_i',
+                                              'connect_range' => 'TAGw-1    :   0',
+                                              'type' => 'input'
+                                            },
+                                 'adr_i' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'adr_o',
+                                              'connect_type' => 'output',
+                                              'range' => 'Aw-1      :   0',
+                                              'name' => 'adr_i',
+                                              'connect_range' => 'Aw-1      :   0',
+                                              'type' => 'input'
+                                            },
+                                 'dat_o' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'dat_i',
+                                              'connect_type' => 'input',
+                                              'range' => 'Dw-1      :   0',
+                                              'name' => 'dat_o',
+                                              'connect_range' => 'Dw-1      :   0',
+                                              'type' => 'output'
+                                            },
+                                 'we_i' => {
+                                             'outport_type' => 'concatenate',
+                                             'connect_name' => 'we_o',
+                                             'connect_type' => 'output',
+                                             'range' => '',
+                                             'name' => 'we_i',
+                                             'connect_range' => '',
+                                             'type' => 'input'
+                                           },
+                                 'sel_i' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'sel_o',
+                                              'connect_type' => 'output',
+                                              'range' => 'SELw-1    :   0',
+                                              'name' => 'sel_i',
+                                              'connect_range' => 'SELw-1    :   0',
+                                              'type' => 'input'
+                                            }
+                               },
+                    'file_name' => '/home/alireza/Mywork/develop/gui/main/lib/verilog/bus.v',
+                    'module_name' => 'wb_master_socket',
+                    'type' => 'socket',
+                    'category' => 'wishbone'
+                  }, 'intfc_gen' );
