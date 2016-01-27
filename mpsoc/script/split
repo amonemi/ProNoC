@@ -1,0 +1,11 @@
+#!/usr/bin/perl 
+use Verilog::EditFiles;
+   my $split = Verilog::EditFiles->new
+       (outdir => "processed_rtl",
+        translate_synthesis => 0,
+       # lint_header =>" `include \"define.v\" \n ",
+        celldefine => 0,
+        );
+   $split->read_and_split(glob("rtl_work/*.v"));
+   $split->write_files();
+   $split->edit_file(filename=>"foo", cb => sub { return $_[0]; });

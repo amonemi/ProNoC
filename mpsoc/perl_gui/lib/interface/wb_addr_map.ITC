@@ -1,0 +1,33 @@
+$HashRef = bless( {
+                    'connection_num' => 'single connection',
+                    'name' => 'wb_addr_map',
+                    'description' => 'reset source',
+                    'modules' => {
+                                   'wishbone_bus' => {},
+                                   'bus_arbiter' => {}
+                                 },
+                    'ports' => {
+                                 'm_grant_addr' => {
+                                                     'outport_type' => 'concatenate',
+                                                     'connect_name' => 'grant_addr',
+                                                     'connect_type' => 'input',
+                                                     'range' => 'Aw-1       :   0',
+                                                     'name' => 'grant_addr',
+                                                     'connect_range' => 'Aw-1       :   0',
+                                                     'type' => 'output'
+                                                   },
+                                 's_sel_one_hot' => {
+                                                      'outport_type' => 'concatenate',
+                                                      'connect_name' => 'sel_one_hot',
+                                                      'connect_type' => 'output',
+                                                      'range' => 'S-1        :   0',
+                                                      'name' => 'sel_one_hot',
+                                                      'connect_range' => 'S-1        :   0',
+                                                      'type' => 'input'
+                                                    }
+                               },
+                    'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/bus/wishbone_bus.v',
+                    'module_name' => 'wishbone_bus',
+                    'type' => 'socket',
+                    'category' => 'wishbone'
+                  }, 'intfc_gen' );

@@ -1,0 +1,26 @@
+$HashRef = bless( {
+                    'connection_num' => 'multi connection',
+                    'name' => 'reset',
+                    'description' => 'reset source',
+                    'modules' => {
+                                   'clk_socket' => {},
+                                   'wb_master_socket' => {},
+                                   'wb_slave_socket' => {},
+                                   'reset_socket' => {}
+                                 },
+                    'ports' => {
+                                 'reset_o' => {
+                                                'outport_type' => 'concatenate',
+                                                'connect_name' => 'reset_i',
+                                                'connect_type' => 'input',
+                                                'range' => '',
+                                                'name' => 'reset_o',
+                                                'connect_range' => '',
+                                                'type' => 'output'
+                                              }
+                               },
+                    'file_name' => '/home/alireza/Mywork/develop/gui/main/lib/verilog/bus.v',
+                    'module_name' => 'reset_socket',
+                    'type' => 'socket',
+                    'category' => 'source'
+                  }, 'intfc_gen' );

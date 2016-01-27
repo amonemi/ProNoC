@@ -1,0 +1,26 @@
+$HashRef = bless( {
+                    'connection_num' => 'multi connection',
+                    'name' => 'clk',
+                    'description' => 'clock source',
+                    'modules' => {
+                                   'clk_socket' => {},
+                                   'wb_master_socket' => {},
+                                   'wb_slave_socket' => {},
+                                   'reset_socket' => {}
+                                 },
+                    'ports' => {
+                                 'clk_o' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'clk_i',
+                                              'connect_type' => 'input',
+                                              'range' => '',
+                                              'name' => 'clk_o',
+                                              'connect_range' => '',
+                                              'type' => 'output'
+                                            }
+                               },
+                    'file_name' => '/home/alireza/Mywork/develop/gui/main/lib/verilog/bus.v',
+                    'module_name' => 'clk_socket',
+                    'type' => 'socket',
+                    'category' => 'source'
+                  }, 'intfc_gen' );
