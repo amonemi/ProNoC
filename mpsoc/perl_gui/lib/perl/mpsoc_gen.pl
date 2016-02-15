@@ -25,7 +25,7 @@ use Gtk2::Pango;
 
 require "widget.pl"; 
 require "mpsoc_verilog_gen.pl";
-require "aeMB.pl";
+require "hdr_file_gen.pl";
 
 
 
@@ -241,7 +241,7 @@ sub b_box{
 
 sub get_conflict_decision{
 	my ($mpsoc,$name,$inserted,$conflicts,$msg,$state)=@_;
-	$msg="\tThe inserted tiles have been selected previously \"$msg\".\n \t Do u want to remove them for the current soc or from the previous ones? ";
+	$msg="\tThe inserted tile number(s) have been mapped previously to \n\t\t\"$msg\".\n\tDo you want to remove the conflicted tiles number(s) in newly \n\tinsterd range or remove them from the previous ones? ";
 	
 	my $wind=def_popwin_size(100,300,"warning");
 	my $label= gen_label_in_left($msg);	
@@ -348,7 +348,7 @@ sub check_inserted_ip_nums{
 			my @c=get_common_array(\@all_num,\@taken_tiles);
 			if (scalar @c) {
 				my $str=join(',', @c);
-				$conflicts_msg = (defined $conflicts_msg)? "$conflicts_msg, in $p:$str" : "in $p:$str";
+				$conflicts_msg = (defined $conflicts_msg)? "$conflicts_msg\n\t\t $str->$p" : "$str->$p";
 				@conflicts= (defined $conflicts_msg)? (@conflicts,@c): @c;
 			}
 		}#if
@@ -1148,7 +1148,7 @@ sub generate_soc_files{
     		
     #copy hdl codes in src_verilog
     	
-    my ($hdl_ref,$warnings)= get_all_hdl_files_list($soc);
+    my ($hdl_ref,$warnings)= get_all_files_list($soc);
     foreach my $f(@{$hdl_ref}){
     	my $n="$project_dir$f";
     	 if (-f "$n") {
@@ -1180,7 +1180,7 @@ sub generate_soc_files{
     		
     		
     		# Write header file
-			my $file_h=aemb_generate_header($soc);
+			my $file_h=generate_header_file($soc);
 			open(FILE,  ">lib/verilog/$soc_name.h") || die "Can not open: $!";
 			print FILE $file_h;
 			close(FILE) || die "Error closing file: $!";

@@ -12,12 +12,12 @@ $all = bless( {
                                                                            'type' => 'output'
                                                                          },
                                                   'ni0_flit_in_wr' => {
-                                                                      'intfc_port' => 'flit_in_wr',
-                                                                      'intfc_name' => 'socket:ni[0]',
-                                                                      'instance_name' => 'ni0',
-                                                                      'range' => '',
-                                                                      'type' => 'input'
-                                                                    },
+                                                                        'intfc_port' => 'flit_in_wr',
+                                                                        'intfc_name' => 'socket:ni[0]',
+                                                                        'instance_name' => 'ni0',
+                                                                        'range' => '',
+                                                                        'type' => 'input'
+                                                                      },
                                                   'ss_clk_in' => {
                                                                    'intfc_port' => 'clk_i',
                                                                    'intfc_name' => 'plug:clk[0]',
@@ -33,12 +33,12 @@ $all = bless( {
                                                                       'type' => 'inout'
                                                                     },
                                                   'ni0_credit_out' => {
-                                                                      'intfc_port' => 'credit_out',
-                                                                      'intfc_name' => 'socket:ni[0]',
-                                                                      'instance_name' => 'ni0',
-                                                                      'range' => 'ni0_V-1:   0',
-                                                                      'type' => 'output'
-                                                                    },
+                                                                        'intfc_port' => 'credit_out',
+                                                                        'intfc_name' => 'socket:ni[0]',
+                                                                        'instance_name' => 'ni0',
+                                                                        'range' => 'ni0_V-1:   0',
+                                                                        'type' => 'output'
+                                                                      },
                                                   'aeMB_sys_ena_i' => {
                                                                         'intfc_port' => 'enable_i',
                                                                         'intfc_name' => 'plug:enable[0]',
@@ -47,12 +47,12 @@ $all = bless( {
                                                                         'type' => 'input'
                                                                       },
                                                   'ni0_current_x' => {
-                                                                     'intfc_port' => 'current_x',
-                                                                     'intfc_name' => 'socket:ni[0]',
-                                                                     'instance_name' => 'ni0',
-                                                                     'range' => 'ni0_Xw-1   :   0',
-                                                                     'type' => 'input'
-                                                                   },
+                                                                       'intfc_port' => 'current_x',
+                                                                       'intfc_name' => 'socket:ni[0]',
+                                                                       'instance_name' => 'ni0',
+                                                                       'range' => 'ni0_Xw-1   :   0',
+                                                                       'type' => 'input'
+                                                                     },
                                                   'uart_dataavailable' => {
                                                                             'intfc_port' => 'IO',
                                                                             'intfc_name' => 'IO',
@@ -68,12 +68,12 @@ $all = bless( {
                                                                            'type' => 'input'
                                                                          },
                                                   'ni0_flit_out_wr' => {
-                                                                       'intfc_port' => 'flit_out_wr',
-                                                                       'intfc_name' => 'socket:ni[0]',
-                                                                       'instance_name' => 'ni0',
-                                                                       'range' => '',
-                                                                       'type' => 'output'
-                                                                     },
+                                                                         'intfc_port' => 'flit_out_wr',
+                                                                         'intfc_name' => 'socket:ni[0]',
+                                                                         'instance_name' => 'ni0',
+                                                                         'range' => '',
+                                                                         'type' => 'output'
+                                                                       },
                                                   'ss_reset_in' => {
                                                                      'intfc_port' => 'reset_i',
                                                                      'intfc_name' => 'plug:reset[0]',
@@ -82,33 +82,33 @@ $all = bless( {
                                                                      'type' => 'input'
                                                                    },
                                                   'ni0_flit_in' => {
-                                                                   'intfc_port' => 'flit_in',
-                                                                   'intfc_name' => 'socket:ni[0]',
-                                                                   'instance_name' => 'ni0',
-                                                                   'range' => 'ni0_Fw-1   :   0',
-                                                                   'type' => 'input'
-                                                                 },
-                                                  'ni0_current_y' => {
-                                                                     'intfc_port' => 'current_y',
+                                                                     'intfc_port' => 'flit_in',
                                                                      'intfc_name' => 'socket:ni[0]',
                                                                      'instance_name' => 'ni0',
-                                                                     'range' => 'ni0_Yw-1   :   0',
+                                                                     'range' => 'ni0_Fw-1   :   0',
                                                                      'type' => 'input'
                                                                    },
+                                                  'ni0_current_y' => {
+                                                                       'intfc_port' => 'current_y',
+                                                                       'intfc_name' => 'socket:ni[0]',
+                                                                       'instance_name' => 'ni0',
+                                                                       'range' => 'ni0_Yw-1   :   0',
+                                                                       'type' => 'input'
+                                                                     },
                                                   'ni0_flit_out' => {
-                                                                    'intfc_port' => 'flit_out',
-                                                                    'intfc_name' => 'socket:ni[0]',
-                                                                    'instance_name' => 'ni0',
-                                                                    'range' => 'ni0_Fw-1   :   0',
-                                                                    'type' => 'output'
-                                                                  },
+                                                                      'intfc_port' => 'flit_out',
+                                                                      'intfc_name' => 'socket:ni[0]',
+                                                                      'instance_name' => 'ni0',
+                                                                      'range' => 'ni0_Fw-1   :   0',
+                                                                      'type' => 'output'
+                                                                    },
                                                   'ni0_credit_in' => {
-                                                                     'intfc_port' => 'credit_in',
-                                                                     'intfc_name' => 'socket:ni[0]',
-                                                                     'instance_name' => 'ni0',
-                                                                     'range' => 'ni0_V-1    :   0',
-                                                                     'type' => 'input'
-                                                                   }
+                                                                       'intfc_port' => 'credit_in',
+                                                                       'intfc_name' => 'socket:ni[0]',
+                                                                       'instance_name' => 'ni0',
+                                                                       'range' => 'ni0_V-1    :   0',
+                                                                       'type' => 'input'
+                                                                     }
                                                 },
                                      'interface' => {
                                                       'plug:enable[0]' => {
@@ -124,53 +124,53 @@ $all = bless( {
                                                       'socket:ni[0]' => {
                                                                           'ports' => {
                                                                                        'ni0_flit_in_wr' => {
-                                                                                                           'intfc_port' => 'flit_in_wr',
-                                                                                                           'instance_name' => 'ni0',
-                                                                                                           'range' => '',
-                                                                                                           'type' => 'input'
-                                                                                                         },
+                                                                                                             'intfc_port' => 'flit_in_wr',
+                                                                                                             'instance_name' => 'ni0',
+                                                                                                             'range' => '',
+                                                                                                             'type' => 'input'
+                                                                                                           },
                                                                                        'ni0_credit_out' => {
-                                                                                                           'intfc_port' => 'credit_out',
-                                                                                                           'instance_name' => 'ni0',
-                                                                                                           'range' => 'ni0_V-1:   0',
-                                                                                                           'type' => 'output'
-                                                                                                         },
+                                                                                                             'intfc_port' => 'credit_out',
+                                                                                                             'instance_name' => 'ni0',
+                                                                                                             'range' => 'ni0_V-1:   0',
+                                                                                                             'type' => 'output'
+                                                                                                           },
                                                                                        'ni0_current_x' => {
-                                                                                                          'intfc_port' => 'current_x',
-                                                                                                          'instance_name' => 'ni0',
-                                                                                                          'range' => 'ni0_Xw-1   :   0',
-                                                                                                          'type' => 'input'
-                                                                                                        },
-                                                                                       'ni0_flit_out_wr' => {
-                                                                                                            'intfc_port' => 'flit_out_wr',
+                                                                                                            'intfc_port' => 'current_x',
                                                                                                             'instance_name' => 'ni0',
-                                                                                                            'range' => '',
-                                                                                                            'type' => 'output'
+                                                                                                            'range' => 'ni0_Xw-1   :   0',
+                                                                                                            'type' => 'input'
                                                                                                           },
+                                                                                       'ni0_flit_out_wr' => {
+                                                                                                              'intfc_port' => 'flit_out_wr',
+                                                                                                              'instance_name' => 'ni0',
+                                                                                                              'range' => '',
+                                                                                                              'type' => 'output'
+                                                                                                            },
                                                                                        'ni0_current_y' => {
-                                                                                                          'intfc_port' => 'current_y',
-                                                                                                          'instance_name' => 'ni0',
-                                                                                                          'range' => 'ni0_Yw-1   :   0',
-                                                                                                          'type' => 'input'
-                                                                                                        },
+                                                                                                            'intfc_port' => 'current_y',
+                                                                                                            'instance_name' => 'ni0',
+                                                                                                            'range' => 'ni0_Yw-1   :   0',
+                                                                                                            'type' => 'input'
+                                                                                                          },
                                                                                        'ni0_flit_in' => {
-                                                                                                        'intfc_port' => 'flit_in',
-                                                                                                        'instance_name' => 'ni0',
-                                                                                                        'range' => 'ni0_Fw-1   :   0',
-                                                                                                        'type' => 'input'
-                                                                                                      },
-                                                                                       'ni0_credit_in' => {
-                                                                                                          'intfc_port' => 'credit_in',
+                                                                                                          'intfc_port' => 'flit_in',
                                                                                                           'instance_name' => 'ni0',
-                                                                                                          'range' => 'ni0_V-1    :   0',
+                                                                                                          'range' => 'ni0_Fw-1   :   0',
                                                                                                           'type' => 'input'
                                                                                                         },
+                                                                                       'ni0_credit_in' => {
+                                                                                                            'intfc_port' => 'credit_in',
+                                                                                                            'instance_name' => 'ni0',
+                                                                                                            'range' => 'ni0_V-1    :   0',
+                                                                                                            'type' => 'input'
+                                                                                                          },
                                                                                        'ni0_flit_out' => {
-                                                                                                         'intfc_port' => 'flit_out',
-                                                                                                         'instance_name' => 'ni0',
-                                                                                                         'range' => 'ni0_Fw-1   :   0',
-                                                                                                         'type' => 'output'
-                                                                                                       }
+                                                                                                           'intfc_port' => 'flit_out',
+                                                                                                           'instance_name' => 'ni0',
+                                                                                                           'range' => 'ni0_Fw-1   :   0',
+                                                                                                           'type' => 'output'
+                                                                                                         }
                                                                                      }
                                                                         },
                                                       'IO' => {
@@ -224,26 +224,6 @@ $all = bless( {
                                                     },
                                      'instance_ids' => {
                                                          'aeMB0' => {
-                                                                      'parameters' => {
-                                                                                        'aeMB_AEMB_BSF' => {
-                                                                                                             'info' => '1: aeMB with hardware barrel shifter
-0:aeMB without  haedware barrel shifter',
-                                                                                                             'deafult' => ' 1',
-                                                                                                             'global_param' => 1,
-                                                                                                             'content' => '1,0',
-                                                                                                             'redefine_param' => 1,
-                                                                                                             'type' => 'Combo-box'
-                                                                                                           },
-                                                                                        'aeMB_AEMB_MUL' => {
-                                                                                                             'info' => '1: aeMB with hardware multiplier
-0: aeMB without harware multiplier',
-                                                                                                             'deafult' => ' 1',
-                                                                                                             'global_param' => 1,
-                                                                                                             'content' => '1,0',
-                                                                                                             'redefine_param' => 1,
-                                                                                                             'type' => 'Combo-box'
-                                                                                                           }
-                                                                                      },
                                                                       'ports' => {
                                                                                    'aeMB_sys_ena_i' => {
                                                                                                          'intfc_port' => 'enable_i',
@@ -263,6 +243,12 @@ $all = bless( {
                                                                               'instance' => 'bus',
                                                                               'module' => 'wishbone_bus'
                                                                             },
+                                                         'timer1' => {
+                                                                       'module_name' => 'timer',
+                                                                       'category' => 'TIM',
+                                                                       'instance' => 'timer1',
+                                                                       'module' => 'timer'
+                                                                     },
                                                          'int_ctrl0' => {
                                                                           'module_name' => 'int_ctrl',
                                                                           'category' => 'interrupt',
@@ -290,24 +276,6 @@ $all = bless( {
                                                                                   'module' => 'altera_jtag_uart'
                                                                                 },
                                                          'Altera_single_port_ram0' => {
-                                                                                        'parameters' => {
-                                                                                                          'ram_Dw' => {
-                                                                                                                        'info' => undef,
-                                                                                                                        'deafult' => '32',
-                                                                                                                        'global_param' => 1,
-                                                                                                                        'content' => '8,1024,1',
-                                                                                                                        'redefine_param' => 1,
-                                                                                                                        'type' => 'Spin-button'
-                                                                                                                      },
-                                                                                                          'ram_Aw' => {
-                                                                                                                        'info' => undef,
-                                                                                                                        'deafult' => '10',
-                                                                                                                        'global_param' => 1,
-                                                                                                                        'content' => '4,31,1',
-                                                                                                                        'redefine_param' => 1,
-                                                                                                                        'type' => 'Spin-button'
-                                                                                                                      }
-                                                                                                        },
                                                                                         'module_name' => 'Altera_single_port_ram',
                                                                                         'category' => 'RAM',
                                                                                         'instance' => 'ram',
@@ -372,123 +340,65 @@ $all = bless( {
                                                                       'module' => 'gpio'
                                                                     },
                                                          'ni0' => {
-                                                                  'parameters' => {
-                                                                                    'ni0_B' => {
-                                                                                               'info' => undef,
-                                                                                               'deafult' => ' 4',
-                                                                                               'global_param' => 1,
-                                                                                               'content' => '2,16,1',
-                                                                                               'redefine_param' => 1,
-                                                                                               'type' => 'Fixed'
-                                                                                             },
-                                                                                    'ni0_TOPOLOGY' => {
-                                                                                                      'info' => undef,
-                                                                                                      'deafult' => '    "MESH"',
-                                                                                                      'global_param' => 1,
-                                                                                                      'content' => '"MESH", "TORUS"',
-                                                                                                      'redefine_param' => 1,
-                                                                                                      'type' => 'Fixed'
+                                                                    'ports' => {
+                                                                                 'ni0_flit_in_wr' => {
+                                                                                                       'intfc_port' => 'flit_in_wr',
+                                                                                                       'intfc_name' => 'socket:ni[0]',
+                                                                                                       'range' => '',
+                                                                                                       'type' => 'input'
+                                                                                                     },
+                                                                                 'ni0_credit_out' => {
+                                                                                                       'intfc_port' => 'credit_out',
+                                                                                                       'intfc_name' => 'socket:ni[0]',
+                                                                                                       'range' => 'ni0_V-1:   0',
+                                                                                                       'type' => 'output'
+                                                                                                     },
+                                                                                 'ni0_current_x' => {
+                                                                                                      'intfc_port' => 'current_x',
+                                                                                                      'intfc_name' => 'socket:ni[0]',
+                                                                                                      'range' => 'ni0_Xw-1   :   0',
+                                                                                                      'type' => 'input'
                                                                                                     },
-                                                                                    'ni0_V' => {
-                                                                                               'info' => undef,
-                                                                                               'deafult' => ' 4',
-                                                                                               'global_param' => 1,
-                                                                                               'content' => '2,16,1',
-                                                                                               'redefine_param' => 1,
-                                                                                               'type' => 'Fixed'
-                                                                                             },
-                                                                                    'ni0_NY' => {
-                                                                                                'info' => undef,
-                                                                                                'deafult' => ' 2',
-                                                                                                'global_param' => 1,
-                                                                                                'content' => '2,16,1',
-                                                                                                'redefine_param' => 1,
-                                                                                                'type' => 'Fixed'
-                                                                                              },
-                                                                                    'ni0_DEBUG_EN' => {
-                                                                                                      'info' => undef,
-                                                                                                      'deafult' => '   1',
-                                                                                                      'global_param' => 1,
-                                                                                                      'content' => '0,1',
-                                                                                                      'redefine_param' => 1,
-                                                                                                      'type' => 'Fixed'
+                                                                                 'ni0_flit_out_wr' => {
+                                                                                                        'intfc_port' => 'flit_out_wr',
+                                                                                                        'intfc_name' => 'socket:ni[0]',
+                                                                                                        'range' => '',
+                                                                                                        'type' => 'output'
+                                                                                                      },
+                                                                                 'ni0_current_y' => {
+                                                                                                      'intfc_port' => 'current_y',
+                                                                                                      'intfc_name' => 'socket:ni[0]',
+                                                                                                      'range' => 'ni0_Yw-1   :   0',
+                                                                                                      'type' => 'input'
                                                                                                     },
-                                                                                    'ni0_NX' => {
-                                                                                                'info' => undef,
-                                                                                                'deafult' => ' 2',
-                                                                                                'global_param' => 1,
-                                                                                                'content' => '2,16,1',
-                                                                                                'redefine_param' => 1,
-                                                                                                'type' => 'Fixed'
-                                                                                              },
-                                                                                    'ni0_ROUTE_NAME' => {
-                                                                                                        'info' => undef,
-                                                                                                        'deafult' => '"XY"     ',
-                                                                                                        'global_param' => 1,
-                                                                                                        'content' => ' "XY" ,"WEST_FIRST","NORTH_LAST" , "NEGETIVE_FIRST", "DUATO"',
-                                                                                                        'redefine_param' => 1,
-                                                                                                        'type' => 'Fixed'
-                                                                                                      }
-                                                                                  },
-                                                                  'ports' => {
-                                                                               'ni0_flit_in_wr' => {
-                                                                                                   'intfc_port' => 'flit_in_wr',
-                                                                                                   'intfc_name' => 'socket:ni[0]',
-                                                                                                   'range' => '',
-                                                                                                   'type' => 'input'
-                                                                                                 },
-                                                                               'ni0_credit_out' => {
-                                                                                                   'intfc_port' => 'credit_out',
-                                                                                                   'intfc_name' => 'socket:ni[0]',
-                                                                                                   'range' => 'ni0_V-1:   0',
-                                                                                                   'type' => 'output'
-                                                                                                 },
-                                                                               'ni0_current_x' => {
-                                                                                                  'intfc_port' => 'current_x',
-                                                                                                  'intfc_name' => 'socket:ni[0]',
-                                                                                                  'range' => 'ni0_Xw-1   :   0',
-                                                                                                  'type' => 'input'
-                                                                                                },
-                                                                               'ni0_flit_out_wr' => {
-                                                                                                    'intfc_port' => 'flit_out_wr',
+                                                                                 'ni0_flit_in' => {
+                                                                                                    'intfc_port' => 'flit_in',
                                                                                                     'intfc_name' => 'socket:ni[0]',
-                                                                                                    'range' => '',
-                                                                                                    'type' => 'output'
+                                                                                                    'range' => 'ni0_Fw-1   :   0',
+                                                                                                    'type' => 'input'
                                                                                                   },
-                                                                               'ni0_current_y' => {
-                                                                                                  'intfc_port' => 'current_y',
-                                                                                                  'intfc_name' => 'socket:ni[0]',
-                                                                                                  'range' => 'ni0_Yw-1   :   0',
-                                                                                                  'type' => 'input'
-                                                                                                },
-                                                                               'ni0_flit_in' => {
-                                                                                                'intfc_port' => 'flit_in',
-                                                                                                'intfc_name' => 'socket:ni[0]',
-                                                                                                'range' => 'ni0_Fw-1   :   0',
-                                                                                                'type' => 'input'
-                                                                                              },
-                                                                               'ni0_credit_in' => {
-                                                                                                  'intfc_port' => 'credit_in',
-                                                                                                  'intfc_name' => 'socket:ni[0]',
-                                                                                                  'range' => 'ni0_V-1    :   0',
-                                                                                                  'type' => 'input'
-                                                                                                },
-                                                                               'ni0_flit_out' => {
-                                                                                                 'intfc_port' => 'flit_out',
-                                                                                                 'intfc_name' => 'socket:ni[0]',
-                                                                                                 'range' => 'ni0_Fw-1   :   0',
-                                                                                                 'type' => 'output'
-                                                                                               }
-                                                                             },
-                                                                  'module_name' => 'ni',
-                                                                  'category' => 'NoC',
-                                                                  'instance' => 'ni0',
-                                                                  'module' => 'ni'
-                                                                },
+                                                                                 'ni0_credit_in' => {
+                                                                                                      'intfc_port' => 'credit_in',
+                                                                                                      'intfc_name' => 'socket:ni[0]',
+                                                                                                      'range' => 'ni0_V-1    :   0',
+                                                                                                      'type' => 'input'
+                                                                                                    },
+                                                                                 'ni0_flit_out' => {
+                                                                                                     'intfc_port' => 'flit_out',
+                                                                                                     'intfc_name' => 'socket:ni[0]',
+                                                                                                     'range' => 'ni0_Fw-1   :   0',
+                                                                                                     'type' => 'output'
+                                                                                                   }
+                                                                               },
+                                                                    'module_name' => 'ni',
+                                                                    'category' => 'NoC',
+                                                                    'instance' => 'ni0',
+                                                                    'module' => 'ni'
+                                                                  },
                                                          'timer0' => {
                                                                        'module_name' => 'timer',
                                                                        'category' => 'TIM',
-                                                                       'instance' => 'timer',
+                                                                       'instance' => 'timer0',
                                                                        'module' => 'timer'
                                                                      }
                                                        }
@@ -640,7 +550,7 @@ $all = bless( {
                                                                  },
                                                       'parameters' => {
                                                                         'S' => {
-                                                                                 'value' => 7
+                                                                                 'value' => 8
                                                                                },
                                                                         'Aw' => {
                                                                                   'value' => '	32'
@@ -702,6 +612,96 @@ $all = bless( {
                                                       'category' => 'bus',
                                                       'module' => 'wishbone_bus'
                                                     },
+                                 'timer1' => {
+                                               'timer1' => {},
+                                               'instance_name' => 'timer1',
+                                               'plugs' => {
+                                                            'clk' => {
+                                                                       'connection_num' => undef,
+                                                                       'value' => 1,
+                                                                       'type' => 'num',
+                                                                       'nums' => {
+                                                                                   '0' => {
+                                                                                            'connect_id' => 'clk_source0',
+                                                                                            'connect_socket_num' => '0',
+                                                                                            'name' => 'clk',
+                                                                                            'connect_socket' => 'clk'
+                                                                                          }
+                                                                                 }
+                                                                     },
+                                                            'interrupt_peripheral' => {
+                                                                                        'connection_num' => undef,
+                                                                                        'value' => 1,
+                                                                                        'type' => 'num',
+                                                                                        'nums' => {
+                                                                                                    '0' => {
+                                                                                                             'connect_id' => 'int_ctrl0',
+                                                                                                             'connect_socket_num' => '4',
+                                                                                                             'name' => 'interrupt_peripheral',
+                                                                                                             'connect_socket' => 'interrupt_peripheral'
+                                                                                                           }
+                                                                                                  }
+                                                                                      },
+                                                            'reset' => {
+                                                                         'connection_num' => undef,
+                                                                         'value' => 1,
+                                                                         'type' => 'num',
+                                                                         'nums' => {
+                                                                                     '0' => {
+                                                                                              'connect_id' => 'clk_source0',
+                                                                                              'connect_socket_num' => '0',
+                                                                                              'name' => 'reset',
+                                                                                              'connect_socket' => 'reset'
+                                                                                            }
+                                                                                   }
+                                                                       },
+                                                            'wb_slave' => {
+                                                                            'connection_num' => undef,
+                                                                            'value' => 1,
+                                                                            'type' => 'num',
+                                                                            'nums' => {
+                                                                                        '0' => {
+                                                                                                 'connect_socket_num' => '7',
+                                                                                                 'width' => 5,
+                                                                                                 'base' => 2516582432,
+                                                                                                 'name' => 'wb',
+                                                                                                 'connect_socket' => 'wb_slave',
+                                                                                                 'end' => 2516582463,
+                                                                                                 'connect_id' => 'wishbone_bus0',
+                                                                                                 'addr' => '0x9600_0000	0x96ff_ffff		PWM/Timer/Counter Ctrl'
+                                                                                               }
+                                                                                      }
+                                                                          }
+                                                          },
+                                               'parameters' => {
+                                                                 'Aw' => {
+                                                                           'value' => ' 3'
+                                                                         },
+                                                                 'SELw' => {
+                                                                             'value' => '	4'
+                                                                           },
+                                                                 'TAGw' => {
+                                                                             'value' => '3'
+                                                                           },
+                                                                 'CNTw' => {
+                                                                             'value' => '32     '
+                                                                           },
+                                                                 'Dw' => {
+                                                                           'value' => '	32'
+                                                                         }
+                                                               },
+                                               'parameters_order' => [
+                                                                       'CNTw',
+                                                                       'Dw',
+                                                                       'Aw',
+                                                                       'TAGw',
+                                                                       'SELw'
+                                                                     ],
+                                               'sockets' => {},
+                                               'module_name' => 'timer',
+                                               'category' => 'TIM',
+                                               'module' => 'timer'
+                                             },
                                  'int_ctrl0' => {
                                                   'int_ctrl0' => {},
                                                   'instance_name' => 'int_ctrl',
@@ -761,7 +761,7 @@ $all = bless( {
                                                                               'value' => '    32'
                                                                             },
                                                                     'INT_NUM' => {
-                                                                                   'value' => 4
+                                                                                   'value' => 5
                                                                                  }
                                                                   },
                                                   'parameters_order' => [
@@ -1161,173 +1161,174 @@ $all = bless( {
                                               'module' => 'gpio'
                                             },
                                  'ni0' => {
-                                          'instance_name' => 'ni0',
-                                          'plugs' => {
-                                                       'wb_master' => {
-                                                                        'connection_num' => undef,
-                                                                        'value' => 1,
-                                                                        'nums' => {
-                                                                                    '0' => {
-                                                                                             'connect_socket_num' => '0',
-                                                                                             'connect_id' => 'wishbone_bus0',
-                                                                                             'name' => 'wb_master',
-                                                                                             'connect_socket' => 'wb_master'
-                                                                                           }
-                                                                                  },
-                                                                        'type' => 'num'
-                                                                      },
-                                                       'reset' => {
+                                            'instance_name' => 'ni0',
+                                            'plugs' => {
+                                                         'wb_master' => {
+                                                                          'connection_num' => undef,
+                                                                          'value' => 1,
+                                                                          'nums' => {
+                                                                                      '0' => {
+                                                                                               'connect_socket_num' => '0',
+                                                                                               'connect_id' => 'wishbone_bus0',
+                                                                                               'name' => 'wb_master',
+                                                                                               'connect_socket' => 'wb_master'
+                                                                                             }
+                                                                                    },
+                                                                          'type' => 'num'
+                                                                        },
+                                                         'reset' => {
+                                                                      'connection_num' => undef,
+                                                                      'value' => 1,
+                                                                      'nums' => {
+                                                                                  '0' => {
+                                                                                           'connect_socket_num' => '0',
+                                                                                           'connect_id' => 'clk_source0',
+                                                                                           'name' => 'reset',
+                                                                                           'connect_socket' => 'reset'
+                                                                                         }
+                                                                                },
+                                                                      'type' => 'num'
+                                                                    },
+                                                         'interrupt_peripheral' => {
+                                                                                     'connection_num' => undef,
+                                                                                     'value' => 1,
+                                                                                     'nums' => {
+                                                                                                 '0' => {
+                                                                                                          'connect_socket_num' => '1',
+                                                                                                          'connect_id' => 'int_ctrl0',
+                                                                                                          'name' => 'int_peripheral',
+                                                                                                          'connect_socket' => 'interrupt_peripheral'
+                                                                                                        }
+                                                                                               },
+                                                                                     'type' => 'num'
+                                                                                   },
+                                                         'clk' => {
                                                                     'connection_num' => undef,
                                                                     'value' => 1,
                                                                     'nums' => {
                                                                                 '0' => {
                                                                                          'connect_socket_num' => '0',
                                                                                          'connect_id' => 'clk_source0',
-                                                                                         'name' => 'reset',
-                                                                                         'connect_socket' => 'reset'
+                                                                                         'name' => 'clk',
+                                                                                         'connect_socket' => 'clk'
                                                                                        }
                                                                               },
                                                                     'type' => 'num'
                                                                   },
-                                                       'interrupt_peripheral' => {
-                                                                                   'connection_num' => undef,
-                                                                                   'value' => 1,
-                                                                                   'nums' => {
-                                                                                               '0' => {
-                                                                                                        'connect_socket_num' => '1',
-                                                                                                        'connect_id' => 'int_ctrl0',
-                                                                                                        'name' => 'int_peripheral',
-                                                                                                        'connect_socket' => 'interrupt_peripheral'
-                                                                                                      }
-                                                                                             },
-                                                                                   'type' => 'num'
-                                                                                 },
-                                                       'clk' => {
-                                                                  'connection_num' => undef,
-                                                                  'value' => 1,
-                                                                  'nums' => {
-                                                                              '0' => {
-                                                                                       'connect_socket_num' => '0',
-                                                                                       'connect_id' => 'clk_source0',
-                                                                                       'name' => 'clk',
-                                                                                       'connect_socket' => 'clk'
-                                                                                     }
-                                                                            },
-                                                                  'type' => 'num'
-                                                                },
-                                                       'wb_slave' => {
-                                                                       'connection_num' => undef,
-                                                                       'value' => 1,
-                                                                       'nums' => {
-                                                                                   '0' => {
-                                                                                            'base' => 3087007744,
-                                                                                            'width' => 5,
-                                                                                            'connect_socket_num' => '2',
-                                                                                            'name' => 'wb_slave',
-                                                                                            'end' => 3087007775,
-                                                                                            'connect_socket' => 'wb_slave',
-                                                                                            'connect_id' => 'wishbone_bus0',
-                                                                                            'addr' => '0xb800_0000	0xbfff_ffff		custom devices'
-                                                                                          }
-                                                                                 },
-                                                                       'type' => 'num'
-                                                                     }
-                                                     },
-                                          'parameters' => {
-                                                            'Dw' => {
-                                                                      'value' => '32'
-                                                                    },
-                                                            'NY' => {
-                                                                      'value' => ' 2'
-                                                                    },
-                                                            'DEBUG_EN' => {
-                                                                            'value' => '   1'
-                                                                          },
-                                                            'NX' => {
-                                                                      'value' => ' 2'
-                                                                    },
-                                                            'V' => {
-                                                                     'value' => ' 4'
-                                                                   },
-                                                            'Fw' => {
-                                                                      'value' => '2 + V + Fpay'
-                                                                    },
-                                                            'TAGw' => {
-                                                                        'value' => '   3'
-                                                                      },
-                                                            'M_Aw' => {
+                                                         'wb_slave' => {
+                                                                         'connection_num' => undef,
+                                                                         'value' => 1,
+                                                                         'nums' => {
+                                                                                     '0' => {
+                                                                                              'base' => 3087007744,
+                                                                                              'width' => 5,
+                                                                                              'connect_socket_num' => '2',
+                                                                                              'name' => 'wb_slave',
+                                                                                              'end' => 3087007775,
+                                                                                              'connect_socket' => 'wb_slave',
+                                                                                              'connect_id' => 'wishbone_bus0',
+                                                                                              'addr' => '0xb800_0000	0xbfff_ffff		custom devices'
+                                                                                            }
+                                                                                   },
+                                                                         'type' => 'num'
+                                                                       }
+                                                       },
+                                            'parameters' => {
+                                                              'Dw' => {
                                                                         'value' => '32'
                                                                       },
-                                                            'ROUTE_NAME' => {
-                                                                              'value' => '"XY"     '
-                                                                            },
-                                                            'Fpay' => {
-                                                                        'value' => ' 32'
+                                                              'NY' => {
+                                                                        'value' => ' 2'
                                                                       },
-                                                            'ROUTE_TYPE' => {
-                                                                              'value' => '   (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
+                                                              'DEBUG_EN' => {
+                                                                              'value' => '   1'
+                                                                            },
+                                                              'NX' => {
+                                                                        'value' => ' 2'
+                                                                      },
+                                                              'V' => {
+                                                                       'value' => ' 4'
+                                                                     },
+                                                              'Fw' => {
+                                                                        'value' => '2 + V + Fpay'
+                                                                      },
+                                                              'TAGw' => {
+                                                                          'value' => '   3'
+                                                                        },
+                                                              'M_Aw' => {
+                                                                          'value' => '32'
+                                                                        },
+                                                              'ROUTE_NAME' => {
+                                                                                'value' => '"XY"     '
+                                                                              },
+                                                              'Fpay' => {
+                                                                          'value' => ' 32'
+                                                                        },
+                                                              'ROUTE_TYPE' => {
+                                                                                'value' => '   (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
 			            (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE" '
+                                                                              },
+                                                              'SELw' => {
+                                                                          'value' => '   4    '
+                                                                        },
+                                                              'P' => {
+                                                                       'value' => ' 5'
+                                                                     },
+                                                              'B' => {
+                                                                       'value' => ' 4'
+                                                                     },
+                                                              'S_Aw' => {
+                                                                          'value' => '   3'
+                                                                        },
+                                                              'TOPOLOGY' => {
+                                                                              'value' => '    "MESH"'
                                                                             },
-                                                            'SELw' => {
-                                                                        'value' => '   4    '
+                                                              'Xw' => {
+                                                                        'value' => 'log2( NX )'
                                                                       },
-                                                            'P' => {
-                                                                     'value' => ' 5'
-                                                                   },
-                                                            'B' => {
-                                                                     'value' => ' 4'
-                                                                   },
-                                                            'Xw' => {
-                                                                      'value' => 'log2( NX )'
-                                                                    },
-                                                            'S_Aw' => {
-                                                                        'value' => '   3'
-                                                                      },
-                                                            'TOPOLOGY' => {
-                                                                            'value' => '    "MESH"'
-                                                                          },
-                                                            'Yw' => {
-                                                                      'value' => 'log2( NY )'
-                                                                    }
-                                                          },
-                                          'parameters_order' => [
-                                                                  'NY',
-                                                                  'NX',
-                                                                  'V',
-                                                                  'B',
-                                                                  'Dw',
-                                                                  'DEBUG_EN',
-                                                                  'TAGw',
-                                                                  'M_Aw',
-                                                                  'ROUTE_NAME',
-                                                                  'Fpay',
-                                                                  'SELw',
-                                                                  'ROUTE_TYPE',
-                                                                  'P',
-                                                                  'S_Aw',
-                                                                  'TOPOLOGY',
-                                                                  'Fw',
-                                                                  'Xw',
-                                                                  'Yw'
-                                                                ],
-                                          'sockets' => {
-                                                         'ni' => {
-                                                                   'connection_num' => 'single connection',
-                                                                   'value' => 1,
-                                                                   'nums' => {
-                                                                               '0' => {
-                                                                                        'name' => 'ni'
-                                                                                      }
-                                                                             },
-                                                                   'type' => 'num'
-                                                                 }
-                                                       },
-                                          'module_name' => 'ni',
-                                          'category' => 'NoC',
-                                          'module' => 'ni'
-                                        },
+                                                              'Yw' => {
+                                                                        'value' => 'log2( NY )'
+                                                                      }
+                                                            },
+                                            'parameters_order' => [
+                                                                    'NY',
+                                                                    'NX',
+                                                                    'V',
+                                                                    'B',
+                                                                    'Dw',
+                                                                    'DEBUG_EN',
+                                                                    'TAGw',
+                                                                    'M_Aw',
+                                                                    'ROUTE_NAME',
+                                                                    'Fpay',
+                                                                    'SELw',
+                                                                    'ROUTE_TYPE',
+                                                                    'P',
+                                                                    'S_Aw',
+                                                                    'TOPOLOGY',
+                                                                    'Fw',
+                                                                    'Xw',
+                                                                    'Yw'
+                                                                  ],
+                                            'sockets' => {
+                                                           'ni' => {
+                                                                     'connection_num' => 'single connection',
+                                                                     'value' => 1,
+                                                                     'nums' => {
+                                                                                 '0' => {
+                                                                                          'name' => 'ni'
+                                                                                        }
+                                                                               },
+                                                                     'type' => 'num'
+                                                                   }
+                                                         },
+                                            'ni0' => {},
+                                            'module_name' => 'ni',
+                                            'category' => 'NoC',
+                                            'module' => 'ni'
+                                          },
                                  'timer0' => {
-                                               'instance_name' => 'timer',
+                                               'instance_name' => 'timer0',
                                                'plugs' => {
                                                             'clk' => {
                                                                        'connection_num' => undef,
@@ -1424,6 +1425,7 @@ $all = bless( {
                                       'aeMB0',
                                       'Altera_single_port_ram0',
                                       'timer0',
+                                      'timer1',
                                       'ext_int0',
                                       'int_ctrl0',
                                       'clk_source0',

@@ -137,6 +137,21 @@ sub def_h_labeled_entry{
 	
 }		
 
+##############
+# ComboBoxEntry
+##############
+
+sub gen_combo_entry{
+	my $list_ref=shift;
+	my @list=@{$list_ref};	
+
+	my $combo_box_entry = Gtk2::ComboBoxEntry->new_text;
+	foreach my $p (@list){
+		$combo_box_entry->append_text($p);
+	}
+	$combo_box_entry->set_active(0);
+	return $combo_box_entry;
+}
 
 #############
 #  label

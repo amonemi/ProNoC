@@ -31,9 +31,10 @@ sub soc_generate_verilog{
 	my $body_v;
 	
 	my ($param_v_all, $local_param_v_all, $wire_def_v_all, $inst_v_all, $plugs_assign_v_all, $sockets_assign_v_all,$io_full_v_all);
-	
+	my $wires=soc->new_wires();
+	my $intfc=interface->interface_new();
 	foreach my $id (@instances){
-		my ($param_v, $local_param_v, $wire_def_v, $inst_v, $plugs_assign_v, $sockets_assign_v,$io_full_v)=gen_module_inst($id,$soc,\$io_sim_v,\$param_as_in_v,$top_ip);
+		my ($param_v, $local_param_v, $wire_def_v, $inst_v, $plugs_assign_v, $sockets_assign_v,$io_full_v)=gen_module_inst($id,$soc,\$io_sim_v,\$param_as_in_v,$top_ip,$intfc,$wires);
 		my $inst   	= $soc->soc_get_instance_name($id);
 		add_text_to_string(\$body_v,"/*******************\n*\n*\t$inst\n*\n*\n*********************/\n");
 		
@@ -47,7 +48,7 @@ sub soc_generate_verilog{
 		#print  "$param_v $local_param_v $wire_def_v $inst_v $plugs_assign_v $sockets_assign_v $io_full_v";
 			
 	}	
-	my ($addr_map,$addr_localparam,$module_addr_localparam)= generate_address_cmp($soc);
+	my ($addr_map,$addr_localparam,$module_addr_localparam)= generate_address_cmp($soc,$wires);
 
 	#add functions
 	my $dir = Cwd::getcwd();
@@ -57,6 +58,8 @@ sub soc_generate_verilog{
 		 $functions_all="$functions_all $f1 ";
 	}
 	close($file1);
+	my $unused_wiers_v=assign_unconnected_wires($wires,$intfc);
+	
 
 	my $soc_v = (defined $param_as_in_v )? "module $soc_name #(\n $param_as_in_v\n)(\n$io_sim_v\n);\n": "module $soc_name (\n$io_sim_v\n);\n";
 	add_text_to_string(\$soc_v,$functions_all);	
@@ -65,6 +68,7 @@ sub soc_generate_verilog{
 	add_text_to_string(\$soc_v,$module_addr_localparam);	
 	add_text_to_string(\$soc_v,$io_full_v_all);
 	add_text_to_string(\$soc_v,$wire_def_v_all);
+	add_text_to_string(\$soc_v,$unused_wiers_v);
 	add_text_to_string(\$soc_v,$inst_v_all);
 	add_text_to_string(\$soc_v,$plugs_assign_v_all);
 	add_text_to_string(\$soc_v,$sockets_assign_v_all);
@@ -73,7 +77,7 @@ sub soc_generate_verilog{
 	
 	
 	$soc->soc_add_top($top_ip);
-	
+	#print @assigned_wires;
 	return "$soc_v";
 
 
@@ -84,14 +88,14 @@ sub soc_generate_verilog{
 ###############
 
 sub gen_module_inst {
-	my ($id,$soc,$io_sim_v,$param_as_in_v,$top_ip)=@_;
+	my ($id,$soc,$io_sim_v,$param_as_in_v,$top_ip, $intfc,$wires)=@_;
 	my $module 	=$soc->soc_get_module($id);
 	my $module_name	=$soc->soc_get_module_name($id);
 	my $category 	=$soc->soc_get_category($id);
 	
 	my $inst   	= $soc->soc_get_instance_name($id);
 	my %params	= $soc->soc_get_module_param($id);
-	my $intfc=interface->interface_new();
+	
 	my $ip = ip->lib_new ();
 	
 	my @ports=$ip->ip_list_ports($category,$module);
@@ -168,7 +172,7 @@ sub gen_module_inst {
 			 $assigned_port="$inst\_$i_type\_$i_name\_$i_num\_$i_port";
 			 
 			 #create plug wires
-			 my $wire_string=generate_wire ($range,$assigned_port,$inst,\%params);
+			 my $wire_string=generate_wire ($range,$assigned_port,$inst,\%params,$i_type,$i_name,$i_num,$i_port, $wires);
 			 add_text_to_string(\$wire_def_v,$wire_string);
 				
 			 
@@ -184,8 +188,17 @@ sub gen_module_inst {
 					#connect plug port to socket port
 					my $new_range = add_instantc_name_to_parameters(\%params,$inst,$range);
 					my $connect_port_range=(length($new_range)>1)?"$connect_port\[$new_range\]":$connect_port;					
-					$plugs_assign_v= ($type eq 'input' )? "$plugs_assign_v \tassign  $assigned_port = $connect_port_range;\n":
-													"$plugs_assign_v \tassign  $connect_port  = $assigned_port;\n";
+					
+					if($type eq 'input' ){
+						$plugs_assign_v= "$plugs_assign_v \tassign  $assigned_port = $connect_port_range;\n";
+						$wires->wire_add($assigned_port,"connected",1);
+						
+					}else{
+						$plugs_assign_v= "$plugs_assign_v \tassign  $connect_port  = $assigned_port;\n";
+						$wires->wire_add($connect_port,"connected",1);						
+					}
+
+
 				}
 			}#plug
 			else{ #socket
@@ -197,14 +210,14 @@ sub gen_module_inst {
 						my $name= $soc->soc_get_instance_name($id);
 						my $joint= "$name\_$i_type\_$i_name\_$v\_$i_port";
 						
-						my $wire_string=generate_wire ($i_range,"$name\_$i_type\_$i_name\_$v\_$i_port",$inst,\%params);
+						my $wire_string=generate_wire ($i_range,"$name\_$i_type\_$i_name\_$v\_$i_port",$inst,\%params,$i_type,$i_name,$i_num,$i_port, $wires);
 						add_text_to_string(\$wire_def_v,$wire_string);
 						
 						for(my $i=$v-1; $i>=0; $i--) {
 							$joint= "$joint ,$name\_$i_type\_$i_name\_$i\_$i_port";
 							#create socket wires
 							 #create plug wires
-							my $wire_string=generate_wire ($i_range,"$name\_$i_type\_$i_name\_$i\_$i_port",$inst,\%params);
+							my $wire_string=generate_wire ($i_range,"$name\_$i_type\_$i_name\_$i\_$i_port",$inst,\%params,$i_type,$i_name,$i_num,$i_port, $wires);
 							add_text_to_string(\$wire_def_v,$wire_string);
 				
 							
@@ -213,8 +226,17 @@ sub gen_module_inst {
 							
 							
 						}
-						$joint=($v>0)? "\{$joint\}" : "$joint";
-						my $text=($type eq 'input' )? "\tassign $assigned_port =$joint;\n": "\tassign $joint =$assigned_port;\n";
+						$wires->wire_add($assigned_port,"connected",1)  if($type eq 'input');
+						if($type ne 'input' ){
+							my @w=split('\s*,\s*',$joint);
+							foreach my $q (@w) {
+								$wires->wire_add($q,"connected",1);
+							}
+							
+						}
+						$joint=($v>0)? "\{ $joint\ }" : "$joint";
+						my $text=($type eq 'input' )? "\tassign $assigned_port = $joint;\n": "\tassign $joint = $assigned_port;\n";
+						
 						add_text_to_string(\$sockets_assign_v,$text);
 				}
 				
@@ -227,7 +249,7 @@ sub gen_module_inst {
 				
 		
 		
-		if (++$counter == scalar(@ports)){
+		if (++$counter == scalar(@ports)){#last port def
 			
 			$inst_v=($NC eq 'yes')? "$inst_v\t\t.$port()\n": "$inst_v\t\t.$port($assigned_port)\n";
 			
@@ -236,12 +258,18 @@ sub gen_module_inst {
 			$inst_v=($NC eq 'yes')? "$inst_v\t\t.$port(),\n":"$inst_v\t\t.$port($assigned_port),\n";
 		}
 		
-		
+		if($type ne 'input' && $NC ne 'yes' ){
+			$wires->wire_add($assigned_port,"connected",1);
+			
+		}
 		
 		
 		
 	}	
 	$inst_v="$inst_v\t);\n";
+	
+	
+	
 	
 	return ($param_v, $local_param_v, $wire_def_v, $inst_v, $plugs_assign_v, $sockets_assign_v,$io_full_v);
 	
@@ -326,7 +354,7 @@ sort keys%params;
 ##############
 
 sub generate_address_cmp{
-	my $soc=shift;
+	my ($soc,$wires)=@_;
 	my $number=0;
 	my $addr_mp_v="\n//Wishbone slave address match\n";
 	my $instance_addr_localparam="\n//Wishbone slave base address based on instance name\n";
@@ -352,8 +380,9 @@ sub generate_address_cmp{
 							add_text_to_string(\$module_addr_localparam,"\tlocalparam \t$instance_id\_END_ADDR\t=\t$end_hex;\n");
 						}
 						
-						my $connect_name=$soc->soc_get_instance_name($connect_id); 
-						$addr_mp_v="$addr_mp_v \tassign $connect_name\_socket_wb_addr_map_0_sel_one_hot[$connect_socket_num\]= (($connect_name\_socket_wb_addr_map_0_grant_addr >= $instance_name\_BASE_ADDR)   & ($connect_name\_socket_wb_addr_map_0_grant_addr< $instance_name\_END_ADDR));\n";
+						my $connect_name=$soc->soc_get_instance_name($connect_id);
+						$wires->wire_add("$connect_name\_socket_wb_addr_map_0_sel_one_hot","connected",1);
+						$addr_mp_v="$addr_mp_v \tassign $connect_name\_socket_wb_addr_map_0_sel_one_hot[$connect_socket_num\] = (($connect_name\_socket_wb_addr_map_0_grant_addr >= $instance_name\_BASE_ADDR)   & ($connect_name\_socket_wb_addr_map_0_grant_addr< $instance_name\_END_ADDR));\n";
 						
 						$number++;
 					}#if
@@ -384,22 +413,77 @@ sub add_text_to_string{
 
 
 sub generate_wire {
-	my($range,$port_name,$inst_name,$params_ref)=@_;
+	my($range,$port_name,$inst_name,$params_ref,$i_type,$i_name,$i_num,$i_port, $wires)=@_;
 	my $wire_string;
+	my $new_range;
 	if(length ($range)>1 ){
 		#replace parameter in range
-		my $new_range = add_instantc_name_to_parameters($params_ref,$inst_name,$range);
+		$new_range = add_instantc_name_to_parameters($params_ref,$inst_name,$range);
 		$wire_string= "\twire\t[ $new_range ] $port_name;\n";				
 	}
 	else{
 		$wire_string="\twire\t\t\t $port_name;\n";
-	}	
+	}
+	$wires->wire_add("$port_name","range",$new_range);
+	$wires->wire_add("$port_name","inst_name",$inst_name);
+	$wires->wire_add("$port_name","i_type",$i_type);
+	$wires->wire_add("$port_name","i_name",$i_name);
+	$wires->wire_add("$port_name","i_num",$i_num);
+	$wires->wire_add("$port_name","i_port",$i_port);
+		
 	return $wire_string;	
 }	
 
+sub port_width_repeat{
+	my ($range,$value)=@_;
+	$range=remove_all_white_spaces($range);
+	my ($h,$l)=split(':',$range);
+	return "$value" if(!defined $h ) ; # port width is 1
+	return "$value" if($h eq "0" && "$l" eq "0"); # port width is 1
+	$h=$l if($h eq "0" && "$l" ne "0"); 
+	if($h =~ /-1$/){ # the address ranged is endup with -1 
+		$h =~ s/-1$//; # remove -1
+		return "\{$h\{$value\}\}"  if($h =~ /\)$/);
+		return "\{($h)\{$value\}\}" if($h =~ /[\*\.\+\-\^\%\&]/);
+		return "\{$h\{$value\}\}";
+	}
+	return "\{($h+1){$value}}";	
+}
 
+sub assign_unconnected_wires{
+	my($wires,$intfc)=@_;
+	my $unused_wire_v=undef;
+	
+	my @all_wires=$wires->wires_list();
+	foreach my $p (@all_wires ){
+		if(!defined $wires->wire_get($p,"connected")){ # unconnected wires
+			# Take default value from interface definition 
+			#$wires->wire_get("$p","inst_name");
+			my $i_type=$wires->wire_get($p,"i_type");
+			my $i_name= $wires->wire_get($p,"i_name");
+			my $i_num=$wires->wire_get($p,"i_num");
+			my $i_port=$wires->wire_get($p,"i_port");
+			my $new_range=$wires->wire_get($p,"range");
+			my ($range,$type,$connect,$default_out) = ($i_type eq "socket" )? $intfc->get_port_info_of_socket($i_name,$i_port):
+																			  $intfc->get_port_info_of_plug($i_name,$i_port);
+			#""Active high","Don't care"
+			
+			my $default=(!defined $default_out		  )? port_width_repeat($new_range,"1\'bx"):
+						($default_out eq 'Active low' )? port_width_repeat($new_range,"1\'b0"):
+					    ($default_out eq 'Active high')? port_width_repeat($new_range,"1\'b1"):
+ 						($default_out eq 'Don\'t care')? port_width_repeat($new_range,"1\'bx"): $default_out;
+					    
+			
+			$unused_wire_v= "$unused_wire_v \tassign ${p} = $default;\n";
+		
+		}
+		
+	}
+	$unused_wire_v="\n//Take the default value for ports that defined by interfaces but did not assigned to any wires.\n $unused_wire_v\n\n" if(defined $unused_wire_v); 
+	return $unused_wire_v;
 
-
+	
+}
 
 
 

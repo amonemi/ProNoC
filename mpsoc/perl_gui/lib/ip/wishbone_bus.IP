@@ -6,54 +6,76 @@ $wishbone_bus = bless( {
                                         ],
                          'ip_name' => 'wishbone_bus',
                          'description' => 'wishbone bus',
+                         'parameters' => {
+                                           'S' => {
+                                                    'info' => 'Number of wishbone slave interface',
+                                                    'deafult' => '4',
+                                                    'global_param' => 0,
+                                                    'content' => '1,256,1',
+                                                    'type' => 'Spin-button',
+                                                    'redefine_param' => 1
+                                                  },
+                                           'SELw' => {
+                                                       'info' => undef,
+                                                       'deafult' => 'Dw/8',
+                                                       'global_param' => 0,
+                                                       'content' => '',
+                                                       'type' => 'Fixed',
+                                                       'redefine_param' => 1
+                                                     },
+                                           'Dw' => {
+                                                     'info' => undef,
+                                                     'deafult' => '32',
+                                                     'global_param' => 0,
+                                                     'content' => '',
+                                                     'type' => 'Fixed',
+                                                     'redefine_param' => 1
+                                                   },
+                                           'BTEw' => {
+                                                       'info' => undef,
+                                                       'deafult' => '2 ',
+                                                       'global_param' => 0,
+                                                       'content' => '',
+                                                       'type' => 'Fixed',
+                                                       'redefine_param' => 1
+                                                     },
+                                           'M' => {
+                                                    'info' => 'Number of wishbone master interface',
+                                                    'deafult' => ' 4',
+                                                    'global_param' => 0,
+                                                    'content' => '1,256,1',
+                                                    'type' => 'Spin-button',
+                                                    'redefine_param' => 1
+                                                  },
+                                           'Aw' => {
+                                                     'info' => undef,
+                                                     'deafult' => '32',
+                                                     'global_param' => 0,
+                                                     'content' => '',
+                                                     'type' => 'Fixed',
+                                                     'redefine_param' => 1
+                                                   },
+                                           'TAGw' => {
+                                                       'info' => undef,
+                                                       'deafult' => '3',
+                                                       'global_param' => 0,
+                                                       'content' => '',
+                                                       'type' => 'Fixed',
+                                                       'redefine_param' => 1
+                                                     },
+                                           'CTIw' => {
+                                                       'info' => undef,
+                                                       'deafult' => '3',
+                                                       'global_param' => 0,
+                                                       'content' => '',
+                                                       'type' => 'Fixed',
+                                                       'redefine_param' => 1
+                                                     }
+                                         },
                          'modules' => {
                                         'wishbone_bus' => {},
                                         'bus_arbiter' => {}
                                       },
-                         'parameters' => {
-                                           'S' => {
-                                                    'info' => 'slave port number',
-                                                    'deafult' => '	4',
-                                                    'global_param' => 0,
-                                                    'content' => '1,256,1',
-                                                    'type' => 'Spin-button'
-                                                  },
-                                           'M' => {
-                                                    'info' => 'master port number',
-                                                    'deafult' => '	4',
-                                                    'global_param' => 0,
-                                                    'content' => '1,256,1',
-                                                    'type' => 'Spin-button'
-                                                  },
-                                           'Aw' => {
-                                                     'info' => undef,
-                                                     'deafult' => '	32',
-                                                     'global_param' => 0,
-                                                     'content' => '',
-                                                     'type' => 'Fixed'
-                                                   },
-                                           'TAGw' => {
-                                                       'info' => undef,
-                                                       'deafult' => '	3    ',
-                                                       'global_param' => 0,
-                                                       'content' => '',
-                                                       'type' => 'Fixed'
-                                                     },
-                                           'SELw' => {
-                                                       'info' => undef,
-                                                       'deafult' => '	4',
-                                                       'global_param' => 0,
-                                                       'content' => '',
-                                                       'type' => 'Fixed'
-                                                     },
-                                           'Dw' => {
-                                                     'info' => undef,
-                                                     'deafult' => '	32',
-                                                     'global_param' => 0,
-                                                     'content' => '',
-                                                     'type' => 'Fixed'
-                                                   }
-                                         },
                          'plugs' => {
                                       'clk' => {
                                                  'clk' => {},
@@ -76,19 +98,19 @@ $wishbone_bus = bless( {
                                       's_sel_o_all' => {
                                                          'intfc_name' => 'socket:wb_slave[array]',
                                                          'intfc_port' => 'sel_o',
-                                                         'range' => '(SELw*S)-1    :   0',
+                                                         'range' => 'SELw*S-1    :   0',
                                                          'type' => 'output'
                                                        },
                                       's_adr_o_all' => {
                                                          'intfc_name' => 'socket:wb_slave[array]',
                                                          'intfc_port' => 'adr_o',
-                                                         'range' => '(Aw*S)-1      :   0',
+                                                         'range' => 'Aw*S-1      :   0',
                                                          'type' => 'output'
                                                        },
                                       's_dat_o_all' => {
                                                          'intfc_name' => 'socket:wb_slave[array]',
                                                          'intfc_port' => 'dat_o',
-                                                         'range' => '(Dw*S)-1      :   0',
+                                                         'range' => 'Dw*S-1      :   0',
                                                          'type' => 'output'
                                                        },
                                       'm_cyc_i_all' => {
@@ -103,16 +125,28 @@ $wishbone_bus = bless( {
                                                           'range' => 'Aw-1       :   0',
                                                           'type' => 'output'
                                                         },
+                                      's_bte_o_all' => {
+                                                         'intfc_name' => 'socket:wb_slave[array]',
+                                                         'intfc_port' => 'bte_o',
+                                                         'range' => 'BTEw*S-1    :   0',
+                                                         'type' => 'output'
+                                                       },
                                       's_ack_i_all' => {
                                                          'intfc_name' => 'socket:wb_slave[array]',
                                                          'intfc_port' => 'ack_i',
                                                          'range' => 'S-1        :   0',
                                                          'type' => 'input'
                                                        },
+                                      's_cti_o_all' => {
+                                                         'intfc_name' => 'socket:wb_slave[array]',
+                                                         'intfc_port' => 'cti_o',
+                                                         'range' => 'CTIw*S-1    :   0',
+                                                         'type' => 'output'
+                                                       },
                                       's_tag_o_all' => {
                                                          'intfc_name' => 'socket:wb_slave[array]',
                                                          'intfc_port' => 'tag_o',
-                                                         'range' => '(TAGw*S)-1    :   0',
+                                                         'range' => 'TAGw*S-1    :   0',
                                                          'type' => 'output'
                                                        },
                                       's_err_i_all' => {
@@ -148,7 +182,7 @@ $wishbone_bus = bless( {
                                       'm_adr_i_all' => {
                                                          'intfc_name' => 'socket:wb_master[array]',
                                                          'intfc_port' => 'adr_i',
-                                                         'range' => '(Aw*M)-1      :   0',
+                                                         'range' => 'Aw*M-1      :   0',
                                                          'type' => 'input'
                                                        },
                                       'm_rty_o_all' => {
@@ -160,7 +194,7 @@ $wishbone_bus = bless( {
                                       'm_dat_o_all' => {
                                                          'intfc_name' => 'socket:wb_master[array]',
                                                          'intfc_port' => 'dat_o',
-                                                         'range' => '(Dw*M)-1      :   0',
+                                                         'range' => 'Dw*M-1      :   0',
                                                          'type' => 'output'
                                                        },
                                       's_we_o_all' => {
@@ -169,17 +203,23 @@ $wishbone_bus = bless( {
                                                         'range' => 'S-1        :   0',
                                                         'type' => 'output'
                                                       },
+                                      'm_dat_i_all' => {
+                                                         'intfc_name' => 'socket:wb_master[array]',
+                                                         'intfc_port' => 'dat_i',
+                                                         'range' => 'Dw*M-1      :   0',
+                                                         'type' => 'input'
+                                                       },
+                                      'm_bte_i_all' => {
+                                                         'intfc_name' => 'socket:wb_master[array]',
+                                                         'intfc_port' => 'bte_i',
+                                                         'range' => 'BTEw*M-1    :   0',
+                                                         'type' => 'input'
+                                                       },
                                       'm_err_o_all' => {
                                                          'intfc_name' => 'socket:wb_master[array]',
                                                          'intfc_port' => 'err_o',
                                                          'range' => 'M-1        :   0',
                                                          'type' => 'output'
-                                                       },
-                                      'm_dat_i_all' => {
-                                                         'intfc_name' => 'socket:wb_master[array]',
-                                                         'intfc_port' => 'dat_i',
-                                                         'range' => '(Dw*M)-1      :   0',
-                                                         'type' => 'input'
                                                        },
                                       's_rty_i_all' => {
                                                          'intfc_name' => 'socket:wb_slave[array]',
@@ -196,19 +236,19 @@ $wishbone_bus = bless( {
                                       'm_tag_i_all' => {
                                                          'intfc_name' => 'socket:wb_master[array]',
                                                          'intfc_port' => 'tag_i',
-                                                         'range' => '(TAGw*M)-1    :   0',
+                                                         'range' => 'TAGw*M-1    :   0',
                                                          'type' => 'input'
                                                        },
                                       's_dat_i_all' => {
                                                          'intfc_name' => 'socket:wb_slave[array]',
                                                          'intfc_port' => 'dat_i',
-                                                         'range' => '(Dw*S)-1      :   0',
+                                                         'range' => 'Dw*S-1      :   0',
                                                          'type' => 'input'
                                                        },
                                       'm_sel_i_all' => {
                                                          'intfc_name' => 'socket:wb_master[array]',
                                                          'intfc_port' => 'sel_i',
-                                                         'range' => '(SELw*M)-1    :   0',
+                                                         'range' => 'SELw*M-1    :   0',
                                                          'type' => 'input'
                                                        },
                                       'clk' => {
@@ -217,6 +257,12 @@ $wishbone_bus = bless( {
                                                  'range' => '',
                                                  'type' => 'input'
                                                },
+                                      'm_cti_i_all' => {
+                                                         'intfc_name' => 'socket:wb_master[array]',
+                                                         'intfc_port' => 'cti_i',
+                                                         'range' => 'CTIw*M-1    :   0',
+                                                         'type' => 'input'
+                                                       },
                                       'm_we_i_all' => {
                                                         'intfc_name' => 'socket:wb_master[array]',
                                                         'intfc_port' => 'we_i',
@@ -230,13 +276,47 @@ $wishbone_bus = bless( {
                                                            'type' => 'input'
                                                          }
                                     },
+                         'ports_order' => [
+                                            's_adr_o_all',
+                                            's_dat_o_all',
+                                            's_sel_o_all',
+                                            's_tag_o_all',
+                                            's_we_o_all',
+                                            's_cyc_o_all',
+                                            's_stb_o_all',
+                                            's_cti_o_all',
+                                            's_bte_o_all',
+                                            's_dat_i_all',
+                                            's_ack_i_all',
+                                            's_err_i_all',
+                                            's_rty_i_all',
+                                            'm_dat_o_all',
+                                            'm_ack_o_all',
+                                            'm_err_o_all',
+                                            'm_rty_o_all',
+                                            'm_adr_i_all',
+                                            'm_dat_i_all',
+                                            'm_sel_i_all',
+                                            'm_tag_i_all',
+                                            'm_we_i_all',
+                                            'm_stb_i_all',
+                                            'm_cyc_i_all',
+                                            'm_cti_i_all',
+                                            'm_bte_i_all',
+                                            'm_grant_addr',
+                                            's_sel_one_hot',
+                                            'clk',
+                                            'reset'
+                                          ],
                          'parameters_order' => [
-                                                 'S',
                                                  'M',
+                                                 'S',
+                                                 'Dw',
                                                  'Aw',
-                                                 'TAGw',
                                                  'SELw',
-                                                 'Dw'
+                                                 'TAGw',
+                                                 'CTIw',
+                                                 'BTEw'
                                                ],
                          'sockets' => {
                                         'wb_master' => {
@@ -267,7 +347,8 @@ $wishbone_bus = bless( {
                                                         'wb_slave' => {}
                                                       }
                                       },
-                         'file_name' => '/home/alireza/Mywork/develop/mpsoc/src_peripheral/bus/wishbone_bus.v',
+                         'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/bus/wishbone_bus.v',
                          'module_name' => 'wishbone_bus',
+                         'unused' => undef,
                          'category' => 'bus'
                        }, 'ip_gen' );

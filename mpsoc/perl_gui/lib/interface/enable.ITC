@@ -11,15 +11,16 @@ $HashRef = bless( {
                                  'clk_o' => {
                                               'outport_type' => 'concatenate',
                                               'connect_name' => 'enable_o',
-                                              'connect_type' => 'output',
-                                              'range' => '',
                                               'name' => 'enable_i',
+                                              'range' => '',
+                                              'connect_type' => 'output',
                                               'connect_range' => '',
+                                              'default_out' => 'Active high',
                                               'type' => 'input'
                                             }
                                },
                     'file_name' => '/home/alireza/Mywork/mpsoc/perl_gui/lib/verilog/bus.v',
                     'module_name' => 'clk_socket',
-                    'type' => 'plug',
-                    'category' => 'source'
+                    'category' => 'source',
+                    'type' => 'plug'
                   }, 'intfc_gen' );

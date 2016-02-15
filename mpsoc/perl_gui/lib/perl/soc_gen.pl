@@ -10,7 +10,7 @@ use POSIX 'strtol';
 use File::Path;
 use File::Find;
 use File::Copy;
-
+use File::Copy::Recursive qw(dircopy);
 use Cwd 'abs_path';
 
 
@@ -29,7 +29,8 @@ use constant NUM_COLUMNS     => 4;
 
 require "widget.pl"; 
 require "verilog_gen.pl";
-require "aeMB.pl";
+
+require "hdr_file_gen.pl";
 
 
 
@@ -799,8 +800,8 @@ sub create_tree {
 
 
 
-sub get_all_hdl_files_list {
-	my $soc=shift;
+sub get_all_files_list {
+	my ($soc,$list_name)=@_;
 	my @instances=$soc->soc_get_all_instances();
 	my $ip = ip->lib_new ();
 	my @files;
@@ -815,11 +816,11 @@ sub get_all_hdl_files_list {
 		my $category 	=$soc->soc_get_category($id);
 		my $inst   		=$soc->soc_get_instance_name($id);
 			
-		my @new=$ip->ip_get_hdl_files( $category,$module);
+		my @new=$ip->ip_get_files( $category,$module,$list_name);
 		foreach my $f(@new){
     			my $n="$project_dir$f";
-    			 if (!(-f "$n") && !(-f "$f" )){
-    			 	$warnings=(defined $warnings)? "$warnings WARNING: Can not find  the hdl file \"$f\" which is required for \"$inst\" \n":"WARNING: Can not find  the hdl file \"$f\" which is required for \"$inst\"\n ";   
+    			 if (!(-f "$n") && !(-f "$f" ) ){
+    			 	$warnings=(defined $warnings)? "$warnings WARNING: Can not find  \"$f\" which is required for \"$inst\" \n":"WARNING: Can not find  \"$f\"  which is required for \"$inst\"\n ";   
     			 	
     			 }
     			
@@ -873,8 +874,8 @@ sub generate_soc{
     		
     		#copy hdl codes in src_verilog
     		
-    		my ($hdl_ref,$warnings)= get_all_hdl_files_list($soc);
-    		foreach my $f(@{$hdl_ref}){
+    		my ($file_ref,$warnings)= get_all_files_list($soc,"hdl_files");
+    		foreach my $f(@{$file_ref}){
     			my $n="$project_dir$f";
     			 if (-f "$n") {
     			 	copy ("$n","$target_dir/src_verilog/lib"); 		
@@ -904,22 +905,42 @@ sub generate_soc{
     		
     		
     		
-    		# Write header file
-			my $file_h=aemb_generate_header($soc);
+    		# Write header files
+			my $file_h=generate_header_file($soc);
 			open(FILE,  ">lib/verilog/$name.h") || die "Can not open: $!";
 			print FILE $file_h;
 			close(FILE) || die "Error closing file: $!";
-			
-    		
-    				
 			copy ("$dir/lib/verilog/$name.h","$target_dir/sw/"); 
+    		
+    		# Write Software files
+			($file_ref,$warnings)= get_all_files_list($soc,"sw_files");
+		
+			foreach my $f(@{$file_ref}){
+				my $name= basename($f);
+				
+    			my $n="$project_dir$f";
+    			 if (-f "$n") { #copy file
+    			 	copy ("$n","$target_dir/sw"); 		
+    			 }elsif(-f "$f" ){
+    			 	copy ("$f","$target_dir/sw"); 		
+    			 	
+    			 }elsif (-d "$n") {#copy folder
+    			 	dircopy ("$n","$target_dir/sw/$name"); 		
+    			 }elsif(-d "$f" ){
+    			 	dircopy ("$f","$target_dir/sw/$name"); 		
+    			 	
+    			 }
+    			
+    		
+    		}
 			
-			use File::Copy::Recursive qw(dircopy);
-			dircopy("$dir/../src_processor/aeMB/compiler","$target_dir/sw/") or die("$!\n");
+			
+			
 			
 			
 			
 			message_dialog("SoC \"$name\" has been created successfully at $target_dir/ " );
+			exec($^X, $0, @ARGV);# reset ProNoC to apply changes
 		
 		}else {
 			message_dialog("Please define the SoC name!");

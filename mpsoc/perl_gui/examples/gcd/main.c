@@ -17,7 +17,7 @@ void desplay_num( unsigned int num){
 		
 	}
 	
-	DISPLAY_WRITE(value);
+	GPO_WRITE(value);
 
 }
 
@@ -45,7 +45,7 @@ int main(){
 	while(1){
 		i++;
 		delay(5000000);
-		DISPLAY_WRITE(0xFFFFFFF);
+		GPO_WRITE(0xFFFFFFF);
 	}
 
 

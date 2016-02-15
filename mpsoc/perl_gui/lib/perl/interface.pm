@@ -133,46 +133,51 @@ sub add_param_to_socket{
 
 
 sub add_port_to_plug{
-	my($self,$interface,$port,$range,$type,$outport_type,$connect)=@_;
+	my($self,$interface,$port,$range,$type,$outport_type,$connect,$default_out)=@_;
 	$self->{plugs}{$interface}{ports}{$port}={};
 	$self->{plugs}{$interface}{ports}{$port}{range}=$range;
 	$self->{plugs}{$interface}{ports}{$port}{type}=$type;
 	$self->{plugs}{$interface}{ports}{$port}{outport_type}=$outport_type;
 	$self->{plugs}{$interface}{ports}{$port}{connect}=$connect;
+	$self->{plugs}{$interface}{ports}{$port}{default_out}=$default_out;
 	
 }
 
 
 sub get_port_info_of_socket{
 	my($self,$socket,$port)=@_;
-	my($range,$type,$connect);
+	my($range,$type,$connect,$default_out);
 	if(exists ($self->{sockets}{$socket}{ports}{$port})){
 		$range=$self->{sockets}{$socket}{ports}{$port}{range};
 		$type=$self->{sockets}{$socket}{ports}{$port}{type};
 		$connect=$self->{sockets}{$socket}{ports}{$port}{connect};
+		$default_out=$self->{sockets}{$socket}{ports}{$port}{default_out};
 	}
-	return ($range,$type,$connect);
+	return ($range,$type,$connect,$default_out);
 }
 
 sub get_port_info_of_plug{
 	my($self,$plug,$port)=@_;
-	my($range,$type,$connect);
+	my($range,$type,$connect,$default_out);
 	if(exists ($self->{plugs}{$plug}{ports}{$port})){
 		$range=$self->{plugs}{$plug}{ports}{$port}{range};
 		$type=$self->{plugs}{$plug}{ports}{$port}{type};
 		$connect=$self->{plugs}{$plug}{ports}{$port}{connect};
+		$default_out=$self->{plugs}{$plug}{ports}{$port}{default_out};
+
 	}
-	return ($range,$type,$connect);
+	return ($range,$type,$connect,$default_out);
 }
 
 
 sub add_port_to_socket{
-	my($self,$socket,$port,$range,$type,$outport_type,$connect)=@_;
+	my($self,$socket,$port,$range,$type,$outport_type,$connect,$default_out)=@_;
 	$self->{sockets}{$socket}{ports}{$port}={};
 	$self->{sockets}{$socket}{ports}{$port}{range}=$range;
 	$self->{sockets}{$socket}{ports}{$port}{type}=$type;
 	$self->{sockets}{$socket}{ports}{$port}{outport_type}=$outport_type;
 	$self->{sockets}{$socket}{ports}{$port}{connect}=$connect;
+	$self->{sockets}{$socket}{ports}{$port}{default_out}=$default_out;
 	
 }
 
@@ -250,7 +255,7 @@ sub add_intfc{
 	my $intfc_category=$infc_gen->intfc_get_category();
 	
 	
-	my(%types,%ranges,%names,%connect_types,%connect_ranges,%connect_names,%outport_types);
+	my(%types,%ranges,%names,%connect_types,%connect_ranges,%connect_names,%outport_types,%default_outs);
 	
 	
 	add_socket($self,$intfc_name,$intfc_info,$intfc_category,$connection_num,$intfc_name);
@@ -259,7 +264,7 @@ sub add_intfc{
 	add_category($self,$intfc_category,$intfc_name,$intfc_info);
 	
 	
-	$infc_gen->intfc_get_ports(\%types,\%ranges,\%names,\%connect_types,\%connect_ranges,\%connect_names,\%outport_types);	
+	$infc_gen->intfc_get_ports(\%types,\%ranges,\%names,\%connect_types,\%connect_ranges,\%connect_names,\%outport_types,\%default_outs);	
 	foreach my $id (sort keys %ranges){
 			my $type=$types{$id};
 			my $range=$ranges{$id};
@@ -268,18 +273,18 @@ sub add_intfc{
 			my $connect_range=$connect_ranges{$id};
 			my $connect_name=$connect_names{$id};
 			my $outport_type=$outport_types{$id};
-			
+			my $default_out=$default_outs{$id};
 			if($intfc_type eq 'plug'){
 				
 				 #my($self,$interface,$port,$range,$type,$outport_type)
-				add_port_to_plug	($self,$intfc_name,$name,$range,$type,$outport_type,$connect_name);
+				add_port_to_plug	($self,$intfc_name,$name,$range,$type,$outport_type,$connect_name,$default_out);
 				#print "add_port_to_plug(\$self,$intfc_name,$name,$range,$type,,$outport_type);\n";
-				add_port_to_socket	($self,$intfc_name,$connect_name,$connect_range,$connect_type,$outport_type,$name);
+				add_port_to_socket	($self,$intfc_name,$connect_name,$connect_range,$connect_type,$outport_type,$name,$default_out);
 				#print "add_port_to_socket(\$self,$connect_name,$connect_range,$connect_type);\n";
 			}	
 			else{
-				add_port_to_socket($self,$intfc_name,$name,$range,$type,$outport_type,$connect_name);
-				add_port_to_plug($self,$intfc_name,$connect_name,$connect_range,$connect_type,$outport_type,$name);
+				add_port_to_socket($self,$intfc_name,$name,$range,$type,$outport_type,$connect_name,$default_out);
+				add_port_to_plug($self,$intfc_name,$connect_name,$connect_range,$connect_type,$outport_type,$name,$default_out);
 			}	
 	}		
 	

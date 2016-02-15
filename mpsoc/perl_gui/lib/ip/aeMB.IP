@@ -40,51 +40,56 @@ For more information check 	http://opencores.org/project,aemb',
                                                        'deafult' => ' 7',
                                                        'global_param' => 0,
                                                        'content' => '',
-                                                       'type' => 'Fixed'
+                                                       'type' => 'Fixed',
+                                                       'redefine_param' => 1
                                                      },
                                        'AEMB_IDX' => {
                                                        'info' => undef,
                                                        'deafult' => ' 6',
                                                        'global_param' => 0,
                                                        'content' => '',
-                                                       'type' => 'Fixed'
+                                                       'type' => 'Fixed',
+                                                       'redefine_param' => 1
                                                      },
                                        'AEMB_MUL' => {
-                                                       'info' => '1: aeMB with hardware multiplier
-0: aeMB without harware multiplier',
+                                                       'info' => undef,
                                                        'deafult' => ' 1',
-                                                       'global_param' => 1,
-                                                       'content' => '1,0',
-                                                       'type' => 'Combo-box'
+                                                       'global_param' => 0,
+                                                       'content' => '',
+                                                       'type' => 'Fixed',
+                                                       'redefine_param' => 1
                                                      },
                                        'AEMB_IWB' => {
                                                        'info' => undef,
                                                        'deafult' => ' 32',
                                                        'global_param' => 0,
                                                        'content' => '',
-                                                       'type' => 'Fixed'
+                                                       'type' => 'Fixed',
+                                                       'redefine_param' => 1
                                                      },
                                        'AEMB_BSF' => {
-                                                       'info' => '1: aeMB with hardware barrel shifter
-0:aeMB without  haedware barrel shifter',
+                                                       'info' => undef,
                                                        'deafult' => ' 1',
-                                                       'global_param' => 1,
-                                                       'content' => '1,0',
-                                                       'type' => 'Combo-box'
+                                                       'global_param' => 0,
+                                                       'content' => '',
+                                                       'type' => 'Fixed',
+                                                       'redefine_param' => 1
                                                      },
                                        'AEMB_ICH' => {
                                                        'info' => undef,
                                                        'deafult' => ' 11',
                                                        'global_param' => 0,
                                                        'content' => '',
-                                                       'type' => 'Fixed'
+                                                       'type' => 'Fixed',
+                                                       'redefine_param' => 1
                                                      },
                                        'AEMB_DWB' => {
                                                        'info' => undef,
                                                        'deafult' => ' 32',
                                                        'global_param' => 0,
                                                        'content' => '',
-                                                       'type' => 'Fixed'
+                                                       'type' => 'Fixed',
+                                                       'redefine_param' => 1
                                                      }
                                      },
                      'plugs' => {
@@ -136,13 +141,13 @@ For more information check 	http://opencores.org/project,aemb',
                                     'aeMB_top' => {}
                                   },
                      'parameters_order' => [
-                                             'AEMB_XWB',
-                                             'AEMB_IDX',
-                                             'AEMB_MUL',
                                              'AEMB_IWB',
-                                             'AEMB_BSF',
+                                             'AEMB_DWB',
+                                             'AEMB_XWB',
                                              'AEMB_ICH',
-                                             'AEMB_DWB'
+                                             'AEMB_IDX',
+                                             'AEMB_BSF',
+                                             'AEMB_MUL'
                                            ],
                      'ports' => {
                                   'iwb_err_i' => {
@@ -191,6 +196,12 @@ For more information check 	http://opencores.org/project,aemb',
                                                    'intfc_name' => 'plug:wb_master[0]',
                                                    'intfc_port' => 'adr_o',
                                                    'range' => '31:0',
+                                                   'type' => 'output'
+                                                 },
+                                  'iwb_bte_o' => {
+                                                   'intfc_name' => 'plug:wb_master[0]',
+                                                   'intfc_port' => 'bte_o',
+                                                   'range' => '1:0',
                                                    'type' => 'output'
                                                  },
                                   'reset' => {
@@ -247,10 +258,28 @@ For more information check 	http://opencores.org/project,aemb',
                                                    'range' => '31:0',
                                                    'type' => 'output'
                                                  },
+                                  'dwb_bte_o' => {
+                                                   'intfc_name' => 'plug:wb_master[1]',
+                                                   'intfc_port' => 'bte_o',
+                                                   'range' => '1:0',
+                                                   'type' => 'output'
+                                                 },
                                   'dwb_dat_o' => {
                                                    'intfc_name' => 'plug:wb_master[1]',
                                                    'intfc_port' => 'dat_o',
                                                    'range' => '31:0',
+                                                   'type' => 'output'
+                                                 },
+                                  'dwb_cti_o' => {
+                                                   'intfc_name' => 'plug:wb_master[1]',
+                                                   'intfc_port' => 'cti_o',
+                                                   'range' => '2:0',
+                                                   'type' => 'output'
+                                                 },
+                                  'iwb_cti_o' => {
+                                                   'intfc_name' => 'plug:wb_master[0]',
+                                                   'intfc_port' => 'cti_o',
+                                                   'range' => '2:0',
                                                    'type' => 'output'
                                                  },
                                   'iwb_stb_o' => {
@@ -265,10 +294,10 @@ For more information check 	http://opencores.org/project,aemb',
                                              'range' => '',
                                              'type' => 'input'
                                            },
-                                  'iwb_dat_i' => {
-                                                   'intfc_name' => 'plug:wb_master[0]',
-                                                   'intfc_port' => 'dat_i',
-                                                   'range' => '31:0',
+                                  'dwb_rty_i' => {
+                                                   'intfc_name' => 'plug:wb_master[1]',
+                                                   'intfc_port' => 'rty_i',
+                                                   'range' => '',
                                                    'type' => 'input'
                                                  },
                                   'dwb_dat_i' => {
@@ -277,10 +306,10 @@ For more information check 	http://opencores.org/project,aemb',
                                                    'range' => '31:0',
                                                    'type' => 'input'
                                                  },
-                                  'dwb_rty_i' => {
-                                                   'intfc_name' => 'plug:wb_master[1]',
-                                                   'intfc_port' => 'rty_i',
-                                                   'range' => '',
+                                  'iwb_dat_i' => {
+                                                   'intfc_name' => 'plug:wb_master[0]',
+                                                   'intfc_port' => 'dat_i',
+                                                   'range' => '31:0',
                                                    'type' => 'input'
                                                  },
                                   'dwb_sel_o' => {
@@ -302,7 +331,50 @@ For more information check 	http://opencores.org/project,aemb',
                                                    'type' => 'input'
                                                  }
                                 },
-                     'file_name' => '/home/alireza/Mywork/develop/mpsoc/src_processor/aemb.v',
+                     'ports_order' => [
+                                        'dwb_adr_o',
+                                        'dwb_cyc_o',
+                                        'dwb_dat_o',
+                                        'dwb_sel_o',
+                                        'dwb_stb_o',
+                                        'dwb_tag_o',
+                                        'dwb_wre_o',
+                                        'dwb_cti_o',
+                                        'dwb_bte_o',
+                                        'dwb_ack_i',
+                                        'dwb_dat_i',
+                                        'dwb_err_i',
+                                        'dwb_rty_i',
+                                        'iwb_adr_o',
+                                        'iwb_cyc_o',
+                                        'iwb_sel_o',
+                                        'iwb_stb_o',
+                                        'iwb_tag_o',
+                                        'iwb_wre_o',
+                                        'iwb_dat_o',
+                                        'iwb_cti_o',
+                                        'iwb_bte_o',
+                                        'iwb_ack_i',
+                                        'iwb_dat_i',
+                                        'iwb_err_i',
+                                        'iwb_rty_i',
+                                        'clk',
+                                        'reset',
+                                        'sys_int_i',
+                                        'sys_ena_i'
+                                      ],
+                     'file_name' => '/home/alireza/Mywork/mpsoc/src_processor/aeMB/verilog/aemb.v',
                      'module_name' => 'aeMB_top',
-                     'category' => 'Processor'
+                     'unused' => undef,
+                     'category' => 'Processor',
+                     'header' => ' #include <stdio.h> 
+ #include <stdlib.h> 
+ #include "aemb/core.hh" ',
+                     'sw_files' => [
+                                     '/mpsoc/src_processor/aeMB/sw/aemb',
+                                     '/mpsoc/src_processor/aeMB/sw/compile',
+                                     '/mpsoc/src_processor/aeMB/sw/program',
+                                     '/mpsoc/src_processor/program_memories.sh',
+                                     '/mpsoc/src_processor/aeMB/sw/Makefile'
+                                   ]
                    }, 'ip_gen' );

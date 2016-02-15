@@ -5,31 +5,34 @@ $HashRef = bless( {
                                    'ni' => {}
                                  },
                     'ports' => {
-                                 'flit_in' => {
-                                                'outport_type' => 'concatenate',
-                                                'connect_name' => 'flit_out',
-                                                'connect_type' => 'output',
-                                                'range' => 'Fw-1   :   0',
-                                                'name' => 'flit_in',
-                                                'connect_range' => 'Fw-1   :   0',
-                                                'type' => 'input'
-                                              },
                                  'credit_in' => {
                                                   'outport_type' => 'concatenate',
                                                   'connect_name' => 'credit_out',
-                                                  'connect_type' => 'output',
-                                                  'range' => 'V-1    :   0',
                                                   'name' => 'credit_in',
+                                                  'range' => 'V-1    :   0',
+                                                  'connect_type' => 'output',
                                                   'connect_range' => 'V-1    :   0',
+                                                  'default_out' => '{V{1\'b0}}',
                                                   'type' => 'input'
                                                 },
+                                 'flit_in' => {
+                                                'outport_type' => 'concatenate',
+                                                'connect_name' => 'flit_out',
+                                                'name' => 'flit_in',
+                                                'range' => 'Fw-1   :   0',
+                                                'connect_type' => 'output',
+                                                'connect_range' => 'Fw-1   :   0',
+                                                'default_out' => '{Fw{1\'b0}}',
+                                                'type' => 'input'
+                                              },
                                  'flit_in_wr' => {
                                                    'outport_type' => 'concatenate',
                                                    'connect_name' => 'flit_out_wr',
-                                                   'connect_type' => 'output',
-                                                   'range' => '',
                                                    'name' => 'flit_in_wr',
+                                                   'range' => '',
+                                                   'connect_type' => 'output',
                                                    'connect_range' => '',
+                                                   'default_out' => '1\'b0',
                                                    'type' => 'input'
                                                  }
                                },

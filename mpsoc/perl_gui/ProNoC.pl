@@ -16,7 +16,7 @@ require "soc_gen.pl";
 require "mpsoc_gen.pl";
 require "noc_sim.pl";
 
-
+#use PDF::API2;
 
 
 
@@ -144,11 +144,91 @@ $notebook->append_page ($mpsocgen,Gtk2::Label->new_with_mnemonic ("_NoC based MP
 		$scrolled_win->add_with_viewport($notebook);	
 		
 		my $window = def_win_size($width-100,$hight-100,"ProNoC");
-		$window->add($scrolled_win);
+		#$window->add($scrolled_win);
 		
 
 		my $navIco = Gtk2::Gdk::Pixbuf->new_from_file("./icons/ProNoC.png");         # advance1.png");  
 		$window->set_default_icon($navIco); 
+
+
+	
+
+
+
+
+
+		my @entries = (
+        ### Everything falls under the following 3 rows ###
+        [ 'FileMenu',       undef, '_File' ],
+        [ 'ViewMenu',       undef, '_View' ],
+        [ 'HelpMenu',       undef, '_Help' ],
+
+        # Quit
+        [   'Exit',           'gtk-quit',
+            'E_xit', '<control>X',
+            undef,      sub { Gtk2->main_quit },
+            FALSE
+        ],
+        # About
+        [   'About',                          'gtk-about',
+            '_About',                           '<control>A',
+            undef,      \&about,
+            FALSE
+        ],
+
+	 # intf_gen help
+        [   'interface generator',                          'gtk-about',
+            '_Interface generator',                           'F1',
+            undef,      \&intfc_help,
+            FALSE
+        ],
+	 # ip_gen help
+        [   'ip generator',                          'gtk-about',
+            '_IP generator',                           'F2',
+            undef,      \&ip_help,
+            FALSE
+        ],
+	 # pt_gen help
+        [   'pt generator',                          'gtk-about',
+            '_Processing tile generator',                           'F3',
+            undef,      \&pt_help,
+            FALSE
+        ],
+);
+
+    my $ui_info = "<ui>
+        <menubar name='MenuBar'>
+         <menu action='FileMenu'>
+          <separator/>
+          <menuitem action='Exit'/>
+         </menu>
+          <menu action='ViewMenu'>
+         </menu>
+         <menu action='HelpMenu'>
+          <menuitem action='About'/>
+	  <menuitem action='interface generator'/>
+	  <menuitem action='ip generator'/>
+	  <menuitem action='pt generator'/>
+
+         </menu>
+        </menubar>
+</ui>";
+
+    my $actions = Gtk2::ActionGroup->new('Actions');
+    $actions->add_actions( \@entries, undef );
+
+    my $ui = Gtk2::UIManager->new;
+    $ui->insert_action_group( $actions, 0 );
+
+    $window->add_accel_group( $ui->get_accel_group );
+    $ui->add_ui_from_string($ui_info);
+   my $vbox = Gtk2::VBox->new( FALSE, 0 );
+    $vbox->pack_start( $ui->get_widget('/MenuBar'), FALSE, FALSE, 0 );
+    $vbox->pack_end( $scrolled_win, TRUE, TRUE,10 );
+
+$window->add($vbox);
+
+
 
 
 		$window->set_resizable (1);
@@ -163,6 +243,51 @@ $notebook->append_page ($mpsocgen,Gtk2::Label->new_with_mnemonic ("_NoC based MP
 
 
 }			
+
+
+
+sub about {
+    my $about = Gtk2::AboutDialog->new;
+    $about->set_authors("Alireza Monemi\n Email: alirezamonemi\@opencores.org");
+    $about->set_version( '1.0' );
+    $about->set_website('http://opencores.org/project,an-fpga-implementation-of-low-latency-noc-based-mpsoc');
+    $about->set_comments('NoC based MPSoC generator.');
+    $about->set_license(
+                 "This program is free software; you can redistribute it\n"
+                . "and/or modify it under the terms of the GNU General \n"
+		. "Public License as published by the Free Software \n"
+		. "Foundation; either version 1, or (at your option)\n"
+		. "any later version.\n\n"
+                 
+        );
+    $about->run;
+    $about->destroy;
+    return;
+}
+
+sub intfc_help{
+    my $dir = Cwd::getcwd();
+    my $help="$dir/doc/interface_gen.pdf";	
+    system qq (xdg-open $help);
+    return;
+
+}
+
+sub ip_help{ 
+    my $dir = Cwd::getcwd();
+    my $help="$dir/doc/ip_gen.pdf";	
+    system qq (xdg-open $help);
+    return;
+}
+
+
+
+sub pt_help{ 
+    my $dir = Cwd::getcwd();
+    my $help="$dir/doc/pt-gen.pdf";	
+    system qq (xdg-open $help);
+    return;
+}
 
 
 

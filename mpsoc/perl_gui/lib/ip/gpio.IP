@@ -35,37 +35,37 @@ $gpio = bless( {
                                            }
                                  },
                  'plugs' => {
-                              'clk' => {
-                                         'clk' => {},
-                                         '0' => {
-                                                  'name' => 'clk'
-                                                },
-                                         'value' => 1,
-                                         'type' => 'num'
-                                       },
                               'reset' => {
                                            'reset' => {},
+                                           'value' => 1,
                                            '0' => {
                                                     'name' => 'reset'
                                                   },
-                                           'value' => 1,
                                            'type' => 'num'
                                          },
+                              'clk' => {
+                                         'clk' => {},
+                                         'value' => 1,
+                                         '0' => {
+                                                  'name' => 'clk'
+                                                },
+                                         'type' => 'num'
+                                       },
                               'wb_slave' => {
+                                              'value' => 1,
                                               '0' => {
                                                        'width' => 5,
                                                        'name' => 'wb',
                                                        'addr' => '0x9100_0000	0x91ff_ffff		General-Purpose I/O'
                                                      },
-                                              'value' => 1,
                                               'type' => 'num',
                                               'wb_slave' => {}
                                             }
                             },
                  'modules' => {
                                 'gpi' => {},
-                                'gpo' => {},
-                                'gpio' => {}
+                                'gpio' => {},
+                                'gpo' => {}
                               },
                  'parameters_order' => [
                                          'PORT_WIDTH',
@@ -74,75 +74,75 @@ $gpio = bless( {
                                          'SELw'
                                        ],
                  'ports' => {
-                              'sa_rty_o' => {
-                                              'intfc_name' => 'plug:wb_slave[0]',
-                                              'intfc_port' => 'rty_o',
-                                              'range' => '',
-                                              'type' => 'output'
-                                            },
-                              'port_io' => {
-                                             'intfc_name' => 'IO',
-                                             'intfc_port' => 'IO',
-                                             'range' => 'PORT_WIDTH-1     :   0',
-                                             'type' => 'inout'
-                                           },
                               'sa_dat_o' => {
-                                              'intfc_name' => 'plug:wb_slave[0]',
                                               'intfc_port' => 'dat_o',
+                                              'intfc_name' => 'plug:wb_slave[0]',
                                               'range' => 'Dw-1       :   0',
                                               'type' => 'output'
                                             },
-                              'sa_sel_i' => {
-                                              'intfc_port' => 'sel_i',
+                              'port_io' => {
+                                             'intfc_port' => 'IO',
+                                             'intfc_name' => 'IO',
+                                             'range' => 'PORT_WIDTH-1     :   0',
+                                             'type' => 'inout'
+                                           },
+                              'sa_rty_o' => {
+                                              'intfc_port' => 'rty_o',
                                               'intfc_name' => 'plug:wb_slave[0]',
+                                              'range' => '',
+                                              'type' => 'output'
+                                            },
+                              'sa_sel_i' => {
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'intfc_port' => 'sel_i',
                                               'range' => 'SELw-1     :   0',
                                               'type' => 'input'
                                             },
                               'sa_dat_i' => {
-                                              'intfc_port' => 'dat_i',
                                               'intfc_name' => 'plug:wb_slave[0]',
+                                              'intfc_port' => 'dat_i',
                                               'range' => 'Dw-1       :   0',
                                               'type' => 'input'
                                             },
                               'sa_we_i' => {
-                                             'intfc_name' => 'plug:wb_slave[0]',
                                              'intfc_port' => 'we_i',
+                                             'intfc_name' => 'plug:wb_slave[0]',
                                              'range' => '',
                                              'type' => 'input'
                                            },
                               'sa_err_o' => {
+                                              'intfc_name' => 'plug:wb_slave[0]',
                                               'intfc_port' => 'err_o',
+                                              'range' => '',
+                                              'type' => 'output'
+                                            },
+                              'clk' => {
+                                         'intfc_port' => 'clk_i',
+                                         'intfc_name' => 'plug:clk[0]',
+                                         'range' => '',
+                                         'type' => 'input'
+                                       },
+                              'sa_ack_o' => {
+                                              'intfc_port' => 'ack_o',
                                               'intfc_name' => 'plug:wb_slave[0]',
                                               'range' => '',
                                               'type' => 'output'
                                             },
                               'reset' => {
-                                           'intfc_port' => 'reset_i',
                                            'intfc_name' => 'plug:reset[0]',
+                                           'intfc_port' => 'reset_i',
                                            'range' => '',
                                            'type' => 'input'
                                          },
-                              'sa_ack_o' => {
-                                              'intfc_name' => 'plug:wb_slave[0]',
-                                              'intfc_port' => 'ack_o',
-                                              'range' => '',
-                                              'type' => 'output'
-                                            },
-                              'clk' => {
-                                         'intfc_name' => 'plug:clk[0]',
-                                         'intfc_port' => 'clk_i',
-                                         'range' => '',
-                                         'type' => 'input'
-                                       },
                               'sa_addr_i' => {
-                                               'intfc_name' => 'plug:wb_slave[0]',
                                                'intfc_port' => 'adr_i',
+                                               'intfc_name' => 'plug:wb_slave[0]',
                                                'range' => 'Aw-1       :   0',
                                                'type' => 'input'
                                              },
                               'sa_stb_i' => {
-                                              'intfc_name' => 'plug:wb_slave[0]',
                                               'intfc_port' => 'stb_i',
+                                              'intfc_name' => 'plug:wb_slave[0]',
                                               'range' => '',
                                               'type' => 'input'
                                             }
@@ -150,6 +150,14 @@ $gpio = bless( {
                  'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/gpio/gpio.v',
                  'sockets' => {},
                  'module_name' => 'gpio',
+                 'unused' => {
+                               'plug:wb_slave[0]' => [
+                                                       'cyc_i',
+                                                       'tag_i',
+                                                       'cti_i',
+                                                       'bte_i'
+                                                     ]
+                             },
                  'category' => 'GPI',
                  'header' => '   
 #define $IP_DIR_REG   (*((volatile unsigned int *) ($BASE)))   

@@ -1,7 +1,7 @@
 $HashRef = bless( {
                     'connection_num' => 'single connection',
                     'name' => 'wb_master',
-                    'description' => 'wish bone bus master interface',
+                    'description' => 'Wishbone bus master interface',
                     'modules' => {
                                    'clk_socket' => {},
                                    'wb_master_socket' => {},
@@ -16,6 +16,7 @@ $HashRef = bless( {
                                               'range' => '',
                                               'name' => 'err_o',
                                               'connect_range' => '',
+                                              'default_out' => 'Active low',
                                               'type' => 'output'
                                             },
                                  'stb_i' => {
@@ -25,6 +26,7 @@ $HashRef = bless( {
                                               'range' => '',
                                               'name' => 'stb_i',
                                               'connect_range' => '',
+                                              'default_out' => 'Active low',
                                               'type' => 'input'
                                             },
                                  'cyc_i' => {
@@ -34,15 +36,17 @@ $HashRef = bless( {
                                               'range' => '',
                                               'name' => 'cyc_i',
                                               'connect_range' => '',
+                                              'default_out' => 'Active low',
                                               'type' => 'input'
                                             },
                                  'dat_i' => {
                                               'outport_type' => 'concatenate',
                                               'connect_name' => 'dat_o',
                                               'connect_type' => 'output',
-                                              'range' => 'Dw-1      :   0',
+                                              'range' => 'Dw-1:0',
                                               'name' => 'dat_i',
-                                              'connect_range' => 'Dw-1      :   0',
+                                              'connect_range' => 'Dw-1:0',
+                                              'default_out' => 'Active low',
                                               'type' => 'input'
                                             },
                                  'ack_o' => {
@@ -52,6 +56,7 @@ $HashRef = bless( {
                                               'range' => '',
                                               'name' => 'ack_o',
                                               'connect_range' => '',
+                                              'default_out' => 'Active low',
                                               'type' => 'output'
                                             },
                                  'rty_o' => {
@@ -61,34 +66,48 @@ $HashRef = bless( {
                                               'range' => '',
                                               'name' => 'rty_o',
                                               'connect_range' => '',
+                                              'default_out' => 'Active low',
                                               'type' => 'output'
-                                            },
-                                 'tag_i' => {
-                                              'outport_type' => 'concatenate',
-                                              'connect_name' => 'tag_o',
-                                              'connect_type' => 'output',
-                                              'range' => 'TAGw-1    :   0',
-                                              'name' => 'tag_i',
-                                              'connect_range' => 'TAGw-1    :   0',
-                                              'type' => 'input'
                                             },
                                  'adr_i' => {
                                               'outport_type' => 'concatenate',
                                               'connect_name' => 'adr_o',
                                               'connect_type' => 'output',
-                                              'range' => 'Aw-1      :   0',
+                                              'range' => 'Aw-1:0',
                                               'name' => 'adr_i',
-                                              'connect_range' => 'Aw-1      :   0',
+                                              'connect_range' => 'Aw-1:0',
+                                              'default_out' => 'Active low',
                                               'type' => 'input'
                                             },
                                  'dat_o' => {
                                               'outport_type' => 'concatenate',
                                               'connect_name' => 'dat_i',
                                               'connect_type' => 'input',
-                                              'range' => 'Dw-1      :   0',
+                                              'range' => 'Dw-1:0',
                                               'name' => 'dat_o',
-                                              'connect_range' => 'Dw-1      :   0',
+                                              'connect_range' => 'Dw-1:0',
+                                              'default_out' => 'Active low',
                                               'type' => 'output'
+                                            },
+                                 'tag_i' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'tag_o',
+                                              'connect_type' => 'output',
+                                              'range' => 'TAGw-1:0',
+                                              'name' => 'tag_i',
+                                              'connect_range' => 'TAGw-1:0',
+                                              'default_out' => 'Active low',
+                                              'type' => 'input'
+                                            },
+                                 'cti_i' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'cti_o',
+                                              'connect_type' => 'output',
+                                              'range' => 'CTIw-1:0',
+                                              'name' => 'cti_i',
+                                              'connect_range' => 'CTIw-1:0',
+                                              'default_out' => 'Active low',
+                                              'type' => 'input'
                                             },
                                  'we_i' => {
                                              'outport_type' => 'concatenate',
@@ -97,19 +116,31 @@ $HashRef = bless( {
                                              'range' => '',
                                              'name' => 'we_i',
                                              'connect_range' => '',
+                                             'default_out' => 'Active low',
                                              'type' => 'input'
                                            },
                                  'sel_i' => {
                                               'outport_type' => 'concatenate',
                                               'connect_name' => 'sel_o',
                                               'connect_type' => 'output',
-                                              'range' => 'SELw-1    :   0',
+                                              'range' => 'SELw-1:0',
                                               'name' => 'sel_i',
-                                              'connect_range' => 'SELw-1    :   0',
+                                              'connect_range' => 'SELw-1:0',
+                                              'default_out' => 'Active low',
+                                              'type' => 'input'
+                                            },
+                                 'bte_i' => {
+                                              'outport_type' => 'concatenate',
+                                              'connect_name' => 'bte_o',
+                                              'connect_type' => 'output',
+                                              'range' => 'BTEw-1:0',
+                                              'name' => 'bte_i',
+                                              'connect_range' => 'BTEw-1:0',
+                                              'default_out' => 'Active low',
                                               'type' => 'input'
                                             }
                                },
-                    'file_name' => '/home/alireza/Mywork/develop/gui/main/lib/verilog/bus.v',
+                    'file_name' => '/home/alireza/Mywork/mpsoc/perl_gui/lib/verilog/bus.v',
                     'module_name' => 'wb_master_socket',
                     'type' => 'socket',
                     'category' => 'wishbone'
