@@ -401,11 +401,18 @@ sub ip_get_hdr{
 }
 
 
-sub ip_get_hdl_files{
-	my ($self, $category,$module)=@_;
+sub ip_get_files{
+	my ($self, $category,$module,$list_name)=@_;
 	my @l;
-	@l=@{$self->{categories}{$category}{names}{$module}{hdl}} if(defined $self->{categories}{$category}{names}{$module}{hdl});
+	@l=@{$self->{categories}{$category}{names}{$module}{$list_name}} if(defined $self->{categories}{$category}{names}{$module}{$list_name});
 	return 	 @l;	
+}
+
+
+sub ip_get_unsuded_intfc_ports{
+	my ($self, $category,$module)=@_;
+	return $self->{categories}{$category}{names}{$module}{"unused"};	
+	
 }
 
 sub add_ip{
@@ -452,8 +459,14 @@ sub add_ip{
 	my $hdr= $ipgen->ipgen_get_hdr();
 	$self->{categories}{$category}{names}{$module}{header}=$hdr;	
 	
-	my @hdl_files= $ipgen->ipgen_get_hdl_files_list();
-	$self->{categories}{$category}{names}{$module}{hdl}=\@hdl_files;	
+	my @hdl_files= $ipgen->ipgen_get_files_list("hdl_files");
+	$self->{categories}{$category}{names}{$module}{"hdl_files"}=\@hdl_files;
+	
+	my @sw_files= $ipgen->ipgen_get_files_list("sw_files");
+	$self->{categories}{$category}{names}{$module}{"sw_files"}=\@sw_files;
+	$self->{categories}{$category}{names}{$module}{"unused"}=$ipgen->ipgen_get_unused_intfc_ports();
+	
+		
 	
 }		
 	

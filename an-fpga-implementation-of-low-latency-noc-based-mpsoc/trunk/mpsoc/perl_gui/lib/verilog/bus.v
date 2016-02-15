@@ -34,10 +34,12 @@
 module wb_master_socket #(
 		
 	
-	parameter Dw  =	32,	   // maximum data width
-	parameter Aw  =	32,    // address width
+	parameter Dw     =	32,	   // maximum data width
+	parameter Aw  	 =	32,    // address width
 	parameter SELw   =	2,
-	parameter TAGw   =	3    //merged  {tga,tgb,tgc}
+	parameter TAGw   =	3 ,   //merged  {tga,tgb,tgc}
+	parameter CTIw   =   3,
+	parameter BTEw   =   2 
   
 		
 )
@@ -58,7 +60,9 @@ module wb_master_socket #(
 	input   [TAGw-1    :   0]   tag_i,
 	input   		    we_i,
 	input  			    stb_i,
-	input 			    cyc_i
+	input 			    cyc_i,
+	input   [CTIw-1	   :	0]  cti_i,
+	input   [BTEw-1	   :	0]  bte_i
 	
 	//address compar
 	//m_grant_addr,
@@ -86,7 +90,9 @@ module wb_slave_socket #(
 	parameter Dw  =	32,	   // maximum data width
 	parameter Aw  =	32,    // address width
 	parameter SELw   =	2,
-	parameter TAGw   =	3    //merged  {tga,tgb,tgc}
+	parameter TAGw   =	3,   //merged  {tga,tgb,tgc}
+	parameter CTIw   =   3,
+	parameter BTEw   =   2 
   
 		
 )
@@ -99,8 +105,10 @@ module wb_slave_socket #(
     output  [SELw-1    :   0]   sel_o,
     output  [TAGw-1    :   0]   tag_o,
     output  			we_o,
-    output     cyc_o,
-    output     stb_o,
+    output			cyc_o,
+    output     			stb_o,
+    output   [CTIw-1   :   0]  cti_o,
+    output   [BTEw-1   :   0]  bte_o,
     
     
     input   [DwS-1      :   0]   dat_i,

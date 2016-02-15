@@ -10,19 +10,21 @@ $clk_source = bless( {
                                     },
                        'plugs' => {
                                     'reset' => {
+                                                 'reset' => {},
+                                                 '0' => {
+                                                          'name' => 'reset'
+                                                        },
+                                                 'value' => 1,
+                                                 'type' => 'num'
+                                               },
+                                    'clk' => {
+                                               'clk' => {},
                                                '0' => {
-                                                        'name' => 'reset'
+                                                        'name' => 'clk'
                                                       },
                                                'value' => 1,
                                                'type' => 'num'
-                                             },
-                                    'clk' => {
-                                             '0' => {
-                                                      'name' => 'clk'
-                                                    },
-                                             'value' => 1,
-                                             'type' => 'num'
-                                           }
+                                             }
                                   },
                        'ports' => {
                                     'clk_out' => {

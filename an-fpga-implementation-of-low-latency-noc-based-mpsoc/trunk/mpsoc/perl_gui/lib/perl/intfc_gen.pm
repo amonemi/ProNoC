@@ -92,18 +92,19 @@ sub intfc_get_module_name {
 
 
 sub intfc_add_port{
-	my ($self,$port_id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$outport_type)=@_;
+	my ($self,$port_id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$outport_type,$default_out)=@_;
 	$self->{ports}{$port_id}{name}=$name;
 	$self->{ports}{$port_id}{range}=$range;
 	$self->{ports}{$port_id}{type}=$type;
 	$self->{ports}{$port_id}{connect_name}=$connect_name;	
 	$self->{ports}{$port_id}{connect_range}=$connect_range;
 	$self->{ports}{$port_id}{connect_type}=$connect_type;	
-	$self->{ports}{$port_id}{outport_type}=$outport_type;	
+	$self->{ports}{$port_id}{outport_type}=$outport_type;
+	$self->{ports}{$port_id}{default_out}=$default_out;	
 }	
 
 sub intfc_get_ports{
-	my ($self,$types_ref,$ranges_ref,$names_ref,$connect_types_ref,$connect_ranges_ref,$connect_name_ref,$outport_type_ref)=@_;
+	my ($self,$types_ref,$ranges_ref,$names_ref,$connect_types_ref,$connect_ranges_ref,$connect_name_ref,$outport_type_ref,$default_out_ref)=@_;
 	if(exists ($self->{ports})){
 		foreach my $id (sort keys %{$self->{ports}}){
 				$types_ref->{$id}=$self->{ports}{$id}{type};
@@ -113,6 +114,7 @@ sub intfc_get_ports{
 				$connect_ranges_ref->{$id}=$self->{ports}{$id}{connect_range};
 				$connect_name_ref->{$id}=$self->{ports}{$id}{connect_name};
 				$outport_type_ref->{$id}=$self->{ports}{$id}{outport_type};
+				$default_out_ref->{$id}=$self->{ports}{$id}{default_out};
 		}
 	}
 }

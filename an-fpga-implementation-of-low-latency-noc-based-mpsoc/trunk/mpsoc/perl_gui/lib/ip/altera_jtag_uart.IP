@@ -123,6 +123,16 @@ $altera_jtag_uart_wb = bless( {
                                            },
                                 'file_name' => '/home/jaytang/Desktop/alisoc/mpsoc/src_peripheral/jtag/altera_jtag_uart_wb.v',
                                 'module_name' => 'altera_jtag_uart_wb',
+                                'unused' => {
+                                              'plug:wb_slave[0]' => [
+                                                                      'err_o',
+                                                                      'rty_o',
+                                                                      'tag_i',
+                                                                      'cti_i',
+                                                                      'sel_i',
+                                                                      'bte_i'
+                                                                    ]
+                                            },
                                 'category' => 'Jtag',
                                 'header' => ' #define $IP_DATA_REG					(*((volatile unsigned int *) ($BASE)))
  #define $IP_CONTROL_REG				(*((volatile unsigned int *) ($BASE+4)))

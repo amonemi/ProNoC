@@ -12,10 +12,11 @@ $HashRef = bless( {
                                  'reset_o' => {
                                                 'outport_type' => 'concatenate',
                                                 'connect_name' => 'reset_i',
-                                                'connect_type' => 'input',
-                                                'range' => '',
                                                 'name' => 'reset_o',
+                                                'range' => '',
+                                                'connect_type' => 'input',
                                                 'connect_range' => '',
+                                                'default_out' => 'Active low',
                                                 'type' => 'output'
                                               }
                                },

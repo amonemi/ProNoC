@@ -24,7 +24,7 @@ gcd_test uut(
 	.aeMB_sys_ena_i(1'b1), 
 	.ss_clk_in(CLOCK_50),  
 	.ss_reset_in(reset),
-	.display_port_o({HEX3,HEX2,HEX1,HEX0})
+	.gpo_port_o({HEX3,HEX2,HEX1,HEX0})
 );
 
 	

@@ -12,8 +12,9 @@ $HashRef = bless( {
                                               'name' => 'int_i',
                                               'range' => '',
                                               'connect_type' => 'output',
-                                              'type' => 'input',
-                                              'connect_range' => ''
+                                              'connect_range' => '',
+                                              'default_out' => 'Active low',
+                                              'type' => 'input'
                                             }
                                },
                     'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/int_ctrl/int_ctrl.v',

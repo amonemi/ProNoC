@@ -9,10 +9,11 @@ $HashRef = bless( {
                                  'int_o' => {
                                               'outport_type' => 'concatenate',
                                               'connect_name' => 'int_i',
-                                              'connect_type' => 'input',
-                                              'range' => '',
                                               'name' => 'int_o',
+                                              'range' => '',
+                                              'connect_type' => 'input',
                                               'connect_range' => '',
+                                              'default_out' => 'Active low',
                                               'type' => 'output'
                                             }
                                },

@@ -18,7 +18,7 @@ reset_jtag the_reset(
 
 // soc 	
 led_tim #(
-	.ram_RAM_TAG_STRING("00") ,
+	.CORE_ID(0),
 	.led_PORT_WIDTH(1)
 )uut
 (

@@ -490,22 +490,41 @@ sub ipgen_get_hdr{
 
 }
 
-sub ipgen_get_hdl_files_list{
-	my $self=shift;
+
+
+
+sub ipgen_get_files_list{
+	my ($self,$list_name)=@_;
 	my @l;
-	if ( defined $self->{hdl_files} ){
-		@l=@{$self->{hdl_files}};		
+	if ( defined $self->{$list_name} ){
+		@l=@{$self->{$list_name}};		
 	}	
 	
 	return @l;
 }
 
 
-sub ipgen_set_hdl_files_list{
-	my ($self,$ref)=@_;
-	$self->{hdl_files}=	$ref;	
+sub ipgen_set_files_list{
+	my ($self,$list_name,$ref)=@_;
+	$self->{$list_name}=	$ref;	
 }
 
+
+sub ipgen_add_unused_intfc_port{
+	my ($self,$intfc_name,$port)=@_;
+	push(@{$self->{unused}{$intfc_name}},$port);	
+}
+
+sub ipgen_get_unused_intfc_ports{
+	my $self=shift;
+	return $self->{unused};	
+	
+}
+
+sub ipgen_remove_unused_intfc_port{
+	my $self=shift;
+	$self->{unused}=undef;		
+}
 
 ######################################
 

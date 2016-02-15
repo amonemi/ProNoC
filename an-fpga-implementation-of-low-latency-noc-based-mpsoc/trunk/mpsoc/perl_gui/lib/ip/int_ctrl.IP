@@ -102,23 +102,17 @@ $int_ctrl = bless( {
                                                   'range' => '',
                                                   'type' => 'output'
                                                 },
-                                  'reset' => {
-                                               'intfc_name' => 'plug:reset[0]',
-                                               'intfc_port' => 'reset_i',
-                                               'range' => '',
-                                               'type' => 'input'
-                                             },
                                   'sa_ack_o' => {
                                                   'intfc_name' => 'plug:wb_slave[0]',
                                                   'intfc_port' => 'ack_o',
                                                   'range' => '',
                                                   'type' => 'output'
                                                 },
-                                  'int_o' => {
-                                               'intfc_name' => 'socket:interrupt_cpu[0]',
-                                               'intfc_port' => 'int_o',
+                                  'reset' => {
+                                               'intfc_name' => 'plug:reset[0]',
+                                               'intfc_port' => 'reset_i',
                                                'range' => '',
-                                               'type' => 'output'
+                                               'type' => 'input'
                                              },
                                   'clk' => {
                                              'intfc_name' => 'plug:clk[0]',
@@ -126,6 +120,12 @@ $int_ctrl = bless( {
                                              'range' => '',
                                              'type' => 'input'
                                            },
+                                  'int_o' => {
+                                               'intfc_name' => 'socket:interrupt_cpu[0]',
+                                               'intfc_port' => 'int_o',
+                                               'range' => '',
+                                               'type' => 'output'
+                                             },
                                   'int_i' => {
                                                'intfc_name' => 'socket:interrupt_peripheral[array]',
                                                'intfc_port' => 'int_i',
@@ -173,6 +173,14 @@ $int_ctrl = bless( {
                                   },
                      'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/int_ctrl/int_ctrl.v',
                      'module_name' => 'int_ctrl',
+                     'unused' => {
+                                   'plug:wb_slave[0]' => [
+                                                           'cyc_i',
+                                                           'tag_i',
+                                                           'cti_i',
+                                                           'bte_i'
+                                                         ]
+                                 },
                      'category' => 'interrupt',
                      'header' => '
 	#define	 $IP_MER		       (*((volatile unsigned int *) ($BASE	)))

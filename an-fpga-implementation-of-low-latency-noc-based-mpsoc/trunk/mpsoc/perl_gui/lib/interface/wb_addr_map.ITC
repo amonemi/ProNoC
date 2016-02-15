@@ -14,6 +14,7 @@ $HashRef = bless( {
                                                      'range' => 'Aw-1       :   0',
                                                      'name' => 'grant_addr',
                                                      'connect_range' => 'Aw-1       :   0',
+                                                     'default_out' => 'Active low',
                                                      'type' => 'output'
                                                    },
                                  's_sel_one_hot' => {
@@ -23,6 +24,7 @@ $HashRef = bless( {
                                                       'range' => 'S-1        :   0',
                                                       'name' => 'sel_one_hot',
                                                       'connect_range' => 'S-1        :   0',
+                                                      'default_out' => 'Active low',
                                                       'type' => 'input'
                                                     }
                                },

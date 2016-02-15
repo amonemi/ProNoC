@@ -613,4 +613,28 @@ sub soc_remove_hdl_files{
 
 
 
+sub new_wires {
+		my $class = shift;
+		my $self;
+		$self->{assigned_name}={};
+		bless($self,$class);
+		return $self;
+}	
+sub wire_add{
+	my ($self,$name,$filed,$data)=@_;
+	$self->{assigned_name}{$name}{$filed}=$data;	
+}
+
+sub wire_get{
+	my ($self,$name,$filed)=@_;
+	return	$self->{assigned_name}{$name}{$filed};	
+}
+
+sub wires_list{
+	my($self)=shift;
+	my @list=	sort keys $self->{assigned_name};
+	return @list;
+}
+
+
 1
