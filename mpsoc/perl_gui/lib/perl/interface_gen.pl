@@ -374,21 +374,7 @@ sub interface_type_select {
 	
 }	
 
-sub port_width_repeat{
-	my ($range,$value)=@_;
-	$range=remove_all_white_spaces($range);
-	my ($h,$l)=split(':',$range);
-	return "$value" if(!defined $h ) ; # port width is 1
-	return "$value" if($h eq "0" && "$l" eq "0"); # port width is 1
-	$h=$l if($h eq "0" && "$l" ne "0"); 
-	if($h =~ /-1$/){ # the address ranged is endup with -1 
-		$h =~ s/-1$//; # remove -1
-		return "\{$h\{$value\}\}"  if($h =~ /\)$/);
-		return "\{($h)\{$value\}\}" if($h =~ /[\*\.\+\-\^\%\&]/);
-		return "\{$h\{$value\}\}";
-	}
-	return "\{($h+1){$value}}";	
-}
+
 
 
 

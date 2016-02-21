@@ -19,6 +19,7 @@ sub lib_new {
     my $self;
     $self = {};
   	my $dir = Cwd::getcwd();
+	$dir =~ s/ /\\ /g;
 	my @files = glob "$dir/lib/ip/*.IP";
 	for my $p (@files){
 		

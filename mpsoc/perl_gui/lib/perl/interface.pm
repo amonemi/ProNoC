@@ -33,6 +33,7 @@ sub interface_new {
     
     
 	my $dir = Cwd::getcwd();
+	$dir =~ s/ /\\ /g;
 	my @files = glob "$dir/lib/interface/*.ITC";
 	for my $p (@files){
 		#print "$p\n"; 

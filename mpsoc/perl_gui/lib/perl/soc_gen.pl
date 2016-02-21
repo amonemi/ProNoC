@@ -901,7 +901,7 @@ sub generate_soc{
     		#}
     		
     		
-    		copy ("$dir/lib/verilog/$name.v","$target_dir/src_verilog/"); 	
+    		move ("$dir/lib/verilog/$name.v","$target_dir/src_verilog/"); 	
     		
     		
     		
@@ -910,7 +910,7 @@ sub generate_soc{
 			open(FILE,  ">lib/verilog/$name.h") || die "Can not open: $!";
 			print FILE $file_h;
 			close(FILE) || die "Error closing file: $!";
-			copy ("$dir/lib/verilog/$name.h","$target_dir/sw/"); 
+			move ("$dir/lib/verilog/$name.h","$target_dir/sw/"); 
     		
     		# Write Software files
 			($file_ref,$warnings)= get_all_files_list($soc,"sw_files");
