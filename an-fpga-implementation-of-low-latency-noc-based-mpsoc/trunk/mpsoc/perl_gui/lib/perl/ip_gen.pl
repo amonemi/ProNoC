@@ -664,6 +664,7 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 		$add_remove->signal_connect (clicked => sub{
 			if($p eq "#new#"){ #add new parameter
 				my $param= $param_name->get_text();
+				$param=remove_all_white_spaces($param);
 			        
 				if( length($param) ){
 					my $deafult=$deafult_entry->get_text();

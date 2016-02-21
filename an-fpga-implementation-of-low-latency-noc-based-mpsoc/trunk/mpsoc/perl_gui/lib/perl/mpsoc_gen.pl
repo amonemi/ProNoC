@@ -172,7 +172,8 @@ sub get_soc_list {
 	my $mpsoc=shift;
 
 	my $path=$mpsoc->mpsoc_get_setting('soc_path');	
-    my @socs;
+	$path =~ s/ /\\ /g;
+    	my @socs;
 	my @files = glob "$path/*.SOC";
 	for my $p (@files){
 		
@@ -1083,7 +1084,8 @@ sub gen_socs {
 	my ($mpsoc,$info)=@_;
 
 	my $path=$mpsoc->mpsoc_get_setting('soc_path');	
-    my @socs;
+	$path=~ s/ /\\ /g;
+    	my @socs;
 	my @files = glob "$path/*.SOC";
 	my @soc_list=$mpsoc-> mpsoc_get_soc_list();
 	my @used_socs;
@@ -1148,8 +1150,9 @@ sub generate_soc_files{
     		
     #copy hdl codes in src_verilog
     	
-    my ($hdl_ref,$warnings)= get_all_files_list($soc);
+    my ($hdl_ref,$warnings)= get_all_files_list($soc,"hdl_files");
     foreach my $f(@{$hdl_ref}){
+	
     	my $n="$project_dir$f";
     	 if (-f "$n") {
     		 	copy ("$n","$target_dir/src_verilog/lib"); 		
@@ -1175,7 +1178,7 @@ sub generate_soc_files{
     		#}
     		
     		
-    		copy ("$dir/lib/verilog/$soc_name.v","$target_dir/src_verilog/tiles/"); 	
+    		move ("$dir/lib/verilog/$soc_name.v","$target_dir/src_verilog/tiles/"); 	
     		copy_noc_files($project_dir,"$target_dir/src_verilog/lib");
     		
     		
@@ -1187,10 +1190,10 @@ sub generate_soc_files{
 			
     		
     				
-			copy ("$dir/lib/verilog/$soc_name.h","$target_dir/sw/"); 
+			move ("$dir/lib/verilog/$soc_name.h","$target_dir/sw/"); 
 			
-			use File::Copy::Recursive qw(dircopy);
-			dircopy("$dir/../src_processor/aeMB/compiler","$target_dir/sw/") or die("$!\n");
+			#use File::Copy::Recursive qw(dircopy);
+			#dircopy("$dir/../src_processor/aeMB/compiler","$target_dir/sw/") or die("$!\n");
 			
 			
 			my $msg="SoC \"$soc_name\" has been created successfully at $target_dir/ ";
@@ -1236,7 +1239,7 @@ sub generate_mpsoc{
     		
     		gen_socs($mpsoc,$info);
     		
-    		copy ("$dir/lib/verilog/$name.v","$target_dir/src_verilog/"); 	
+    		move ("$dir/lib/verilog/$name.v","$target_dir/src_verilog/"); 	
     		
     		
     		

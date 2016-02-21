@@ -436,7 +436,8 @@ sub generate_wire {
 
 sub port_width_repeat{
 	my ($range,$value)=@_;
-	$range=remove_all_white_spaces($range);
+	return "$value" if (!defined $range);
+	$range= remove_all_white_spaces($range);
 	my ($h,$l)=split(':',$range);
 	return "$value" if(!defined $h ) ; # port width is 1
 	return "$value" if($h eq "0" && "$l" eq "0"); # port width is 1
@@ -474,7 +475,7 @@ sub assign_unconnected_wires{
  						($default_out eq 'Don\'t care')? port_width_repeat($new_range,"1\'bx"): $default_out;
 					    
 			
-			$unused_wire_v= "$unused_wire_v \tassign ${p} = $default;\n";
+			$unused_wire_v= (defined $unused_wire_v)? "$unused_wire_v \tassign ${p} = $default;\n" : "\tassign ${p} = $default;\n";
 		
 		}
 		

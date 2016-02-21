@@ -2,7 +2,6 @@ $lm32 = bless( {
                  'hdl_files' => [
                                   '/mpsoc/src_processor/lm32/verilog/src/er1.v',
                                   '/mpsoc/src_processor/lm32/verilog/src/JTAGB.v',
-                                  '/mpsoc/src_processor/lm32/verilog/src/jtag_cores.v',
                                   '/mpsoc/src_processor/lm32/verilog/src/jtag_lm32.v',
                                   '/mpsoc/src_processor/lm32/verilog/src/lm32.v',
                                   '/mpsoc/src_processor/lm32/verilog/src/lm32_adder.v',
@@ -21,7 +20,6 @@ $lm32 = bless( {
                                   '/mpsoc/src_processor/lm32/verilog/src/lm32_logic_op.v',
                                   '/mpsoc/src_processor/lm32/verilog/src/lm32_mc_arithmetic.v',
                                   '/mpsoc/src_processor/lm32/verilog/src/lm32_monitor.v',
-                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_monitor_ram.v',
                                   '/mpsoc/src_processor/lm32/verilog/src/lm32_multiplier.v',
                                   '/mpsoc/src_processor/lm32/verilog/src/lm32_ram.v',
                                   '/mpsoc/src_processor/lm32/verilog/src/lm32_shifter.v',

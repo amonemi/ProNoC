@@ -171,77 +171,77 @@ $aemb_test = bless( {
                                                     'aeMB0' => {},
                                                     'instance_name' => 'aeMB',
                                                     'plugs' => {
-                                                                 'interrupt_cpu' => {
-                                                                                      'connection_num' => undef,
-                                                                                      'value' => 1,
-                                                                                      'type' => 'num',
-                                                                                      'nums' => {
-                                                                                                  '0' => {
-                                                                                                           'connect_socket_num' => undef,
-                                                                                                           'connect_id' => 'NC',
-                                                                                                           'name' => 'intrp',
-                                                                                                           'connect_socket' => undef
-                                                                                                         }
-                                                                                                }
-                                                                                    },
                                                                  'wb_master' => {
                                                                                   'connection_num' => undef,
                                                                                   'value' => 2,
+                                                                                  'type' => 'num',
                                                                                   'nums' => {
                                                                                               '1' => {
-                                                                                                       'connect_id' => 'wishbone_bus0',
                                                                                                        'connect_socket_num' => '1',
+                                                                                                       'connect_id' => 'wishbone_bus0',
                                                                                                        'name' => 'dwb',
                                                                                                        'connect_socket' => 'wb_master'
                                                                                                      },
                                                                                               '0' => {
-                                                                                                       'connect_id' => 'wishbone_bus0',
                                                                                                        'connect_socket_num' => '0',
+                                                                                                       'connect_id' => 'wishbone_bus0',
                                                                                                        'name' => 'iwb',
                                                                                                        'connect_socket' => 'wb_master'
                                                                                                      }
-                                                                                            },
-                                                                                  'type' => 'num'
+                                                                                            }
                                                                                 },
+                                                                 'interrupt_cpu' => {
+                                                                                      'connection_num' => undef,
+                                                                                      'value' => 1,
+                                                                                      'nums' => {
+                                                                                                  '0' => {
+                                                                                                           'connect_id' => 'NC',
+                                                                                                           'connect_socket_num' => undef,
+                                                                                                           'name' => 'intrp',
+                                                                                                           'connect_socket' => undef
+                                                                                                         }
+                                                                                                },
+                                                                                      'type' => 'num'
+                                                                                    },
                                                                  'enable' => {
                                                                                'connection_num' => undef,
                                                                                'value' => 1,
-                                                                               'type' => 'num',
                                                                                'nums' => {
                                                                                            '0' => {
-                                                                                                    'connect_socket_num' => undef,
                                                                                                     'connect_id' => 'IO',
+                                                                                                    'connect_socket_num' => undef,
                                                                                                     'name' => 'enable',
                                                                                                     'connect_socket' => undef
                                                                                                   }
-                                                                                         }
+                                                                                         },
+                                                                               'type' => 'num'
                                                                              },
-                                                                 'reset' => {
-                                                                              'connection_num' => undef,
-                                                                              'value' => 1,
-                                                                              'type' => 'num',
-                                                                              'nums' => {
-                                                                                          '0' => {
-                                                                                                   'connect_id' => 'clk_source0',
-                                                                                                   'connect_socket_num' => '0',
-                                                                                                   'name' => 'reset',
-                                                                                                   'connect_socket' => 'reset'
-                                                                                                 }
-                                                                                        }
-                                                                            },
                                                                  'clk' => {
                                                                             'connection_num' => undef,
                                                                             'value' => 1,
+                                                                            'type' => 'num',
                                                                             'nums' => {
                                                                                         '0' => {
-                                                                                                 'connect_socket_num' => '0',
                                                                                                  'connect_id' => 'clk_source0',
+                                                                                                 'connect_socket_num' => '0',
                                                                                                  'name' => 'clk',
                                                                                                  'connect_socket' => 'clk'
                                                                                                }
-                                                                                      },
-                                                                            'type' => 'num'
-                                                                          }
+                                                                                      }
+                                                                          },
+                                                                 'reset' => {
+                                                                              'connection_num' => undef,
+                                                                              'value' => 1,
+                                                                              'nums' => {
+                                                                                          '0' => {
+                                                                                                   'connect_socket_num' => '0',
+                                                                                                   'connect_id' => 'clk_source0',
+                                                                                                   'name' => 'reset',
+                                                                                                   'connect_socket' => 'reset'
+                                                                                                 }
+                                                                                        },
+                                                                              'type' => 'num'
+                                                                            }
                                                                },
                                                     'parameters' => {
                                                                       'AEMB_XWB' => {
@@ -250,20 +250,20 @@ $aemb_test = bless( {
                                                                       'AEMB_IDX' => {
                                                                                       'value' => ' 6'
                                                                                     },
-                                                                      'AEMB_IWB' => {
-                                                                                      'value' => ' 32'
-                                                                                    },
                                                                       'AEMB_MUL' => {
                                                                                       'value' => ' 1'
+                                                                                    },
+                                                                      'AEMB_IWB' => {
+                                                                                      'value' => ' 32'
                                                                                     },
                                                                       'AEMB_BSF' => {
                                                                                       'value' => ' 1'
                                                                                     },
-                                                                      'AEMB_ICH' => {
-                                                                                      'value' => ' 11'
-                                                                                    },
                                                                       'AEMB_DWB' => {
                                                                                       'value' => ' 32'
+                                                                                    },
+                                                                      'AEMB_ICH' => {
+                                                                                      'value' => ' 11'
                                                                                     }
                                                                     },
                                                     'parameters_order' => [
@@ -283,57 +283,57 @@ $aemb_test = bless( {
                                        'clk_source0' => {
                                                           'instance_name' => 'ss',
                                                           'plugs' => {
-                                                                       'reset' => {
-                                                                                    'connection_num' => undef,
-                                                                                    'value' => 1,
-                                                                                    'type' => 'num',
-                                                                                    'nums' => {
-                                                                                                '0' => {
-                                                                                                         'connect_socket_num' => undef,
-                                                                                                         'connect_id' => 'IO',
-                                                                                                         'name' => 'reset',
-                                                                                                         'connect_socket' => undef
-                                                                                                       }
-                                                                                              }
-                                                                                  },
                                                                        'clk' => {
                                                                                   'connection_num' => undef,
                                                                                   'value' => 1,
+                                                                                  'type' => 'num',
                                                                                   'nums' => {
                                                                                               '0' => {
-                                                                                                       'connect_id' => 'IO',
                                                                                                        'connect_socket_num' => undef,
+                                                                                                       'connect_id' => 'IO',
                                                                                                        'name' => 'clk',
                                                                                                        'connect_socket' => undef
                                                                                                      }
-                                                                                            },
-                                                                                  'type' => 'num'
-                                                                                }
+                                                                                            }
+                                                                                },
+                                                                       'reset' => {
+                                                                                    'connection_num' => undef,
+                                                                                    'value' => 1,
+                                                                                    'nums' => {
+                                                                                                '0' => {
+                                                                                                         'connect_id' => 'IO',
+                                                                                                         'connect_socket_num' => undef,
+                                                                                                         'name' => 'reset',
+                                                                                                         'connect_socket' => undef
+                                                                                                       }
+                                                                                              },
+                                                                                    'type' => 'num'
+                                                                                  }
                                                                      },
                                                           'parameters' => {},
                                                           'parameters_order' => [],
                                                           'clk_source0' => {},
                                                           'sockets' => {
-                                                                         'clk' => {
-                                                                                    'connection_num' => 'multi connection',
-                                                                                    'value' => 1,
-                                                                                    'nums' => {
-                                                                                                '0' => {
-                                                                                                         'name' => 'clk'
-                                                                                                       }
-                                                                                              },
-                                                                                    'type' => 'num'
-                                                                                  },
                                                                          'reset' => {
                                                                                       'connection_num' => 'multi connection',
                                                                                       'value' => 1,
-                                                                                      'type' => 'num',
                                                                                       'nums' => {
                                                                                                   '0' => {
                                                                                                            'name' => 'reset'
                                                                                                          }
-                                                                                                }
-                                                                                    }
+                                                                                                },
+                                                                                      'type' => 'num'
+                                                                                    },
+                                                                         'clk' => {
+                                                                                    'connection_num' => 'multi connection',
+                                                                                    'value' => 1,
+                                                                                    'type' => 'num',
+                                                                                    'nums' => {
+                                                                                                '0' => {
+                                                                                                         'name' => 'clk'
+                                                                                                       }
+                                                                                              }
+                                                                                  }
                                                                        },
                                                           'module_name' => 'clk_source',
                                                           'category' => 'source',
@@ -349,59 +349,59 @@ $aemb_test = bless( {
                                                                      'Aw' => {
                                                                                'value' => '    2'
                                                                              },
-                                                                     'SELw' => {
-                                                                                 'value' => '    4'
-                                                                               },
                                                                      'TAGw' => {
                                                                                  'value' => '    3'
+                                                                               },
+                                                                     'SELw' => {
+                                                                                 'value' => '    4'
                                                                                },
                                                                      'Dw' => {
                                                                                'value' => '    32'
                                                                              }
                                                                    },
                                                    'plugs' => {
-                                                                'clk' => {
-                                                                           'connection_num' => undef,
-                                                                           'value' => 1,
-                                                                           'type' => 'num',
-                                                                           'nums' => {
-                                                                                       '0' => {
-                                                                                                'connect_socket_num' => '0',
-                                                                                                'connect_id' => 'clk_source0',
-                                                                                                'name' => 'clk',
-                                                                                                'connect_socket' => 'clk'
-                                                                                              }
-                                                                                     }
-                                                                         },
                                                                 'reset' => {
                                                                              'connection_num' => undef,
                                                                              'value' => 1,
+                                                                             'type' => 'num',
                                                                              'nums' => {
                                                                                          '0' => {
-                                                                                                  'connect_socket_num' => '0',
                                                                                                   'connect_id' => 'clk_source0',
+                                                                                                  'connect_socket_num' => '0',
                                                                                                   'name' => 'reset',
                                                                                                   'connect_socket' => 'reset'
                                                                                                 }
-                                                                                       },
-                                                                             'type' => 'num'
+                                                                                       }
                                                                            },
+                                                                'clk' => {
+                                                                           'connection_num' => undef,
+                                                                           'value' => 1,
+                                                                           'nums' => {
+                                                                                       '0' => {
+                                                                                                'connect_id' => 'clk_source0',
+                                                                                                'connect_socket_num' => '0',
+                                                                                                'name' => 'clk',
+                                                                                                'connect_socket' => 'clk'
+                                                                                              }
+                                                                                     },
+                                                                           'type' => 'num'
+                                                                         },
                                                                 'wb_slave' => {
                                                                                 'connection_num' => undef,
                                                                                 'value' => 1,
+                                                                                'type' => 'num',
                                                                                 'nums' => {
                                                                                             '0' => {
-                                                                                                     'base' => 2432696320,
-                                                                                                     'width' => 5,
                                                                                                      'connect_socket_num' => '0',
+                                                                                                     'width' => 5,
+                                                                                                     'base' => 2432696320,
                                                                                                      'name' => 'wb',
-                                                                                                     'end' => 2432696351,
                                                                                                      'connect_socket' => 'wb_slave',
+                                                                                                     'end' => 2432696351,
                                                                                                      'connect_id' => 'wishbone_bus0',
                                                                                                      'addr' => '0x9100_0000	0x91ff_ffff		General-Purpose I/O'
                                                                                                    }
-                                                                                          },
-                                                                                'type' => 'num'
+                                                                                          }
                                                                               }
                                                               },
                                                    'parameters_order' => [
@@ -446,32 +446,32 @@ $aemb_test = bless( {
                                                                                         }
                                                                             },
                                                             'plugs' => {
-                                                                         'clk' => {
-                                                                                    'connection_num' => undef,
-                                                                                    'value' => 1,
-                                                                                    'type' => 'num',
-                                                                                    'nums' => {
-                                                                                                '0' => {
-                                                                                                         'connect_id' => 'clk_source0',
-                                                                                                         'connect_socket_num' => '0',
-                                                                                                         'name' => 'clk',
-                                                                                                         'connect_socket' => 'clk'
-                                                                                                       }
-                                                                                              }
-                                                                                  },
                                                                          'reset' => {
                                                                                       'connection_num' => undef,
                                                                                       'value' => 1,
+                                                                                      'type' => 'num',
                                                                                       'nums' => {
                                                                                                   '0' => {
-                                                                                                           'connect_id' => 'clk_source0',
                                                                                                            'connect_socket_num' => '0',
+                                                                                                           'connect_id' => 'clk_source0',
                                                                                                            'name' => 'reset',
                                                                                                            'connect_socket' => 'reset'
                                                                                                          }
-                                                                                                },
-                                                                                      'type' => 'num'
-                                                                                    }
+                                                                                                }
+                                                                                    },
+                                                                         'clk' => {
+                                                                                    'connection_num' => undef,
+                                                                                    'value' => 1,
+                                                                                    'nums' => {
+                                                                                                '0' => {
+                                                                                                         'connect_socket_num' => '0',
+                                                                                                         'connect_id' => 'clk_source0',
+                                                                                                         'name' => 'clk',
+                                                                                                         'connect_socket' => 'clk'
+                                                                                                       }
+                                                                                              },
+                                                                                    'type' => 'num'
+                                                                                  }
                                                                        },
                                                             'parameters_order' => [
                                                                                     'S',
@@ -487,32 +487,32 @@ $aemb_test = bless( {
                                                                            'wb_master' => {
                                                                                             'connection_num' => 'single connection',
                                                                                             'value' => 'M',
+                                                                                            'type' => 'param',
                                                                                             'nums' => {
                                                                                                         '0' => {
                                                                                                                  'name' => 'wb_master'
                                                                                                                }
-                                                                                                      },
-                                                                                            'type' => 'param'
+                                                                                                      }
                                                                                           },
                                                                            'wb_addr_map' => {
                                                                                               'connection_num' => 'single connection',
                                                                                               'value' => 1,
-                                                                                              'type' => 'num',
                                                                                               'nums' => {
                                                                                                           '0' => {
                                                                                                                    'name' => 'wb_addr_map'
                                                                                                                  }
-                                                                                                        }
+                                                                                                        },
+                                                                                              'type' => 'num'
                                                                                             },
                                                                            'wb_slave' => {
                                                                                            'connection_num' => 'single connection',
                                                                                            'value' => 'S',
-                                                                                           'type' => 'param',
                                                                                            'nums' => {
                                                                                                        '0' => {
                                                                                                                 'name' => 'wb_slave'
                                                                                                               }
-                                                                                                     }
+                                                                                                     },
+                                                                                           'type' => 'param'
                                                                                          }
                                                                          },
                                                             'module_name' => 'wishbone_bus',
@@ -523,48 +523,48 @@ $aemb_test = bless( {
                                                                       'instance_name' => 'ram',
                                                                       'Altera_single_port_ram0' => {},
                                                                       'plugs' => {
-                                                                                   'reset' => {
-                                                                                                'connection_num' => undef,
-                                                                                                'value' => 1,
-                                                                                                'nums' => {
-                                                                                                            '0' => {
-                                                                                                                     'connect_socket_num' => '0',
-                                                                                                                     'connect_id' => 'clk_source0',
-                                                                                                                     'name' => 'reset',
-                                                                                                                     'connect_socket' => 'reset'
-                                                                                                                   }
-                                                                                                          },
-                                                                                                'type' => 'num'
-                                                                                              },
                                                                                    'clk' => {
                                                                                               'connection_num' => undef,
                                                                                               'value' => 1,
-                                                                                              'type' => 'num',
                                                                                               'nums' => {
                                                                                                           '0' => {
-                                                                                                                   'connect_id' => 'clk_source0',
                                                                                                                    'connect_socket_num' => '0',
+                                                                                                                   'connect_id' => 'clk_source0',
                                                                                                                    'name' => 'clk',
                                                                                                                    'connect_socket' => 'clk'
                                                                                                                  }
-                                                                                                        }
+                                                                                                        },
+                                                                                              'type' => 'num'
                                                                                             },
+                                                                                   'reset' => {
+                                                                                                'connection_num' => undef,
+                                                                                                'value' => 1,
+                                                                                                'type' => 'num',
+                                                                                                'nums' => {
+                                                                                                            '0' => {
+                                                                                                                     'connect_id' => 'clk_source0',
+                                                                                                                     'connect_socket_num' => '0',
+                                                                                                                     'name' => 'reset',
+                                                                                                                     'connect_socket' => 'reset'
+                                                                                                                   }
+                                                                                                          }
+                                                                                              },
                                                                                    'wb_slave' => {
                                                                                                    'connection_num' => undef,
                                                                                                    'value' => 1,
+                                                                                                   'type' => 'num',
                                                                                                    'nums' => {
                                                                                                                '0' => {
-                                                                                                                        'connect_socket_num' => '1',
-                                                                                                                        'width' => 'WBAw',
                                                                                                                         'base' => 0,
+                                                                                                                        'width' => 'WBAw',
+                                                                                                                        'connect_socket_num' => '1',
                                                                                                                         'name' => 'wb_slave',
-                                                                                                                        'end' => 16383,
                                                                                                                         'connect_socket' => 'wb_slave',
+                                                                                                                        'end' => 16383,
                                                                                                                         'connect_id' => 'wishbone_bus0',
                                                                                                                         'addr' => '0x0000_0000	0x3fff_ffff		RAM'
                                                                                                                       }
-                                                                                                             },
-                                                                                                   'type' => 'num'
+                                                                                                             }
                                                                                                  }
                                                                                  },
                                                                       'parameters' => {
