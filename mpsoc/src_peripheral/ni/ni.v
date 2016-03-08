@@ -114,7 +114,7 @@ module ni #(
     s_dat_i,
     s_sel_i,
     s_addr_i,  
-    s_tag_i,
+    s_cti_i,
     s_stb_i,
     s_cyc_i,
     s_we_i,    
@@ -129,7 +129,7 @@ module ni #(
     m_sel_o,
     m_dat_o,
     m_addr_o,
-    m_tag_o,
+    m_cti_o,
     m_stb_o,
     m_cyc_o,
     m_we_o,
@@ -252,7 +252,7 @@ localparam  NUMBER_OF_STATUS    =   7,
     input   [Dw-1       :   0]      s_dat_i;
     input   [SELw-1     :   0]      s_sel_i;
     input   [S_Aw-1     :   0]      s_addr_i;  
-    input   [TAGw-1     :   0]      s_tag_i;
+    input   [TAGw-1     :   0]      s_cti_i;
     input                           s_stb_i;
     input                           s_cyc_i;
     input                           s_we_i;
@@ -267,7 +267,7 @@ localparam  NUMBER_OF_STATUS    =   7,
     output  [SELw-1          :   0] m_sel_o;
     output  [Dw-1            :   0] m_dat_o;
     output  [M_Aw-1          :   0] m_addr_o;
-    output  [TAGw-1          :   0] m_tag_o;
+    output  [TAGw-1          :   0] m_cti_o;
     output                          m_stb_o;
     output                          m_cyc_o;
     output                          m_we_o;
@@ -360,7 +360,8 @@ localparam  NUMBER_OF_STATUS    =   7,
     assign  m_waitrequest   =   ~m_ack_i_delayed ; //in busrt mode  the ack is regisered inside the ni insted of ram to avoid combinational loop
     assign  m_cyc_o         =   m_we_o | m_read;
     assign  s_ack_o_next    =   s_stb_i & (~s_ack_o);
-    assign  m_tag_o         =   (m_stb_o)   ?   ((last_rw)? 3'b111 :    3'b010) : 3'b000;
+   // assign  m_cti_o         =   (m_stb_o)   ?   ((last_rw)? 3'b111 :    3'b100) : 3'b000;
+    assign  m_cti_o         =   (m_stb_o)   ?      3'b100 : 3'b000;
     
     assign  irq             = (rsv_pck_isr & rsv_pck_int_en) | (rd_done_isr & rd_done_int_en) | (wr_done_isr & wr_done_int_en);
         

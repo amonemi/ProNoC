@@ -170,7 +170,7 @@ module credit_counter #(
 		inport_module #(
 			.V	(V), // vc_num_per_port
 			.P	(P) // router port num
-		)inport_module
+		)the_inport_module
 		(
 			.flit_is_tail                    (flit_is_tail_all						[(i+1)*V-1		:i*V]),
 			.assigned_ovc_num                (assigned_ovc_num_all				[(i+1)*VV-1		:i*VV]),

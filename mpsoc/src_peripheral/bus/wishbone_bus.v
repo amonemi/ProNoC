@@ -33,12 +33,14 @@
 
 module wishbone_bus #(
 		
-	parameter M  =	4,		//number of master port
-	parameter S   =	4,		//number of slave port
-	parameter Dw  =	32,	   // maximum data width
-	parameter Aw  =	32,    // address width
-	parameter SELw   =	2,
-	parameter TAGw   =	3    //merged  {tga,tgb,tgc}
+	parameter M        =   4,		//number of master port
+	parameter S        =   4,		//number of slave port
+	parameter Dw       =   32,	   // maximum data width
+	parameter Aw       =   32,    // address width
+	parameter SELw     =   2,
+	parameter TAGw     =   3,    //merged  {tga,tgb,tgc}
+	parameter CTIw     =   3,
+	parameter BTEw     =   2 
   
 		
 )
@@ -51,12 +53,14 @@ module wishbone_bus #(
 	s_we_o_all,
 	s_cyc_o_all,
 	s_stb_o_all,
+	s_cti_o_all,
+    s_bte_o_all,    
 	
 	s_dat_i_all,
 	s_ack_i_all,
 	s_err_i_all,
 	s_rty_i_all,
-									
+								
 	
 	//masters interface
 	m_dat_o_all,
@@ -72,6 +76,8 @@ module wishbone_bus #(
 	m_we_i_all,
 	m_stb_i_all,
 	m_cyc_i_all,
+	m_cti_i_all,
+    m_bte_i_all,
 	
 	//address compar
 	m_grant_addr,
@@ -100,12 +106,16 @@ module wishbone_bus #(
                 AwS     =   Aw * S,
                 SELwS   =   SELw * S, 
                 TAGwS   =   TAGw * S,
+                CTIwS   =   CTIw * S,
+                BTEwS   =   BTEw * S,          
                 DwM     =   Dw * M,
                 AwM     =   Aw  * M,
                 SELwM   =   SELw   * M,
                 TAGwM   =   TAGw   * M,
                 Mw      =   (M>1)? log2(M):1,
-                Sw      =   (S>1)? log2(S):1;          
+                Sw      =   (S>1)? log2(S):1,
+                CTIwM   =   CTIw * M,
+                BTEwM   =   BTEw * M;          
                 
                 
                 
@@ -118,20 +128,25 @@ module wishbone_bus #(
     output  [S-1        :   0]   s_we_o_all;
     output  [S-1        :   0]   s_cyc_o_all;
     output  [S-1        :   0]   s_stb_o_all;
+    output  [CTIwS-1    :   0]   s_cti_o_all;
+    output  [BTEwS-1    :   0]   s_bte_o_all;   
     
     
     input   [DwS-1      :   0]   s_dat_i_all;
     input   [S-1        :   0]   s_ack_i_all;
     input   [S-1        :   0]   s_err_i_all;
     input   [S-1        :   0]   s_rty_i_all;
-                                    
+                                 
+    
+  
+                                 
     
     //masters interface
     output  [DwM-1      :   0]   m_dat_o_all;
     output  [M-1        :   0]   m_ack_o_all;
     output  [M-1        :   0]   m_err_o_all;
     output  [M-1        :   0]   m_rty_o_all;
-    
+             
     
     input   [AwM-1      :   0]   m_adr_i_all;
     input   [DwM-1      :   0]   m_dat_i_all;
@@ -140,6 +155,8 @@ module wishbone_bus #(
     input   [M-1        :   0]   m_we_i_all;
     input   [M-1        :   0]   m_stb_i_all;
     input   [M-1        :   0]   m_cyc_i_all;
+    input   [CTIwM-1    :   0]   m_cti_i_all;
+    input   [BTEwM-1    :   0]   m_bte_i_all; 
     
     //
      output [Aw-1       :   0]  m_grant_addr;
@@ -154,6 +171,8 @@ module wishbone_bus #(
    
     wire    [Dw-1       :	0]	m_grant_dat,s_read_dat;
     wire	[SELw-1     :	0]	m_grant_sel;
+    wire    [BTEw-1     :   0]  m_grant_bte;
+    wire    [CTIw-1     :   0]  m_grant_cti;
     wire	[TAGw-1     :	0]	m_grant_tag;
 
     
@@ -164,6 +183,9 @@ module wishbone_bus #(
     wire 	[Aw-1      :	0]	s_adr_o;
     wire	[Dw-1      :	0]	s_dat_o;
     wire	[SELw-1    :	0]	s_sel_o;
+    wire    [BTEw-1    :    0]  s_bte_o;
+    wire    [CTIw-1    :    0]  s_cti_o;
+    
     wire	[TAGw-1    :	0]	s_tag_o;
     wire                        s_we_o;
     wire                        s_cyc_o;
@@ -173,6 +195,9 @@ module wishbone_bus #(
     assign	s_adr_o_all	=	{S{s_adr_o}};
     assign	s_dat_o_all	=	{S{s_dat_o}};
     assign	s_sel_o_all	=	{S{s_sel_o}};
+    assign  s_cti_o_all =   {S{s_cti_o}};
+    assign  s_bte_o_all =   {S{s_bte_o}};
+    
     assign	s_tag_o_all	=	{S{s_tag_o}};
     assign	s_we_o_all	=	{S{s_we_o}};
     assign	s_cyc_o_all	=	{S{s_cyc_o}};
@@ -185,6 +210,8 @@ module wishbone_bus #(
     assign 	s_adr_o	    =	m_grant_addr;
     assign 	s_dat_o     =	m_grant_dat;
     assign 	s_sel_o     =	m_grant_sel;
+    assign  s_bte_o     =   m_grant_bte;
+    assign  s_cti_o     =   m_grant_cti;
     assign	s_tag_o     =	m_grant_tag;
     assign 	s_we_o      =	m_grant_we;
     assign 	s_cyc_o     =	m_grant_cyc;
@@ -282,6 +309,29 @@ assign	m_rty_o_all	=	m_grant_onehot	& {M{any_s_rty}};
     
     );
     
+     binary_mux #( 
+        .IN_WIDTH   (BTEwM),    
+        .OUT_WIDTH  (BTEw)
+    )
+     m_bte_mux
+    (
+        .mux_in         (m_bte_i_all),
+        .mux_out        (m_grant_bte),
+        .sel            (m_grant_bin)
+    
+    );
+    
+    binary_mux #( 
+        .IN_WIDTH   (CTIwM),    
+        .OUT_WIDTH  (CTIw)
+    )
+     m_cti_mux
+    (
+        .mux_in         (m_cti_i_all),
+        .mux_out        (m_grant_cti),
+        .sel            (m_grant_bin)
+    
+    );
     
     
     binary_mux #( 
@@ -336,6 +386,10 @@ assign	m_rty_o_all	=	m_grant_onehot	& {M{any_s_rty}};
     	.sel			(m_grant_bin)
     
     );
+    
+    
+  
+    
 
 generate
 	if(M > 1) begin

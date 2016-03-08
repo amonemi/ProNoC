@@ -221,7 +221,7 @@ module  traffic_gen #(
     (
     .wr_in                      (ovc_wr_in),   
     .credit_in                  (credit_in),
-    .full_vc                    (full_vc),
+    .nearly_full_vc             (full_vc),
     .empty_vc                   (empty_vc),
     .cand_vc                    (cand_vc),
     .cand_wr_vc_en              (cand_wr_vc_en),
