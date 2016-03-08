@@ -1,53 +1,53 @@
-`timescale	 1ns/1ps
+`timescale   1ns/1ps
 
 module flit_buffer #(
-	parameter V        =   4,
-	parameter P        =   5,
-	parameter B        =   4, 	// buffer space :flit per VC 
-	parameter Fpay     =   32,
-	parameter DEBUG_EN =   1
-	)	
-	(
-		din,     // Data in
-		vc_num_wr,//write vertual channel 	
-		vc_num_rd,//read vertual channel 	
-		wr_en,   // Write enable
-		rd_en,   // Read the next word
-		dout,    // Data out
-		vc_not_empty,
-		reset,
-		clk
-	);
+    parameter V        =   4,
+    parameter P        =   5,
+    parameter B        =   4,   // buffer space :flit per VC 
+    parameter Fpay     =   32,
+    parameter DEBUG_EN =   1
+    )   
+    (
+        din,     // Data in
+        vc_num_wr,//write vertual channel   
+        vc_num_rd,//read vertual channel    
+        wr_en,   // Write enable
+        rd_en,   // Read the next word
+        dout,    // Data out
+        vc_not_empty,
+        reset,
+        clk
+    );
 
-	function integer log2;
-      input integer number;	begin	
-         log2=0;	
-         while(2**log2<number) begin	
-            log2=log2+1;	
-         end	
-      end	
+    function integer log2;
+      input integer number; begin   
+         log2=0;    
+         while(2**log2<number) begin    
+            log2=log2+1;    
+         end    
+      end   
     endfunction // log2 
-	
-    localparam 		Fw		=	2+V+Fpay,	//flit width
-					BV		=	B	*	V;
-	
-	
-	input  [Fw-1	  :0] 	din;     // Data in
-	input  [V-1		  :0]	vc_num_wr;//write vertual channel 	
-	input  [V-1		  :0]	vc_num_rd;//read vertual channel 	
-	input 					wr_en;   // Write enable
-	input 					rd_en;   // Read the next word
-	output [Fw-1       :0]	dout;    // Data out
-	output [V-1        :0]	vc_not_empty;
-	input					reset;
-	input					clk;
-	
-	
-	localparam BVw		        =	log2(BV),
-               Bw			    =	log2(B),
-               DEPTHw		    =	Bw+1,
-               BwV	            =	Bw * V,
-               BVw_Bw	        =	BVw-Bw,
+    
+    localparam      Fw      =   2+V+Fpay,   //flit width
+                    BV      =   B   *   V;
+    
+    
+    input  [Fw-1      :0]   din;     // Data in
+    input  [V-1       :0]   vc_num_wr;//write vertual channel   
+    input  [V-1       :0]   vc_num_rd;//read vertual channel    
+    input                   wr_en;   // Write enable
+    input                   rd_en;   // Read the next word
+    output [Fw-1       :0]  dout;    // Data out
+    output [V-1        :0]  vc_not_empty;
+    input                   reset;
+    input                   clk;
+    
+    
+    localparam BVw              =   log2(BV),
+               Bw               =   (B==1)? 1 : log2(B),
+               Vw               =  (V==1)? 1 : log2(V),
+               DEPTHw           =   Bw+1,
+               BwV              =   Bw * V,
                BVwV             =   BVw * V,
                RAM_DATA_WIDTH   =   Fw - V;
                
@@ -64,85 +64,85 @@ module flit_buffer #(
     assign dout = {fifo_ram_dout[Fpay+1:Fpay],{V{1'bX}},fifo_ram_dout[Fpay-1        :   0]};    
     assign  wr  =   (wr_en)?  vc_num_wr : {V{1'b0}};
     assign  rd  =   (rd_en)?  vc_num_rd : {V{1'b0}};
-	
+    
 
 genvar i;
 
 generate 
     if((2**Bw)==B)begin :pow2
-		/*****************		
-		  Buffer width is power of 2
-		******************/
-	reg [Bw- 1 		: 	0] rd_ptr [V-1			:0];
-	reg [Bw- 1 		: 	0] wr_ptr [V-1			:0];
-	
-	
-	
-	
-	wire [BwV-1	   :	0]	rd_ptr_array;
-	wire [BwV-1	   :	0]	wr_ptr_array;
-	wire [Bw-1	   :	0]	vc_wr_addr;
-	wire [Bw-1	   :	0]	vc_rd_addr;	
-	wire [BVw_Bw-1 :	0]	wr_select_addr;
-	wire [BVw_Bw-1 :	0]	rd_select_addr;	
-	wire [BVw- 1   : 	0]  wr_addr;
-	wire [BVw- 1   : 	0]  rd_addr;
-	
-	
-	
-	
-	assign  wr_addr	=	{wr_select_addr,vc_wr_addr};
-	assign  rd_addr	=	{rd_select_addr,vc_rd_addr};
-	
-	
-	
-	one_hot_mux #(
-		.IN_WIDTH		(BwV),
-		.SEL_WIDTH 		(V) 
-	)
-	wr_ptr_mux
-	(
-		.mux_in			(wr_ptr_array),
-		.mux_out			(vc_wr_addr),
-		.sel				(vc_num_wr)
-	);
-	
-		
-	
-	one_hot_mux #(
-		.IN_WIDTH		(BwV),
-		.SEL_WIDTH 		(V) 
-	)
-	rd_ptr_mux
-	(
-		.mux_in			(rd_ptr_array),
-		.mux_out			(vc_rd_addr),
-		.sel				(vc_num_rd)
-	);
-	
-	
-	
-	one_hot_to_bin #(
-	.ONE_HOT_WIDTH	(V)
-	
-	)
-	wr_vc_start_addr
-	(
-	.one_hot_code	(vc_num_wr),
-	.bin_code		(wr_select_addr)
+        /*****************      
+          Buffer width is power of 2
+        ******************/
+    reg [Bw- 1      :   0] rd_ptr [V-1          :0];
+    reg [Bw- 1      :   0] wr_ptr [V-1          :0];
+    
+    
+    
+    
+    wire [BwV-1    :    0]  rd_ptr_array;
+    wire [BwV-1    :    0]  wr_ptr_array;
+    wire [Bw-1     :    0]  vc_wr_addr;
+    wire [Bw-1     :    0]  vc_rd_addr; 
+    wire [Vw-1     :    0]  wr_select_addr;
+    wire [Vw-1     :    0]  rd_select_addr; 
+    wire [Bw+Vw-1  :    0]  wr_addr;
+    wire [Bw+Vw-1  :    0]  rd_addr;
+    
+    
+    
+    
+    assign  wr_addr =   {wr_select_addr,vc_wr_addr};
+    assign  rd_addr =   {rd_select_addr,vc_rd_addr};
+    
+    
+    
+    one_hot_mux #(
+        .IN_WIDTH       (BwV),
+        .SEL_WIDTH      (V) 
+    )
+    wr_ptr_mux
+    (
+        .mux_in         (wr_ptr_array),
+        .mux_out            (vc_wr_addr),
+        .sel                (vc_num_wr)
+    );
+    
+        
+    
+    one_hot_mux #(
+        .IN_WIDTH       (BwV),
+        .SEL_WIDTH      (V) 
+    )
+    rd_ptr_mux
+    (
+        .mux_in         (rd_ptr_array),
+        .mux_out            (vc_rd_addr),
+        .sel                (vc_num_rd)
+    );
+    
+    
+    
+    one_hot_to_bin #(
+    .ONE_HOT_WIDTH  (V)
+    
+    )
+    wr_vc_start_addr
+    (
+    .one_hot_code   (vc_num_wr),
+    .bin_code       (wr_select_addr)
 
-	);
-	
-	one_hot_to_bin #(
-	.ONE_HOT_WIDTH	(V)
-	
-	)
-	rd_vc_start_addr
-	(
-	.one_hot_code	(vc_num_rd),
-	.bin_code		(rd_select_addr)
+    );
+    
+    one_hot_to_bin #(
+    .ONE_HOT_WIDTH  (V)
+    
+    )
+    rd_vc_start_addr
+    (
+    .one_hot_code   (vc_num_rd),
+    .bin_code       (rd_select_addr)
 
-	);
+    );
 
     fifo_ram    #(
         .DATA_WIDTH (RAM_DATA_WIDTH),
@@ -151,68 +151,68 @@ generate
     the_queue
     (
         .wr_data        (fifo_ram_din), 
-        .wr_addr        (wr_addr),
-        .rd_addr        (rd_addr),
+        .wr_addr        (wr_addr[BVw-1  :   0]),
+        .rd_addr        (rd_addr[BVw-1  :   0]),
         .wr_en          (wr_en),
         .rd_en          (rd_en),
         .clk            (clk),
         .rd_data        (fifo_ram_dout)
     );  
 
-	for(i=0;i<V;i=i+1) begin :loop0
-		
-		assign 	wr_ptr_array[(i+1)*Bw- 1 		: 	i*Bw]	=		wr_ptr[i];
-		assign 	rd_ptr_array[(i+1)*Bw- 1 		: 	i*Bw]	=		rd_ptr[i];
-		//assign 	vc_nearly_full[i] = (depth[i] >= B-1);
-		assign 	vc_not_empty	[i] =	(depth[i] >	0);
-	
-	
-		always @(posedge clk or posedge reset)
-		begin
-			if (reset) begin
-				rd_ptr 	[i]	<= {Bw{1'b0}};
-				wr_ptr	[i]	<= {Bw{1'b0}};
-				depth	[i]	<= {DEPTHw{1'b0}};
-			end
-			else begin
-				if (wr[i] ) wr_ptr[i] <= wr_ptr [i]+ 1'h1;
-				if (rd[i] ) rd_ptr [i]<= rd_ptr [i]+ 1'h1;
-				if (wr[i] & ~rd[i]) depth [i]<=
-				   //synthesis translate_off
-				   //synopsys  translate_off
-				   #1
-				   //synopsys  translate_on
-				   // synthesis translate_on
-				   depth[i] + 1'h1;
-				else if (~wr[i] & rd[i]) depth [i]<=
-				   // synthesis translate_off
-				   //synopsys  translate_off
-				   #1
-				  //synopsys  translate_on
-				   // synthesis translate_on
-				   depth[i] - 1'h1;
-			end//else
-		end//always
+    for(i=0;i<V;i=i+1) begin :loop0
+        
+        assign  wr_ptr_array[(i+1)*Bw- 1        :   i*Bw]   =       wr_ptr[i];
+        assign  rd_ptr_array[(i+1)*Bw- 1        :   i*Bw]   =       rd_ptr[i];
+        //assign    vc_nearly_full[i] = (depth[i] >= B-1);
+        assign  vc_not_empty    [i] =   (depth[i] > 0);
+    
+    
+        always @(posedge clk or posedge reset)
+        begin
+            if (reset) begin
+                rd_ptr  [i] <= {Bw{1'b0}};
+                wr_ptr  [i] <= {Bw{1'b0}};
+                depth   [i] <= {DEPTHw{1'b0}};
+            end
+            else begin
+                if (wr[i] ) wr_ptr[i] <= wr_ptr [i]+ 1'h1;
+                if (rd[i] ) rd_ptr [i]<= rd_ptr [i]+ 1'h1;
+                if (wr[i] & ~rd[i]) depth [i]<=
+                   //synthesis translate_off
+                   //synopsys  translate_off
+                   #1
+                   //synopsys  translate_on
+                   // synthesis translate_on
+                   depth[i] + 1'h1;
+                else if (~wr[i] & rd[i]) depth [i]<=
+                   // synthesis translate_off
+                   //synopsys  translate_off
+                   #1
+                  //synopsys  translate_on
+                   // synthesis translate_on
+                   depth[i] - 1'h1;
+            end//else
+        end//always
 
 
 // synthesis translate_off
 //synopsys  translate_off
-	
-		always @(posedge clk) begin
-			if (wr[i] && (depth[i] == B) && !rd[i])
-				$display("%t: ERROR: Attempt to write to full FIFO: %m",$time);
-			if (rd[i] && (depth[i] == {DEPTHw{1'b0}} ))
-				$display("%t: ERROR: Attempt to read an empty FIFO: %m",$time);
-			
-		//if (wr_en)       $display($time, " %h is written on fifo ",din);
-		end//always
+    
+        always @(posedge clk) begin
+            if (wr[i] && (depth[i] == B) && !rd[i])
+                $display("%t: ERROR: Attempt to write to full FIFO: %m",$time);
+            if (rd[i] && (depth[i] == {DEPTHw{1'b0}} ))
+                $display("%t: ERROR: Attempt to read an empty FIFO: %m",$time);
+            
+        //if (wr_en)       $display($time, " %h is written on fifo ",din);
+        end//always
 //synopsys  translate_on
 // synthesis translate_on
-	end//for
-	
-	
-	
-	end  else begin :no_pow2	//pow2
+    end//for
+    
+    
+    
+    end  else begin :no_pow2    //pow2
 
 
 
@@ -225,17 +225,17 @@ generate
 
 
 
-	
-	//pointers
-	reg [BVw- 1     :   0] rd_ptr [V-1          :0];
+    
+    //pointers
+    reg [BVw- 1     :   0] rd_ptr [V-1          :0];
     reg [BVw- 1     :   0] wr_ptr [V-1          :0];
-  	
-	// memory address
-	wire [BVw- 1    :   0]  wr_addr;
+    
+    // memory address
+    wire [BVw- 1    :   0]  wr_addr;
     wire [BVw- 1    :   0]  rd_addr;
-	
-	//pointer array      
-	wire [BVwV- 1   :   0]  wr_addr_all;
+    
+    //pointer array      
+    wire [BVwV- 1   :   0]  wr_addr_all;
     wire [BVwV- 1   :   0]  rd_addr_all;
     
     for(i=0;i<V;i=i+1) begin :loop0
@@ -257,24 +257,24 @@ generate
                 if (rd[i] ) rd_ptr[i] <=(rd_ptr[i]==(B*(i+1))-1)? (B*i) : rd_ptr [i]+ 1'h1;
                 if (wr[i] & ~rd[i]) depth [i]<=
                    //synthesis translate_off
-		   //synopsys  translate_off
+           //synopsys  translate_off
                    #1
-		   //synopsys  translate_on
+           //synopsys  translate_on
                    //synthesis translate_on
                    depth[i] + 1'h1;
                 else if (~wr[i] & rd[i]) depth [i]<=
                    //synthesis translate_off
-		   //synopsys  translate_off
-                   #1		   
+           //synopsys  translate_off
+                   #1          
                    //synthesis translate_on
-		   //synopsys  translate_on
+           //synopsys  translate_on
                    depth[i] - 1'h1;
             end//else
         end//always  
         
         
         //synthesis translate_off
-	//synopsys  translate_off
+    //synopsys  translate_off
     
         always @(posedge clk) begin
             if (wr[i] && (depth[i] == B) && !rd[i])
@@ -284,28 +284,28 @@ generate
             
         //if (wr_en)       $display($time, " %h is written on fifo ",din);
         end//always
-	
-	//synopsys  translate_on
-	//synthesis translate_on
+    
+    //synopsys  translate_on
+    //synthesis translate_on
         
               
     
     end//FOR
     
-	
-	one_hot_mux #(
-		.IN_WIDTH(BVwV),
-		.SEL_WIDTH(V),
-		.OUT_WIDTH(BVw)
-	)
-	wr_mux
-	(
-		.mux_in(wr_addr_all),
-		.mux_out(wr_addr),
-		.sel(vc_num_wr)
-	);
-	
-	one_hot_mux #(
+    
+    one_hot_mux #(
+        .IN_WIDTH(BVwV),
+        .SEL_WIDTH(V),
+        .OUT_WIDTH(BVw)
+    )
+    wr_mux
+    (
+        .mux_in(wr_addr_all),
+        .mux_out(wr_addr),
+        .sel(vc_num_wr)
+    );
+    
+    one_hot_mux #(
         .IN_WIDTH(BVwV),
         .SEL_WIDTH(V),
         .OUT_WIDTH(BVw)
@@ -316,8 +316,8 @@ generate
         .mux_out(rd_addr),
         .sel(vc_num_rd)
     );
-	
-	fifo_ram_mem_size #(
+    
+    fifo_ram_mem_size #(
        .DATA_WIDTH (RAM_DATA_WIDTH),
        .MEM_SIZE (BV )
     )
@@ -331,34 +331,34 @@ generate
         .clk            (clk),
         .rd_data        (fifo_ram_dout)
     );  
-	
-	
-	
-	
-	
-	
-	end
-	endgenerate
-	
-	
-	
-	
+    
+    
+    
+    
+    
+    
+    end
+    endgenerate
+    
+    
+    
+    
   
 
 //synthesis translate_off
 //synopsys  translate_off
 generate
-if(DEBUG_EN) begin :dbg	
-	always @(posedge clk) begin
-		if(wr_en && vc_num_wr == {V{1'b0}})
-				$display("%t: ERROR: Attempt to write when no wr VC is asserted: %m",$time);
-		if(rd_en && vc_num_rd == {V{1'b0}})
-				$display("%t: ERROR: Attempt to read when no rd VC is asserted: %m",$time);
-	end
-end	
-endgenerate	
+if(DEBUG_EN) begin :dbg 
+    always @(posedge clk) begin
+        if(wr_en && vc_num_wr == {V{1'b0}})
+                $display("%t: ERROR: Attempt to write when no wr VC is asserted: %m",$time);
+        if(rd_en && vc_num_rd == {V{1'b0}})
+                $display("%t: ERROR: Attempt to read when no rd VC is asserted: %m",$time);
+    end
+end 
+endgenerate 
 //synopsys  translate_on
-//synthesis translate_on	
+//synthesis translate_on    
 
 endmodule 
 
@@ -371,36 +371,36 @@ endmodule
 *****************************/
 
 
-module fifo_ram 	#(
-	parameter DATA_WIDTH	= 32,
-	parameter ADDR_WIDTH	= 8
-	)
-	(
-		input [DATA_WIDTH-1			:		0] 	wr_data,		
-		input [ADDR_WIDTH-1			:		0]		wr_addr,
-		input [ADDR_WIDTH-1			:		0]		rd_addr,
-		input												wr_en,
-		input												rd_en,
-		input 											clk,
-		output reg 	[DATA_WIDTH-1	:		0]		rd_data
-	);	
+module fifo_ram     #(
+    parameter DATA_WIDTH    = 32,
+    parameter ADDR_WIDTH    = 8
+    )
+    (
+        input [DATA_WIDTH-1         :       0]  wr_data,        
+        input [ADDR_WIDTH-1         :       0]      wr_addr,
+        input [ADDR_WIDTH-1         :       0]      rd_addr,
+        input                                               wr_en,
+        input                                               rd_en,
+        input                                           clk,
+        output reg  [DATA_WIDTH-1   :       0]      rd_data
+    );  
 
-	 
-	
-	reg [DATA_WIDTH-1:0] queue [2**ADDR_WIDTH-1:0] /* synthesis ramstyle = "no_rw_check , M9K" */;
-	
-	always @(posedge clk ) begin
-		if (wr_en)
-			queue[wr_addr] <= wr_data;
-		if (rd_en)
-			rd_data <=
-				// synthesis translate_off
-				#1
-				// synthesis translate_on
-				queue[rd_addr];
-	end
-	
-	
+     
+    
+    reg [DATA_WIDTH-1:0] queue [2**ADDR_WIDTH-1:0] /* synthesis ramstyle = "no_rw_check , M9K" */;
+    
+    always @(posedge clk ) begin
+        if (wr_en)
+            queue[wr_addr] <= wr_data;
+        if (rd_en)
+            rd_data <=
+                // synthesis translate_off
+                #1
+                // synthesis translate_on
+                queue[rd_addr];
+    end
+    
+    
 endmodule
 
 
@@ -621,7 +621,7 @@ always @(posedge clk or posedge reset) begin
         end//always
         
         //synthesis translate_off
-	//synopsys  translate_off
+    //synopsys  translate_off
         always @(posedge clk)
         begin
             if (wr_en && ~rd_en && full) begin
@@ -631,7 +631,7 @@ always @(posedge clk or posedge reset) begin
                 $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
             end
         end // always @ (posedge clk)
-	//synopsys  translate_on
+    //synopsys  translate_on
         //synthesis translate_on
 
 
@@ -748,53 +748,3 @@ end
 //synthesis translate_on
 
 endmodule // fifo
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

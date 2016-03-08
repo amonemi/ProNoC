@@ -33,9 +33,11 @@
 
 module Altera_single_port_ram #(
 	parameter Dw	=32, 
-	parameter Aw	=10,	
+	parameter Aw	=10,
 	parameter TAGw	=3,
 	parameter SELw	=4,
+	parameter CTIw   =   3,
+    parameter BTEw   =   2, 
 	parameter RAM_TAG_STRING="2" //use for programming the memory at run time
 	
 )
@@ -48,6 +50,8 @@ module Altera_single_port_ram #(
     sa_sel_i,
     sa_addr_i,  
     sa_tag_i,
+    sa_cti_i,
+    sa_bte_i,
     sa_stb_i,
     sa_cyc_i,
     sa_we_i,    
@@ -70,6 +74,8 @@ module Altera_single_port_ram #(
     input                               sa_stb_i;
     input                               sa_cyc_i;
     input                               sa_we_i;
+    input       [CTIw-1     :   0]      sa_cti_i;
+    input       [BTEw-1     :   0]      sa_bte_i;
     
     output      [Dw-1       :   0]      sa_dat_o;
     output                              sa_ack_o;
@@ -81,25 +87,24 @@ module Altera_single_port_ram #(
     
     wire   [TAGw-1 :   0]   sa_cti_i;
 	
-    assign  sa_cti_i = sa_tag_i;
-	
+    	
 	
 	wire   [Dw-1   :   0]  data_a;
 	wire   [Aw-1   :   0]  addr_a;
 	wire				   we_a;
 	wire   [(Dw-1) :   0]  q_a;
 	reg 				   sa_ack_classic, sa_ack_classic_next;
-	wire				   sa_ack_burst;
+	wire				   sa_ack_ni_burst;
 	
 	assign sa_dat_o        =   q_a;
 	assign data_a          =   sa_dat_i ;
 	assign addr_a          =   sa_addr_i;
 	assign we_a            =   sa_stb_i &  sa_we_i;
-	assign sa_ack_burst	   =   sa_stb_i ; //the ack is registerd inside the master in burst mode 
+	assign sa_ack_ni_burst =   sa_stb_i ; //the ack is registerd inside the master in burst mode 
 	assign sa_err_o        =   1'b0;
     assign sa_rty_o        =   1'b0; 
-	
-	assign sa_ack_o = (sa_cti_i == 3'b000 ) ? sa_ack_classic : sa_ack_burst;
+	// 3'b100 is reserved in wb4 interface. It used for ni
+	assign sa_ack_o = (sa_cti_i == 3'b100 ) ?  sa_ack_ni_burst: sa_ack_classic;
 
 	
 	always @(*) begin

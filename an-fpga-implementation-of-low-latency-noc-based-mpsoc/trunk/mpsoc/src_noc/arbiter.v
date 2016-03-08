@@ -29,8 +29,12 @@ module arbiter #(
 	input										reset;
 
 
+
 	generate 
-	if(ARBITER_WIDTH<=4) begin: w4
+	if(ARBITER_WIDTH==1)  begin: w1
+		assign grant= request;
+		assign any_grant =request;
+	end else if(ARBITER_WIDTH<=4) begin: w4
 		//my own arbiter 
 		my_one_hot_arbiter #(
 			.ARBITER_WIDTH	(ARBITER_WIDTH)
