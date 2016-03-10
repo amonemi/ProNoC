@@ -382,7 +382,7 @@ sub generate_address_cmp{
 						
 						my $connect_name=$soc->soc_get_instance_name($connect_id);
 						$wires->wire_add("$connect_name\_socket_wb_addr_map_0_sel_one_hot","connected",1);
-						$addr_mp_v="$addr_mp_v \tassign $connect_name\_socket_wb_addr_map_0_sel_one_hot[$connect_socket_num\] = (($connect_name\_socket_wb_addr_map_0_grant_addr >= $instance_name\_BASE_ADDR)   & ($connect_name\_socket_wb_addr_map_0_grant_addr< $instance_name\_END_ADDR));\n";
+						$addr_mp_v="$addr_mp_v \tassign $connect_name\_socket_wb_addr_map_0_sel_one_hot[$connect_socket_num\] = (($connect_name\_socket_wb_addr_map_0_grant_addr >= $instance_name\_BASE_ADDR)   & ($connect_name\_socket_wb_addr_map_0_grant_addr <= $instance_name\_END_ADDR));\n";
 						
 						$number++;
 					}#if
