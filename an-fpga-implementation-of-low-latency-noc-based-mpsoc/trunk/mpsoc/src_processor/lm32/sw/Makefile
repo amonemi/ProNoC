@@ -1,19 +1,28 @@
-TOOLCHAIN=$(PRONOC_WORK)/toolchain/lm32/bin/
+TOOLCHAIN=$(PRONOC_WORK)/toolchain/lm32
 IHEX2MIF =$(PRONOC_WORK)/toolchain/ihex2mif/ihex2mif
 
 
 #SREC2VRAM ?= ../../../toolchain/lm32/srec2vram/srec2vram
 
 RAMSIZE=3FFF
+#CPU_FLAGS=-mbarrel-shift-enabled -mmultiply-enabled -msign-extend-enabled -mdivide-enabled
+CPU_FLAGS=-mbarrel-shift-enabled -mmultiply-enabled 
 
-LM32_CC=$(TOOLCHAIN)lm32-elf-gcc
-LM32_LD=$(TOOLCHAIN)lm32-elf-ld
-LM32_OBJCOPY=$(TOOLCHAIN)lm32-elf-objcopy
-LM32_OBJDUMP=$(TOOLCHAIN)lm32-elf-objdump
+LM32_CC=${TOOLCHAIN}/bin/lm32-elf-gcc
+LM32_LD=${TOOLCHAIN}/bin/lm32-elf-ld
+LM32_OBJCOPY=${TOOLCHAIN}/bin/lm32-elf-objcopy
+LM32_OBJDUMP=${TOOLCHAIN}/bin/lm32-elf-objdump
+LM32_LIB1=${TOOLCHAIN}/lm32-elf/lib
+LM32_LIB2=${TOOLCHAIN}/lib/gcc/lm32-elf/4.5.3
+
+LIBRARIES = -L${LM32_LIB1} -lc -lg  -L${LM32_LIB2}  -lgcc 
+
 VRAMFILE=image.ram
 
-CFLAGS=-MMD -O2 -Wall -g -s -fomit-frame-pointer -mbarrel-shift-enabled   -mmultiply-enabled -mdivide-enabled -msign-extend-enabled
+#CFLAGS=-MMD -O2 -Wall -g -s -fomit-frame-pointer ${CPU_FLAGS}
+CFLAGS  := -Wall -Os -ggdb -ffreestanding ${CPU_FLAGS}
 LDFLAGS=-nostdlib -nodefaultlibs -Tlinker.ld 
+#LDFLAGS=-nostdlib -T -Tlinker.ld
 SEGMENTS = -j .text -j .rodata -j .data
 
 all: image.srec $(VRAMFILE) 
@@ -28,7 +37,7 @@ main.o: main.c
 #$(LM32_CC) $(CFLAGS) -c soc-hw.c
 
 image: crt0ram.o main.o  linker.ld Makefile 
-	$(LM32_LD) $(LDFLAGS) -Map image.map -N -o image crt0ram.o main.o 
+	$(LM32_LD) $(LDFLAGS) -Map image.map -N -o image crt0ram.o main.o ${LIBRARIES}
 
 image.lst: image
 	$(LM32_OBJDUMP) -h -S $< > $@
