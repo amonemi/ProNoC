@@ -490,6 +490,7 @@ sub show_interface_info{
 
 	$$refresh_ref-> signal_connect("clicked" => sub{ 
 		$table->destroy;
+		select(undef, undef, undef, 0.1); #wait 10 ms
 		$table = interface_info_box($intfc,$ipgen,$soc_state,$info,$info);
 		
 		$scrolled_win->add_with_viewport($table);

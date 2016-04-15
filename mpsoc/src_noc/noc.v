@@ -7,7 +7,7 @@
 
 
 module noc #(
-	parameter V    = 4, 	// V
+	parameter V    = 2, 	// V
 	parameter P    = 5, 	// router port num
 	parameter B    = 4, 	// buffer space :flit per VC 
 	parameter NX   = 2,	// number of node in x axis
@@ -16,7 +16,7 @@ module noc #(
 	parameter Fpay = 32,
 	parameter MUX_TYPE	=	"BINARY",	//"ONE_HOT" or "BINARY"
 	parameter VC_REALLOCATION_TYPE	=	"NONATOMIC",// "ATOMIC" , "NONATOMIC"
-	parameter COMBINATION_TYPE= "BASELINE",// "BASELINE", "COMB_SPEC1", "COMB_SPEC2", "COMB_NONSPEC"
+	parameter COMBINATION_TYPE= "COMB_NONSPEC",// "BASELINE", "COMB_SPEC1", "COMB_SPEC2", "COMB_NONSPEC"
 	parameter FIRST_ARBITER_EXT_P_EN   =	1,	
 	parameter TOPOLOGY =	"MESH",//"MESH","TORUS"
 	parameter ROUTE_TYPE   =   "DETERMINISTIC",// "DETERMINISTIC", "FULL_ADAPTIVE", "PAR_ADAPTIVE"

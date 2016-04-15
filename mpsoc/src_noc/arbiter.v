@@ -94,8 +94,12 @@ module arbiter_priority_en #(
 	input												reset;
 	input 											 priority_en;
 	
+	
 	generate 
-	if(ARBITER_WIDTH<=4) begin :w4
+	if(ARBITER_WIDTH==1)  begin: w1
+		assign grant= request;
+		assign any_grant =request;
+	end else if(ARBITER_WIDTH<=4) begin: w4
 		//my own arbiter 
 		my_one_hot_arbiter_priority_en #(
 			.ARBITER_WIDTH	(ARBITER_WIDTH)

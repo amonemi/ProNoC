@@ -81,12 +81,12 @@ endmodule
 
 
 module testbench_sub #(
-    parameter V=4,
+    parameter V=1,
     parameter P=5,
     parameter B=5,
     parameter NX=8,
     parameter NY=8,
-    parameter C=2,
+    parameter C=1,
     parameter Fpay=32,
     parameter MUX_TYPE="ONE_HOT",
     parameter VC_REALLOCATION_TYPE="NONATOMIC",

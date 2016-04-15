@@ -102,7 +102,7 @@ sub remove_instance_from_soc{
 	my ($soc,$instance_id,$soc_state)=@_;
 	$soc->soc_remove_instance($instance_id);
 	$soc->soc_remove_from_instance_order($instance_id);
-	set_state($soc_state,"refresh_soc",1);
+	set_state($soc_state,"refresh_soc",0);
 }	
 
 
@@ -227,7 +227,7 @@ sub get_module_parameter{
 		}#plugs
 		
 		
-		set_state($soc_state,"refresh_soc",1);
+		set_state($soc_state,"refresh_soc",0);
 		#$$refresh_soc->clicked;
 		
 		});
@@ -344,7 +344,7 @@ sub gen_instance{;
 	});
 	$up->signal_connect (clicked => sub{
 		$soc->soc_decrease_instance_order($instance_id);
-		set_state($soc_state,"refresh_soc",1);
+		set_state($soc_state,"refresh_soc",0);
 		
 	});
 	
@@ -363,7 +363,7 @@ sub gen_instance{;
 	});	
 	$dwn->signal_connect (clicked => sub{
 		$soc->soc_increase_instance_order($instance_id);
-		set_state($soc_state,"refresh_soc",1);
+		set_state($soc_state,"refresh_soc",0);
 		
 	});
 	
@@ -634,7 +634,9 @@ sub show_active_dev{
 
 
 	$$refresh_ref-> signal_connect("clicked" => sub{ 
+	   	
 		$dev_table->destroy;
+		select(undef, undef, undef, 0.1); #wait 10 ms
 		$dev_table = generate_dev_table($soc,$ip,$infc,$soc_state,$info);
 		#$box->attach_defaults ($dev_table, 0, 1, 0, 1);#( $dev_table, FALSE, FALSE, 3);
 		$scrolled_win->add_with_viewport($dev_table);

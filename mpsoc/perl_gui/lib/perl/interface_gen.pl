@@ -603,6 +603,7 @@ sub dev_box_show{
 
 	$$refresh_ref-> signal_connect("clicked" => sub{ 
 		$dev_table->destroy;
+		select(undef, undef, undef, 0.1); #wait 10 ms
 		$dev_table = dev_box_gen($infc_gen,$soc_state,$info);
 		#$box->attach_defaults ($dev_table, 0, 1, 0, 1);#( $dev_table, FALSE, FALSE, 3);
 		$scrolled_win->add_with_viewport($dev_table);

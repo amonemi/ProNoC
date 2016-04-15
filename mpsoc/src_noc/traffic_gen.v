@@ -98,7 +98,8 @@ module  traffic_gen #(
   
    
    localparam RATIOw= log2(100),
-              VC_NUM_BCD_WIDTH = log2(V); 
+              Vw    =  (V==1)? 1 : log2(V);
+               
    
    
     reg [2:0]   ps,ns;
@@ -178,7 +179,7 @@ module  traffic_gen #(
     wire    [X_Y_IN_HDR_WIDTH-1     :   0] rd_des_x_addr,   rd_des_y_addr,rd_src_x_addr,rd_src_y_addr;
     reg     [CLK_CNTw-1             :   0] rsv_counter,last_pck_time;
     reg     [CLK_CNTw-1             :   0] clk_counter;
-    wire    [VC_NUM_BCD_WIDTH-1     :   0] rd_vc_bin,wr_vc_bin;
+    wire    [Vw-1                   :   0] rd_vc_bin,wr_vc_bin;
     reg     [CLK_CNTw-1             :   0] rsv_time_stamp[V-1:0];
     wire    [V-1                    :   0] rd_vc; 
     wire                                   wr_vc_is_full,wr_vc_avb,wr_vc_is_empty;
@@ -324,9 +325,14 @@ assign {rd_hdr_flg,rd_vc,rd_class_hdr,rd_destport_hdr,rd_des_x_addr,rd_des_y_add
     	.dest_y(current_y),
     	.distance(distance)
     );
-   
+ 
+ generate 
+ if(V==1) begin : v1
+    assign rd_vc_bin=1'b0;
+    assign wr_vc_bin=1'b0;
+ end else begin :vother  
 
- one_hot_to_bin #( .ONE_HOT_WIDTH (V)) conv1 
+    one_hot_to_bin #( .ONE_HOT_WIDTH (V)) conv1 
     (
         .one_hot_code   (rd_vc),
         .bin_code       (rd_vc_bin)
@@ -337,6 +343,8 @@ assign {rd_hdr_flg,rd_vc,rd_class_hdr,rd_destport_hdr,rd_des_x_addr,rd_des_y_add
         .one_hot_code   (wr_vc),
         .bin_code       (wr_vc_bin)
     );
+ end 
+ endgenerate
     
     
     assign  ovc_wr_in   = (flit_out_wr ) ?      wr_vc : {V{1'b0}};
