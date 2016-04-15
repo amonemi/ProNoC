@@ -28,6 +28,18 @@ require "mpsoc_verilog_gen.pl";
 require "hdr_file_gen.pl";
 
 
+sub get_pos{
+		my ($item,@list)=@_;
+		my $pos=0;
+		foreach my $p (@list){
+				#print "$p eq $item\n";
+				if ($p eq $item){return $pos;}
+				$pos++;
+		}	
+		return undef;
+	
+}	
+
 
 sub noc_param_widget{
 	 my ($mpsoc,$name,$param, $default,$type,$content,$info, $state,$table,$row,$show)=@_;
@@ -52,7 +64,12 @@ sub noc_param_widget{
 	 }
 	 elsif ($type eq "Combo-box"){
 		 my @combo_list=split(",",$content);
-		 my $pos=get_item_pos($value, @combo_list);
+		 my $pos=get_pos($value, @combo_list);
+		 if(!defined $pos){
+		 	$mpsoc->mpsoc_add_param($param,$default);	
+		 	$pos=get_item_pos($default, @combo_list);
+		 		 	
+		 }
 		#print " my $pos=get_item_pos($value, @combo_list);\n";
 		 $widget=gen_combo(\@combo_list, $pos);
 		 $widget-> signal_connect("changed" => sub{
@@ -731,6 +748,19 @@ sub noc_config{
 		$table->attach_defaults ( $b1 , 0, 4, $row,$row+1);$row++;	
 	}
 	
+	
+	#Router type
+	$label='Router Type';
+	$param='ROUTER_TYPE';
+	$default='"VC_BASED"';
+	$content='"INPUT_QUEUED","VC_BASED"';
+	$type='Combo-box';
+    $info="    Input-queued: simple router with low performance and does not support fully adaptive routing.
+    VC-based routers offer higher performance, fully adaptive routing  and traffic isolation for different packet classes."; 
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$show_noc);
+	my $router_type=$mpsoc->mpsoc_get_param("ROUTER_TYPE");
+	
+	
 	#P port number 
 	$label= 'Port Number';
 	$param= 'P';
@@ -739,6 +769,7 @@ sub noc_config{
     $info= 'Number of NoC router port';
     $type= 'Spin-button';             
 	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,0);
+	
 	
 
 	#Routers per row
@@ -761,23 +792,31 @@ sub noc_config{
     $type= 'Spin-button';             
 	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$show_noc);
 
-
-	#VC number per port
-	$label='VC number per port';
-	$param='V';
-	$default='2';
-	$type='Spin-button';
-	$content='2,16,1';
-	$info='Number of Virtual Channel per each router port';
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$show_noc);
-
+	if($router_type eq '"VC_BASED"'){
+		#VC number per port
+		my $v=$mpsoc->mpsoc_get_param('V');
+		$mpsoc->mpsoc_add_param('V',2) if($v eq 1);
+		$label='VC number per port';
+		$param='V';
+		$default='2';
+		$type='Spin-button';
+		$content='2,16,1';
+		$info='Number of Virtual Channel per each router port';
+		$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$show_noc);
+	} else {
+		$mpsoc->mpsoc_add_param('V',1);
+		$mpsoc->mpsoc_add_param('C',0);
+		
+		
+	}
+	
 	#buffer width per VC
-	$label='Buffer flits per VC';
+	$label=($router_type eq '"VC_BASED"')? 'Buffer flits per VC': "Buffer flits";
  	$param='B';
     $default='4';                                  
     $content='2,256,1';
     $type='Spin-button';
- 	$info='Buffer queue per VC in flits';
+ 	$info=($router_type eq '"VC_BASED"')?  'Buffer queue size per VC in flits' : 'Buffer queue size in flits';
     $row= noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$show_noc);
 	
 	#packet payload width
@@ -803,8 +842,16 @@ sub noc_config{
 	$label='Routing Algorithm';
 	$param="ROUTE_NAME";
 	$type="Combo-box";
-	$content=($topology eq '"MESH"')?  '"XY","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","DUATO"' :
-			   	   	    '"TRANC_XY","TRANC_WEST_FIRST","TRANC_NORTH_LAST","TRANC_NEGETIVE_FIRST","TRANC_DUATO"';
+	if($router_type eq '"VC_BASED"'){
+		$content=($topology eq '"MESH"')?  '"XY","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","DUATO"' :
+				   	   	    '"TRANC_XY","TRANC_WEST_FIRST","TRANC_NORTH_LAST","TRANC_NEGETIVE_FIRST","TRANC_DUATO"';
+	
+	}else{
+		$content=($topology eq '"MESH"')?  '"XY","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST"' :
+				   	   	    '"TRANC_XY","TRANC_WEST_FIRST","TRANC_NORTH_LAST","TRANC_NEGETIVE_FIRST"';
+	
+		
+	}
 	$default=($topology eq '"MESH"')?  '"XY"':'"TRANC_XY"';
 	$info="Select the routing algorithm: XY(DoR) , partially adaptive (Turn models). Fully adaptive (Duato) "; 
 	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$show_noc);
@@ -840,15 +887,31 @@ sub noc_config{
 		   	$type="Spin-button";
 		   	$content="0,12,1";
 			$info="Congestion index determines how congestion information is collected from neighboring routers. Please refer to the usere manual for more information";
-		    $default=7;
+		    $default=3;
 		   	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set);
 		   
 		}
+		#Fully adaptive routing setting
+		if( $route eq '"TRANC_DUATO"' or $route eq '"DUATO"'  ){
+		  	 my $v=$mpsoc->mpsoc_get_param("V");
+		  	 $label="Select Escap VC";	
+		  	 $param="ESCAP_VC_MASK";
+		  	 $type="Check-box";
+		  	 $content=$v;
+		  	 $default="$v\'b";
+		  	 for (my $i=1; $i<=$v-1; $i++){$default=  "${default}0";}
+		  	 $default=  "${default}1";
+			
+		
+		  	 $info="Select the escap VC for fully adaptive routing.";
+		  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set,$adv_set);
+	  	
+	  	 }
 		
 	# VC reallocation type
-		$label='VC reallocation type';	
+		$label=($router_type eq '"VC_BASED"')? 'VC reallocation type': 'Queue reallocation type';	
 		$param='VC_REALLOCATION_TYPE';
-                $info="VC reallocation type: Atomic: A VC can be allocated when it is empty. Nonatomic a VC is allocated when the tail flit is injected in.";
+                $info="VC reallocation type: If set as atomic only empty VCs can be allocated for new packets. Whereas, in non-atomic a non-empty VC which has received the last packet tail flit can accept a new  packet"; 
                 $default='"NONATOMIC"';  
                 $content='"ATOMIC","NONATOMIC"';
                 $type='Combo-box';
@@ -857,17 +920,18 @@ sub noc_config{
 
 
 
-
+	if ($router_type eq '"VC_BASED"'){
 	#vc/sw allocator type
 		$label = 'VC/SW combination type';
  		$param='COMBINATION_TYPE';
-                $default='"COMB_SPEC1"';
+                $default='"COMB_NONSPEC"';
                 $content='"BASELINE","COMB_SPEC1","COMB_SPEC2","COMB_NONSPEC"';
                 $type='Combo-box';
                 $info="The joint VC/ switch allocator type. using canonical combination is not recommanded";                    
                 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set);                   
 
-
+	}
+	
 	# Crossbar mux type 
 		$label='Crossbar mux type';
 		$param='MUX_TYPE';
@@ -877,7 +941,7 @@ sub noc_config{
 		$info="Crossbar multiplexer type";
         $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set);             
        
-	
+	if($router_type eq '"VC_BASED"'){
 	#class
 		$label='class number';
 		$param='C';
@@ -908,35 +972,10 @@ sub noc_config{
 		}
 
 
-	#Fully adaptive routing setting
-		if( $route eq '"TRANC_DUATO"' or $route eq '"DUATO"'  ){
-		  	 my $v=$mpsoc->mpsoc_get_param("V");
-		  	 $label="Select Escap VC";	
-		  	 $param="ESCAP_VC_MASK";
-		  	 $type="Check-box";
-		  	 $content=$v;
-		  	 $default="$v\'b";
-		  	 for (my $i=1; $i<=$v-1; $i++){$default=  "${default}0";}
-		  	 $default=  "${default}1";
-			
-		
-		  	 $info="Select the escap VC for fully adaptive routing.";
-		  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set,$adv_set);
-	  	
-	  	 }
+	
+	}#($router_type eq '"VC_BASED"')
 	 
-	 # non determinstic 	 
-	  	if( $route ne '"TRANC_XY"' or $route eq '"XY"'  ){	 
-	  	 #CONGESTION_INDEX
-		$label='congestion index';
-		$param='CONGESTION_INDEX';
-		$default= 3;
-		$info='Congestion index determins how congestion information must be extracted from the router.'; 
-		$content='0,12,1';
-		$type="Spin-button";
-		$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set);  
-	  	 
-	  	}
+	 
 
 	 #simulation debuge enable     
 		$label='Debug enable';
@@ -957,7 +996,7 @@ sub noc_config{
 	$content=1;
 	$default="1\'b0";
 	$info="If ebabled it adds a pipline register at the output port of the router.";
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set,$adv_set);
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,0);
 	  	
 	
 	$label="Add pipeline reg befor crossbar";	
@@ -966,7 +1005,7 @@ sub noc_config{
 	$content=1;
 	$default="1\'b0";
 	$info="If ebabled it adds a pipline register after the input memory sd ram.";
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set,$adv_set);
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,0);
 	  	
 
 	
