@@ -935,8 +935,15 @@ sub generate_soc{
     			
     		
     		}
+		# Write main.c file if not exist
+		my $n="$target_dir/sw/main.c";
+		if (!(-f "$n")) { 
+			# Write main.c
+			open(FILE,  ">$n") || die "Can not open: $!";
+			print FILE main_c_template($name);
+			close(FILE) || die "Error closing file: $!";
 			
-			
+		}
 			
 			
 			
@@ -953,7 +960,39 @@ return 1;
 }	
 
 
+sub main_c_template{
+	my $hdr=shift;
+	my $text="
+#include \"$hdr.h\"
 
+
+// a simple delay function
+void delay ( unsigned int num ){
+	
+	while (num>0){ 
+		num--;
+		asm volatile (\"nop\");
+	}
+	return;
+
+}
+
+int main(){
+	while(1){
+		
+	
+
+	}
+
+return 0;
+}
+
+";
+
+return $text;
+
+
+}
 
 
 
