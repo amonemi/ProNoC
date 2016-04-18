@@ -795,7 +795,7 @@ sub noc_config{
 	if($router_type eq '"VC_BASED"'){
 		#VC number per port
 		my $v=$mpsoc->mpsoc_get_param('V');
-		$mpsoc->mpsoc_add_param('V',2) if($v eq 1);
+		if(defined $v){ $mpsoc->mpsoc_add_param('V',2) if($v eq 1);}
 		$label='VC number per port';
 		$param='V';
 		$default='2';
