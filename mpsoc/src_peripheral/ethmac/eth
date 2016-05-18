@@ -1,0 +1,189 @@
+#ifndef ${IP}_H
+	#define ${IP}_H
+
+#ifndef ETH_BASIC_DEF
+	#define ETH_BASIC_DEF
+
+//MODER BITS
+#define ETH_RECSMAL		0x00010000
+#define ETH_PAD		        0x00008000
+#define ETH_HUGEN	        0x00004000
+#define ETH_CRCEN	        0x00002000
+#define ETH_DLYCRCEN	        0x00001000
+#define ETH_FULLD	        0x00000400
+#define ETH_EXDFREN	        0x00000200
+#define ETH_NOBCKOF	        0x00000100
+#define ETH_LOOPBCK	        0x00000080
+#define ETH_IFG		        0x00000040
+#define ETH_PRO		        0x00000020
+#define ETH_IAM		        0x00000010
+#define ETH_BRO		        0x00000008
+#define ETH_NOPRE	        0x00000004
+#define ETH_TXEN	        0x00000002
+#define ETH_RXEN	        0x00000001
+
+//INTERRUPTS BITS
+#define ETH_RXC		        0x00000040
+#define ETH_TXC		        0x00000020
+#define ETH_BUSY	        0x00000010
+#define ETH_RXE		        0x00000008
+#define ETH_RXB		        0x00000004
+#define ETH_TXE		        0x00000002
+#define ETH_TXB		        0x00000001
+
+//BUFFER DESCRIPTOR BITS
+#define ETH_RXBD_EMPTY	    	0x00008000
+#define ETH_RXBD_IRQ	    	0x00004000
+#define ETH_RXBD_WRAP	    	0x00002000
+#define ETH_RXBD_CF	        0x00000100
+#define ETH_RXBD_MISS	    	0x00000080
+#define ETH_RXBD_OR	        0x00000040
+#define ETH_RXBD_IS	        0x00000020
+#define ETH_RXBD_DN	        0x00000010
+#define ETH_RXBD_TL	        0x00000008
+#define ETH_RXBD_SF	        0x00000004
+#define ETH_RXBD_CRC	    	0x00000002
+#define ETH_RXBD_LC	        0x00000001
+
+#define ETH_TXBD_READY		0x00008000
+#define ETH_TXBD_IRQ		0x00004000
+#define ETH_TXBD_WRAP		0x00002000
+#define ETH_TXBD_PAD		0x00001000
+#define ETH_TXBD_CRC		0x00000800
+#define ETH_TXBD_UR	        0x00000100
+#define ETH_TXBD_RL	        0x00000008
+#define ETH_TXBD_LC	        0x00000004
+#define ETH_TXBD_DF	        0x00000002
+#define ETH_TXBD_CS	        0x00000001
+
+#define HDR_LEN			14
+#define CRC_LEN			4
+#define BD_SND  ( ETH_TXBD_READY | ETH_TXBD_IRQ | ETH_TXBD_WRAP | ETH_TXBD_PAD | ETH_TXBD_CRC )
+#define RX_READY    ( ETH_RXBD_EMPTY | ETH_RXBD_IRQ | ETH_RXBD_WRAP )
+#define TX_READY ( ETH_TXBD_IRQ | ETH_TXBD_WRAP | ETH_TXBD_PAD | ETH_TXBD_CRC )
+
+
+#endif
+
+
+
+//user defines
+#define ${IP}_MAC_ADDR_5	0x55
+#define ${IP}_MAC_ADDR_4	0x47
+#define ${IP}_MAC_ADDR_3	0x34
+#define ${IP}_MAC_ADDR_2	0x22
+#define ${IP}_MAC_ADDR_1	0x88
+#define ${IP}_MAC_ADDR_0	0x92
+
+#define ${IP}_BROADCAST_ADDR_5	0xFF
+#define ${IP}_BROADCAST_ADDR_4	0xFF
+#define ${IP}_BROADCAST_ADDR_3	0xFF
+#define ${IP}_BROADCAST_ADDR_2	0xFF
+#define ${IP}_BROADCAST_ADDR_1	0xFF
+#define ${IP}_BROADCAST_ADDR_0	0xFF
+
+
+
+
+int ${IP}_tx_done;
+int ${IP}_rx_done;
+int ${IP}_rx_len;
+unsigned char ${IP}_tx_packet[1536];     //max length
+unsigned char ${IP}_rx_packet[1536];
+unsigned char * ethmac_tx_data= & ethmac_tx_packet[HDR_LEN];
+unsigned char * ethmac_rx_data= & ethmac_rx_packet[HDR_LEN];
+
+void ${IP}_recv_ack(void)
+{
+	${IP}_rx_done = 0;
+	${IP}_rx_len = 0;
+	//accept further data (reset RXBD to empty)
+	${IP}_RXBD0L = RX_READY;	//len = 0 | IRQ & WR = 1 | EMPTY = 1    
+}
+
+void ${IP}_init()
+{
+	//TXEN & RXEN = 1; PAD & CRC = 1; FULLD = 1
+	${IP}_MODER = ETH_TXEN | ETH_RXEN | ETH_PAD | ETH_CRCEN | ETH_FULLD;
+	//PHY ADDR = 0x001
+	${IP}_MIIADDR = 0x00000001;
+
+	//enable all interrupts
+	${IP}_INT_MASK = ETH_RXB | ETH_TXB;
+
+	//set MAC ADDR
+	${IP}_MAC_ADDR1 = (${IP}_MAC_ADDR_5 << 8) | ${IP}_MAC_ADDR_4;	//low word = mac ADDR high word
+	${IP}_MAC_ADDR0 = (${IP}_MAC_ADDR_3 << 24) | (${IP}_MAC_ADDR_2 << 16)
+		| (${IP}_MAC_ADDR_1 << 8) | ${IP}_MAC_ADDR_0;		//mac ADDR rest
+
+	//configure TXBD0
+	${IP}_TXBD0H = (unsigned long) ${IP}_tx_packet;		//ADDR used for tx_data
+	${IP}_TXBD0L = TX_READY;	//length = 0 | PAD & CRC = 1 | IRQ & WR = 1
+
+	//configure RXBD0
+	${IP}_RXBD0H = (unsigned long)${IP}_rx_packet;		//ADDR used for tx_data
+	${IP}_RXBD0L = RX_READY;	//len = 0 | IRQ & WR = 1 | EMPTY = 1
+
+	//set txdata
+	${IP}_tx_packet[0] = ${IP}_BROADCAST_ADDR_5;
+	${IP}_tx_packet[1] = ${IP}_BROADCAST_ADDR_4;
+	${IP}_tx_packet[2] = ${IP}_BROADCAST_ADDR_3;
+	${IP}_tx_packet[3] = ${IP}_BROADCAST_ADDR_2;
+	${IP}_tx_packet[4] = ${IP}_BROADCAST_ADDR_1;
+	${IP}_tx_packet[5] = ${IP}_BROADCAST_ADDR_0;
+
+	${IP}_tx_packet[6] = ${IP}_MAC_ADDR_5;
+	${IP}_tx_packet[7] = ${IP}_MAC_ADDR_4;
+	${IP}_tx_packet[8] = ${IP}_MAC_ADDR_3;
+	${IP}_tx_packet[9] = ${IP}_MAC_ADDR_2;
+	${IP}_tx_packet[10] = ${IP}_MAC_ADDR_1;
+	${IP}_tx_packet[11] = ${IP}_MAC_ADDR_0;
+
+	//erase interrupts
+	${IP}_INT_SOURCE = ETH_RXC | ETH_TXC | ETH_BUSY | ETH_RXE | ETH_RXB | ETH_TXE | ETH_TXB;
+
+	${IP}_tx_done = 1;
+	${IP}_rx_done = 0;
+	${IP}_rx_len  = 0;
+	${IP}_tx_data = & ${IP}_tx_packet[HDR_LEN];
+	${IP}_rx_data = & ${IP}_rx_packet[HDR_LEN];
+}
+
+
+int ${IP}_send(int length)
+{
+	if (!${IP}_tx_done)       //if previous command not fully processed, bail out
+		return -1;
+
+	${IP}_tx_done = 0;
+	${IP}_tx_packet[12] = length >> 8;
+	${IP}_tx_packet[13] = length;
+
+	${IP}_TXBD0L = (( 0x0000FFFF & ( length + HDR_LEN ) ) << 16) | BD_SND;
+
+	return length;
+}
+
+void ${IP}_interrupt()
+{
+	unsigned long source = ${IP}_INT_SOURCE;
+	if ( source & ETH_TXB )
+	{
+		${IP}_tx_done = 1;
+		//erase interrupt
+		${IP}_INT_SOURCE |= ETH_TXB;
+	}
+	if ( source & ETH_RXB )
+	{
+		${IP}_rx_done = 1;
+		${IP}_rx_len = (${IP}_RXBD0L >> 16) - HDR_LEN - CRC_LEN;
+		//erase interrupt
+		${IP}_INT_SOURCE |= ETH_RXB;        
+	}
+}
+
+
+
+
+
+#endif

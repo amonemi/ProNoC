@@ -34,37 +34,6 @@ sub ip_gen_new {
     return $self;
 } 
 
-sub ipgen_set_file{
-	my ($self,$file)=@_;
-	  $self->{file_name}=$file;	
-}	
-
-
-
-sub ipgen_get_file{
-	my $self=shift;
-	return   $self->{file_name};	
-}	
-
-sub ipgen_set_module_name{
-	my ($self,$module)=@_;
-	$self->{module_name}=$module;	
-}
-
-sub ipgen_get_module_name{
-	my ($self)=@_;
-	return $self->{module_name};
-}
-
-sub ipgen_set_ip_name{
-	my ($self,$name)=@_;
-	$self->{ip_name}=$name;
-}
-
-sub ipgen_get_ip_name{
-	my ($self)=@_;
-	return 	$self->{ip_name};
-}		
 
 
 sub ipgen_set_module_list{
@@ -101,20 +70,8 @@ sub ipgen_add_parameter{
 
 
 
-sub ipgen_add_parameters_order{
-	my ($self,@parameters_order)=@_;
-	$self->{parameters_order}=\@parameters_order;
-	
-					
-}	
 
 
-sub ipgen_get_parameters_order{
-	my $self=shift;
-	my @r;
-	@r =	@{$self->{parameters_order}} if (defined $self->{parameters_order});
-	return @r;					
-}	
 
 sub ipgen_push_parameters_order{
 	my ($self,$param)=@_;
@@ -378,42 +335,9 @@ sub ipgen_get_port_intfc_port{
 }	
 	
 	
-sub ipgen_set_category{
-	my ($self,$category)=@_;	
-	if(defined $category){
-		$self->{category}=$category;
-		
-	}	
-
-}
-	
-	
-
-sub ipgen_get_category{
-	my ($self)=@_;
-	my $category;
-	if(exists ($self->{category})){
-		$category=$self->{category};
-	}	
-	return  $category;
-}
 
 
-sub ipgen_get_description{
-	my ($self)=@_;
-	my $description;
-	if(exists ($self->{description})){
-		$description=$self->{description};
-	}
-	return $description;		
-}
 
-sub ipgen_set_description{
-	my ($self,$description)=@_;
-		$self->{description}=$description;
-	
-	
-}		
 
 
 sub ipgen_save_wb_addr{
@@ -473,27 +397,35 @@ sub ipgen_get_socket_name{
 	
 }		
 
-sub ipgen_set_hdr{
-	my ($self,$hdr)=@_;
-	$self->{header}=$hdr;	
-}	
+	
 
-
-sub ipgen_get_hdr{
-	my ($self)=@_;
-	my $hdr;
-	if(exists ($self->{header})){
-		$hdr=$self->{header};	
-		
-	}
-	return $hdr;	
-
+sub ipgen_add_unused_intfc_port{
+	my ($self,$intfc_name,$port)=@_;
+	push(@{$self->{unused}{$intfc_name}},$port);	
 }
 
 
 
 
-sub ipgen_get_files_list{
+
+#add,read,remove object fileds
+
+sub ipgen_add{
+	my ($self,$filed_name,$filed_data)=@_;
+	$self->{$filed_name}=$filed_data;		
+}
+
+sub ipgen_remove{
+	my ($self,$filed_name)=@_;
+	$self->{$filed_name}=undef;		
+}
+
+sub ipgen_get{
+	my ($self,$filed_name)=@_;
+	return $self->{$filed_name}		
+}
+
+sub ipgen_get_list{
 	my ($self,$list_name)=@_;
 	my @l;
 	if ( defined $self->{$list_name} ){
@@ -504,27 +436,7 @@ sub ipgen_get_files_list{
 }
 
 
-sub ipgen_set_files_list{
-	my ($self,$list_name,$ref)=@_;
-	$self->{$list_name}=	$ref;	
-}
 
-
-sub ipgen_add_unused_intfc_port{
-	my ($self,$intfc_name,$port)=@_;
-	push(@{$self->{unused}{$intfc_name}},$port);	
-}
-
-sub ipgen_get_unused_intfc_ports{
-	my $self=shift;
-	return $self->{unused};	
-	
-}
-
-sub ipgen_remove_unused_intfc_port{
-	my $self=shift;
-	$self->{unused}=undef;		
-}
 
 ######################################
 

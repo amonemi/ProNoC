@@ -1,0 +1,117 @@
+#ifndef ${IP}_H
+	#define		${IP}_H
+
+
+	#define		${IP}_WAIT_CNT		(${IP}_CLK_MHZ*100)
+	#define		${IP}_COLUMN_NUM		16
+	#define		${IP}_ROW_NUM		2
+
+	const char base_y[4]={0x80,0xc0,${IP}_COLUMN_NUM+0x80,${IP}_COLUMN_NUM+0xc0};
+
+	#define		${IP}_set_8_bit_1_line() 		${IP}_wr_cmd_func(0x30)
+	#define		${IP}_set_8_bit_2_line()		${IP}_wr_cmd_func(0x38)
+	#define		${IP}_set_4_bit_1_line() 		${IP}_wr_cmd_func(0x20)
+	#define		${IP}_set_4_bit_3_line()		${IP}_wr_cmd_func(0x28)
+	#define		${IP}_entry_mode()		${IP}_wr_cmd_func(0x06)
+//(clearing display without clearing ddram content)
+	#define		${IP}_dsply_off_cursor_off() 	${IP}_wr_cmd_func(0x08)
+	#define		${IP}_dsply_on_cursor_on()	${IP}_wr_cmd_func(0x0e)
+	#define		${IP}_dsply_on_cursor_off()	${IP}_wr_cmd_func(0x0c)
+	#define		${IP}_dsply_on_cursor_blink()	${IP}_wr_cmd_func(0x0f)
+	#define		${IP}_shift_dsply_left() 		${IP}_wr_cmd_func(0x18)
+	#define		${IP}_shift_dsply_right()	 	${IP}_wr_cmd_func(0x1c)
+	#define		${IP}_shift_cursor_left() 	${IP}_wr_cmd_func(0x10)
+	#define		${IP}_shift_cursor_right()	${IP}_wr_cmd_func(0x14)
+//(also clear ddram content)
+	#define		${IP}_clr_dsply()			${IP}_wr_cmd_func(0x01)
+	#define		${IP}_goto_line(line_num)		${IP}_wr_cmd_func(base_y[line_num-1])    // 1<= lines num <= ${IP}_ROW_NUM
+	#define		${IP}_gotoxy(x,y) 		${IP}_wr_cmd_func(base_y[y]+x)// 0<= x< ${IP}_COLUMN_NUM;   0<= y < ${IP}_ROW_NUM
+	#define		${IP}_show_character(c)		${IP}_wr_data_func(c); 	
+
+
+
+void ${IP}_wait(unsigned int volatile num){
+	while (num>0){ 
+		num--;
+		asm volatile ("nop");
+	}
+	return;
+}
+
+
+inline void ${IP}_wr_cmd_func( char data){
+	${IP}_WR_CMD= data;
+	${IP}_wait(${IP}_WAIT_CNT);
+}
+
+inline void ${IP}_wr_data_func( char data){
+	${IP}_WR_DATA=data;
+	${IP}_wait(${IP}_WAIT_CNT);
+}
+
+
+
+
+
+
+void ${IP}_init()
+{
+  ${IP}_set_8_bit_2_line();
+  ${IP}_dsply_on_cursor_off();
+  ${IP}_clr_dsply();
+  ${IP}_entry_mode();
+  ${IP}_goto_line(1);
+}
+
+//-------------------------------------------------------------------------
+void ${IP}_show_text(char* Text, unsigned char length)
+{
+  int i;
+  for(i=0;i<length;i++) ${IP}_show_character(Text[i]); 
+}
+
+
+
+
+
+
+#ifdef ${IP}_TEST_ENABLE
+
+
+
+//-------------------------------------------------------------------------
+
+const char test_text[4][17]= {"${IP} 2x16 test   ", "  ProNoC SoC    ","Test Line 3     ","Test Line 4     "};
+
+
+void ${IP}_test()
+{
+  unsigned int x,y;
+  
+  //  Initial ${IP}
+  ${IP}_init();
+  //  Show Text to ${IP}
+  for(y=1;y<=${IP}_ROW_NUM;y++)  {
+	${IP}_goto_line(y);
+  	${IP}_show_text((char*)test_text[y-1],16);
+  }
+  
+  ${IP}_wait(1000*${IP}_WAIT_CNT); 
+  ${IP}_clr_dsply();
+  
+  for(y=0;y<${IP}_ROW_NUM;y++){
+ 	 for(x=0;x<${IP}_COLUMN_NUM;x++){
+  	
+		${IP}_gotoxy(x,y);
+		${IP}_show_character(test_text[y][x]);
+		${IP}_wait(500*${IP}_WAIT_CNT); 
+	}
+  }
+
+
+}
+//-------------------------------------------------------------------------
+
+#endif
+
+#endif

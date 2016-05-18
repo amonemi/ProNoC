@@ -2,6 +2,13 @@ $gpio = bless( {
                  'hdl_files' => [
                                   '/mpsoc/src_peripheral/gpio/gpio.v'
                                 ],
+                 'system_h' => '#define ${IP}_DIR_REG   (*((volatile unsigned int *) ($BASE)))   
+#define ${IP}_WRITE _REG  (*((volatile unsigned int *) ($BASE+4)))
+#define ${IP}_READ_REG   (*((volatile unsigned int *) ($BASE+8)))
+   
+ #define ${IP}_DIR_SET(value)   ${IP}_DIR_REG=value	  
+#define ${IP}_WRITE(value)  ${IP}_WRITE _REG=value	
+#define ${IP}_READ()  	 ${IP}_READ_REG	',
                  'description' => 'General inout port',
                  'ip_name' => 'gpio',
                  'parameters' => {
@@ -67,12 +74,6 @@ $gpio = bless( {
                                 'gpio' => {},
                                 'gpo' => {}
                               },
-                 'parameters_order' => [
-                                         'PORT_WIDTH',
-                                         'Dw',
-                                         'Aw',
-                                         'SELw'
-                                       ],
                  'ports' => {
                               'sa_dat_o' => {
                                               'intfc_port' => 'dat_o',
@@ -147,6 +148,12 @@ $gpio = bless( {
                                               'type' => 'input'
                                             }
                             },
+                 'parameters_order' => [
+                                         'PORT_WIDTH',
+                                         'Dw',
+                                         'Aw',
+                                         'SELw'
+                                       ],
                  'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/gpio/gpio.v',
                  'sockets' => {},
                  'module_name' => 'gpio',
@@ -158,13 +165,5 @@ $gpio = bless( {
                                                        'bte_i'
                                                      ]
                              },
-                 'category' => 'GPI',
-                 'header' => '   
-#define $IP_DIR_REG   (*((volatile unsigned int *) ($BASE)))   
-#define $IP_WRITE _REG  (*((volatile unsigned int *) ($BASE+4)))
-#define $IP_READ_REG   (*((volatile unsigned int *) ($BASE+8)))
-   
- #define $IP_DIR_SET(value)   $IP_DIR_REG=value	  
-#define $IP_WRITE(value)  $IP_WRITE _REG=value	
-#define $IP_READ()  	 $IP_READ_REG	'
+                 'category' => 'GPI'
                }, 'ip_gen' );

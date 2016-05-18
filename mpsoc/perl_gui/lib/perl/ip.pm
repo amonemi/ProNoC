@@ -229,19 +229,6 @@ sub get_modules{
 	return @r;
 }
 
-sub get_describtion{
-	my ($self,$category,$module)=@_;
-	my $r;
-	if (!defined($module) ) {return $r;} 
-		$r=$self->{categories}{$category}{names}{$module}{Describtion};
-		
-	return $r;
-
-}
-
-
-
-
 
 sub get_param_default{
 	my ($self,$category,$module)=@_;
@@ -382,52 +369,53 @@ sub ip_get_param_order{
 }
 
 
-sub ip_get_module_name{
-	my ($self, $category,$module)=@_;
-	my $module_name;
-	if(exists $self->{categories}{$category}{names}{$module}{module_name}){
-		$module_name= $self->{categories}{$category}{names}{$module}{module_name};
-	}
-	return $module_name;
-}	
 
 
-sub ip_get_hdr{
-	my ($self, $category,$module)=@_;
-	my $hdr;
-	if(exists($self->{categories}{$category}{names}{$module}{header})){		
-		$hdr=$self->{categories}{$category}{names}{$module}{header};
-	}
-	return $hdr;
+
+
+
+sub ip_add{
+	my ($self,$category,$module,$filed_name,$filed_data)=@_;
+	$self->{categories}{$category}{names}{$module}{$filed_name}=$filed_data;		
 }
 
 
-sub ip_get_files{
-	my ($self, $category,$module,$list_name)=@_;
+sub ip_get{
+	my ($self,$category,$module,$filed_name)=@_;
+	return $self->{categories}{$category}{names}{$module}{$filed_name};
+}
+
+
+sub ip_get_list{
+	my ($self,$category,$module,$filed_name)=@_;
 	my @l;
-	@l=@{$self->{categories}{$category}{names}{$module}{$list_name}} if(defined $self->{categories}{$category}{names}{$module}{$list_name});
-	return 	 @l;	
+	if( defined $self->{categories}{$category}{names}{$module}{$filed_name}){
+		@l=@{$self->{categories}{$category}{names}{$module}{$filed_name}};		
+	}
+	return @l;
 }
 
 
-sub ip_get_unsuded_intfc_ports{
-	my ($self, $category,$module)=@_;
-	return $self->{categories}{$category}{names}{$module}{"unused"};	
-	
+sub ip_remove{
+	my ($self,$category,$module,$filed_name)=@_;
+	delete 	$self->{categories}{$category}{names}{$module}{$filed_name};
 }
+
+
+
 
 sub add_ip{
 
 	my ($self,$ipgen) =@_;
 	my $module;
-	$module	=	$ipgen->ipgen_get_ip_name();
-	my $module_name =$ipgen->ipgen_get_module_name();
+	$module	=	$ipgen->ipgen_get("ip_name");
+	my $module_name =$ipgen->ipgen_get("module_name");
 	if(!defined $module){ $module	=	$module_name}
-	my $category=	$ipgen->ipgen_get_category();
-	my $Describtion=	$ipgen->ipgen_get_description();
+	my $category=	$ipgen->ipgen_get("category");
+	
 	
 	$self->{categories}{$category}{names}{$module}={};
-	$self->{categories}{$category}{names}{$module}{Describtion}=$Describtion;
+	
 	$self->{categories}{$category}{names}{$module}{module_name}=$module_name;
 	my @plugs= $ipgen->ipgen_list_plugs();
 	#print "$module:@plugs\n";
@@ -450,24 +438,20 @@ sub add_ip{
 		ip_add_parameter($self,$category,$module,$param,$deafult,$type,$content,$info,$glob_param,$redefine_param);
 				
 	}
-	my @params_order= $ipgen->ipgen_get_parameters_order();
-	$self->{categories}{$category}{names}{$module}{parameters_order}=\@params_order;
+	
 	my @ports= $ipgen->ipgen_list_ports();
 	foreach my $port (@ports){
 		my($range,$type,$intfc_name,$intfc_port)=$ipgen->ipgen_get_port($port);
 		ip_add_port($self,$category,$module,$port,$type,$range,$intfc_name,$intfc_port);
 	}
-	my $hdr= $ipgen->ipgen_get_hdr();
-	$self->{categories}{$category}{names}{$module}{header}=$hdr;	
 	
-	my @hdl_files= $ipgen->ipgen_get_files_list("hdl_files");
-	$self->{categories}{$category}{names}{$module}{"hdl_files"}=\@hdl_files;
+	my @fileds =("system_h","hdl_files","sw_files","gen_sw_files","sw_params_list","unused","parameters_order","description");
+	foreach my $p (@fileds){
+		my $val=$ipgen->ipgen_get($p);
+		$self->{categories}{$category}{names}{$module}{$p}=$ipgen->ipgen_get($p) if(defined $val );	
+	}
 	
-	my @sw_files= $ipgen->ipgen_get_files_list("sw_files");
-	$self->{categories}{$category}{names}{$module}{"sw_files"}=\@sw_files;
-	$self->{categories}{$category}{names}{$module}{"unused"}=$ipgen->ipgen_get_unused_intfc_ports();
 	
-		
 	
 }		
 	

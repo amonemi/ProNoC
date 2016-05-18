@@ -89,7 +89,7 @@ sub noc_param_widget{
 		  $step=~ s/\D//g;
 		  $widget=gen_spin($min,$max,$step);
 		  $widget->set_value($value);
-		  $widget-> signal_connect("changed" => sub{
+		  $widget-> signal_connect("value_changed" => sub{
 		  my $new_param_value=$widget->get_value_as_int();
 		  $mpsoc->mpsoc_add_param($param,$new_param_value);
 		  set_state($state,"ref",1);
@@ -440,7 +440,7 @@ sub get_soc_parameter_setting{
 		  		my $spin=gen_spin($min,$max,$step);
 		  		$spin->set_value($param_value{$p});
 		  		$table->attach_defaults ($spin, 3, 4, $row, $row+1);
-		  		$spin-> signal_connect("changed" => sub{$param_value{$p}=$spin->get_value_as_int();});
+		  		$spin-> signal_connect("value_changed" => sub{$param_value{$p}=$spin->get_value_as_int();});
 		 
 		 # $box=def_label_spin_help_box ($param,$info, $value,$min,$max,$step, 2);
 			}
@@ -1131,7 +1131,7 @@ sub gen_socs {
 	foreach my $soc_name (@soc_list){
 		my @n=$mpsoc->mpsoc_get_soc_tiles_num($soc_name);
 		if(scalar @n){
-			#this soc has been used generate the verilog files of it
+			#generate the verilog files of it
 			push(@used_socs,$soc_name);			
 		}		
 	}
@@ -1222,14 +1222,11 @@ sub generate_soc_files{
     		
     		
     		# Write header file
-			my $file_h=generate_header_file($soc);
-			open(FILE,  ">lib/verilog/$soc_name.h") || die "Can not open: $!";
-			print FILE $file_h;
-			close(FILE) || die "Error closing file: $!";
+			generate_header_file($soc,$project_dir,$target_dir,$dir);
 			
     		
     				
-			move ("$dir/lib/verilog/$soc_name.h","$target_dir/sw/"); 
+			
 			
 			#use File::Copy::Recursive qw(dircopy);
 			#dircopy("$dir/../src_processor/aeMB/compiler","$target_dir/sw/") or die("$!\n");

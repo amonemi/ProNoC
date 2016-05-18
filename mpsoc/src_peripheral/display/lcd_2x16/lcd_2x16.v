@@ -4,8 +4,10 @@
 
 
 module lcd_2x16 #(
+	parameter CLK_MHZ= 50,
 	parameter Dw  =	8,   // wishbone bus data width
 	parameter Aw  = 2
+	
 )(
 	clk,
 	reset,
@@ -27,6 +29,20 @@ module lcd_2x16 #(
 );
 
 
+	 function integer log2;
+      input integer number; begin   
+         log2=0;    
+         while(2**log2<number) begin    
+            log2=log2+1;    
+         end    
+      end   
+   endfunction // log2 
+
+
+
+   localparam Cw=log2(CLK_MHZ);
+	
+	
 
  	input                       clk;
 	input                       reset;
@@ -50,7 +66,7 @@ module lcd_2x16 #(
 	inout   [  7: 0] lcd_data;
 	
 	
-   reg [5:0]cnt;
+   reg [Cw-1:0]cnt;
 
   
 	assign lcd_rw = s_addr_i[0];
@@ -68,13 +84,11 @@ module lcd_2x16 #(
 			cnt=6'd0;
 		end else begin 
 			s_ack_o	<=	s_stb_i & (cnt==2);
-			if(s_stb_i && cnt==0) cnt=6'h111111;
+			if(s_stb_i && cnt==0) cnt={Cw{1'b1}}; // minimum 1 ms delay for holfing lcd en signal
 			else if(lcd_en)cnt=cnt-1'b1;
 		end
 	end
   
 
 endmodule
-
-
 

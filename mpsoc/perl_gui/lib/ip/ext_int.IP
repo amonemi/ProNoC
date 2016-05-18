@@ -3,6 +3,45 @@ $ext_int = bless( {
                                      '/mpsoc/src_peripheral/ext_int/ext_int.v'
                                    ],
                     'ip_name' => 'ext_int',
+                    'plugs' => {
+                                 'interrupt_peripheral' => {
+                                                             'interrupt_peripheral' => {},
+                                                             'value' => 1,
+                                                             '0' => {
+                                                                      'name' => 'interrupt'
+                                                                    },
+                                                             'type' => 'num'
+                                                           },
+                                 'reset' => {
+                                              'reset' => {},
+                                              'value' => 1,
+                                              '0' => {
+                                                       'name' => 'reset'
+                                                     },
+                                              'type' => 'num'
+                                            },
+                                 'clk' => {
+                                            'clk' => {},
+                                            'value' => 1,
+                                            '0' => {
+                                                     'name' => 'clk'
+                                                   },
+                                            'type' => 'num'
+                                          },
+                                 'wb_slave' => {
+                                                 'value' => 1,
+                                                 '0' => {
+                                                          'width' => 5,
+                                                          'name' => 'wb',
+                                                          'addr' => '0x9e00_0000	0x9eff_ffff		IDE Controller'
+                                                        },
+                                                 'type' => 'num',
+                                                 'wb_slave' => {}
+                                               }
+                               },
+                    'modules' => {
+                                   'ext_int' => {}
+                                 },
                     'parameters' => {
                                       'Aw' => {
                                                 'info' => undef,
@@ -11,13 +50,6 @@ $ext_int = bless( {
                                                 'content' => '',
                                                 'type' => 'Fixed'
                                               },
-                                      'TAGw' => {
-                                                  'info' => undef,
-                                                  'deafult' => '3',
-                                                  'global_param' => 0,
-                                                  'content' => '',
-                                                  'type' => 'Fixed'
-                                                },
                                       'SELw' => {
                                                   'info' => undef,
                                                   'deafult' => '4',
@@ -25,154 +57,122 @@ $ext_int = bless( {
                                                   'content' => '',
                                                   'type' => 'Fixed'
                                                 },
-                                      'EXT_INT_NUM' => {
-                                                         'info' => 'number of external interrupt pins.',
-                                                         'deafult' => '3',
-                                                         'global_param' => 0,
-                                                         'content' => '1,32,1',
-                                                         'type' => 'Spin-button'
-                                                       },
+                                      'TAGw' => {
+                                                  'info' => undef,
+                                                  'deafult' => '3',
+                                                  'global_param' => 0,
+                                                  'content' => '',
+                                                  'type' => 'Fixed'
+                                                },
                                       'Dw' => {
                                                 'info' => undef,
                                                 'deafult' => '32',
                                                 'global_param' => 0,
                                                 'content' => '',
                                                 'type' => 'Fixed'
-                                              }
+                                              },
+                                      'EXT_INT_NUM' => {
+                                                         'info' => 'number of external interrupt pins.',
+                                                         'deafult' => '3',
+                                                         'global_param' => 0,
+                                                         'content' => '1,32,1',
+                                                         'type' => 'Spin-button'
+                                                       }
                                     },
-                    'modules' => {
-                                   'ext_int' => {}
-                                 },
-                    'plugs' => {
-                                 'clk' => {
-                                            'clk' => {},
-                                            '0' => {
-                                                     'name' => 'clk'
-                                                   },
-                                            'value' => 1,
-                                            'type' => 'num'
-                                          },
-                                 'reset' => {
-                                              'reset' => {},
-                                              '0' => {
-                                                       'name' => 'reset'
-                                                     },
-                                              'value' => 1,
-                                              'type' => 'num'
-                                            },
-                                 'interrupt_peripheral' => {
-                                                             'interrupt_peripheral' => {},
-                                                             '0' => {
-                                                                      'name' => 'interrupt'
-                                                                    },
-                                                             'value' => 1,
-                                                             'type' => 'num'
-                                                           },
-                                 'wb_slave' => {
-                                                 '0' => {
-                                                          'width' => 5,
-                                                          'name' => 'wb',
-                                                          'addr' => '0x9e00_0000	0x9eff_ffff		IDE Controller'
-                                                        },
-                                                 'value' => 1,
-                                                 'type' => 'num',
-                                                 'wb_slave' => {}
-                                               }
-                               },
                     'ports' => {
                                  'sa_tag_i' => {
-                                                 'intfc_name' => 'plug:wb_slave[0]',
                                                  'intfc_port' => 'tag_i',
+                                                 'intfc_name' => 'plug:wb_slave[0]',
                                                  'range' => 'TAGw-1     :   0',
                                                  'type' => 'input'
                                                },
-                                 'sa_dat_o' => {
-                                                 'intfc_name' => 'plug:wb_slave[0]',
-                                                 'intfc_port' => 'dat_o',
-                                                 'range' => 'Dw-1       :   0',
-                                                 'type' => 'output'
-                                               },
                                  'sa_rty_o' => {
-                                                 'intfc_name' => 'plug:wb_slave[0]',
                                                  'intfc_port' => 'rty_o',
+                                                 'intfc_name' => 'plug:wb_slave[0]',
                                                  'range' => '',
                                                  'type' => 'output'
                                                },
-                                 'sa_sel_i' => {
-                                                 'intfc_port' => 'sel_i',
+                                 'sa_dat_o' => {
+                                                 'intfc_port' => 'dat_o',
                                                  'intfc_name' => 'plug:wb_slave[0]',
+                                                 'range' => 'Dw-1       :   0',
+                                                 'type' => 'output'
+                                               },
+                                 'sa_sel_i' => {
+                                                 'intfc_name' => 'plug:wb_slave[0]',
+                                                 'intfc_port' => 'sel_i',
                                                  'range' => 'SELw-1     :   0',
                                                  'type' => 'input'
                                                },
                                  'sa_dat_i' => {
-                                                 'intfc_port' => 'dat_i',
                                                  'intfc_name' => 'plug:wb_slave[0]',
+                                                 'intfc_port' => 'dat_i',
                                                  'range' => 'Dw-1       :   0',
                                                  'type' => 'input'
                                                },
                                  'ext_int_o' => {
-                                                  'intfc_port' => 'int_o',
                                                   'intfc_name' => 'plug:interrupt_peripheral[0]',
+                                                  'intfc_port' => 'int_o',
                                                   'range' => '',
                                                   'type' => 'output'
                                                 },
                                  'sa_we_i' => {
-                                                'intfc_name' => 'plug:wb_slave[0]',
                                                 'intfc_port' => 'we_i',
+                                                'intfc_name' => 'plug:wb_slave[0]',
                                                 'range' => '',
                                                 'type' => 'input'
                                               },
-                                 'sa_err_o' => {
-                                                 'intfc_name' => 'plug:wb_slave[0]',
-                                                 'intfc_port' => 'err_o',
-                                                 'range' => '',
-                                                 'type' => 'output'
-                                               },
                                  'sa_cyc_i' => {
-                                                 'intfc_name' => 'plug:wb_slave[0]',
                                                  'intfc_port' => 'cyc_i',
+                                                 'intfc_name' => 'plug:wb_slave[0]',
                                                  'range' => '',
                                                  'type' => 'input'
                                                },
-                                 'reset' => {
-                                              'intfc_name' => 'plug:reset[0]',
-                                              'intfc_port' => 'reset_i',
-                                              'range' => '',
-                                              'type' => 'input'
-                                            },
-                                 'clk' => {
-                                            'intfc_port' => 'clk_i',
-                                            'intfc_name' => 'plug:clk[0]',
-                                            'range' => '',
-                                            'type' => 'input'
-                                          },
-                                 'ext_int_i' => {
-                                                  'intfc_port' => 'IO',
-                                                  'intfc_name' => 'IO',
-                                                  'range' => 'EXT_INT_NUM-1      :   0',
-                                                  'type' => 'input'
-                                                },
-                                 'sa_ack_o' => {
-                                                 'intfc_port' => 'ack_o',
+                                 'sa_err_o' => {
+                                                 'intfc_port' => 'err_o',
                                                  'intfc_name' => 'plug:wb_slave[0]',
                                                  'range' => '',
                                                  'type' => 'output'
                                                },
+                                 'sa_ack_o' => {
+                                                 'intfc_name' => 'plug:wb_slave[0]',
+                                                 'intfc_port' => 'ack_o',
+                                                 'range' => '',
+                                                 'type' => 'output'
+                                               },
+                                 'ext_int_i' => {
+                                                  'intfc_name' => 'IO',
+                                                  'intfc_port' => 'IO',
+                                                  'range' => 'EXT_INT_NUM-1      :   0',
+                                                  'type' => 'input'
+                                                },
+                                 'clk' => {
+                                            'intfc_name' => 'plug:clk[0]',
+                                            'intfc_port' => 'clk_i',
+                                            'range' => '',
+                                            'type' => 'input'
+                                          },
+                                 'reset' => {
+                                              'intfc_port' => 'reset_i',
+                                              'intfc_name' => 'plug:reset[0]',
+                                              'range' => '',
+                                              'type' => 'input'
+                                            },
                                  'sa_addr_i' => {
-                                                  'intfc_port' => 'adr_i',
                                                   'intfc_name' => 'plug:wb_slave[0]',
+                                                  'intfc_port' => 'adr_i',
                                                   'range' => 'Aw-1       :   0',
                                                   'type' => 'input'
                                                 },
                                  'sa_stb_i' => {
-                                                 'intfc_port' => 'stb_i',
                                                  'intfc_name' => 'plug:wb_slave[0]',
+                                                 'intfc_port' => 'stb_i',
                                                  'range' => '',
                                                  'type' => 'input'
                                                }
                                },
-                    'sockets' => {},
                     'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/ext_int/ext_int.v',
+                    'sockets' => {},
                     'module_name' => 'ext_int',
                     'unused' => {
                                   'plug:wb_slave[0]' => [
@@ -181,10 +181,10 @@ $ext_int = bless( {
                                                         ]
                                 },
                     'category' => 'interrupt',
-                    'header' => '
-	#define $IP_GER	   		(*((volatile unsigned int *) ($BASE	)))
-	#define $IP_IER_RISE		(*((volatile unsigned int *) ($BASE+4	)))
-	#define $IP_IER_FALL		(*((volatile unsigned int *) ($BASE+8	)))
-	#define $IP_ISR 			(*((volatile unsigned int *) ($BASE+12	)))
-	#define $IP_RD   			(*((volatile unsigned int *) ($BASE+16	)))'
+                    'system_h' => '
+	#define ${IP}_GER	   		(*((volatile unsigned int *) ($BASE	)))
+	#define ${IP}_IER_RISE		(*((volatile unsigned int *) ($BASE+4	)))
+	#define ${IP}_IER_FALL		(*((volatile unsigned int *) ($BASE+8	)))
+	#define ${IP}_ISR 			(*((volatile unsigned int *) ($BASE+12	)))
+	#define ${IP}_RD   			(*((volatile unsigned int *) ($BASE+16	)))'
                   }, 'ip_gen' );
