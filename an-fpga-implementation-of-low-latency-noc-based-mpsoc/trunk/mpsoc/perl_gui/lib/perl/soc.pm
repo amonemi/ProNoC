@@ -27,7 +27,7 @@ sub soc_add_instance{
 	if(exists ($self->{instances}{$instance_id})){
 		return 0;
 	}
-	my $module_name=$ip->ip_get_module_name($category,$module);
+	my $module_name=$ip->ip_get($category,$module,"module_name");
 	#print "$module_name\n";
 	$self->{instances}{$instance_id}={};
 	$self->{instances}{$instance_id}{module}=$module;

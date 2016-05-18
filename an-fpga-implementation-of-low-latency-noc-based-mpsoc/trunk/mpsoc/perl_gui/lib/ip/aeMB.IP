@@ -367,7 +367,7 @@ For more information check 	http://opencores.org/project,aemb',
                      'module_name' => 'aeMB_top',
                      'unused' => undef,
                      'category' => 'Processor',
-                     'header' => ' #include <stdio.h> 
+                     'system_h' => ' #include <stdio.h> 
  #include <stdlib.h> 
  #include "aemb/core.hh" ',
                      'sw_files' => [

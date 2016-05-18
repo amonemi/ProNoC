@@ -53,7 +53,7 @@ sub check_input_file{
 	my ($file,$ipgen,$soc_state,$info)=@_;
 	my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
 	if($suffix eq '.IP'){
-		$ipgen->ipgen_set_file($file);
+		$ipgen->ipgen_add("file_name",$file);
 		set_state($soc_state,"load_file",0);
 		
 		
@@ -74,8 +74,11 @@ sub read_all_module{
 		my $vdb =  read_file($file);
 		my @modules=sort $vdb->get_modules($file);
 		#foreach my $p(@module_list) {print "$p\n"}
-		$ipgen->ipgen_set_file($file);
-		$ipgen->ipgen_set_module_name($modules[0]);
+		$ipgen->ipgen_add("file_name",$file);
+
+
+
+		$ipgen->ipgen_add("module_name",$modules[0]);
 		$ipgen->ipgen_set_module_list(@modules);
 		load_deafult_setting($ipgen,$modules[0]);
 		
@@ -237,9 +240,9 @@ sub ip_file_box {
 	my $browse= def_image_button("icons/browse.png","Browse");
 	my $label2= gen_label_in_left(" IP name:");
 	my $entry2= gen_entry();
-	my $file= $ipgen->ipgen_get_file();
+	my $file= $ipgen->ipgen_get("file_name");
 	if(defined $file){$entry->set_text($file);}
-	my $ip_name= $ipgen->ipgen_get_ip_name();
+	my $ip_name= $ipgen->ipgen_get("ip_name");
 	if(defined $ip_name){$entry2->set_text($ip_name);}
 	show_info(\$info,"Please select the verilog file containig the ip module\n");
 	$browse->signal_connect("clicked"=> sub{
@@ -290,7 +293,7 @@ sub ip_file_box {
 	});
 	$entry2->signal_connect("changed"=>sub{
 		my $name=$entry2->get_text();
-		$ipgen->ipgen_set_ip_name($name);
+		$ipgen->ipgen_add("ip_name",$name);
 		
 	});
 	$table->attach_defaults ($label, 0, 1 , $row, $row+1);
@@ -312,14 +315,14 @@ sub select_module{
 	my ($ipgen,$soc_state,$info,$table,$row)=@_;
 	my $label= gen_label_in_left("  Select\n module:");
 	my @modules= $ipgen->ipgen_get_module_list();
-	my $saved_module=$ipgen->ipgen_get_module_name();
+	my $saved_module=$ipgen->ipgen_get("module_name");
 	my $pos=(defined $saved_module ) ? get_scolar_pos( $saved_module,@modules) : 0;
 	my $combo = gen_combo(\@modules, $pos);
 	my $param= def_image_button("icons/setting.png","Parameter\n   setting");
 	my $def= def_image_button("icons/setting.png","Definition\n file setting");
 	my $label2= gen_label_in_left("  Select\n Category:");
 	my ($category,$category_entry)=gen_entry_help('Define the IP category:e.g RAM, GPIO,...');
-	my $saved_category=$ipgen->ipgen_get_category();
+	my $saved_category=$ipgen->ipgen_get("category");
 	if(defined $saved_category){$category_entry->set_text($saved_category);}
 	my $ipinfo= def_image_button("icons/info.png","    IP\n Description");
 	my $header_h= def_image_button("icons/h_file.png","Add Software\n      files");
@@ -358,7 +361,7 @@ sub select_module{
 	});	
 	$category_entry->signal_connect("changed"=> sub{
 		my $name=$category_entry->get_text();
-		$ipgen->ipgen_set_category($name);
+		$ipgen->ipgen_add("category",$name);
 		
 	});
 	$ipinfo->signal_connect("clicked"=> sub{
@@ -366,19 +369,69 @@ sub select_module{
 		
 	});	
 	$header_h->signal_connect("clicked"=> sub{
-		get_software_file($ipgen,$soc_state,$info);		
+		my %page_info;
+		my $help1="The files and folder that selected here will be copied in genertated processing tile SW folder.";
+		my $help2="The file listed here can contain some variable with \${var_name} format. The file genertor will replace them with their values during file generation. The variable can be selected from above listed global vairable";
+		my $help3='Define the header file for this peripheral device. You can use global vriables listed at the top.  
+  		
+header file example 
+   
+ #define ${IP}_REG_0   (*((volatile unsigned int *) ($BASE)))   
+ #define ${IP}_REG_1   (*((volatile unsigned int *) ($BASE+4)))
+   
+   
+ #define ${IP}_WRITE_REG1(value)  ${IP}_REG_1=value	
+ #define ${IP}_READ_REG1()  	${IP}_REG_1	    
+  ';	
+
+		$page_info{0}{page_name} = "_Add exsiting file/folder";
+		$page_info{0}{filed_name}= "sw_files";
+		$page_info{0}{filed_type}= "exsiting_file/folder";
+		$page_info{0}{rename_file}=undef; 
+		$page_info{0}{folder_en}=1;
+		$page_info{0}{help}=$help1;
+
+		$page_info{1}{page_name} = "_Add file generator(s)";
+		$page_info{1}{filed_name}= "gen_sw_files";
+		$page_info{1}{filed_type}= "file_generators";
+		$page_info{1}{rename_file}=1; 
+		$page_info{1}{folder_en}=0;
+		$page_info{1}{help}=$help2;
+
+		$page_info{2}{page_name} = "_Add to system.h";
+		$page_info{2}{filed_name}= "system_h";
+		$page_info{2}{filed_type}= "file_content";
+		$page_info{2}{rename_file}=undef; 
+		$page_info{2}{folder_en}=0;
+		$page_info{2}{help}=$help3;
+
+
+		get_source_file($ipgen,$soc_state,$info,0,"Add software file(s)","SW",\%page_info);
+		#get_software_file($ipgen,$soc_state,$info,0);		
 		
 	});	
 	$lib_hdl->signal_connect("clicked"=> sub{
-		get_hdl_file($ipgen,$soc_state,$info);		
+		my $help1="The files and folder that selected here will be copied in genertated processing tile RTL  folder.";
+		my %page_info;
+		$page_info{0}{page_name} = "_Add exsiting HDL file/folder";
+		$page_info{0}{filed_name}= "hdl_files";
+		$page_info{0}{filed_type}= "exsiting_file/folder";
+		$page_info{0}{rename_file}=undef;
+		$page_info{0}{folder_en}=1; 
+		$page_info{0}{help}=$help1;
+
+		get_source_file($ipgen,$soc_state,$info,0,"Add HDL file(s)", "hw",\%page_info);
+
+		#get_hdl_file($ipgen,$soc_state,$info);
+				
 		
 	});	
 }
 
 sub load_deafult_setting{
 	my ($ipgen,$module)=@_; 
-	my $file= $ipgen->ipgen_get_file();
-	$ipgen->ipgen_set_module_name($module);
+	my $file= $ipgen->ipgen_get("file_name");
+	$ipgen->ipgen_add("module_name",$module);
 	my $vdb =read_file($file);
 	my %parameters = $vdb->get_modules_parameters_not_local($module);
 	my @parameters_order= $vdb->get_modules_parameters_not_local_order($module);
@@ -395,7 +448,7 @@ sub load_deafult_setting{
 			
 	}
 	#add parameter order. 
-	$ipgen->ipgen_add_parameters_order(@parameters_order); 
+	$ipgen->ipgen_add("parameters_order",\@parameters_order); 
 	#add port order.
 	$ipgen->ipgen_add_ports_order(@ports_order); 
 	#add ports 
@@ -439,8 +492,7 @@ sub show_file_info{
 		$scrolled_win->add_with_viewport($table);
 		$table->show;
 		$scrolled_win->show_all;
-		
-		#print "llllllllllllllllllllllllllllllllllllll\n";
+			
 		
 		
 	});
@@ -519,8 +571,8 @@ sub show_interface_info{
 sub get_parameter_setting { 
 	my ($ipgen,$soc_state,$info)=@_;
 	
-	my $module = $ipgen->ipgen_get_module_name();	
-	my $file= $ipgen->ipgen_get_file();
+	my $module = $ipgen->ipgen_get("module_name");
+	my $file= $ipgen->ipgen_get("file_name");
 	if (!defined $file) {
 			message_dialog("The input verilog file is empty");
 			return;
@@ -583,7 +635,7 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 	
 
 	my @parameters=$ipgen->ipgen_get_all_parameters_list();
-	my @params_order= $ipgen->ipgen_get_parameters_order();
+	my @params_order= $ipgen->ipgen_get_list("parameters_order");
 	if((@params_order)) {@parameters=@params_order;}
 	
 	my $ok = def_image_button('icons/select.png','OK');
@@ -774,7 +826,7 @@ sub get_def_setting {
 
 sub get_Description{
 	my ($ipgen,$soc_state,$info)=@_;
-	my $description = $ipgen->ipgen_get_description();	
+	my $description = $ipgen->ipgen_get("description");	
 	my $table = Gtk2::Table->new (15, 15, TRUE);
 	my $window=def_popwin_size(500,500,"Add description");
 	my ($scrwin,$text_view)=create_text();
@@ -790,7 +842,7 @@ sub get_Description{
 		$window->destroy;
 		 
 		 my $text = $text_buffer->get_text($text_buffer->get_bounds, TRUE);
-		 $ipgen->ipgen_set_description($text);	
+		 $ipgen->ipgen_add("description",$text);	
 		#print "$text\n";
 		
 	});
@@ -801,204 +853,85 @@ sub get_Description{
 }	
 
 
-###########
-#	get header file 
-#########
-
-sub get_header_file{
-	my ($ipgen,$soc_state,$info)=@_;
-	my $hdr = $ipgen->ipgen_get_hdr();	
-	my $table = Gtk2::Table->new (15, 15, TRUE);
-	#my $window=def_popwin_size(600,600,"Add header file");
-	my ($scrwin,$text_view)=create_text();
-	
-	my $help_text=
-'Define the header file for this peripheral device. 
-You can use two variable $BASEn and $IP.
-   $BASE  is the wishbone base addresse(s) and will be added 
-   during soc generation to system.h. If more than one slave
-   wishbone bus are used  define them as $BASE0, $BASE1 ... 
-      
-   $IP:  is the peripheral device name. When more than one 
-   peripheral device is allowed to be called in the SoC, it is 
-   recommended to add $IP to the global variables, definitions 
-   and functions. 
-  		
-header file example 
-   
- #define $IP_REG_0   (*((volatile unsigned int *) ($BASE)))   
- #define $IP_REG_1   (*((volatile unsigned int *) ($BASE+4)))
-   
-   
- #define $IP_WRITE_REG1(value)  $IP_REG_1=value	
- #define $IP_READ_REG1()  	$IP_REG_1	    
-  ';
-	
-	my $help=gen_label_help($help_text,"Define the header file for this peripheral device. "); 
-	$table->attach_defaults($help,0,15,0,1);
-	$table->attach_defaults($scrwin,0,15,1,14);
-	my $text_buffer = $text_view->get_buffer;
-	if(defined $hdr) {$text_buffer->set_text($hdr)};
-	
-	
-	
-	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
-	$scrolled_win->set_policy( "automatic", "automatic" );
-	$scrolled_win->add_with_viewport($table);	
-	
-	#$window->add($table);
-	#$window->show_all();
-	return ($scrolled_win,$text_buffer);
-	
-}	
-
-#############
-#	get hdl files
-############
-sub get_hdl_file{
-my ($ipgen,$soc_state,$info)=@_;
-	my $table = Gtk2::Table->new (15, 15, TRUE);
-	my $window=def_popwin_size(600,600,"Add HDL file()s");
-	my @saved_files=$ipgen->ipgen_get_files_list("hdl_files");
-	my $ok=def_image_button("icons/select.png",' Ok ');
-	my $scrwin=gen_file_list($ipgen,"hdl_files",\@saved_files,$ok);
-	
-	my $label=gen_label_in_left("Selecet the design files you want to include for the IP core"); 
-	my $brows=def_image_button("icons/browse.png",' Browse');
-	$table->attach_defaults($label,0,10,0,1);
-	$table->attach_defaults($brows,10,12,0,1);
-	$table->attach_defaults($scrwin,0,15,1,14);
-	$table->attach_defaults($ok,6,9,14,15);
-	
-	my $dir = Cwd::getcwd();
-	my $project_dir	  = abs_path("$dir/../../"); #mpsoc directory address
-	
-	
-	$brows->signal_connect("clicked"=> sub {
-		my @files;
-        my $dialog = Gtk2::FileChooserDialog->new(
-            	'Select a File', 
-            	 undef,
-            	 'open',
-            	'gtk-cancel' => 'cancel',
-            	'gtk-ok'     => 'ok',
-        	);
-        	
-        	my $filter = Gtk2::FileFilter->new();
-			my $dir = Cwd::getcwd();
-			$dialog->set_current_folder ("$dir/..")	;	
-			$dialog->set_select_multiple(TRUE);
-
-        	if ( "ok" eq $dialog->run ) {
-            		@files = $dialog->get_filenames;
-            		
-            		@saved_files=$ipgen->ipgen_get_files_list("hdl_files");
-            		foreach my $p (@files){
-            			#remove $project_dir form beginig of each file
-            			$p =~ s/$project_dir//;  
-            			if(! grep (/^$p$/,@saved_files)){push(@saved_files,$p)};
-            			
-            		}
-            		$ipgen->ipgen_set_files_list("hdl_files",\@saved_files);
-            		$window->destroy;
-            		get_hdl_file($ipgen,$soc_state,$info);
-            		
-					#$$entry_ref->set_text($file);
-					
-            		#print "file = $file\n";
-       		 }
-       		$dialog->destroy;
-       		
-
-
-	} );# # ,\$entry);
-		
-		
-	
-	
-	
-	$ok->signal_connect("clicked"=> sub {
-		
-		
-		
-		$window->destroy;
-		 
-		 #my $text = $text_buffer->get_text($text_buffer->get_bounds, TRUE);
-		 #$ipgen->ipgen_set_hdr($text);	
-		#print "$text\n";
-		
-	});
-	
-	$window->add($table);
-	$window->show_all();
-
-}		
 
 
 
 
 ##########
-#
+#	gen_file_list
 #########
 
 sub gen_file_list{
-	my ($ipgen,$list_name,$ref,$ok)=@_;
-	my @files=@{$ref};
-	my $file_num= scalar @files;
+	my ($ipgen,$list_name,$window,$rename_file_en)=@_;
 	
 
 	my $table=def_table(10,10,TRUE);#	my ($row,$col,$homogeneous)=@_;
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
+	my $ok=def_image_button("icons/select.png",' Ok ');
+
 	$scrolled_win->set_policy( "automatic", "automatic" );
 	$scrolled_win->add_with_viewport($table);
-
-   
+	$table->attach_defaults (gen_label_in_center("File path"), 0, 5 , 0, 1);
+   	$table->attach_defaults (gen_label_help("The target name can contain any of Global variables e.g \$IP\$.h","Copy as"), 5, 9 , 0, 1) if(defined $rename_file_en);
 	my $col=0;
-    my $row=0;
+        my $row=1;
+	my @files=  $ipgen->ipgen_get_list($list_name); #@{$ref};
+	my $file_num= scalar @files;	
 	foreach my $p(@files){
-		my $entry=gen_entry($p);
-		my $remove=def_image_button("icons/cancel.png");
-	    $table->attach_defaults ($entry, 0, 9 , $row, $row+1);
-		$table->attach_defaults ($remove, 9,10 , $row, $row+1);
-		$row++;		
-		$remove->signal_connect("clicked"=> sub {
-			my @saved_files=$ipgen->ipgen_get_files_list($list_name);
-			@saved_files=remove_scolar_from_array(\@saved_files,$p);
-			$ipgen->ipgen_set_files_list($list_name,\@saved_files);
-			$entry->destroy;
-			$remove->destroy;
+			my ($path,$rename)=split('frename_sep_t',$p); 
+			my $entry=gen_entry($path);
+			my $entry2=gen_entry($rename) ;
+			my $remove=def_image_button("icons/cancel.png");
+			$table->attach_defaults ($entry, 0, 5 , $row, $row+1);
+			$table->attach_defaults ($entry2, 5, 9 , $row, $row+1) if(defined $rename_file_en);
+			$table->attach_defaults ($remove, 9,10 , $row, $row+1);
+			$row++;		
+			$remove->signal_connect("clicked"=> sub {
+				my @saved_files=$ipgen->ipgen_get_list($list_name);
+				@saved_files=remove_scolar_from_array(\@saved_files,$p);
+				$ipgen->ipgen_add($list_name,\@saved_files);
+				$entry->destroy;
+				$entry2->destroy if(defined $rename_file_en);
+				$remove->destroy;
 			
-		});
-		$ok->signal_connect("clicked"=> sub {
-			if(defined $entry){
-				my $n= $entry->get_text();
-				if($p ne $n){
-					my @saved_files=$ipgen->ipgen_get_files_list($list_name);
-					@saved_files=replace_in_array(\@saved_files,$p, $n);
-					$ipgen->ipgen_set_files_list($list_name,\@saved_files);
-				}
+			});
+			$ok->signal_connect("clicked"=> sub {
+				if(defined $entry){
+					my $n= $entry->get_text();
+					   if(defined $rename_file_en){
+						$n= $n.'frename_sep_t'.$entry2->get_text() ;
+					   }
+					if($p ne $n){
+						my @saved_files=$ipgen->ipgen_get_list($list_name);
+						@saved_files=replace_in_array(\@saved_files,$p, $n);
+						$ipgen->ipgen_add($list_name,\@saved_files);
+					}
 				
-			}
+				}
 			
 			
 			
-		});
+			});
 		
-		#my $seph = Gtk2::HSeparator->new;
-		#$table->attach_defaults ($seph, 0, 10 , $row, $row+1);
-		#$row++;		
+			#my $seph = Gtk2::HSeparator->new;
+			#$table->attach_defaults ($seph, 0, 10 , $row, $row+1);
+			#$row++;		
+		
 	}
 	
-
 	
+
+	$ok->signal_connect("clicked"=> sub {
+		$window->destroy;
+	});
 
 #   while( $row<10){
 	#	my $label=gen_label_in_left(' ');
 	   # $table->attach_defaults ($label, 0, 1 , $row, $row+1);$row++;
 	#}
 
-
-	return $scrolled_win;
+	
+	return ($scrolled_win,$ok);
 }
 
 
@@ -1079,7 +1012,7 @@ sub interface_info_box {
 			my $advance_button=def_image_button('icons/advance.png','separate');
 			$table->attach_defaults ($type_box, $positions[2], $positions[3], $row, $row+1);
 			$table->attach_defaults ($advance_button, $positions[3], $positions[4], $row, $row+1);	
-			$type_spin->signal_connect("changed"=>sub{
+			$type_spin->signal_connect("value_changed"=>sub{
 				my $wiget=shift;
 				my $num=$wiget->get_value_as_int();
 				$ipgen->ipgen_add_soket($p,'num',$num);
@@ -1163,7 +1096,7 @@ sub interface_info_box {
 			$type_box->pack_start($name_setting,FALSE,FALSE,0);
 			$type_spin->set_value($value);
 			$table->attach_defaults ($type_box, $positions[2], $positions[3], $row, $row+1);
-			$type_spin->signal_connect("changed"=>sub{
+			$type_spin->signal_connect("value_changed"=>sub{
 				my $wiget=shift;
 				my $num=$wiget->get_value_as_int();
 				$ipgen->ipgen_add_plug($q,'num',$num);
@@ -1207,7 +1140,9 @@ sub interface_info_box {
 	return $table;
 	
 }	
-
+########
+#	get_intfc_setting
+########
 
 sub get_intfc_setting{
 	
@@ -1299,6 +1234,7 @@ sub get_intfc_setting{
 			my $name_combo=gen_combo(\@list,$pos);
 			my $sbox=def_hbox(FALSE,0);
 			my $widget;
+			my $size_lab;
 			my @l=("Fixed","Parameterizable");
 
 			if(!defined $saved_width){
@@ -1311,12 +1247,15 @@ sub get_intfc_setting{
 			 		 $pos= 0; 
 					 $widget=gen_spin(1,31,1);
 					 $widget->set_value($saved_width);
+					 my $d=2**$saved_width;
+					 $size_lab=gen_label_in_left(metric_conversion($d). " Bytes");
 				} else{
 					$pos= 1; 
 					my @parameters=$ipgen->ipgen_get_all_parameters_list();
 					my $p=get_scolar_pos($saved_width,@parameters);
 
 					$widget=gen_combo(\@parameters, $p); 
+					$size_lab=gen_label_in_left(" ");
 
 				}
 
@@ -1329,16 +1268,38 @@ sub get_intfc_setting{
 			#$widget->set_value($saved_width);
 			$sbox->pack_start($comb,FALSE,FALSE,3);
 			$sbox->pack_end($widget,FALSE,FALSE,3);
-			
+			$sbox->pack_end($size_lab,FALSE,FALSE,3);
 			$comb->signal_connect('changed'=>sub{			
 				my $condition=$comb->get_active_text();
 				$widget->destroy;
+				$size_lab->destroy;
 				my @parameters=$ipgen->ipgen_get_all_parameters_list();
 				$widget=($condition eq "Fixed" )? gen_spin(1,31,1):gen_combo(\@parameters, 0); 
+				$size_lab=($condition eq "Fixed" )? gen_label_in_left("2 Bytes"):  gen_label_in_left(" ");
 				$sbox->pack_end($widget,FALSE,FALSE,3);
+				$sbox->pack_end($size_lab,FALSE,FALSE,3);
+				$sbox->show_all();
+				$widget->signal_connect('changed'=>sub{	
+					$size_lab->destroy;
+					my $in=$comb->get_active_text();
+					my $width=($in eq "Fixed" )? $widget->get_value_as_int(): $widget->get_active_text() ;
+					my $d=($in eq "Fixed" )? 2**$width:0;
+				
+					$size_lab=($in eq "Fixed" )? gen_label_in_left( metric_conversion($d). " Bytes"):gen_label_in_left(" ");
+					$sbox->pack_end($size_lab,FALSE,FALSE,3);
+					$sbox->show_all();
+				});
+			});
+			$widget->signal_connect('changed'=>sub{	
+				$size_lab->destroy;
+				my $in=$comb->get_active_text();
+				my $width=($in eq "Fixed" )? $widget->get_value_as_int(): $widget->get_active_text() ;
+				my $d=($in eq "Fixed" )? 2**$width:0;
+				
+				$size_lab=($in eq "Fixed" )? gen_label_in_left(metric_conversion($d). " Bytes"):gen_label_in_left(" ");
+				$sbox->pack_end($size_lab,FALSE,FALSE,3);
 				$sbox->show_all();
 			});
-			
 		
 			$table->attach_defaults($name_combo,2,5,$i+1,$i+2);
 			$table->attach_defaults($sbox,5,6,$i+1,$i+2);
@@ -1586,14 +1547,14 @@ sub port_info_box {
 
 sub generate_ip{
 	my $ipgen=shift;
-	my $name=$ipgen->ipgen_get_module_name();
-	my $category=$ipgen->ipgen_get_category();
-	my $ip_name= $ipgen->ipgen_get_ip_name();
+	my $name=$ipgen->ipgen_get("module_name");
+	my $category=$ipgen->ipgen_get("category");
+	my $ip_name= $ipgen->ipgen_get("ip_name");
 	#check if name has been set
 	if(defined ($name) && defined ($category)){
 		if (!defined $ip_name) {$ip_name= $name}
 		#check if any source file has been added for this ip
-		my @l=$ipgen->ipgen_get_files_list("hdl_files");
+		my @l=$ipgen->ipgen_get_list("hdl_files");
 		if( scalar @l ==0){
 			my $mwindow;
 			my $dialog = Gtk2::MessageDialog->new ($mwindow,
@@ -1668,7 +1629,7 @@ sub load_ip{
 		$file = $dialog->get_filename;
 		my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
 		if($suffix eq '.IP'){
-			$ipgen->ipgen_set_file($file);	
+			$ipgen->ipgen_add("file_name",$file);	
 			set_state($soc_state,"load_file",0);
 		}					
      }
@@ -1680,31 +1641,83 @@ sub load_ip{
 
 
 
+
+
+
+############
+#	get_source_file
 ###########
-#	get header file 
+
+
+
+sub get_source_file{
+	my($ipgen,$soc_state,$info,$page,$title,$dest,$page_info_ref)=@_;
+
+		
+	my $var_list='${parameter_name}: Verilog module parameter values. 
+
+${BASE}: is the wishbone base addresse(s) and will be added during soc generation to system.h. If more than one slave wishbone bus are used  define them as ${BASE0}, ${BASE1}... . 
+      
+${IP}: is the peripheral device instance name.
+
+${CORE}: is the peripheral device module name.';
+	my $var_help=gen_button_message($var_list,"icons/info.png","Global variables");
+	
+	my($width,$hight)=max_win_size();
+	my $window = def_popwin_size($width*2/3,$hight*2/3,$title);
+	
+	my $notebook=source_notebook($ipgen,$soc_state,$info,$window,$page,$dest,$page_info_ref);
+	my $table=def_table (15, 15, TRUE);						
+	
+		
+	$table->attach_defaults ($var_help, 5, 7, 0, 1);
+	$table->attach_defaults ($notebook , 0, 15, 1, 15);
+		
+	$window->add($table);
+	$window->show_all;	
+	return $window;	  
+	
+}
+
+##########
+# source_notebook
+##########
+
+sub source_notebook{
+	my($ipgen,$soc_state,$info,$window,$page,$dest,$page_info_ref)=@_;
+	my $notebook = Gtk2::Notebook->new;
+	my %page_info=%{$page_info_ref};
+	foreach my $p (sort keys %page_info){
+		my $page_ref;
+		$page_ref=get_file_folder($ipgen,$soc_state,$info,$window,$p,$page_info_ref) if($page_info{$p}{filed_type} eq "exsiting_file/folder"); 
+		$page_ref=get_file_folder($ipgen,$soc_state,$info,$window,$p,$page_info_ref) if($page_info{$p}{filed_type} eq "file_generators"); 
+		$page_ref=get_file_content($ipgen,$soc_state,$info,$window,$page_info{$p},$page_info_ref) if($page_info{$p}{filed_type} eq "file_content"); 
+		$notebook->append_page ($page_ref,Gtk2::Label->new_with_mnemonic ($page_info{$p}{page_name}));
+
+	}	
+	$notebook->show_all;	
+	$notebook->set_current_page($page) if(defined $page);
+	return $notebook;
+
+}
+
+##########
+#  get_file_folder
 #########
 
-sub get_sw_file_folder{
-	my ($ipgen,$soc_state,$info,$window)=@_;
-	my @sw_dir = $ipgen->ipgen_get_files_list("sw_files");
-	my $table = Gtk2::Table->new (15, 15, TRUE);
-	
-	
-	my $help=gen_label_help("The files and folder that selected here will be copied in genertated processing tile SW folder.");
-	
-	
-	$table->attach_defaults($help,0,15,0,1);
-	my $ok=def_image_button("icons/select.png",' Ok ');
-	my $scrwin=gen_file_list($ipgen,"sw_files",\@sw_dir,$ok);
+sub get_file_folder{
+	my ($ipgen,$soc_state,$info,$window,$page,$page_info_ref)=@_;
+	my %page_info=%{$page_info_ref};
+	my @sw_dir = $ipgen->ipgen_get_list($page_info{$page}{filed_name});
+	my $table = Gtk2::Table->new (15, 15, TRUE);	
+	my $help=gen_label_help($page_info{$page}{help});	
+	$table->attach_defaults($help,0,2,0,1);	
+	my ($scrwin,$ok)=gen_file_list($ipgen,$page_info{$page}{filed_name},$window,$page_info{$page}{rename_file});
 	
 	my $label=gen_label_in_left("Selecet file(s):"); 
 	my $brows=def_image_button("icons/browse.png",' Browse');
-	$table->attach_defaults($label,1,3,1,2);
-	$table->attach_defaults($brows,3,5,1,2);
-	my $label2=gen_label_in_left("Selecet folder(s):"); 
-	my $brows2=def_image_button("icons/browse.png",' Browse');
-	$table->attach_defaults($label2,7,9,1,2);
-	$table->attach_defaults($brows2,9,11,1,2);
+	$table->attach_defaults($label,2,4,0,1);
+	$table->attach_defaults($brows,4,6,0,1);
 	
 	my $dir = Cwd::getcwd();
 	my $project_dir	  = abs_path("$dir/../../"); #mpsoc directory address
@@ -1726,98 +1739,114 @@ sub get_sw_file_folder{
 			$dialog->set_select_multiple(TRUE);
 
         	if ( "ok" eq $dialog->run ) {
-            		@files = $dialog->get_filenames;
-            		
-            		@sw_dir=$ipgen->ipgen_get_files_list("sw_files");
+            		@files = $dialog->get_filenames;            		
+            		@sw_dir=$ipgen->ipgen_get_list($page_info{$page}{filed_name});
             		foreach my $p (@files){
             			#remove $project_dir form beginig of each file
-            			$p =~ s/$project_dir//;  
+            			$p =~ s/$project_dir//; 
+				my ($name,$path,$suffix) = fileparse("$p",qr"\..[^.]*$");
+				$p=$p.'frename_sep_t'.$name.$suffix if (defined $page_info{$page}{rename_file}); 
             			if(! grep (/^$p$/,@sw_dir)){push(@sw_dir,$p)};
             			
-            		}
-            		
-            		$ipgen->ipgen_set_files_list("sw_files",\@sw_dir);
-            		get_software_file($ipgen,$soc_state,$info);
+            		}            		
+            		$ipgen->ipgen_add($page_info{$page}{filed_name},\@sw_dir);
+            		get_source_file($ipgen,$soc_state,$info,$page,"Add software file(s)","SW",$page_info_ref);
             		$window->destroy;
             		
-            		
-					#$$entry_ref->set_text($file);
-					
-            		#print "file = $file\n";
        		 }
        		$dialog->destroy;
-       		
-
-
 	} );# # ,\$entry);
 	
-	
-	
-	
-	$brows2->signal_connect("clicked"=> sub {
-		my @files;
-		
-		 my $dialog = Gtk2::FileChooserDialog->new(
-            	'Select Folder(s)', 
-            	undef,
-				'select-folder',
-            	'gtk-cancel' => 'cancel',
-            	'gtk-ok'     => 'ok',
-        	);
-       
-		
-       
-        	
-        	my $filter = Gtk2::FileFilter->new();
-			my $dir = Cwd::getcwd();
-			$dialog->set_current_folder ("$dir/..")	;	
-			$dialog->set_select_multiple(TRUE);
+	if($page_info{$page}{folder_en} eq 1){
+		my $label2=gen_label_in_left("Selecet folder(s):"); 
+		my $brows2=def_image_button("icons/browse.png",' Browse');
+		$table->attach_defaults($label2,7,9,0,1);
+		$table->attach_defaults($brows2,9,11,0,1);
 
-        	if ( "ok" eq $dialog->run ) {
-            		@files = $dialog->get_filenames;
-            		
-            		@sw_dir=$ipgen->ipgen_get_files_list("sw_files");
-            		foreach my $p (@files){
-            			#remove $project_dir form beginig of each file
-            			$p =~ s/$project_dir//;  
-            			if(! grep (/^$p$/,@sw_dir)){push(@sw_dir,$p)};
-            			
-            		}
-            		
-            		$ipgen->ipgen_set_files_list("sw_files",\@sw_dir);
-            		get_software_file($ipgen,$soc_state,$info);
-            		$window->destroy;
-            		
-            		
-					#$$entry_ref->set_text($file);
+		$brows2->signal_connect("clicked"=> sub {
+			my @files;
+		
+			 my $dialog = Gtk2::FileChooserDialog->new(
+		    	'Select Folder(s)', 
+		    	undef,
+					'select-folder',
+		    	'gtk-cancel' => 'cancel',
+		    	'gtk-ok'     => 'ok',
+			);
+	       		
+			my $filter = Gtk2::FileFilter->new();
+				my $dir = Cwd::getcwd();
+				$dialog->set_current_folder ("$dir/..")	;	
+				$dialog->set_select_multiple(TRUE);
+
+			if ( "ok" eq $dialog->run ) {
+		    		@files = $dialog->get_filenames;
+		    		
+		    		@sw_dir=$ipgen->ipgen_get_list($page_info{$page}{filed_name});
+		    		foreach my $p (@files){
+		    			#remove $project_dir form beginig of each file
+		    			$p =~ s/$project_dir//;  
+		    			if(! grep (/^$p$/,@sw_dir)){push(@sw_dir,$p)};
+		    			
+		    		}
+		    		
+		    		$ipgen->ipgen_add($page_info{$page}{filed_name},\@sw_dir);
+		    		get_source_file($ipgen,$soc_state,$info,$page,"Add software file(s)","SW",$page_info_ref);
+		    		$window->destroy;
+		    		
+		    		
+						#$$entry_ref->set_text($file);
 					
-            		#print "file = $file\n";
-       		 }
-       		$dialog->destroy;
-       		
+		    		#print "file = $file\n";
+	       		 }
+	       		$dialog->destroy;
+	       		
 
 
-	} );# # ,\$entry);
+		} );# # ,\$entry);
+	}	
 	
 	
 	
+	$table->attach_defaults($scrwin,0,15,1,14);
+	$table->attach_defaults($ok,6,9,14,15);
 	
+	return ($table)
+
 	
-	$table->attach_defaults($scrwin,0,15,2,15);
-	#$table->attach_defaults($ok,6,9,14,15);
+}	
+
+
+
+###########
+#	get_file_content
+#########
+
+sub get_file_content{
+	my ($ipgen,$soc_state,$info,$window,$page_info_ref)=@_;
+	my %page_info=%{$page_info_ref};
+	#my $hdr = $ipgen->ipgen_get_hdr();
+	my  $hdr = $ipgen-> ipgen_get($page_info{filed_name});	
+	my $table = Gtk2::Table->new (14, 15, TRUE);
+	#my $window=def_popwin_size(600,600,"Add header file");
+	my ($scrwin,$text_view)=create_text();
+
+	my $help=gen_label_help($page_info{help}); 
+	$table->attach_defaults($help,0,8,0,1);
+	$table->attach_defaults($scrwin,0,15,1,14);
+	my $text_buffer = $text_view->get_buffer;
+	if(defined $hdr) {$text_buffer->set_text($hdr)};	
 	
-	
-	
-	
-	
-	
-	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
-	$scrolled_win->set_policy( "automatic", "automatic" );
-	$scrolled_win->add_with_viewport($table);	
-	
-	#$window->add($table);
-	#$window->show_all();
-	return ($scrolled_win);
+	my $ok=def_image_button("icons/select.png",' Save ');
+	$ok->signal_connect("clicked"=> sub {#		  
+		 my $text = $text_buffer->get_text($text_buffer->get_bounds, TRUE);
+		 $ipgen->ipgen_add($page_info{filed_name},$text);	
+		 $window->destroy;
+				
+	});
+
+	$table->attach_defaults($ok,6,9,14,15);
+	return ($table);
 	
 }	
 
@@ -1825,69 +1854,15 @@ sub get_sw_file_folder{
 
 
 
-sub get_software_file{
-	my($ipgen,$soc_state,$info)=@_;
-
-
-	my $notebook = Gtk2::Notebook->new;
-	#$hbox->pack_start ($notebook, TRUE, TRUE, 0);
-
-	my($width,$hight)=max_win_size();
-	my $window = def_popwin_size($width*2/3,$hight*2/3,"Add Software file(s)");
-	
-	
-	my ($sw_dir)=get_sw_file_folder($ipgen,$soc_state,$info,$window);
-	$notebook->append_page ($sw_dir,Gtk2::Label->new_with_mnemonic ("_Add file/folder"));
-
-	my ($hdr_file,$text_buffer)=  get_header_file($ipgen,$soc_state,$info);
-	$notebook->append_page ($hdr_file,Gtk2::Label->new_with_mnemonic ("_Add hedaer file"));
-
-	
-
-	#my $socgen=socgen_main();			
-	#$notebook->append_page ($socgen,Gtk2::Label->new_with_mnemonic ("_Processing tile generator"));
-
-	#my $mpsocgen =mpsocgen_main();
-	#$notebook->append_page ($mpsocgen,Gtk2::Label->new_with_mnemonic ("_NoC based MPSoC generator"));	
-
-								
-	my $table=def_table (15, 15, TRUE);	
-			
-			
-	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
-	$scrolled_win->set_policy( "automatic", "automatic" );
-	$scrolled_win->add_with_viewport($table);	
-	
-	
-	
-	
-	
-
-	
-	
-	my $ok=def_image_button("icons/select.png",' Ok ');
-	$ok->signal_connect("clicked"=> sub {
-		$window->destroy;
-		 
-		 my $text = $text_buffer->get_text($text_buffer->get_bounds, TRUE);
-		 $ipgen->ipgen_set_hdr($text);	
-		#print "$text\n";
-		
-	});
-	
-	#$table->attach_defaults ($event_box, $col, $col+1, $row, $row+1);
-	$table->attach_defaults ($ok , 7, 9, 14, 15);
-	
-	$table->attach_defaults ($notebook , 0, 15, 0, 14);
-	#	
-	$window->add($scrolled_win);
-	$window->show_all;	
-	return $window;	  
-		
 
 
 
-}
+
+
+
+
+
+
 
 
 ############
@@ -1900,7 +1875,7 @@ sub get_unused_intfc_ports_list {
 	my ($name_ref,$ref)=get_list_of_all_interfaces($ipgen);
 	my @interfaces_name=@{$name_ref};
 	my @interfaces=@{$ref};
-	$ipgen->ipgen_remove_unused_intfc_port(  );
+	$ipgen->ipgen_remove("unused");
 	foreach my $intfc_name (@interfaces)
 	{
 		#print "$intfc_name\n";
@@ -1944,6 +1919,21 @@ sub check_intfc_port_exits{
 	return $result;
 	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ############
@@ -2003,7 +1993,7 @@ Glib::Timeout->add (100, sub{
 	 
 		my ($state,$timeout)= get_state($soc_state);
 		if($state eq "load_file"){
-			my $file=$ipgen->ipgen_get_file();
+			my $file=$ipgen->ipgen_get("file_name");
 			my $pp= eval { do $file };
 			clone_obj($ipgen,$pp);
 						

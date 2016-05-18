@@ -163,7 +163,7 @@ sub get_module_parameter{
 		  my $spin=gen_spin($min,$max,$step);
 		  $spin->set_value($value);
 		  $table->attach_defaults ($spin, 3, 4, $row, $row+1);
-		  $spin-> signal_connect("changed" => sub{$new_param_value{$p}=$spin->get_value_as_int();});
+		  $spin-> signal_connect("value_changed" => sub{ $new_param_value{$p}=$spin->get_value_as_int(); });
 		 
 		 # $box=def_label_spin_help_box ($param,$info, $value,$min,$max,$step, 2);
 		}
@@ -749,7 +749,7 @@ sub create_tree {
 
   	my ($category) = $model->get ($iter, CATRGORY_COLUMN);
   	my ($module) = $model->get ($iter,MODULE_COLUMN );
-  	my $describ=$ip->get_describtion($category,$module);
+  	my $describ=$ip->ip_get($category,$module,"description");
 	if($describ){
 		#print "$entry describtion is: $describ \n";
 		show_info($info,$describ);
@@ -818,10 +818,11 @@ sub get_all_files_list {
 		my $category 	=$soc->soc_get_category($id);
 		my $inst   		=$soc->soc_get_instance_name($id);
 			
-		my @new=$ip->ip_get_files( $category,$module,$list_name);
+		my @new=$ip->ip_get_list( $category,$module,$list_name);
+		#print "@new\n";
 		foreach my $f(@new){
     			my $n="$project_dir$f";
-    			 if (!(-f "$n") && !(-f "$f" ) ){
+    			 if (!(-f "$n") && !(-f "$f" ) && !(-d "$n") && !(-d "$f" )     ){
     			 	$warnings=(defined $warnings)? "$warnings WARNING: Can not find  \"$f\" which is required for \"$inst\" \n":"WARNING: Can not find  \"$f\"  which is required for \"$inst\"\n ";   
     			 	
     			 }
@@ -877,17 +878,8 @@ sub generate_soc{
     		#copy hdl codes in src_verilog
     		
     		my ($file_ref,$warnings)= get_all_files_list($soc,"hdl_files");
-    		foreach my $f(@{$file_ref}){
-    			my $n="$project_dir$f";
-    			 if (-f "$n") {
-    			 	copy ("$n","$target_dir/src_verilog/lib"); 		
-    			 }elsif(-f "$f" ){
-    			 	copy ("$f","$target_dir/src_verilog/lib"); 		
-    			 	
-    			 }
-    			
+		copy_file_and_folders($file_ref,$project_dir,"$target_dir/src_verilog/lib");
     		
-    		}
 			show_info(\$info,$warnings)     		if(defined $warnings);  
     		
     		
@@ -907,34 +899,23 @@ sub generate_soc{
     		
     		
     		
-    		# Write header files
-			my $file_h=generate_header_file($soc);
-			open(FILE,  ">lib/verilog/$name.h") || die "Can not open: $!";
-			print FILE $file_h;
-			close(FILE) || die "Error closing file: $!";
-			move ("$dir/lib/verilog/$name.h","$target_dir/sw/"); 
+    		# Write system.h and generated file
+			generate_header_file($soc,$project_dir,$target_dir,$dir);
+			 
     		
     		# Write Software files
 			($file_ref,$warnings)= get_all_files_list($soc,"sw_files");
-		
+			copy_file_and_folders($file_ref,$project_dir,"$target_dir/sw");
+			
+		# Write Software gen files
+			($file_ref,$warnings)= get_all_files_list($soc,"gen_sw_files");
 			foreach my $f(@{$file_ref}){
-				my $name= basename($f);
+				#print "$f\n";
 				
-    			my $n="$project_dir$f";
-    			 if (-f "$n") { #copy file
-    			 	copy ("$n","$target_dir/sw"); 		
-    			 }elsif(-f "$f" ){
-    			 	copy ("$f","$target_dir/sw"); 		
-    			 	
-    			 }elsif (-d "$n") {#copy folder
-    			 	dircopy ("$n","$target_dir/sw/$name"); 		
-    			 }elsif(-d "$f" ){
-    			 	dircopy ("$f","$target_dir/sw/$name"); 		
-    			 	
-    			 }
-    			
-    		
-    		}
+
+			}
+
+
 		# Write main.c file if not exist
 		my $n="$target_dir/sw/main.c";
 		if (!(-f "$n")) { 
@@ -1236,11 +1217,7 @@ sub addr_box_gen{
 	my $info;
 	if(is_hex($base_in) && is_hex($end_in)){
 		my $size=(hex ($end_in) >= hex ($base_in))? hex ($end_in) - hex ($base_in) +1 : 0;
-		my $size_text=	$size==0	 ? 'Error': 
-						$size<(1 << 10)? $size:
-						$size<(1 << 20)? join (' ', ($size>>10,"K")) :
-						$size<(1 << 30)? join (' ', ($size>>20,"M")) :
-									   join (' ', ($size>>30,"G")) ;
+		my $size_text=	metric_conversion($size);
 		$label= gen_label_in_center($size_text);
 		$$newbase_ref[$number]=hex($base_in);
 		$$newend_ref[$number]=hex($end_in);

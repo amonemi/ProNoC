@@ -135,7 +135,18 @@ sub def_h_labeled_entry{
 	$box->pack_start( $entry, FALSE, FALSE, 3);
 	return ($box,$entry);
 	
-}		
+}
+
+sub def_h_labeled_entry_help{
+	my ($help,$label_name,$initial)=@_;
+	my $box = def_hbox(TRUE,0);
+	my $label= gen_label_in_left($label_name);	
+	my ($b,$entry) =gen_entry_help($help,$initial);
+	$box->pack_start( $label, FALSE, FALSE, 3);
+	$box->pack_start( $b, FALSE, FALSE, 3);
+	return ($box,$entry);
+	
+}			
 
 ##############
 # ComboBoxEntry
@@ -152,6 +163,25 @@ sub gen_combo_entry{
 	$combo_box_entry->set_active(0);
 	return $combo_box_entry;
 }
+
+###########
+#
+###########
+
+sub def_h_labeled_checkbutton{
+	my ($label_name,$status)=@_;
+	my $box = def_hbox(TRUE,0);
+	my $label= gen_label_in_left($label_name);	
+	my $check= Gtk2::CheckButton->new;
+	#if($status==1) $check->
+	$box->pack_start( $label, FALSE, FALSE, 3);
+	$box->pack_start( $check, FALSE, FALSE, 3);
+	return ($box,$check);
+	
+}	
+
+
+
 
 #############
 #  label
@@ -896,5 +926,63 @@ sub compress_nums{
 	
 }
 
+
+sub copy_file_and_folders{
+	my ($file_ref,$project_dir,$target_dir)=@_;
+
+	foreach my $f(@{$file_ref}){
+		my $name= basename($f);				
+		my $n="$project_dir$f";
+		if (-f "$n") { #copy file
+			copy ("$n","$target_dir"); 		
+		}elsif(-f "$f" ){
+			copy ("$f","$target_dir");     			 	
+		}elsif (-d "$n") {#copy folder
+			dircopy ("$n","$target_dir/$name"); 		
+		}elsif(-d "$f" ){
+			dircopy ("$f","$target_dir/$name"); 		
+    			 	
+		}
+	}
+
+}
+
+sub read_file_cntent {
+	my ($f,$project_dir)=@_;
+	my $n="$project_dir$f";
+	my $str;
+	if (-f "$n") { #copy file
+				
+		$str = do {
+	    		local $/ = undef;
+	    		open my $fh, "<", $n
+			or die "could not open $n: $!";
+	    		<$fh>;
+		};
+
+	}elsif(-f "$f" ){
+		$str = do {
+	    		local $/ = undef;
+	    		open my $fh, "<", $f
+			or die "could not open $f: $!";
+	    		<$fh>;
+		};
+		
+						 	
+	}
+	return $str
+
+}
+
+
+sub metric_conversion{
+	my $size=shift;	
+	my $size_text=	$size==0	 ? 'Error': 
+			$size<(1 << 10)? $size:
+			$size<(1 << 20)? join (' ', ($size>>10,"K")) :
+			$size<(1 << 30)? join (' ', ($size>>20,"M")) :
+					 join (' ', ($size>>30,"G")) ;
+return $size_text;
+}
 
 1

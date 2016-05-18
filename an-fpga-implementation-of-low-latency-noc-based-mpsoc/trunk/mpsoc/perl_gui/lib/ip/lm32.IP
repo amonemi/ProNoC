@@ -340,5 +340,5 @@ for more information vist: http://www.latticesemi.com/en/Products/DesignSoftware
                                            'type' => 'input'
                                          }
                             },
-                 'header' => '#include "lm32_system.h"'
+                 'system_h' => '#include "lm32_system.h"'
                }, 'ip_gen' );

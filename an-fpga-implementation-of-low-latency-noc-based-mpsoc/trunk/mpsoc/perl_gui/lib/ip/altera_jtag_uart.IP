@@ -3,120 +3,120 @@ $altera_jtag_uart_wb = bless( {
                                                  '/mpsoc/src_peripheral/jtag/altera_jtag_uart_wb.v'
                                                ],
                                 'ip_name' => 'altera_jtag_uart',
-                                'modules' => {
-                                               'qsys_jtag_uart_0_scfifo_w' => {},
-                                               'qsys_jtag_uart_0_scfifo_r' => {},
-                                               'qsys_jtag_uart_0_sim_scfifo_r' => {},
-                                               'qsys_jtag_uart_0' => {},
-                                               'altera_jtag_uart_wb' => {},
-                                               'qsys_jtag_uart_0_sim_scfifo_w' => {}
-                                             },
                                 'plugs' => {
-                                             'interrupt_peripheral' => {
-                                                                         'interrupt_peripheral' => {},
-                                                                         '0' => {
-                                                                                  'name' => 'interrupt_peripheral'
-                                                                                },
-                                                                         'value' => 1,
-                                                                         'type' => 'num'
-                                                                       },
-                                             'reset' => {
-                                                          'reset' => {},
-                                                          '0' => {
-                                                                   'name' => 'reset'
-                                                                 },
-                                                          'value' => 1,
-                                                          'type' => 'num'
-                                                        },
                                              'clk' => {
                                                         'clk' => {},
+                                                        'value' => 1,
                                                         '0' => {
                                                                  'name' => 'clk'
                                                                },
-                                                        'value' => 1,
                                                         'type' => 'num'
                                                       },
+                                             'reset' => {
+                                                          'reset' => {},
+                                                          'value' => 1,
+                                                          '0' => {
+                                                                   'name' => 'reset'
+                                                                 },
+                                                          'type' => 'num'
+                                                        },
+                                             'interrupt_peripheral' => {
+                                                                         'interrupt_peripheral' => {},
+                                                                         'value' => 1,
+                                                                         '0' => {
+                                                                                  'name' => 'interrupt_peripheral'
+                                                                                },
+                                                                         'type' => 'num'
+                                                                       },
                                              'wb_slave' => {
+                                                             'value' => 1,
                                                              '0' => {
                                                                       'width' => 5,
                                                                       'name' => 'wb_slave',
                                                                       'addr' => '0x9000_0000	0x90ff_ffff		UART16550 Controller'
                                                                     },
-                                                             'value' => 1,
                                                              'type' => 'num',
                                                              'wb_slave' => {}
                                                            }
                                            },
+                                'modules' => {
+                                               'qsys_jtag_uart_0_scfifo_w' => {},
+                                               'qsys_jtag_uart_0_scfifo_r' => {},
+                                               'altera_jtag_uart_wb' => {},
+                                               'qsys_jtag_uart_0' => {},
+                                               'qsys_jtag_uart_0_sim_scfifo_r' => {},
+                                               'qsys_jtag_uart_0_sim_scfifo_w' => {}
+                                             },
                                 'ports' => {
                                              'wb_irq' => {
-                                                           'intfc_port' => 'int_o',
                                                            'intfc_name' => 'plug:interrupt_peripheral[0]',
+                                                           'intfc_port' => 'int_o',
                                                            'range' => '',
                                                            'type' => 'output'
                                                          },
-                                             'stb_i' => {
-                                                          'intfc_port' => 'stb_i',
+                                             'cyc_i' => {
                                                           'intfc_name' => 'plug:wb_slave[0]',
+                                                          'intfc_port' => 'cyc_i',
                                                           'range' => '',
                                                           'type' => 'input'
                                                         },
-                                             'cyc_i' => {
-                                                          'intfc_port' => 'cyc_i',
+                                             'stb_i' => {
                                                           'intfc_name' => 'plug:wb_slave[0]',
+                                                          'intfc_port' => 'stb_i',
                                                           'range' => '',
                                                           'type' => 'input'
                                                         },
                                              'dat_i' => {
-                                                          'intfc_port' => 'dat_i',
                                                           'intfc_name' => 'plug:wb_slave[0]',
+                                                          'intfc_port' => 'dat_i',
                                                           'range' => ' 31: 0',
                                                           'type' => 'input'
                                                         },
+                                             'ack_o' => {
+                                                          'intfc_name' => 'plug:wb_slave[0]',
+                                                          'intfc_port' => 'ack_o',
+                                                          'range' => '',
+                                                          'type' => 'output'
+                                                        },
                                              'rst' => {
-                                                        'intfc_port' => 'reset_i',
                                                         'intfc_name' => 'plug:reset[0]',
+                                                        'intfc_port' => 'reset_i',
                                                         'range' => '',
                                                         'type' => 'input'
                                                       },
-                                             'ack_o' => {
-                                                          'intfc_port' => 'ack_o',
-                                                          'intfc_name' => 'plug:wb_slave[0]',
-                                                          'range' => '',
-                                                          'type' => 'output'
-                                                        },
                                              'readyfordata' => {
-                                                                 'intfc_port' => 'IO',
                                                                  'intfc_name' => 'IO',
+                                                                 'intfc_port' => 'IO',
                                                                  'range' => '',
                                                                  'type' => 'output'
                                                                },
-                                             'adr_i' => {
-                                                          'intfc_port' => 'adr_i',
-                                                          'intfc_name' => 'plug:wb_slave[0]',
-                                                          'range' => '',
-                                                          'type' => 'input'
-                                                        },
                                              'dat_o' => {
-                                                          'intfc_port' => 'dat_o',
                                                           'intfc_name' => 'plug:wb_slave[0]',
+                                                          'intfc_port' => 'dat_o',
                                                           'range' => ' 31: 0',
                                                           'type' => 'output'
                                                         },
+                                             'adr_i' => {
+                                                          'intfc_name' => 'plug:wb_slave[0]',
+                                                          'intfc_port' => 'adr_i',
+                                                          'range' => '',
+                                                          'type' => 'input'
+                                                        },
                                              'clk' => {
-                                                        'intfc_port' => 'clk_i',
                                                         'intfc_name' => 'plug:clk[0]',
+                                                        'intfc_port' => 'clk_i',
                                                         'range' => '',
                                                         'type' => 'input'
                                                       },
                                              'we_i' => {
-                                                         'intfc_port' => 'we_i',
                                                          'intfc_name' => 'plug:wb_slave[0]',
+                                                         'intfc_port' => 'we_i',
                                                          'range' => '',
                                                          'type' => 'input'
                                                        },
                                              'dataavailable' => {
-                                                                  'intfc_port' => 'IO',
                                                                   'intfc_name' => 'IO',
+                                                                  'intfc_port' => 'IO',
                                                                   'range' => '',
                                                                   'type' => 'output'
                                                                 }
@@ -134,11 +134,11 @@ $altera_jtag_uart_wb = bless( {
                                                                     ]
                                             },
                                 'category' => 'Jtag',
-                                'header' => ' #define $IP_DATA_REG					(*((volatile unsigned int *) ($BASE)))
- #define $IP_CONTROL_REG				(*((volatile unsigned int *) ($BASE+4)))
-#define $IP_CONTROL_WSPACE_MSK	0xFFFF0000
-#define $IP_DATA_RVALID_MSK			0x00008000
-#define $IP_DATA_DATA_MSK			0x000000FF
+                                'system_h' => '#define ${IP}_DATA_REG					(*((volatile unsigned int *) ($BASE)))
+#define ${IP}_CONTROL_REG				(*((volatile unsigned int *) ($BASE+4)))
+#define ${IP}_CONTROL_WSPACE_MSK	0xFFFF0000
+#define ${IP}_DATA_RVALID_MSK			0x00008000
+#define ${IP}_DATA_DATA_MSK			0x000000FF
 
 //////////////////////////////*basic function for jtag_uart*////////////////////////////////////////
 void jtag_putchar(char ch);
@@ -147,16 +147,16 @@ void outbyte(char c){jtag_putchar(c);} //called in xil_printf();
 char inbyte(){return jtag_getchar();}
 
 void jtag_putchar(char ch){ //print one char from jtag_uart
-	while(($IP_CONTROL_REG&$IP_CONTROL_WSPACE_MSK)==0);
-	$IP_DATA_REG=ch;
+	while((${IP}_CONTROL_REG&${IP}_CONTROL_WSPACE_MSK)==0);
+	${IP}_DATA_REG=ch;
 }
 
 char jtag_getchar(void){ //get one char from jtag_uart
 	unsigned int data;
-	data=$IP_DATA_REG;
-	while(!(data & $IP_DATA_RVALID_MSK)) //wait for terminal input
-		data=$IP_DATA_REG;
-	return (data&$IP_DATA_DATA_MSK);
+	data=${IP}_DATA_REG;
+	while(!(data & ${IP}_DATA_RVALID_MSK)) //wait for terminal input
+		data=${IP}_DATA_REG;
+	return (data&${IP}_DATA_DATA_MSK);
 }	
 
 int jtag_scanstr(char* buf){ //scan string until <ENTER> to buf, return str length 
