@@ -20,16 +20,19 @@ sub lib_new {
     $self = {};
   	my $dir = Cwd::getcwd();
 	$dir =~ s/ /\\ /g;
-	my @files = glob "$dir/lib/ip/*.IP";
+	my @files = glob "$dir/lib/ip/*/*.IP";
 	for my $p (@files){
 		
 		# Read
 		my  $ipgen;
 		$ipgen = eval { do $p };
 		# Might need "no strict;" before and "use strict;" after "do"
-		die "Error reading: $@" if $@;
+		 if ($@ || !defined $ipgen){		
+			print  "\n**Warning: skipping  $p file due to error in reading: $@\n";
+		       next; 
+		} 
+			add_ip($self,$ipgen);
 		
-		add_ip($self,$ipgen);
 	}
   
 
@@ -65,18 +68,6 @@ sub ip_remove_parameter {
 	return 1;
 }
 
-
-sub ip_get_module_parameters{
-	my ($self,$category,$module)=@_;
-	my @parameters;
-	if ( exists ($self->{categories}{$category}{names}{$module}) ){
-		foreach my $p (keys %{$self->{categories}{$category}{names}{$module}{parameters}}){
-			push(@parameters,$p);
-			
-		}#for
-	}#if	
-	return @parameters;
-}	
 
 
 sub ip_get_parameter {

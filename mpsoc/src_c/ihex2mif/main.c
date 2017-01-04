@@ -1,3 +1,5 @@
+#define MAX_MEMORY_SIZE		0xFFFFF   //max memory size in bytes mustbe power of 2
+
 #include "ihex.c"
 #include <unistd.h>
 #include <stdlib.h>
@@ -5,7 +7,7 @@
 #define DEFAULT_OUT_FILE_NAME		"out.mif"
 #define DEAFULT_END_SIZE		"1FFF"
 
-int	memory[65536];		/* the memory is global */
+int	memory[MAX_MEMORY_SIZE+1];		/* the memory is global */
 unsigned int 	end_addr_int;
 FILE * in, * out;
 char *file_name, *end_addr, *out_file_name ;

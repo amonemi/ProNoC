@@ -6,13 +6,14 @@ module crossbar #(
 	parameter Fpay 	= 32,
 	parameter MUX_TYPE="BINARY",		//"ONE_HOT" or "BINARY"
 	parameter ADD_PIPREG_AFTER_CROSSBAR=0,
-	parameter ADD_PIPREG_BEFORE_CROSSBAR=0
+	parameter SSA_EN="YES" // "YES" , "NO"
 )
 (
 	granted_dest_port_all,
 	flit_in_all,
 	flit_out_all,
 	flit_out_we_all,
+	ssa_flit_wr_all,
 	clk,
 	reset
 
@@ -27,7 +28,7 @@ module crossbar #(
       end	
    endfunction // log2 
 	
-	localparam 	PV		=	V		*	P,
+	localparam 	   PV		=	V		*	P,
 					VV		=	V		*	V,
 					PP		=	P		*	P,					
 					PVV	=	PV		*  V,	
@@ -46,43 +47,73 @@ module crossbar #(
 	input	[PFw-1		:	0]	flit_in_all;
 	output reg [PFw-1	:	0]	flit_out_all;
 	output reg [P-1		:	0]	flit_out_we_all;
+	input	[P-1		:	0]	ssa_flit_wr_all;
 	input reset,clk;
 	
-	reg  [PP_1-1        :   0]  granted_dest_port_all_internal;
-    reg  [PFw-1         :   0]  flit_in_all_internal;
+	
+	
 	wire [PFw-1         :   0]  flit_out_all_internal;
-    wire [P-1           :   0]  flit_out_we_all_internal;
+	wire [P-1           :   0]  flit_out_we_all_internal,flit_we_mux_out;
 	wire [P_1-1			:	0]	granted_dest_port [P-1		:	0];
 	wire [P_1Fw-1		:	0]	mux_in				[P-1		:	0];
-	wire [P_1-1			:	0]	mux_sel				[P-1		:	0];
+	wire [P_1-1			:	0]	mux_sel_pre			[P-1		:	0];
+	wire [P_1-1         :   0]  mux_sel             [P-1        :   0];
 	wire [P_1w-1		:	0]	mux_sel_bin			[P-1		:	0];
 	wire [PP-1			:	0]	flit_out_we_gen;
 	
 	genvar i,j;
 	generate
-	for(i=0;i<P;i=i+1)begin : port_loop
-		assign granted_dest_port[i] = granted_dest_port_all_internal[(i+1)*P_1-1	:	i*P_1];
+    for(i=0;i<P;i=i+1)begin : port_loop
+		assign granted_dest_port[i] = granted_dest_port_all[(i+1)*P_1-1	:	i*P_1];
 		for(j=0;j<P;j=j+1)begin : port_loop2  //remove sender port flit from flit list
 			if(i>j)	begin	:if1
-				assign mux_in[i][(j+1)*Fw-1	:	j*Fw]= 	flit_in_all_internal[(j+1)*Fw-1	:	j*Fw];
-				assign mux_sel[i][j] =	granted_dest_port[j][i-1];
+				assign mux_in[i][(j+1)*Fw-1	:	j*Fw]= 	flit_in_all[(j+1)*Fw-1	:	j*Fw];
+				assign mux_sel_pre[i][j] =	granted_dest_port[j][i-1];
 			end
 			else if(i<j) begin :if2
-				assign mux_in[i][j*Fw-1	:	(j-1)*Fw]= 	flit_in_all_internal[(j+1)*Fw-1	:	j*Fw];
-				assign mux_sel[i][j-1] =	granted_dest_port[j][i];
+				assign mux_in[i][j*Fw-1	:	(j-1)*Fw]= 	flit_in_all[(j+1)*Fw-1	:	j*Fw];
+				assign mux_sel_pre[i][j-1] =	granted_dest_port[j][i];
 			end
-		end//fior j
+        end//for j
+		
+		
+		
+		
+		if (SSA_EN =="YES")begin :predict //If no output is granted replace the output port with SS port
+                add_ss_port #(
+                    .SW_LOC(i)
+                )
+                ss_port
+                (
+                    .destport_in (mux_sel_pre[i]),
+                    .destport_out(mux_sel [i])
+                );
+        
+        
+        end else begin :nopredict
+               assign mux_sel[i]= mux_sel_pre[i];
+          
+        end
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		
 		if	(MUX_TYPE	==	"ONE_HOT") begin : one_hot_gen
 			one_hot_mux #(
-				.IN_WIDTH			(P_1Fw),
-				.SEL_WIDTH			(P_1)
+				.IN_WIDTH (P_1Fw),
+                .SEL_WIDTH (P_1)
 			)
 			cross_mux
 			(
-				.mux_in				(mux_in [i]),
-				.mux_out				(flit_out_all_internal[(i+1)*Fw-1	:	i*Fw]),
-				.sel					(mux_sel[i])
+                .mux_in (mux_in [i]),
+				.mux_out (flit_out_all_internal[(i+1)*Fw-1	:	i*Fw]),
+				.sel (mux_sel[i])
 	
 			);
 		end else begin : binary
@@ -106,22 +137,27 @@ module crossbar #(
 			cross_mux
 			(
 				.mux_in				(mux_in [i]),
-				.mux_out				(flit_out_all_internal[(i+1)*Fw-1	:	i*Fw]),
-				.sel					(mux_sel_bin[i])
+				.mux_out			(flit_out_all_internal[(i+1)*Fw-1	:	i*Fw]),
+				.sel				(mux_sel_bin[i])
 		
 			);
 		end//binary
 	
 	
 	
-	add_sw_loc_one_hot #(
-		.P(P),
-		.SW_LOC(i)
-	)
-	add_sw_loc(
-		.destport_in(granted_dest_port_all_internal[(i+1)*P_1-1    :   i*P_1]),
-		.destport_out(flit_out_we_gen[(i+1)*P-1   :   i*P])
-	);
+    	add_sw_loc_one_hot #(
+    		.P(P),
+    		.SW_LOC(i)
+    	)
+    	add_sw_loc
+    	(
+    		.destport_in(granted_dest_port_all[(i+1)*P_1-1    :   i*P_1]),
+    		.destport_out(flit_out_we_gen [(i+1)*P-1   :   i*P])
+    	);
+    	
+    	
+	
+	
 	
 	
 	end//for i	
@@ -133,10 +169,10 @@ module crossbar #(
 	)wide_or
 	(
 		.or_in	(flit_out_we_gen),
-		.or_out	(flit_out_we_all_internal)
+		.or_out	(flit_we_mux_out)
 	);
 	
-	
+	assign	flit_out_we_all_internal = flit_we_mux_out | ssa_flit_wr_all;
     generate 
         if(	ADD_PIPREG_AFTER_CROSSBAR == 1)begin :pip_reg1
     	    always @(posedge clk or posedge reset)begin 
@@ -154,27 +190,8 @@ module crossbar #(
                flit_out_all     =   flit_out_all_internal;
                flit_out_we_all  =   flit_out_we_all_internal;
            end
-    	end
-    	
-    	
-    	
-    	if(ADD_PIPREG_BEFORE_CROSSBAR == 1)begin :pip_reg2
-            always @(posedge clk or posedge reset)begin 
-               if(reset)begin
-                    granted_dest_port_all_internal  <={PP_1{1'b0}};
-                    flit_in_all_internal            <={PFw{1'b0}};                    
-               end else begin 
-                    granted_dest_port_all_internal  <=granted_dest_port_all;
-                    flit_in_all_internal            <=flit_in_all;                  
-               end
-             end  
-        end else begin :no_pip_reg2
-            always @(*)begin
-                    granted_dest_port_all_internal  =granted_dest_port_all;
-                    flit_in_all_internal            =flit_in_all;                  
-            end  
-        end   
-        	
+    	end   	
+    	        	
 	endgenerate
 	
 	

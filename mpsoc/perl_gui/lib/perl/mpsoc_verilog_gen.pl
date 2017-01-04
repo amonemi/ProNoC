@@ -13,7 +13,7 @@ use rvp;
 
 sub mpsoc_generate_verilog{
 	my $mpsoc=shift;
-	my $mpsoc_name=$mpsoc->mpsoc_get_mpsoc_name();
+	my $mpsoc_name=$mpsoc->object_get_attribute('mpsoc_name');
 	my $io_v="\tclk,\n\treset";
 	my $io_def_v="
 //IO
@@ -24,7 +24,7 @@ sub mpsoc_generate_verilog{
 	my $socs_param= gen_socs_param($mpsoc);
 	
 	#generate noc_parameter
-	my $noc_param=gen_noc_param_v($mpsoc);
+	my ($noc_param,$pass_param)=gen_noc_param_v($mpsoc);
 	
 	#generate the noc
 	my $noc_v=gen_noc_v();
@@ -70,7 +70,7 @@ sub get_functions{
         
 
 	localparam	Fw      =   2+V+Fpay,
-				NC      =   NX*NY,  //flit width; 
+				NC     =	(TOPOLOGY=="RING")? NX    :   NX*NY,	//number of cores
 				Xw      =   log2(NX),
 				Yw      =   log2(NY) , 
 				Cw      =   (C>1)? log2(C): 1,
@@ -90,8 +90,8 @@ sub  gen_socs_param{
 	my $mpsoc=shift;
 	my $socs_param="
 //SOC parameters\n";
-	my $nx= $mpsoc->mpsoc_get_param("NX");
-    my $ny= $mpsoc->mpsoc_get_param("NY");
+	my $nx= $mpsoc->object_get_attribute('noc_param',"NX");
+    my $ny= $mpsoc->object_get_attribute('noc_param',"NY");
     my $processors_en=0;
     for (my $y=0;$y<$ny;$y++){
 		for (my $x=0; $x<$nx;$x++){
@@ -132,14 +132,16 @@ sub  gen_soc_param {
 sub gen_noc_param_v{
 	my $mpsoc=shift;
 	my $param_v="\n\n//NoC parameters\n";
-	my @params=$mpsoc->mpsoc_get_param_order();
+	my $pass_param;
+	my @params=$mpsoc->object_get_attribute_order('noc_param');
 	foreach my $p (@params){
-		my $val=$mpsoc->mpsoc_get_param($p);
+		my $val=$mpsoc->object_get_attribute('noc_param',$p);
 		add_text_to_string (\$param_v,"\tlocalparam $p=$val;\n");
-		#print "$p\n";
+		add_text_to_string (\$pass_param,".$p($p),\n");
+		#print "$p:$val\n";
 		
 	}
-	my $class=$mpsoc->mpsoc_get_param("C");
+	my $class=$mpsoc->object_get_attribute('noc_param',"C");
 	my $str;
 	if( $class > 1){
 		$str="CLASS_SETTING={";
@@ -150,14 +152,18 @@ sub gen_noc_param_v{
 		$str="CLASS_SETTING={V{1\'b1}};\n";
 	}	
 	add_text_to_string (\$param_v,"\tlocalparam $str");
-	my $v=$mpsoc->mpsoc_get_param("V")-1;
-	my $escape=$mpsoc->mpsoc_get_param("ESCAP_VC_MASK");
-	add_text_to_string (\$param_v,"\tlocalparam [$v	:0] ESCAP_VC_MASK=1;\n") if (! defined $escape);
+	add_text_to_string (\$pass_param,".CLASS_SETTING(CLASS_SETTING),\n");
+	my $v=$mpsoc->object_get_attribute('noc_param',"V")-1;
+	my $escape=$mpsoc->object_get_attribute('noc_param',"ESCAP_VC_MASK");
+	if (! defined $escape){
+		add_text_to_string (\$param_v,"\tlocalparam [$v	:0] ESCAP_VC_MASK=1;\n");
+		add_text_to_string (\$pass_param,".ESCAP_VC_MASK(ESCAP_VC_MASK),\n"); 
+	}
 	add_text_to_string (\$param_v," \tlocalparam  CVw=(C==0)? V : C * V;\n");
+	add_text_to_string (\$pass_param,".CVw(CVw)\n");
 	
 	
-	
-	return $param_v;	
+	return ($param_v,$pass_param);	
 	
 	
 	
@@ -334,8 +340,8 @@ sub gen_socs_v{
    
  my $socs_v;  
                 
-   my $nx= $mpsoc->mpsoc_get_param("NX");
-   my $ny= $mpsoc->mpsoc_get_param("NY");
+   my $nx= $mpsoc->object_get_attribute('noc_param',"NX");
+   my $ny= $mpsoc->object_get_attribute('noc_param',"NY");
    my $processors_en=0;
    for (my $y=0;$y<$ny;$y++){
 		for (my $x=0; $x<$nx;$x++){
@@ -383,8 +389,8 @@ sub   gen_soc_v{
 	my ($mpsoc,$soc_name,$tile_num,$x,$y,$soc_num,$io_v_ref,$io_def_v)=@_;
 	my $soc_v;
 	my $processor_en=0;
-	my $xw= log2($mpsoc->mpsoc_get_param("NX"));
-	my $yw= log2($mpsoc->mpsoc_get_param("NY"));
+	my $xw= log2($mpsoc->object_get_attribute('noc_param',"NX"));
+	my $yw= log2($mpsoc->object_get_attribute('noc_param',"NY"));
 	$soc_v="\n\n // Tile:$tile_num (x=$x,y=$y)\n   \t$soc_name #(\n";
 	
 	# core id
@@ -416,6 +422,18 @@ sub   gen_soc_v{
 	my @intfcs=$top->top_get_intfc_list();
 	
 	my $i=0;
+
+	my $dir = Cwd::getcwd();
+	my $mpsoc_name=$mpsoc->object_get_attribute('mpsoc_name');
+	my $project_dir	  = abs_path("$dir/../../");
+	my $target_dir  = "$project_dir/mpsoc_work/MPSOC/$mpsoc_name";
+	my $soc_file="$target_dir/src_verilog/tiles/$soc_name.v";
+			
+	my $vdb =read_file($soc_file);
+		
+	my %soc_localparam = $vdb->get_modules_parameters($soc_name);
+	
+
 	foreach my $intfc (@intfcs){
 		
 		# ni intfc	
@@ -477,6 +495,19 @@ sub   gen_soc_v{
 			foreach my $p (@ports){
 			my($inst,$range,$type,$intfc_name,$intfc_port)= $top->top_get_port($p);
 			my $io_port="${soc_name}_${soc_num}_${p}";
+			#resolve range parameter
+			if (defined $range ){
+				my @a= split (/\b/,$range);			
+				foreach my $l (@a){
+					#if defined in parameter list ignore it
+					next  if(defined $params{$l});
+					($range=$range)=~ s/\b$l\b/$soc_localparam{$l}/g      if(defined $soc_localparam{$l});
+					#else s
+					
+					#print "$l\n";
+				}
+
+			}
 			#io name 
 			add_text_to_string($io_v_ref,",\n\t$io_port");
 			#io definition
@@ -517,11 +548,110 @@ sub   gen_soc_v{
 sub log2{
 	my $num=shift;
 	my $log=0;    
-	while( (1<<$log)  < $num) {    
+	while( (1<< $log)  < $num) {    
 				$log++;    
 	}
 	return  $log;  
 }
+
+
+
+sub gen_emulate_top_v{
+		my $emulate=shift;	
+		my ($localparam, $pass_param)=gen_noc_param_v( $emulate);
+		my $top_v="
+		
+module  emulator_top (
+	output [0:0]LEDR,
+	output [0:0]LEDG,
+	input  [0:0]KEY,
+	input  CLOCK_50
+); 
+
+	
+		
+		
+	$localparam
+
+
+	wire reset_in,jtag_reset,reset,reset_sync;
+
+	assign	reset_in	=	~KEY[0];
+	assign  LEDG[0]		=	reset;
+	assign  reset		=	(jtag_reset | reset_in);
+	wire done;
+	reg[31:0]time_cnt;
+
+	// a reset source which can be controled using jtag
+	jtag_source_probe #(
+		.VJTAG_INDEX(127),
+	 	.Dw(1)	//source/probe width in bits
+ 	)the_reset(
+		.probe(done),
+		.source(jtag_reset)
+	);
+
+	altera_reset_synchronizer rst_sync
+	(
+		.reset_in(reset), 
+		.clk(CLOCK_50),
+		.reset_out(reset_sync)
+	);
+	
+	
+	
+	noc_emulator #(
+	 	$pass_param
+    
+		    // simulation
+		   // parameter MAX_PCK_NUM=2560000,
+		   // parameter MAX_SIM_CLKs=1000000,
+		  //  parameter MAX_PCK_SIZ=10,
+		 //   parameter TIMSTMP_FIFO_NUM=16
+	)
+	emulate_top
+	(
+		.reset(reset_sync),
+		.clk(CLOCK_50),
+		.done(done)
+	);
+	
+	
+	 jtag_source_probe #(
+		.VJTAG_INDEX(126),
+	 	.Dw(32)	//source/probe width in bits
+		
+    
+    	) 
+	src_pb
+    	(
+		.probe(time_cnt),
+		.source()
+     	);
+	
+	
+	always @(posedge CLOCK_50 or posedge reset)begin
+		if(reset) begin
+			time_cnt<=0;
+		end else begin
+			 if(!done) time_cnt<=time_cnt+1;			
+		end	
+	end
+	
+
+ assign LEDR[0]=done;
+ 
+
+endmodule
+			
+		
+		";
+		return $top_v;
+		
+	
+	   
+	
+}	
 
 
 1

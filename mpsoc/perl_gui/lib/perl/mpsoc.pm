@@ -21,7 +21,8 @@ sub mpsoc_new {
     $self->{file_name}        = (); # information on each file
     $self->{noc_param}=   {};
     $self->{noc_indept_param}={};
-    $self->{parameters_order}=[];
+   # $self->{parameters_order}=[];
+  
     $self->{setting}={};
    	$self->{socs}={};
    	mpsoc_initial_setting($self);
@@ -39,60 +40,6 @@ sub mpsoc_initial_setting{
 	$self->{setting}{show_adv_setting}=0;
 	$self->{setting}{show_tile_setting}=1;	
 	$self->{setting}{soc_path}="lib/soc";
-}
-
-sub mpsoc_set_setting{
-	my ($self,$name,$value)=@_;
-	$self->{setting}{$name}=$value;
-	
-}
-
-sub mpsoc_get_setting{
-	my ($self,$name)=@_;
-	return $self->{setting}{$name};
-	
-}
-
-
-sub mpsoc_set_mpsoc_name{
-	my ($self,$name)=@_;
-	if(defined $name){$self->{mpsoc_name}=$name;}	
-}	
-
-sub mpsoc_get_mpsoc_name{
-	my ($self)=@_;
-	my $name;
-	if(exists  $self->{mpsoc_name}){ $name=$self->{mpsoc_name};}	
-	return $name;
-}	
-
-sub mpsoc_get_indept_params{
-	my $self=shift;
-	return  $self->{noc_indept_param};
-}
-
-
-sub mpsoc_add_param{
-	my ($self,$param,$value)=@_;
-	$self->{noc_param}{$param}=$value;
-
-}
-
-sub mpsoc_get_param{
-	my ($self,$param)=@_;
-	return $self->{noc_param}{$param};
-
-}
-sub mpsoc_add_param_order{
-	my ($self,@param)=@_;
-	foreach my $p (@param){
-		push (@{$self->{parameters_order}},$p);
-
-	}
-}
-sub mpsoc_get_param_order{
-	my $self=shift;
-	return @{$self->{parameters_order}};
 }
 
 
@@ -258,6 +205,40 @@ sub mpsoc_get_tile_param_setting{
 	}
 	return $setting;
 }	
+
+
+
+sub object_add_attribute{
+	my ($self,$attribute1,$attribute2,$value)=@_;
+	if(!defined $attribute2){$self->{$attribute1}=$value;}
+	else {$self->{$attribute1}{$attribute2}=$value;}
+
+}
+
+
+
+sub object_get_attribute{
+	my ($self,$attribute1,$attribute2)=@_;
+	if(!defined $attribute2) {return $self->{$attribute1};}
+	return $self->{$attribute1}{$attribute2};
+
+
+}
+
+
+sub object_add_attribute_order{
+	my ($self,$attribute,@param)=@_;
+	$self->{'parameters_order'}{$attribute}=[] if (!defined $self->{parameters_order}{$attribute});
+	foreach my $p (@param){
+		push (@{$self->{parameters_order}{$attribute}},$p);
+
+	}
+}
+sub object_get_attribute_order{
+	my ($self,$attribute)=@_;
+	return @{$self->{parameters_order}{$attribute}};
+}
+
 
 
 1

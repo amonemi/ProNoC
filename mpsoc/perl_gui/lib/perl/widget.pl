@@ -3,8 +3,10 @@ use Glib qw/TRUE FALSE/;
 use strict;
 use warnings;
 
-use Gtk2::Pango;
 
+
+use Gtk2::Pango;
+#use Tk::Animation;
 
 ##############
 # combo box
@@ -14,7 +16,7 @@ sub gen_combo{
 	my $combo = Gtk2::ComboBox->new_text;
 	
 	combo_set_names($combo,$combo_list);
-	$combo->set_active($combo_active_pos);
+	$combo->set_active($combo_active_pos) if(defined $combo_active_pos);
 	
 	#my $font = Gtk2::Pango::FontDescription->from_string('Tahoma 5');
 	#$combo->modify_font($font);
@@ -153,16 +155,29 @@ sub def_h_labeled_entry_help{
 ##############
 
 sub gen_combo_entry{
-	my $list_ref=shift;
+	my ($list_ref,$pos)=@_;
 	my @list=@{$list_ref};	
 
 	my $combo_box_entry = Gtk2::ComboBoxEntry->new_text;
 	foreach my $p (@list){
 		$combo_box_entry->append_text($p);
 	}
-	$combo_box_entry->set_active(0);
+	$pos=0 if(! defined $pos ); 
+	$combo_box_entry->set_active($pos);
 	return $combo_box_entry;
 }
+
+
+sub def_h_labeled_combo_entry_help{
+	my ($help,$label_name,$list_ref,$initial)=@_;
+	my $box = def_hbox(TRUE,0);
+	my $label= gen_label_in_left($list_ref);	
+	my ($b,$entry) =gen_combo_entry($help,$initial);
+	$box->pack_start( $label, FALSE, FALSE, 3);
+	$box->pack_start( $b, FALSE, FALSE, 3);
+	return ($box,$entry);
+	
+}		
 
 ###########
 #
@@ -273,7 +288,7 @@ sub button_box{
 
 sub def_image{
 	my $image_file=shift;
-	my $font_size=get_deafualt_font_size();
+	my $font_size=get_defualt_font_size();
 	my $size=($font_size==10)? 25:
 		     ($font_size==9 )? 22:
 			 ($font_size==8 )? 18:
@@ -289,9 +304,10 @@ sub def_image{
 
 
 sub def_image_button{
-	my ($image_file, $label_text)=@_;
+	my ($image_file, $label_text, $homogeneous)=@_;
 	# create box for image and label 
-	my $box = def_hbox(FALSE,0);
+	$homogeneous = FALSE if(!defined $homogeneous);
+	my $box = def_hbox($homogeneous,0);
 	my $image = def_image($image_file);
 		
 	
@@ -358,7 +374,7 @@ sub def_colored_button{
 	my ($label_text,$color_num)=@_;
 	# create box for image and label 
 	my $box = def_hbox(FALSE,0);
-	my $font_size=get_deafualt_font_size();
+	my $font_size=get_defualt_font_size();
 	my $size=($font_size==10)? 25:
 		     ($font_size==9 )? 22:
 			 ($font_size==8 )? 18:
@@ -385,8 +401,53 @@ sub def_colored_button{
 
 
 
+sub show_gif{
+
+	my $gif = shift;
+	#my $mw=def_popwin_size(400,200,'hey');
+	my $vbox = Gtk2::HBox->new (TRUE, 8);
+    my $filename;
+      eval {
+##          $filename = demo_find_file ("floppybuddy.gif");
+          $filename = main::demo_find_file ($gif);
+      };
+     
+      
+      my $image = Gtk2::Image->new_from_file ($gif);
+    
+     $vbox->set_border_width (4);
+     my   $align = Gtk2::Alignment->new (0.5, 0.5, 0, 0);
+     
+	my $frame = Gtk2::Frame->new;
+	$frame->set_shadow_type ('in');
+
+     
+      
+ 
+      # Animation
+     $frame->add ($image);
+      $align->add ($frame);
+
+     
+     
+	
+     $vbox->pack_start ($align, FALSE, FALSE, 0);
+  
+      # $mw->add ($vbox);
+      
+
+      # Progressive
+      
+      
+      
+  
+	#$mw->show_all();
+  return $vbox;
 
 
+
+
+}
 
 ############
 #	message_dialog
@@ -454,6 +515,9 @@ sub def_popwin_size {
 }	
 
 
+
+
+
 sub def_scrolled_window_box{
 			
 	my $window =  def_popwin_size(@_);
@@ -480,69 +544,27 @@ sub max_win_size{
 }
 
 
-sub get_deafualt_font_size{
+sub get_defualt_font_size{
 	my($width,$hight)=max_win_size();
 	#print "($width,$hight)\n";
 	my $font_size=($width>=1600)? 10:
 			      ($width>=1400)? 9:
 				  ($width>=1200)? 8:
 				  ($width>=1000)? 7:6;
+	#print "$font_size\n";	
 	return $font_size;
 }
 
 
-sub set_deafualt_font_size{
-	my $font_size=get_deafualt_font_size();
-	if($font_size==10){	    
+sub set_defualt_font_size{
+	my $font_size=get_defualt_font_size();
+	   
 		Gtk2::Rc->parse_string(<<__);
 			style "normal" { 
-				font_name ="Verdana 10" 
+				font_name ="Verdana $font_size" 
 			}
 			widget "*" style "normal"
 __
-
-	}
-	elsif ($font_size==9){	    
-		$font_size=9;
-		Gtk2::Rc->parse_string(<<__);
-		style "normal" { 
-				font_name ="Verdana 9" 
-			}
-			widget "*" style "normal"
-__
-
-	}
-	elsif ($font_size==8){	    
-		$font_size=8;
-		Gtk2::Rc->parse_string(<<__);
-		style "normal" { 
-				font_name ="Verdana 8" 
-			}
-			widget "*" style "normal"
-__
-
-	}
-	elsif ($font_size==7){	    
-	    $font_size=7;
-		Gtk2::Rc->parse_string(<<__);
-		style "normal" { 
-				font_name ="Verdana 7" 
-			}
-			widget "*" style "normal"
-__
-
-	}
-	else{
-	   	Gtk2::Rc->parse_string(<<__);
-		style "normal" { 
-				font_name ="Verdana 6" 
-			}
-			widget "*" style "normal"
-__
-
-	}
-	
-
 
 }
 
@@ -628,23 +650,23 @@ sub def_state{
 
 }	
 
-sub set_state{
-	my ($state,$initial,$timeout)=@_;
-	my ($entry,$time_out)=@{$state};
-	$entry->set_text($initial);
-	@{$state}[1]=$timeout;
-	
+
+
+
+
+sub set_gui_status{
+	my ($object,$status,$timeout)=@_;
+	$object->object_add_attribute('gui_status','status',$status);
+	$object->object_add_attribute('gui_status','timeout',$timeout);
 }	
 
 
-sub get_state{
-	my ($state)=@_;
-	my ($entry,$time_out)=@{$state};
-	my $st;
-	$st=$entry->get_text();
-	return ($st,$time_out);	
+sub get_gui_status{
+	my ($object)=@_;
+	my $status= $object->object_get_attribute('gui_status','status');
+	my $timeout=$object->object_get_attribute('gui_status','timeout');
+	return ($status,$timeout);	
 }	
-
 
 
 
@@ -655,6 +677,15 @@ sub show_info{
 	my ($textview_ref,$info)=@_;
 	my $buffer = $$textview_ref->get_buffer();
   	$buffer->set_text($info);
+}
+
+sub add_info{
+	my ($textview_ref,$info)=@_;
+	my $buffer = $$textview_ref->get_buffer();
+	my $textiter = $buffer->get_end_iter();
+	#Insert some text into the buffer
+	$buffer->insert($textiter,$info);
+	
 }
 
 
@@ -685,7 +716,22 @@ sub read_file{
 	return $vdb;
 }
 
+sub add_color_to_gd{
+	foreach (my $i=0;$i<32;$i++ ) {
+		my ($red,$green,$blue)=get_color($i);
+		
+	    
+		add_colour("my_color$i"=>[$red>>8,$green>>8,$blue>>8]);
+	
+	
+	}
+	
+	
+	
+}
 
+
+	
 sub get_color {
 	my $num=shift;
 	
@@ -693,7 +739,7 @@ sub get_color {
 	0x6495ED,#Cornflower Blue
 	0xFAEBD7,#Antiquewhite
 	0xC71585,#Violet Red
-	0xC0C0C0, #silver
+	0xC0C0C0,#silver
 	0xADD8E6,#Lightblue	
 	0x6A5ACD,#Slate Blue
 	0x00CED1,#Dark Turquoise
@@ -720,7 +766,8 @@ sub get_color {
 	0x800000,#marron
 	0x800080,#Purple
 	0x4B0082,#Indigo
-	0xFFFFFF #white			
+	0xFFFFFF,#white	
+	0x000000 #Black		
 		);
 	
 	my $color= 	($num< scalar (@colors))? $colors[$num]: 0xFFFFFF;	
@@ -796,6 +843,301 @@ sub clone_obj{
 		}#if	
 	}#p
 }#sub	
+
+
+############
+#	get file folder list
+###########
+
+sub get_directory_name {
+	my ($object,$title,$entry,$attribute1,$attribute2,$status,$timeout)= @_;
+	my $browse= def_image_button("icons/browse.png");
+
+	$browse->signal_connect("clicked"=> sub{
+		my $entry_ref=$_[1];
+ 		my $file;
+		$title ='select directory' if(!defined $title);
+		my $dialog = Gtk2::FileChooserDialog->new(
+		    	$title, undef,
+			#       	'open',
+			'select-folder',
+		    	'gtk-cancel' => 'cancel',
+		    	'gtk-ok'     => 'ok',
+			);
+	       
+			
+			if ( "ok" eq $dialog->run ) {
+		    	$file = $dialog->get_filename;
+				$$entry_ref->set_text($file);
+				$object->object_add_attribute($attribute1,$attribute2,$file);
+				set_gui_status($object,$status,$timeout) if(defined $status);			
+				#check_input_file($file,$socgen,$soc_state,$info);
+		    		#print "file = $file\n";
+	       		 }
+	       		$dialog->destroy;
+	       		
+
+
+		} , \$entry);
+	
+	return $browse;
+
+}
+
+
+sub get_file_name {
+	my ($object,$title,$entry,$attribute1,$attribute2,$extension,$lable,$open_in)= @_;
+	my $browse= def_image_button("icons/browse.png");
+
+	$browse->signal_connect("clicked"=> sub{
+		my $entry_ref=$_[1];
+ 		my $file;
+		$title ='select directory' if(!defined $title);
+		my $dialog = Gtk2::FileChooserDialog->new(
+            	'Select a File', undef,
+            	'open',
+            	'gtk-cancel' => 'cancel',
+            	'gtk-ok'     => 'ok',
+        	);
+	 if(defined $extension){
+		my $filter = Gtk2::FileFilter->new();
+		$filter->set_name($extension);
+		$filter->add_pattern("*.$extension");
+		$dialog->add_filter ($filter);
+	 }
+	  if(defined  $open_in){
+		$dialog->set_current_folder ($open_in); 
+		# print "$open_in\n";
+		 
+	}
+		
+			if ( "ok" eq $dialog->run ) {
+		    	$file = $dialog->get_filename;
+				$$entry_ref->set_text($file);
+				$object->object_add_attribute($attribute1,$attribute2,$file);
+				my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
+				$lable->set_markup("<span  foreground= 'black' ><b>$name$suffix</b></span>");
+				$lable->show;
+						
+				#check_input_file($file,$socgen,$soc_state,$info);
+		    		#print "file = $file\n";
+	       		 }
+	       		$dialog->destroy;
+	       		
+
+
+		} , \$entry);
+	
+	return $browse;
+
+}
+
+
+#################
+#	widget update object
+#################
+
+sub gen_entry_object {
+	my ($object,$attribute1,$attribute2,$default,$status,$timeout)=@_;
+	my $old=$object->object_get_attribute($attribute1,$attribute2);
+	my $widget;
+	if(defined $old ){
+		$widget=gen_entry($old);
+	}
+	else
+	{
+		$widget=gen_entry($default);
+		$object->object_add_attribute($attribute1,$attribute2,$default);		
+	}	
+	$widget-> signal_connect("changed" => sub{
+		my $new_param_value=$widget->get_text();
+		$object->object_add_attribute($attribute1,$attribute2,$new_param_value);
+		set_gui_status($object,$status,$timeout) if (defined $status);
+	});
+	return $widget;
+}
+
+
+sub gen_combobox_object {
+ 	my ($object,$attribute1,$attribute2,$content,$default,$status,$timeout)=@_;
+	my @combo_list=split(",",$content);
+	my $value=$object->object_get_attribute($attribute1,$attribute2);
+	my $pos;
+	$pos=get_pos($value, @combo_list) if (defined $value);
+	if(!defined $pos && defined $default){
+		$object->object_add_attribute($attribute1,$attribute2,$default);	
+	 	$pos=get_item_pos($default, @combo_list);
+	}
+	#print " my $pos=get_item_pos($value, @combo_list);\n";
+	my $widget=gen_combo(\@combo_list, $pos);
+	$widget-> signal_connect("changed" => sub{
+		my $new_param_value=$widget->get_active_text();
+		$object->object_add_attribute($attribute1,$attribute2,$new_param_value);
+		set_gui_status($object,$status,$timeout) if (defined $status);
+	 });
+	return $widget;		 
+	
+
+}
+
+
+sub gen_comboentry_object {
+ 	my ($object,$attribute1,$attribute2,$content,$default,$status,$timeout)=@_;
+	my @combo_list=split(",",$content);
+	my $value=$object->object_get_attribute($attribute1,$attribute2);
+	my $pos;
+	$pos=get_pos($value, @combo_list) if (defined $value);
+	if(!defined $pos && defined $default){
+		$object->object_add_attribute($attribute1,$attribute2,$default);	
+	 	$pos=get_item_pos($default, @combo_list);
+	}
+	#print " my $pos=get_item_pos($value, @combo_list);\n";
+	my $widget=gen_combo_entry(\@combo_list, $pos);
+	($widget->child)->signal_connect('changed' => sub {
+		my ($entry) = @_;
+		my $new_param_value=$entry->get_text();
+		$object->object_add_attribute($attribute1,$attribute2,$new_param_value);
+		set_gui_status($object,$status,$timeout) if (defined $status);
+	 });
+	return $widget;	
+
+}
+
+
+
+sub gen_spin_object {
+	my ($object,$attribute1,$attribute2,$content, $default,$status,$timeout)=@_;
+	my $value=$object->object_get_attribute($attribute1,$attribute2);
+	my ($min,$max,$step)=split(",",$content);
+	if(!defined $value){
+		$value=$default;
+		$object->object_add_attribute($attribute1,$attribute2,$value);
+	}
+	$value=~ s/\D//g;
+	$min=~ s/\D//g;
+	$max=~ s/\D//g;
+	$step=~ s/\D//g;
+	my $widget=gen_spin($min,$max,$step);
+	$widget->set_value($value);
+	$widget-> signal_connect("value_changed" => sub{
+		my $new_param_value=$widget->get_value_as_int();
+		$object->object_add_attribute($attribute1,$attribute2,$new_param_value);
+		set_gui_status($object,$status,$timeout) if (defined $status);
+	});
+	return $widget;		
+}
+
+
+sub gen_check_box_object {
+		my ($object,$attribute1,$attribute2,$content,$value,$default,$status,$timeout)=@_;
+		my $widget = def_hbox(FALSE,0);
+		my @check;
+		for (my $i=0;$i<$content;$i++){
+			$check[$i]= Gtk2::CheckButton->new;
+		}
+		for (my $i=0;$i<$content;$i++){
+			$widget->pack_end(  $check[$i], FALSE, FALSE, 0);
+			
+			my @chars = split("",$value);
+			#check if saved value match the size of check box
+			if($chars[0] ne $content ) {
+				$object->object_add_attribute($attribute1,$attribute2,$default);
+				$value=$default;
+				@chars = split("",$value);
+			}
+			#set initial value
+			
+			#print "\@chars=@chars\n";
+			for (my $i=0;$i<$content;$i++){
+				my $loc= (scalar @chars) -($i+1);
+					if( $chars[$loc] eq '1') {$check[$i]->set_active(TRUE);}
+					else {$check[$i]->set_active(FALSE);}
+			}
+
+
+			#get new value
+			$check[$i]-> signal_connect("toggled" => sub{
+				my $new_val="$content\'b";			
+ 				
+				for (my $i=$content-1; $i >= 0; $i--){
+					if($check[$i]->get_active()) {$new_val="${new_val}1" ;}
+					else {$new_val="${new_val}0" ;}
+				}
+				$object->object_add_attribute($attribute1,$attribute2,$new_val);
+				#print "\$new_val=$new_val\n";
+				set_gui_status($object,$status,$timeout) if (defined $status);
+			});
+	}
+	return $widget;
+
+}
+
+
+
+sub get_dir_in_object {
+	my ($object,$attribute1,$attribute2,$content,$status,$timeout)=@_;
+	my $widget = def_hbox(FALSE,0);
+	my $value=$object->object_get_attribute($attribute1,$attribute2);
+	my $entry=gen_entry($value);
+	$entry-> signal_connect("changed" => sub{
+		my $new_param_value=$entry->get_text();
+		$object->object_add_attribute($attribute1,$attribute2,$new_param_value);
+		set_gui_status($object,$status,$timeout) if (defined $status);
+	});
+	my $browse= get_directory_name($object,undef,$entry,$attribute1,$attribute2,$status,$timeout);
+	$widget->pack_start( $entry, FALSE, FALSE, 0);
+	$widget->pack_start( $browse, FALSE, FALSE, 0);
+	return $widget;
+}
+
+
+
+
+sub get_file_name_object {
+	my ($object,$attribute1,$attribute2,$extension,$open_in)=@_;
+	my $widget = def_hbox(FALSE,0);
+	my $value=$object->object_get_attribute($attribute1,$attribute2);
+	my $lable;
+	if(defined $value){
+		my ($name,$path,$suffix) = fileparse("$value",qr"\..[^.]*$");
+		$lable=gen_label_in_center($name.$suffix);
+		
+	} else {
+			$lable=gen_label_in_center("Selecet a $extension file");
+			$lable->set_markup("<span  foreground= 'red' ><b>Selecet a sof file</b></span>");
+	}
+	my $entry=gen_entry();
+	my $browse= get_file_name($object,undef,$entry,$attribute1,$attribute2,$extension,$lable,$open_in);
+	$widget->pack_start( $lable, FALSE, FALSE, 0);
+	$widget->pack_start( $browse, FALSE, FALSE, 0);
+	return $widget;
+}
+
+################
+# ADD info and label to widget
+################
+
+
+sub labele_widget_info{
+	my ($label_name,$widget,$info)=@_;
+	my $box = def_hbox(FALSE,0);
+	#label
+	if(defined $label_name){
+		my $label= gen_label_in_left($label_name);	
+		$box->pack_start( $label, FALSE, FALSE, 3);
+	}
+	$box->pack_start( $widget, FALSE, FALSE, 3);
+	#info	
+	if(defined $info){
+		my $button=def_image_button("icons/help.png");
+		$button->signal_connect("clicked" => sub {message_dialog($info);});	
+		$box->pack_start( $button, FALSE, FALSE, 3);
+	}
+	$box->show_all;	
+	return $box;
+}	
+
+
 
 
 ################

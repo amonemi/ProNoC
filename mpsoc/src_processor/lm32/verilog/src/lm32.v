@@ -14,6 +14,7 @@ module lm32 #(
     clk_i,
     rst_i,
     interrupt,
+     en_i,
      // Instruction Wishbone master
     I_DAT_I,
     I_ACK_I,
@@ -50,6 +51,12 @@ module lm32 #(
 
 input clk_i;                                    // Clock
 input rst_i;                                    // Reset
+input en_i;
+
+
+wire reset;
+
+assign reset = rst_i | ~ en_i;
 
 //`ifdef CFG_INTERRUPTS_ENABLED
 input [`LM32_INTERRUPT_RNG] interrupt;          // Interrupt pins
@@ -136,7 +143,7 @@ wire [31:0] iadr_o,dadr_o;
 
 lm32_top  the_lm32_top(
 	.clk_i(clk_i),
-	.rst_i(rst_i),
+	.rst_i(reset ),
 	.interrupt_n(~interrupt),
 	.I_DAT_I(I_DAT_I),
 	.I_ACK_I(I_ACK_I),
@@ -176,3 +183,4 @@ lm32_top  the_lm32_top(
 
 endmodule        
     
+

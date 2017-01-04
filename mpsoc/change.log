@@ -1,0 +1,24 @@
+All notable changes to this project will be documented in this file.
+
+##[1.5.0] - 13-10-2016
+### Added
+- static straight allocator (SSA) which accelerates packets traversing to the same direction to the NoC router.
+- NoC emulator.
+- Altor processor.
+- Jtag_wb: allow access to the wishbone bus slave ports via Jtag. 
+- Jtag_main: A C code which allows host PC to have access to the jtag_wb.  
+
+
+## changed
+- Memory IP cores are categorized into two IPs: Single and double port. 
+- The access via jtag_wb or Altera In-System Memory Content Editor is added as optional via parameter setting for single port memory.
+
+
+
+##[1.0.0] - 27-1-2016
+### added
+- ProNoC: new version with GUI generator
+- Interface generator
+- IP generator
+- Processing tile generator
+- NoC based MCSoC generator  

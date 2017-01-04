@@ -29,7 +29,7 @@ use constant NUM_COLUMNS     => 4;
 
 require "widget.pl"; 
 require "verilog_gen.pl";
-
+require "readme_gen.pl";
 require "hdr_file_gen.pl";
 
 
@@ -65,7 +65,7 @@ sub get_instance_id{
 #  add_module_to_soc
 ###############
 sub add_module_to_soc{
-	my ($soc,$ip,$category,$module,$info,$soc_state)=@_;
+	my ($soc,$ip,$category,$module,$info)=@_;
 	my ($instance_id,$id)= get_instance_id($soc,$category,$module);
 	
 	#add module instanance
@@ -78,19 +78,19 @@ sub add_module_to_soc{
 	}
 	$soc->soc_add_instance_order($instance_id);
 	
-	# Read deafult parameter from lib and add them to soc
+	# Read default parameter from lib and add them to soc
 	my %param_default= $ip->get_param_default($category,$module);
 	
 	my $rr=$soc->soc_add_instance_param($instance_id,\%param_default);
 	if($rr == 0){
-		my $info_text= "Failed to add deafualt parameter to \"$instance_id\".  $instance_id does not exist exist.";	 
+		my $info_text= "Failed to add defualt parameter to \"$instance_id\".  $instance_id does not exist exist.";	 
 		show_info($info,$info_text); 
 		return;
 	}
 	my @r=$ip->ip_get_param_order($category,$module);
 	$soc->soc_add_instance_param_order($instance_id,\@r);
 	
-	get_module_parameter($soc,$ip,$instance_id,$soc_state);
+	get_module_parameter($soc,$ip,$instance_id);
 	
 	
 	
@@ -99,10 +99,10 @@ sub add_module_to_soc{
 #	remove_instance_from_soc
 ################
 sub remove_instance_from_soc{
-	my ($soc,$instance_id,$soc_state)=@_;
+	my ($soc,$instance_id)=@_;
 	$soc->soc_remove_instance($instance_id);
 	$soc->soc_remove_from_instance_order($instance_id);
-	set_state($soc_state,"refresh_soc",0);
+	set_gui_status($soc,"refresh_soc",0);
 }	
 
 
@@ -112,12 +112,12 @@ sub remove_instance_from_soc{
 ##############
 
 sub get_module_parameter{
-	my ($soc,$ip,$instance_id,$soc_state)=@_;
+	my ($soc,$ip,$instance_id)=@_;
 	
 	#read module parameters from lib
 	my $module=$soc->soc_get_module($instance_id);
 	my $category=$soc->soc_get_category($instance_id);
-	my @parameters=$ip->ip_get_module_parameters($category,$module);
+	my @parameters=$ip->ip_get_param_order($category,$module);
 	my $param_num = @parameters;
 	
 	#read soc parameters
@@ -125,8 +125,9 @@ sub get_module_parameter{
 	my %new_param_value=%param_value;
 	#gui
 	my $table_size = ($param_num<10) ? 10 : $param_num;
-	my $window = def_popwin_size(600,400,"Parameter setting for $module ");
-	my $table = def_table($table_size, 7, TRUE);
+	my($width,$hight)=max_win_size();
+	my $window =  def_popwin_size(.6*$width,.6*$hight, "Parameter setting for $module ");
+	my $table = def_table($table_size, 7, FALSE);
 	
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
 	$scrolled_win->set_policy( "automatic", "automatic" );
@@ -134,23 +135,27 @@ sub get_module_parameter{
 	my $row=0;
 	
 	my $ok = def_image_button('icons/select.png','OK');
-	my $okbox=def_hbox(TRUE,0);
-	$okbox->pack_start($ok, FALSE, FALSE,0);
+	
+	
+	$table->attach (gen_label_in_center("Parameter name"),0, 3, $row, $row+1,'expand','shrink',2,2);
+	$table->attach (gen_label_in_center("Value"),3, 6, $row, $row+1,'expand','shrink',2,2);
+	$table->attach (gen_label_in_center("Description"),6, 7, $row, $row+1,'expand','shrink',2,2);
+	$row++;
 	foreach my $p (@parameters){
-		my ($deafult,$type,$content,$info)= $ip->ip_get_parameter($category,$module,$p);
+		my ($default,$type,$content,$info)= $ip->ip_get_parameter($category,$module,$p);
 		
 		my $value=$param_value{$p};
 		
 		if ($type eq "Entry"){
 			my $entry=gen_entry($value);
-			$table->attach_defaults ($entry, 3, 6, $row, $row+1);
+			$table->attach ($entry, 3, 6, $row, $row+1,'expand','shrink',2,2);
 			$entry-> signal_connect("changed" => sub{$new_param_value{$p}=$entry->get_text();});
 		}
 		elsif ($type eq "Combo-box"){
 			my @combo_list=split(",",$content);
 			my $pos=get_item_pos($value, @combo_list);
 			my $combo=gen_combo(\@combo_list, $pos);
-			$table->attach_defaults ($combo, 3, 6, $row, $row+1);
+			$table->attach ($combo, 3, 6, $row, $row+1,'expand','shrink',2,2);
 			$combo-> signal_connect("changed" => sub{$new_param_value{$p}=$combo->get_active_text();});
 			
 		}
@@ -162,14 +167,14 @@ sub get_module_parameter{
 		  $step=~ s/\D//g;
 		  my $spin=gen_spin($min,$max,$step);
 		  $spin->set_value($value);
-		  $table->attach_defaults ($spin, 3, 4, $row, $row+1);
+		  $table->attach ($spin, 3, 4, $row, $row+1,'expand','shrink',2,2);
 		  $spin-> signal_connect("value_changed" => sub{ $new_param_value{$p}=$spin->get_value_as_int(); });
 		 
 		 # $box=def_label_spin_help_box ($param,$info, $value,$min,$max,$step, 2);
 		}
 		if (defined $info && $type ne "Fixed"){
 			my $info_button=def_image_button('icons/help.png');
-			$table->attach_defaults ($info_button, 6, 7, $row, $row+1);	
+			$table->attach ($info_button, 6, 7, $row, $row+1,'expand','shrink',2,2);	
 			$info_button->signal_connect('clicked'=>sub{
 				message_dialog($info);
 				
@@ -179,17 +184,22 @@ sub get_module_parameter{
 		if ($type ne "Fixed"){
 			#print "$p:val:$value\n";
 			my $label =gen_label_in_center($p);
-			$table->attach_defaults ($label, 0, 3, $row, $row+1);	
+			$table->attach ($label, 0, 3, $row, $row+1,'expand','shrink',2,2);
 			$row++;
 		}		 
-			
+		
 		
 	}
+	#if ($row== 0){
+			#my $label =gen_label_in_left("The $module IP does not have any adjatable parameter");
+		#	$table->attach ($label, 0, 7, $row, $row+1,'expand','shrink',2,2);
+
+	#}
 	
-	my $mtable = def_table(10, 1, TRUE);
+	my $mtable = def_table(10, 1, FALSE);
 
 	$mtable->attach_defaults($scrolled_win,0,1,0,9);
-	$mtable->attach_defaults($okbox,0,1,9,10);
+	$mtable->attach($ok,0,1,9,10,'expand','shrink',2,2);
 	
 	$window->add ($mtable);
 	$window->show_all();
@@ -227,7 +237,7 @@ sub get_module_parameter{
 		}#plugs
 		
 		
-		set_state($soc_state,"refresh_soc",0);
+		set_gui_status($soc,"refresh_soc",0);
 		#$$refresh_soc->clicked;
 		
 		});
@@ -313,9 +323,9 @@ sub  get_mathced_socket_pos{
 #	gen_dev_box
 ##############
 
-sub gen_instance{;
-	#my ($soc,$ip,$infc,$instance_id,$soc_state,$info)=@_;
-	my ($soc,$ip,$infc,$instance_id,$soc_state,$info,$table,$offset)=@_;
+sub gen_instance{
+	#my ($soc,$ip,$infc,$instance_id,$info)=@_;
+	my ($soc,$ip,$infc,$instance_id,$info,$table,$offset)=@_;
 	
 	
 	
@@ -339,12 +349,12 @@ sub gen_instance{;
 	$box1->pack_start($param_button,   FALSE, FALSE,3);
 	$table->attach_defaults ($box1 ,0,1,$offset+1,$offset+2);
 	$param_button->signal_connect (clicked => sub{
-		get_module_parameter($soc,$ip,$instance_id,$soc_state);	
+		get_module_parameter($soc,$ip,$instance_id);	
 		
 	});
 	$up->signal_connect (clicked => sub{
 		$soc->soc_decrease_instance_order($instance_id);
-		set_state($soc_state,"refresh_soc",0);
+		set_gui_status($soc,"refresh_soc",0);
 		
 	});
 	
@@ -358,12 +368,12 @@ sub gen_instance{;
 	$box2->pack_start($cancel_button,   FALSE, FALSE,3);
 	$table->attach_defaults ($box2,0,1,$offset+2,$offset+3);
 	$cancel_button->signal_connect (clicked => sub{
-		remove_instance_from_soc($soc,$instance_id,$soc_state);
+		remove_instance_from_soc($soc,$instance_id);
 				
 	});	
 	$dwn->signal_connect (clicked => sub{
 		$soc->soc_increase_instance_order($instance_id);
-		set_state($soc_state,"refresh_soc",0);
+		set_gui_status($soc,"refresh_soc",0);
 		
 	});
 	
@@ -390,7 +400,7 @@ sub gen_instance{;
 		#add instance name to soc
 			$soc->soc_set_instance_name($instance_id,$instance_name);
 		
-			set_state($soc_state,"refresh_soc",25);
+			set_gui_status($soc,"refresh_soc",25);
 				
 		}	
 	});
@@ -547,7 +557,7 @@ sub gen_instance{;
 				
 			
 			
-				set_state($soc_state,"refresh_soc",0);
+				set_gui_status($soc,"refresh_soc",0);
 			},\@ll);
 			
 	
@@ -591,7 +601,7 @@ sub find_connection{
 #	generate_dev_table
 ############
 sub generate_dev_table{
-	my($soc,$ip,$infc,$soc_state,$info)=@_;	
+	my($soc,$ip,$infc,$info)=@_;	
 	#my $box= def_hbox (TRUE,0);
   
 	my $table=def_table(3,25,FALSE);
@@ -603,7 +613,7 @@ sub generate_dev_table{
 	my $i=0;
 	
 	foreach my $instanc(@instance_list){
-		$row=gen_instance($soc,$ip,$infc,$instanc,$soc_state,$info,$table,$row);
+		$row=gen_instance($soc,$ip,$infc,$instanc,$info,$table,$row);
 		
 	}
 	if($row<20){for ($i=$row; $i<20; $i++){
@@ -624,9 +634,9 @@ sub generate_dev_table{
 ################ 
 
 sub show_active_dev{
-	my($soc,$ip,$infc,$soc_state,$refresh_ref,$info)=@_;
+	my($soc,$ip,$infc,$refresh_ref,$info)=@_;
 	my $box= def_table (1, 1, FALSE);
-	my $dev_table = generate_dev_table($soc,$ip,$infc,$soc_state,$info);
+	my $dev_table = generate_dev_table($soc,$ip,$infc,$info);
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
 	$scrolled_win->set_policy( "automatic", "automatic" );
 	$scrolled_win->add_with_viewport($dev_table);
@@ -637,7 +647,7 @@ sub show_active_dev{
 	   	
 		$dev_table->destroy;
 		select(undef, undef, undef, 0.1); #wait 10 ms
-		$dev_table = generate_dev_table($soc,$ip,$infc,$soc_state,$info);
+		$dev_table = generate_dev_table($soc,$ip,$infc,$info);
 		#$box->attach_defaults ($dev_table, 0, 1, 0, 1);#( $dev_table, FALSE, FALSE, 3);
 		$scrolled_win->add_with_viewport($dev_table);
 		$dev_table->show;
@@ -682,14 +692,14 @@ sub row_activated_cb{
 #	create tree
 ##############
 sub create_tree {
-   my ($info,$ip,$soc,$soc_state)=@_;
+   my ($info,$ip,$soc)=@_;
    my $model = Gtk2::TreeStore->new ('Glib::String', 'Glib::String', 'Glib::Scalar', 'Glib::Boolean');
    my $tree_view = Gtk2::TreeView->new;
    $tree_view->set_model ($model);
    my $selection = $tree_view->get_selection;
 
    $selection->set_mode ('browse');
-   $tree_view->set_size_request (200, -1);
+   #$tree_view->set_size_request (200, -1);
 
    #
    # this code only supports 1 level of children. If we
@@ -733,7 +743,7 @@ sub create_tree {
    my $cell = Gtk2::CellRendererText->new;
    $cell->set ('style' => 'italic');
    my $column = Gtk2::TreeViewColumn->new_with_attributes
- 					("Double click to add the device",
+ 					("IP list",
                                         $cell,
                                         'text' => DISPLAY_COLUMN,
                                         'style_set' => ITALIC_COLUMN);
@@ -772,8 +782,8 @@ sub create_tree {
 
 	if($module){ 
 		#print "$module  is selected via row activaton!\n";
-		add_module_to_soc($soc,$ip,$category,$module,\$info,$soc_state);
-		set_state($soc_state,"refresh_soc",0);	
+		add_module_to_soc($soc,$ip,$category,$module,\$info);
+		set_gui_status($soc,"refresh_soc",0);	
 	}
 		
 
@@ -792,7 +802,7 @@ sub create_tree {
   $scrolled_window->set_shadow_type ('in');
   $scrolled_window->add($tree_view);
 
-  my $hbox = Gtk2::HBox->new (TRUE, 0);
+  my $hbox = Gtk2::HBox->new (FALSE, 0);
   $hbox->pack_start ( $scrolled_window, TRUE, TRUE, 0);
 
   
@@ -844,7 +854,7 @@ sub get_all_files_list {
 
 sub generate_soc{
 	my ($soc,$info)=@_;
-	my $name=$soc->soc_get_soc_name();
+	my $name=$soc->object_get_attribute('soc_name');
 		if (length($name)>0){
 			my @tmp=split('_',$name);
 			if ( $tmp[-1] =~ /^[0-9]+$/ ){
@@ -852,10 +862,11 @@ sub generate_soc{
 				return 0;
 			}
 			
-			my $file_v=soc_generate_verilog($soc);
+			my ($file_v,$top_v,$readme)=soc_generate_verilog($soc);
 			
 			# Write object file
 			open(FILE,  ">lib/soc/$name.SOC") || die "Can not open: $!";
+			print FILE perl_file_header("$name.SOC");
 			print FILE Data::Dumper->Dump([\%$soc],[$name]);
 			close(FILE) || die "Error closing file: $!";
 			
@@ -864,25 +875,39 @@ sub generate_soc{
 			print FILE $file_v;
 			close(FILE) || die "Error closing file: $!";
 			
+			# Write Top module file
+			my $l=autogen_warning().get_license_header("${name}_top.v");
+			open(FILE,  ">lib/verilog/${name}_top.v") || die "Can not open: $!";
+			print FILE "$l\n$top_v";
+			close(FILE) || die "Error closing file: $!";
+
 			
-			
+			# Write readme file
+			open(FILE,  ">lib/verilog/README") || die "Can not open: $!";
+			print FILE $readme;
+			close(FILE) || die "Error closing file: $!";
 			
 			# copy all files in project work directory
 			my $dir = Cwd::getcwd();
 			#make target dir
 			my $project_dir	  = abs_path("$dir/../../");
 			my $target_dir  = "$project_dir/mpsoc_work/SOC/$name";
-			mkpath("$target_dir/src_verilog/lib/",1,0755);
-			mkpath("$target_dir/sw",1,0755);
+			mkpath("$target_dir/src_verilog/lib/",1,01777);
+			mkpath("$target_dir/sw",1,01777);
     		
     		#copy hdl codes in src_verilog
     		
     		my ($file_ref,$warnings)= get_all_files_list($soc,"hdl_files");
-		copy_file_and_folders($file_ref,$project_dir,"$target_dir/src_verilog/lib");
+		
+		    copy_file_and_folders($file_ref,$project_dir,"$target_dir/src_verilog/lib");
     		
 			show_info(\$info,$warnings)     		if(defined $warnings);  
     		
     		
+		#copy jtag control files 
+		my @jtags=(("/mpsoc/src_peripheral/jtag/jtag_wb"),("jtag"));
+		copy_file_and_folders(\@jtags,$project_dir,"$target_dir/src_verilog/lib");
+
     		#my @pathes=("$dir/../src_peripheral","$dir/../src_noc","$dir/../src_processor");
     		#foreach my $p(@pathes){
     		#	find(
@@ -895,25 +920,18 @@ sub generate_soc{
     		#}
     		
     		
-    		move ("$dir/lib/verilog/$name.v","$target_dir/src_verilog/"); 	
+    		move ("$dir/lib/verilog/$name.v","$target_dir/src_verilog/"); 
+		move ("$dir/lib/verilog/${name}_top.v","$target_dir/src_verilog/"); 		
+    		move ("$dir/lib/verilog/README" ,"$target_dir/sw/");
+    		# Copy Software files
+			($file_ref,$warnings)= get_all_files_list($soc,"sw_files");
+			copy_file_and_folders($file_ref,$project_dir,"$target_dir/sw");
     		
-    		
-    		
-    		# Write system.h and generated file
+    		# Write system.h and Software gen files
 			generate_header_file($soc,$project_dir,$target_dir,$dir);
 			 
     		
-    		# Write Software files
-			($file_ref,$warnings)= get_all_files_list($soc,"sw_files");
-			copy_file_and_folders($file_ref,$project_dir,"$target_dir/sw");
-			
-		# Write Software gen files
-			($file_ref,$warnings)= get_all_files_list($soc,"gen_sw_files");
-			foreach my $f(@{$file_ref}){
-				#print "$f\n";
-				
-
-			}
+    			
 
 
 		# Write main.c file if not exist
@@ -952,7 +970,7 @@ void delay ( unsigned int num ){
 	
 	while (num>0){ 
 		num--;
-		asm volatile (\"nop\");
+		nop(); // asm volatile (\"nop\");
 	}
 	return;
 
@@ -1031,7 +1049,7 @@ sub wb_address_setting {
 		
 	
 	my $window = def_popwin_size(1200,500,"Wishbone slave port address setting");
-	my $table = def_table(10, 6, TRUE);
+	my $table = def_table(10, 6, FALSE);
 	
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
 	$scrolled_win->set_policy( "automatic", "automatic" );
@@ -1039,12 +1057,12 @@ sub wb_address_setting {
 	my $row=0;
 	
 	#title
-	$table->attach_defaults(gen_label_in_left  ("Instance name"),0,1,$row,$row+1);
-	$table->attach_defaults(gen_label_in_left  ("Interface name"),1,2,$row,$row+1);
-	$table->attach_defaults(gen_label_in_left  ("Bus name"),2,3,$row,$row+1);
-	$table->attach_defaults(gen_label_in_center("Base address"),3,4,$row,$row+1);
-	$table->attach_defaults(gen_label_in_center("End address"),4,5,$row,$row+1);
-	$table->attach_defaults(gen_label_in_center("Size (Bytes)"),5,6,$row,$row+1);
+	$table->attach(gen_label_in_left  ("Instance name"),0,1,$row,$row+1,'expand','shrink',2,2);
+	$table->attach(gen_label_in_left  ("Interface name"),1,2,$row,$row+1,'expand','shrink',2,2);
+	$table->attach(gen_label_in_left  ("Bus name"),2,3,$row,$row+1,'expand','shrink',2,2);
+	$table->attach(gen_label_in_center("Base address"),3,4,$row,$row+1,'expand','shrink',2,2);
+	$table->attach(gen_label_in_center("End address"),4,5,$row,$row+1,'expand','shrink',2,2);
+	$table->attach(gen_label_in_center("Size (Bytes)"),5,6,$row,$row+1,'expand','shrink',2,2);
 	
 	my (@newbase,@newend,@connects);
 	
@@ -1094,14 +1112,14 @@ sub wb_address_setting {
 					$status_all[$number]=$valid;
 							
 							
-					$table->attach_defaults($label1,0,1,$row,$row+1);
-					$table->attach_defaults($plug_name,1,2,$row,$row+1);
-					$table->attach_defaults($label2,2,3,$row,$row+1);
-					$table->attach_defaults($entry1,3,4,$row,$row+1);
-					$table->attach_defaults($entry2,4,5,$row,$row+1);
+					$table->attach($label1,0,1,$row,$row+1,'expand','shrink',2,2);
+					$table->attach($plug_name,1,2,$row,$row+1,'expand','shrink',2,2);
+					$table->attach($label2,2,3,$row,$row+1,'expand','shrink',2,2);
+					$table->attach($entry1,3,4,$row,$row+1,'expand','shrink',2,2);
+					$table->attach($entry2,4,5,$row,$row+1,'expand','shrink',2,2);
 							
 							
-					$table->attach_defaults($box,5,7,$row,$row+1);
+					$table->attach($box,5,7,$row,$row+1,'expand','shrink',2,2);
 							
 							
 					$entry1->signal_connect('changed'=>sub{
@@ -1112,7 +1130,7 @@ sub wb_address_setting {
 						$box->destroy;
 						($box,$valid)=addr_box_gen($base_in, $end_in,\@newbase,\@newend,\@connects,$number);
 						$status_all[$number]=$valid;
-						$table->attach_defaults($box,5,7,$number+1,$number+2);	
+						$table->attach($box,5,7,$number+1,$number+2,'expand','shrink',2,2);
 						$table->show_all;
 						
 								
@@ -1125,7 +1143,7 @@ sub wb_address_setting {
 						$box->destroy;
 						($box,$valid)=addr_box_gen($base_in, $end_in,\@newbase,\@newend,\@connects,$number);
 						$status_all[$number]=$valid;
-						$table->attach_defaults($box,5,7,$number+1,$number+2);	
+						$table->attach($box,5,7,$number+1,$number+2,'expand','shrink',2,2);	
 						$table->show_all;				
 					} );
 														
@@ -1141,8 +1159,8 @@ sub wb_address_setting {
 		
 	
 	my $ok = def_image_button('icons/select.png','OK');
-	my $okbox=def_hbox(TRUE,0);
-	$okbox->pack_start($ok, FALSE, FALSE,0);
+	
+	
 	
 	my $refresh = def_image_button('icons/revert.png','Revert');
 	my $refbox=def_hbox(TRUE,0);
@@ -1195,9 +1213,9 @@ sub wb_address_setting {
 		
 		
 	
-	$row= ($row<9)? 9:$row;
-	$table->attach_defaults($refbox,2,3,$row,$row+1);
-	$table->attach_defaults($okbox,3,4,$row,$row+1);
+	
+	$table->attach ($refbox,2,3,$row,$row+1,'expand','shrink',2,2);
+	$table->attach ($ok,3,4,$row,$row+1,'expand','shrink',2,2);
 	
 	$window->add($scrolled_win);
 	$window->show_all;
@@ -1331,7 +1349,7 @@ return;
 #############
 
 sub load_soc{
-	my ($soc,$soc_state)=@_;
+	my ($soc,$info)=@_;
 	my $file;
 	my $dialog = Gtk2::FileChooserDialog->new(
             	'Select a File', undef,
@@ -1353,8 +1371,13 @@ sub load_soc{
 		my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
 		if($suffix eq '.SOC'){
 			my $pp= eval { do $file };
+			if ($@ || !defined $pp){		
+				show_info(\$info,"**Error reading  $file file: $@\n");
+				 $dialog->destroy;
+				return;
+			} 
 			clone_obj($soc,$pp);
-			set_state($soc_state,"load_file",0);		
+			set_gui_status($soc,"load_file",0);		
 		}					
      }
      $dialog->destroy;
@@ -1394,9 +1417,10 @@ sub socgen_main{
 	my $infc = interface->interface_new(); 
 	my $ip = ip->lib_new ();
 	my $soc = soc->soc_new();
+	set_gui_status($soc,"ideal",0);
 	#my $soc= eval { do 'lib/soc/soc.SOC' };
 	
-	my $soc_state=  def_state("ideal");
+	
 	# main window
 	#my $window = def_win_size(1000,800,"Top");
 	#  The main table containg the lib tree, selected modules and info section 
@@ -1409,65 +1433,58 @@ sub socgen_main{
 	my $refresh_dev_win = Gtk2::Button->new_from_stock('ref');
 	
 	# A tree view for holding a library
-	my $tree_box = create_tree ($info,$ip,$soc,$soc_state);
+	my $tree_box = create_tree ($info,$ip,$soc);
 
 
 
 	$main_table->set_row_spacings (4);
 	$main_table->set_col_spacings (1);
 	
-	my  $device_win=show_active_dev($soc,$ip,$infc,$soc_state,\$refresh_dev_win,$info);
+	my  $device_win=show_active_dev($soc,$ip,$infc,\$refresh_dev_win,$info);
 	
 	
 	my $generate = def_image_button('icons/gen.png','Generate');
-	my $genbox=def_hbox(TRUE,0);
-	$genbox->pack_start($generate,   FALSE, FALSE,0);
+	
 
 
 
 
 	
 	my $wb = def_image_button('icons/setting.png','Wishbone address setting');
-	my $wbbox=def_hbox(TRUE,0);
-	$wbbox->pack_start($wb,   FALSE, FALSE,0);
+	
+	
 	
 	my $open = def_image_button('icons/browse.png','Load Tile');
-	my $openbox=def_hbox(TRUE,0);
-	$openbox->pack_start($open,   FALSE, FALSE,0);
 	
 	
+	my $entry=gen_entry_object($soc,'soc_name',undef,undef,undef,undef);
+	my $entrybox=labele_widget_info(" Tile name:",$entry);
 	
-	my ($entrybox,$entry) = def_h_labeled_entry('Tile name:');
-	$entry->signal_connect( 'changed'=> sub{
-		my $name=$entry->get_text();
-		$soc->soc_set_soc_name($name);		
-	});	
 	
 	#$table->attach_defaults ($event_box, $col, $col+1, $row, $row+1);
 	$main_table->attach_defaults ($tree_box , 0, 2, 0, 17);
 	$main_table->attach_defaults ($device_win , 2, 12, 0, 17);
 	$main_table->attach_defaults ($infobox  , 0, 12, 17,19);
-	$main_table->attach_defaults ($openbox,0, 3, 19,20);
+	$main_table->attach ($open,0, 3, 19,20,'expand','shrink',2,2);
 	$main_table->attach_defaults ($entrybox,3, 7, 19,20);
-	$main_table->attach_defaults ($wbbox, 7, 10, 19,20);
-	$main_table->attach_defaults ($genbox, 10, 12, 19,20);
+	$main_table->attach ($wb, 7, 10, 19,20,'expand','shrink',2,2);
+	$main_table->attach ($generate, 10, 12, 19,20,'expand','shrink',2,2);
 	
 
 	#check soc status every 0.5 second. referesh device table if there is any changes 
 	Glib::Timeout->add (100, sub{ 
-	 
-		my ($state,$timeout)= get_state($soc_state);
-
+	 	my ($state,$timeout)= get_gui_status($soc);
+		
 		if ($timeout>0){
 			$timeout--;
-			set_state($soc_state,$state,$timeout);		
+			set_gui_status($soc,$state,$timeout);
+				
 		}
 		elsif( $state ne "ideal" ){
 			$refresh_dev_win->clicked;
-			my $saved_name=$soc->soc_get_soc_name();
+			my $saved_name=$soc->object_get_attribute('soc_name',undef);
 			if(defined $saved_name) {$entry->set_text($saved_name);}
-			set_state($soc_state,"ideal",0);
-			
+			set_gui_status($soc,"ideal",0);			
 		}	
 		return TRUE;
 		
@@ -1486,7 +1503,7 @@ sub socgen_main{
 	});
 
 	$open-> signal_connect("clicked" => sub{ 
-		load_soc($soc,$soc_state);
+		load_soc($soc,$info);
 	
 	});	
 

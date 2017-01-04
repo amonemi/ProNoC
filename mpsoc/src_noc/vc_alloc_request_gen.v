@@ -108,7 +108,7 @@ module  vc_alloc_request_gen_adaptive #(
     dest_port_out_all,
     masked_ovc_request_all,
     port_pre_sel,
-    port_pre_sel_ld_all,
+    //port_pre_sel_ld_all,
     current_x_0,
     x_diff_is_one_all,
     sel,
@@ -138,7 +138,8 @@ module  vc_alloc_request_gen_adaptive #(
     output  [PVV-1      :   0]  masked_ovc_request_all;
     input   [PVV-1      :   0]  candidate_ovc_all;
     input   [P_1-1      :   0]  port_pre_sel;
-    input   [PV-1       :   0]  port_pre_sel_ld_all;
+   // input   [PV-1       :   0]  port_pre_sel_ld_all;
+   
     output  [PV-1       :   0]  sel;
     input                       reset,clk;
     input                       current_x_0;
@@ -201,10 +202,10 @@ module  vc_alloc_request_gen_adaptive #(
 	       .ROUTE_SUBFUNC (ROUTE_SUBFUNC)
         )
         the_portsel(
-	       .reset              (reset),
-	       .clk                (clk),
+	    //   .reset              (reset),
+	    //   .clk                (clk),
 	       .port_pre_sel       (port_pre_sel_perport[i/V]),
-	       .port_pre_sel_ld    (port_pre_sel_ld_all[i]),
+	       //.port_pre_sel_ld    (port_pre_sel_ld_all[i]),
 	       .swap_port_presel   (swap_port_presel[i]),
 	       .sel                (sel[i]),
 	       .dest_port_in       (dest_port_in_all[((i+1)*P_1)-1 : i*P_1]),
@@ -435,11 +436,11 @@ module port_selector #(
     port_pre_sel,
     dest_port_out,
     dest_port_in,
-    port_pre_sel_ld,
+    //port_pre_sel_ld,
     swap_port_presel,
     sel,
-    reset,
-    clk,
+   // reset,
+   // clk,
     
     //full adaptive,
     y_evc_forbiden,
@@ -467,9 +468,9 @@ module port_selector #(
 ************************/
 
 
-    input           reset,clk;
+    //input           reset,clk;
     input   [3:0]   port_pre_sel;
-    input           port_pre_sel_ld;
+   // input           port_pre_sel_ld;
     output          sel;
     input   [3:0]   dest_port_in;
     output  [3:0]   dest_port_out;
@@ -479,7 +480,7 @@ module port_selector #(
     
     wire  x,y,a,b;
     wire [3:0] port_pre_sel_final;
-    reg  [3:0] port_pre_sel_delayed , port_pre_sel_latched;
+    //reg  [3:0] port_pre_sel_delayed , port_pre_sel_latched;
   //  wire o1,o2;
     reg [4:0] portout;
 
@@ -495,6 +496,7 @@ module port_selector #(
    assign port_pre_sel_final= (swap_port_presel)? ~port_pre_sel: port_pre_sel;
    
     assign {x,y,a,b} = dest_port_in;
+    /*
     // the destination port must not change after assigning OVC. latch the port_pre_sel result after assigning OVC.  
      always @(posedge clk or posedge reset) begin 
         if(reset) begin 
@@ -507,6 +509,7 @@ module port_selector #(
             
         end
     end
+    */
     
    // assign port_pre_sel_latched = (port_pre_sel_ld)? port_pre_sel : port_pre_sel_delayed; 
 /*
@@ -524,7 +527,7 @@ module port_selector #(
  wire [1:0] xy;
  
  assign xy={x,y};
- assign sel_pre= port_pre_sel_latched[xy];
+ assign sel_pre= port_pre_sel_final[xy];
  
  assign overwrite= a&b;
  generate 
@@ -570,7 +573,7 @@ module port_selector #(
         case({a,b})
             2'b10 : portout = {1'b0,~x,1'b0,x,1'b0};
             2'b01 : portout = {~y,1'b0,y,1'b0,1'b0};
-            2'b11 : portout = (port_pre_sel_latched[{x,y}])?  {~y,1'b0,y,1'b0,1'b0} : {1'b0,~x,1'b0,x,1'b0} ;
+            2'b11 : portout = (port_pre_sel_final[{x,y}])?  {~y,1'b0,y,1'b0,1'b0} : {1'b0,~x,1'b0,x,1'b0} ;
             2'b00 : portout =  5'b00001;
          endcase
    end //always

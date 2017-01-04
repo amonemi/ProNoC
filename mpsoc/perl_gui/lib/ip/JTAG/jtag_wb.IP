@@ -1,0 +1,219 @@
+#######################################################################
+##	File: jtag_wb.IP
+##    
+##	Copyright (C) 2014-2016  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.5.0 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$vjtag_wb = bless( {
+                     'hdl_files' => [
+                                      '/mpsoc/src_peripheral/jtag/jtag_wb'
+                                    ],
+                     'description' => 'A jtag to wishbone interface',
+                     'ip_name' => 'jtag_wb',
+                     'gui_status' => {
+                                       'timeout' => 0,
+                                       'status' => 'ideal'
+                                     },
+                     'parameters' => {
+                                       'AW' => {
+                                                 'info' => 'Parameter',
+                                                 'deafult' => '32',
+                                                 'global_param' => 'Localparam',
+                                                 'content' => '',
+                                                 'type' => 'Fixed',
+                                                 'redefine_param' => 1
+                                               },
+                                       'SELw' => {
+                                                   'info' => 'Parameter',
+                                                   'deafult' => '   4',
+                                                   'global_param' => 'Localparam',
+                                                   'content' => '',
+                                                   'type' => 'Fixed',
+                                                   'redefine_param' => 1
+                                                 },
+                                       'TAGw' => {
+                                                   'info' => 'Parameter',
+                                                   'deafult' => '   3',
+                                                   'global_param' => 'Localparam',
+                                                   'content' => '',
+                                                   'type' => 'Fixed',
+                                                   'redefine_param' => 1
+                                                 },
+                                       'VJTAG_INDEX' => {
+                                                          'info' => 'JTAG control host identifies each instance of this IP core by a unique index number. The default value is the tile ID number. You assign an index value between 0 to 255.',
+                                                          'deafult' => 'CORE_ID',
+                                                          'global_param' => 'Parameter',
+                                                          'content' => '',
+                                                          'redefine_param' => 1,
+                                                          'type' => 'Entry'
+                                                        },
+                                       'DW' => {
+                                                 'info' => 'Parameter',
+                                                 'deafult' => '32',
+                                                 'global_param' => 'Localparam',
+                                                 'content' => '',
+                                                 'type' => 'Fixed',
+                                                 'redefine_param' => 1
+                                               },
+                                       'S_Aw' => {
+                                                   'info' => 'Parameter',
+                                                   'deafult' => '   7',
+                                                   'global_param' => 'Localparam',
+                                                   'content' => '',
+                                                   'type' => 'Fixed',
+                                                   'redefine_param' => 1
+                                                 },
+                                       'M_Aw' => {
+                                                   'info' => 'Parameter',
+                                                   'deafult' => '   32',
+                                                   'global_param' => 'Localparam',
+                                                   'content' => '',
+                                                   'type' => 'Fixed',
+                                                   'redefine_param' => 1
+                                                 }
+                                     },
+                     'plugs' => {
+                                  'wb_master' => {
+                                                   'wb_master' => {},
+                                                   '0' => {
+                                                            'name' => 'wbm'
+                                                          },
+                                                   'value' => 1,
+                                                   'type' => 'num'
+                                                 },
+                                  'reset' => {
+                                               'reset' => {},
+                                               '0' => {
+                                                        'name' => 'reset'
+                                                      },
+                                               'value' => 1,
+                                               'type' => 'num'
+                                             },
+                                  'clk' => {
+                                             'clk' => {},
+                                             '0' => {
+                                                      'name' => 'clk'
+                                                    },
+                                             'value' => 1,
+                                             'type' => 'num'
+                                           }
+                                },
+                     'modules' => {
+                                    'wb_if' => {},
+                                    'vjtag_wb' => {},
+                                    'vjtag_ctrl' => {}
+                                  },
+                     'ports_order' => [
+                                        'clk',
+                                        'reset',
+                                        'm_sel_o',
+                                        'm_dat_o',
+                                        'm_addr_o',
+                                        'm_cti_o',
+                                        'm_stb_o',
+                                        'm_cyc_o',
+                                        'm_we_o',
+                                        'm_dat_i',
+                                        'm_ack_i',
+                                        'status_i'
+                                      ],
+                     'ports' => {
+                                  'm_dat_i' => {
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'intfc_port' => 'dat_i',
+                                                 'range' => 'DW-1           :  0',
+                                                 'type' => 'input'
+                                               },
+                                  'm_sel_o' => {
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'intfc_port' => 'sel_o',
+                                                 'range' => 'SELw-1          :   0',
+                                                 'type' => 'output'
+                                               },
+                                  'm_addr_o' => {
+                                                  'intfc_name' => 'plug:wb_master[0]',
+                                                  'intfc_port' => 'adr_o',
+                                                  'range' => 'M_Aw-1          :   0',
+                                                  'type' => 'output'
+                                                },
+                                  'm_dat_o' => {
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'intfc_port' => 'dat_o',
+                                                 'range' => 'DW-1            :   0',
+                                                 'type' => 'output'
+                                               },
+                                  'm_cyc_o' => {
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'intfc_port' => 'cyc_o',
+                                                 'range' => '',
+                                                 'type' => 'output'
+                                               },
+                                  'm_cti_o' => {
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'intfc_port' => 'cti_o',
+                                                 'range' => 'TAGw-1          :   0',
+                                                 'type' => 'output'
+                                               },
+                                  'm_stb_o' => {
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'intfc_port' => 'stb_o',
+                                                 'range' => '',
+                                                 'type' => 'output'
+                                               },
+                                  'm_we_o' => {
+                                                'intfc_name' => 'plug:wb_master[0]',
+                                                'intfc_port' => 'we_o',
+                                                'range' => '',
+                                                'type' => 'output'
+                                              },
+                                  'status_i' => {
+                                                  'intfc_name' => 'IO',
+                                                  'intfc_port' => 'NC',
+                                                  'range' => '',
+                                                  'type' => 'input'
+                                                },
+                                  'clk' => {
+                                             'intfc_name' => 'plug:clk[0]',
+                                             'intfc_port' => 'clk_i',
+                                             'range' => '',
+                                             'type' => 'input'
+                                           },
+                                  'reset' => {
+                                               'intfc_name' => 'plug:reset[0]',
+                                               'intfc_port' => 'reset_i',
+                                               'range' => '',
+                                               'type' => 'input'
+                                             },
+                                  'm_ack_i' => {
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'intfc_port' => 'ack_i',
+                                                 'range' => '',
+                                                 'type' => 'input'
+                                               }
+                                },
+                     'parameters_order' => [
+                                             'DW',
+                                             'AW',
+                                             'S_Aw',
+                                             'M_Aw',
+                                             'TAGw',
+                                             'SELw',
+                                             'VJTAG_INDEX'
+                                           ],
+                     'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/jtag/jtag_wb/vjtag_wb.v',
+                     'module_name' => 'vjtag_wb',
+                     'unused' => {
+                                   'plug:wb_master[0]' => [
+                                                            'tag_o',
+                                                            'bte_o',
+                                                            'err_i',
+                                                            'rty_i'
+                                                          ]
+                                 },
+                     'category' => 'JTAG'
+                   }, 'ip_gen' );

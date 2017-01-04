@@ -5,10 +5,11 @@ TOOLCHAIN="$PRONOC_WORK/toolchain"
 
 
 # Compile using C pre-processor
+
 ELFFILE="rom"
 XILFLAGS="-mtune=v5.00 -mxl-soft-div -msoft-float -mxl-barrel-shift -mno-xl-soft-mul"
 CXXFLAGS="-O1"
-LNKFLAGS="-Wl,-defsym -Wl,_STACK_SIZE=0x400 -Wl,-defsym -Wl,_HEAP_SIZE=0x400"
+LNKFLAGS="-Wl,-defsym -Wl,_STACK_SIZE=${STACK_SIZE} -Wl,-defsym -Wl,_HEAP_SIZE=${HEAP_SIZE}"
 LIBFLAGS=""
 INCFLAGS="-Icc/"
 RAMSIZE="3FFF" #for aeMB ramwith of 12
@@ -33,9 +34,11 @@ echo "xgcc=$?" && \
 $TOOLCHAIN/aemb/bin/mb-objcopy -O ihex $ELFFILE $ELFFILE.ihex && \
 #echo "copy2ihex=$?" && \
 
-# Generate a MIF file from the IHEX file
-$TOOLCHAIN/ihex2mif/ihex2mif -f $ELFFILE.ihex -e $RAMSIZE -o ram.mif && \
+# Generate a MIF & BIN files from the IHEX file
+$TOOLCHAIN/bin/ihex2mif -f $ELFFILE.ihex -e $RAMSIZE -o ram.mif && \
 echo "ihex2mif=$?" 
+$TOOLCHAIN/bin/ihex2bin -i $ELFFILE.ihex  -o ram.bin && \
+echo "ihex2bin=$?" 
 
 # echo the checksum
 #MD5=$(sha1sum $ELFFILE | cut -c1-32) && \

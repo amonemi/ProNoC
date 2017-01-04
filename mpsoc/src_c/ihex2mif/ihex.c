@@ -11,6 +11,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
+
+#ifndef MAX_MEMORY_SIZE
+	#define MAX_MEMORY_SIZE 	65535
+#endif
 
 /* some ansi prototypes.. maybe ought to make a .h file */
 
@@ -30,7 +35,7 @@ int parse_hex_line(char *theline, int bytes[], int *addr, int *num, int *code);
 void hexout(FILE *fhex, int byte, int memory_location, int end);
 
 
-extern int	memory[65536];		/* the memory is global */
+extern int	memory[MAX_MEMORY_SIZE+1];		/* the memory is global */
 
 /* parses a line of intel hex code, stores the data in bytes[] */
 /* and the beginning address in addr, and returns a 1 if the */
@@ -145,8 +150,8 @@ char *command;
 		printf("    the addresses must be hexidecimal format\n");
 		return;
 	}
-	begin &= 65535;
-	end &= 65535;
+	begin &= MAX_MEMORY_SIZE;
+	end &= MAX_MEMORY_SIZE;
 	if (begin > end) {
 		printf("   Begin address must be less than end address.\n");
 		return;

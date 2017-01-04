@@ -1,0 +1,20 @@
+
+Quick hack commandline tools to interact with Altera FPGA Virtual JTAG interfaces,
+using the USB Blaster device (as integrated on Terasic dev boards, etc).
+
+Not terribly fancy or optimized but only depends on libusb-1.0
+
+Currently does not support multiple devices on the chain.
+
+jtag.c - provides simple jtag interface
+jtag-virtual.c - provides simple virtual jtag interface
+
+jload.c - example of using the virtual jtag interface for a downloader interface
+          with a CTRL/ADDR/DATA register set.  CTRL[0] asserts reset, writes to
+          DATA store to [ADDR] and auto-increment ADRR.
+
+jinfo.c - dumps idcode and virtual jtag hub and device info table
+
+
+Why?  Scripting the Altera quartus_stp tool in TCL was driving me nuts.
+

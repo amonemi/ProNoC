@@ -26,9 +26,11 @@ module combined_vc_sw_alloc #(
 	nonspec_granted_dest_port_all,
 	spec_granted_dest_port_all,
 	any_ivc_sw_request_granted_all,
+	any_ovc_granted_in_outport_all,
 	spec_ovc_num_all,
 	lk_destination_all, 
-	clk,reset
+	clk,
+	reset
 
 );
 
@@ -43,9 +45,9 @@ module combined_vc_sw_alloc #(
 
 					
 					
-	input  [PVP_1-1    		:	0]	dest_port_all;
-	input  [PVV-1          :   0]  masked_ovc_request_all;	
-	input  [PV-1			:	0]	ovc_is_assigned_all;
+	input  [PVP_1-1    		:	0] dest_port_all;
+	input  [PVV-1           :   0] masked_ovc_request_all;	
+	input  [PV-1			:	0] ovc_is_assigned_all;
 	input  [PV-1			:	0] ivc_request_all;
 	input  [PV-1			:	0] assigned_ovc_not_full_all;
 	
@@ -55,13 +57,14 @@ module combined_vc_sw_alloc #(
 	output [PV-1			:	0] ivc_num_getting_ovc_grant;
 	output [PV-1			:	0] ivc_num_getting_sw_grant;
 	output [PV-1			:	0] nonspec_first_arbiter_granted_ivc_all;
-	output [PV-1			:	0]	spec_first_arbiter_granted_ivc_all;
-	output [P-1				:	0] any_ivc_sw_request_granted_all;	
-	output [PP_1-1			:	0]	granted_dest_port_all;
-	output [PP_1-1			:	0]	nonspec_granted_dest_port_all;
-	output [PP_1-1			:	0]	spec_granted_dest_port_all; 
-	output [PVV-1			:	0]	spec_ovc_num_all;
-	input  [PVP_1-1         :   0]  lk_destination_all;
+	output [PV-1			:	0] spec_first_arbiter_granted_ivc_all;
+	output [P-1				:	0] any_ivc_sw_request_granted_all;
+	output [P-1             :   0] any_ovc_granted_in_outport_all;	
+	output [PP_1-1			:	0] granted_dest_port_all;
+	output [PP_1-1			:	0] nonspec_granted_dest_port_all;
+	output [PP_1-1			:	0] spec_granted_dest_port_all; 
+	output [PVV-1			:	0] spec_ovc_num_all;
+	input  [PVP_1-1         :   0] lk_destination_all;
 	
 	input								clk,reset;
 
@@ -73,7 +76,8 @@ module combined_vc_sw_alloc #(
 			.P(P),						
 			.TREE_ARBITER_EN(1),
 			.DEBUG_EN(DEBUG_EN)			
-		)the_base_line
+		)
+		the_base_line
 		(
 			.dest_port_all(dest_port_all), 
 			.masked_ovc_request_all(masked_ovc_request_all),
@@ -102,7 +106,8 @@ module combined_vc_sw_alloc #(
 			.V(V),	
 			.P(P),
 			.DEBUG_EN(DEBUG_EN)
-		)the_comb_spec1
+		)
+		the_comb_spec1
 		(
 			.dest_port_all(dest_port_all), 
 			.masked_ovc_request_all(masked_ovc_request_all),
@@ -174,6 +179,7 @@ module combined_vc_sw_alloc #(
 				.nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all), 
 				.granted_dest_port_all(granted_dest_port_all), 
 				.any_ivc_sw_request_granted_all(any_ivc_sw_request_granted_all),
+				.any_ovc_granted_in_outport_all(any_ovc_granted_in_outport_all),
 				.clk(clk), 
 				.reset(reset)
 			);
@@ -182,7 +188,8 @@ module combined_vc_sw_alloc #(
 				.V(V),	
 				.P(P),
 				.FIRST_ARBITER_EXT_P_EN(FIRST_ARBITER_EXT_P_EN)
-			)nonspec_comb
+			)
+			nonspec_comb
 			(
 				.dest_port_all(dest_port_all), 
 				.masked_ovc_request_all(masked_ovc_request_all),
@@ -196,6 +203,7 @@ module combined_vc_sw_alloc #(
 				.nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all), 
 				.granted_dest_port_all(granted_dest_port_all), 
 				.any_ivc_sw_request_granted_all(any_ivc_sw_request_granted_all),
+				.any_ovc_granted_in_outport_all(any_ovc_granted_in_outport_all),
 				.lk_destination_all(lk_destination_all),
 				.clk(clk), 
 				.reset(reset)

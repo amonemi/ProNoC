@@ -47,8 +47,8 @@ integer i;
 initial begin 
     reset = 1'b1;
     start = 1'b0;
-    pck_size=10;
-    ratio =45;
+    pck_size=4;
+    ratio =50;
     i=0;
     #40
     repeat(8) begin 
@@ -60,6 +60,12 @@ initial begin
         @(posedge clk) start = 1'b0;
         @(posedge done) 
         #100
+	 ratio=0;
+	@(posedge clk) start = 1'b1;
+        @(posedge clk) start = 1'b0;
+	#10000;
+
+
         ratio= ratio +5;
         i=i+1'b1;
     end
@@ -81,33 +87,34 @@ endmodule
 
 
 module testbench_sub #(
-    parameter V=1,
-    parameter P=5,
+    parameter V=2,
     parameter B=5,
-    parameter NX=8,
-    parameter NY=8,
-    parameter C=1,
+    parameter NX=4,
+    parameter NY=4,
+    parameter C=2,
     parameter Fpay=32,
     parameter MUX_TYPE="ONE_HOT",
     parameter VC_REALLOCATION_TYPE="NONATOMIC",
     parameter COMBINATION_TYPE="COMB_NONSPEC",
     parameter FIRST_ARBITER_EXT_P_EN=0,
     parameter TOPOLOGY="MESH",
-    parameter ROUTE_NAME="DUATO",
-    parameter CONGESTION_INDEX=12,
+    parameter ROUTE_NAME="XY",
+    parameter CONGESTION_INDEX=7,
     parameter ROUTE_SUBFUNC= "XY",
-    parameter AVC_ATOMIC_EN= 1,
+    parameter AVC_ATOMIC_EN= 0,
     parameter ADD_PIPREG_AFTER_CROSSBAR=0,
-    parameter ADD_PIPREG_BEFORE_CROSSBAR=0,
     parameter CVw=(C==0)? V : C * V,
-    parameter [CVw-1:   0] CLASS_SETTING = {CVw{1'b1}}, // shows how each class can use VCs   
-    parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000,  // mask scape vc, valid only for full adaptive 
-    
+    parameter [CVw-1:   0] CLASS_SETTING = 4'b1111, // shows how each class can use VCs   
+    parameter [V-1  :   0] ESCAP_VC_MASK = 2'b10,  // mask scape vc, valid only for full adaptive 
+    parameter SSA_EN="YES", // "YES" , "NO"    
+      
     parameter C0_p=50,
     parameter C1_p=50,
     parameter C2_p=0,
     parameter C3_p=0,
+   // parameter TRAFFIC="TRANSPOSE1",
     parameter TRAFFIC="RANDOM",
+ //parameter TRAFFIC="CUSTOM",
     parameter HOTSPOT_PERCENTAGE=4,
     parameter HOTSOPT_NUM=4,
     parameter HOTSPOT_CORE_1=26,
@@ -115,15 +122,15 @@ module testbench_sub #(
     parameter HOTSPOT_CORE_3=22,
     parameter HOTSPOT_CORE_4=54,
     parameter HOTSPOT_CORE_5=18,
-    parameter MAX_PCK_NUM=200000,
-    parameter MAX_SIM_CLKs=100000,
+    parameter MAX_PCK_NUM=2560000,
+    parameter MAX_SIM_CLKs=1000000,
     parameter MAX_PCK_SIZ=10,
-    parameter TIMSTMP_FIFO_NUM=64,
+    parameter TIMSTMP_FIFO_NUM=2,
     parameter ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
                         (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE", 
     parameter DEBUG_EN=1,
     parameter AVG_LATENCY_METRIC= "HEAD_2_TAIL"
- 
+  
     
 
     
@@ -146,9 +153,7 @@ module testbench_sub #(
                       (CONGESTION_INDEX==12)? 3:2;
      
     
-    //localparam  ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
-    //                        (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO")?   "FULL_ADAPTIVE": "PAR_ADAPTIVE";          
-    
+   
    
     function integer log2;
       input integer number; begin   
@@ -169,7 +174,7 @@ module testbench_sub #(
         
 
     localparam      Fw      =   2+V+Fpay,
-                    NC      =   NX*NY,  //flit width; 
+                    NC     =	(TOPOLOGY=="RING")? NX    :   NX*NY, //number of cores
                     Xw      =   log2(NX),
                     Yw      =   log2(NY) , 
                     Cw      =   (C>1)? log2(C): 1,
@@ -243,7 +248,6 @@ module testbench_sub #(
         
        noc #(
         .V(V),
-        .P(P),
         .B(B), 
         .NX(NX),
         .NY(NY),
@@ -254,18 +258,16 @@ module testbench_sub #(
         .COMBINATION_TYPE(COMBINATION_TYPE),
         .FIRST_ARBITER_EXT_P_EN(FIRST_ARBITER_EXT_P_EN),
         .TOPOLOGY(TOPOLOGY),
-        .ROUTE_TYPE(ROUTE_TYPE),
         .ROUTE_NAME(ROUTE_NAME),
         .CONGESTION_INDEX(CONGESTION_INDEX),
-        //.CONGw(CONGw),
         .DEBUG_EN (DEBUG_EN),
         .ROUTE_SUBFUNC(ROUTE_SUBFUNC),
         .AVC_ATOMIC_EN(AVC_ATOMIC_EN),
         .ADD_PIPREG_AFTER_CROSSBAR(ADD_PIPREG_AFTER_CROSSBAR),
-        .ADD_PIPREG_BEFORE_CROSSBAR(ADD_PIPREG_BEFORE_CROSSBAR),
         .CVw(CVw),
         .CLASS_SETTING(CLASS_SETTING), // shows how each class can use VCs   
-        .ESCAP_VC_MASK(ESCAP_VC_MASK)  //
+        .ESCAP_VC_MASK(ESCAP_VC_MASK), //
+        .SSA_EN(SSA_EN)
                
 
     )
@@ -305,29 +307,15 @@ end
                 localparam IP_NUM   =   CORE_NUM(x,y);  
             
             traffic_gen #(
-            	.V(V),
-            	.P(P),
-            	.B(B),
-            	.NX(NX),
-            	.NY(NY),
-            	.Fpay(Fpay),
-            	.VC_REALLOCATION_TYPE(VC_REALLOCATION_TYPE),
-            	.TOPOLOGY(TOPOLOGY),
-            	.ROUTE_NAME(ROUTE_NAME),
-            	.ROUTE_TYPE(ROUTE_TYPE),
-            	.TRAFFIC(TRAFFIC),
-            	.HOTSPOT_PERCENTAGE(HOTSPOT_PERCENTAGE),
-            	.HOTSOPT_NUM(HOTSOPT_NUM),
-            	.HOTSPOT_CORE_1(HOTSPOT_CORE_1),
-            	.HOTSPOT_CORE_2(HOTSPOT_CORE_2),
-            	.HOTSPOT_CORE_3(HOTSPOT_CORE_3),
-            	.HOTSPOT_CORE_4(HOTSPOT_CORE_4),
-            	.HOTSPOT_CORE_5(HOTSPOT_CORE_5),
-            	.C(C),
-            	.C0_p(C0_p),
-            	.C1_p(C1_p),  
-            	.C2_p(C2_p),  
-            	.C3_p(C3_p),      
+                .V(V),
+                .B(B),
+                .NX(NX),
+                .NY(NY),
+                .Fpay(Fpay),
+                .C(C),
+                .VC_REALLOCATION_TYPE(VC_REALLOCATION_TYPE),
+                .TOPOLOGY(TOPOLOGY),
+                .ROUTE_NAME(ROUTE_NAME),
                 .MAX_PCK_NUM(MAX_PCK_NUM),
                 .MAX_SIM_CLKs(MAX_SIM_CLKs),
                 .MAX_PCK_SIZ(MAX_PCK_SIZ),
@@ -383,6 +371,7 @@ end
  pck_class_in_gen #(
     .NX(NX),
     .NY(NY),
+    .TOPOLOGY(TOPOLOGY),
     .C(C),
     .C0_p(C0_p),
     .C1_p(C1_p),
@@ -407,6 +396,7 @@ end
    pck_dst_gen #(
     .NX(NX),
     .NY(NY),
+    .TOPOLOGY(TOPOLOGY),
     .TRAFFIC(TRAFFIC),
     .MAX_PCK_NUM(MAX_PCK_NUM),
     .HOTSPOT_PERCENTAGE(HOTSPOT_PERCENTAGE),

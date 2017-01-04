@@ -10,12 +10,13 @@ use rvp;
 use Cwd 'abs_path';
 
 use File::Basename;
+use File::Path qw/make_path/;
 
 use Gtk2;
 
 
 require "widget.pl"; 
-
+require "readme_gen.pl";
 
 use String::Similarity;
 
@@ -50,15 +51,15 @@ use constant NUM_COLUMN     => 4;
 ################
 
 sub check_input_file{
-	my ($file,$ipgen,$soc_state,$info)=@_;
+	my ($file,$ipgen,$info)=@_;
 	my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
 	if($suffix eq '.IP'){
 		$ipgen->ipgen_add("file_name",$file);
-		set_state($soc_state,"load_file",0);
+		set_gui_status($ipgen,"load_file",0);
 		
 		
 	}else{
-		read_all_module ($file,$ipgen,$soc_state,$info);
+		read_all_module ($file,$ipgen,$info);
 	
 	}	
 	
@@ -67,7 +68,7 @@ sub check_input_file{
 
 
 sub read_all_module{
-	my ($file,$ipgen,$soc_state,$info)=@_;
+	my ($file,$ipgen,$info)=@_;
 	
 	if (!defined $file) {return; }
 	if (-e $file) { 
@@ -83,7 +84,7 @@ sub read_all_module{
 		load_deafult_setting($ipgen,$modules[0]);
 		
 		
-		set_state($soc_state,"file_selected",1);
+		set_gui_status($ipgen,"file_selected",1);
 		show_info(\$info,"Select the module which contain the interface ports\n ");	
 	    
 	}
@@ -98,14 +99,14 @@ sub read_all_module{
 #	create_interface_tree 
 ##############
 sub create_interface_tree {
-   my ($info,$intfc,$ipgen,$soc_state)=@_;
+   my ($info,$intfc,$ipgen)=@_;
    my $model = Gtk2::TreeStore->new ('Glib::String', 'Glib::String', 'Glib::Scalar', 'Glib::Boolean');
    my $tree_view = Gtk2::TreeView->new;
    $tree_view->set_model ($model);
    my $selection = $tree_view->get_selection;
 
    $selection->set_mode ('browse');
-   $tree_view->set_size_request (200, -1);
+  # $tree_view->set_size_request (200, -1);
  
 
   # my @interface= $intfc->get_interfaces();
@@ -144,7 +145,7 @@ sub create_interface_tree {
    my $cell = Gtk2::CellRendererText->new;
    $cell->set ('style' => 'italic');
    my $column = Gtk2::TreeViewColumn->new_with_attributes
- 					("Double click to add the interface",
+ 					("Interfaces list",
                                         $cell,
                                         'text' => DISPLY_COLUMN,
                                         'style_set' => ITAL_COLUMN);
@@ -185,7 +186,7 @@ sub create_interface_tree {
 
 	if($name){ 
 		#print "$infc_name-$infc_type  is selected via row activaton!\n";
-		add_intfc_to_ip($intfc,$ipgen,$name,'plug',\$info,$soc_state);
+		add_intfc_to_ip($intfc,$ipgen,$name,'plug',\$info);
 	
 	}
 
@@ -198,7 +199,7 @@ sub create_interface_tree {
   $scrolled_window->set_shadow_type ('in');
   $scrolled_window->add($tree_view);
 
-  my $hbox = Gtk2::HBox->new (TRUE, 0);
+  my $hbox = Gtk2::HBox->new (FALSE, 0);
   $hbox->pack_start ( $scrolled_window, TRUE, TRUE, 0);
 
   
@@ -233,17 +234,20 @@ sub save_ports_all{
 #############
 
 sub ip_file_box {
-	my ($ipgen,$soc_state,$info,$table,$row)=@_;
+	my ($ipgen,$info,$table,$row)=@_;
 	my $label = gen_label_in_left(" Select file:");
 	my $entry = Gtk2::Entry->new;
 	#my $open= def_image_button("icons/select.png","Open");
 	my $browse= def_image_button("icons/browse.png","Browse");
-	my $label2= gen_label_in_left(" IP name:");
-	my $entry2= gen_entry();
 	my $file= $ipgen->ipgen_get("file_name");
 	if(defined $file){$entry->set_text($file);}
-	my $ip_name= $ipgen->ipgen_get("ip_name");
-	if(defined $ip_name){$entry2->set_text($ip_name);}
+
+
+	
+	my $entry2=labele_widget_info(" IP name:",gen_entry_object($ipgen,'ip_name',undef,undef,undef,undef));
+
+
+
 	show_info(\$info,"Please select the verilog file containig the ip module\n");
 	$browse->signal_connect("clicked"=> sub{
 		my $entry_ref=$_[1];
@@ -267,7 +271,7 @@ sub ip_file_box {
         	if ( "ok" eq $dialog->run ) {
             		$file = $dialog->get_filename;
 					$$entry_ref->set_text($file);
-					check_input_file($file,$ipgen,$soc_state,$info);
+					check_input_file($file,$ipgen,$info);
             		#print "file = $file\n";
        		 }
        		$dialog->destroy;
@@ -278,32 +282,21 @@ sub ip_file_box {
 	
 	
 	
-	#$open->signal_connect("clicked"=> sub{
-		#my $file_name=$entry->get_text();
-		#check_input_file($file_name,$ipgen,$soc_state,$info);
-		
-		#});
+	
 	$entry->signal_connect("activate"=>sub{
 		my $file_name=$entry->get_text();
-		check_input_file($file_name,$ipgen,$soc_state,$info);
+		check_input_file($file_name,$ipgen,$info);
 	});
 		
 	$entry->signal_connect("changed"=>sub{
 		show_info(\$info,"Please select the verilog file containig the interface\n");
 	});
-	$entry2->signal_connect("changed"=>sub{
-		my $name=$entry2->get_text();
-		$ipgen->ipgen_add("ip_name",$name);
-		
-	});
+	
 	$table->attach_defaults ($label, 0, 1 , $row, $row+1);
 	$table->attach_defaults ($entry, 1, 8 , $row, $row+1);
-	$table->attach_defaults ($browse, 8, 9, $row, $row+1);
-	$table->attach_defaults ($label2, 9, 10, $row, $row+1);
-	$table->attach_defaults ($entry2,  10, 11, $row, $row+1);
-	#$table->attach_defaults ($open,  7, 8, $row, $row+1);
-	#$table->attach_defaults ($entry, $col, $col+1, $row, $row+1);
-	#return $table;
+	$table->attach ($browse, 8, 9, $row, $row+1,,'expand','shrink',2,2);
+	$table->attach_defaults ($entry2,  9, 11, $row, $row+1);
+	
 	
 	
 }
@@ -312,60 +305,73 @@ sub ip_file_box {
 
 
 sub select_module{
-	my ($ipgen,$soc_state,$info,$table,$row)=@_;
-	my $label= gen_label_in_left("  Select\n module:");
+	my ($ipgen,$info,$table,$row)=@_;
+
+	
 	my @modules= $ipgen->ipgen_get_module_list();
 	my $saved_module=$ipgen->ipgen_get("module_name");
 	my $pos=(defined $saved_module ) ? get_scolar_pos( $saved_module,@modules) : 0;
 	my $combo = gen_combo(\@modules, $pos);
+	my $top_module=labele_widget_info("  Select\n module:",$combo);
+
+
+
+
 	my $param= def_image_button("icons/setting.png","Parameter\n   setting");
 	my $def= def_image_button("icons/setting.png","Definition\n file setting");
-	my $label2= gen_label_in_left("  Select\n Category:");
-	my ($category,$category_entry)=gen_entry_help('Define the IP category:e.g RAM, GPIO,...');
+	
+	
+	
+	#Category	
+	my $ip = ip->lib_new ();
+	my @categories= $ip->ip_get_categories();
+	$ip =undef;
 	my $saved_category=$ipgen->ipgen_get("category");
-	if(defined $saved_category){$category_entry->set_text($saved_category);}
-	my $ipinfo= def_image_button("icons/info.png","    IP\n Description");
+	if(defined $saved_category ){	push(@categories,$saved_category) if(!( grep /^$saved_category$/, @categories ));}
+	my $content=join( ',', @categories);	
+	my $combentry=gen_comboentry_object ($ipgen,'category',undef,$content,$saved_category,undef,undef);
+	my $category=labele_widget_info("  Select\n Category:",$combentry,"Select the IP category form the given list or you can add a new category.");
+
+
+	
+	my $ipinfo= def_image_button("icons/add_info.png","    IP\n Description");
 	my $header_h= def_image_button("icons/h_file.png","Add Software\n      files");
 	my $lib_hdl= def_image_button("icons/add-notes.png","Add HDL\n     files");
 	
-	$table->attach_defaults ($label, 0, 1 , $row, $row+1);
-	$table->attach_defaults ($combo, 1, 4 , $row,$row+1);
-	$table->attach_defaults ($param, 4, 6 , $row, $row+1);
-	#$table->attach_defaults ($def, 5, 6 , $row, $row+1);
-	$table->attach_defaults ($label2, 6, 7 , $row, $row+1);	
-	$table->attach_defaults ($category, 7, 8 , $row, $row+1);
-	$table->attach_defaults ($ipinfo, 8, 9 , $row, $row+1);
-	$table->attach_defaults ($header_h, 9, 10 , $row, $row+1);
-	$table->attach_defaults ($lib_hdl, 10, 11 , $row, $row+1);
+
+	#$table->attach_defaults ($top_module, 0, 1 , $row, $row+1);
+	$table->attach ($top_module, 0, 4 , $row,$row+1,'fill','shrink',2,2);
+	$table->attach ($param, 4, 6 , $row, $row+1,'expand','shrink',2,2);
+		
+	$table->attach ($category, 6, 8 , $row, $row+1,'expand','shrink',2,2);
+	$table->attach ($ipinfo, 8, 9 , $row, $row+1,'expand','shrink',2,2);
+	$table->attach ($header_h, 9, 10 , $row, $row+1,'expand','shrink',2,2);
+	$table->attach ($lib_hdl, 10, 11 , $row, $row+1,'expand','shrink',2,2);
 	
 	
 	$combo->signal_connect("changed"=> sub{
 		
 		my $module= $combo->get_active_text();
 		load_deafult_setting($ipgen,$module); 
-		set_state($soc_state,'intfc_changed',0);
+		set_gui_status($ipgen,'intfc_changed',0);
 		
 		
 	});
 	
 	$param->signal_connect("clicked"=> sub{
-		get_parameter_setting($ipgen,$soc_state,$info);
+		get_parameter_setting($ipgen,$info);
 		
 		
 	});	
 
 	$def->signal_connect("clicked"=> sub{
-		get_def_setting($ipgen,$soc_state,$info);
+		get_def_setting($ipgen,$info);
 		
 		
 	});	
-	$category_entry->signal_connect("changed"=> sub{
-		my $name=$category_entry->get_text();
-		$ipgen->ipgen_add("category",$name);
-		
-	});
+	
 	$ipinfo->signal_connect("clicked"=> sub{
-		get_Description($ipgen,$soc_state,$info);		
+		get_Description($ipgen,$info);		
 		
 	});	
 	$header_h->signal_connect("clicked"=> sub{
@@ -406,8 +412,8 @@ header file example
 		$page_info{2}{help}=$help3;
 
 
-		get_source_file($ipgen,$soc_state,$info,0,"Add software file(s)","SW",\%page_info);
-		#get_software_file($ipgen,$soc_state,$info,0);		
+		get_source_file($ipgen,$info,0,"Add software file(s)","SW",\%page_info);
+		#get_software_file($ipgen,$info,0);		
 		
 	});	
 	$lib_hdl->signal_connect("clicked"=> sub{
@@ -420,9 +426,9 @@ header file example
 		$page_info{0}{folder_en}=1; 
 		$page_info{0}{help}=$help1;
 
-		get_source_file($ipgen,$soc_state,$info,0,"Add HDL file(s)", "hw",\%page_info);
+		get_source_file($ipgen,$info,0,"Add HDL file(s)", "hw",\%page_info);
 
-		#get_hdl_file($ipgen,$soc_state,$info);
+		#get_hdl_file($ipgen,$info);
 				
 		
 	});	
@@ -444,7 +450,7 @@ sub load_deafult_setting{
 			#print "$p\n";
 			my $v = $parameters{$p};
 			$v =~s/[\n]//gs;
-			$ipgen->ipgen_add_parameter($p,$v,'Fixed','');
+			$ipgen->ipgen_add_parameter($p,$v,'Fixed','','Parameter',1);
 			
 	}
 	#add parameter order. 
@@ -460,12 +466,12 @@ sub load_deafult_setting{
 }
 
 sub file_info_box {
-	my($ipgen,$soc_state,$info)=@_;
+	my($ipgen,$info)=@_;
 	my $table=def_table(2,11,FALSE);
 	my $table1=def_table(1,11,FALSE);
 	my $table2=def_table(1,11,FALSE);
-	ip_file_box ($ipgen,$soc_state,$info,$table1,0);
-	select_module($ipgen,$soc_state,$info,$table2,0);
+	ip_file_box ($ipgen,$info,$table1,0);
+	select_module($ipgen,$info,$table2,0);
 	$table->attach_defaults($table1,0,11,0,1);
 	$table->attach_defaults($table2,0,11,1,2);
 	return $table;
@@ -477,8 +483,8 @@ sub file_info_box {
 
 
 sub show_file_info{
-	my($ipgen,$soc_state,$info,$refresh_ref)=@_;
-	my $table = file_info_box($ipgen,$soc_state,$info,$info);
+	my($ipgen,$info,$refresh_ref)=@_;
+	my $table = file_info_box($ipgen,$info,$info);
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
 	$scrolled_win->set_policy( "automatic", "never" );
 	$scrolled_win->add_with_viewport($table);
@@ -487,7 +493,7 @@ sub show_file_info{
 
 	$$refresh_ref-> signal_connect("clicked" => sub{ 
 		$table->destroy;
-		$table = file_info_box($ipgen,$soc_state,$info,$info);
+		$table = file_info_box($ipgen,$info,$info);
 		
 		$scrolled_win->add_with_viewport($table);
 		$table->show;
@@ -505,8 +511,8 @@ sub show_file_info{
 
 
 sub show_port_info{
-	my($intfc,$ipgen,$soc_state,$info,$refresh_ref)=@_;
-	my $table = port_info_box($intfc,$ipgen,$soc_state,$info,$info);
+	my($intfc,$ipgen,$info,$refresh_ref)=@_;
+	my $table = port_info_box($intfc,$ipgen,$info,$info);
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
 	$scrolled_win->set_policy( "automatic", "automatic" );
 	$scrolled_win->add_with_viewport($table);
@@ -515,7 +521,7 @@ sub show_port_info{
 
 	$$refresh_ref-> signal_connect("clicked" => sub{ 
 		$table->destroy;
-		$table = port_info_box($intfc,$ipgen,$soc_state,$info,$info);
+		$table = port_info_box($intfc,$ipgen,$info,$info);
 		
 		$scrolled_win->add_with_viewport($table);
 		$table->show;
@@ -532,8 +538,8 @@ sub show_port_info{
 
 
 sub show_interface_info{
-	my($intfc,$ipgen,$soc_state,$info,$refresh_ref)=@_;
-	my $table = interface_info_box($intfc,$ipgen,$soc_state,$info,$info);
+	my($intfc,$ipgen,$info,$refresh_ref)=@_;
+	my $table = interface_info_box($intfc,$ipgen,$info,$info);
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
 	$scrolled_win->set_policy( "automatic", "automatic" );
 	$scrolled_win->add_with_viewport($table);
@@ -543,7 +549,7 @@ sub show_interface_info{
 	$$refresh_ref-> signal_connect("clicked" => sub{ 
 		$table->destroy;
 		select(undef, undef, undef, 0.1); #wait 10 ms
-		$table = interface_info_box($intfc,$ipgen,$soc_state,$info,$info);
+		$table = interface_info_box($intfc,$ipgen,$info,$info);
 		
 		$scrolled_win->add_with_viewport($table);
 		$table->show;
@@ -569,24 +575,25 @@ sub show_interface_info{
 #  get_parameter_setting
 ##########
 sub get_parameter_setting { 
-	my ($ipgen,$soc_state,$info)=@_;
+	my ($ipgen,$info)=@_;
 	
-	my $module = $ipgen->ipgen_get("module_name");
+	
 	my $file= $ipgen->ipgen_get("file_name");
 	if (!defined $file) {
 			message_dialog("The input verilog file is empty");
 			return;
 			
 	}		
+	my $module = $ipgen->ipgen_get("module_name");
 	
-	#my $titelbox=def_title_box(TRUE,5,("Parameter name","Deafult value","Widget type","Widget content","Global param   Optional info",));
-	
+	my($width,$hight)=max_win_size();
+	my $window =  def_popwin_size(.85*$width,.5*$hight,"Define parameters detail");	
 	
 	
 	
 	
 	my @widget_type_list=("Fixed","Entry","Combo-box","Spin-button");
-	my @param_type_list=("localparam-pass", "parameter-pass", "localparam-notpass","parameter-notpass");
+	my @param_type_list=("Parameter","Localparam","Don't include");
 	my $type_info="Define the parameter type: 
 
 Fixed: The parameter is fixed and get the default value. Users can not see or change the parameter value.
@@ -600,8 +607,7 @@ Spin-button: The parameter is numeric and will be obtained using spin button.";
 For Fixed and Entry leave it empty.
 For Combo box define the parameters which must be shown in combo box as: "PAEAMETER1","PARAMETER2"...,"PARAMETERn".
 For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
-	my $param_info='
-	If checked, the parameter will be defined as parameter in SoC file too, otherwise it will be defined as localparam.';
+	my $param_info='Define how parameter is included in the top module containig this IP core.';
 
 	my $redefine_info='
 	If checked, the defined parameter/localparam in SoC will be passed to the IP core';
@@ -623,13 +629,13 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 	
 	
 	foreach my $t (@title){
-		$table->attach_defaults ($title[$col], $positions[$col], $positions[$col+1], 0, 1);$col++;
+		$table->attach ($title[$col], $positions[$col], $positions[$col+1], 0, 1,'expand','shrink',2,2); $col++;
 
 	}
 	
 
 	
-	my ($box,$window)=def_scrolled_window_box(1200,500,"Define parameters detail");
+	
 	
 	
 	
@@ -639,8 +645,7 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 	if((@params_order)) {@parameters=@params_order;}
 	
 	my $ok = def_image_button('icons/select.png','OK');
-	my $okbox=def_hbox(TRUE,0);
-	$okbox->pack_start($ok,   FALSE, FALSE,0);
+	
 
 	my ($b,$new_param)= def_h_labeled_entry("Add new parameter name:");
 	my $add = def_image_button('icons/plus.png','Add parameter');
@@ -654,7 +659,7 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 	
 	push(@parameters,"#new#");
 	foreach my $p (@parameters) {
-		my ($saved_deafult,$saved_widget_type,$saved_content,$saved_info,$global_param,$redefine_param)=  $ipgen->ipgen_get_parameter_detail($p);
+		my ($saved_deafult,$saved_widget_type,$saved_content,$saved_info,$vfile_param_type,$redefine_param)=  $ipgen->ipgen_get_parameter_detail($p);
 		#print 	"($saved_deafult,$saved_type,$saved_content)\n";
 		my $parameter_box = def_hbox(TRUE,5);
 		my $param_name;
@@ -671,8 +676,17 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 		my $pos=(defined $saved_widget_type ) ? get_scolar_pos( $saved_widget_type,@widget_type_list) : 0;
 		my $widget_type_combo=gen_combo(\@widget_type_list, $pos);
 		my $content_entry= gen_entry($saved_content);
-		my $check_param= Gtk2::CheckButton->new('Parameter');
-		$check_param->set_active($global_param) if(defined $global_param );
+
+
+		
+		$vfile_param_type= "Don't include" if (!defined $vfile_param_type );
+		$vfile_param_type= "Parameter"  if ($vfile_param_type eq 1);
+		$vfile_param_type= "Localparam" if ($vfile_param_type eq 0);
+		$pos=get_scolar_pos($vfile_param_type,@param_type_list);
+		my $check_param= gen_combo(\@param_type_list, $pos);
+
+
+		#$check_param->set_active($vfile_param_type) if(defined $vfile_param_type );
 		my $check_redefine= Gtk2::CheckButton->new('Redefine');
 		$check_redefine->set_active(1) ;
 		$check_redefine->set_active($redefine_param) if(defined $redefine_param );		
@@ -682,16 +696,16 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 
 
 		#my $check= Gtk2::CheckButton->new;
-		#$check->set_active($global_param) if(defined $global_param );
+		#$check->set_active($vfile_param_type) if(defined $vfile_param_type );
 
 
-		my $info=def_image_button("icons/addinfo.png");
-		#print "\$global_param =$global_param\n";
+		my $info=def_image_button("icons/add_info.png");
+		#print "\$vfile_param_type =$vfile_param_type\n";
 		
 		$col=0;
 		my @all_widget=($param_name,$deafult_entry,$widget_type_combo,$content_entry,$check_param,$check_redefine,$info,$add_remove);
 		foreach my $t (@all_widget){
-			$table->attach_defaults ($t, $positions[$col], $positions[$col+1], $row, $row+1);$col++;
+			$table->attach ($t, $positions[$col], $positions[$col+1], $row, $row+1,'expand','shrink',2,2);$col++;
 
 		}		
 		
@@ -707,11 +721,10 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 				my $deafult=$deafult_entry->get_text();
 				my $type= $widget_type_combo->get_active_text();
 				my $content=$content_entry->get_text();
-				my $check_result=$check_param->get_active();
-				my $global_param=($check_result eq 1)? 1:0;
-				$check_result=$check_redefine->get_active();
+				my $vfile_param_type=$check_param->get_active_text();					
+				my $check_result=$check_redefine->get_active();
 				my $redefine_param=($check_result eq 1)? 1:0;
-				$ipgen->ipgen_add_parameter($p,$deafult,$type,$content,$saved_info,$global_param,$redefine_param);
+				$ipgen->ipgen_add_parameter($p,$deafult,$type,$content,$saved_info,$vfile_param_type,$redefine_param);
 			}
 		});
 		$add_remove->signal_connect (clicked => sub{
@@ -723,13 +736,12 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 					my $deafult=$deafult_entry->get_text();
 					my $type=$widget_type_combo->get_active_text();
 					my $content=$content_entry->get_text();
-					my $check_result=$check_param->get_active();
-					my $global_param=($check_result eq 1)? 1:0;
-					   $check_result=$check_redefine->get_active();
+					my $vfile_param_type=$check_param->get_active_text();	
+					my $check_result=$check_redefine->get_active();
 					my $redefine_param=($check_result eq 1)? 1:0;
-					$ipgen->ipgen_add_parameter($param,$deafult,$type,$content,$saved_info,$global_param,$redefine_param);
+					$ipgen->ipgen_add_parameter($param,$deafult,$type,$content,$saved_info,$vfile_param_type,$redefine_param);
 					$ipgen->ipgen_push_parameters_order($param);
-					set_state($soc_state,"change_parameter",0);
+					set_gui_status($ipgen,"change_parameter",0);
 					$ok->clicked;
 					#$window->destroy();
 				}
@@ -737,7 +749,7 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 			} else { #remove the parameter
 				$ipgen->ipgen_remove_parameter($p);
 				$ipgen->ipgen_remove_parameters_order($p);
-				set_state($soc_state,"change_parameter",0);
+				set_gui_status($ipgen,"change_parameter",0);
 				$ok->clicked;
 					#$window->destroy();
 	
@@ -746,7 +758,7 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 			#	if( length($param_name) ){
 			#		print "$param_name\n";
 			#		$ipgen->ipgen_add_parameter($param_name,undef);
-			#		set_state($soc_state,"change_parameter",0);
+			#		set_gui_status($ipgen,"change_parameter",0);
 			#		$window->destroy();
 			
 		});
@@ -755,21 +767,28 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 		
 	$row++;	
 	}
-	$box->pack_start( $table, FALSE, FALSE, 3);
-
-	for (my $i=$row; $i<7;$i++){
-		my $temp=gen_label_in_center(' ');
-		$box->pack_start($temp,   TRUE, FALSE,3);
-	}
 	
-	$box->pack_start($okbox,   TRUE, FALSE,3);
+
+
+
+	
+	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
+	$scrolled_win->set_policy( "automatic", "automatic" );
+	$scrolled_win->add_with_viewport($table);
+
+
+
+
+	
+	
+	
 
 	$add->signal_connect (clicked => sub{
 		my $param_name=$new_param->get_text();
 		if( length($param_name) ){
 			#print "$param_name\n";
 			$ipgen->ipgen_add_parameter($param_name,undef);
-			set_state($soc_state,"change_parameter",0);
+			set_gui_status($ipgen,"change_parameter",0);
 			$window->destroy();
 		}
 
@@ -783,11 +802,15 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 
 	});
 	
-
+	my $mtable = def_table(10, 1, FALSE);
+	$mtable->attach_defaults($scrolled_win,0,1,0,9);
+	$mtable->attach($ok,0,1,9,10,'expand','shrink',2,2);
+	
+	$window->add ($mtable);
+	$window->show_all();
 	
 	
 	
-	$window->show_all;
 }
 
 
@@ -797,10 +820,11 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 #  get_def_setting
 ##########
 sub get_def_setting { 
-	my ($ipgen,$soc_state,$info)=@_;
+	my ($ipgen,$info)=@_;
 	my $table = Gtk2::Table->new (15, 15, TRUE);
 	my $table2 = Gtk2::Table->new (15, 15, TRUE);
-	my $window=def_popwin_size(600,600,"Add definition file");
+	my($width,$hight)=max_win_size();
+	my $window =  def_popwin_size(.7*$width,.7*$hight,"Add definition file");
 	my $ok=def_image_button("icons/select.png",' Ok ');
 	my $scrwin=  new Gtk2::ScrolledWindow (undef, undef);
 	$scrwin->set_policy( "automatic", "automatic" );
@@ -809,9 +833,9 @@ sub get_def_setting {
 	my $label=gen_label_help("You ","Selecet the Verilog file containig the definitions."); 
 	my $brows=def_image_button("icons/browse.png",' Browse');
 	$table->attach_defaults($label,0,10,0,1);
-	$table->attach_defaults($brows,10,12,1,2);
+	$table->attach($brows,10,12,1,2,'expand','shrink',2,2);
 	$table->attach_defaults($scrwin,0,15,2,14);
-	$table->attach_defaults($ok,6,9,14,15);
+	$table->attach($ok,6,9,14,15,'expand','shrink',2,2);
 
 	$window->add($table);
 	$window->show_all;
@@ -825,16 +849,17 @@ sub get_def_setting {
 #########
 
 sub get_Description{
-	my ($ipgen,$soc_state,$info)=@_;
+	my ($ipgen,$info)=@_;
 	my $description = $ipgen->ipgen_get("description");	
-	my $table = Gtk2::Table->new (15, 15, TRUE);
-	my $window=def_popwin_size(500,500,"Add description");
+	my $table = Gtk2::Table->new (15, 15, FALSE);
+	my($width,$hight)=max_win_size();
+	my $window =  def_popwin_size(.4*$width,.4*$hight, "Add description");
 	my ($scrwin,$text_view)=create_text();
 	#my $buffer = $textbox->get_buffer();
 	my $ok=def_image_button("icons/select.png",' Ok ');
 	
 	$table->attach_defaults($scrwin,0,15,0,14);
-	$table->attach_defaults($ok,6,9,14,15);
+	$table->attach($ok,6,9,14,15,'expand','shrink',2,2);
 	my $text_buffer = $text_view->get_buffer;
 	if(defined $description) {$text_buffer->set_text($description)};
 	
@@ -865,14 +890,14 @@ sub gen_file_list{
 	my ($ipgen,$list_name,$window,$rename_file_en)=@_;
 	
 
-	my $table=def_table(10,10,TRUE);#	my ($row,$col,$homogeneous)=@_;
+	my $table=def_table(10,10,FALSE);#	my ($row,$col,$homogeneous)=@_;
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
 	my $ok=def_image_button("icons/select.png",' Ok ');
 
 	$scrolled_win->set_policy( "automatic", "automatic" );
 	$scrolled_win->add_with_viewport($table);
-	$table->attach_defaults (gen_label_in_center("File path"), 0, 5 , 0, 1);
-   	$table->attach_defaults (gen_label_help("The target name can contain any of Global variables e.g \$IP\$.h","Copy as"), 5, 9 , 0, 1) if(defined $rename_file_en);
+	$table->attach  (gen_label_in_center("File path"), 0, 5 , 0, 1,'expand','shrink',2,2);
+   	$table->attach (gen_label_help("The target name can contain any of Global variables e.g \$IP\$.h","Copy as"), 5, 9 , 0, 1,'expand','shrink',2,2) if(defined $rename_file_en);
 	my $col=0;
         my $row=1;
 	my @files=  $ipgen->ipgen_get_list($list_name); #@{$ref};
@@ -882,9 +907,9 @@ sub gen_file_list{
 			my $entry=gen_entry($path);
 			my $entry2=gen_entry($rename) ;
 			my $remove=def_image_button("icons/cancel.png");
-			$table->attach_defaults ($entry, 0, 5 , $row, $row+1);
-			$table->attach_defaults ($entry2, 5, 9 , $row, $row+1) if(defined $rename_file_en);
-			$table->attach_defaults ($remove, 9,10 , $row, $row+1);
+			$table->attach  ($entry, 0, 5 , $row, $row+1,'fill','shrink',2,2);
+			$table->attach  ($entry2, 5, 9 , $row, $row+1,'fill','shrink',2,2) if(defined $rename_file_en);
+			$table->attach ($remove, 9,10 , $row, $row+1,'expand','shrink',2,2);
 			$row++;		
 			$remove->signal_connect("clicked"=> sub {
 				my @saved_files=$ipgen->ipgen_get_list($list_name);
@@ -938,13 +963,14 @@ sub gen_file_list{
 
 sub get_param_info{
 	my ($ipgen,$saved_info)=@_;
-	my $table = Gtk2::Table->new (15, 15, TRUE);
-	my $window=def_popwin_size(500,500,"Add description");
+	my $table = Gtk2::Table->new (15, 15, FALSE);
+	my($width,$hight)=max_win_size();
+	my $window =  def_popwin_size(.5*$width,.5*$hight,"Add description");
 	my ($scrwin,$text_view)=create_text();
 	my $ok=def_image_button("icons/select.png",' Ok ');
 	
 	$table->attach_defaults($scrwin,0,15,0,14);
-	$table->attach_defaults($ok,6,9,14,15);
+	$table->attach($ok,6,9,14,15,'expand','shrink',2,2);
 	my $text_buffer = $text_view->get_buffer;
 	if(defined $$saved_info) {$text_buffer->set_text($$saved_info)};
 	
@@ -965,8 +991,8 @@ sub get_param_info{
 
 
 sub interface_info_box {
-	my($intfc,$ipgen,$soc_state,$info)=@_;
-	my $table=def_table(7,7,TRUE);
+	my($intfc,$ipgen,$info)=@_;
+	my $table=def_table(7,7,FALSE);
 	my @sokets=$ipgen->ipgen_list_sokets;
 	my @plugs=$ipgen->ipgen_list_plugs;
 	
@@ -975,9 +1001,9 @@ sub interface_info_box {
 	
 	my $row=0;
 	my $col=0;
-	$table->attach_defaults (gen_label_in_center(" Interface name"), $positions[0], $positions[1], $row, $row+1);
-	$table->attach_defaults (gen_label_in_center("Type"), $positions[1], $positions[2], $row, $row+1);
-	$table->attach_defaults (gen_label_in_left("Interface Num"), $positions[2], $positions[3], $row, $row+1);
+	$table->attach (gen_label_in_center(" Interface name"), $positions[0], $positions[1], $row, $row+1,'expand','shrink',2,2);
+	$table->attach (gen_label_in_center("Type"), $positions[1], $positions[2], $row, $row+1,'expand','shrink',2,2);
+	$table->attach (gen_label_in_left("Interface Num"), $positions[2], $positions[3], $row, $row+1,'expand','shrink',2,2);
 	
 	$row++;
 	my @type_list=('plug','socket');
@@ -991,37 +1017,39 @@ sub interface_info_box {
 		my $name_setting=def_image_button('icons/setting.png');
 		$remove->signal_connect ('clicked'=> sub{
 			$ipgen->ipgen_remove_socket($p);
-			set_state($soc_state,'intfc_changed',0);		
+			set_gui_status($ipgen,'intfc_changed',0);		
 			
 			}  );
 		$name_setting->signal_connect ('clicked'=> sub{
-			get_intfc_setting($ipgen,$soc_state,$p,'socket');
+			get_intfc_setting($ipgen,$p,'socket');
 			
 			
 		});	
 		$combo_type	->signal_connect ('changed'=> sub{
 			$ipgen->ipgen_remove_socket($p);
-			add_intfc_to_ip($intfc,$ipgen,$p,'plug',$info,$soc_state);
+			add_intfc_to_ip($intfc,$ipgen,$p,'plug',$info);
 				
 			}  );
-		$table->attach_defaults ($remove, $positions[4], $positions[5], $row, $row+1);	
+		$table->attach ($remove, $positions[4], $positions[5], $row, $row+1,'expand','shrink',2,2);
+
+	
 		if ($type eq 'num'){
 			my ($type_box,$type_spin)=gen_spin_help ('Define the number of this interface in module', 1,1024,1);
 			$type_box->pack_start($name_setting,FALSE,FALSE,0);
 			$type_spin->set_value($value);
 			my $advance_button=def_image_button('icons/advance.png','separate');
-			$table->attach_defaults ($type_box, $positions[2], $positions[3], $row, $row+1);
-			$table->attach_defaults ($advance_button, $positions[3], $positions[4], $row, $row+1);	
+			$table->attach ($type_box, $positions[2], $positions[3], $row, $row+1,'expand','shrink',2,2);
+			$table->attach ($advance_button, $positions[3], $positions[4], $row, $row+1,'expand','shrink',2,2);
 			$type_spin->signal_connect("value_changed"=>sub{
 				my $wiget=shift;
 				my $num=$wiget->get_value_as_int();
 				$ipgen->ipgen_add_soket($p,'num',$num);
-				set_state($soc_state,'intfc_changed',0);
+				set_gui_status($ipgen,'intfc_changed',0);
 				
 			});
 			$advance_button->signal_connect("clicked"=>sub{
 				$ipgen->ipgen_add_soket($p,'param');
-				set_state($soc_state,'intfc_changed',0);
+				set_gui_status($ipgen,'intfc_changed',0);
 				
 			});	
 			
@@ -1036,18 +1064,18 @@ sub interface_info_box {
 			my ($type_box,$type_combo)=gen_combo_help ('Define the parameter which determine the number of this interface in module',\@parameters,$pos);
 			$type_box->pack_start($name_setting,FALSE,FALSE,0);
 			my $advance_button=def_image_button('icons/advance.png','concatenate');
-			$table->attach_defaults ($type_box, $positions[2], $positions[3], $row, $row+1);
-			$table->attach_defaults ($advance_button, $positions[3], $positions[4], $row, $row+1);		
+			$table->attach ($type_box, $positions[2], $positions[3], $row, $row+1,'expand','shrink',2,2);
+			$table->attach ($advance_button, $positions[3], $positions[4], $row, $row+1,'expand','shrink',2,2);	
 			$type_combo->signal_connect("changed"=>sub{
 				my $wiget=shift;
 				my $value=$wiget->get_active_text();
 				$ipgen->ipgen_add_soket($p,'param',$value);
-				set_state($soc_state,'intfc_changed',0);
+				set_gui_status($ipgen,'intfc_changed',0);
 				
 			});
 			$advance_button->signal_connect("clicked"=>sub{
 				$ipgen->ipgen_add_soket($p,'num',0);
-				set_state($soc_state,'intfc_changed',0);
+				set_gui_status($ipgen,'intfc_changed',0);
 				
 			});	
 			
@@ -1058,8 +1086,8 @@ sub interface_info_box {
 		
 		
 		
-		$table->attach_defaults ($label_name, $positions[0], $positions[1], $row, $row+1);
-		$table->attach_defaults ($combo_type, $positions[1], $positions[2], $row, $row+1);
+		$table->attach ($label_name, $positions[0], $positions[1], $row, $row+1,'expand','shrink',2,2);
+		$table->attach ($combo_type, $positions[1], $positions[2], $row, $row+1,'expand','shrink',2,2);
 		
 		
 		
@@ -1074,20 +1102,20 @@ sub interface_info_box {
 		my $remove=	def_image_button('icons/cancel.png','Remove');
 		my $name_setting=def_image_button('icons/setting.png');
 		
-		$table->attach_defaults ($remove, $positions[4], $positions[5], $row, $row+1);	
+		$table->attach ($remove, $positions[4], $positions[5], $row, $row+1,'expand','shrink',2,2);
 		$remove->signal_connect ('clicked'=> sub{
 			$ipgen->ipgen_remove_plug($q);
-			set_state($soc_state,'intfc_changed',0);		
+			set_gui_status($ipgen,'intfc_changed',0);		
 			
 			}  );
 		$name_setting->signal_connect ('clicked'=> sub{
-			get_intfc_setting($ipgen,$soc_state,$q,'plug');
+			get_intfc_setting($ipgen,$q,'plug');
 			
 			
 		}	);	
 		$combo_type	->signal_connect ('changed'=> sub{
 			$ipgen->ipgen_remove_plug($q);
-			add_intfc_to_ip($intfc,$ipgen,$q,'socket',$info,$soc_state);
+			add_intfc_to_ip($intfc,$ipgen,$q,'socket',$info);
 				
 			}  );	
 		#my $range_entry=gen_entry($range);
@@ -1095,18 +1123,18 @@ sub interface_info_box {
 			my ($type_box,$type_spin)=gen_spin_help ('Define the number of this interface in module', 1,1024,1);
 			$type_box->pack_start($name_setting,FALSE,FALSE,0);
 			$type_spin->set_value($value);
-			$table->attach_defaults ($type_box, $positions[2], $positions[3], $row, $row+1);
+			$table->attach ($type_box, $positions[2], $positions[3], $row, $row+1,'expand','shrink',2,2);
 			$type_spin->signal_connect("value_changed"=>sub{
 				my $wiget=shift;
 				my $num=$wiget->get_value_as_int();
 				$ipgen->ipgen_add_plug($q,'num',$num);
-				set_state($soc_state,'intfc_changed',0);
+				set_gui_status($ipgen,'intfc_changed',0);
 				
 			});
 			
 		}	
-		$table->attach_defaults ($label_name, $positions[0], $positions[1], $row, $row+1);
-		$table->attach_defaults ($combo_type, $positions[1], $positions[2], $row, $row+1);
+		$table->attach ($label_name, $positions[0], $positions[1], $row, $row+1,'expand','shrink',2,2);
+		$table->attach ($combo_type, $positions[1], $positions[2], $row, $row+1,'expand','shrink',2,2);
 		#$table->attach_defaults ($range_entry, 2, 4, $row, $row+1);
 		
 		#wishbone address seting
@@ -1124,7 +1152,7 @@ sub interface_info_box {
 				 $addr=	def_image_button('icons/select.png');
 				
 			}	
-			$table->attach_defaults ($addr, $positions[5], $positions[6], $row, $row+1);
+			$table->attach ($addr, $positions[5], $positions[6], $row, $row+1,'expand','shrink',2,2);
 			
 			
 		}	
@@ -1146,14 +1174,13 @@ sub interface_info_box {
 
 sub get_intfc_setting{
 	
-	my ($ipgen,$soc_state,$intfc_name, $intfc_type)=@_;
+	my ($ipgen,$intfc_name, $intfc_type)=@_;
 	
-	
-	my $window =  def_popwin_size(1000,500);
+	my($width,$hight)=max_win_size();
+	my $window =  def_popwin_size(.7*$width,.7*$hight,"Interface parameter setting");
 	my $table=def_table(7,6,FALSE);
 	my $ok = def_image_button('icons/select.png','OK');
-	my $okbox=def_hbox(TRUE,0);
-	$okbox->pack_start($ok, FALSE, FALSE,0);
+	
 	
 	
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
@@ -1162,7 +1189,7 @@ sub get_intfc_setting{
 	
 	#title
 	my $lable1=gen_label_in_left("interface name");
-	$table->attach_defaults( $lable1,0,2,0,1);
+	$table->attach ( $lable1,0,2,0,1,'expand','shrink',2,2);
 	
 	
 	
@@ -1184,7 +1211,7 @@ sub get_intfc_setting{
 		else						{$saved_name= $ipgen->ipgen_get_socket_name($intfc_name,$number);}
 		my  $entry_name=gen_entry($saved_name);
 		
-		$table->attach_defaults($entry_name,0,2,$i+1,$i+2);
+		$table->attach($entry_name,0,2,$i+1,$i+2,'expand','shrink',2,2);
 		$ok->signal_connect('clicked'=>sub{
 				my $new_name=$entry_name->get_text();
 				#print "my new name is: $new_name\n";
@@ -1200,10 +1227,11 @@ sub get_intfc_setting{
 	#wishbone addr
 	if($intfc_name eq 'wb_slave' &&  $intfc_type eq 'plug'){ 
 		my $lable2=gen_label_in_center("address range: (start end name)");
-		my $lable3=gen_label_in_center("block address width");
+		my $lable3=gen_label_help("This field defines the total memory_map address  which is required by this module in byte. ( =2 ^ block_address_width).
+You can define a fixed value or assign it to any of module parameter","block address width");
 
-		$table->attach_defaults( $lable2,2,5,0,1);
-		$table->attach_defaults( $lable3,5,6,0,1);
+		$table->attach ( $lable2,2,5,0,1,'expand','shrink',2,2);
+		$table->attach ( $lable3,5,6,0,1,'expand','shrink',2,2);
 		
 		my $plug=$intfc_name;
 		my $wb= wb_addr->wb_addr_new();
@@ -1301,8 +1329,8 @@ sub get_intfc_setting{
 				$sbox->show_all();
 			});
 		
-			$table->attach_defaults($name_combo,2,5,$i+1,$i+2);
-			$table->attach_defaults($sbox,5,6,$i+1,$i+2);
+			$table->attach ($name_combo,2,5,$i+1,$i+2 ,'expand','shrink',2,2);
+			$table->attach ($sbox,5,6,$i+1,$i+2,'expand','shrink',2,2);
 			$ok->signal_connect('clicked'=>sub{
 				my $addr=$name_combo->get_active_text();
 				my $in=$comb->get_active_text();
@@ -1318,19 +1346,13 @@ sub get_intfc_setting{
 	
 	}
 
-	while($i<7){
-		$i++;
-		my $tmp=gen_label_in_left('  ');
-		$table->attach_defaults($tmp,5,6,$i,$i+1);
-		
-	}
-
-	 $i=($i<7)? 7:$i;
 	
 
-	my $mtable = def_table(10, 1, TRUE);
+	
+
+	my $mtable = def_table(10, 1, FALSE);
 	$mtable->attach_defaults($scrolled_win,0,1,0,9);
-	$mtable->attach_defaults($okbox,0,1,9,10);
+	$mtable->attach($ok,0,1,9,10,'expand','shrink',2,2);
 	
 	$window->add ($mtable);
 	$window->show_all();
@@ -1340,7 +1362,7 @@ sub get_intfc_setting{
 
 	 $ok->signal_connect('clicked'=>sub{
 			$window->destroy;
-			set_state($soc_state,"interface_selected",1);
+			set_gui_status($ipgen,"interface_selected",1);
 			 
 		 } );
 
@@ -1362,13 +1384,13 @@ sub is_integer {
 
 
 sub add_intfc_to_ip{
-	my ($intfc,$ipgen,$infc_name,$infc_type,$info,$soc_state)=@_;
+	my ($intfc,$ipgen,$infc_name,$infc_type,$info)=@_;
 	if($infc_type eq 'socket'){ 
 		my ($connection_num,$connect_to)=$intfc->get_socket($infc_name);
 		$ipgen->ipgen_add_soket($infc_name,'num',1,$connection_num);
 	}
 	else { $ipgen->ipgen_add_plug($infc_name,'num',1);}
-	set_state($soc_state,"interface_selected",1);
+	set_gui_status($ipgen,"interface_selected",1);
 	
 }	
 
@@ -1451,7 +1473,7 @@ sub gen_intfc_port_combo{
 		
 	}
 	else  {
-		@ports=('IO');
+		@ports=('IO','NC');
 	}
 	my $saved_intfc_port=$ipgen->ipgen_get_port_intfc_port($portname);	
 	my $pos=(defined $saved_intfc_port ) ? get_scolar_pos( $saved_intfc_port,@ports) : undef;
@@ -1474,8 +1496,8 @@ sub gen_intfc_port_combo{
 
 
 sub port_info_box {
-	my($intfc,$ipgen,$soc_state,$info)=@_;
-	my $table=def_table(8,10,TRUE);
+	my($intfc,$ipgen,$info)=@_;
+	my $table=def_table(8,10,FALSE);
 	my @ports=$ipgen->ipgen_list_ports;
 	my $row=0;
 	my ($name_ref,$ref)=get_list_of_all_interfaces($ipgen);
@@ -1483,11 +1505,11 @@ sub port_info_box {
 	my @interfaces=@{$ref};
 	#print "@interfaces_name\n";
 	
-	$table->attach_defaults (gen_label_in_left(" Type "), 0, 1, $row, $row+1);
-	$table->attach_defaults (gen_label_in_left(" Port name "), 1, 3, $row, $row+1);
-	$table->attach_defaults (gen_label_in_left(" Interface name "), 3, 5, $row, $row+1);
-	$table->attach_defaults (gen_label_in_center(" Range "), 5, 7, $row, $row+1);	
-	$table->attach_defaults (gen_label_in_left(" Interface port "), 7, 9, $row, $row+1);
+	$table->attach  (gen_label_in_left(" Type "), 0, 1, $row, $row+1,'expand','shrink',2,2);
+	$table->attach  (gen_label_in_left(" Port name "), 1, 3, $row, $row+1,'expand','shrink',2,2);
+	$table->attach  (gen_label_in_left(" Interface name "), 3, 5, $row, $row+1,'expand','shrink',2,2);
+	$table->attach  (gen_label_in_center(" Interface port  "), 5, 7, $row, $row+1,'fill','shrink',2,2);
+	$table->attach  (gen_label_in_left("  Port Range "), 7, 9, $row, $row+1,'expand','shrink',2,2);
 	$row++;
 	#print  @interfaces;
 	my @ports_order=$ipgen->ipgen_get_ports_order();
@@ -1499,7 +1521,7 @@ sub port_info_box {
 	foreach my $p( @ports){
 		my ($range,$type,$intfc_name,$intfc_port)=$ipgen->ipgen_get_port($p);
 		#my $label_name=gen_label_in_left(" $p ");
-		my $name_entry=gen_entry($p);
+		my $name_entry=gen_label_in_left($p);
 		my $label_type=gen_label_in_left(" $type ");
 		my $range_entry=gen_entry($range);
 		my $pos=(defined $intfc_name ) ? get_scolar_pos( $intfc_name,@interfaces) : 0;
@@ -1511,18 +1533,19 @@ sub port_info_box {
 		my $intfc_port_combo=gen_intfc_port_combo($intfc,$ipgen,$intfc_name,$type,$p);
 		
 		
-		$table->attach_defaults ($label_type, 0, 1, $row, $row+1);
-		$table->attach_defaults ($name_entry, 1, 3, $row, $row+1);
-		$table->attach_defaults ($intfc_name_combo,3, 5, $row, $row+1);
-		$table->attach_defaults ($range_entry, 5, 7, $row, $row+1);
-		$table->attach_defaults ($intfc_port_combo,7, 9, $row, $row+1);
+		$table->attach ($label_type, 0, 1, $row, $row+1,'expand','shrink',2,2);
+		$table->attach ($name_entry, 1, 3, $row, $row+1,'expand','shrink',2,2);
+		$table->attach ($intfc_name_combo,3, 5, $row, $row+1,'expand','shrink',2,2);
+		$table->attach ($intfc_port_combo, 5, 7, $row, $row+1,'fill','shrink',2,2);
+		$table->attach ($range_entry ,7, 9, $row, $row+1,'fill','shrink',2,2);
+				
 		$intfc_name_combo->signal_connect('changed'=>sub{
 			my $intfc_name=$intfc_name_combo->get_active_text();
 			my $pos=  get_scolar_pos( $intfc_name,@interfaces_name);
 			#my($type,$name,$num)= split("[:\[ \\]]", $intfc_name);
 			#print "$type,$name,$num\n";
 			$ipgen->ipgen_set_port_intfc_name($p,$interfaces[$pos]);
-			set_state($soc_state,"interface_selected",1);
+			set_gui_status($ipgen,"interface_selected",1);
 		});
 		$range_entry->signal_connect('changed'=>sub{
 			my $new_range=$range_entry->get_text();
@@ -1550,6 +1573,9 @@ sub generate_ip{
 	my $name=$ipgen->ipgen_get("module_name");
 	my $category=$ipgen->ipgen_get("category");
 	my $ip_name= $ipgen->ipgen_get("ip_name");
+	my $dir = Cwd::getcwd();
+	
+
 	#check if name has been set
 	if(defined ($name) && defined ($category)){
 		if (!defined $ip_name) {$ip_name= $name}
@@ -1565,7 +1591,9 @@ sub generate_ip{
   			my $response = $dialog->run;
   			if ($response eq 'yes') {
       			# Write
-				open(FILE,  ">lib/ip/$ip_name.IP") || die "Can not open: $!";
+				mkpath("$dir/lib/ip/$category/",1,01777);				
+				open(FILE,  ">lib/ip/$category/$ip_name.IP") || die "Can not open: \">lib/ip/$category/$ip_name.IP\" $!";
+				print FILE perl_file_header("$ip_name.IP");				
 				print FILE Data::Dumper->Dump([\%$ipgen],[$name]);
 				close(FILE) || die "Error closing file: $!";
 				my $message="IP $ip_name has been generated successfully" ;
@@ -1579,7 +1607,9 @@ sub generate_ip{
 			
 		}else{
 			# Write
-			open(FILE,  ">lib/ip/$ip_name.IP") || die "Can not open: $!";
+			mkpath("$dir/lib/ip/$category/",1,01777);	
+			open(FILE,  ">lib/ip/$category/$ip_name.IP") || die "Can not open: $!";
+			print FILE perl_file_header("$ip_name.IP");
 			print FILE Data::Dumper->Dump([\%$ipgen],[$name]);
 			close(FILE) || die "Error closing file: $!";
 			my $message="IP $ip_name has been generated successfully" ;
@@ -1608,7 +1638,7 @@ return 1;
 ########
 
 sub load_ip{
-	my ($ipgen,$soc_state)=@_;
+	my ($ipgen)=@_;
 	my $file;
 	my $dialog = Gtk2::FileChooserDialog->new(
             	'Select a File', undef,
@@ -1630,7 +1660,7 @@ sub load_ip{
 		my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
 		if($suffix eq '.IP'){
 			$ipgen->ipgen_add("file_name",$file);	
-			set_state($soc_state,"load_file",0);
+			set_gui_status($ipgen,"load_file",0);
 		}					
      }
      $dialog->destroy;
@@ -1651,26 +1681,30 @@ sub load_ip{
 
 
 sub get_source_file{
-	my($ipgen,$soc_state,$info,$page,$title,$dest,$page_info_ref)=@_;
+	my($ipgen,$info,$page,$title,$dest,$page_info_ref)=@_;
 
 		
-	my $var_list='${parameter_name}: Verilog module parameter values. 
-
-${BASE}: is the wishbone base addresse(s) and will be added during soc generation to system.h. If more than one slave wishbone bus are used  define them as ${BASE0}, ${BASE1}... . 
+	my $var_list='${parameter_name}: Verilog module parameter values.
+ 
+${CORE_ID} Each wishbone bus based SoC will have a unique CORE_ID that represents its location in NoC topology. CORE_ID=((y * number_of_nodes_in_x_ dimension) + x) where (x,y) are the node location in x and y axises. If the generated tile is used as top level module CORE_ID will take the default value of zero.
       
 ${IP}: is the peripheral device instance name.
 
-${CORE}: is the peripheral device module name.';
+${CORE}: is the peripheral device module name.
+
+${BASE}: is the wishbone base addresse(s) and will be added during soc generation to system.h. If more than one slave wishbone bus are used  define them as ${BASE0}, ${BASE1}... . 
+'
+;
 	my $var_help=gen_button_message($var_list,"icons/info.png","Global variables");
 	
 	my($width,$hight)=max_win_size();
 	my $window = def_popwin_size($width*2/3,$hight*2/3,$title);
 	
-	my $notebook=source_notebook($ipgen,$soc_state,$info,$window,$page,$dest,$page_info_ref);
-	my $table=def_table (15, 15, TRUE);						
+	my $notebook=source_notebook($ipgen,$info,$window,$page,$dest,$page_info_ref);
+	my $table=def_table (15, 15, FALSE);						
 	
 		
-	$table->attach_defaults ($var_help, 5, 7, 0, 1);
+	$table->attach ($var_help, 5, 7, 0, 1,'expand','shrink',2,2);
 	$table->attach_defaults ($notebook , 0, 15, 1, 15);
 		
 	$window->add($table);
@@ -1684,14 +1718,14 @@ ${CORE}: is the peripheral device module name.';
 ##########
 
 sub source_notebook{
-	my($ipgen,$soc_state,$info,$window,$page,$dest,$page_info_ref)=@_;
+	my($ipgen,$info,$window,$page,$dest,$page_info_ref)=@_;
 	my $notebook = Gtk2::Notebook->new;
 	my %page_info=%{$page_info_ref};
 	foreach my $p (sort keys %page_info){
 		my $page_ref;
-		$page_ref=get_file_folder($ipgen,$soc_state,$info,$window,$p,$page_info_ref) if($page_info{$p}{filed_type} eq "exsiting_file/folder"); 
-		$page_ref=get_file_folder($ipgen,$soc_state,$info,$window,$p,$page_info_ref) if($page_info{$p}{filed_type} eq "file_generators"); 
-		$page_ref=get_file_content($ipgen,$soc_state,$info,$window,$page_info{$p},$page_info_ref) if($page_info{$p}{filed_type} eq "file_content"); 
+		$page_ref=get_file_folder($ipgen,$info,$window,$p,$page_info_ref) if($page_info{$p}{filed_type} eq "exsiting_file/folder"); 
+		$page_ref=get_file_folder($ipgen,$info,$window,$p,$page_info_ref) if($page_info{$p}{filed_type} eq "file_generators"); 
+		$page_ref=get_file_content($ipgen,$info,$window,$page_info{$p},$page_info_ref) if($page_info{$p}{filed_type} eq "file_content"); 
 		$notebook->append_page ($page_ref,Gtk2::Label->new_with_mnemonic ($page_info{$p}{page_name}));
 
 	}	
@@ -1706,18 +1740,18 @@ sub source_notebook{
 #########
 
 sub get_file_folder{
-	my ($ipgen,$soc_state,$info,$window,$page,$page_info_ref)=@_;
+	my ($ipgen,$info,$window,$page,$page_info_ref)=@_;
 	my %page_info=%{$page_info_ref};
 	my @sw_dir = $ipgen->ipgen_get_list($page_info{$page}{filed_name});
-	my $table = Gtk2::Table->new (15, 15, TRUE);	
+	my $table = Gtk2::Table->new (15, 15, FALSE);	
 	my $help=gen_label_help($page_info{$page}{help});	
-	$table->attach_defaults($help,0,2,0,1);	
+	$table->attach ($help,0,2,0,1,'expand','shrink',2,2);	
 	my ($scrwin,$ok)=gen_file_list($ipgen,$page_info{$page}{filed_name},$window,$page_info{$page}{rename_file});
 	
 	my $label=gen_label_in_left("Selecet file(s):"); 
 	my $brows=def_image_button("icons/browse.png",' Browse');
-	$table->attach_defaults($label,2,4,0,1);
-	$table->attach_defaults($brows,4,6,0,1);
+	$table->attach ($label,2,4,0,1,'expand','shrink',2,2);
+	$table->attach($brows,4,6,0,1,'expand','shrink',2,2);
 	
 	my $dir = Cwd::getcwd();
 	my $project_dir	  = abs_path("$dir/../../"); #mpsoc directory address
@@ -1750,7 +1784,7 @@ sub get_file_folder{
             			
             		}            		
             		$ipgen->ipgen_add($page_info{$page}{filed_name},\@sw_dir);
-            		get_source_file($ipgen,$soc_state,$info,$page,"Add software file(s)","SW",$page_info_ref);
+            		get_source_file($ipgen,$info,$page,"Add software file(s)","SW",$page_info_ref);
             		$window->destroy;
             		
        		 }
@@ -1760,8 +1794,8 @@ sub get_file_folder{
 	if($page_info{$page}{folder_en} eq 1){
 		my $label2=gen_label_in_left("Selecet folder(s):"); 
 		my $brows2=def_image_button("icons/browse.png",' Browse');
-		$table->attach_defaults($label2,7,9,0,1);
-		$table->attach_defaults($brows2,9,11,0,1);
+		$table->attach($label2,7,9,0,1,'expand','shrink',2,2);
+		$table->attach($brows2,9,11,0,1,'expand','shrink',2,2);
 
 		$brows2->signal_connect("clicked"=> sub {
 			my @files;
@@ -1791,7 +1825,7 @@ sub get_file_folder{
 		    		}
 		    		
 		    		$ipgen->ipgen_add($page_info{$page}{filed_name},\@sw_dir);
-		    		get_source_file($ipgen,$soc_state,$info,$page,"Add software file(s)","SW",$page_info_ref);
+		    		get_source_file($ipgen,$info,$page,"Add software file(s)","SW",$page_info_ref);
 		    		$window->destroy;
 		    		
 		    		
@@ -1809,7 +1843,7 @@ sub get_file_folder{
 	
 	
 	$table->attach_defaults($scrwin,0,15,1,14);
-	$table->attach_defaults($ok,6,9,14,15);
+	$table->attach($ok,6,9,14,15,'expand','shrink',2,2);
 	
 	return ($table)
 
@@ -1823,16 +1857,16 @@ sub get_file_folder{
 #########
 
 sub get_file_content{
-	my ($ipgen,$soc_state,$info,$window,$page_info_ref)=@_;
+	my ($ipgen,$info,$window,$page_info_ref)=@_;
 	my %page_info=%{$page_info_ref};
 	#my $hdr = $ipgen->ipgen_get_hdr();
 	my  $hdr = $ipgen-> ipgen_get($page_info{filed_name});	
-	my $table = Gtk2::Table->new (14, 15, TRUE);
+	my $table = Gtk2::Table->new (14, 15, FALSE);
 	#my $window=def_popwin_size(600,600,"Add header file");
 	my ($scrwin,$text_view)=create_text();
 
 	my $help=gen_label_help($page_info{help}); 
-	$table->attach_defaults($help,0,8,0,1);
+	$table->attach ($help,0,8,0,1,'expand','shrink',2,2);
 	$table->attach_defaults($scrwin,0,15,1,14);
 	my $text_buffer = $text_view->get_buffer;
 	if(defined $hdr) {$text_buffer->set_text($hdr)};	
@@ -1845,7 +1879,7 @@ sub get_file_content{
 				
 	});
 
-	$table->attach_defaults($ok,6,9,14,15);
+	$table->attach($ok,6,7,14,15,'expand','shrink',2,2);
 	return ($table);
 	
 }	
@@ -1870,7 +1904,7 @@ sub get_file_content{
 ###########
 
 sub get_unused_intfc_ports_list {
-	my($intfc,$ipgen,$soc_state,$info)=@_;
+	my($intfc,$ipgen,$info)=@_;
 	my @ports=$ipgen->ipgen_list_ports;
 	my ($name_ref,$ref)=get_list_of_all_interfaces($ipgen);
 	my @interfaces_name=@{$name_ref};
@@ -1888,7 +1922,7 @@ sub get_unused_intfc_ports_list {
 			@all_ports= $intfc->get_plug_port_list($name);
 		}
 		foreach my $p(@all_ports){
-				my $r= check_intfc_port_exits($intfc,$ipgen,$soc_state,$info,$intfc_name,$p);
+				my $r= check_intfc_port_exits($intfc,$ipgen,$info,$intfc_name,$p);
 				if ($r eq "0"){
 					$ipgen->ipgen_add_unused_intfc_port( $intfc_name,$p );
 				}
@@ -1899,7 +1933,7 @@ sub get_unused_intfc_ports_list {
 }
 
 sub check_intfc_port_exits{
-	my($intfc,$ipgen,$soc_state,$info,$intfc_name,$intfc_port)=@_;
+	my($intfc,$ipgen,$info,$intfc_name,$intfc_port)=@_;
 	my @ports=$ipgen->ipgen_list_ports;
 	
 	
@@ -1943,10 +1977,8 @@ sub ipgen_main{
 	my $ipgen=shift;
 	my $intfc=interface->interface_new();
 	if(!defined $ipgen) { $ipgen=ip_gen->ip_gen_new();}
-	#my $ipgen = eval { do 'lib/ip/wishbone_bus.IP' };
-	my $soc_state=  def_state("ideal");
-	# main window
-	#my $window = def_win_size(1000,800,"Top");
+	set_gui_status($ipgen,"ideal",0);	
+	
 	#  The main table containg the lib tree, selected modules and info section 
 	my $main_table = def_table (15, 12, FALSE);
 	
@@ -1956,65 +1988,63 @@ sub ipgen_main{
 	
 	my $refresh_dev_win = Gtk2::Button->new_from_stock('ref');
 	my $generate = def_image_button('icons/gen.png','Generate');
-	my $genbox=def_hbox(TRUE,5);
-	$genbox->pack_start($generate,   FALSE, FALSE,3);
+	
 	
 	# A tree view for holding a library
-	my $tree_box = create_interface_tree  ($info,$intfc,$ipgen,$soc_state);
+	my $tree_box = create_interface_tree  ($info,$intfc,$ipgen);
 
 
-	my $file_info=show_file_info($ipgen,$soc_state,$info,\$refresh_dev_win);
-	my $port_info=show_port_info($intfc,$ipgen,$soc_state,$info,\$refresh_dev_win);
-	my $intfc_info=show_interface_info($intfc,$ipgen,$soc_state,$info,\$refresh_dev_win);
+	my $file_info=show_file_info($ipgen,$info,\$refresh_dev_win);
+	my $port_info=show_port_info($intfc,$ipgen,$info,\$refresh_dev_win);
+	my $intfc_info=show_interface_info($intfc,$ipgen,$info,\$refresh_dev_win);
 	
 	
 	my $open = def_image_button('icons/browse.png','Load IP');
-	my $openbox=def_hbox(TRUE,0);
-	$openbox->pack_start($open,   FALSE, FALSE,0);
+	
 
 	$main_table->set_row_spacings (4);
 	$main_table->set_col_spacings (1);
 	
-	#my  $device_win=show_active_dev($soc,$lib,$infc,$soc_state,\$refresh_dev_win,$info);
+	#my  $device_win=show_active_dev($soc,$lib,$infc,\$refresh_dev_win,$info);
 	
 	
 	#$table->attach_defaults ($event_box, $col, $col+1, $row, $row+1);
 	$main_table->attach_defaults ($tree_box , 0, 2, 0, 13);
 	$main_table->attach_defaults ($file_info , 2, 12, 0, 2);
-	$main_table->attach_defaults ($intfc_info , 2, 12, 2, 7);
+	$main_table->attach_defaults ($intfc_info , 2, 12, 2, 6);
 	
-	$main_table->attach_defaults ($port_info  , 2, 12, 7,13);
+	$main_table->attach_defaults ($port_info  , 2, 12, 6,13);
 	$main_table->attach_defaults ($infobox  , 0, 12, 13,14);
-	$main_table->attach_defaults ($genbox, 6, 8, 14,15);
-	$main_table->attach_defaults ($openbox,0, 1, 14,15);
+	$main_table->attach ($generate, 6, 8, 14,15,'expand','shrink',2,2);
+	$main_table->attach ($open,0, 1, 14,15,'expand','shrink',2,2);
 
 	#check soc status every 0.5 second. referesh device table if there is any changes 
 Glib::Timeout->add (100, sub{ 
 	 
-		my ($state,$timeout)= get_state($soc_state);
+		my ($state,$timeout)= get_gui_status($ipgen);
 		if($state eq "load_file"){
 			my $file=$ipgen->ipgen_get("file_name");
 			my $pp= eval { do $file };
 			clone_obj($ipgen,$pp);
 						
 			
-			set_state($soc_state,"ref",1);
+			set_gui_status($ipgen,"ref",1);
 			
 			
 		}elsif ($timeout>0){
 			$timeout--;
-			set_state($soc_state,$state,$timeout);		
+			set_gui_status($ipgen,$state,$timeout);		
 		}
 		elsif( $state eq "change_parameter" ){
-			get_parameter_setting($ipgen,$soc_state,$info);
-			set_state($soc_state,"ideal",0);
+			get_parameter_setting($ipgen,$info);
+			set_gui_status($ipgen,"ideal",0);
 			
 			
 			
 		}
 		elsif( $state ne "ideal" ){
 			$refresh_dev_win->clicked;
-			set_state($soc_state,"ideal",0);
+			set_gui_status($ipgen,"ideal",0);
 			
 			
 		}	
@@ -2022,12 +2052,12 @@ Glib::Timeout->add (100, sub{
 		
 		} );
 	$open-> signal_connect("clicked" => sub{ 
-		load_ip($ipgen,$soc_state);
+		load_ip($ipgen);
 	
 	});		
 		
 	$generate-> signal_connect("clicked" => sub{ 
-		get_unused_intfc_ports_list ($intfc,$ipgen,$soc_state,$info);
+		get_unused_intfc_ports_list ($intfc,$ipgen,$info);
 		generate_ip($ipgen);
 		
 		$refresh_dev_win->clicked;

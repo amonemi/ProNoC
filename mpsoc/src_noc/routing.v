@@ -714,7 +714,8 @@ module conventional_routing #(
                 west_first_routing #(
                     .NX         (NX),
                     .NY         (NY)
-                ) west_first
+                ) 
+                west_first
                 (
                     .current_x          (current_x),
                     .current_y          (current_y),
@@ -729,7 +730,8 @@ module conventional_routing #(
                 north_last_routing #(
                     .NX         (NX),
                     .NY         (NY)
-                ) north_last
+                ) 
+                north_last
                 (
                     .current_x          (current_x),
                     .current_y          (current_y),
@@ -745,7 +747,8 @@ module conventional_routing #(
                 negetive_first_routing #(
                     .NX         (NX),
                     .NY         (NY)
-                ) negetive_first
+                ) 
+                negetive_first
                 (
                     .current_x          (current_x),
                     .current_y          (current_y),
@@ -778,7 +781,8 @@ module conventional_routing #(
                 duato_mesh_routing #(
                     .NX         (NX),
                     .NY         (NY)                    
-                ) duato_full_adaptive
+                ) 
+                duato_full_adaptive
                 (
                     .current_x          (current_x),
                     .current_y          (current_y),
@@ -799,7 +803,8 @@ module conventional_routing #(
                 tranc_xy_routing #(
                     .NX (NX),
                     .NY (NY)
-                ) tranc_xy
+                ) 
+                tranc_xy
                 (
                     .current_x          (current_x),
                     .current_y          (current_y),
@@ -816,7 +821,8 @@ module conventional_routing #(
                 tranc_west_first_routing #(
                     .NX         (NX),
                     .NY         (NY)
-                ) tranc_west_first
+                ) 
+                tranc_west_first
                 (
                     .current_x          (current_x),
                     .current_y          (current_y),
@@ -831,7 +837,8 @@ module conventional_routing #(
                 tranc_north_last_routing #(
                     .NX         (NX),
                     .NY         (NY)
-                ) tranc_north_last
+                ) 
+                tranc_north_last
                 (
                     .current_x          (current_x),
                     .current_y          (current_y),
@@ -846,7 +853,8 @@ module conventional_routing #(
                 tranc_negetive_first_routing #(
                     .NX         (NX),
                     .NY         (NY)
-                ) tranc_negetive_first
+                ) 
+                tranc_negetive_first
                 (
                     .current_x          (current_x),
                     .current_y          (current_y),
@@ -861,7 +869,8 @@ module conventional_routing #(
                 tranc_duato_routing #(
                     .NX         (NX),
                     .NY         (NY)
-                )duato_full_adaptive
+                )
+                duato_full_adaptive
                 (
                     .current_x          (current_x),
                     .current_y          (current_y),
@@ -877,7 +886,23 @@ module conventional_routing #(
 	    //synopsys  translate_on
             //synthesis translate_on
         end //TORUS
-
+        /*
+        else if (TOPOLOGY == "RING" ) begin :ring
+                tranc_ring_routing #(
+                    .NX(NX),
+                    .OUT_BIN(0) 
+    
+                )
+                tranc_ring                
+                (
+                    .current_x(current_x),
+                    .dest_x(dest_x),
+                    .destport(destport)    
+                );
+        
+        
+        end //"RING" 
+        */
         //synthesis translate_off
 	//synopsys  translate_off
             else begin : wrong_topology initial $display("Error: %s is an unsupported topology",TOPOLOGY); end
@@ -975,6 +1000,106 @@ module ni_conventional_routing #(
 
 
 endmodule
+
+
+
+
+/********************************************
+                        TRANC_ring
+*********************************************/
+
+module tranc_ring_routing #(
+    parameter NX   =    4,
+    parameter OUT_BIN =    0   // 1: destination port is in binary format 0: onehot 
+    
+)
+(
+    current_x,
+    dest_x,
+    destport
+    
+);
+
+    function integer log2;
+      input integer number; begin   
+         log2=0;    
+         while(2**log2<number) begin    
+            log2=log2+1;    
+         end    
+      end   
+    endfunction // log2 
+
+    
+    localparam  P           =   3,
+                Xw          =   log2(NX),
+                Pw          =   log2(P),
+                DSTw        =   (OUT_BIN)? Pw : P;
+    
+    
+    input   [Xw-1       :   0] current_x;
+    input   [Xw-1       :   0] dest_x;
+    output  [DSTw -1    :   0] destport;
+    
+    localparam      LOCAL   =   (OUT_BIN)?  3'd0    : 3'b001,  
+                    PLUS    =   (OUT_BIN)?  3'd1    : 3'b010,   
+                    MINUS   =   (OUT_BIN)?  3'd2    : 3'b100;    
+                    
+    reg [DSTw-1            :0] destport_next;
+   
+   
+
+    reg tranc_x_plus;
+    reg tranc_x_min;
+    wire same_x;
+    
+    
+
+    localparam SIGNED_X_WIDTH   =  (Xw<3) ? 4 : Xw+1;
+  
+    
+    wire signed [SIGNED_X_WIDTH-1       :0] xc;//current 
+    wire signed [SIGNED_X_WIDTH-1       :0] xd;//destination
+    wire signed [SIGNED_X_WIDTH-1       :0] xdiff;
+   
+    
+    assign  xd  ={{(SIGNED_X_WIDTH-Xw){1'b0}}, dest_x};
+    assign  xc  ={{(SIGNED_X_WIDTH-Xw){1'b0}}, current_x [Xw-1      :0]};
+    assign  xdiff   = xd-xc;
+   
+    
+    always@ (*)begin 
+        tranc_x_plus    =1'b0;
+        tranc_x_min     =1'b0;
+        if(xdiff!=0)begin 
+            if ((xdiff ==1) || 
+                 (xdiff == (-NX+1)) ||
+                 ((xc == (NX-4)) && (xd == (NX-2))) ||
+                 ((xc >= (NX-2)) && (xd <= (NX-4))) ||
+                 ((xdiff> 0) && (xd<= (NX-3)))) 
+                    tranc_x_plus    = 1'b1;
+            else    tranc_x_min     = 1'b1;
+        end
+        
+    end//always
+    
+    assign same_x = (xdiff == 0);
+ 
+
+
+
+        
+    always@(*)begin
+        if (same_x ) destport_next= LOCAL;
+        else    begin 
+            if          (tranc_x_plus)  destport_next= PLUS;
+            else if     (tranc_x_min)   destport_next= MINUS;
+         end
+    end
+
+    assign destport= destport_next;
+    
+endmodule
+
 
 
 

@@ -242,7 +242,7 @@ sub read_verilog {
 		}
 	    }
 	}
-	$self->_add_warning("$file:$line: Could not find module $m");
+	#$self->_add_warning("$file:$line: Could not find module $m");
     }
     return $self;
 } 
