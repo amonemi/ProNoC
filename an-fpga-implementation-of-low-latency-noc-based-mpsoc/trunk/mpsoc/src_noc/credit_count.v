@@ -3,7 +3,7 @@
 module credit_counter #(
 
 	parameter V = 4, // vc_num_per_port
-	parameter P	= 5, // router port num
+	parameter P = 5, // router port num
 	parameter B = 4, // buffer space :flit per VC 
 	parameter VC_REALLOCATION_TYPE	=	"NONATOMIC",// "ATOMIC" , "NONATOMIC"
 	parameter ROUTE_TYPE           =   "PAR_ADAPTIVE",// "DETERMINISTIC", "FULL_ADAPTIVE", "PAR_ADAPTIVE"
@@ -12,8 +12,9 @@ module credit_counter #(
 	parameter DEBUG_EN =   1,
 	parameter AVC_ATOMIC_EN=0,
 	parameter CONGw   =   2 //congestion width per port 
+	
 )(
-	ovc_allocated_all,
+	non_ss_ovc_allocated_all,
 	flit_is_tail_all,
 	assigned_ovc_num_all,
 	ovc_is_assigned_all,
@@ -24,9 +25,11 @@ module credit_counter #(
 	ivc_num_getting_sw_grant,
 	ovc_avalable_all,
 	assigned_ovc_not_full_all,
-	reset_ivc_all,
 	port_pre_sel,
 	congestion_in_all,
+	ssa_ovc_released_all,
+	ssa_ovc_allocated_all, 
+	ssa_decreased_credit_in_ss_ovc_all,
 	reset,clk
 );
 
@@ -56,7 +59,7 @@ module credit_counter #(
     localparam [V-1     :   0] ADAPTIVE_VC_MASK = ~ ESCAP_VC_MASK;   
     localparam  CONG_ALw=   CONGw * P;   //  congestion width per router;             
 					
-	input  [PV-1       :	0]	ovc_allocated_all;
+	input  [PV-1       :	0]	non_ss_ovc_allocated_all;
 	input  [PV-1       :	0]	flit_is_tail_all;
 	input  [PVV-1	   :	0]	assigned_ovc_num_all;
 	input  [PV-1       :	0]	ovc_is_assigned_all;
@@ -67,11 +70,13 @@ module credit_counter #(
 	input  [PV-1       :	0]	ivc_num_getting_sw_grant;
 	output [PV-1       :	0]	ovc_avalable_all;
 	output [PV-1       :	0]	assigned_ovc_not_full_all;
-	output [PV-1       :	0]	reset_ivc_all;	
-	input                       reset,clk;
-	output [P_1-1      :   0]  port_pre_sel;
-    input  [CONG_ALw-1 :    0]  congestion_in_all;  
-	
+	input                       	reset,clk;
+	output [P_1-1      :    0] port_pre_sel;
+	input  [CONG_ALw-1 :    0] congestion_in_all; 
+	//ssa
+	input  [PV-1	   :	0] ssa_ovc_released_all; 
+	input  [PV-1       :    0] ssa_ovc_allocated_all; 
+	input  [PV-1       :    0] ssa_decreased_credit_in_ss_ovc_all;
 	
 	
 	reg    [PV-1	:	0]	ovc_status;
@@ -82,14 +87,27 @@ module credit_counter #(
 	wire   [PV-1	:	0]	assigned_ovc_is_full_all;
 	wire   [VP_1-1	:	0]	credit_decreased		[P-1		:	0];
 	wire   [P_1-1	:	0]	credit_decreased_gen	[PV-1		:	0];
-	wire   [PV-1	:	0]  credit_decreased_all;
+	wire   [PV-1	:	0]  non_ss_credit_decreased_all;
 	wire   [PV-1	:	0]  credit_increased_all;
 	wire   [VP_1-1	:	0]	ovc_released			[P-1		:	0];
 	wire   [P_1-1	:	0]	ovc_released_gen		[PV-1		:	0];
-	wire   [PV-1	:	0]  ovc_released_all;
+	wire   [PV-1	:	0]  non_ss_ovc_released_all;
 	wire   [VP_1-1	:   0]  credit_in_perport		[P-1		:	0];
 	wire   [VP_1-1	:	0]  full_perport	  		[P-1		:	0];
 	wire   [VP_1-1	:	0]  nearly_full_perport	[P-1		:	0];
+	
+	
+	//ssa
+	
+	wire [PV-1  :   0] credit_decreased_all;
+    wire [PV-1  :   0] ovc_released_all;
+    wire [PV-1  :   0] ovc_allocated_all;
+    
+    assign credit_decreased_all = non_ss_credit_decreased_all | ssa_decreased_credit_in_ss_ovc_all;
+    assign ovc_released_all = non_ss_ovc_released_all | ssa_ovc_released_all;
+    assign ovc_allocated_all = non_ss_ovc_allocated_all | ssa_ovc_allocated_all;  
+	
+	
 	integer k;
 	genvar i,j;
 	generate
@@ -196,8 +214,8 @@ module credit_counter #(
 				assign credit_decreased_gen[i][j]	= credit_decreased[j][i-V];
 			end
 		end//j
-		assign ovc_released_all 	 [i] = |ovc_released_gen[i];
-		assign credit_decreased_all [i] = (|credit_decreased_gen[i])|ovc_allocated_all[i];
+		assign non_ss_ovc_released_all 	 [i] = |ovc_released_gen[i];
+		assign non_ss_credit_decreased_all [i] = (|credit_decreased_gen[i])|non_ss_ovc_allocated_all[i];
 	end//i
 	
 	
@@ -227,6 +245,7 @@ module credit_counter #(
 		 sw_mask_gen #(
 			.V (V), // vc_num_per_port
 			.P	(P) // router port num
+			
 		)sw_mask
 		(
 			.assigned_ovc_num			(assigned_ovc_num_all[(i+1)*V-1		:i*V]),
@@ -287,7 +306,7 @@ module credit_counter #(
     );
 	
 
-	
+
 	
 	always @(*) begin
 		for(k=0;	k<PV; k=k+1'b1) begin 
@@ -308,7 +327,7 @@ module credit_counter #(
 	end
 	
 
-assign	reset_ivc_all	=	flit_is_tail_all & ivc_num_getting_sw_grant;
+
 
 	//synthesis translate_off 
 	//synopsys  translate_off
@@ -320,15 +339,15 @@ if(DEBUG_EN) begin: debug
 	    end else begin
 		for(k=0;	k<PV; k=k+1'b1) begin 
 			if(credit_counter[k]== Bint && credit_increased_all[k])
-				$display("%t: ERROR: unexpected credit recived for empty ovc: %m",$time);
+				$display("%t: ERROR: unexpected credit recived for empty ovc[%d]: %m",$time,k);
 			if(credit_counter[k]== {Bw{1'b0}} && credit_decreased_all[k])
-				$display("%t: ERROR: Attempt to send flit to full ovc: %m",$time);
+				$display("%t: ERROR: Attempt to send flit to full ovc[%d]: %m",$time,k);
 			if(ovc_released_all[k] && ovc_allocated_all[k])		
-				$display("%t: ERROR: simultaneous allocation and release for an OVC: %m",$time);
+				$display("%t: ERROR: simultaneous allocation and release for an OVC[%d]: %m",$time,k);
 			if(ovc_released_all[k] && ovc_status[k]==1'b0)
-				$display("%t: ERROR: Attempt to release an unallocated OVC: %m",$time);
+				$display("%t: ERROR: Attempt to release an unallocated OVC[%d]: %m",$time,k);
 			if(ovc_allocated_all[k] && ovc_status[k]==1'b1)
-				$display("%t: ERROR: Attempt to allocate an allocated OVC(%d): %m",$time,k);
+				$display("%t: ERROR: Attempt to allocate an allocated OVC[%d]: %m",$time,k);
 		end//for
 	   end
 	end//always
@@ -361,6 +380,7 @@ if(DEBUG_EN) begin: debug
 	check_ovc #(
 		.V(V) , // vc_num_per_port
 		.P(P) // router port num
+		
 	)test
 	(
 	.ovc_status(ovc_status),
@@ -480,6 +500,7 @@ endmodule
 module sw_mask_gen #(
 		parameter V = 4, // vc_num_per_port
 		parameter P	= 5 // router port num
+		
 )(
 	assigned_ovc_num,
 	dest_port,
@@ -582,6 +603,7 @@ endmodule
 module check_ovc #(
 	parameter V = 4, // vc_num_per_port
 	parameter P	= 5 // router port num
+	
 )(
 	ovc_status,
 	assigned_ovc_num_all,
@@ -606,6 +628,7 @@ module check_ovc #(
 	wire [V-1		:	0] assigned_ovc_num	[PV-1		:	0];
 	wire [P_1-1		:	0]	destport_sel		[PV-1		:	0];
 	wire [P-1		:	0]	destport_num		[PV-1		:	0];
+	
 	wire [PV-1		:	0] ovc_num				[PV-1		:	0];
 	genvar i;
 	generate
@@ -617,12 +640,15 @@ module check_ovc #(
 			.P(P),
             .SW_LOC(i/V)
 		)
-		remove_sw_loc(
+		add_sw_loc
+		(
 			.destport_in(destport_sel[i]),
 			.destport_out(destport_num[i])
 		);
 		
+			
 		
+	
 				
 		one_hot_demux	#(
 			.IN_WIDTH	(V),

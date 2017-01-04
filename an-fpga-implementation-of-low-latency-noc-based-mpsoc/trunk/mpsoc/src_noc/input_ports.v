@@ -19,7 +19,8 @@ module input_ports
     parameter AVC_ATOMIC_EN= 0,
     parameter CVw=(C==0)? V : C * V,
     parameter [CVw-1:   0] CLASS_SETTING = {CVw{1'b1}}, // shows how each class can use VCs   
-    parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000  // mask scape vc, valid only for full adaptive      
+    parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000,  // mask scape vc, valid only for full adaptive
+    parameter SSA_EN="YES" // "YES" , "NO"       
 
 	 
 )(
@@ -40,6 +41,8 @@ module input_ports
 	sel,
 	x_diff_is_one_all,
 	nonspec_first_arbiter_granted_ivc_all,
+	ssa_ivc_num_getting_sw_grant_all,
+	destport_ab_clear_all,
 	reset,
 	clk
 );
@@ -86,8 +89,8 @@ output  [PV-1       :   0]      x_diff_is_one_all;
 input							reset,clk;
 output  [PVP_1-1    :   0]      lk_destination_all;
 input   [PV-1       :   0]      nonspec_first_arbiter_granted_ivc_all;
-
-
+input   [PV-1       :   0]      ssa_ivc_num_getting_sw_grant_all;
+input   [2*PV-1     :   0]      destport_ab_clear_all;
 
 genvar i;
 generate 
@@ -95,48 +98,52 @@ generate
 	
 	
 	input_queue_per_port 
- #(
-	.V(V),
-	.P(P),
-	.B(B), 
-	.NX(NX),
-	.NY(NY),
-    .C(C),	
-	.Fpay(Fpay),	
-	.SW_LOC(i),	
-	.VC_REALLOCATION_TYPE(VC_REALLOCATION_TYPE),
-	.COMBINATION_TYPE(COMBINATION_TYPE),
-	.TOPOLOGY(TOPOLOGY),
-	.ROUTE_NAME(ROUTE_NAME),
-    .ROUTE_TYPE(ROUTE_TYPE),
-    .DEBUG_EN(DEBUG_EN),
-    .ROUTE_SUBFUNC(ROUTE_SUBFUNC),
-    .AVC_ATOMIC_EN(AVC_ATOMIC_EN),
-    .CVw(CVw),
-    .CLASS_SETTING(CLASS_SETTING),   
-    .ESCAP_VC_MASK(ESCAP_VC_MASK)     
+    #(
+    	.V(V),
+    	.P(P),
+    	.B(B), 
+    	.NX(NX),
+    	.NY(NY),
+        .C(C),	
+    	.Fpay(Fpay),	
+    	.SW_LOC(i),	
+    	.VC_REALLOCATION_TYPE(VC_REALLOCATION_TYPE),
+    	.COMBINATION_TYPE(COMBINATION_TYPE),
+    	.TOPOLOGY(TOPOLOGY),
+    	.ROUTE_NAME(ROUTE_NAME),
+        .ROUTE_TYPE(ROUTE_TYPE),
+        .DEBUG_EN(DEBUG_EN),
+        .ROUTE_SUBFUNC(ROUTE_SUBFUNC),
+        .AVC_ATOMIC_EN(AVC_ATOMIC_EN),
+        .CVw(CVw),
+        .CLASS_SETTING(CLASS_SETTING),   
+        .ESCAP_VC_MASK(ESCAP_VC_MASK),
+        .SSA_EN(SSA_EN) 
 	
-)the_input_queue_per_port
-(
-    .current_x(current_x),	
-    .current_y(current_y),	
-    .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant  [(i+1)*V-1		: i*V]),// for non spec ivc_num_getting_first_sw_grant,
-    .any_ivc_sw_request_granted(any_ivc_sw_request_granted_all  [i]),	
-    .flit_in(flit_in_all[(i+1)*Fw-1		: i*Fw]),
-    .flit_in_we(flit_in_we_all[i]),
-    .reset_ivc(reset_ivc_all    [(i+1)*V-1		: i*V]),
-    .flit_is_tail(flit_is_tail_all  [(i+1)*V-1		: i*V]),
-    .ivc_request(ivc_request_all    [(i+1)*V-1		: i*V]),	
-	.dest_port(dest_port_all   [(i+1)*VP_1-1	: i*VP_1]),
-	.candidate_ovcs(candidate_ovcs_all [(i+1)* VV -1		: i*VV]),
-	.flit_out(flit_out_all [(i+1)*Fw-1		: i*Fw]),
-	.assigned_ovc_num(assigned_ovc_num_all [(i+1)*VV-1		: i*VV]),
-	.sel(sel [(i+1)*V-1    : i*V]),
-	.x_diff_is_one(x_diff_is_one_all[(i+1)*V-1    : i*V]),
-	.nonspec_first_arbiter_granted_ivc(nonspec_first_arbiter_granted_ivc_all[(i+1)*V-1    : i*V]),
-	.reset(reset),
-	.clk(clk),
-	.lk_destination(lk_destination_all[(i+1)*VP_1-1     :   i*VP_1])
+    )
+    the_input_queue_per_port
+    (
+        .current_x(current_x),	
+        .current_y(current_y),	
+        .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant  [(i+1)*V-1		: i*V]),// for non spec ivc_num_getting_first_sw_grant,
+        .any_ivc_sw_request_granted(any_ivc_sw_request_granted_all  [i]),	
+        .flit_in(flit_in_all[(i+1)*Fw-1		: i*Fw]),
+        .flit_in_we(flit_in_we_all[i]),
+        .reset_ivc(reset_ivc_all    [(i+1)*V-1		: i*V]),
+        .flit_is_tail(flit_is_tail_all  [(i+1)*V-1		: i*V]),
+        .ivc_request(ivc_request_all    [(i+1)*V-1		: i*V]),	
+    	.dest_port(dest_port_all   [(i+1)*VP_1-1	: i*VP_1]),
+    	.candidate_ovcs(candidate_ovcs_all [(i+1)* VV -1		: i*VV]),
+    	.flit_out(flit_out_all [(i+1)*Fw-1		: i*Fw]),
+    	.assigned_ovc_num(assigned_ovc_num_all [(i+1)*VV-1		: i*VV]),
+    	.sel(sel [(i+1)*V-1    : i*V]),
+    	.x_diff_is_one(x_diff_is_one_all[(i+1)*V-1    : i*V]),
+    	.nonspec_first_arbiter_granted_ivc(nonspec_first_arbiter_granted_ivc_all[(i+1)*V-1    : i*V]),
+    	.reset(reset),
+    	.clk(clk),
+    	.lk_destination(lk_destination_all[(i+1)*VP_1-1     :   i*VP_1]),
+    	.ssa_ivc_num_getting_sw_grant(ssa_ivc_num_getting_sw_grant_all[(i+1)*V-1    : i*V]),
+    	.destport_ab_clear(destport_ab_clear_all[(i+1)*2*V-1    : i*2*V])
 	);
 	
 	end//for
@@ -171,19 +178,20 @@ module input_queue_per_port
 	parameter NX		= 4,	// number of node in x axis
 	parameter NY		= 4,	// number of node in y axis
 	parameter C			= 4,	//	number of flit class 
-    parameter Fpay     = 32,
+	parameter Fpay     = 32,
 	parameter SW_LOC	= 0,
 	parameter VC_REALLOCATION_TYPE	=	"ATOMIC",
 	parameter COMBINATION_TYPE= "BASELINE",// "BASELINE", "COMB_SPEC1", "COMB_SPEC2", "COMB_NONSPEC"
 	parameter TOPOLOGY					=	"MESH",//"MESH","TORUS"
 	parameter ROUTE_NAME="XY",// "XY", "TRANC_XY"
-    parameter ROUTE_TYPE="DETERMINISTIC",// "DETERMINISTIC", "FULL_ADAPTIVE", "PAR_ADAPTIVE"
+	parameter ROUTE_TYPE="DETERMINISTIC",// "DETERMINISTIC", "FULL_ADAPTIVE", "PAR_ADAPTIVE"
 	parameter DEBUG_EN =1,
 	parameter ROUTE_SUBFUNC= "XY",
-    parameter AVC_ATOMIC_EN= 0,
-    parameter CVw=(C==0)? V : C * V,
-    parameter [CVw-1:   0] CLASS_SETTING = {CVw{1'b1}}, // shows how each class can use VCs   
-    parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000  // mask scape vc, valid only for full adaptive      
+	parameter AVC_ATOMIC_EN= 0,
+	parameter CVw=(C==0)? V : C * V,
+	parameter [CVw-1:   0] CLASS_SETTING = {CVw{1'b1}}, // shows how each class can use VCs   
+	parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000,  // mask scape vc, valid only for full adaptive 
+	parameter SSA_EN="YES" // "YES" , "NO"      
   
 )(
 	current_x,
@@ -204,7 +212,9 @@ module input_queue_per_port
 	clk,
 	x_diff_is_one,
 	lk_destination,
-	nonspec_first_arbiter_granted_ivc
+	nonspec_first_arbiter_granted_ivc,
+	destport_ab_clear,
+	ssa_ivc_num_getting_sw_grant
 	
 	
 );
@@ -260,7 +270,8 @@ input 						    reset,clk;
 output  [VP_1-1     :   0]      lk_destination;
 output  [V-1        :   0]      x_diff_is_one;
 input   [V-1        :   0]      nonspec_first_arbiter_granted_ivc;
-				
+input   [V-1        :   0]      ssa_ivc_num_getting_sw_grant;	
+input   [2*V-1      :   0]      destport_ab_clear;			
 
 wire 	[CLASS_IN_HDR_WIDTH-1	:	0]	class_hdr;
 wire    [DEST_IN_HDR_WIDTH-1	:	0]	destport_hdr;
@@ -332,7 +343,8 @@ generate
 		//tail fifo
 		 fwft_fifo #(
 				.DATA_WIDTH(1),
-				.MAX_DEPTH (B)
+				.MAX_DEPTH (B),
+				.IGNORE_SAME_LOC_RD_WR_WARNING(SSA_EN)
 			)
 			tail_fifo
 			(
@@ -373,42 +385,85 @@ generate
            assign class_out[i] = 1'b0;
        end
 			//lk_dst_fifo
-			fwft_fifo #(
-					.DATA_WIDTH(P_1),
-					.MAX_DEPTH (MAX_PCK)
-				)lk_dest_fifo
-				(
-					.din						(lk_destination_in),
-					.wr_en					(hdr_flit_wr_delayed	[i]),   // Write enable
-					.rd_en					(lk_dst_rd_fifo	[i]),   // Read the next word
-					.dout						(lk_destination		[(i+1)*P_1-1		:	i*P_1]),    // Data out
-					.full						(),
-					.nearly_full			(),
-					.recieve_more_than_0	(),
-					.recieve_more_than_1	(),
-					.reset					(reset),
-					.clk						(clk)
-				
-				);
-			
-			//destport_fifo
+
 			fwft_fifo #(
 				.DATA_WIDTH(P_1),
 				.MAX_DEPTH (MAX_PCK)
-			)dest_fifo
+			)
+			lk_dest_fifo
 			(
-				.din                    (destport_in),
-				.wr_en					(hdr_flit_wr[i]),   // Write enable
-				.rd_en					(dst_rd_fifo[i]),   // Read the next word
-				.dout                   (dest_port[(i+1)*P_1-1		:	i*P_1]),    // Data out
-				.full                   (),
-				.nearly_full			(),
-				.recieve_more_than_0	(),
-				.recieve_more_than_1	(),
-				.reset					(reset),
-				.clk                    (clk)
-			
+				.din (lk_destination_in),
+				.wr_en (hdr_flit_wr_delayed	[i]),   // Write enable
+				.rd_en (lk_dst_rd_fifo	[i]),   // Read the next word
+				.dout (lk_destination		[(i+1)*P_1-1		:	i*P_1]),    // Data out
+				.full (),
+				.nearly_full (),
+				.recieve_more_than_0 (),
+				.recieve_more_than_1 (),
+				.reset (reset),
+				.clk (clk)
+				
 			);
+			
+			if( ROUTE_TYPE=="DETERMINISTIC") begin : dtrmn_dest
+                //destport_fifo
+                fwft_fifo #(
+                    .DATA_WIDTH(P_1),
+                    .MAX_DEPTH (MAX_PCK)
+                )
+                dest_fifo
+                (
+                    .din                    (destport_in),
+                    .wr_en                  (hdr_flit_wr[i]),   // Write enable
+                    .rd_en                  (dst_rd_fifo[i]),   // Read the next word
+                    .dout                   (dest_port[(i+1)*P_1-1      :   i*P_1]),    // Data out
+                    .full                   (),
+                    .nearly_full            (),
+                    .recieve_more_than_0    (),
+                    .recieve_more_than_1    (),
+                    .reset                  (reset),
+                    .clk                    (clk)
+                
+                );			
+			end else begin : adptv_dest
+			
+			
+			
+                fwft_fifo_with_output_clear #(
+                    .DATA_WIDTH(P_1),
+                    .MAX_DEPTH (MAX_PCK)
+                )
+                dest_fifo
+                (
+                    .din                    (destport_in),
+                    .wr_en                  (hdr_flit_wr[i]),   // Write enable
+                    .rd_en                  (dst_rd_fifo[i]),   // Read the next word
+                    .dout                   (dest_port[(i+1)*P_1-1      :   i*P_1]),    // Data out
+                    .full                   (),
+                    .nearly_full            (),
+                    .recieve_more_than_0    (),
+                    .recieve_more_than_1    (),
+                    .reset                  (reset),
+                    .clk                    (clk),
+                    .clear                  ({2'b00,destport_ab_clear[((i+1)*2)-1   :   i*2]})   // dest_port_in ={x,y,a,b}
+                
+                );          
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+    			
+			end
+			
+			
 			if( ROUTE_TYPE=="FULL_ADAPTIVE" && ROUTE_SUBFUNC=="ODD_EVEN") begin :odd
                 wire x_diff_is_one_in;
                 assign x_diff_is_one_in =(current_x==(NX-1'b1))? 1'b0 : (x_dst_in == (current_x + 1'b1)); 
@@ -477,7 +532,8 @@ if(COMBINATION_TYPE == "COMB_NONSPEC") begin  : nonspec
             .P(P)   ,
             .B(B)   ,   // buffer space :flit per VC 
             .Fpay(Fpay),
-            .DEBUG_EN(DEBUG_EN)
+            .DEBUG_EN(DEBUG_EN),
+            .SSA_EN(SSA_EN)
         )
         the_flit_buffer
         (
@@ -489,7 +545,8 @@ if(COMBINATION_TYPE == "COMB_NONSPEC") begin  : nonspec
             .dout(buffer_out),    // Data out
             .vc_not_empty(ivc_not_empty),
             .reset(reset),
-            .clk(clk)
+            .clk(clk),
+            .ssa_rd(ssa_ivc_num_getting_sw_grant)
         );
    
  end else begin :spec//not nonspec comb
@@ -499,7 +556,8 @@ if(COMBINATION_TYPE == "COMB_NONSPEC") begin  : nonspec
             .P(P)   ,
             .B(B)   ,   // buffer space :flit per VC 
             .Fpay(Fpay),
-            .DEBUG_EN(DEBUG_EN)
+            .DEBUG_EN(DEBUG_EN),
+            .SSA_EN(SSA_EN)
         )
         the_flit_buffer
         (
@@ -511,7 +569,8 @@ if(COMBINATION_TYPE == "COMB_NONSPEC") begin  : nonspec
             .dout(buffer_out),    // Data out
             .vc_not_empty(ivc_not_empty),
             .reset(reset),
-            .clk(clk)
+            .clk(clk),
+            .ssa_rd(ssa_ivc_num_getting_sw_grant)
         );
   
   
@@ -530,48 +589,51 @@ endgenerate
 
 
 
- look_ahead_routing #(
-    .P      (P),
-	.NX		(NX),
-	.NY		(NY),
-	.SW_LOC	(SW_LOC),
-	.TOPOLOGY (TOPOLOGY),
-	.ROUTE_NAME(ROUTE_NAME),
-	.ROUTE_TYPE(ROUTE_TYPE)
-  )lk_routing
-  (
-	.current_x		(current_x),
-	.current_y		(current_y),
-	.dest_x			(x_dst_in),
-	.dest_y			(y_dst_in),
-	.destport		(destport_in),
-	.lkdestport		(lk_destination_in),
-	.reset			(reset),
-	.clk			(clk)
- );
+	 look_ahead_routing #(
+		.P      (P),
+		.NX		(NX),
+		.NY		(NY),
+		.SW_LOC	(SW_LOC),
+		.TOPOLOGY (TOPOLOGY),
+		.ROUTE_NAME(ROUTE_NAME),
+		.ROUTE_TYPE(ROUTE_TYPE)
+	  )lk_routing
+	  (
+		.current_x		(current_x),
+		.current_y		(current_y),
+		.dest_x			(x_dst_in),
+		.dest_y			(y_dst_in),
+		.destport		(destport_in),
+		.lkdestport		(lk_destination_in),
+		.reset			(reset),
+		.clk			(clk)
+	 );
  
 	
 
 
-flit_update #(
-	.V(V),
-	.P(P),
-	.Fpay(Fpay),
-	.X_Y_IN_HDR_WIDTH(X_Y_IN_HDR_WIDTH),
-	.ROUTE_TYPE(ROUTE_TYPE)
+	flit_update #(
+		.V(V),
+		.P(P),
+		.Fpay(Fpay),
+		.X_Y_IN_HDR_WIDTH(X_Y_IN_HDR_WIDTH),
+		.ROUTE_TYPE(ROUTE_TYPE),
+		.SSA_EN(SSA_EN)
 
-)the_flit_update
-(
-	.flit_in           (buffer_out),
-	.flit_out          (flit_out),
-	.vc_num_in         (ivc_num_getting_sw_grant),
-	.lk_dest_all_in    (lk_destination),
-	.assigned_ovc_num  (assigned_ovc_num),
-	.sel               (sel),
-	.reset             (reset),
-	.clk               (clk)
-
-);
+	)
+	the_flit_update
+	(
+		.flit_in (buffer_out),
+		.flit_out (flit_out),
+		.vc_num_in  (ivc_num_getting_sw_grant),
+		.lk_dest_all_in (lk_destination),
+		.assigned_ovc_num (assigned_ovc_num),
+		.any_ivc_sw_request_granted(any_ivc_sw_request_granted),
+		.lk_dest_not_registered(lk_destination_in),
+		.sel (sel),
+		.reset (reset),
+		.clk (clk)
+	);
 
 //synthesis translate_off
 //synopsys  translate_off
@@ -688,13 +750,16 @@ module flit_update #(
     parameter P                         =   5,
     parameter Fpay                      =   32,
     parameter X_Y_IN_HDR_WIDTH          =   4,
-    parameter ROUTE_TYPE                ="DETERMINISTIC"
+    parameter ROUTE_TYPE                =   "DETERMINISTIC",
+    parameter SSA_EN		="YES"
 )(
     flit_in ,
     flit_out,
     vc_num_in,
     lk_dest_all_in,
     assigned_ovc_num,
+    any_ivc_sw_request_granted,
+    lk_dest_not_registered,
     sel,
     reset,
     clk
@@ -713,15 +778,18 @@ module flit_update #(
     input       [VP_1-1 :   0]  lk_dest_all_in;
     input                           reset,clk;
     input       [VV-1       :   0]  assigned_ovc_num;
-    input       [V-1        :   0]  sel;
-    
+    input	[V-1        :   0]  sel;
+    input			    any_ivc_sw_request_granted;
+    input	[P_1-1	:	0]  lk_dest_not_registered;
+
     generate 
     if(ROUTE_TYPE == "DETERMINISTIC") begin :dtrmn
         flit_update_dtrmn #(
             .V(V),
             .P(P),
             .Fpay(Fpay),
-            .X_Y_IN_HDR_WIDTH(X_Y_IN_HDR_WIDTH)
+            .X_Y_IN_HDR_WIDTH(X_Y_IN_HDR_WIDTH),
+            .SSA_EN(SSA_EN)
         )        
         the_flit_update
         (
@@ -730,6 +798,8 @@ module flit_update #(
         	.vc_num_in(vc_num_in),
         	.lk_dest_all_in(lk_dest_all_in),
         	.assigned_ovc_num(assigned_ovc_num),
+            .any_ivc_sw_request_granted(any_ivc_sw_request_granted),
+            .lk_dest_not_registered(lk_dest_not_registered),
         	.reset(reset),
         	.clk(clk)        	
         );
@@ -740,7 +810,8 @@ module flit_update #(
             .V(V),
             .P(P),
             .Fpay(Fpay),
-            .X_Y_IN_HDR_WIDTH(X_Y_IN_HDR_WIDTH)
+            .X_Y_IN_HDR_WIDTH(X_Y_IN_HDR_WIDTH),
+            .SSA_EN(SSA_EN)
         )        
         the_flit_update
         (
@@ -749,6 +820,8 @@ module flit_update #(
             .vc_num_in(vc_num_in),
             .lk_dest_all_in(lk_dest_all_in),
             .assigned_ovc_num(assigned_ovc_num),
+            .any_ivc_sw_request_granted(any_ivc_sw_request_granted),
+            .lk_dest_not_registered(lk_dest_not_registered),
             .sel(sel),
             .reset(reset),
             .clk(clk)           
@@ -762,10 +835,11 @@ endmodule
 
 
 module flit_update_dtrmn #(
-	parameter V	               =   4,
+	parameter V	           =   4,
 	parameter P                =   5,
 	parameter Fpay             =   32,
-	parameter X_Y_IN_HDR_WIDTH =   4
+	parameter X_Y_IN_HDR_WIDTH =   4,
+	parameter SSA_EN	   ="YES"
 
 
 )(
@@ -774,6 +848,8 @@ module flit_update_dtrmn #(
 	vc_num_in,
 	lk_dest_all_in,
 	assigned_ovc_num,
+	any_ivc_sw_request_granted,
+	lk_dest_not_registered,
 	reset,
 	clk
 );
@@ -793,12 +869,14 @@ module flit_update_dtrmn #(
 	input      [VP_1-1     :	0]	lk_dest_all_in;
 	input 							reset,clk;
 	input      [VV-1       :	0]	assigned_ovc_num;
-	
+	input					any_ivc_sw_request_granted;
+	input	   [P_1-1	:	0]	lk_dest_not_registered;
 	
 	wire 						hdr_flag;
 	reg 	[V-1		:	0]	vc_num_delayed;
 	wire 	[V-1		:	0]	ovc_num; 
 	//reg	[VV-1		:	0]	assigned_ovc_num_delayed;
+	wire	[P_1-1	:	0]	lk_mux_out;	
 	wire	[P_1-1	:	0]	lk_dest;
 	
 	always @(posedge clk or posedge reset) begin 
@@ -820,7 +898,7 @@ module flit_update_dtrmn #(
 	lkdest_mux
 	(
 		.mux_in			(lk_dest_all_in),
-		.mux_out			(lk_dest),
+		.mux_out			(lk_mux_out),
 		.sel				(vc_num_delayed)
 	);
 	
@@ -834,6 +912,25 @@ module flit_update_dtrmn #(
 		.mux_out			(ovc_num),
 		.sel				(vc_num_delayed)
 	);
+
+	generate 
+	if( SSA_EN	== "YES" ) begin : predict // bypass the lk fifo when no ivc is granted
+		reg ivc_any_delayed;
+		always @(posedge clk or posedge reset) begin 
+			if(reset) begin 
+				ivc_any_delayed <= 1'b0;
+			end else begin
+				ivc_any_delayed <= any_ivc_sw_request_granted;
+			end
+		end
+		
+		assign lk_dest = (ivc_any_delayed == 1'b0)? lk_dest_not_registered :  lk_mux_out;
+
+	end else begin : no_predict
+		assign lk_dest =lk_mux_out;
+	end 
+	endgenerate
+
 	
 	always @(*)begin 
 		flit_out		=	{flit_in[Fw-1	:	Fw-2],ovc_num,flit_in[Fpay-1	:0]};
@@ -847,13 +944,16 @@ module flit_update_adaptive #(
     parameter V                         =   4,
     parameter P                         =   5,
     parameter Fpay                      = 32,
-    parameter X_Y_IN_HDR_WIDTH          =   4
+    parameter X_Y_IN_HDR_WIDTH          =   4,
+    parameter SSA_EN	   ="YES"
 )(
     flit_in ,
     flit_out,
     vc_num_in,
     lk_dest_all_in,
     assigned_ovc_num,
+    any_ivc_sw_request_granted,
+    lk_dest_not_registered,
     sel,
     reset,
     clk
@@ -875,11 +975,14 @@ module flit_update_adaptive #(
     input                           reset,clk;
     input       [VV-1       :   0]  assigned_ovc_num;
     input       [V-1        :   0]  sel;
+    input		            any_ivc_sw_request_granted;
+    input       [P_1-1	    :	0]  lk_dest_not_registered;
     
     wire                        hdr_flag;
     reg     [V-1        :   0]  vc_num_delayed;
     wire    [V-1        :   0]  ovc_num; 
     wire    [P_1-1      :   0]  lk_dest;
+    wire    [P_1-1      :   0]  lk_mux_out;
     wire    [1          :   0]  ab,xy;
     wire                        sel_muxed;
     
@@ -902,10 +1005,31 @@ module flit_update_adaptive #(
     lkdest_mux
     (
         .mux_in         (lk_dest_all_in),
-        .mux_out            (lk_dest),
+        .mux_out            (lk_mux_out),
         .sel                (vc_num_delayed)
     );
-    
+   
+
+	generate 
+	if( SSA_EN	== "YES" ) begin : predict // bypass the lk fifo when no ivc is granted
+		reg ivc_any_delayed;
+		always @(posedge clk or posedge reset) begin 
+			if(reset) begin 
+				ivc_any_delayed <= 1'b0;
+			end else begin
+				ivc_any_delayed <= any_ivc_sw_request_granted;
+			end
+		end
+		
+		assign lk_dest = (ivc_any_delayed == 1'b0)? lk_dest_not_registered :  lk_mux_out;
+
+	end else begin : no_predict
+		assign lk_dest =lk_mux_out;
+	end 
+	endgenerate
+
+
+ 
     one_hot_mux #(
         .IN_WIDTH       (VV),
         .SEL_WIDTH      (V) 

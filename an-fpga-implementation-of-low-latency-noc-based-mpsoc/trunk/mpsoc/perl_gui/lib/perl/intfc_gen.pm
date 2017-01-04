@@ -198,20 +198,8 @@ sub intfc_get_connection_num {
 }
 
 
-sub intfc_set_category{
-	my ($self,$category)=@_;
-	$self->{category}=$category;	
-}
 
 
-sub intfc_get_category{
-	my ($self)=@_;
-	my $category;
-	if(exists ($self->{category})){
-		$category=$self->{category};
-	}
-	return $category;	
-}
 
 sub intfc_set_description{
 	my  ($self,$description)=@_;
@@ -228,6 +216,40 @@ my ($self)=@_;
 	}
 	return $des;
 }	
+
+
+
+
+sub object_add_attribute{
+	my ($self,$attribute1,$attribute2,$value)=@_;
+	if(!defined $attribute2){$self->{$attribute1}=$value;}
+	else {$self->{$attribute1}{$attribute2}=$value;}
+
+}
+
+sub object_get_attribute{
+	my ($self,$attribute1,$attribute2)=@_;
+	if(!defined $attribute2) {return $self->{$attribute1};}
+	return $self->{$attribute1}{$attribute2};
+
+
+}
+
+sub object_add_attribute_order{
+	my ($self,$attribute,@param)=@_;
+	$self->{'parameters_order'}{$attribute}=[] if (!defined $self->{parameters_order}{$attribute});
+	foreach my $p (@param){
+		push (@{$self->{parameters_order}{$attribute}},$p);
+
+	}
+}
+
+sub object_get_attribute_order{
+	my ($self,$attribute)=@_;
+	return @{$self->{parameters_order}{$attribute}};
+}
+	
+
 
 
 

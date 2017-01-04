@@ -1,0 +1,94 @@
+#######################################################################
+##	File: clk_source.IP
+##    
+##	Copyright (C) 2014-2016  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.5.0 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$clk_source = bless( {
+                       'hdl_files' => [
+                                        '/mpsoc/src_peripheral/reset_sync/altera_reset_synchronizer.v',
+                                        '/mpsoc/src_peripheral/reset_sync/clk_source.v'
+                                      ],
+                       'ip_name' => 'clk_source',
+                       'description' => 'clk source. This module provides the clk and reset (socket) interfaces for all other IPs. It also synchronizes the reset signal.',
+                       'gui_status' => {
+                                         'status' => 'ideal',
+                                         'timeout' => 0
+                                       },
+                       'modules' => {
+                                      'clk_source' => {}
+                                    },
+                       'plugs' => {
+                                    'reset' => {
+                                                 'reset' => {},
+                                                 '0' => {
+                                                          'name' => 'reset'
+                                                        },
+                                                 'value' => 1,
+                                                 'type' => 'num'
+                                               },
+                                    'clk' => {
+                                               'clk' => {},
+                                               '0' => {
+                                                        'name' => 'clk'
+                                                      },
+                                               'value' => 1,
+                                               'type' => 'num'
+                                             }
+                                  },
+                       'ports' => {
+                                    'clk_out' => {
+                                                   'intfc_port' => 'clk_o',
+                                                   'intfc_name' => 'socket:clk[0]',
+                                                   'range' => '',
+                                                   'type' => 'output'
+                                                 },
+                                    'reset_out' => {
+                                                     'intfc_port' => 'reset_o',
+                                                     'intfc_name' => 'socket:reset[0]',
+                                                     'range' => '',
+                                                     'type' => 'output'
+                                                   },
+                                    'clk_in' => {
+                                                  'intfc_port' => 'clk_i',
+                                                  'intfc_name' => 'plug:clk[0]',
+                                                  'range' => '',
+                                                  'type' => 'input'
+                                                },
+                                    'reset_in' => {
+                                                    'intfc_port' => 'reset_i',
+                                                    'intfc_name' => 'plug:reset[0]',
+                                                    'range' => '',
+                                                    'type' => 'input'
+                                                  }
+                                  },
+                       'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/reset_sync/clk_source.v',
+                       'sockets' => {
+                                      'clk' => {
+                                                 'clk' => {},
+                                                 'connection_num' => 'multi connection',
+                                                 'value' => 1,
+                                                 '0' => {
+                                                          'name' => 'clk'
+                                                        },
+                                                 'type' => 'num'
+                                               },
+                                      'reset' => {
+                                                   'reset' => {},
+                                                   'connection_num' => 'multi connection',
+                                                   'value' => 1,
+                                                   '0' => {
+                                                            'name' => 'reset'
+                                                          },
+                                                   'type' => 'num'
+                                                 }
+                                    },
+                       'module_name' => 'clk_source',
+                       'unused' => undef,
+                       'category' => 'Source'
+                     }, 'ip_gen' );

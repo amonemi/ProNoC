@@ -16,7 +16,7 @@ module comb_nonspec_allocator #(
 				parameter	V				=	4,
 				parameter 	P				=	5,
 				parameter	FIRST_ARBITER_EXT_P_EN		=	1,
-				parameter   	VC_ARBITER_TYPE="ROUND_ROBIN"		
+				parameter   VC_ARBITER_TYPE="ROUND_ROBIN"		
 
 )(
 	//VC allocator
@@ -41,6 +41,7 @@ module comb_nonspec_allocator #(
 	ivc_num_getting_sw_grant,
 	nonspec_first_arbiter_granted_ivc_all,
 	any_ivc_sw_request_granted_all,
+	any_ovc_granted_in_outport_all,
 	
 	// global
 	clk,
@@ -57,17 +58,18 @@ module comb_nonspec_allocator #(
 					PVP_1	=	PV	*	P_1;
 
 					
-	input  [PVV-1          :   0]  masked_ovc_request_all;
-	input  [PVP_1-1		    :	0]	dest_port_all;
-	input  [PV-1			:	0]	ovc_is_assigned_all;
+	input  [PVV-1           :   0]  masked_ovc_request_all;
+	input  [PVP_1-1		    :	0] dest_port_all;
+	input  [PV-1			:	0] ovc_is_assigned_all;
 	output [PV-1			:	0] ovc_allocated_all;
 	output [PVV-1			:	0] granted_ovc_num_all;
 	output [PV-1			:	0] ivc_num_getting_ovc_grant;
 	input  [PV-1			:	0] ivc_request_all;
 	input  [PV-1			:	0] assigned_ovc_not_full_all;
-	output [PP_1-1			:	0]	granted_dest_port_all;
+	output [PP_1-1			:	0] granted_dest_port_all;
 	output [PV-1			:	0] ivc_num_getting_sw_grant;
 	output [P-1				:	0] any_ivc_sw_request_granted_all;
+	output [P-1             :   0] any_ovc_granted_in_outport_all;
 	output [PV-1			:	0] nonspec_first_arbiter_granted_ivc_all;
 	input  [PVP_1-1         :   0] lk_destination_all;
 	input						   clk,reset;
@@ -86,17 +88,19 @@ module comb_nonspec_allocator #(
 		.V				(V),
 		.P				(P),
 		.FIRST_ARBITER_EXT_P_EN		(FIRST_ARBITER_EXT_P_EN)
-	)nonspeculative_sw_allocator
+	)
+	nonspeculative_sw_allocator
 	(
 
-		.ivc_granted_all							(ivc_num_getting_sw_grant),
-		.ivc_request_masked_all					(ivc_request_masked_all),
-		.dest_port_all								(dest_port_all),
-		.granted_dest_port_all					(granted_dest_port_all),
-		.first_arbiter_granted_ivc_all		(first_arbiter_granted_ivc_all),
-		.any_ivc_granted_all						(any_ivc_sw_request_granted_all),
-		.clk											(clk),
-		.reset										(reset)
+		.ivc_granted_all (ivc_num_getting_sw_grant),
+		.ivc_request_masked_all (ivc_request_masked_all),
+		.dest_port_all (dest_port_all),
+		.granted_dest_port_all (granted_dest_port_all),
+		.first_arbiter_granted_ivc_all (first_arbiter_granted_ivc_all),
+		.any_ivc_granted_all (any_ivc_sw_request_granted_all),
+		.any_ovc_granted_all (any_ovc_granted_in_outport_all),
+		.clk (clk),
+		.reset (reset)
 	
 	);
 	
@@ -286,7 +290,7 @@ module  comb_nonspec_v2_allocator #(
     ivc_num_getting_sw_grant,
     nonspec_first_arbiter_granted_ivc_all,
     any_ivc_sw_request_granted_all,
-    
+    any_ovc_granted_in_outport_all,
     // global
     clk,
     reset
@@ -302,19 +306,20 @@ module  comb_nonspec_v2_allocator #(
                     PVP_1   =   PV  *   P_1;
 
                     
-    input   [PVV-1          :   0]  masked_ovc_request_all;
-    input   [PVP_1-1        :   0]  dest_port_all;
-    input   [PV-1           :   0]  ovc_is_assigned_all;
-    output  [PV-1           :   0]  ovc_allocated_all;
-    output  [PVV-1          :   0]   granted_ovc_num_all;
-    output  [PV-1           :   0]    ivc_num_getting_ovc_grant;
-    input   [PV-1           :   0]    ivc_request_all;
-    input   [PV-1           :   0]    assigned_ovc_not_full_all;
-    output  [PP_1-1         :   0]  granted_dest_port_all;
-    output [PV-1            :   0] ivc_num_getting_sw_grant;
-    output [P-1             :   0] any_ivc_sw_request_granted_all;
-    output [PV-1            :   0] nonspec_first_arbiter_granted_ivc_all;
-    input                               clk,reset;
+    input   [PVV-1          :   0] masked_ovc_request_all;
+    input   [PVP_1-1        :   0] dest_port_all;
+    input   [PV-1           :   0] ovc_is_assigned_all;
+    output  [PV-1           :   0] ovc_allocated_all;
+    output  [PVV-1          :   0] granted_ovc_num_all;
+    output  [PV-1           :   0] ivc_num_getting_ovc_grant;
+    input   [PV-1           :   0] ivc_request_all;
+    input   [PV-1           :   0] assigned_ovc_not_full_all;
+    output  [PP_1-1         :   0] granted_dest_port_all;
+    output  [PV-1           :   0] ivc_num_getting_sw_grant;
+    output  [P-1            :   0] any_ivc_sw_request_granted_all;
+    output  [P-1            :   0] any_ovc_granted_in_outport_all;
+    output  [PV-1           :   0] nonspec_first_arbiter_granted_ivc_all;
+    input                          clk,reset;
 
 
     //internal wires switch allocator
@@ -324,39 +329,41 @@ module  comb_nonspec_v2_allocator #(
      
     assign nonspec_first_arbiter_granted_ivc_all = first_arbiter_granted_ivc_all;
      
- //nonspeculative switch allocator    
- nonspec_sw_alloc #(
+    //nonspeculative switch allocator    
+    nonspec_sw_alloc #(
         .V              (V),
         .P              (P),
         .FIRST_ARBITER_EXT_P_EN     (FIRST_ARBITER_EXT_P_EN)
-    )nonspeculative_sw_allocator
+    )
+    nonspeculative_sw_allocator
     (
 
-        .ivc_granted_all                            (ivc_num_getting_sw_grant),
-        .ivc_request_masked_all                 (ivc_request_masked_all),
-        .dest_port_all                              (dest_port_all),
-        .granted_dest_port_all                  (granted_dest_port_all),
-        .first_arbiter_granted_ivc_all      (first_arbiter_granted_ivc_all),
+        .ivc_granted_all (ivc_num_getting_sw_grant),
+        .ivc_request_masked_all (ivc_request_masked_all),
+        .dest_port_all  (dest_port_all),
+        .granted_dest_port_all (granted_dest_port_all),
+        .first_arbiter_granted_ivc_all (first_arbiter_granted_ivc_all),
         //.first_arbiter_granted_port_all   (first_arbiter_granted_port_all),
-        .any_ivc_granted_all                        (any_ivc_sw_request_granted_all),
-        .clk                                            (clk),
-        .reset                                      (reset)
+        .any_ivc_granted_all (any_ivc_sw_request_granted_all),
+        .any_ovc_granted_all (any_ovc_granted_in_outport_all),
+        .clk  (clk),
+        .reset (reset)
     
     );
     
-    wire    [V-1     :   0]  masked_non_assigned_request [PV-1       :   0]  ;   
-    wire    [PV-1    :   0]  masked_assigned_request;
-    wire    [PV-1    :   0]  assigned_ovc_request_all;
-    wire    [VV-1    :   0]  masked_non_assigned_request_per_port [P-1       :   0]  ;
-    wire    [V-1     :   0]  first_arbiter_granted_ivc_per_port[P-1          :   0]  ;
-    wire    [V-1     :   0]  candidate_ovc_local_num         [P-1        :   0]  ;
+    wire    [V-1     :   0] masked_non_assigned_request [PV-1       :   0]  ;   
+    wire    [PV-1    :   0] masked_assigned_request;
+    wire    [PV-1    :   0] assigned_ovc_request_all;
+    wire    [VV-1    :   0] masked_non_assigned_request_per_port [P-1       :   0]  ;
+    wire    [V-1     :   0] first_arbiter_granted_ivc_per_port[P-1          :   0]  ;
+    wire    [V-1     :   0] candidate_ovc_local_num     [P-1        :   0]  ;
     wire    [V-1     :   0] first_arbiter_ovc_granted [P-1:0];
-    wire    [P_1-1   :   0]  granted_dest_port_per_port      [P-1        :   0];
-    wire    [VP_1-1  :   0] cand_ovc_granted                 [P-1        :   0];
-    wire    [P_1-1   :   0]  ovc_allocated_all_gen           [PV-1       :   0];
-    wire    [V-1       :   0]  granted_ovc_local_num_per_port [P-1     :   0];
-    wire    [V-1       :   0]  ivc_local_num_getting_ovc_grant[P-1     :   0];
-    wire    [V         :   0]  summ_in                              [PV-1  :   0];
+    wire    [P_1-1   :   0] granted_dest_port_per_port  [P-1        :   0];
+    wire    [VP_1-1  :   0] cand_ovc_granted    [P-1        :   0];
+    wire    [P_1-1   :   0] ovc_allocated_all_gen   [PV-1       :   0];
+    wire    [V-1     :   0] granted_ovc_local_num_per_port [P-1     :   0];
+    wire    [V-1     :   0] ivc_local_num_getting_ovc_grant[P-1     :   0];
+    wire    [V       :   0] summ_in   [PV-1  :   0];
     
     
     assign assigned_ovc_request_all        =   ivc_request_all &   ovc_is_assigned_all;
@@ -478,6 +485,7 @@ module nonspec_sw_alloc #(
     first_arbiter_granted_ivc_all,
     //first_arbiter_granted_port_all,
     any_ivc_granted_all,
+    any_ovc_granted_all,
     clk,
     reset
     
@@ -493,12 +501,13 @@ module nonspec_sw_alloc #(
                     
 
     output [PV-1        :   0]  ivc_granted_all;
-    input  [PV-1        :   0] ivc_request_masked_all;
-    input  [PVP_1-1 :   0]  dest_port_all;
+    input  [PV-1        :   0]  ivc_request_masked_all;
+    input  [PVP_1-1     :   0]  dest_port_all;
     output [PP_1-1      :   0]  granted_dest_port_all;
     output [PV-1        :   0]  first_arbiter_granted_ivc_all;
-    //output [PP_1-1        :   0]  first_arbiter_granted_port_all;
-    output [P-1         :   0]  any_ivc_granted_all;
+    //output [PP_1-1    :   0]  first_arbiter_granted_port_all;
+    output [P-1         :   0]  any_ivc_granted_all; //any ivc is granted in input  port [i]
+    output [P-1         :   0]  any_ovc_granted_all; //any ovc is granted in output port [i]
     input                           clk;
     input                           reset;
     
@@ -508,8 +517,8 @@ module nonspec_sw_alloc #(
     wire    [P_1-1      :   0]  granted_dest_port           [P-1            :   0];
     
     // internal wires
-    wire    [V-1        :   0] ivc_masked                   [P-1            :   0];//output of mask and             
-    wire    [V-1        :   0] first_arbiter_grant      [P-1            :   0];//output of first arbiter            
+    wire    [V-1        :   0]  ivc_masked              [P-1            :   0];//output of mask and             
+    wire    [V-1        :   0]  first_arbiter_grant     [P-1            :   0];//output of first arbiter            
     wire    [P_1-1      :   0]  dest_port               [P-1            :   0];//output of multiplexer
     wire    [P_1-1      :   0]  second_arbiter_request  [P-1            :   0]; 
     wire    [P_1-1      :   0]  second_arbiter_grant    [P-1            :   0];             
@@ -592,9 +601,9 @@ module nonspec_sw_alloc #(
         (   
             .clk        (clk), 
             .reset      (reset), 
-            .request    (second_arbiter_request[i]), 
-            .grant      (second_arbiter_grant  [i]),
-            .any_grant   ()
+            .request    (second_arbiter_request [i]), 
+            .grant      (second_arbiter_grant   [i]),
+            .any_grant  (any_ovc_granted_all    [i])
         );
         
         //any ivc 

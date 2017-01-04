@@ -33,7 +33,7 @@
 	
 	      assign  candidate_ovcs={V{1'b1}};
 	
-	    end else begin 
+	    end else begin: width_class
 	    
 	       wire [V-1  :   0] class_table [C-1  :   0];
 	       for(i=0;i<C;i=i+1) begin : class_loop

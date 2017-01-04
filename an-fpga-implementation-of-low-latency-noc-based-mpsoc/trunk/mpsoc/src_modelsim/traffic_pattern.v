@@ -19,6 +19,7 @@
 module pck_class_in_gen #(
     parameter NX = 4,
     parameter NY = 4,
+    parameter TOPOLOGY="MESH",
     parameter C = 4,    //  number of packet class 
     parameter C0_p = 25,    //  the percentage of injected packets with class 0 
     parameter C1_p = 25,
@@ -47,7 +48,7 @@ module pck_class_in_gen #(
     endfunction // log2 
    
     localparam Cw = (C>1)? log2(C) : 1,
-               NC = NX      *   NY, //number of cores;  
+               NC =	(TOPOLOGY=="RING")? NX    :   NX*NY,	//number of cores
                NCw= log2(NC),
                PCK_CNTw = log2(MAX_PCK_NUM+1),
                RNDw = log2(100);
@@ -94,7 +95,7 @@ endmodule
 module pck_dst_gen #(
     parameter NX = 4,
     parameter NY = 4,
-   
+    parameter TOPOLOGY="MESH",
     parameter TRAFFIC =   "RANDOM",
     parameter MAX_PCK_NUM = 10000,
     parameter HOTSPOT_PERCENTAGE    =   3,   //maximum 20
@@ -131,7 +132,7 @@ module pck_dst_gen #(
     endfunction // log2 
      
      
-     localparam NC = NX      *   NY, //number of cores; 
+     localparam NC =	(TOPOLOGY=="RING")? NX    :   NX*NY,	//number of cores
                 Xw = log2(NX),
                 Yw = log2(NY), 
                 NCw= log2(NC),
@@ -244,15 +245,18 @@ module pck_dst_gen #(
         always @(*) begin 
             valid_dst_reg=1'b0;       
             if((current_x==0) &&  (current_y== 0)) begin 
-                dest_x_reg=  1; dest_y_reg=  1; valid_dst_reg=1'b1;
+                dest_x_reg=  NX-1; dest_y_reg=  NY-1; valid_dst_reg=1'b1;
             end
-            if((current_x==0) &&  (current_y== 1)) begin 
-                dest_x_reg=  1; dest_y_reg=  2; valid_dst_reg=1'b1;
-            end
+
             if((current_x==1) &&  (current_y== 0)) begin 
-                dest_x_reg=  1; dest_y_reg=  7; valid_dst_reg=1'b1;
+                dest_x_reg=  NX-1; dest_y_reg=  NY-2; valid_dst_reg=1'b1;
             end
-            if((current_x==1) &&  (current_y== 1)) begin 
+ 
+          if((current_x==2) &&  (current_y== 0)) begin 
+                dest_x_reg= NX-1; dest_y_reg=   NY-1; valid_dst_reg=1'b1;
+            end
+/*  
+           if((current_x==1) &&  (current_y== 1)) begin 
                 dest_x_reg=  1; dest_y_reg=  6; valid_dst_reg=1'b1;
             end
             if((current_x==1) &&  (current_y== 2)) begin 
@@ -261,6 +265,7 @@ module pck_dst_gen #(
             if((current_x==1) &&  (current_y== 3)) begin 
                 dest_x_reg=  1; dest_y_reg=  4; valid_dst_reg=1'b1;
             end
+*/
         end
       /*
         0  0   1  1

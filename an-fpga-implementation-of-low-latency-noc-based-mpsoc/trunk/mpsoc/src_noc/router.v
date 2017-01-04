@@ -23,10 +23,12 @@ module router # (
     parameter AVC_ATOMIC_EN= 0,
     parameter CONGw   =   3, //congestion width per port
     parameter ADD_PIPREG_AFTER_CROSSBAR=0,
-    parameter ADD_PIPREG_BEFORE_CROSSBAR=0,
     parameter CVw=(C==0)? V : C * V,
     parameter [CVw-1:   0] CLASS_SETTING = {CVw{1'b1}}, // shows how each class can use VCs   
-    parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000  // mask scape vc, valid only for full adaptive      
+    parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000,  // mask scape vc, valid only for full adaptive
+    parameter SSA_EN="YES", // "YES" , "NO"
+    parameter X = 0, // router x address   
+    parameter Y = 0  // router y address     
 )(
 	current_x,
 	current_y,
@@ -98,111 +100,130 @@ module router # (
 	wire	[PP_1-1   :	0] spec_granted_dest_port_all;	
 	wire	[PP_1-1   :	0] granted_dest_port_all;
 	wire	[P-1      :	0] any_ivc_sw_request_granted_all;
-		
-		// to vc/sw allocator
+	wire    [P-1      : 	0] any_ovc_granted_in_outport_all;	
+    
+	// to vc/sw allocator
 	wire   [PVP_1-1    :   0] dest_port_all;
 	wire   [PV-1       :   0] ovc_is_assigned_all;
 	wire   [PV-1       :   0] ivc_request_all;
 	wire   [PV-1       :   0] assigned_ovc_not_full_all;
 	wire   [PVV-1      :   0] masked_ovc_request_all;
 	wire   [PVP_1-1    :   0] lk_destination_all;	
+
+
+	
 		
 		// to the crossbar
 	wire   [PFw-1		:	0]	iport_flit_out_all;
-	
+	wire   [P-1		:	0]	ssa_flit_wr_all;
 
 	reg    [PP_1-1		:	0]	granted_dest_port_all_delayed;
 	
 	
 	inout_ports
- #(
-	.V(V),
-	.P(P),
-	.B(B), 
-	.NX(NX),
-	.NY(NY),
-	.C(C),	
-	.Fpay(Fpay),	
-	.VC_REALLOCATION_TYPE(VC_REALLOCATION_TYPE),
-	.COMBINATION_TYPE(COMBINATION_TYPE),
-	.TOPOLOGY(TOPOLOGY),
-	.ROUTE_TYPE(ROUTE_TYPE),
-	.ROUTE_NAME(ROUTE_NAME),
-    .CONGESTION_INDEX(CONGESTION_INDEX),
-    .DEBUG_EN(DEBUG_EN),
-    .ROUTE_SUBFUNC(ROUTE_SUBFUNC),
-    .AVC_ATOMIC_EN(AVC_ATOMIC_EN),
-    .CONGw(CONGw),
-    .CVw(CVw),
-    .CLASS_SETTING(CLASS_SETTING),   
-    .ESCAP_VC_MASK(ESCAP_VC_MASK) 
-	
-	
-)the_inout_ports
-(
-	.current_x(current_x),
-	.current_y(current_y),
-	.flit_in_all(flit_in_all),
-	.flit_in_we_all(flit_in_we_all),
-	.credit_out_all(credit_out_all),
-	.credit_in_all(credit_in_all),
-	.masked_ovc_request_all(masked_ovc_request_all),
-	.ovc_allocated_all(ovc_allocated_all), 
-	.granted_ovc_num_all(granted_ovc_num_all), 
-	.ivc_num_getting_sw_grant(ivc_num_getting_sw_grant), 
-	.ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant), 
-	.spec_ovc_num_all(spec_ovc_num_all), 
-	.nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all), 
-	.spec_first_arbiter_granted_ivc_all(spec_first_arbiter_granted_ivc_all), 
-	.nonspec_granted_dest_port_all(nonspec_granted_dest_port_all), 
-	.spec_granted_dest_port_all(spec_granted_dest_port_all), 
-	.granted_dest_port_all(granted_dest_port_all), 
-	.any_ivc_sw_request_granted_all(any_ivc_sw_request_granted_all), 
-	.dest_port_all(dest_port_all), 
-	.ovc_is_assigned_all(ovc_is_assigned_all), 
-	.ivc_request_all(ivc_request_all), 
-	.assigned_ovc_not_full_all(assigned_ovc_not_full_all), 
-	.flit_out_all(iport_flit_out_all),
-	.congestion_in_all(congestion_in_all),
-	.congestion_out_all(congestion_out_all),
-	.lk_destination_all(lk_destination_all),
-	.clk(clk), 
-	.reset(reset)
-);
+    #(
+    	.V(V),
+    	.P(P),
+    	.B(B), 
+    	.NX(NX),
+    	.NY(NY),
+    	.C(C),	
+    	.Fpay(Fpay),	
+    	.VC_REALLOCATION_TYPE(VC_REALLOCATION_TYPE),
+    	.COMBINATION_TYPE(COMBINATION_TYPE),
+    	.TOPOLOGY(TOPOLOGY),
+    	.ROUTE_TYPE(ROUTE_TYPE),
+    	.ROUTE_NAME(ROUTE_NAME),
+        .CONGESTION_INDEX(CONGESTION_INDEX),
+        .DEBUG_EN(DEBUG_EN),
+        .ROUTE_SUBFUNC(ROUTE_SUBFUNC),
+        .AVC_ATOMIC_EN(AVC_ATOMIC_EN),
+        .CONGw(CONGw),
+        .CVw(CVw),
+        .CLASS_SETTING(CLASS_SETTING),   
+        .ESCAP_VC_MASK(ESCAP_VC_MASK),
+        .SSA_EN(SSA_EN),
+        .X(X), 
+        .Y(Y) 	
+    )
+    the_inout_ports
+    (
+    	.current_x(current_x),
+    	.current_y(current_y),
+    	.flit_in_all(flit_in_all),
+    	.flit_in_we_all(flit_in_we_all),
+    	.credit_out_all(credit_out_all),
+    	.credit_in_all(credit_in_all),
+    	.masked_ovc_request_all(masked_ovc_request_all),
+    	.ovc_allocated_all(ovc_allocated_all), 
+    	.granted_ovc_num_all(granted_ovc_num_all), 
+    	.ivc_num_getting_sw_grant(ivc_num_getting_sw_grant), 
+    	.ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant), 
+    	.spec_ovc_num_all(spec_ovc_num_all), 
+    	.nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all), 
+    	.spec_first_arbiter_granted_ivc_all(spec_first_arbiter_granted_ivc_all), 
+    	.nonspec_granted_dest_port_all(nonspec_granted_dest_port_all), 
+    	.spec_granted_dest_port_all(spec_granted_dest_port_all), 
+    	.granted_dest_port_all(granted_dest_port_all), 
+    	.any_ivc_sw_request_granted_all(any_ivc_sw_request_granted_all), 
+    	.any_ovc_granted_in_outport_all(any_ovc_granted_in_outport_all),
+    	.dest_port_all(dest_port_all), 
+    	.ovc_is_assigned_all(ovc_is_assigned_all), 
+    	.ivc_request_all(ivc_request_all), 
+    	.assigned_ovc_not_full_all(assigned_ovc_not_full_all), 
+    	.flit_out_all(iport_flit_out_all),
+    	.congestion_in_all(congestion_in_all),
+    	.congestion_out_all(congestion_out_all),
+    	.lk_destination_all(lk_destination_all),
+        .ssa_flit_wr_all(ssa_flit_wr_all),
+    	.clk(clk), 
+    	.reset(reset)
+    );
 
 
-combined_vc_sw_alloc #(
-	.V(V),	//VC number per port
-	.P(P), //port number
-	.COMBINATION_TYPE(COMBINATION_TYPE),
-	.FIRST_ARBITER_EXT_P_EN (FIRST_ARBITER_EXT_P_EN),
-	.ROUTE_TYPE(ROUTE_TYPE),
-	.ESCAP_VC_MASK(ESCAP_VC_MASK),
-	.DEBUG_EN(DEBUG_EN)
- 	
-)the_combined_vc_sw_alloc
-(
-	.dest_port_all(dest_port_all), 
-	.masked_ovc_request_all(masked_ovc_request_all),
-	.ovc_is_assigned_all(ovc_is_assigned_all), 
-	.ivc_request_all(ivc_request_all), 
-	.assigned_ovc_not_full_all(assigned_ovc_not_full_all), 
-	.ovc_allocated_all(ovc_allocated_all), 
-	.granted_ovc_num_all(granted_ovc_num_all), 
-	.ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant), 
-	.ivc_num_getting_sw_grant(ivc_num_getting_sw_grant), 
-	.spec_first_arbiter_granted_ivc_all(spec_first_arbiter_granted_ivc_all), 
-	.nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all), 
-	.nonspec_granted_dest_port_all(nonspec_granted_dest_port_all), 
-	.spec_granted_dest_port_all(spec_granted_dest_port_all), 
-	.granted_dest_port_all(granted_dest_port_all), 
-	.any_ivc_sw_request_granted_all(any_ivc_sw_request_granted_all), 
-	.spec_ovc_num_all(spec_ovc_num_all), 
-	.lk_destination_all(lk_destination_all),    
-	.clk(clk), 
-	.reset(reset)
-	);
+    combined_vc_sw_alloc #(
+    	.V(V),	//VC number per port
+    	.P(P), //port number
+    	.COMBINATION_TYPE(COMBINATION_TYPE),
+    	.FIRST_ARBITER_EXT_P_EN (FIRST_ARBITER_EXT_P_EN),
+    	.ROUTE_TYPE(ROUTE_TYPE),
+    	.ESCAP_VC_MASK(ESCAP_VC_MASK),
+    	.DEBUG_EN(DEBUG_EN) 	
+    )
+    the_combined_vc_sw_alloc
+    (
+    	.dest_port_all(dest_port_all), 
+    	.masked_ovc_request_all(masked_ovc_request_all),
+    	.ovc_is_assigned_all(ovc_is_assigned_all), 
+    	.ivc_request_all(ivc_request_all), 
+    	.assigned_ovc_not_full_all(assigned_ovc_not_full_all), 
+    	.ovc_allocated_all(ovc_allocated_all), 
+    	.granted_ovc_num_all(granted_ovc_num_all), 
+    	.ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant), 
+    	.ivc_num_getting_sw_grant(ivc_num_getting_sw_grant), 
+    	.spec_first_arbiter_granted_ivc_all(spec_first_arbiter_granted_ivc_all), 
+    	.nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all), 
+    	.nonspec_granted_dest_port_all(nonspec_granted_dest_port_all), 
+    	.spec_granted_dest_port_all(spec_granted_dest_port_all), 
+    	.granted_dest_port_all(granted_dest_port_all), 
+    	.any_ivc_sw_request_granted_all(any_ivc_sw_request_granted_all), 
+    	.any_ovc_granted_in_outport_all(any_ovc_granted_in_outport_all),
+    	.spec_ovc_num_all(spec_ovc_num_all), 
+    	.lk_destination_all(lk_destination_all),    
+    	.clk(clk), 
+    	.reset(reset)
+    	);
+    	
+
+
 	
+
+
+	
+
+
+
+
 	
 	always @( posedge clk or posedge reset)begin
 		if(reset) begin 
@@ -216,25 +237,26 @@ combined_vc_sw_alloc #(
 	
 	
 	crossbar #(
-		.V				(V), 	// vc_num_per_port
-		.P				(P), 	// router port num
-		.Fpay			(Fpay),
-		.MUX_TYPE	(MUX_TYPE),
-		.ADD_PIPREG_AFTER_CROSSBAR(ADD_PIPREG_AFTER_CROSSBAR),
-        .ADD_PIPREG_BEFORE_CROSSBAR(ADD_PIPREG_BEFORE_CROSSBAR)     	
-	)the_crossbar
+		.V (V), 	// vc_num_per_port
+		.P (P), 	// router port num
+		.Fpay (Fpay),
+		.MUX_TYPE (MUX_TYPE),
+		.ADD_PIPREG_AFTER_CROSSBAR (ADD_PIPREG_AFTER_CROSSBAR),
+		.SSA_EN (SSA_EN)
+        )
+	the_crossbar
 	(
-		.granted_dest_port_all	    (granted_dest_port_all_delayed),
-		.flit_in_all				(iport_flit_out_all),
-		.flit_out_all				(flit_out_all),
-		.flit_out_we_all			(flit_out_we_all),
-		.clk                        (clk),
-		.reset                      (reset)
+		.granted_dest_port_all (granted_dest_port_all_delayed),
+		.flit_in_all (iport_flit_out_all),
+		.flit_out_all (flit_out_all),
+		.flit_out_we_all (flit_out_we_all),
+		.ssa_flit_wr_all (ssa_flit_wr_all),
+		.clk (clk),
+		.reset (reset)
 		
 	);	
 
-	
-	
+	 
 	
 	//synthesis translate_off 
 	//synopsys  translate_off

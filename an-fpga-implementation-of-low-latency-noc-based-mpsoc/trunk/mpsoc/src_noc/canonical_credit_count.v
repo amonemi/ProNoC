@@ -14,7 +14,7 @@ module canonical_credit_counter #(
     parameter CONGw   =   2 //congestion width per port 
     
 )(
-	ovc_allocated_all,
+	non_ss_ovc_allocated_all,
 	flit_is_tail_all,
 	assigned_ovc_num_all,
 	spec_ovc_num_all,
@@ -27,9 +27,11 @@ module canonical_credit_counter #(
 	ivc_num_getting_sw_grant,
 	ovc_avalable_all,
 	assigned_ovc_not_full_all,
-	reset_ivc_all,
 	congestion_in_all,
 	port_pre_sel,
+	ssa_ovc_released_all,
+    ssa_ovc_allocated_all, 
+    ssa_decreased_credit_in_ss_ovc_all,
 	reset,clk
 );
 
@@ -59,7 +61,7 @@ module canonical_credit_counter #(
 	localparam  CONG_ALw=   CONGw* P;   //  congestion width per router;
 
 	integer k;				
-	input	[PV-1		:	0]	ovc_allocated_all;
+	input	[PV-1		:	0]	non_ss_ovc_allocated_all;
 	input	[PV-1		:	0]	flit_is_tail_all;
 	input	[PVV-1	    :	0]	assigned_ovc_num_all;
 	input	[PVV-1	    :	0]	spec_ovc_num_all;
@@ -70,13 +72,16 @@ module canonical_credit_counter #(
 	input	[PV-1		:	0]	nonspec_first_arbiter_granted_ivc_all;
 	input	[PV-1		:	0]	spec_first_arbiter_granted_ivc_all;
 	input	[PV-1		:	0]	ivc_num_getting_sw_grant;
-    output  [PV-1		:	0]	ovc_avalable_all;
-    output  [PV-1		:	0]	assigned_ovc_not_full_all;
-    output  [PV-1		:	0]	reset_ivc_all;	
-    output  [P_1-1      :   0]  port_pre_sel;
-    input   [CONG_ALw-1 :   0]  congestion_in_all;  
-	input						reset,clk;
+	output  [PV-1		:	0]	ovc_avalable_all;
+	output  [PV-1		:	0]	assigned_ovc_not_full_all;
+	output  [P_1-1      :   0]  port_pre_sel;
+	input   [CONG_ALw-1 :   0]  congestion_in_all;
 
+	input						reset,clk;
+//ssa
+    input  [PV-1       :    0] ssa_ovc_released_all; 
+    input  [PV-1       :    0] ssa_ovc_allocated_all; 
+    input  [PV-1       :    0] ssa_decreased_credit_in_ss_ovc_all;
 	
 	
 	
@@ -88,14 +93,26 @@ module canonical_credit_counter #(
 	wire   [PV-1       :	0]    assigned_ovc_is_full_all;
 	wire   [VP_1-1     :	0]    credit_decreased		[P-1		:	0];
 	wire   [P_1-1      :	0]    credit_decreased_gen	[PV-1		:	0];
-	wire   [PV-1       :	0]    credit_decreased_all;
+	wire   [PV-1       :	0]    non_ss_credit_decreased_all;
 	wire   [PV-1       :	0]    credit_increased_all;
 	wire   [VP_1-1     :	0]    ovc_released			[P-1		:	0];
 	wire   [P_1-1      :	0]    ovc_released_gen		[PV-1		:	0];
-	wire   [PV-1       :	0]    ovc_released_all;
+	wire   [PV-1       :	0]    non_ss_ovc_released_all;
 	wire   [VP_1-1     :	0]    credit_in_perport		[P-1		:	0];
 	wire   [VP_1-1     :	0]    full_perport	  		[P-1		:	0];
 	wire   [VP_1-1     :	0]    nearly_full_perport	[P-1		:	0];
+	
+	
+	//ssa
+    
+    wire [PV-1  :   0] credit_decreased_all;
+    wire [PV-1  :   0] ovc_released_all;
+    wire [PV-1  :   0] ovc_allocated_all;
+    
+    assign credit_decreased_all = non_ss_credit_decreased_all | ssa_decreased_credit_in_ss_ovc_all;
+    assign ovc_released_all = non_ss_ovc_released_all | ssa_ovc_released_all;
+    assign ovc_allocated_all = non_ss_ovc_allocated_all | ssa_ovc_allocated_all;  
+    
 	
 	generate
 		if(VC_REALLOCATION_TYPE=="ATOMIC") begin :atomic
@@ -126,15 +143,7 @@ module canonical_credit_counter #(
                
                reg [PV-1       :   0] full_adaptive_ovc_mask,full_adaptive_ovc_mask_next; 
                
-               always @(posedge clk or posedge reset) begin
-                    for(k=0;    k<PV; k=k+1'b1) begin 
-                        if(reset) begin 
-                            full_adaptive_ovc_mask[k]    <=  1'b0;
-                        end else begin 
-                            full_adaptive_ovc_mask[k]    <= full_adaptive_ovc_mask_next[k];
-                        end
-                    end//for
-                end//always
+              
         
                 always @(*) begin
                     for(k=0;    k<PV; k=k+1'b1) begin
@@ -149,12 +158,20 @@ module canonical_credit_counter #(
                             else    full_adaptive_ovc_mask_next[k] = ~nearly_full_all_next[k];
                         
                         
-                        end
-                        
-                        
+                        end                       
                         
                      end // for  
                 end//always
+
+		 always @(posedge clk or posedge reset) begin
+                        if(reset) begin 
+                            full_adaptive_ovc_mask    <=  {PV{1'b0}};
+                        end else begin 
+                            full_adaptive_ovc_mask    <= full_adaptive_ovc_mask_next;
+                        end                    
+                end//always
+		
+
                 assign ovc_avalable_all              = ~ovc_status & full_adaptive_ovc_mask;
             
             end else begin :paradapt //par adaptive
@@ -205,8 +222,8 @@ module canonical_credit_counter #(
 				assign credit_decreased_gen[i][j]	= credit_decreased[j][i-V];
 			end
 		end//j
-		assign ovc_released_all 	 [i] = |ovc_released_gen[i];
-		assign credit_decreased_all [i] = |credit_decreased_gen[i];
+		assign non_ss_ovc_released_all     [i] = |ovc_released_gen[i];
+        assign non_ss_credit_decreased_all [i] = (|credit_decreased_gen[i])|non_ss_ovc_allocated_all[i];
 	end//i
 	
 	
@@ -261,7 +278,7 @@ module canonical_credit_counter #(
 				credit_counter[i]	<=	credit_counter_next[i];
 				full_all[i]			<=	full_all_next[i];
 				nearly_full_all[i]<=	nearly_full_all_next[i];
-				if(ovc_released_all[i])		ovc_status[i]<=1'b0;
+				if(ovc_released_all[i] )		ovc_status[i]<=1'b0;
 				if(ovc_allocated_all[i])	ovc_status[i]<=1'b1;
 			end
 		end//always
@@ -297,7 +314,7 @@ module canonical_credit_counter #(
 	
 	
 	always @(*) begin
-		for(k=0;	k<PV; k=k+1'b1) begin 
+		for(k=0;	k<PV; k=k+1) begin 
 			credit_counter_next[k]	=	credit_counter[k];
 			if(credit_increased_all[k]	& ~credit_decreased_all[k]) begin 
 				credit_counter_next[k]	= credit_counter[k]+1'b1;
@@ -308,13 +325,13 @@ module canonical_credit_counter #(
 	end
 	
 	always @(*) begin
-		for(k=0;	k<PV; k=k+1'b1) begin 
+		for(k=0;	k<PV; k=k+1) begin 
 			full_all_next[k]			= 	credit_counter_next[k] 		== {Bw{1'b0}};
 			nearly_full_all_next[k]	=	credit_counter_next[k] 		<= 1;
 		end	
 	end
 	
-	assign	reset_ivc_all	=	flit_is_tail_all & ivc_num_getting_sw_grant;
+	
 	
 	//synthesis translate_off 
 	//synopsys  translate_off

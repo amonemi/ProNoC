@@ -26,7 +26,7 @@ use Gtk2::Pango;
 require "widget.pl"; 
 require "mpsoc_verilog_gen.pl";
 require "hdr_file_gen.pl";
-
+require "readme_gen.pl";
 
 sub get_pos{
 		my ($item,@list)=@_;
@@ -42,21 +42,26 @@ sub get_pos{
 
 
 sub noc_param_widget{
-	 my ($mpsoc,$name,$param, $default,$type,$content,$info, $state,$table,$row,$show)=@_;
+	 my ($mpsoc,$name,$param, $default,$type,$content,$info, $table,$row,$show,$attribut1,$ref_delay)=@_;
 	 my $label =gen_label_in_left(" $name");
 	 my $widget;
-	 my $value=$mpsoc->mpsoc_get_param($param);
+	 my $value=$mpsoc->object_get_attribute($attribut1,$param);
 	 if(! defined $value) {
-			$mpsoc->mpsoc_add_param($param,$default);
-			$mpsoc->mpsoc_add_param_order($param);
+			$mpsoc->object_add_attribute($attribut1,$param,$default);
+			$mpsoc->object_add_attribute_order($attribut1,$param);
 			$value=$default;
+	 }
+	 if( ! defined $ref_delay){
+	 	$ref_delay=($type eq "Entry") ? 10 : 1;
+
 	 }
 	 if ($type eq "Entry"){
 		$widget=gen_entry($value);
 		$widget-> signal_connect("changed" => sub{
 			my $new_param_value=$widget->get_text();
-			$mpsoc->mpsoc_add_param($param,$new_param_value);
-			set_state($state,"ref",10);
+			$mpsoc->object_add_attribute($attribut1,$param,$new_param_value);
+			set_gui_status($mpsoc,"ref",$ref_delay);
+			
 
 		});
 		
@@ -64,18 +69,18 @@ sub noc_param_widget{
 	 }
 	 elsif ($type eq "Combo-box"){
 		 my @combo_list=split(",",$content);
-		 my $pos=get_pos($value, @combo_list);
+		 my $pos=get_pos($value, @combo_list) if(defined $value);
 		 if(!defined $pos){
-		 	$mpsoc->mpsoc_add_param($param,$default);	
-		 	$pos=get_item_pos($default, @combo_list);
+		 	$mpsoc->object_add_attribute($attribut1,$param,$default);	
+		 	$pos=get_item_pos($default, @combo_list) if (defined $default);
 		 		 	
 		 }
 		#print " my $pos=get_item_pos($value, @combo_list);\n";
 		 $widget=gen_combo(\@combo_list, $pos);
 		 $widget-> signal_connect("changed" => sub{
 		 my $new_param_value=$widget->get_active_text();
-		 $mpsoc->mpsoc_add_param($param,$new_param_value);
-		 set_state($state,"ref",1);
+		 $mpsoc->object_add_attribute($attribut1,$param,$new_param_value);
+		 set_gui_status($mpsoc,"ref",$ref_delay);
 
 
 		 });
@@ -91,8 +96,8 @@ sub noc_param_widget{
 		  $widget->set_value($value);
 		  $widget-> signal_connect("value_changed" => sub{
 		  my $new_param_value=$widget->get_value_as_int();
-		  $mpsoc->mpsoc_add_param($param,$new_param_value);
-		  set_state($state,"ref",1);
+		  $mpsoc->object_add_attribute($attribut1,$param,$new_param_value);
+		  set_gui_status($mpsoc,"ref",$ref_delay);
 
 		  });
 		 
@@ -111,7 +116,7 @@ sub noc_param_widget{
 			my @chars = split("",$value);
 			#check if saved value match the size of check box
 			if($chars[0] ne $content ) {
-				$mpsoc->mpsoc_add_param($param,$default);
+				$mpsoc->object_add_attribute($attribut1,$param,$default);
 				$value=$default;
 				@chars = split("",$value);
 			}
@@ -133,9 +138,9 @@ sub noc_param_widget{
 					if($check[$i]->get_active()) {$new_val="${new_val}1" ;}
 					else {$new_val="${new_val}0" ;}
 				}
-				$mpsoc->mpsoc_add_param($param,$new_val);
+				$mpsoc->object_add_attribute($attribut1,$param,$new_val);
 				#print "\$new_val=$new_val\n";
-				set_state($state,"ref",1);
+				set_gui_status($mpsoc,"ref",$ref_delay);
 			});
 		}
 
@@ -143,6 +148,12 @@ sub noc_param_widget{
 
 
 	}
+	elsif ( $type eq "DIR_path"){
+			$widget =get_dir_in_object ($mpsoc,$attribut1,$param,$value,'ref',10);
+	}
+	
+	
+	
 	else {
 		 $widget =gen_label_in_left("unsuported widget type!");
 	}
@@ -186,9 +197,11 @@ sub initial_default_param{
 ############
 
 sub get_soc_list {
-	my $mpsoc=shift;
+	my ($mpsoc,$info)=@_;
 
-	my $path=$mpsoc->mpsoc_get_setting('soc_path');	
+	
+	my $path=$mpsoc->object_get_attribute('setting','soc_path');		
+	
 	$path =~ s/ /\\ /g;
     	my @socs;
 	my @files = glob "$path/*.SOC";
@@ -196,6 +209,10 @@ sub get_soc_list {
 		
 		# Read
 		my  $soc = eval { do $p };
+		 if ($@ || !defined $soc){		
+			add_info(\$info,"**Error reading  $p file: $@\n");
+		         next; 
+		} 
 		my $top=$soc->soc_get_top();
 		if (defined $top){
 			my @instance_list=$top->top_get_all_instances();
@@ -204,7 +221,7 @@ sub get_soc_list {
 				my $module=$top->top_get_def_of_instance($instanc,'module');
 				if($module eq 'ni') 
 				{
-					my $name=$soc->soc_get_soc_name();			
+					my $name=$soc->object_get_attribute('soc_name');			
 					$mpsoc->mpsoc_add_soc($name,$top);
 					#print" $name\n";
 				}		
@@ -216,19 +233,7 @@ sub get_soc_list {
 		
 		
 		
-		#my @instance_list=$soc->soc_get_all_instances();
-		#my $i=0;
 		
-		#check if the soc has ni port
-		#foreach my $instanc(@instance_list){
-		#	my $module=$soc->soc_get_module($instanc);
-		#	if($module eq 'ni') 
-		#	{
-		#		my $name=$soc->soc_get_soc_name();			
-		#		$mpsoc->mpsoc_add_soc($name,$soc);
-		#		#print" $name\n";
-		#	} 
-		#}	
 		
 		
 	}#files
@@ -258,7 +263,7 @@ sub b_box{
 }
 
 sub get_conflict_decision{
-	my ($mpsoc,$name,$inserted,$conflicts,$msg,$state)=@_;
+	my ($mpsoc,$name,$inserted,$conflicts,$msg)=@_;
 	$msg="\tThe inserted tile number(s) have been mapped previously to \n\t\t\"$msg\".\n\tDo you want to remove the conflicted tiles number(s) in newly \n\tinsterd range or remove them from the previous ones? ";
 	
 	my $wind=def_popwin_size(100,300,"warning");
@@ -288,7 +293,7 @@ sub get_conflict_decision{
 			}
 		}
 		$mpsoc->mpsoc_add_soc_tiles_num($name,$inserted) if(defined $inserted  );
-		set_state($state,"ref",1);		
+		set_gui_status($mpsoc,"ref",1);		
 		$wind->destroy();
 			
 	});
@@ -297,7 +302,7 @@ sub get_conflict_decision{
 		my @new= get_diff_array($inserted,$conflicts);	
 		$mpsoc->mpsoc_add_soc_tiles_num($name,\@new) if(scalar @new  );
 		$mpsoc->mpsoc_add_soc_tiles_num($name,undef) if(scalar @new ==0 );
-		set_state($state,"ref",1);		
+		set_gui_status($mpsoc,"ref",1);		
 		$wind->destroy();		
 		
 	});
@@ -317,7 +322,7 @@ sub get_conflict_decision{
 
 
 sub check_inserted_ip_nums{
-	my  ($mpsoc,$name,$str,$state)=@_;
+	my  ($mpsoc,$name,$str)=@_;
 	my @all_num=();
 	$str= remove_all_white_spaces ($str);
 	
@@ -342,8 +347,8 @@ sub check_inserted_ip_nums{
 		
 	}
 	#check if range does not exceed the tile numbers
-	my $nx= $mpsoc->mpsoc_get_param("NX");
-	my $ny= $mpsoc->mpsoc_get_param("NY");
+	my $nx= $mpsoc->object_get_attribute('noc_param',"NX");
+	my $ny= $mpsoc->object_get_attribute('noc_param',"NY");
 	
 	my $max_tile_num=$nx*$ny;
 	my @f=sort { $a <=> $b }  @all_num;
@@ -372,13 +377,13 @@ sub check_inserted_ip_nums{
 		}#if
 	}
 	if (defined $conflicts_msg) {
-		get_conflict_decision($mpsoc,$name,\@all_num,\@conflicts,$conflicts_msg,$state);
+		get_conflict_decision($mpsoc,$name,\@all_num,\@conflicts,$conflicts_msg);
 		
 	}else {
 		#save the entered ips
 		if( scalar @all_num>0){ $mpsoc->mpsoc_add_soc_tiles_num($name,\@all_num);}
 		else {$mpsoc->mpsoc_add_soc_tiles_num($name,undef);}
-		set_state($state,"ref",1);
+		set_gui_status($mpsoc,"ref",1);
 	}
 	
 
@@ -393,7 +398,7 @@ sub check_inserted_ip_nums{
 ################
 
 sub get_soc_parameter_setting{
-	my ($mpsoc,$soc_name,$state,$tile)=@_;
+	my ($mpsoc,$soc_name,$tile)=@_;
 	
 	my $window = (defined $tile)? def_popwin_size(600,400,"Parameter setting for $soc_name located in tile($tile) "):def_popwin_size(600,400,"Default Parameter setting for $soc_name ");
 	my $table = def_table(10, 7, TRUE);
@@ -425,7 +430,7 @@ sub get_soc_parameter_setting{
 			}
 			elsif ($type eq "Combo-box"){
 				my @combo_list=split(",",$content);
-				my $pos=get_item_pos($param_value{$p}, @combo_list);
+				my $pos=get_item_pos($param_value{$p}, @combo_list) if(defined $param_value{$p});
 				my $combo=gen_combo(\@combo_list, $pos);
 				$table->attach_defaults ($combo, 3, 6, $row, $row+1);
 				$combo-> signal_connect("changed" => sub{$param_value{$p}=$combo->get_active_text();});
@@ -461,7 +466,7 @@ sub get_soc_parameter_setting{
 		
 		}
 	}
-	#my @parameters=$ip->ip_get_module_parameters($category,$module);
+	
 	
 	
 	
@@ -506,7 +511,7 @@ sub get_soc_parameter_setting{
 			$top->top_add_custom_soc_param(\%param_value,$tile);				
 			
 		}
-		#set_state($soc_state,"refresh_soc",1);
+		#set_gui_status($mpsoc,"refresh_soc",1);
 		#$$refresh_soc->clicked;
 		
 		});
@@ -526,7 +531,7 @@ sub get_soc_parameter_setting{
 ################
 
 sub tile_set_widget{
-	my ($mpsoc,$soc_name,$num,$table,$state,$show,$row)=@_;
+	my ($mpsoc,$soc_name,$num,$table,$show,$row)=@_;
 	#my $lable=gen_label_in_left($soc);
 	my @all_num= $mpsoc->mpsoc_get_soc_tiles_num($soc_name);
 	my $init=compress_nums(@all_num);
@@ -540,21 +545,21 @@ sub tile_set_widget{
 			
 	my $button = def_colored_button($soc_name,$num);
 	$button->signal_connect("clicked"=> sub{
-		get_soc_parameter_setting($mpsoc,$soc_name,$state,undef);
+		get_soc_parameter_setting($mpsoc,$soc_name,undef);
 		
 	});	
 	
 	
 	$set->signal_connect("clicked"=> sub{
 		my $data=$entry->get_text();
-		check_inserted_ip_nums($mpsoc,$soc_name,$data,$state);
+		check_inserted_ip_nums($mpsoc,$soc_name,$data);
 		
 		
 		
 	});
 	$remove->signal_connect("clicked"=> sub{
 		$mpsoc->mpsoc_remove_soc($soc_name);
-		set_state($state,"ref",1);
+		set_gui_status($mpsoc,"ref",1);
 
 	});
 
@@ -584,7 +589,7 @@ if($show){
 ###################
 
 sub defualt_tilles_setting {
-	my ($mpsoc,$state,$table,$show,$row)=@_;
+	my ($mpsoc,$table,$show,$row,$info)=@_;
 		
 	#title	
 	my $separator1 = Gtk2::HSeparator->new;
@@ -602,7 +607,7 @@ sub defualt_tilles_setting {
 	my $label = gen_label_in_left("Tiles path:");
 	my $entry = Gtk2::Entry->new;
 	my $browse= def_image_button("icons/browse.png");
-	my $file= $mpsoc->mpsoc_get_setting('soc_path');	
+	my $file= $mpsoc->object_get_attribute('setting','soc_path');
 	if(defined $file){$entry->set_text($file);}
 	
 	
@@ -626,10 +631,10 @@ sub defualt_tilles_setting {
         	if ( "ok" eq $dialog->run ) {
             		$file = $dialog->get_filename;
 			$$entry_ref->set_text($file);
-			$mpsoc->mpsoc_set_setting('soc_path',$file);
+			$mpsoc->object_add_attribute('setting','soc_path',$file);
 			$mpsoc->mpsoc_remove_all_soc();
-			set_state($state,"ref",1);			
-			#check_input_file($file,$socgen,$soc_state,$info);
+			set_gui_status($mpsoc,"ref",1);			
+			#check_input_file($file,$socgen,$info);
             		#print "file = $file\n";
        		 }
        		$dialog->destroy;
@@ -643,10 +648,10 @@ sub defualt_tilles_setting {
 	
 	$entry->signal_connect("activate"=>sub{
 		my $file_name=$entry->get_text();
-		$mpsoc->mpsoc_set_setting('soc_path',$file_name);
+		$mpsoc->object_add_attribute('setting','soc_path',$file_name);
 		$mpsoc->mpsoc_remove_all_soc();	
-		set_state($state,"ref",1);	
-		#check_input_file($file_name,$socgen,$soc_state,$info);
+		set_gui_status($mpsoc,"ref",1);	
+		#check_input_file($file_name,$socgen,$info);
 	});
 		
 	
@@ -664,7 +669,7 @@ sub defualt_tilles_setting {
 	
 	my @socs=$mpsoc->mpsoc_get_soc_list();
 	if( scalar @socs == 0){		
-		@socs=get_soc_list($mpsoc); 
+		@socs=get_soc_list($mpsoc,$info); 
 				
 	}
 	@socs=$mpsoc->mpsoc_get_soc_list();
@@ -680,32 +685,17 @@ you can add individual numbers or ranges as follow
 	if($show){
 		$table->attach_defaults ($lab1 ,0,3, $row,$row+1);
 		$table->attach_defaults ($lab2 ,5,10, $row,$row+1);$row++;
-	}
-	
-	
+	}	
 	
 	my $soc_num=0;
 	foreach my $soc_name (@socs){	
-		$row=tile_set_widget ($mpsoc,$soc_name,$soc_num,$table,$state,$show,$row);	
-		$soc_num++;	
+		$row=tile_set_widget ($mpsoc,$soc_name,$soc_num,$table,$show,$row);	
+		$soc_num++;		
 		
-			
-			
-		
-	}
-
-	
-	
-	
-	
+	}	
 	return $row;
 	
-	
 }
-
-
-
-
 
 
 
@@ -715,11 +705,8 @@ you can add individual numbers or ranges as follow
 ######################
 
 sub noc_config{
-	my ($mpsoc,$state)=@_;
-	my $table=def_table(20,10,FALSE);#	my ($row,$col,$homogeneous)=@_;
-	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
-	$scrolled_win->set_policy( "automatic", "automatic" );
-	$scrolled_win->add_with_viewport($table);
+	my ($mpsoc,$table)=@_;
+	
 
 	
 	#title	
@@ -740,7 +727,12 @@ sub noc_config{
 	
 	#parameter start
 	my $b1;
-	my $show_noc=$mpsoc->mpsoc_get_setting('show_noc_setting');
+	my $show_noc=$mpsoc->object_get_attribute('setting','show_noc_setting');
+	if(!defined $show_noc){
+		$show_noc=1;
+		$mpsoc->object_add_attribute('setting','show_noc_setting',$show_noc);
+		
+	}
 	if($show_noc == 0){	
 		$b1= def_image_button("icons/down.png","NoC Parameters");
 		$label=gen_label_in_center(' ');
@@ -757,20 +749,10 @@ sub noc_config{
 	$type='Combo-box';
     $info="    Input-queued: simple router with low performance and does not support fully adaptive routing.
     VC-based routers offer higher performance, fully adaptive routing  and traffic isolation for different packet classes."; 
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$show_noc);
-	my $router_type=$mpsoc->mpsoc_get_param("ROUTER_TYPE");
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_type');
+	my $router_type=$mpsoc->object_get_attribute('noc_type',"ROUTER_TYPE");
 	
-	
-	#P port number 
-	$label= 'Port Number';
-	$param= 'P';
-    $default=' 5';
-	$content='3,12,1';
-    $info= 'Number of NoC router port';
-    $type= 'Spin-button';             
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,0);
-	
-	
+			
 
 	#Routers per row
 	$label= 'Routers per row';
@@ -779,7 +761,7 @@ sub noc_config{
 	$content='2,16,1';
     $info= 'Number of NoC routers in row (X dimention)';
     $type= 'Spin-button';             
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$show_noc);
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param');
 	
 
 
@@ -790,22 +772,22 @@ sub noc_config{
 	$content='2,16,1';
     $info= 'Number of NoC routers in column (Y dimention)';
     $type= 'Spin-button';             
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$show_noc);
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param');
 
 	if($router_type eq '"VC_BASED"'){
 		#VC number per port
-		my $v=$mpsoc->mpsoc_get_param('V');
-		if(defined $v){ $mpsoc->mpsoc_add_param('V',2) if($v eq 1);}
+		my $v=$mpsoc->object_get_attribute('noc_param','V');
+		if(defined $v){ $mpsoc->object_add_attribute('noc_param','V',2) if($v eq 1);}
 		$label='VC number per port';
 		$param='V';
 		$default='2';
 		$type='Spin-button';
 		$content='2,16,1';
 		$info='Number of Virtual Channel per each router port';
-		$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$show_noc);
+		$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param');
 	} else {
-		$mpsoc->mpsoc_add_param('V',1);
-		$mpsoc->mpsoc_add_param('C',0);
+		$mpsoc->object_add_attribute('noc_param','V',1);
+		$mpsoc->object_add_attribute('noc_param','C',0);
 		
 		
 	}
@@ -817,7 +799,7 @@ sub noc_config{
     $content='2,256,1';
     $type='Spin-button';
  	$info=($router_type eq '"VC_BASED"')?  'Buffer queue size per VC in flits' : 'Buffer queue size in flits';
-    $row= noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$show_noc);
+    $row= noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param');
 	
 	#packet payload width
 	$label='payload width';
@@ -826,7 +808,7 @@ sub noc_config{
 	$content='32,256,32';
 	$type='Spin-button';
     $info="The packet payload width in bits"; 
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$show_noc);
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info,$table,$row,$show_noc,'noc_param');
 
 	#topology
 	$label='Topology';
@@ -835,10 +817,10 @@ sub noc_config{
 	$content='"MESH","TORUS"';
 	$type='Combo-box';
     $info="NoC topology"; 
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$show_noc);
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param');
 
 	#routing algorithm
-	my $topology=$mpsoc->mpsoc_get_param('TOPOLOGY');
+	my $topology=$mpsoc->object_get_attribute('noc_param','TOPOLOGY');
 	$label='Routing Algorithm';
 	$param="ROUTE_NAME";
 	$type="Combo-box";
@@ -854,7 +836,20 @@ sub noc_config{
 	}
 	$default=($topology eq '"MESH"')?  '"XY"':'"TRANC_XY"';
 	$info="Select the routing algorithm: XY(DoR) , partially adaptive (Turn models). Fully adaptive (Duato) "; 
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$show_noc);
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param');
+
+
+	#SSA
+	$label='SSA Ebable'; 
+	$param='SSA_EN';
+	$default='"NO"';
+	$content='"YES","NO"';
+	$type='Combo-box';
+    $info="Enable single cycle latency on packets traversing in the same direction using static straight allocator (SSA)"; 
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param');
+
+
+
 
 
 	if($show_noc == 1){	
@@ -863,14 +858,14 @@ sub noc_config{
 	}
 	$b1->signal_connect("clicked" => sub{ 
 		$show_noc=($show_noc==1)?0:1;
-		$mpsoc->mpsoc_set_setting('show_noc_setting',$show_noc);
-		set_state($state,"ref",1);
+		$mpsoc->object_add_attribute('setting','show_noc_setting',$show_noc);
+		set_gui_status($mpsoc,"ref",1);
 
 	});
 
 	#advance parameter start
 	my $advc;
-	my $adv_set=$mpsoc->mpsoc_get_setting('show_adv_setting');
+	my $adv_set=$mpsoc->object_get_attribute('setting','show_adv_setting');
 	if($adv_set == 0){	
 		$advc= def_image_button("icons/down.png","Advance Parameters");
 		$table->attach_defaults ( $advc , 0, 4, $row,$row+1);$row++;
@@ -880,7 +875,7 @@ sub noc_config{
 	
 	
 	#Fully and partially adaptive routing setting
-		my $route=$mpsoc->mpsoc_get_param("ROUTE_NAME");
+		my $route=$mpsoc->object_get_attribute('noc_param',"ROUTE_NAME");
 		if($route ne '"XY"' and $route ne '"TRANC_XY"' ){
 			$label="Congestion index";	
 			$param="CONGESTION_INDEX";
@@ -888,12 +883,12 @@ sub noc_config{
 		   	$content="0,12,1";
 			$info="Congestion index determines how congestion information is collected from neighboring routers. Please refer to the usere manual for more information";
 		    $default=3;
-		   	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set);
+		   	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');
 		   
 		}
 		#Fully adaptive routing setting
 		if( $route eq '"TRANC_DUATO"' or $route eq '"DUATO"'  ){
-		  	 my $v=$mpsoc->mpsoc_get_param("V");
+		  	 my $v=$mpsoc->object_get_attribute('noc_param',"V");
 		  	 $label="Select Escap VC";	
 		  	 $param="ESCAP_VC_MASK";
 		  	 $type="Check-box";
@@ -904,7 +899,7 @@ sub noc_config{
 			
 		
 		  	 $info="Select the escap VC for fully adaptive routing.";
-		  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set,$adv_set);
+		  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,$adv_set,'noc_param');
 	  	
 	  	 }
 		
@@ -915,7 +910,7 @@ sub noc_config{
                 $default='"NONATOMIC"';  
                 $content='"ATOMIC","NONATOMIC"';
                 $type='Combo-box';
-                $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set);                                           
+                $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');                                           
 
 
 
@@ -928,7 +923,7 @@ sub noc_config{
                 $content='"BASELINE","COMB_SPEC1","COMB_SPEC2","COMB_NONSPEC"';
                 $type='Combo-box';
                 $info="The joint VC/ switch allocator type. using canonical combination is not recommanded";                    
-                $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set);                   
+                $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');                   
 
 	}
 	
@@ -939,7 +934,7 @@ sub noc_config{
 		$content='"ONE_HOT","BINARY"';
 		$type='Combo-box';
 		$info="Crossbar multiplexer type";
-        $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set);             
+        $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');             
        
 	if($router_type eq '"VC_BASED"'){
 	#class
@@ -949,11 +944,11 @@ sub noc_config{
 		$info='Number of message classes. Each specific class can use different set of VC'; 
 		$content='0,16,1';
 	    $type='Spin-button';
-	    $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set);                             
+	    $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');                             
 		
 
-		my $class=$mpsoc->mpsoc_get_param("C");
-		my $v=$mpsoc->mpsoc_get_param("V");
+		my $class=$mpsoc->object_get_attribute('noc_param',"C");
+		my $v=$mpsoc->object_get_attribute('noc_param',"V");
 		$default= "$v\'b";
 		for (my $i=1; $i<=$v; $i++){
 			$default=  "${default}1";
@@ -966,7 +961,7 @@ sub noc_config{
 		  	 $type="Check-box";
 		  	 $content=$v;
 		  	 $info="Select the permitted VCs which the message class $i can be sent via them.";
-		  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set);
+		  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');
 
 
 		}
@@ -984,7 +979,7 @@ sub noc_config{
 		$default='0';
                 $content='0,1';
                 $type='Combo-box';
-                $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,$adv_set);  
+                $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');  
 
 
 
@@ -996,16 +991,10 @@ sub noc_config{
 	$content=1;
 	$default="1\'b0";
 	$info="If ebabled it adds a pipline register at the output port of the router.";
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,0);
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');
 	  	
 	
-	$label="Add pipeline reg befor crossbar";	
-	$param="ADD_PIPREG_BEFORE_CROSSBAR";
-	$type="Check-box";
-	$content=1;
-	$default="1\'b0";
-	$info="If ebabled it adds a pipline register after the input memory sd ram.";
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,0);
+	
 	  	
 
 	
@@ -1015,10 +1004,8 @@ sub noc_config{
 	}
 	$advc->signal_connect("clicked" => sub{ 
 		$adv_set=($adv_set==1)?0:1;
-		$mpsoc->mpsoc_set_setting('show_adv_setting',$adv_set);
-		set_state($state,"ref",1);
-
-
+		$mpsoc->object_add_attribute('setting','show_adv_setting',$adv_set);
+		set_gui_status($mpsoc,"ref",1);
 	});
 	
 	
@@ -1032,15 +1019,9 @@ sub noc_config{
 	$info='FIRST_ARBITER_EXT_P_EN'; 
 	$content='0,1';
 	$type="Combo-box";
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,0);         
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info,$table,$row,0,'noc_param');         
 	
-	#ROUTE_TYPE
-	$param='ROUTE_TYPE';
-	$default='(ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
-			 (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE"';
-	$info='ROUTE_TYPE'; 
-	$type="Entry";
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,0);     
+	   
 	
 	# AVC_ATOMIC_EN
 	$label='AVC_ATOMIC_EN';
@@ -1049,7 +1030,7 @@ sub noc_config{
 	$info='AVC_ATOMIC_EN'; 
 	$content='0,1';
 	$type="Combo-box";
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,0);
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,0,'noc_param');
 	
 	
 	#ROUTE_SUBFUNC
@@ -1059,11 +1040,49 @@ sub noc_config{
 	$info='ROUTE_SUBFUNC'; 
 	$content='"XY"';
 	$type="Combo-box";
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $state,$table,$row,0);
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,0,'noc_param');
 	
+	return $row;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#######################
+#   get_config
+######################
+
+sub get_config{
+	my ($mpsoc,$info)=@_;
+	my $table=def_table(20,10,FALSE);#	my ($row,$col,$homogeneous)=@_;
+	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
+	$scrolled_win->set_policy( "automatic", "automatic" );
+	$scrolled_win->add_with_viewport($table);
+
+	#noc_setting
+	my $row=noc_config ($mpsoc,$table);
+	
+		
 	#tile setting 
 	my $tile_set;
-	my $show=$mpsoc->mpsoc_get_setting('show_tile_setting');
+	my $show=$mpsoc->object_get_attribute('setting','show_tile_setting');
+	
 	if($show == 0){	
 		$tile_set= def_image_button("icons/down.png","Tiles setting");
 		$table->attach_defaults ( $tile_set , 0, 4, $row,$row+1);$row++;
@@ -1074,7 +1093,7 @@ sub noc_config{
 	
 	
 	
-	$row=defualt_tilles_setting($mpsoc,$state,$table,$show,$row);
+	$row=defualt_tilles_setting($mpsoc,$table,$show,$row,$info);
 	
 	
 
@@ -1090,8 +1109,8 @@ sub noc_config{
 	}
 	$tile_set->signal_connect("clicked" => sub{ 
 		$show=($show==1)?0:1;
-		$mpsoc->mpsoc_set_setting('show_tile_setting',$show);
-		set_state($state,"ref",1);
+		$mpsoc->object_add_attribute('setting','show_tile_setting',$show);
+		set_gui_status($mpsoc,"ref",1);
 
 
 	});
@@ -1121,8 +1140,7 @@ return  $scrolled_win;
 
 sub gen_socs {
 	my ($mpsoc,$info)=@_;
-
-	my $path=$mpsoc->mpsoc_get_setting('soc_path');	
+	my $path=$mpsoc->object_get_attribute('setting','soc_path');	
 	$path=~ s/ /\\ /g;
     	my @socs;
 	my @files = glob "$path/*.SOC";
@@ -1139,7 +1157,11 @@ sub gen_socs {
 	for my $p (@files){
 		# Read
 		my  $soc = eval { do $p };
-		my  $name=$soc->soc_get_soc_name();
+		if ($@ || !defined $soc){		
+			show_info(\$info,"**Error reading  $p file: $@\n");
+		       next; 
+		} 
+		my  $name=$soc->object_get_attribute('soc_name');
 		if( grep (/^$name$/,@used_socs)){
 		#generate the soc
 		generate_soc_files($mpsoc,$soc,$info);
@@ -1161,12 +1183,13 @@ sub gen_socs {
 
 sub generate_soc_files{
 	my ($mpsoc,$soc,$info)=@_;
-	my $mpsoc_name=$mpsoc->mpsoc_get_mpsoc_name();
-	my $soc_name=$soc->soc_get_soc_name();
-	my $file_v=soc_generate_verilog($soc);
+	my $mpsoc_name=$mpsoc->object_get_attribute('mpsoc_name');
+	my $soc_name=$soc->object_get_attribute('soc_name');
+	my ($file_v,$tmp)=soc_generate_verilog($soc);
 		
 	# Write object file
 	open(FILE,  ">lib/soc/$soc_name.SOC") || die "Can not open: $!";
+	print FILE perl_file_header("$soc_name.SOC");
 	print FILE Data::Dumper->Dump([\%$soc],[$soc_name]);
 	close(FILE) || die "Error closing file: $!";
 		
@@ -1247,13 +1270,15 @@ return $msg;
 
 sub generate_mpsoc{
 	my ($mpsoc,$info)=@_;
-	my $name=$mpsoc->mpsoc_get_mpsoc_name();
+	my $name=$mpsoc->object_get_attribute('mpsoc_name');
 		my $size= (defined $name)? length($name) :0;
 		if ($size >0){
-			my $file_v=mpsoc_generate_verilog($mpsoc);
+			gen_socs($mpsoc,$info);
+			my ($file_v,$tmp)=mpsoc_generate_verilog($mpsoc);
 			
 			# Write object file
 			open(FILE,  ">lib/mpsoc/$name.MPSOC") || die "Can not open: $!";
+			print FILE perl_file_header("$name.MPSOC");
 			print FILE Data::Dumper->Dump([\%$mpsoc],[$name]);
 			close(FILE) || die "Error closing file: $!";
 			
@@ -1273,7 +1298,7 @@ sub generate_mpsoc{
 			mkpath("$target_dir/src_verilog/lib/",1,0755);
 			mkpath("$target_dir/sw",1,0755);
     		
-    		gen_socs($mpsoc,$info);
+    		#gen_socs($mpsoc,$info);
     		
     		move ("$dir/lib/verilog/$name.v","$target_dir/src_verilog/"); 	
     		
@@ -1298,7 +1323,7 @@ return 1;
 
 
 sub get_tile_LIST{
- 	my ($mpsoc,$state,$x,$y,$soc_num,$row,$table)=@_;
+ 	my ($mpsoc,$x,$y,$soc_num,$row,$table)=@_;
 	my $instance_name=$mpsoc->mpsoc_get_instance_info($soc_num);	
 	if(!defined $instance_name){
 		$mpsoc->mpsoc_set_default_ip($soc_num);
@@ -1316,7 +1341,7 @@ sub get_tile_LIST{
 	$entry->signal_connect( 'changed'=> sub{
 		my $new_instance=$entry->get_text();
 		$mpsoc->mpsoc_set_ip_inst_name($soc_num,$new_instance);
-		set_state($state,"ref",20);
+		set_gui_status($mpsoc,"ref",20);
 		print "changed to  $new_instance\n ";	
 
 	});
@@ -1341,10 +1366,10 @@ sub get_tile_LIST{
 #########
 
 sub gen_tiles_LIST{
-	my ($mpsoc,$soc_state)=@_;
+	my ($mpsoc)=@_;
 
-	my $nx= $mpsoc->mpsoc_get_param("NX");
-	my $ny= $mpsoc->mpsoc_get_param("NY");
+	my $nx= $mpsoc->object_get_attribute('noc_param',"NX");
+	my $ny= $mpsoc->object_get_attribute('noc_param',"NY");
 
 	# print "($nx,$ny);\n";
 	my $table=def_table($nx*$ny,4,FALSE);#	my ($row,$col,$homogeneous)=@_;
@@ -1374,7 +1399,7 @@ sub gen_tiles_LIST{
 			my $soc_num= $y*$nx+$x;
 			my $seph = Gtk2::HSeparator->new;
 			$table->attach_defaults ($seph, 0, 8 , $row, $row+1);$row++;
-			get_tile($mpsoc,$soc_state,$x,$y,$soc_num,$row,$table);$row++;
+			get_tile($mpsoc,$x,$y,$soc_num,$row,$table);$row++;
 					
 			
 
@@ -1404,7 +1429,7 @@ sub gen_tiles_LIST{
 
 
 sub get_tile{
-	my ($mpsoc,$state,$tile,$x,$y)=@_;
+	my ($mpsoc,$tile,$x,$y)=@_;
 	
 
 	my ($soc_name,$num)= $mpsoc->mpsoc_get_tile_soc_name($tile);
@@ -1448,7 +1473,7 @@ sub get_tile{
 		@list=('Default','Custom');
 		$pos=(defined $param_setting)? get_scolar_pos($param_setting,@list): 0;
 		my $nn=(defined $soc_name)? $soc_name : 'soc';
-		my ($box2,$combo2)=gen_combo_help("Defualt: the tail will get  deafualt parameter setting of $nn.\n Custom: it will allow custom parameter  setting for this tile only." , \@list, $pos);
+		my ($box2,$combo2)=gen_combo_help("Defualt: the tail will get  defualt parameter setting of $nn.\n Custom: it will allow custom parameter  setting for this tile only." , \@list, $pos);
 		my $lable2=gen_label_in_left("  Parameter Setting:");
 		$table->attach_defaults($lable2,0,3,$row,$row+1);
 		$table->attach_defaults($box2,3,7,$row,$row+1);$row++;
@@ -1491,16 +1516,16 @@ sub get_tile{
 	
 		$ok-> signal_connect("clicked" => sub{ 
 			$window->destroy;
-			set_state($state,"refresh_soc",1);
+			set_gui_status($mpsoc,"refresh_soc",1);
 			my $soc_name=$combo->get_active_text();
 			my $setting=$combo2->get_active_text();
 			if ($soc_name ne ' ' && $setting ne 'Default'){
-			get_soc_parameter_setting ($mpsoc,$soc_name,$state,$tile);
+			get_soc_parameter_setting ($mpsoc,$soc_name,$tile);
 			
 			}
 			#save new values 
 			#$top->top_add_default_soc_param(\%param_value);
-			#set_state($soc_state,"refresh_soc",1);
+			#set_gui_status($mpsoc,"refresh_soc",1);
 			#$$refresh_soc->clicked;
 		
 			});
@@ -1526,10 +1551,10 @@ sub get_tile{
 #########
 
 sub gen_tiles{
-	my ($mpsoc,$soc_state)=@_;
+	my ($mpsoc)=@_;
 
-	my $nx= $mpsoc->mpsoc_get_param("NX");
-	my $ny= $mpsoc->mpsoc_get_param("NY");
+	my $nx= $mpsoc->object_get_attribute('noc_param',"NX");
+	my $ny= $mpsoc->object_get_attribute('noc_param',"NY");
 
 	#print "($nx,$ny);\n";
 	my $table=def_table($nx,$ny,FALSE);#	my ($row,$col,$homogeneous)=@_;
@@ -1545,7 +1570,7 @@ sub gen_tiles{
 	for (my $y=0;$y<$ny;$y++){
 		for (my $x=0; $x<$nx;$x++){
 			my $tile_num=($nx*$y)+ $x; 
-			my $tile=get_tile($mpsoc,$soc_state,$tile_num,$x,$y);
+			my $tile=get_tile($mpsoc,$tile_num,$x,$y);
 		#print "($x,$y);\n";
 		$table->attach_defaults ($tile, $x, $x+1 , $y, $y+1);
 
@@ -1572,9 +1597,9 @@ sub mpsocgen_main{
 	#my $soc = soc->soc_new();
 
 	my $mpsoc= mpsoc->mpsoc_new();
-	#my $soc= eval { do 'lib/soc/soc.SOC' };
 	
-	my $soc_state=  def_state("ideal");
+	set_gui_status($mpsoc,"ideal",0);
+	
 	# main window
 	#my $window = def_win_size(1000,800,"Top");
 	#  The main table containg the lib tree, selected modules and info section 
@@ -1587,57 +1612,52 @@ sub mpsocgen_main{
 	my $refresh = Gtk2::Button->new_from_stock('ref');
 	
 	
-	my $noc_conf_box=noc_config ($mpsoc,$soc_state);
-	my $noc_tiles=gen_tiles($mpsoc,$soc_state);
+	my $noc_conf_box=get_config ($mpsoc,$info);
+	my $noc_tiles=gen_tiles($mpsoc);
 
 
 
 	$main_table->set_row_spacings (4);
 	$main_table->set_col_spacings (1);
 	
-	#my  $device_win=show_active_dev($soc,$soc,$infc,$soc_state,\$refresh,$info);
+	#my  $device_win=show_active_dev($soc,$soc,$infc,\$refresh,$info);
 	
 	
 	my $generate = def_image_button('icons/gen.png','Generate');
-	my $genbox=def_hbox(TRUE,0);
-	$genbox->pack_start($generate,   FALSE, FALSE,0);
+	
 	
 	
 	
 	my $open = def_image_button('icons/browse.png','Load MPSoC');
-	my $openbox=def_hbox(TRUE,0);
-	$openbox->pack_start($open,   FALSE, FALSE,0);
 	
 	
+	my $entry=gen_entry_object($mpsoc,'soc_name',undef,undef,undef,undef);
+	my $entrybox=labele_widget_info(" MPSoC name:",$entry);
 	
-	my ($entrybox,$entry) = def_h_labeled_entry('MPSoC name:');
-	$entry->signal_connect( 'changed'=> sub{
-		my $name=$entry->get_text();
-		$mpsoc->mpsoc_set_mpsoc_name($name);		
-	});	
+	
 	
 	#$table->attach_defaults ($event_box, $col, $col+1, $row, $row+1);
-	$main_table->attach_defaults ($noc_conf_box , 0, 4, 0, 23);
-	$main_table->attach_defaults ($noc_tiles , 4, 12, 0, 23);
-	$main_table->attach_defaults ($infobox  , 0, 12, 23,24);
-	$main_table->attach_defaults ($openbox,0, 3, 24,25);
+	$main_table->attach_defaults ($noc_conf_box , 0, 4, 0, 22);
+	$main_table->attach_defaults ($noc_tiles , 4, 12, 0, 22);
+	$main_table->attach_defaults ($infobox  , 0, 12, 22,24);
+	$main_table->attach ($open,0, 3, 24,25,'expand','shrink',2,2);
 	$main_table->attach_defaults ($entrybox,3, 7, 24,25);
 	
-	$main_table->attach_defaults ($genbox, 10, 12, 24,25);
+	$main_table->attach ($generate, 10, 12, 24,25,'expand','shrink',2,2);
 	
 
 	#referesh the mpsoc generator 
 	$refresh-> signal_connect("clicked" => sub{ 
 		$noc_conf_box->destroy();
-		$noc_conf_box=noc_config ($mpsoc,$soc_state);
-		$main_table->attach_defaults ($noc_conf_box , 0, 4, 0, 23);
+		$noc_conf_box=get_config ($mpsoc,$info);
+		$main_table->attach_defaults ($noc_conf_box , 0, 4, 0, 22);
 		$noc_conf_box->show_all();			
 		
 
 
 		$noc_tiles->destroy();
-		$noc_tiles=gen_tiles($mpsoc,$soc_state);
-		$main_table->attach_defaults ($noc_tiles , 4, 12, 0, 23);
+		$noc_tiles=gen_tiles($mpsoc);
+		$main_table->attach_defaults ($noc_tiles , 4, 12, 0, 22);
 
 		$main_table->show_all();
 
@@ -1648,18 +1668,19 @@ sub mpsocgen_main{
 
 	#check soc status every 0.5 second. referesh device table if there is any changes 
 	Glib::Timeout->add (100, sub{ 
-	 
-		my ($state,$timeout)= get_state($soc_state);
+		my ($state,$timeout)= get_gui_status($mpsoc);
+		
 
 		if ($timeout>0){
 			$timeout--;
-			set_state($soc_state,$state,$timeout);		
+			set_gui_status($mpsoc,$state,$timeout);						
 		}
 		elsif( $state ne "ideal" ){
 			$refresh->clicked;
-			my $saved_name=$mpsoc->mpsoc_get_mpsoc_name();
+			my $saved_name=$mpsoc->object_get_attribute('mpsoc_name');
 			if(defined $saved_name) {$entry->set_text($saved_name);}
-			set_state($soc_state,"ideal",0);
+			set_gui_status($mpsoc,"ideal",0);
+			
 			
 		}	
 		return TRUE;
@@ -1679,8 +1700,8 @@ sub mpsocgen_main{
 #	});
 
 	$open-> signal_connect("clicked" => sub{ 
-		set_state($soc_state,"ref",5);
-		load_mpsoc($mpsoc,$soc_state);
+		set_gui_status($mpsoc,"ref",5);
+		load_mpsoc($mpsoc,$info);
 	
 	});	
 
@@ -1708,7 +1729,7 @@ sub mpsocgen_main{
 #############
 
 sub load_mpsoc{
-	my ($mpsoc,$soc_state)=@_;
+	my ($mpsoc,$info)=@_;
 	my $file;
 	my $dialog = Gtk2::FileChooserDialog->new(
             	'Select a File', undef,
@@ -1730,8 +1751,16 @@ sub load_mpsoc{
 		my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
 		if($suffix eq '.MPSOC'){
 			my $pp= eval { do $file };
+			if ($@ || !defined $pp){		
+				show_info(\$info,"**Error reading  $file file: $@\n");
+				 $dialog->destroy;
+				return;
+			} 
+
+
 			clone_obj($mpsoc,$pp);
-			set_state($soc_state,"load_file",0);		
+			set_gui_status($mpsoc,"load_file",0);
+					
 		}					
      }
      $dialog->destroy;
@@ -1748,7 +1777,8 @@ sub load_mpsoc{
 sub copy_noc_files{
 	my ($project_dir,$dest)=@_;
 	
-my @noc_files=('/mpsoc/src_noc/arbiter.v',
+my @noc_files=(
+    '/mpsoc/src_noc/arbiter.v',
 	'/mpsoc/src_noc/baseline.v',
 	'/mpsoc/src_noc/canonical_credit_count.v',
 	'/mpsoc/src_noc/class_table.v',
@@ -1769,7 +1799,8 @@ my @noc_files=('/mpsoc/src_noc/arbiter.v',
 	'/mpsoc/src_noc/router.v',
 	'/mpsoc/src_noc/route_torus.v',
 	'/mpsoc/src_noc/routing.v',
-	'/mpsoc/src_noc/vc_alloc_request_gen.v');
+	'/mpsoc/src_noc/vc_alloc_request_gen.v',
+	'/mpsoc/src_noc/ss_allocator.v');
 	foreach my $f (@noc_files){
 		copy ("$project_dir$f",$dest); 
 		

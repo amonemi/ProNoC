@@ -249,11 +249,11 @@ sub add_intfc{
 
 	my ($self,$infc_gen) =@_;
 	
-	my $intfc_name=$infc_gen->intfc_get_interface_name();
-	my $connection_num=$infc_gen->intfc_get_connection_num();
-	my $intfc_type=$infc_gen->intfc_get_interface_type();
-	my $intfc_info=$infc_gen->intfc_get_description();
-	my $intfc_category=$infc_gen->intfc_get_category();
+	my $intfc_name=$infc_gen->object_get_attribute('name');
+	my $connection_num=$infc_gen->object_get_attribute('connection_num');
+	my $intfc_type=$infc_gen->object_get_attribute('type');
+	my $intfc_info=$infc_gen->object_get_attribute('description');
+	my $intfc_category=$infc_gen->object_get_attribute('category');
 	
 	
 	my(%types,%ranges,%names,%connect_types,%connect_ranges,%connect_names,%outport_types,%default_outs);

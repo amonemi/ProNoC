@@ -43,11 +43,11 @@
 
 
 module gpio #(
-	parameter Dw           =   32,
 	parameter Aw           =   2,
 	parameter SELw         =   4,
 	parameter TAGw         =   3,
-	parameter PORT_WIDTH   =   1
+	parameter PORT_WIDTH   =   1,
+	parameter Dw           =    PORT_WIDTH
 	
 	
 )
@@ -153,11 +153,11 @@ endmodule
 
 
 module gpi #(
-    parameter Dw            =   32,
     parameter Aw            =   2,
     parameter SELw          =   4,
     parameter TAGw          =   3,
-    parameter PORT_WIDTH    =   1
+    parameter PORT_WIDTH    =   1,
+    parameter Dw           =    PORT_WIDTH
     
     
 )
@@ -245,11 +245,12 @@ endmodule
 
 
 module gpo #(
-    parameter Dw           =    32,
+   
     parameter Aw           =    2,
     parameter SELw         =    4,
     parameter TAGw         =    3,
-    parameter PORT_WIDTH    =   1
+    parameter PORT_WIDTH    =   1,
+    parameter Dw           =    PORT_WIDTH
     
     
 )

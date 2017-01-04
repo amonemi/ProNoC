@@ -235,17 +235,9 @@ sub soc_get_plug_of_instance{
 	return ($type,$value,$connection_num);	
 }
 
-sub soc_set_soc_name{
-	my ($self,$name)=@_;
-	if(defined $name){$self->{soc_name}=$name;}	
-}	
 
-sub soc_get_soc_name{
-	my ($self)=@_;
-	my $name;
-	if(exists  $self->{soc_name}){ $name=$self->{soc_name};}	
-	return $name;
-}	
+
+
 
 
 
@@ -635,6 +627,54 @@ sub wires_list{
 	my @list=	sort keys $self->{assigned_name};
 	return @list;
 }
+
+
+
+
+
+
+
+
+
+
+
+sub object_add_attribute{
+	my ($self,$attribute1,$attribute2,$value)=@_;
+	if(!defined $attribute2){$self->{$attribute1}=$value;}
+	else {$self->{$attribute1}{$attribute2}=$value;}
+
+}
+
+sub object_get_attribute{
+	my ($self,$attribute1,$attribute2)=@_;
+	if(!defined $attribute2) {return $self->{$attribute1};}
+	return $self->{$attribute1}{$attribute2};
+
+
+}
+
+sub object_add_attribute_order{
+	my ($self,$attribute,@param)=@_;
+	$self->{'parameters_order'}{$attribute}=[] if (!defined $self->{parameters_order}{$attribute});
+	foreach my $p (@param){
+		push (@{$self->{parameters_order}{$attribute}},$p);
+
+	}
+}
+
+sub object_get_attribute_order{
+	my ($self,$attribute)=@_;
+	return @{$self->{parameters_order}{$attribute}};
+}
+
+
+
+
+
+
+
+
+
 
 
 1

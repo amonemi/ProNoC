@@ -1,0 +1,288 @@
+#######################################################################
+##	File: single_port_ram.IP
+##    
+##	Copyright (C) 2014-2016  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.5.0 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$wb_single_port_ram = bless( {
+                               'hdl_files' => [
+                                                '/mpsoc/src_peripheral/ram/wb_single_port_ram.v',
+                                                '/mpsoc/src_peripheral/ram/generic_ram.v',
+                                                '/mpsoc/src_peripheral/ram/byte_enabled_generic_ram.sv',
+                                                '/mpsoc/src_peripheral/ram/wb_bram_ctrl.v'
+                                              ],
+                               'ip_name' => 'single_port_ram',
+                               'description' => 'Single port ram with wishbone bus interface.',
+                               'modules' => {
+                                              'wb_single_port_ram' => {}
+                                            },
+                               'gui_status' => {
+                                                 'timeout' => 0,
+                                                 'status' => 'ideal'
+                                               },
+                               'plugs' => {
+                                            'reset' => {
+                                                         'reset' => {},
+                                                         'value' => 1,
+                                                         '0' => {
+                                                                  'name' => 'reset'
+                                                                },
+                                                         'type' => 'num'
+                                                       },
+                                            'clk' => {
+                                                       'clk' => {},
+                                                       'value' => 1,
+                                                       '0' => {
+                                                                'name' => 'clk'
+                                                              },
+                                                       'type' => 'num'
+                                                     },
+                                            'wb_slave' => {
+                                                            '0' => {
+                                                                     'width' => 'WB_Aw',
+                                                                     'name' => 'wb',
+                                                                     'addr' => '0x0000_0000	0x3fff_ffff		RAM'
+                                                                   },
+                                                            'value' => 1,
+                                                            'type' => 'num',
+                                                            'wb_slave' => {}
+                                                          }
+                                          },
+                               'parameters' => {
+                                                 'SELw' => {
+                                                             'info' => 'Parameter',
+                                                             'deafult' => 'Dw/8',
+                                                             'global_param' => 'Localparam',
+                                                             'content' => '',
+                                                             'redefine_param' => 1,
+                                                             'type' => 'Fixed'
+                                                           },
+                                                 'Dw' => {
+                                                           'info' => 'Memory data width in Bits.',
+                                                           'deafult' => '32',
+                                                           'global_param' => 'Parameter',
+                                                           'content' => '8,1024,1',
+                                                           'redefine_param' => 1,
+                                                           'type' => 'Spin-button'
+                                                         },
+                                                 'BTEw' => {
+                                                             'info' => 'Parameter',
+                                                             'deafult' => '2',
+                                                             'global_param' => 'Localparam',
+                                                             'content' => '',
+                                                             'type' => 'Fixed',
+                                                             'redefine_param' => 1
+                                                           },
+                                                 'WB_Aw' => {
+                                                              'info' => undef,
+                                                              'deafult' => 'Aw+2',
+                                                              'global_param' => 'Don\'t include',
+                                                              'content' => '',
+                                                              'redefine_param' => 1,
+                                                              'type' => 'Fixed'
+                                                            },
+                                                 'Aw' => {
+                                                           'info' => 'Memory address width',
+                                                           'deafult' => '12',
+                                                           'global_param' => 'Parameter',
+                                                           'content' => '4,31,1',
+                                                           'type' => 'Spin-button',
+                                                           'redefine_param' => 1
+                                                         },
+                                                 'BURST_MODE' => {
+                                                                   'info' => 'Wishbone bus burst read/write mode enable/disable.  ',
+                                                                   'deafult' => '"DISABLED"',
+                                                                   'global_param' => 'Localparam',
+                                                                   'content' => '"DISABLED","ENABLED"',
+                                                                   'type' => 'Combo-box',
+                                                                   'redefine_param' => 1
+                                                                 },
+                                                 'TAGw' => {
+                                                             'info' => 'Parameter',
+                                                             'deafult' => '3',
+                                                             'global_param' => 'Localparam',
+                                                             'content' => '',
+                                                             'type' => 'Fixed',
+                                                             'redefine_param' => 1
+                                                           },
+                                                 'JTAG_INDEX' => {
+                                                                   'info' => '   A unique index number which will be used for accessing to the memory content using JTAG cable.The default value is the processing tile id (CORE_ID) . You can also inter a unique number for each individula memory.
+
+   In case you have \'n\' memory in each processing core you can define their index as "n*CORE_ID+1 , n*CORE_ID+2 ...n*CORE_ID+n-1). 
+
+   You also can disabled JTAG access here and connect one jtag to wb interface (jtag_wb) to the wishbone bus. Using single jtag index number, a jtag_wb module can read/wr any IP that is connected to wishbone bus slave port (including all memory units).
+
+',
+                                                                   'deafult' => 'CORE_ID',
+                                                                   'global_param' => 'Localparam',
+                                                                   'content' => '',
+                                                                   'redefine_param' => 1,
+                                                                   'type' => 'Entry'
+                                                                 },
+                                                 'JTAG_CONNECT' => {
+                                                                     'info' => 'JTAG_CONNECT:
+if it is not disabled then the actual memory implements as a dual port RAM with the second port is connected either to In-System Memory Content Editor or Jtag_to_wb  ',
+                                                                     'deafult' => '"DISABLED"',
+                                                                     'global_param' => 'Localparam',
+                                                                     'content' => '"DISABLED", "JTAG_WB" , "ALTERA_IMCE"',
+                                                                     'type' => 'Combo-box',
+                                                                     'redefine_param' => 1
+                                                                   },
+                                                 'BYTE_WR_EN' => {
+                                                                   'info' => '',
+                                                                   'deafult' => '"YES"',
+                                                                   'global_param' => 'Localparam',
+                                                                   'content' => '"YES","NO"',
+                                                                   'redefine_param' => 1,
+                                                                   'type' => 'Combo-box'
+                                                                 },
+                                                 'CTIw' => {
+                                                             'info' => 'Parameter',
+                                                             'deafult' => '3',
+                                                             'global_param' => 'Localparam',
+                                                             'content' => '',
+                                                             'redefine_param' => 1,
+                                                             'type' => 'Fixed'
+                                                           },
+                                                 'FPGA_VENDOR' => {
+                                                                    'info' => '',
+                                                                    'deafult' => '"ALTERA"',
+                                                                    'global_param' => 'Localparam',
+                                                                    'content' => '"ALTERA","GENERIC"',
+                                                                    'redefine_param' => 1,
+                                                                    'type' => 'Combo-box'
+                                                                  }
+                                               },
+                               'parameters_order' => [
+                                                       'Dw',
+                                                       'Aw',
+                                                       'BYTE_WR_EN',
+                                                       'FPGA_VENDOR',
+                                                       'JTAG_CONNECT',
+                                                       'JTAG_INDEX',
+                                                       'TAGw',
+                                                       'SELw',
+                                                       'CTIw',
+                                                       'BTEw',
+                                                       'WB_Aw',
+                                                       'BURST_MODE'
+                                                     ],
+                               'ports' => {
+                                            'sa_tag_i' => {
+                                                            'intfc_name' => 'plug:wb_slave[0]',
+                                                            'intfc_port' => 'tag_i',
+                                                            'range' => 'TAGw-1     :   0',
+                                                            'type' => 'input'
+                                                          },
+                                            'sa_rty_o' => {
+                                                            'intfc_name' => 'plug:wb_slave[0]',
+                                                            'intfc_port' => 'rty_o',
+                                                            'range' => '',
+                                                            'type' => 'output'
+                                                          },
+                                            'sa_dat_o' => {
+                                                            'intfc_port' => 'dat_o',
+                                                            'intfc_name' => 'plug:wb_slave[0]',
+                                                            'range' => 'Dw-1       :   0',
+                                                            'type' => 'output'
+                                                          },
+                                            'sa_cti_i' => {
+                                                            'intfc_name' => 'plug:wb_slave[0]',
+                                                            'intfc_port' => 'cti_i',
+                                                            'range' => 'CTIw-1     :   0',
+                                                            'type' => 'input'
+                                                          },
+                                            'sa_sel_i' => {
+                                                            'intfc_name' => 'plug:wb_slave[0]',
+                                                            'intfc_port' => 'sel_i',
+                                                            'range' => 'SELw-1     :   0',
+                                                            'type' => 'input'
+                                                          },
+                                            'sa_bte_i' => {
+                                                            'intfc_port' => 'bte_i',
+                                                            'intfc_name' => 'plug:wb_slave[0]',
+                                                            'range' => 'BTEw-1     :   0',
+                                                            'type' => 'input'
+                                                          },
+                                            'sa_dat_i' => {
+                                                            'intfc_port' => 'dat_i',
+                                                            'intfc_name' => 'plug:wb_slave[0]',
+                                                            'range' => 'Dw-1       :   0',
+                                                            'type' => 'input'
+                                                          },
+                                            'sa_we_i' => {
+                                                           'intfc_port' => 'we_i',
+                                                           'intfc_name' => 'plug:wb_slave[0]',
+                                                           'range' => '',
+                                                           'type' => 'input'
+                                                         },
+                                            'sa_err_o' => {
+                                                            'intfc_port' => 'err_o',
+                                                            'intfc_name' => 'plug:wb_slave[0]',
+                                                            'range' => '',
+                                                            'type' => 'output'
+                                                          },
+                                            'sa_cyc_i' => {
+                                                            'intfc_port' => 'cyc_i',
+                                                            'intfc_name' => 'plug:wb_slave[0]',
+                                                            'range' => '',
+                                                            'type' => 'input'
+                                                          },
+                                            'reset' => {
+                                                         'intfc_name' => 'plug:reset[0]',
+                                                         'intfc_port' => 'reset_i',
+                                                         'range' => '',
+                                                         'type' => 'input'
+                                                       },
+                                            'sa_ack_o' => {
+                                                            'intfc_port' => 'ack_o',
+                                                            'intfc_name' => 'plug:wb_slave[0]',
+                                                            'range' => '',
+                                                            'type' => 'output'
+                                                          },
+                                            'clk' => {
+                                                       'intfc_port' => 'clk_i',
+                                                       'intfc_name' => 'plug:clk[0]',
+                                                       'range' => '',
+                                                       'type' => 'input'
+                                                     },
+                                            'sa_addr_i' => {
+                                                             'intfc_port' => 'adr_i',
+                                                             'intfc_name' => 'plug:wb_slave[0]',
+                                                             'range' => 'Aw-1       :   0',
+                                                             'type' => 'input'
+                                                           },
+                                            'sa_stb_i' => {
+                                                            'intfc_port' => 'stb_i',
+                                                            'intfc_name' => 'plug:wb_slave[0]',
+                                                            'range' => '',
+                                                            'type' => 'input'
+                                                          }
+                                          },
+                               'ports_order' => [
+                                                  'clk',
+                                                  'reset',
+                                                  'sa_dat_i',
+                                                  'sa_sel_i',
+                                                  'sa_addr_i',
+                                                  'sa_tag_i',
+                                                  'sa_cti_i',
+                                                  'sa_bte_i',
+                                                  'sa_stb_i',
+                                                  'sa_cyc_i',
+                                                  'sa_we_i',
+                                                  'sa_dat_o',
+                                                  'sa_ack_o',
+                                                  'sa_err_o',
+                                                  'sa_rty_o'
+                                                ],
+                               'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/ram/wb_single_port_ram.v',
+                               'module_name' => 'wb_single_port_ram',
+                               'unused' => undef,
+                               'category' => 'RAM'
+                             }, 'ip_gen' );

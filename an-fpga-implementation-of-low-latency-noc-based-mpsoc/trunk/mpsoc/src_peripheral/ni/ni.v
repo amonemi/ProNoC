@@ -29,34 +29,51 @@
     Purpose:
     A DMA based NI for connecting the NoC router to a processor. The NI has 3 
     memory mapped registers:
-         // ni status register
-    STATUS_ADDR          =   0,
-    // update memory pinter, packet size and send packet read command. If memory pointer and packet size width are smaller than COMB_MEM_PTR_W and COMB_PCK_SIZE_W respectively.
-    RD_MEM_PCKSIZ_ADDR   =   1,  
-    // update memory pinter, packet size and send packet write command. If memory pointer and packet size width are smaller than COMB_MEM_PTR_W and COMB_PCK_SIZE_W respectively.
-    WR_MEM_PCKSIZ_ADDR   =   2,      
-    //update packet size  
-    PCK_SIZE_ADDR        =   3,
-    //update the memory pointer address and send read command. The packet size must be updated before setting this register. use it when memory pointer width is larger than COMB_MEM_PTR_W
-    RD_MEM_ADDR          =   4,     
-    //update the memory pointer address and send write command. The packet size must be updated before setting this register. use it when memory pointer width is larger than COMB_MEM_PTR_W
-    WR_MEM_ADDR          =   5;
+    
+    wishbone slave adderess :
+    
+        [2:0]  
+            // ni status register
+            0 : STATUS_ADDR 
+            // update memory pinter, packet size and send packet read command. If memory pointer and packet size width are smaller than COMB_MEM_PTR_W and COMB_PCK_SIZE_W respectively.
+            1 : MEM_PCKSIZ_ADDR       
+            //update packet size  
+            2: PCK_SIZE_ADDR        
+            //update the memory pointer address and send read command. The packet size must be updated before setting this register. use it when memory pointer width is larger than COMB_MEM_PTR_W
+            3: MEM_ADDR  
+           
+        
+        
+        [3] 
+            // rd/wr flag. If ni is in ideal state then 
+            0:    RD_CMD  update rd packet register
+            1:    WR_CMD  updare wr packet register
+        [4+Vw:4]
+            // candidate read/write V binarry number. Only write in IDEAL state  
+            V_NUM  : rd/wr VC num 
+    
+    
+    
     
         status_reg  
             bit_loc         flag_name
-            12              rsv_pck_isr
-            11              rd_done_isr
-            10              wr_done_isr
-            9               rsv_pck_int_en
-            8               rd_done_int_en
-            7               wr_done_int_en
-            6               all_vcs_full
-            5               any_vc_has_data
-            4               rd_no_pck_err
-            3               rd_ovr_size_err
-            2               rd_done
-            1               wr_done
-            0               busy
+            [14+V : 14+2V-1]rd_vc_not_empty       
+            [14 : 14+V-1]   wr_vc_not_empty       
+            13              rsv_pck_isr
+            12              rd_done_isr
+            11              wr_done_isr
+            10              rsv_pck_int_en
+            9               rd_done_int_en
+            8               wr_done_int_en
+            7               all_wr_vcs_full
+            6               any_rd_vc_has_data
+            5               rd_no_pck_err
+            4               rd_ovr_size_err
+            3               rd_done
+            2               wr_done
+            1               rd_busy
+            0               wr_busy
+           
             
         
         
@@ -88,7 +105,7 @@ module ni #(
     
     //wishbone port parameters
     parameter Dw            =   32,
-    parameter S_Aw          =   3,
+    parameter S_Aw          =   7,
     parameter M_Aw          =   32,
     parameter TAGw          =   3,
     parameter SELw          =   4
@@ -155,40 +172,45 @@ module ni #(
     localparam  P_1    =    P-1 ,
                 Fw     =    2+V+Fpay, //flit width
                 Xw =   log2(NX),
-                Yw =   log2(NY); 
+                Yw =   log2(NY),
+                Vw =   (V>1) ? log2(V) : 1; 
                    
-  
+   
+        
+        
     //wishbone slave addresses
     localparam  
     // ni status register
-    STATUS_ADDR          =   0,
+    STATUS_ADDR       =   3'd0,
     // update memory pinter, packet size and send packet read command. If memory pointer and packet size width are smaller than COMB_MEM_PTR_W and COMB_PCK_SIZE_W respectively.
-    RD_MEM_PCKSIZ_ADDR   =   1,  
-    // update memory pinter, packet size and send packet write command. If memory pointer and packet size width are smaller than COMB_MEM_PTR_W and COMB_PCK_SIZE_W respectively.
-    WR_MEM_PCKSIZ_ADDR   =   2,      
+    MEM_PCKSIZ_ADDR   =   3'd1,  
     //update packet size  
-    PCK_SIZE_ADDR        =   3,
+    PCK_SIZE_ADDR     =   3'd2,
     //update the memory pointer address and send read command. The packet size must be updated before setting this register. use it when memory pointer width is larger than COMB_MEM_PTR_W
-    RD_MEM_ADDR          =   4,     
-    //update the memory pointer address and send write command. The packet size must be updated before setting this register. use it when memory pointer width is larger than COMB_MEM_PTR_W
-    WR_MEM_ADDR          =   5;
+    MEM_ADDR          =   3'd3,
+    //If ni is in ideal state then  update RD/WR packet registers
+    RD_CMD            =   1'b0,   
+    WR_CMD            =   1'b1;
+     
+   
     
     
    
     //status register bit                    
- localparam     NI_BUSY_LOC=            0,  
-                NI_WR_DONE_LOC=         1,
-                NI_RD_DONE_LOC=         2,
-                NI_RD_OVR_ERR_LOC=      3,
-                NI_RD_NPCK_ERR_LOC=     4,
-                NI_HAS_PCK_LOC=         5,
-                NI_ALL_VCS_FULL_LOC=    6,
-                NI_WR_DONE_INT_EN_LOC=  7,
-                NI_RD_DONE_INT_EN_LOC=  8,
-                NI_RSV_PCK_INT_EN_LOC=  9,
-                NI_WR_DONE_ISR_LOC=     10,
-                NI_RD_DONE_ISR_LOC=     11,
-                NI_RSV_PCK_ISR_LOC=     12;  
+ localparam     NI_RD_BUSY_LOC=         0,
+                NI_WR_BUSY_LOC=         1,  
+                NI_WR_DONE_LOC=         2,
+                NI_RD_DONE_LOC=         3,
+                NI_RD_OVR_ERR_LOC=      4,
+                NI_RD_NPCK_ERR_LOC=     5,
+                NI_HAS_PCK_LOC=         6,
+                NI_ALL_VCS_FULL_LOC=    7,
+                NI_WR_DONE_INT_EN_LOC=  8,
+                NI_RD_DONE_INT_EN_LOC=  9,
+                NI_RSV_PCK_INT_EN_LOC=  10,
+                NI_WR_DONE_ISR_LOC=     11,
+                NI_RD_DONE_ISR_LOC=     12,
+                NI_RSV_PCK_ISR_LOC=     13;  
                 
                 
 localparam  CLASS_IN_HDR_WIDTH      =8,
@@ -196,14 +218,17 @@ localparam  CLASS_IN_HDR_WIDTH      =8,
             X_Y_IN_HDR_WIDTH        =4,
             HDR_ROUTING_INFO_WIDTH  =   CLASS_IN_HDR_WIDTH+DEST_IN_HDR_WIDTH+ 4* X_Y_IN_HDR_WIDTH;
             
-localparam  NUMBER_OF_STATUS    =   7,
+localparam  NUMBER_OF_STATUS    =   8,
             IDEAL               =   1,
-            READ_MEM_PCK_HDR    =   2,
-            ASSIGN_PORT_VC      =   4,
-            SEND_HDR            =   8,
-            WR_ON_FIFO          =   16,
-            WR_ON_RAM           =   32,
-            AUTO_WR             =   64;
+            READ_MEM_PCK_HDR    =   2, // wr stage 1
+            ASSIGN_PORT_VC      =   4, // wr stage 2
+            SEND_HDR            =   8, // wr stage 3
+            WR_ON_FIFO          =   16,// wr stage 4
+            
+            RD_VC_CHECK         =   32,// rd stage 1
+            WR_ON_RAM           =   64,// rd stage 2
+            
+            AUTO_WR             =   128;// auto stage 1
                 
             
    
@@ -293,7 +318,7 @@ localparam  NUMBER_OF_STATUS    =   7,
     
     wire                                m_waitrequest, m_read;
     wire                                s_ack_o_next;
-    reg                                 last_rw;
+   
     reg                                 m_ack_i_delayed;  
    
    
@@ -321,17 +346,16 @@ localparam  NUMBER_OF_STATUS    =   7,
     
     
     
-    reg                                     cand_wr_vc_en;
+  
     wire                                    cand_wr_vc_full;
-    reg     [V-1                    :   0]  cand_rd_vc,cand_rd_vc_next;
-    wire                                    no_rd_vc_is_cand;
-    reg                                     cand_rd_vc_en,cand_rd_vc_rst;
+    
+    
     wire                                    cand_rd_vc_not_empty;
     reg                                     any_vc_has_data;
     
         
     
-    wire    [V-1                    :   0]  rd_vc_arbiter_in ,rd_vc_arbiter_out; 
+   
     reg                                     ififo_rd_en; 
     
         
@@ -352,9 +376,26 @@ localparam  NUMBER_OF_STATUS    =   7,
     
     
     wire    [V-1  :0] full_vc;
-    wire    [V-1  :0] cand_wr_vc;
-    wire              noc_busy;
     
+    wire              rd_busy,wr_busy;
+    
+    wire    [V-1  :0] wr_vc_not_empty, rd_vc_not_empty;
+    
+    
+    
+    //wishbone slave register address 
+    wire [2:0] wb_general_reg_addr;
+    wire       wb_wr_rd_addr;
+    wire [Vw-1   :   0] wb_v_addr_binary;
+   
+    
+    reg  [Vw-1  :0] cand_wr_vc_binary,cand_rd_vc_binary;
+    wire [V-1  :0] cand_wr_vc_onehot,cand_rd_vc_onehot;
+    
+    assign {wb_v_addr_binary, wb_wr_rd_addr, wb_general_reg_addr} = s_addr_i[3+Vw      :0];
+   
+  
+   
     
     assign  m_sel_o         =   4'b1111;
     assign  m_waitrequest   =   ~m_ack_i_delayed ; //in busrt mode  the ack is regisered inside the ni insted of ram to avoid combinational loop
@@ -366,12 +407,11 @@ localparam  NUMBER_OF_STATUS    =   7,
     assign  irq             = (rsv_pck_isr & rsv_pck_int_en) | (rd_done_isr & rd_done_int_en) | (wr_done_isr & wr_done_int_en);
         
     assign  all_vcs_full    =   & full_vc;
-    assign  cand_wr_vc_full =   | ( full_vc & cand_wr_vc);
+    assign  cand_wr_vc_full =   full_vc[cand_wr_vc_binary];
          
     
-    assign  no_rd_vc_is_cand            =   ~(| cand_rd_vc);
-    assign  rd_vc_arbiter_in            =   (cand_rd_vc_en)?  ififo_vc_not_empty : {V{1'b0}} ;
-    assign  cand_rd_vc_not_empty        =   |(ififo_vc_not_empty & cand_rd_vc) ;
+   
+    assign  cand_rd_vc_not_empty        =   ififo_vc_not_empty[cand_rd_vc_binary] ;
     
     
     
@@ -381,7 +421,7 @@ localparam  NUMBER_OF_STATUS    =   7,
     
     assign  m_dat_o         =   {ififo_dout[Fpay-1  :   0]};
     
-    assign  flit_out        =   {wr_flit_type,cand_wr_vc,m_pyld};
+    assign  flit_out        =   {wr_flit_type,cand_wr_vc_onehot,m_pyld};
     
     
     wire    [CLASS_IN_HDR_WIDTH-1   :   0]  flit_in_class_hdr;
@@ -428,8 +468,12 @@ endgenerate
    
       
     //status register
-    assign  noc_busy            =   ps!=IDEAL;
-    assign  status_reg          =   {rsv_pck_isr, rd_done_isr,wr_done_isr,rsv_pck_int_en, rd_done_int_en,wr_done_int_en,all_vcs_full,any_vc_has_data,rd_no_pck_err,rd_ovr_size_err,rd_done,wr_done,noc_busy};
+   // assign  noc_busy            =   ps!=IDEAL;
+    assign  rd_busy             =  ( ps == WR_ON_RAM ); 
+    assign  wr_busy             =  ( ps ==   READ_MEM_PCK_HDR | ps ==  ASSIGN_PORT_VC | ps == SEND_HDR  | ps ==     WR_ON_FIFO); 
+    
+    
+    assign  status_reg          =   {rd_vc_not_empty,wr_vc_not_empty,rsv_pck_isr, rd_done_isr,wr_done_isr,rsv_pck_int_en, rd_done_int_en,wr_done_int_en,all_vcs_full,any_vc_has_data,rd_no_pck_err,rd_ovr_size_err,rd_done,wr_done,rd_busy,wr_busy};
     assign  s_dat_o             =   status_reg;
    
     reg  [M_Aw-1          :   0] m_addr;
@@ -461,7 +505,7 @@ endgenerate
             memory_ptr          <=  {MEM_PTR_W{1'b0}};
             pck_size            <=  {COUNTER_W{1'b0}};
             counter             <=  {COUNTER_W{1'b0}};
-            cand_rd_vc          <=  {V{1'b0}};
+           
             wr_done             <=  1'b0;
             rd_done             <=  1'b0;
             rd_no_pck_err       <=  1'b0;
@@ -484,7 +528,7 @@ endgenerate
             memory_ptr          <=  memory_ptr_next;
             pck_size            <=  pck_size_next;
             counter             <=  counter_next;
-            cand_rd_vc          <=  cand_rd_vc_next;
+           
             wr_done             <=  wr_done_next;
             rd_done             <=  rd_done_next;
             rd_no_pck_err       <=  rd_no_pck_err_next;
@@ -507,11 +551,10 @@ endgenerate
     // flit counter & candidate read VC
     always@(*)begin
         counter_next        = counter;  
-        cand_rd_vc_next = cand_rd_vc;
+        
         if      (counter_reset)             counter_next    =   {COUNTER_W{1'b0}};
         else if (counter_increase)          counter_next    =   counter +1'b1;
-        if  (cand_rd_vc_rst)                cand_rd_vc_next =   {V{1'b0}};
-        else if(cand_rd_vc_en)              cand_rd_vc_next =   rd_vc_arbiter_out;
+        
      end//always
     
     reg wr_done_trg,rd_done_trg;
@@ -524,16 +567,17 @@ endgenerate
         pck_size_next       = pck_size;
         case(ps)
         IDEAL:   begin
-            if(s_stb_i &    s_we_i )   begin 
-                case (s_addr_i)
-                RD_MEM_PCKSIZ_ADDR, WR_MEM_PCKSIZ_ADDR : begin 
+            if(s_stb_i &    s_we_i )   begin              
+            
+                case (wb_general_reg_addr)
+                MEM_PCKSIZ_ADDR: begin 
                     memory_ptr_next = {{(MEM_PTR_W+2-COMB_MEM_PTR_W){1'b0}},s_dat_i[COMB_MEM_PTR_W-1:2]};  
                     pck_size_next   = {{(COMB_MEM_PTR_W-2){1'b0}},s_dat_i[M_Aw-1:COMB_MEM_PTR_W]};                  
                 end
                 PCK_SIZE_ADDR :begin
                     pck_size_next   = s_dat_i[COUNTER_W-1  :0];   
                 end
-                RD_MEM_ADDR,WR_MEM_ADDR :begin
+                MEM_ADDR :begin
                     memory_ptr_next = s_dat_i[MEM_PTR_W+1:2];          
                 end
                 default:begin 
@@ -555,31 +599,65 @@ endgenerate
      end
   
   
+ 
+  
+  
+   //update the cand read\write VC
+     always@(posedge clk or posedge reset) begin
+        if(reset)begin 
+              cand_wr_vc_binary<= {Vw{1'b0}};
+              cand_rd_vc_binary<= {Vw{1'b0}};
+        end else begin 
+             if( s_stb_i &  s_we_i & (wb_general_reg_addr != STATUS_ADDR) & (ps == IDEAL ) ) begin            
+                if(wb_wr_rd_addr == RD_CMD)  cand_rd_vc_binary <= wb_v_addr_binary;  
+                if(wb_wr_rd_addr == WR_CMD)  cand_wr_vc_binary <= wb_v_addr_binary;       
+            end
+        end
+     end
+     
+     
+    bin_to_one_hot #(
+        .BIN_WIDTH(Vw)   
+    )
+    conv_rd_vc
+    (
+        .bin_code(cand_rd_vc_binary),
+        .one_hot_code(cand_rd_vc_onehot)
+    );
+     
+     bin_to_one_hot #(
+        .BIN_WIDTH(Vw)   
+    )
+    conv_wr_vc
+    (
+        .bin_code(cand_wr_vc_binary),
+        .one_hot_code(cand_wr_vc_onehot)
+    ); 
+     
+     
+   
+  
+  
   
     
     always@(*) begin
         ns                      = ps;
         counter_reset           = 1'b0;
         counter_increase        = 1'b0;
-        cand_rd_vc_rst          = 1'b0;
-        cand_rd_vc_en           = 1'b0;
-        cand_rd_vc_rst          = 1'b0;
         ififo_rd_en             = 1'b0;  
         wr_mem_en               = 1'b0;
         credit_out              = {V{1'b0}};
         rd_mem_en               = 1'b0;
         flit_out_wr             = 1'b0;
-        cand_wr_vc_en           = 1'b0;
         destport_ld             = 1'b0;
         wr_done_next            = wr_done;
         rd_done_next            = rd_done;
-        rd_no_pck_err_next  = rd_no_pck_err;
+        rd_no_pck_err_next      = rd_no_pck_err;
         rd_ovr_size_err_next    = rd_ovr_size_err;
       
        
         wr_flit_type            = BDY_FLIT; 
         hdr_write               = 1'b0;
-        last_rw                 = 1'b0;
         read_burst              = 1'b0;
         wr_done_trg             = 1'b0;
         rd_done_trg             = 1'b0;
@@ -587,42 +665,32 @@ endgenerate
         case(ps)
         IDEAL:   begin 
             counter_reset =1;
-            cand_rd_vc_en   =   (no_rd_vc_is_cand)? 1'b1    :   1'b0;
             if  (auto_wr_en_delay)    begin
                 ns                  =   AUTO_WR;
                 ififo_rd_en         =   1'b1;
-                credit_out          =   cand_rd_vc;
+                credit_out          =   cand_rd_vc_onehot;
             end
-            if(s_stb_i &    s_we_i )   begin 
-                case (s_addr_i) 
-                RD_MEM_PCKSIZ_ADDR,RD_MEM_ADDR:  begin   
-                    rd_done_next        = 1'b0;
-                    rd_ovr_size_err_next=1'b0;
-                    if(any_vc_has_data) begin 
-                        //synthesis translate_off
-                            //$display ("%t,\t   core (%d,%d) has recived a packet",$time,current_x,current_y);
-                        //synthesis translate_on                                                                
-                        ns  = WR_ON_RAM;
-                        rd_no_pck_err_next= 1'b0;
-                        ififo_rd_en         = 1'b1; 
-                        credit_out          =   cand_rd_vc;
-                    end else  begin
-                            ns= IDEAL;
-                            rd_no_pck_err_next= 1'b1;
-                    end//if
-                end   //RD_PCK_ADDR:
-                WR_MEM_PCKSIZ_ADDR,WR_MEM_ADDR:  begin           
-                    ns              =   READ_MEM_PCK_HDR;
-                    wr_done_next    =   1'b0;
-                                                        
-                end //WR_PCK_ADDR
-                default:                        ns= IDEAL;
-                endcase//s_addr
+            if(s_stb_i  &    s_we_i )   begin 
+                if ((wb_general_reg_addr ==  MEM_PCKSIZ_ADDR) || (wb_general_reg_addr == MEM_ADDR))  begin   
+                    case(wb_wr_rd_addr)
+                        RD_CMD: begin                    
+                            rd_done_next            = 1'b0;
+                            rd_ovr_size_err_next    = 1'b0;  
+                            rd_no_pck_err_next      = 1'b0;                  
+                            ns= RD_VC_CHECK;
+                            
+                        end// RD_CMD
+                        WR_CMD: begin           
+                            ns              =   READ_MEM_PCK_HDR;
+                            wr_done_next    =   1'b0;
+                        end //WR_CMD                                  
+                      endcase//wb_wr_rd_addr
+                end//if
             end//if
         end//IDEAL
         
         READ_MEM_PCK_HDR:   begin
-            if(~all_vcs_full)   begin
+            if(!cand_wr_vc_full)   begin
                 ns  =   ASSIGN_PORT_VC;
                 rd_mem_en  =   1'b1;                        
             end                
@@ -633,9 +701,8 @@ endgenerate
                 ns                  =   SEND_HDR;
                 rd_mem_en           =   1'b1;
                 counter_increase    =   1'b1;
-                cand_wr_vc_en       =   1'b1;
                 destport_ld         =   1'b1;
-            end else rd_mem_en          =  1'b1;
+            end else rd_mem_en      =  1'b1;
         end//ASSIGN_PORT_VC
         
         SEND_HDR: begin 
@@ -654,7 +721,7 @@ endgenerate
                     wr_done_next    =   1'b1;
                     wr_done_trg     =  1'b1;
                     wr_flit_type    = TAIL_FLIT;    
-                    last_rw         =   1'b1;
+                   
                 end else if(!cand_wr_vc_full) begin 
                     flit_out_wr         =1'b1;
                     counter_increase    = 1'b1;
@@ -663,24 +730,39 @@ endgenerate
             end else if(!cand_wr_vc_full)   rd_mem_en           = 1'b1; 
                 //end
         end//WR_ON_FIFO
-            
+        
+      
+        RD_VC_CHECK: begin
+             if(cand_rd_vc_not_empty) begin 
+                        //synthesis translate_off
+                            //$display ("%t,\t   core (%d,%d) has recived a packet",$time,current_x,current_y);
+                        //synthesis translate_on                                                                
+                        ns  = WR_ON_RAM;
+                        rd_no_pck_err_next  = 1'b0;
+                        ififo_rd_en         = 1'b1; 
+                        credit_out          =   cand_rd_vc_onehot;
+                    end else  begin
+                            ns= IDEAL;
+                            rd_no_pck_err_next= 1'b1;
+                    end//if
+        
+        
+        end // RD_VC_CHECK    
             
         WR_ON_RAM:  begin
             rd_no_pck_err_next= 1'b0;
             if(ififo_tail_flg) begin
                 if(~m_waitrequest) begin 
-                    ns                          =   IDEAL;
-                    last_rw                 =   1'b1;
+                    ns                      =   IDEAL;                   
                     rd_done_next            =   1'b1;
-                    rd_done_trg             =  1'b1;
-                    cand_rd_vc_rst          =   1'b1;
+                    rd_done_trg             =   1'b1;
                     wr_mem_en               =   1'b1;
-                 end else  wr_mem_en         =   1'b1;
+                 end else  wr_mem_en        =   1'b1;
             end //ififo_tail_flg
             else if(~m_waitrequest) begin 
                 if(cand_rd_vc_not_empty ) begin
                     ififo_rd_en             = 1'b1; 
-                    credit_out              =   cand_rd_vc;
+                    credit_out              =   cand_rd_vc_onehot;
                     counter_increase        = 1'b1;
                     if( pck_eq_counter )    rd_ovr_size_err_next    =   1'b1;
                     else                        wr_mem_en   =   1'b1;
@@ -692,7 +774,7 @@ endgenerate
         AUTO_WR :   begin                  
             if(cand_rd_vc_not_empty ) begin
                 ififo_rd_en             = 1'b1; 
-                credit_out              = cand_rd_vc;
+                credit_out              = cand_rd_vc_onehot;
                 if(! ififo_hdr_flg)   ns=   WR_ON_RAM;
             end// if(cand_AUTO_vc_not_empty )                
         end//AUTO_WR       
@@ -717,7 +799,7 @@ endgenerate
         if(wr_done_trg  )     wr_done_isr_next  = 1'b1;
         
         
-        if(s_stb_i &   s_we_i & (s_addr_i == STATUS_ADDR [S_Aw-1    :0]) ) begin 
+        if(s_stb_i &   s_we_i & (wb_general_reg_addr == STATUS_ADDR ) ) begin 
             rsv_pck_int_en_next     = s_dat_i[NI_RSV_PCK_INT_EN_LOC];
             rd_done_int_en_next     = s_dat_i[NI_RD_DONE_INT_EN_LOC];
             wr_done_int_en_next     = s_dat_i[NI_WR_DONE_INT_EN_LOC];
@@ -735,38 +817,30 @@ endgenerate
     .P(P),
     .B(B),
     .Fpay(Fpay),
-    .DEBUG_EN(DEBUG_EN)
+    .DEBUG_EN(DEBUG_EN),
+    .SSA_EN("NO")
  )
  the_ififo
  (
     .din(flit_in),     // Data in
     .vc_num_wr(flit_in_vc_num),//write vertual channel    
     .wr_en(flit_in_wr),   // Write enable
-    .vc_num_rd(cand_rd_vc),//read vertual channel     
+    .vc_num_rd(cand_rd_vc_onehot),//read vertual channel     
     .rd_en(ififo_rd_en),   // Read the next word
     .dout(ififo_dout),    // Data out
     .vc_not_empty(ififo_vc_not_empty),
     .reset(reset),
-    .clk(clk)
+    .clk(clk),
+    .ssa_rd({V{1'b0}})
     
     
  );
  
+ assign rd_vc_not_empty = ififo_vc_not_empty;
  
 
     
     
-arbiter #(
-    .ARBITER_WIDTH (V)
-)
-rd_vc_arbiter
-(   
-    .clk        (clk), 
-   .reset       (reset), 
-   .request     (rd_vc_arbiter_in), 
-   .grant       (rd_vc_arbiter_out), 
-   .any_grant    ()
-);
 
 
 
@@ -794,8 +868,8 @@ rd_vc_arbiter
 
  
     
-    wire [V-1         :0]     ovc_wr_in;
-    assign ovc_wr_in    = (flit_out_wr ) ?  cand_wr_vc : {V{1'b0}};
+    wire [V-1         :0]     ovc_wr_in,wr_vc_empty;
+    assign ovc_wr_in    = (flit_out_wr ) ?  cand_wr_vc_onehot  : {V{1'b0}};
     
     output_vc_status #(
         .V  (V),
@@ -804,16 +878,17 @@ rd_vc_arbiter
     )
     nic_ovc_status
     (
-    .wr_in (ovc_wr_in),   
-    .credit_in (credit_in),
-    .nearly_full_vc (full_vc),
-    .cand_vc  (cand_wr_vc),
-    .empty_vc (),
-    .cand_wr_vc_en (cand_wr_vc_en),
-    .clk  (clk),
-    .reset (reset)
+        .wr_in (ovc_wr_in),   
+        .credit_in (credit_in),
+        .nearly_full_vc (full_vc),
+        .cand_vc  (),
+        .empty_vc (wr_vc_empty),
+        .cand_wr_vc_en (1'b0),
+        .clk  (clk),
+        .reset (reset)
     );
     
+    assign wr_vc_not_empty = ~ wr_vc_empty;              
     
 
     //synthesis translate_off

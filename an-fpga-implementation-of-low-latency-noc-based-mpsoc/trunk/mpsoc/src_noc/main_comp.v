@@ -292,15 +292,18 @@ module binary_mux #(
     input   [SEL_WIDTH_BIN-1    :0] sel;                 
     genvar i;
      
-    wire [OUT_WIDTH-1       :0] mux_in_2d [IN_NUM -1    :0];
-   
-    generate 
-        for (i=0; i< IN_NUM; i=i+1) begin : loop
-            assign mux_in_2d[i] =mux_in[((i+1)*OUT_WIDTH)-1 :   i*OUT_WIDTH];   
-        end
-       if(IN_NUM>1) begin :if1 assign mux_out = mux_in_2d[sel]; end
-       else  begin :els       assign mux_out = mux_in; end
-    endgenerate
+    
+	generate 
+		if(IN_NUM>1) begin :if1
+			wire [OUT_WIDTH-1       :0] mux_in_2d [IN_NUM -1    :0];
+			for (i=0; i< IN_NUM; i=i+1) begin : loop
+				assign mux_in_2d[i] =mux_in[((i+1)*OUT_WIDTH)-1 :   i*OUT_WIDTH];   
+			end
+			assign mux_out = mux_in_2d[sel];		
+		end else  begin :els
+			assign mux_out = mux_in;			
+		end
+	endgenerate
     
 endmodule
 

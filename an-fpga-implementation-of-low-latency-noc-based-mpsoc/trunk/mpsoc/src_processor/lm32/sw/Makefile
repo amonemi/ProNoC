@@ -1,5 +1,6 @@
 TOOLCHAIN=$(PRONOC_WORK)/toolchain/lm32
-IHEX2MIF =$(PRONOC_WORK)/toolchain/ihex2mif/ihex2mif
+IHEX2MIF =$(PRONOC_WORK)/toolchain/bin/ihex2mif
+IHEX2BIN =$(PRONOC_WORK)/toolchain/bin/ihex2bin
 
 
 #SREC2VRAM ?= ../../../toolchain/lm32/srec2vram/srec2vram
@@ -51,7 +52,8 @@ image.srec: image image.lst image.bin
 
 $(VRAMFILE): image.srec
 #$(SREC2VRAM) image.srec 0x40000000 0x1000 > $(VRAMFILE)
-	$(IHEX2MIF) -f image.ihex  -e $(RAMSIZE) -o ram00.mif
+	$(IHEX2MIF) -f image.ihex  -e $(RAMSIZE) -o ram0.mif
+	$(IHEX2BIN) -i image.ihex  -o ram0.bin
 
 clean:
 	rm -f image.ihex  image image.lst image.bin image.srec image.map  image.ram image.hex *.o *.d

@@ -1,0 +1,60 @@
+http://sf.net/apps/mediawiki/urjtag/index.php?title=Cable_Altera_USB-Blaster
+----------------------------------------------------------------------------
+
+Altera USB-Blaster
+------------------
+
+General
+-------
+        _________
+       |         |
+       | AT93C46 |
+       |_________|
+        __|__________    _________
+       |             |  |         |
+  USB__| FTDI 245BM  |__| EPM7064 |__JTAG (B_TDO,B_TDI,B_TMS,B_TCK)
+       |_____________|  |_________|
+        __|__________    _|___________
+       |             |  |             |
+       | 6 MHz XTAL  |  | 24 MHz Osc. |
+       |_____________|  |_____________|
+
+
+Quoting from ixo.de (http://www.ixo.de/info/usb_jtag/)
+usb_jtag/device/c51/usbjtag.c comments:
+
+usb_jtag firmware now happens to behave just like the combination of 
+FT245BM and Altera-programmed EPM7064 CPLD in Altera's USB-Blaster. 
+The CPLD knows two major modes: Bit banging mode and Byte shift mode. 
+It starts in Bit banging mode. While bytes are received from the host 
+on EP2OUT, each byte B of them is processed as follows:
+
+Bit banging mode
+----------------
+1. Remember bit 6 (0x40) in B as the "Read bit".
+2. If bit 7 (0x80) is set, switch to Byte shift mode for the coming X 
+   bytes ( X := B & 0x3F ), and don't do anything else now.
+3. Otherwise, set the JTAG signals as follows:
+   - TCK/DCLK high if bit 0 was set (0x01), otherwise low
+   - TMS/nCONFIG high if bit 1 was set (0x02), otherwise low
+   - nCE high if bit 2 was set (0x04), otherwise low
+   - nCS high if bit 3 was set (0x08), otherwise low
+   - TDI/ASDI/DATAO high if bit 4 was set (0x10), otherwise low
+   - Output Enable/LED active if bit 5 was set (0x20), otherwise low 
+4. If "Read bit" (0x40) was set, record the state of TDO(CONF_DONE) and
+   DATAOUT/(nSTATUS) pins and put is as a byte( (DATAOUT<<1)|TDO) in the
+   output FIFO _to_ the host. 
+
+Byte shift mode
+---------------
+1. Load shift register with byte from host
+2. Do 8 times (i.e. for each bit of the byte; implemented in shift.a51)
+   - if nCS=1, set carry bit from TDO, else set carry bit from DATAOUT 
+     (Active Serial mode)
+   - Rotate shift register through carry bit
+   - TDI := Carry bit
+   - Raise TCK, then lower TCK. 
+3. If "Read bit" was set when switching into byte shift mode, record the 
+   shift register content and put it into the FIFO to the host. 
+
+

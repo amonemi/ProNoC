@@ -1140,6 +1140,8 @@ endmodule
             .out(ivc_not_grnt_num[i])
         );
        wire [CNG_w-1 :   0] congestion_num  [P_1-1  :   0];
+
+
        assign congestion_num [i]=  counter_o[i]+ ivc_not_grnt_num[i]+ {ivc_not_grnt_num[i],1'b0};
    
        normalizer #(
@@ -1324,9 +1326,10 @@ localparam PV       = P*V,
  input    [PV-1       :   0]  ovc_avalable_all; 
  input    [PV-1       :   0]  ivc_request_all;    
  input    [PV-1       :   0]  ivc_num_getting_sw_grant; 
- output   [CONG_ALw-1 :   0]  congestion_out_all;                 
+ output  reg [CONG_ALw-1 :   0]  congestion_out_all;                 
  input                        clk,reset;
 
+  wire [CONG_ALw-1 :   0]  congestion_out_all_next;  
 generate
 if(ROUTE_TYPE  !=  "DETERMINISTIC") begin :adpt
         if((CONGESTION_INDEX==2) || (CONGESTION_INDEX==3)) begin :based_ivc
@@ -1338,7 +1341,7 @@ if(ROUTE_TYPE  !=  "DETERMINISTIC") begin :adpt
            the_congestion_out_gen
            (
                .ivc_request_all(ivc_request_all),
-               .congestion_out_all(congestion_out_all)
+               .congestion_out_all(congestion_out_all_next)
            );
         end else if((CONGESTION_INDEX==4) || (CONGESTION_INDEX==5)) begin :based_ng_ivc
       
@@ -1351,7 +1354,7 @@ if(ROUTE_TYPE  !=  "DETERMINISTIC") begin :adpt
            (
                .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant),
                .ivc_request_all(ivc_request_all),
-               .congestion_out_all(congestion_out_all),
+               .congestion_out_all(congestion_out_all_next),
                .clk(clk),
                .reset(reset)
            );
@@ -1366,7 +1369,7 @@ if(ROUTE_TYPE  !=  "DETERMINISTIC") begin :adpt
              the_congestion_out_gen
              (      
             	.ovc_avalable_all(ovc_avalable_all),
-                .congestion_out_all(congestion_out_all)
+                .congestion_out_all(congestion_out_all_next)
               );
        
        
@@ -1380,7 +1383,7 @@ if(ROUTE_TYPE  !=  "DETERMINISTIC") begin :adpt
             the_congestion_out_gen
             (
                 .ovc_avalable_all(ovc_avalable_all),
-                .congestion_out_all(congestion_out_all)   
+                .congestion_out_all(congestion_out_all_next)   
  
             );
          end  else if  (CONGESTION_INDEX==9) begin :indx9
@@ -1392,7 +1395,7 @@ if(ROUTE_TYPE  !=  "DETERMINISTIC") begin :adpt
             the_congestion_out_gen
             (
                 .ovc_avalable_all(ovc_avalable_all),
-                .congestion_out_all(congestion_out_all)   
+                .congestion_out_all(congestion_out_all_next)   
  
             );
          end  else if  (CONGESTION_INDEX==10) begin :indx10
@@ -1404,7 +1407,7 @@ if(ROUTE_TYPE  !=  "DETERMINISTIC") begin :adpt
             the_congestion_out_gen
             (
                 .ovc_avalable_all(ovc_avalable_all),
-                .congestion_out_all(congestion_out_all)   
+                .congestion_out_all(congestion_out_all_next)   
  
             );
             
@@ -1422,19 +1425,29 @@ if(ROUTE_TYPE  !=  "DETERMINISTIC") begin :adpt
                 .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant),
                 .clk(clk),
                 .reset(reset),    
-                .congestion_out_all(congestion_out_all)   
+                .congestion_out_all(congestion_out_all_next)   
             );
              
        
-        end  else begin :nocong assign  congestion_out_all = {CONG_ALw{1'bx}};   end
+        end  else begin :nocong assign  congestion_out_all_next = {CONG_ALw{1'bx}};   end
     
     
     end else begin :dtrmn
-           assign  congestion_out_all = {CONG_ALw{1'bx}};   
+           assign  congestion_out_all_next = {CONG_ALw{1'bx}};   
     
     end
 
 endgenerate
+
+	always @(posedge clk or posedge reset)begin
+		if(reset)begin
+			congestion_out_all <= {CONG_ALw{1'b0}};  
+		end else begin 
+			congestion_out_all <= congestion_out_all_next;
+		
+		end	
+	end
+
 
 endmodule
 
@@ -1533,3 +1546,4 @@ endmodule
 
 
  
+

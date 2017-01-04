@@ -1,3 +1,3 @@
 #!/bin/sh
 all:
-	gcc	main.c	-o	ihex2mif
+	gcc	-Wall main.c	-o	ihex2mif

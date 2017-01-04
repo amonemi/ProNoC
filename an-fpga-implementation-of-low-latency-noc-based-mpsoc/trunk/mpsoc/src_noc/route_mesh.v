@@ -11,6 +11,7 @@
 	*****************************************************/
 
 
+
 module xy_mesh_routing #(
 	parameter NX		=	4,
 	parameter NY		=	3,
@@ -47,7 +48,7 @@ module xy_mesh_routing #(
 	input  [Yw-1		:0]	current_y;
 	input  [Xw-1		:0]	dest_x;
 	input  [Yw-1		:0]	dest_y;
-	output [DSTw-1	    :0]	destport;
+	output [DSTw-1	    	:0]	destport;
 
 	
 	
@@ -55,38 +56,23 @@ module xy_mesh_routing #(
     localparam  LOCAL	=	(OUT_BIN==1)?	0	:  1 ,//5'b00001
                 EAST	=	(OUT_BIN==1)?	1	:  2 ,//5'b00010 
                 NORTH	=	(OUT_BIN==1)?	2	:  4 ,//5'b00100    
-				WEST	=	(OUT_BIN==1)?	3	:  8 ,//5'b01000  
-				SOUTH	=	(OUT_BIN==1)?	4	: 16 ;//5'b10000    
+		WEST	=	(OUT_BIN==1)?	3	:  8 ,//5'b01000  
+		SOUTH	=	(OUT_BIN==1)?	4	: 16 ;//5'b10000    
 	
 	
 	reg [DSTw-1			:0]	destport_next;
 	
-	
-	wire signed [Xw		:0] xc;//current 
-	wire signed [Xw		:0] xd;//destination
-	wire signed [Yw		:0] yc;//current 
-	wire signed [Yw		:0] yd;//destination
-	wire signed [Xw		:0] xdiff;
-	wire signed [Yw		:0] ydiff; 
-	
-	
-	assign 	xc 	={1'b0, current_x [Xw-1		:0]};
-	assign 	yc 	={1'b0, current_y [Yw-1		:0]};
-	assign	xd	={1'b0, dest_x};
-	assign	yd 	={1'b0, dest_y};
-	assign 	xdiff	= xd-xc;
-	assign	ydiff	= yd-yc;
 	
 		
 	assign	destport= destport_next;
 	
 	always@(*)begin
 			destport_next	= LOCAL [DSTw-1	:0];
-			if           (xdiff	> 0)		destport_next	= EAST [DSTw-1	:0];
-			else if      (xdiff	< 0)		destport_next	= WEST [DSTw-1	:0];
+			if           (dest_x	> current_x)		destport_next	= EAST [DSTw-1	:0];
+			else if      (dest_x	< current_x)		destport_next	= WEST [DSTw-1	:0];
 			else begin
-				if			(ydiff	> 0)		destport_next	= SOUTH [DSTw-1:0];
-				else if 	(ydiff	< 0)		destport_next	= NORTH [DSTw-1	:0];
+			if	     (dest_y	> current_y)		destport_next	= SOUTH [DSTw-1:0];
+			else if      (dest_y	< current_y)		destport_next	= NORTH [DSTw-1	:0];
 			end
 	end
 	
@@ -713,6 +699,9 @@ module duato_mesh_routing #(
 endmodule
 	
 		
+
+
+		
 module mesh_dir #(
     parameter NX   =    4,
     parameter NY   =    4
@@ -752,31 +741,21 @@ module mesh_dir #(
     input   [Xw-1       :   0] dest_x;
     input   [Yw-1       :   0] dest_y;
 
-    wire signed [Xw     :0] xc;//current 
-    wire signed [Xw     :0] xd;//destination
-    wire signed [Yw     :0] yc;//current 
-    wire signed [Yw     :0] yd;//destination
-    wire signed [Xw     :0] xdiff;
-    wire signed [Yw     :0] ydiff; 
    
-    
-    assign  xc  ={1'b0, current_x [Xw-1     :0]};
-    assign  yc  ={1'b0, current_y [Yw-1     :0]};
-    assign  xd  ={1'b0, dest_x};
-    assign  yd  ={1'b0, dest_y};
-    assign  xdiff   = xd-xc;
-    assign  ydiff   = yd-yc;
 
-    assign same_x = (xdiff == 0);
-    assign same_y = (ydiff == 0);
-    assign x_plus = (xdiff  > 0);
-    assign x_min  = (xdiff  < 0);
-    assign y_plus = (ydiff  > 0);
-    assign y_min  = (ydiff  < 0);
+    assign same_x = (current_x == dest_x);
+    assign same_y = (current_y == dest_y);
+    assign x_plus = (dest_x  > current_x);
+    assign x_min  = (dest_x  < current_x);
+    assign y_plus = (dest_y  > current_y);
+    assign y_min  = (dest_y  < current_y);
    
    
 
 endmodule
+
+
+
 
 
 

@@ -11,43 +11,18 @@
 ***************************************/
 module  traffic_gen #(
     parameter V = 4,    // VC num per port
-    parameter P = 5,    // router port num
     parameter B = 4,    // buffer space :flit per VC 
     parameter NX= 4,    // number of node in x axis
-    parameter NY= 4,    // number of node in y axis
-   
+    parameter NY= 4,    // number of node in y axis   
     parameter Fpay = 32,
     parameter VC_REALLOCATION_TYPE  = "NONATOMIC",// "ATOMIC" , "NONATOMIC"
     parameter TOPOLOGY  = "MESH",
     parameter ROUTE_NAME    = "XY",
-    parameter ROUTE_TYPE    = "DETERMINISTIC",// "DETERMINISTIC", "FULL_ADAPTIVE", "PAR_ADAPTIVE"
-    parameter TRAFFIC   =   "RANDOM",
-    //  "RANDOM", "TRANSPOSE1","TRANSPOSE2", "HOTSPOT", "BIT_REVERSE", "BIT_COMPLEMENT", "CUSTOM"
-   
-   
-   
-        
-    //setting for hotspot
-    parameter HOTSPOT_PERCENTAGE    =   3,   //maximum 20
-    parameter HOTSOPT_NUM           =   4, //maximum 4
-    parameter HOTSPOT_CORE_1        =   10,
-    parameter HOTSPOT_CORE_2        =   11,
-    parameter HOTSPOT_CORE_3        =   12,
-    parameter HOTSPOT_CORE_4        =   13,
-    parameter HOTSPOT_CORE_5        =   14,
-    
-   
-    parameter C = 4,    //  number of flit class 
-    parameter C0_p = 25,    //  the percentage of injected packets with class 0 
-    parameter C1_p = 25,
-    parameter C2_p = 25,
-    parameter C3_p = 25,
+    parameter C = 4,    //  number of flit class    
     parameter MAX_PCK_NUM   = 10000,
     parameter MAX_SIM_CLKs  = 100000,
     parameter MAX_PCK_SIZ   = 10,  // max packet size
-    parameter TIMSTMP_FIFO_NUM=16
- 
-    
+    parameter TIMSTMP_FIFO_NUM=16  
     
 )
 (
@@ -94,11 +69,12 @@ module  traffic_gen #(
       end   
    endfunction // log2 
    
+    localparam P=  (TOPOLOGY=="RING")? 3 : 5;  
+    localparam ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
+                           (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE";
    
-  
-   
-   localparam RATIOw= log2(100),
-              Vw    =  (V==1)? 1 : log2(V);
+    localparam RATIOw= log2(100),
+                Vw    =  (V==1)? 1 : log2(V);
                
    
    
@@ -241,24 +217,12 @@ module  traffic_gen #(
     	.TOPOLOGY(TOPOLOGY),
     	.ROUTE_NAME(ROUTE_NAME),
     	.ROUTE_TYPE(ROUTE_TYPE),
-    	.TRAFFIC(TRAFFIC),
-    	.HOTSPOT_PERCENTAGE(HOTSPOT_PERCENTAGE),
-    	.HOTSOPT_NUM(HOTSOPT_NUM),
-    	.HOTSPOT_CORE_1(HOTSPOT_CORE_1),
-    	.HOTSPOT_CORE_2(HOTSPOT_CORE_2),
-    	.HOTSPOT_CORE_3(HOTSPOT_CORE_3),
-    	.HOTSPOT_CORE_4(HOTSPOT_CORE_4),
-    	.HOTSPOT_CORE_5(HOTSPOT_CORE_5),
-    	.C(C),
-    	.C0_p(C0_p),
-    	.C1_p(C1_p),
-    	.C2_p(C2_p),
-    	.C3_p(C3_p),
     	.MAX_PCK_NUM(MAX_PCK_NUM),
     	.MAX_SIM_CLKs(MAX_SIM_CLKs),
     	.TIMSTMP_FIFO_NUM(TIMSTMP_FIFO_NUM)
     )
-    packet_buffer(
+    packet_buffer
+    (
     	.reset(reset),
     	.clk(clk),
     	.pck_wr(pck_wr),
@@ -269,7 +233,6 @@ module  traffic_gen #(
     	.pck_number(pck_number),
     	.dest_x(dest_x),
     	.dest_y(dest_y),
-    	.pck_class_in(pck_class_in),
     	.pck_timestamp(pck_timestamp),
     	.buffer_full(buffer_full),
     	.pck_ready(pck_ready),
@@ -351,13 +314,14 @@ assign {rd_hdr_flg,rd_vc,rd_class_hdr,rd_destport_hdr,rd_des_x_addr,rd_des_y_add
 
     assign  wr_vc_is_full           =   | ( full_vc & wr_vc);
     
-    assign wr_vc_is_empty           =  | ( empty_vc & wr_vc);
+    
     
     generate
         if(VC_REALLOCATION_TYPE ==  "NONATOMIC") begin  
             assign wr_vc_avb    =  ~wr_vc_is_full; 
         end else begin 
-            assign wr_vc_avb    =  wr_vc_is_empty;      
+	    assign wr_vc_is_empty	=  | ( empty_vc & wr_vc);
+            assign wr_vc_avb		=  wr_vc_is_empty;      
         end
     endgenerate
 
@@ -490,7 +454,7 @@ always @(posedge clk or posedge reset )begin
     
     
     `ifdef CHECK_PCKS_CONTENT
-    
+    // synthesis translate_off
     
     wire     [PCK_SIZw-1             :   0] rsv_flit_counter; 
     reg      [PCK_SIZw-1             :   0] old_flit_counter    [V-1   :   0];
@@ -520,7 +484,7 @@ always @(posedge clk or posedge reset )begin
         end    
     end
     
-    // synthesis translate_off
+    
     always @(posedge clk) begin     
         if(flit_in_wr && (flit_in[Fw-1:Fw-2]==2'b00) && (~reset))begin 
             if( old_flit_counter[rd_vc_bin]!=rsv_flit_counter-1) $display("%t: Error: missmatch flit counter in %m. Expected %d but recieved %d",$time,old_flit_counter[rd_vc_bin]+1,rsv_flit_counter);
@@ -653,7 +617,7 @@ module injection_ratio_ctrl #
         
         
 			state       <=  next_state;
-            inject      <=  next_inject; 
+           if(ratio!={CNTw{1'b0}}) inject      <=  next_inject; 
             sent        <=  next_sent; 
             flit_counter<=  next_flit_counter;
 			  
@@ -673,31 +637,16 @@ endmodule
  **************************************/
  
  
- module packet_gen #(
-   
+ module packet_gen #(   
     parameter P = 5,    
     parameter NX= 4,    
     parameter NY= 4,    
     parameter TOPOLOGY  = "MESH",
     parameter ROUTE_NAME = "XY",
     parameter ROUTE_TYPE = "DETERMINISTIC",
-    parameter TRAFFIC = "RANDOM",
-    parameter HOTSPOT_PERCENTAGE    =   3,   
-    parameter HOTSOPT_NUM           =   4, 
-    parameter HOTSPOT_CORE_1        =   10,
-    parameter HOTSPOT_CORE_2        =   11,
-    parameter HOTSPOT_CORE_3        =   12,
-    parameter HOTSPOT_CORE_4        =   13,
-    parameter HOTSPOT_CORE_5        =   14,
-    parameter C = 4,    
-    parameter C0_p = 25,    
-    parameter C1_p = 25,
-    parameter C2_p = 25,
-    parameter C3_p = 25,
     parameter MAX_PCK_NUM   = 10000,
     parameter MAX_SIM_CLKs  = 100000,
-    parameter TIMSTMP_FIFO_NUM=16
- 
+    parameter TIMSTMP_FIFO_NUM=16 
  
  )(
     clk_counter,
@@ -706,7 +655,6 @@ endmodule
     current_x,
     current_y,
     pck_number,
-    pck_class_in,
     dest_x,
     dest_y,
     pck_timestamp,
@@ -728,21 +676,11 @@ endmodule
       end   
    endfunction // log2 
    
-   /*
-   function integer CORE_NUM;
-        input integer x,y;
-        begin
-            CORE_NUM = ((y * NX) +  x);
-        end
-   endfunction
-  */
+ 
     
     localparam      P_1         =   P-1,
-                    NC          =   NX*NY,
                     Xw          =   log2(NX),   // number of node in x axis
                     Yw          =   log2(NY),    // number of node in y axis
-                    Cw          =   (C>1)? log2(C): 1,
-                    NCw         =   log2(NC),
                     PCK_CNTw    =   log2(MAX_PCK_NUM+1),
                     CLK_CNTw    =   log2(MAX_SIM_CLKs+1); 
     
@@ -756,81 +694,22 @@ endmodule
  output [PCK_CNTw-1              :0] pck_number;
  input  [Xw-1                    :0] dest_x;
  input  [Yw-1                    :0] dest_y;
- input  [Cw-1                    :0] pck_class_in;
  output [CLK_CNTw-1              :0] pck_timestamp;   
- output                              buffer_full,pck_ready,valid_dst; 
+ output                              buffer_full,pck_ready;
+ input                               valid_dst; 
  output [P_1-1                   :0] destport; 
  
  
  reg    [PCK_CNTw-1              :0] packet_counter;  
- wire   [NCw-1                   :0] core_num;
  wire                                buffer_empty;
  
 
  
  
- //((y * NX) +  x);
- assign core_num =(current_y * NX)+ current_x;
  
  
  assign pck_ready = ~buffer_empty & valid_dst;
 
-/*
-wire  deafult_class_num;
-assign  deafult_class_num = current_x[0] ^ current_y[0];
-
-
- pck_class_in_gen #(
-    .NX(NX),
-    .NY(NY),
-    .C(C),
-    .C0_p(C0_p),
-    .C1_p(C1_p),
-    .C2_p(C2_p),
-    .C3_p(C3_p),
-    .MAX_PCK_NUM(MAX_PCK_NUM)
-   )
-   the_pck_class_in_gen
-   (
-    .en(pck_rd),
-    .pck_class_in(pck_class_in),
-    .core_num(core_num),
-    .pck_number(pck_number),
-    .reset(reset),
-    .deafult_class_num(deafult_class_num),
-    .clk(clk)
-   );
-*/   
-   
-   
-   /*
-   pck_dst_gen #(
-    .NX(NX),
-    .NY(NY),
-    .TRAFFIC(TRAFFIC),
-    .MAX_PCK_NUM(MAX_PCK_NUM),
-    .HOTSPOT_PERCENTAGE(HOTSPOT_PERCENTAGE),
-    .HOTSOPT_NUM(HOTSOPT_NUM),
-    .HOTSPOT_CORE_1(HOTSPOT_CORE_1),
-    .HOTSPOT_CORE_2(HOTSPOT_CORE_2),
-    .HOTSPOT_CORE_3(HOTSPOT_CORE_3),
-    .HOTSPOT_CORE_4(HOTSPOT_CORE_4),
-    .HOTSPOT_CORE_5(HOTSPOT_CORE_5)
-   )
-   the_pck_dst_gen
-   (
-    .reset(reset),
-    .clk(clk),
-    .en(pck_rd),
-    .core_num(core_num),
-    .pck_number(pck_number),
-    .current_x(current_x),
-    .current_y(current_y),
-    .dest_x(dest_x),
-    .dest_y(dest_y),
-    .valid_dst(valid_dst)
-   );
-   */
    
    
    ni_conventional_routing #(        
@@ -918,8 +797,7 @@ module distance_gen #(
  
     localparam      Xw  =   log2(NX),   // number of node in x axis
                     Yw  =   log2(NY);    // number of node in y axis  
-                    //NC  =   NX  *   NY, //number of cores;  
-                    //NCw =   log2(NC);
+                   
 
 
     input [Xw-1 :   0]src_x,dest_x;

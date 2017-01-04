@@ -1,0 +1,378 @@
+#######################################################################
+##	File: lm32.IP
+##    
+##	Copyright (C) 2014-2016  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.5.0 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$lm32 = bless( {
+                 'hdl_files' => [
+                                  '/mpsoc/src_processor/lm32/verilog/src/er1.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/JTAGB.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/jtag_lm32.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_adder.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_addsub.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_cpu.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_dcache.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_debug.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_decoder.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_functions.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_icache.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_include.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_instruction_unit.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_interrupt.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_jtag.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_load_store_unit.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_logic_op.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_mc_arithmetic.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_monitor.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_multiplier.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_ram.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_shifter.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_simtrace.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/lm32_top.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/spiprog.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/system_conf.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/typea.v',
+                                  '/mpsoc/src_processor/lm32/verilog/src/typeb.v'
+                                ],
+                 'system_h' => '#include "lm32_system.h"
+inline void nop (void) {
+	asm volatile ("nop");
+}',
+                 'ip_name' => 'lm32',
+                 'parameters_order' => [
+                                         'INTR_NUM',
+                                         'CFG_PL_MULTIPLY',
+                                         'CFG_PL_BARREL_SHIFT',
+                                         'CFG_SIGN_EXTEND',
+                                         'CFG_MC_DIVIDE'
+                                       ],
+                 'ports_order' => [
+                                    'clk_i',
+                                    'rst_i',
+                                    'en_i',
+                                    'interrupt',
+                                    'I_DAT_I',
+                                    'I_ACK_I',
+                                    'I_ERR_I',
+                                    'I_RTY_I',
+                                    'I_DAT_O',
+                                    'I_ADR_O',
+                                    'I_CYC_O',
+                                    'I_SEL_O',
+                                    'I_STB_O',
+                                    'I_WE_O',
+                                    'I_CTI_O',
+                                    'I_BTE_O',
+                                    'D_DAT_I',
+                                    'D_ACK_I',
+                                    'D_ERR_I',
+                                    'D_RTY_I',
+                                    'D_DAT_O',
+                                    'D_ADR_O',
+                                    'D_CYC_O',
+                                    'D_SEL_O',
+                                    'D_STB_O',
+                                    'D_WE_O',
+                                    'D_CTI_O',
+                                    'D_BTE_O'
+                                  ],
+                 'sockets' => {
+                                'interrupt_peripheral' => {
+                                                            'interrupt_peripheral' => {},
+                                                            'connection_num' => 'single connection',
+                                                            'value' => 'INTR_NUM',
+                                                            '0' => {
+                                                                     'name' => 'interrupt_peripheral'
+                                                                   },
+                                                            'type' => 'param'
+                                                          }
+                              },
+                 'file_name' => '/home/alireza/Mywork/mpsoc/src_processor/lm32/verilog/src/lm32.v',
+                 'module_name' => 'lm32',
+                 'unused' => {
+                               'plug:wb_master[1]' => [
+                                                        'tag_o'
+                                                      ],
+                               'plug:wb_master[0]' => [
+                                                        'tag_o'
+                                                      ]
+                             },
+                 'category' => 'Processor',
+                 'sw_files' => [
+                                 '/mpsoc/src_processor/lm32/sw/crt0ram.S',
+                                 '/mpsoc/src_processor/lm32/sw/linker.ld',
+                                 '/mpsoc/src_processor/lm32/sw/lm32_system.h',
+                                 '/mpsoc/src_processor/lm32/sw/Makefile',
+                                 '/mpsoc/src_processor/lm32/sw/program',
+                                 '/mpsoc/src_processor/program.sh'
+                               ],
+                 'description' => 'The LatticeMico32 is a 32-bit Harvard, RISC architecture "soft" microprocessor, available for free with an open IP core licensing agreement.
+
+for more information vist: http://www.latticesemi.com/en/Products/DesignSoftwareAndIP/IntellectualProperty/IPCore/IPCores02/LatticeMico32.aspx',
+                 'gui_status' => {
+                                   'timeout' => 0,
+                                   'status' => 'ideal'
+                                 },
+                 'plugs' => {
+                              'wb_master' => {
+                                               'wb_master' => {},
+                                               '1' => {
+                                                        'name' => 'dwb'
+                                                      },
+                                               'value' => 2,
+                                               '0' => {
+                                                        'name' => 'iwb'
+                                                      },
+                                               'type' => 'num'
+                                             },
+                              'enable' => {
+                                            'enable' => {},
+                                            '0' => {
+                                                     'name' => 'enable'
+                                                   },
+                                            'value' => 1,
+                                            'type' => 'num'
+                                          },
+                              'reset' => {
+                                           '1' => {
+                                                    'name' => 'reset_1'
+                                                  },
+                                           'reset' => {},
+                                           '0' => {
+                                                    'name' => 'reset'
+                                                  },
+                                           'value' => 1,
+                                           'type' => 'num'
+                                         },
+                              'clk' => {
+                                         'clk' => {},
+                                         '0' => {
+                                                  'name' => 'clk'
+                                                },
+                                         'value' => 1,
+                                         'type' => 'num'
+                                       }
+                            },
+                 'modules' => {
+                                'lm32' => {}
+                              },
+                 'parameters' => {
+                                   'CFG_PL_BARREL_SHIFT' => {
+                                                              'info' => undef,
+                                                              'deafult' => '"ENABLED"',
+                                                              'global_param' => 0,
+                                                              'content' => '"ENABLED","DISABLED"',
+                                                              'redefine_param' => 1,
+                                                              'type' => 'Fixed'
+                                                            },
+                                   'CFG_SIGN_EXTEND' => {
+                                                          'info' => undef,
+                                                          'deafult' => '"ENABLED"',
+                                                          'global_param' => 0,
+                                                          'content' => '"ENABLED","DISABLED"',
+                                                          'redefine_param' => 1,
+                                                          'type' => 'Fixed'
+                                                        },
+                                   'CFG_PL_MULTIPLY' => {
+                                                          'info' => undef,
+                                                          'deafult' => '"ENABLED"',
+                                                          'global_param' => 0,
+                                                          'content' => '"ENABLED","DISABLED"',
+                                                          'redefine_param' => 1,
+                                                          'type' => 'Fixed'
+                                                        },
+                                   'INTR_NUM' => {
+                                                   'info' => undef,
+                                                   'deafult' => '32',
+                                                   'global_param' => 0,
+                                                   'content' => '',
+                                                   'redefine_param' => 1,
+                                                   'type' => 'Fixed'
+                                                 },
+                                   'CFG_MC_DIVIDE' => {
+                                                        'info' => undef,
+                                                        'deafult' => '"DISABLED"',
+                                                        'global_param' => 0,
+                                                        'content' => '"ENABLED","DISABLED"',
+                                                        'redefine_param' => 1,
+                                                        'type' => 'Fixed'
+                                                      }
+                                 },
+                 'ports' => {
+                              'I_SEL_O' => {
+                                             'intfc_port' => 'sel_o',
+                                             'intfc_name' => 'plug:wb_master[0]',
+                                             'range' => '(4-1):0',
+                                             'type' => 'output'
+                                           },
+                              'I_DAT_I' => {
+                                             'intfc_port' => 'dat_i',
+                                             'intfc_name' => 'plug:wb_master[0]',
+                                             'range' => '(32-1):0',
+                                             'type' => 'input'
+                                           },
+                              'I_CTI_O' => {
+                                             'intfc_port' => 'cti_o',
+                                             'intfc_name' => 'plug:wb_master[0]',
+                                             'range' => '(3-1):0',
+                                             'type' => 'output'
+                                           },
+                              'D_WE_O' => {
+                                            'intfc_port' => 'we_o',
+                                            'intfc_name' => 'plug:wb_master[1]',
+                                            'range' => '',
+                                            'type' => 'output'
+                                          },
+                              'I_ERR_I' => {
+                                             'intfc_port' => 'err_i',
+                                             'intfc_name' => 'plug:wb_master[0]',
+                                             'range' => '',
+                                             'type' => 'input'
+                                           },
+                              'D_ADR_O' => {
+                                             'intfc_port' => 'adr_o',
+                                             'intfc_name' => 'plug:wb_master[1]',
+                                             'range' => '(32-1):0',
+                                             'type' => 'output'
+                                           },
+                              'D_CTI_O' => {
+                                             'intfc_port' => 'cti_o',
+                                             'intfc_name' => 'plug:wb_master[1]',
+                                             'range' => '(3-1):0',
+                                             'type' => 'output'
+                                           },
+                              'D_STB_O' => {
+                                             'intfc_port' => 'stb_o',
+                                             'intfc_name' => 'plug:wb_master[1]',
+                                             'range' => '',
+                                             'type' => 'output'
+                                           },
+                              'en_i' => {
+                                          'intfc_port' => 'enable_i',
+                                          'intfc_name' => 'plug:enable[0]',
+                                          'range' => '',
+                                          'type' => 'input'
+                                        },
+                              'I_CYC_O' => {
+                                             'intfc_port' => 'cyc_o',
+                                             'intfc_name' => 'plug:wb_master[0]',
+                                             'range' => '',
+                                             'type' => 'output'
+                                           },
+                              'D_DAT_I' => {
+                                             'intfc_port' => 'dat_i',
+                                             'intfc_name' => 'plug:wb_master[1]',
+                                             'range' => '(32-1):0',
+                                             'type' => 'input'
+                                           },
+                              'D_ACK_I' => {
+                                             'intfc_port' => 'ack_i',
+                                             'intfc_name' => 'plug:wb_master[1]',
+                                             'range' => '',
+                                             'type' => 'input'
+                                           },
+                              'D_DAT_O' => {
+                                             'intfc_port' => 'dat_o',
+                                             'intfc_name' => 'plug:wb_master[1]',
+                                             'range' => '(32-1):0',
+                                             'type' => 'output'
+                                           },
+                              'I_ADR_O' => {
+                                             'intfc_port' => 'adr_o',
+                                             'intfc_name' => 'plug:wb_master[0]',
+                                             'range' => '(32-1):0',
+                                             'type' => 'output'
+                                           },
+                              'I_WE_O' => {
+                                            'intfc_port' => 'we_o',
+                                            'intfc_name' => 'plug:wb_master[0]',
+                                            'range' => '',
+                                            'type' => 'output'
+                                          },
+                              'I_BTE_O' => {
+                                             'intfc_port' => 'bte_o',
+                                             'intfc_name' => 'plug:wb_master[0]',
+                                             'range' => '(2-1):0',
+                                             'type' => 'output'
+                                           },
+                              'rst_i' => {
+                                           'intfc_port' => 'reset_i',
+                                           'intfc_name' => 'plug:reset[0]',
+                                           'range' => '',
+                                           'type' => 'input'
+                                         },
+                              'interrupt' => {
+                                               'intfc_port' => 'int_i',
+                                               'intfc_name' => 'socket:interrupt_peripheral[array]',
+                                               'range' => '(32-1):0',
+                                               'type' => 'input'
+                                             },
+                              'D_BTE_O' => {
+                                             'intfc_port' => 'bte_o',
+                                             'intfc_name' => 'plug:wb_master[1]',
+                                             'range' => '(2-1):0',
+                                             'type' => 'output'
+                                           },
+                              'D_CYC_O' => {
+                                             'intfc_port' => 'cyc_o',
+                                             'intfc_name' => 'plug:wb_master[1]',
+                                             'range' => '',
+                                             'type' => 'output'
+                                           },
+                              'I_STB_O' => {
+                                             'intfc_port' => 'stb_o',
+                                             'intfc_name' => 'plug:wb_master[0]',
+                                             'range' => '',
+                                             'type' => 'output'
+                                           },
+                              'D_SEL_O' => {
+                                             'intfc_port' => 'sel_o',
+                                             'intfc_name' => 'plug:wb_master[1]',
+                                             'range' => '(4-1):0',
+                                             'type' => 'output'
+                                           },
+                              'I_DAT_O' => {
+                                             'intfc_port' => 'dat_o',
+                                             'intfc_name' => 'plug:wb_master[0]',
+                                             'range' => '(32-1):0',
+                                             'type' => 'output'
+                                           },
+                              'D_ERR_I' => {
+                                             'intfc_port' => 'err_i',
+                                             'intfc_name' => 'plug:wb_master[1]',
+                                             'range' => '',
+                                             'type' => 'input'
+                                           },
+                              'D_RTY_I' => {
+                                             'intfc_port' => 'rty_i',
+                                             'intfc_name' => 'plug:wb_master[1]',
+                                             'range' => '',
+                                             'type' => 'input'
+                                           },
+                              'I_ACK_I' => {
+                                             'intfc_port' => 'ack_i',
+                                             'intfc_name' => 'plug:wb_master[0]',
+                                             'range' => '',
+                                             'type' => 'input'
+                                           },
+                              'I_RTY_I' => {
+                                             'intfc_port' => 'rty_i',
+                                             'intfc_name' => 'plug:wb_master[0]',
+                                             'range' => '',
+                                             'type' => 'input'
+                                           },
+                              'clk_i' => {
+                                           'intfc_port' => 'clk_i',
+                                           'intfc_name' => 'plug:clk[0]',
+                                           'range' => '',
+                                           'type' => 'input'
+                                         }
+                            }
+               }, 'ip_gen' );

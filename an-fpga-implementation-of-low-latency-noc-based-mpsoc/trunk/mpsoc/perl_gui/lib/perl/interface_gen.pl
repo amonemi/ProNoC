@@ -13,7 +13,7 @@ require "widget.pl";
 
 
 sub read_file_modules{
-	my ($file,$intfc_gen,$soc_state,$info)=@_;
+	my ($file,$intfc_gen,$info)=@_;
 	
 	if (!defined $file) {return; }
 	if (-e $file) { 
@@ -24,7 +24,7 @@ sub read_file_modules{
 		$intfc_gen->intfc_set_module_name($modules[0]);
 		$intfc_gen->intfc_add_module_list(@modules);
 		
-		set_state($soc_state,"file_selected",1);
+		set_gui_status($intfc_gen,"file_selected",1);
 		show_info(\$info,"Select the module which contain the interface ports\n ");	
 	    
 	}
@@ -40,15 +40,15 @@ sub read_file_modules{
 ################
 
 sub check_input_intfc_file{
-	my ($file,$intfc_gen,$soc_state,$info)=@_;
+	my ($file,$intfc_gen,$info)=@_;
 	my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
 	if($suffix eq '.ITC'){
 		$intfc_gen->intfc_set_interface_file($file);
-		set_state($soc_state,"load_file",0);
+		set_gui_status($intfc_gen,"load_file",0);
 		
 		
 	}else{
-		read_file_modules($file,$intfc_gen,$soc_state,$info);
+		read_file_modules($file,$intfc_gen,$info);
 	
 	}	
 	
@@ -56,15 +56,16 @@ sub check_input_intfc_file{
 }	
 
 sub file_box {
-	my ($intfc_gen,$soc_state,$info,$table,$row)=@_;
+	my ($intfc_gen,$info)=@_;
 	my $label = gen_label_in_left("Select file:");
 	my $entry = Gtk2::Entry->new;
 	my $open= def_image_button("icons/select.png","Open");
 	my $browse= def_image_button("icons/browse.png","Browse");
 	my $file= $intfc_gen->intfc_get_interface_file();
-	my $intfc_info= def_image_button("icons/info.png","Description");
+	my $intfc_info= def_image_button("icons/add_info.png","Description");
+	my $table = def_table(1,10,TRUE);
 	$intfc_info->signal_connect("clicked"=> sub{
-		get_intfc_description($intfc_gen,$soc_state,$info);
+		get_intfc_description($intfc_gen,$info);
 		
 		
 	});	
@@ -94,8 +95,8 @@ sub file_box {
         	if ( "ok" eq $dialog->run ) {
             		$file = $dialog->get_filename;
 					$$entry_ref->set_text($file);
-					check_input_intfc_file($file,$intfc_gen,$soc_state,$info);
-					#read_file_modules($file,$intfc_gen,$soc_state,$info);
+					check_input_intfc_file($file,$intfc_gen,$info);
+					#read_file_modules($file,$intfc_gen,$info);
             		#print "file = $file\n";
        		 }
        		$dialog->destroy;
@@ -106,26 +107,27 @@ sub file_box {
 	
 	$open->signal_connect("clicked"=> sub{
 		my $file_name=$entry->get_text();
-		check_input_intfc_file($file,$intfc_gen,$soc_state,$info);
-		#read_file_modules($file_name,$intfc_gen,$soc_state,$info);
+		check_input_intfc_file($file,$intfc_gen,$info);
+		#read_file_modules($file_name,$intfc_gen,$info);
 		
 		});
 	$entry->signal_connect("activate"=>sub{
 		my $file_name=$entry->get_text();
-		read_file_modules($file_name,$intfc_gen,$soc_state,$info);
+		read_file_modules($file_name,$intfc_gen,$info);
 	});
 		
 	$entry->signal_connect("changed"=>sub{
 		show_info(\$info,"Please select the verilog file containig the interface\n");
 	});
 	
+	my $row=0;
 	$table->attach_defaults ($label, 0, 1 , $row, $row+1);
 	$table->attach_defaults ($entry, 1, 7 , $row, $row+1);
-	$table->attach_defaults ($browse, 7, 8, $row, $row+1);
-	$table->attach_defaults ($intfc_info, 8, 9 , $row, $row+1);
+	$table->attach ($browse, 7, 8, $row, $row+1,'shrink','shrink',2,2);
+	$table->attach ($intfc_info, 8, 9 , $row, $row+1,'shrink','shrink',2,2);
 	#$table->attach_defaults ($open,  9, 10, $row, $row+1);
 	#$table->attach_defaults ($entry, $col, $col+1, $row, $row+1);
-	#return $table;
+	return $table;
 	
 	
 }
@@ -174,12 +176,12 @@ sub get_ports_rang{
 
 
 sub get_interface_ports {
-	my ($infc_gen,$soc_state,$info)=@_;
+	my ($intfc_gen,$info)=@_;
 	my $window=def_popwin_size(800,600,"Import Ports");
 
-	my $file=$infc_gen->intfc_get_interface_file();
+	my $file=$intfc_gen->intfc_get_interface_file();
 	if (!defined $file){show_info(\$info,"File name has not been defined yet!");  return;}
-	my $module=$infc_gen->intfc_get_module_name();
+	my $module=$intfc_gen->intfc_get_module_name();
 	if (!defined $module){  show_info(\$info,"Module name has not been selected yet!");  return;}
 	my $vdb=read_file($file);
 	my %port_type=get_ports_type($vdb,$module);
@@ -212,7 +214,7 @@ sub get_interface_ports {
 	$table->attach_defaults($separator, 0,8, $row, $row+1); 
 	
 	$row++;
-	$infc_gen->intfc_remove_ports();
+	$intfc_gen->intfc_remove_ports();
 	foreach my $p (sort keys %port_type){
 		my $port_id= $p;
 		my $porttype=$port_type{$p};
@@ -240,13 +242,13 @@ sub get_interface_ports {
 			my $in=$widget->get_active();
 			if ($in eq 1){
 				my $connect_type=($porttype eq "input")? "output" : ($porttype eq "output")? "input" : $porttype;
-				$infc_gen->intfc_add_port($port_id,$porttype,$portrange,$p,$connect_type,$portrange,$p,"concatenate","Active low");
+				$intfc_gen->intfc_add_port($port_id,$porttype,$portrange,$p,$connect_type,$portrange,$p,"concatenate","Active low");
 				
 				
 				
 				#print "chanhed to $in \n";
 			}else {
-				$infc_gen->intfc_remove_port($port_id);
+				$intfc_gen->intfc_remove_port($port_id);
 				
 				#print "chanhed to 0 \n";
 				
@@ -259,11 +261,11 @@ sub get_interface_ports {
 	
 	
 	my $ok= def_image_button("icons/select.png","ok");
-	$table->attach_defaults($ok, 3,5, $row, $row+1); 
+	$table->attach($ok, 3,5, $row, $row+1,'shrink','shrink',2,2); 
 	
 	$ok->signal_connect("clicked"=>sub{
 		$window->destroy;
-		set_state($soc_state,"refresh",1);
+		set_gui_status($intfc_gen,"refresh",1);
 		
 		
 		});
@@ -279,98 +281,58 @@ sub get_interface_ports {
 
 
 sub module_select{
-	my ($infc_gen,$soc_state,$info,$table,$row)=@_;
-	my $file= $infc_gen->intfc_get_interface_file();
-	my $label = gen_label_in_left("Select module:");
+	my ($intfc_gen,$info)=@_;
+	my $file= $intfc_gen->intfc_get_interface_file();
 	
-	my @modules= $infc_gen->intfc_get_module_list();
-	my $saved_module=$infc_gen->intfc_get_module_name();
-	my $pos=(defined $saved_module ) ? get_scolar_pos( $saved_module,@modules) : 0;
-	my $combo = gen_combo(\@modules, $pos);
+	my $table = def_table(1,10,TRUE);
+
+	
+	
+	my @modules= $intfc_gen->intfc_get_module_list();
+	my $combo=gen_combobox_object($intfc_gen,'module_name',undef,join(',', @modules),undef,'refresh',1);
+	my $modul_name=labele_widget_info(" Select module:",$combo);
+
+
 	my $port= def_image_button("icons/import.png","Import Ports");
-	my $label2= gen_label_in_left(" Select Category:");
-	my ($category,$category_entry)=gen_entry_help('Define the Interface category:e.g RAM, wishbone,...');
-	my $saved_category=$infc_gen->intfc_get_category();
-	if(defined $saved_category){$category_entry->set_text($saved_category);}
-	
-	
-	$table->attach_defaults ($label, 0, 1 , $row, $row+1);
-	$table->attach_defaults ($combo, 1, 3 , $row,$row+1);
-	$table->attach_defaults ($port, 3, 4 , $row, $row+1);
-	$table->attach_defaults ($label2, 4, 5 , $row, $row+1);
-	$table->attach_defaults ($category, 5, 6 , $row, $row+1);
+	my $category_entry=gen_entry_object($intfc_gen,'category',undef,undef,undef,undef);
+	my $category=labele_widget_info(" Select Category:",$category_entry,'Define the Interface category:e.g RAM, wishbone,...');
+
 	
 	
 	
-	$combo->signal_connect("changed"=> sub{
-		my $module= $combo->get_active_text();
-		$infc_gen->intfc_set_module_name($module);
-		
-		
-	});
+	my $row=0;
+	#$table->attach_defaults ($label, 0, 1 , $row, $row+1);
+	$table->attach  ($modul_name, 0, 3 , $row,$row+1,'shrink','shrink',2,2);
+	$table->attach ($port, 4, 6 , $row, $row+1,'shrink','shrink',2,2);
+	$table->attach_defaults ($category, 7, 10 , $row, $row+1);
+	
+	
+	
 	
 	$port->signal_connect("clicked"=> sub{
-		get_interface_ports($infc_gen,$soc_state,$info);
+		get_interface_ports($intfc_gen,$info);
 		
 		
 	});	
-	$category_entry->signal_connect("changed"=> sub{
-		my $name=$category_entry->get_text();
-		$infc_gen->intfc_set_category($name);
-		
-	});
 	
 	
 	
+	return $table;
 	
 	
 }	
 
 sub interface_type_select {
-	my ($infc_gen,$soc_state,$info,$table,$row)=@_;	
-	my $saved_intfc_type= $infc_gen->intfc_get_interface_type();
-	my $label = gen_label_in_left("Interface name:");
+	my ($intfc_gen,$info,$table,$row)=@_;		
+
+	my $entry=gen_entry_object($intfc_gen,'name',undef,undef,"refresh",50);
+	my $entrybox=labele_widget_info(" Interface name:",$entry);
+
+	my $combo=gen_combobox_object($intfc_gen,'connection_num',undef,"single connection,multi connection","single connection",'refresh',1);
+	my $combo_box=labele_widget_info(" Select soket type:",$combo,'Define the soket as multi connection if only all interfaces ports all output and they can feed more than one plug connection');
 	
-	
-	my $saved_name=$infc_gen->intfc_get_interface_name();
-	my $entry=gen_entry($saved_name);
-	
-	$entry->signal_connect("changed"=>sub{
-		my $widget=shift;
-		my $name=$widget->get_text();
-		$infc_gen->intfc_set_interface_name($name);
-		set_state($soc_state,"refresh",50);
-		
-	}
-	);
-	
-	my $saved_connection_num= $infc_gen->intfc_get_connection_num();
-	my $label2 = gen_label_in_left("Select soket type:");
-	
-	my @connection_nums=("single connection","multi connection");
-	my $pos;
-	if(defined $saved_connection_num){
-		$pos= get_scolar_pos( $saved_connection_num,@connection_nums);
-	}
-	else {
-		$pos= 0;
-		$infc_gen->intfc_set_connection_num($connection_nums[0]);
-	}	 
-	my $combo=gen_combo(\@connection_nums,$pos);
-	
-	$combo->signal_connect("changed"=>sub{
-		my $widget=shift;
-		my $connection_num=$widget->get_active_text();
-		$infc_gen->intfc_set_connection_num($connection_num);
-		set_state($soc_state,"refresh",1);
-		
-	});
-	$table->attach_defaults ($label, 0, 1 , $row, $row+1);
-	$table->attach_defaults ($entry, 1, 2 , $row, $row+1);
-	$table->attach_defaults ($label2, 2, 3 , $row, $row+1);
-	$table->attach_defaults ($combo, 3, 4 , $row, $row+1);
-	
-	
+	$table->attach_defaults ($entrybox, 0, 2 , $row, $row+1);
+	$table->attach_defaults ($combo_box, 3, 5 , $row, $row+1);
 	
 }	
 
@@ -380,9 +342,9 @@ sub interface_type_select {
 
 
 sub port_select{
-	my ($infc_gen,$soc_state,$info,$table,$row)=@_;	
+	my ($intfc_gen,$info,$table,$row)=@_;	
 	my(%types,%ranges,%names,%connect_types,%connect_ranges,%connect_names,%outport_types,%default_outs);
-	$infc_gen->intfc_get_ports(\%types,\%ranges,\%names,\%connect_types,\%connect_ranges,\%connect_names,\%outport_types,\%default_outs);
+	$intfc_gen->intfc_get_ports(\%types,\%ranges,\%names,\%connect_types,\%connect_ranges,\%connect_names,\%outport_types,\%default_outs);
 
 	my $size = keys %types;
 	if($size >0){
@@ -393,23 +355,23 @@ sub port_select{
 		my $swap= def_image_button("icons/swap.png","swap");
 			
 		$swap->signal_connect('clicked'=>sub{
-			my $type=$infc_gen->intfc_get_interface_type();
+			my $type=$intfc_gen->intfc_get_interface_type();
 			if($type eq 'plug'){
-					$infc_gen->intfc_set_interface_type('socket');
+					$intfc_gen->intfc_set_interface_type('socket');
 			}
 			else {
-					$infc_gen->intfc_set_interface_type('plug');
+					$intfc_gen->intfc_set_interface_type('plug');
 			}	
-			set_state($soc_state,"refresh",1);			
+			set_gui_status($intfc_gen,"refresh",1);			
 			
 		});
 		
 		
 		my @intfcs=("plug","socket");
-		my $inttype=$infc_gen->intfc_get_interface_type();
+		my $inttype=$intfc_gen->intfc_get_interface_type();
 		if (!defined $inttype){
 			$inttype='plug';
-			$infc_gen->intfc_set_interface_type($inttype);
+			$intfc_gen->intfc_set_interface_type($inttype);
 		}	
 				
 		#my $lab1= gen_label_in_center($inttype);
@@ -426,9 +388,9 @@ sub port_select{
 		my $sep2 = Gtk2::HSeparator->new;
 		
 		
-		$table->attach_defaults ($lab1, 1, 2 , $row, $row+1);	
-		$table->attach_defaults ($swap, 3, 4 , $row, $row+1);
-		$table->attach_defaults ($lab2, 5, 6 , $row, $row+1);	$row++;		
+		$table->attach ($lab1, 1, 2 , $row, $row+1,'shrink','shrink',2,2);
+		$table->attach ($swap, 3, 4 , $row, $row+1,'shrink','shrink',2,2);
+		$table->attach ($lab2, 5, 6 , $row, $row+1,'shrink','shrink',2,2);	$row++;		
 		$table->attach_defaults ($sep2, 0, 9 , $row, $row+1);	$row++;
 		
 		
@@ -459,7 +421,7 @@ sub port_select{
 			my $default_out=$default_outs{$id};
 			if(! defined $default_out){
 				$default_out = "Active low"; # port_width_repeat($connect_range,"1\'b0");
-				$infc_gen->intfc_add_port($id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$outport_type,$default_out);
+				$intfc_gen->intfc_add_port($id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$outport_type,$default_out);
 				print "\$default_out is set to: $default_out\n ";
 			}
 			
@@ -507,45 +469,45 @@ sub port_select{
 			$combo1->signal_connect("changed"=>sub{
 				my $new_type=$combo1->get_active_text();
 				my $new_connect_type=($new_type eq "input")? "output" : ($new_type eq "output")? "input" : $new_type;
-				$infc_gen->intfc_add_port($id,$new_type,$range,$name,$new_connect_type,$connect_range,$connect_name,$outport_type,$default_out);
-				set_state($soc_state,"refresh",1);
+				$intfc_gen->intfc_add_port($id,$new_type,$range,$name,$new_connect_type,$connect_range,$connect_name,$outport_type,$default_out);
+				set_gui_status($intfc_gen,"refresh",1);
 			
 			});
 			$entry2->signal_connect("changed"=>sub{
 				$range=$entry2->get_text(); 
-				$infc_gen->intfc_add_port($id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$outport_type,$default_out);
-				set_state($soc_state,"refresh",50);
+				$intfc_gen->intfc_add_port($id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$outport_type,$default_out);
+				set_gui_status($intfc_gen,"refresh",50);
 				
 			});	
 			$entry3->signal_connect("changed"=>sub{
 				$name=$entry3->get_text(); 
-				$infc_gen->intfc_add_port($id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$outport_type,$default_out);
-				set_state($soc_state,"refresh",50);
+				$intfc_gen->intfc_add_port($id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$outport_type,$default_out);
+				set_gui_status($intfc_gen,"refresh",50);
 				
 			});	
 			
 			$entry4->signal_connect("changed"=>sub{
 				$connect_range=$entry4->get_text(); 
-				$infc_gen->intfc_add_port($id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$outport_type,$default_out);
-				set_state($soc_state,"refresh",50);
+				$intfc_gen->intfc_add_port($id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$outport_type,$default_out);
+				set_gui_status($intfc_gen,"refresh",50);
 				
 			});	
 			$entry5->signal_connect("changed"=>sub{
 				$connect_name=$entry5->get_text(); 
-				$infc_gen->intfc_add_port($id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$outport_type,$default_out);
-				set_state($soc_state,"refresh",50);
+				$intfc_gen->intfc_add_port($id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$outport_type,$default_out);
+				set_gui_status($intfc_gen,"refresh",50);
 				
 			});	
 			$combo2->signal_connect("changed"=>sub{
 				my $new_outport_type=$combo2->get_active_text();
-				$infc_gen->intfc_add_port($id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$new_outport_type,$default_out);
-				set_state($soc_state,"refresh",1);
+				$intfc_gen->intfc_add_port($id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$new_outport_type,$default_out);
+				set_gui_status($intfc_gen,"refresh",1);
 			
 			});
 			($combentry->child)->signal_connect('changed' => sub {
 				my ($entry) = @_;
 				$default_out=$entry->get_text();
-				$infc_gen->intfc_add_port($id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$outport_type,$default_out);
+				$intfc_gen->intfc_add_port($id,$type,$range,$name,$connect_type,$connect_range,$connect_name,$outport_type,$default_out);
 			
 				
 			});
@@ -571,50 +533,29 @@ sub port_select{
 
 
 
-sub dev_box_gen{
-	my($infc_gen,$soc_state,$info)=@_;
-	my $table = def_table(20,10,FALSE);
-	
-	file_box($infc_gen,$soc_state,$info,$table,0);	
-	module_select($infc_gen,$soc_state,$info,$table,1);	
-	interface_type_select($infc_gen,$soc_state,$info,$table,2);	
-	my $row=port_select($infc_gen,$soc_state,$info,$table,3);	
-	for (my $i=$row; $i<20; $i++){
-		my $temp=gen_label_in_center("");
-		$table->attach_defaults ($temp, 0, 1 , $i, $i+1);
-	}	
-		
-	return 	$table;	
-}	
-
-
 
 
 
 sub dev_box_show{
-	my($infc_gen,$soc_state,$info,$refresh_ref)=@_;
-	my $box= def_table (1, 1, TRUE);
-	my $dev_table = dev_box_gen($infc_gen,$soc_state,$info);
+	my($intfc_gen,$info)=@_;
+	
+	my $table = def_table(20,10,FALSE);
+	
+	
+	interface_type_select($intfc_gen,$info,$table,0);	
+	my $row=port_select($intfc_gen,$info,$table,1);	
+	for (my $i=$row; $i<20; $i++){
+		my $temp=gen_label_in_center(" ");
+		$table->attach_defaults ($temp, 0, 1 , $i, $i+1);
+	}	
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
 	$scrolled_win->set_policy( "automatic", "automatic" );
-	$scrolled_win->add_with_viewport($dev_table);
+	$scrolled_win->add_with_viewport($table);
 	
 
 
-	$$refresh_ref-> signal_connect("clicked" => sub{ 
-		$dev_table->destroy;
-		select(undef, undef, undef, 0.1); #wait 10 ms
-		$dev_table = dev_box_gen($infc_gen,$soc_state,$info);
-		#$box->attach_defaults ($dev_table, 0, 1, 0, 1);#( $dev_table, FALSE, FALSE, 3);
-		$scrolled_win->add_with_viewport($dev_table);
-		$dev_table->show;
-		$scrolled_win->show_all;
-		
-		
-		
-	});
-	#$box->attach_defaults ($dev_table, 0, 1, 0, 1);#$box->pack_start( $dev_table, FALSE, FALSE, 3);
-	#$box->show_all;
+	
+	
 	return $scrolled_win;
 	
 }	
@@ -646,10 +587,11 @@ sub check_intfc{
 sub generate_lib{
 	my $intfc_gen=shift;
 	my $name=$intfc_gen->intfc_get_interface_name();
-	my $category=$intfc_gen->intfc_get_category();
+	my $category=$intfc_gen->object_get_attribute('category');
 	# Write
 	if(defined ($category)){
 		open(FILE,  ">lib/interface/$name.ITC") || die "Can not open: $!";
+		print FILE perl_file_header("$name.ITC");
 		print FILE Data::Dumper->Dump([\%$intfc_gen],["HashRef"]);
 		close(FILE) || die "Error closing file: $!";
 		#store \%$intfc_gen, "lib/$name.ITC";
@@ -674,7 +616,7 @@ return 1;
 #########
 
 sub get_intfc_description{
-	my ($intfc_gen,$soc_state,$info)=@_;
+	my ($intfc_gen,$info)=@_;
 	my $description = $intfc_gen->intfc_get_description();	
 	my $table = Gtk2::Table->new (15, 15, TRUE);
 	my $window=def_popwin_size(500,500,"Add description");
@@ -704,7 +646,7 @@ sub get_intfc_description{
 
 
 sub load_interface{
-	my ($intfc_gen,$soc_state)=@_;
+	my ($intfc_gen)=@_;
 	my $file;
 	my $dialog = Gtk2::FileChooserDialog->new(
             	'Select a File', undef,
@@ -726,7 +668,7 @@ sub load_interface{
 		my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
 		if($suffix eq '.ITC'){
 			$intfc_gen->intfc_set_interface_file($file);
-			set_state($soc_state,"load_file",0);
+			set_gui_status($intfc_gen,"load_file",0);
 		}					
      }
      $dialog->destroy;
@@ -743,49 +685,65 @@ sub load_interface{
 sub intfc_main{
 	
 	my $intfc_gen= intfc_gen->interface_generator();
-	
-	my $soc_state=  def_state("ideal");
-	# main window
-	#my $window = def_win_size(1000,800,"Top");
-	#  The main table containg the lib tree, selected modules and info section 
+	set_gui_status($intfc_gen,"ideal",0);	
 	my $main_table = Gtk2::Table->new (15, 12, FALSE);
-	
+	$main_table->set_row_spacings (4);
+	$main_table->set_col_spacings (1);
 	# The box which holds the info, warning, error ...  mesages
 	my ($infobox,$info)= create_text();	
 	
 	
 	my $refresh = Gtk2::Button->new_from_stock('ref');
 	my $generate = def_image_button('icons/gen.png','Generate');
-	my $genbox=def_hbox(TRUE,5);
-	$genbox->pack_start($generate,   FALSE, FALSE,3);
 	
-	# A tree view for holding a library
-	#my $tree_box = create_tree ($info,$lib,$soc,$soc_state);
 
 
-
-	$main_table->set_row_spacings (4);
-	$main_table->set_col_spacings (1);
+	my $fbox=file_box($intfc_gen,$info);	
+	my $sbox=module_select($intfc_gen,$info);	
 	
-	my $devbox=dev_box_show($intfc_gen,$soc_state,$info,\$refresh);
 	
-	$main_table->attach_defaults ($devbox , 0, 12, 0,12);
+	my $devbox=dev_box_show($intfc_gen,$info);
+	
+	$main_table->attach_defaults ($fbox , 0, 12, 0,1);
+	$main_table->attach_defaults ($sbox , 0, 12, 1,2);
+	$main_table->attach_defaults ($devbox , 0, 12, 2,12);
 	$main_table->attach_defaults ($infobox  , 0, 12, 12,14);
-	$main_table->attach_defaults ($genbox	, 6, 8, 14,15);
+	$main_table->attach ($generate	, 6, 8, 14,15,'shrink','shrink',2,2);
 
 
 	my $open = def_image_button('icons/browse.png','Load Interface');
 	my $openbox=def_hbox(TRUE,0);
 	$openbox->pack_start($open,   FALSE, FALSE,0);
-	$main_table->attach_defaults ($openbox,0, 2, 14,15);
+	$main_table->attach ($openbox,0, 2, 14,15,'shrink','shrink',2,2);
+
+	#referesh the mpsoc generator 
+	$refresh-> signal_connect("clicked" => sub{ 
+		$devbox->destroy();
+		$fbox->destroy();
+		$sbox->destroy();
+		select(undef, undef, undef, 0.1); #wait 10 ms
+		$devbox=dev_box_show($intfc_gen,$info);
+		$fbox=file_box($intfc_gen,$info);	
+		$sbox=module_select($intfc_gen,$info);	
+		$main_table->attach_defaults ($fbox , 0, 12, 0,1);
+		$main_table->attach_defaults ($sbox , 0, 12, 1,2);
+		$main_table->attach_defaults ($devbox , 0, 12, 3,12);
+		
+		$devbox->show_all();
+		$sbox->show_all();
+		$fbox->show_all();	
+	});
+
+
+
 
 	#check soc status every 0.5 second. referesh gui if there is any changes 
 Glib::Timeout->add (100, sub{ 
 	 
-		my ($state,$timeout)= get_state($soc_state);
+		my ($state,$timeout)= get_gui_status($intfc_gen);
 		if ($timeout>0){
 			$timeout--;
-			set_state($soc_state,$state,$timeout);		
+			set_gui_status($intfc_gen,$state,$timeout);		
 		}
 		elsif($state eq "load_file"){
 			my $file=$intfc_gen->intfc_get_interface_file();
@@ -793,13 +751,13 @@ Glib::Timeout->add (100, sub{
 			clone_obj($intfc_gen,$pp);
 						
 			
-			set_state($soc_state,"ref",1);
+			set_gui_status($intfc_gen,"ref",1);
 			
 			
 		}
 		elsif( $state ne "ideal" ){
 			$refresh->clicked;
-			set_state($soc_state,"ideal",0);
+			set_gui_status($intfc_gen,"ideal",0);
 			
 		}	
 		return TRUE;
@@ -807,7 +765,7 @@ Glib::Timeout->add (100, sub{
 		} );
 	
 	$open-> signal_connect("clicked" => sub{ 
-		load_interface($intfc_gen,$soc_state);
+		load_interface($intfc_gen);
 	
 	});		
 		

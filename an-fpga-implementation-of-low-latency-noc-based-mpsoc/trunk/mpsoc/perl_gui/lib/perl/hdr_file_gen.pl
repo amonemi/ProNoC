@@ -22,6 +22,8 @@ sub get_instance_global_variable{
 	my @plugs= $soc->soc_get_all_plugs_of_an_instance($id);
 	my %params= $soc->soc_get_module_param($id);
 	#add two extra variable the instance name and base addresses
+	my $core_id= $soc->object_add_attribute('global_param','CORE_ID');
+	$params{CORE_ID}=(defined $core_id)? $core_id: 0;
 	$params{IP}=$inst;
 	$params{CORE}=$id;
 	foreach my $plug (@plugs){
@@ -63,7 +65,7 @@ sub replace_golb_var{
 
 sub generate_header_file{ 
 	my ($soc,$project_dir,$target_dir,$dir)= @_;
-	my $soc_name=$soc->soc_get_soc_name();
+	my $soc_name=$soc->object_get_attribute('soc_name');
 	$soc_name = uc($soc_name);
 	if(!defined $soc_name){$soc_name='soc'};
 	
@@ -82,7 +84,7 @@ sub generate_header_file{
 		my $inst   		=$soc->soc_get_instance_name($id);
 
 		add_text_to_string(\$system_h,"\n \n /*  $inst   */ \n");	
-		$inst=uc($inst);
+		#$inst=uc($inst);
 		# print base address
 		my @plugs= $soc->soc_get_all_plugs_of_an_instance($id);
 
@@ -128,10 +130,10 @@ sub generate_header_file{
 
 				if(defined $rename){
 			
-					open(FILE,  ">lib/verilog/$rename") || die "Can not open: $!";
+					open(FILE,  ">lib/verilog/tmp") || die "Can not open: $!";
 					print FILE $content;
 					close(FILE) || die "Error closing file: $!";
-					move ("$dir/lib/verilog/$rename","$target_dir/sw/"); 
+					move ("$dir/lib/verilog/tmp","$target_dir/sw/$rename"); 
 
 				
 				}
@@ -142,7 +144,7 @@ sub generate_header_file{
 	}
 	
 	add_text_to_string(\$system_h,"#endif\n");
-	my $name=$soc->soc_get_soc_name();
+	my $name=$soc->object_get_attribute('soc_name');
 	open(FILE,  ">lib/verilog/$name.h") || die "Can not open: $!";
 			print FILE $system_h;
 			close(FILE) || die "Error closing file: $!";
