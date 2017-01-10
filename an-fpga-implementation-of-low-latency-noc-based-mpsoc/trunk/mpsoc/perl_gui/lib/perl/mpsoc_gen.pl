@@ -1631,7 +1631,7 @@ sub mpsocgen_main{
 	my $open = def_image_button('icons/browse.png','Load MPSoC');
 	
 	
-	my $entry=gen_entry_object($mpsoc,'soc_name',undef,undef,undef,undef);
+	my $entry=gen_entry_object($mpsoc,'mpsoc_name',undef,undef,undef,undef);
 	my $entrybox=labele_widget_info(" MPSoC name:",$entry);
 	
 	
