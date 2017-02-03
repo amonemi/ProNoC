@@ -11,7 +11,8 @@ CORE_NUM(){
 
 # NoC parameters:
 	V=2   # number of VC per port
-    P=5   # number of port per router 
+	TOPOLOGY="MESH" #"MESH" or "TORUS"
+    P="(TOPOLOGY==\"RING\")? 3 : 5"    # number of port per router 
     B=4   # buffer space :flit per VC 
     NX=8  # number of node in x axis
     NY=8  # number of node in y axis
@@ -21,17 +22,19 @@ CORE_NUM(){
     VC_REALLOCATION_TYPE="NONATOMIC" # "ATOMIC" or "NONATOMIC"
     COMBINATION_TYPE="COMB_NONSPEC" # "BASELINE" or "COMB_SPEC1" or "COMB_SPEC2" or "COMB_NONSPEC"
     FIRST_ARBITER_EXT_P_EN=0  
-    TOPOLOGY="MESH" #"MESH" or "TORUS"
+    
     ROUTE_NAME="XY" # Routing algorithm
 	#    mesh :  "XY"        , "WEST_FIRST"      , "NORTH_LAST"      , "NEGETIVE_FIRST"      , "DUATO"
     #   torus:  "TRANC_XY"  , "TRANC_WEST_FIRST", "TRANC_NORTH_LAST", "TRANC_NEGETIVE_FIRST", "TRANC_DUATO"
     
 	
 	CLASS_SETTING="{CVw{1'b1}}"   
+	
+	SSA_EN="NO"  
    
 	
 	ADD_PIPREG_AFTER_CROSSBAR=0
-	ADD_PIPREG_BEFORE_CROSSBAR=0  
+	
 #simulation parameters:
     C0_p=100    #  the percentage of injected packets with class 0 
     C1_p=0
@@ -85,7 +88,8 @@ CORE_NUM(){
 	
 generate_parameter_v (){
 	printf " \`ifdef     INCLUDE_PARAM \n\n" >> parameter.v	    
-	printf " parameter V=$V;\n" >> parameter.v	
+	printf " parameter V=$V;\n" >> parameter.v
+	printf " parameter TOPOLOGY=\"$TOPOLOGY\";\n" >> parameter.v	
 	printf " parameter P=$P;\n" >> parameter.v
     printf " parameter B=$B;\n" >> parameter.v	
     printf " parameter NX=$NX;\n" >> parameter.v	
@@ -96,7 +100,7 @@ generate_parameter_v (){
     printf " parameter VC_REALLOCATION_TYPE=\"$VC_REALLOCATION_TYPE\";\n" >> parameter.v	
     printf " parameter COMBINATION_TYPE=\"$COMBINATION_TYPE\";\n" >> parameter.v	
     printf " parameter FIRST_ARBITER_EXT_P_EN=$FIRST_ARBITER_EXT_P_EN;\n" >> parameter.v	 
-    printf " parameter TOPOLOGY=\"$TOPOLOGY\";\n" >> parameter.v	
+   	
     printf " parameter ROUTE_NAME=\"$ROUTE_NAME\";\n" >> parameter.v	
 	printf " parameter CONGESTION_INDEX=$CONGESTION_INDEX;\n" >> parameter.v
 	printf " parameter C0_p=$C0_p;\n" >> parameter.v    
@@ -122,10 +126,10 @@ generate_parameter_v (){
 	printf " parameter AVC_ATOMIC_EN= $AVC_ATOMIC_EN;\n">> parameter.v	
 	printf " parameter AVG_LATENCY_METRIC= \"$AVG_LATENCY_METRIC\";\n">> parameter.v	
 	printf " parameter ADD_PIPREG_AFTER_CROSSBAR= $ADD_PIPREG_AFTER_CROSSBAR;\n" >>  parameter.v
-	printf " parameter ADD_PIPREG_BEFORE_CROSSBAR= $ADD_PIPREG_BEFORE_CROSSBAR;\n" >>  parameter.v
 	printf " parameter CVw=(C==0)? V : C * V;\n" >>  parameter.v
 	printf " parameter [CVw-1:   0] CLASS_SETTING = $CLASS_SETTING;\n">>  parameter.v 
-	printf " parameter [V-1	:	0] ESCAP_VC_MASK=$ESCAP_VC_MASK;\n" >> parameter.v					
+	printf " parameter [V-1	:	0] ESCAP_VC_MASK=$ESCAP_VC_MASK;\n" >> parameter.v	
+	printf " parameter SSA_EN= \"$SSA_EN\";\n">> parameter.v	 				
 	printf " \n\n \`endif " >> parameter.v	    
 	
 	
@@ -170,10 +174,10 @@ generate_parameter_h (){
 	printf "\t #define	STND_DEV_EN	$STND_DEV_EN\n">> parameter.h
 	printf "\t #define  AVG_LATENCY_METRIC	\"$AVG_LATENCY_METRIC\"\n">> parameter.h	
 	printf "\t #define  ADD_PIPREG_AFTER_CROSSBAR  $ADD_PIPREG_AFTER_CROSSBAR\n" >>   parameter.h
-	printf "\t #define  ADD_PIPREG_BEFORE_CROSSBAR  $ADD_PIPREG_BEFORE_CROSSBAR\n" >> parameter.h
 	printf "\t #define  CVw	(C==0)? V : C * V\n" >>  parameter.h
 	printf "\t #define  CLASS_SETTING   \"$CLASS_SETTING\"\n">>  parameter.h 
-	printf "\t #define  ESCAP_VC_MASK	$ESCAP_VC_MASK\n">>  parameter.h					
+	printf "\t #define  ESCAP_VC_MASK	$ESCAP_VC_MASK\n">>  parameter.h
+	printf "\t #define	SSA_EN \"$SSA_EN\"\n" >> parameter.h	 					
 	printf " \n\n #endif " >> parameter.h	    
 		
 }

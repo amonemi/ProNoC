@@ -19,6 +19,9 @@ sub mpsoc_generate_verilog{
 //IO
 \tinput\tclk,reset;\n";
 	my $param_as_in_v;
+	# generate top 
+	my $top_io="\t\t.clk(clk) ,\n\t\t.reset(reset_ored_jtag)";
+	
 	
 	#generate socs_parameter
 	my $socs_param= gen_socs_param($mpsoc);
@@ -27,10 +30,10 @@ sub mpsoc_generate_verilog{
 	my ($noc_param,$pass_param)=gen_noc_param_v($mpsoc);
 	
 	#generate the noc
-	my $noc_v=gen_noc_v();
+	my $noc_v=gen_noc_v($pass_param);
 	
 	#generate socs
-	my $socs_v=gen_socs_v($mpsoc,\$io_v,\$io_def_v);
+	my $socs_v=gen_socs_v($mpsoc,\$io_v,\$io_def_v,\$top_io);
 	
 	#functions
 	my $functions=get_functions();
@@ -44,8 +47,40 @@ sub mpsoc_generate_verilog{
 	add_text_to_string (\$mpsoc_v,$socs_v);
 	add_text_to_string (\$mpsoc_v,"\nendmodule\n");
 	
+	my $top_v = (defined $param_as_in_v )? "module ${mpsoc_name}_top #(\n $param_as_in_v\n)(\n$io_v\n);\n": "module ${mpsoc_name}_top (\n $io_v\n);\n";
+	add_text_to_string (\$top_v,$socs_param);
+	add_text_to_string (\$top_v,$io_def_v);
+	add_text_to_string(\$top_v,"
+// Allow software to remote reset/enable the cpu via jtag
+
+	wire jtag_cpu_en, jtag_system_reset;
+
+	jtag_system_en jtag_en (
+		.cpu_en(jtag_cpu_en),
+		.system_reset(jtag_system_reset)
 	
-	return $mpsoc_v;
+	);
+	
+	wire reset_ored_jtag = reset | jtag_system_reset;
+	wire processors_en_anded_jtag = processors_en & jtag_cpu_en;
+	
+	${mpsoc_name} the_${mpsoc_name} (
+		
+$top_io
+	
+	
+	);
+
+endmodule
+
+
+");	
+	
+	#my $ins= gen_mpsoc_instance_v($mpsoc,$mpsoc_name,$param_pass_v);
+
+	#add_text_to_string(\$top_v,$local_param_v_all."\n".$io_full_v_all);
+	#add_text_to_string(\$top_v,$ins);
+	return ($mpsoc_v,$top_v);
 }
 
 sub get_functions{
@@ -173,7 +208,7 @@ sub gen_noc_param_v{
 
 
 sub gen_noc_v{
-	
+	my $pass_param = shift;
 	
 	my $noc =  read_file("../src_noc/noc.v");
 	my @noc_param=$noc->get_modules_parameters_not_local_order('noc');
@@ -206,9 +241,9 @@ sub gen_noc_v{
 	foreach my $p (@noc_param){
 		my $param=($i==0)?  "\t\t.$p($p)":",\n\t\t.$p($p)";
 		$i=1;
-		add_text_to_string(\$noc_v,$param);			
+		#add_text_to_string(\$noc_v,$param);			
 	}	
-	add_text_to_string(\$noc_v,"\n\t)\n\tthe_noc\n\t(\n");		
+	add_text_to_string(\$noc_v,"$pass_param\n\t)\n\tthe_noc\n\t(\n");		
 	
 	my @ports= $noc->get_module_ports_order('noc');
 	$i=0;
@@ -293,7 +328,8 @@ endgenerate
 
 
 sub gen_socs_v{
-	my ($mpsoc,$io_v_ref,$io_def_v)=@_;
+	my ($mpsoc,$io_v_ref,$io_def_v,$top_io_ref)=@_;
+	
 	#generate loop
 	
 #	my $socs_v='
@@ -346,13 +382,16 @@ sub gen_socs_v{
    for (my $y=0;$y<$ny;$y++){
 		for (my $x=0; $x<$nx;$x++){
 			my $tile_num=($nx*$y)+ $x;
-			
 			my ($soc_name,$n,$soc_num)=$mpsoc->mpsoc_get_tile_soc_name($tile_num);
 		
 			if(defined $soc_name) {
-				my ($soc_v,$en)= gen_soc_v($mpsoc,$soc_name,$tile_num,$x,$y,$soc_num,$io_v_ref,$io_def_v);
+				
+				
+	
+				my ($soc_v,$en)= gen_soc_v($mpsoc,$soc_name,$tile_num,$x,$y,$soc_num,$io_v_ref,$io_def_v,$top_io_ref);
 				add_text_to_string(\$socs_v,$soc_v);	
 				$processors_en|=$en;
+			
 			}else{
 				#this tile is not connected to any ip. the noc input ports will be connected to ground
 				my $soc_v="\n\n // Tile:$tile_num (x=$x,y=$y)   is not assigned to any ip\n";
@@ -371,6 +410,7 @@ sub gen_socs_v{
     if($processors_en){
     	add_text_to_string($io_v_ref,",\n\tprocessors_en");
     	add_text_to_string($io_def_v,"\t input processors_en;");
+    	add_text_to_string($top_io_ref,",\n\t\t.processors_en(processors_en_anded_jtag)");
     	
     }            
                 
@@ -386,7 +426,7 @@ sub gen_socs_v{
 
 
 sub   gen_soc_v{
-	my ($mpsoc,$soc_name,$tile_num,$x,$y,$soc_num,$io_v_ref,$io_def_v)=@_;
+	my ($mpsoc,$soc_name,$tile_num,$x,$y,$soc_num,$io_v_ref,$io_def_v,$top_io_ref)=@_;
 	my $soc_v;
 	my $processor_en=0;
 	my $xw= log2($mpsoc->object_get_attribute('noc_param',"NX"));
@@ -425,8 +465,7 @@ sub   gen_soc_v{
 
 	my $dir = Cwd::getcwd();
 	my $mpsoc_name=$mpsoc->object_get_attribute('mpsoc_name');
-	my $project_dir	  = abs_path("$dir/../../");
-	my $target_dir  = "$project_dir/mpsoc_work/MPSOC/$mpsoc_name";
+	my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name";
 	my $soc_file="$target_dir/src_verilog/tiles/$soc_name.v";
 			
 	my $vdb =read_file($soc_file);
@@ -510,6 +549,7 @@ sub   gen_soc_v{
 			}
 			#io name 
 			add_text_to_string($io_v_ref,",\n\t$io_port");
+			add_text_to_string($top_io_ref,",\n\t\t.$io_port($io_port)");
 			#io definition
 			my $new_range = add_instantc_name_to_parameters(\%params,"${soc_name}_$soc_num",$range);
 			#my $new_range=$range;

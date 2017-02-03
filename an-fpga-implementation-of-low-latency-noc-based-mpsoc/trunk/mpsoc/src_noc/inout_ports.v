@@ -171,7 +171,9 @@ generate
             .NX(NX),   // number of node in x axis
             .NY(NY),   // number of node in y axis
             .X(X), // router x address   
-            .Y(Y)  // router y address   
+            .Y(Y),  // router y address  
+	    .DEBUG_EN(DEBUG_EN),
+	    .ESCAP_VC_MASK(ESCAP_VC_MASK) 
     
         )
         the_ssa
@@ -183,14 +185,14 @@ generate
             .ovc_avalable_all(ovc_avalable_all),
             .ivc_request_all(ivc_request_all),
             .assigned_ovc_not_full_all(assigned_ovc_not_full_all),
-            .dest_port_all(dest_port_all),
+            .dest_port_all(dest_port_coded_all),
             .assigned_ovc_num_all(assigned_ovc_num_all),
             .ovc_is_assigned_all(ovc_is_assigned_all),
             .clk(clk),
             .reset(reset),
 	     
             .ovc_allocated_all(ssa_ovc_allocated_all),
-        	.ovc_released_all(ssa_ovc_released_all),
+            .ovc_released_all(ssa_ovc_released_all),
     	    .granted_ovc_num_all(ssa_granted_ovc_num_all),
     	    .ivc_num_getting_sw_grant_all(ssa_ivc_num_getting_sw_grant_all),
     	    .ivc_num_getting_ovc_grant_all(ssa_ivc_num_getting_ovc_grant_all),

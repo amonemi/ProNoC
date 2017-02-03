@@ -28,7 +28,7 @@ module  traffic_gen #(
 (
     //input 
     ratio,
-    pck_size,   
+    pck_size_in,   
     current_x,
     current_y,
     dest_x,
@@ -113,7 +113,7 @@ module  traffic_gen #(
     input  [Xw-1                    :0] dest_x;
     input  [Yw-1                    :0] dest_y;
     output [PCK_CNTw-1              :0] pck_number;
-    input  [PCK_SIZw-1              :0] pck_size;
+    input  [PCK_SIZw-1              :0] pck_size_in;
     output reg sent_done;
     output hdr_flit_sent;
     input  [Cw-1                    :0] pck_class_in;
@@ -132,7 +132,7 @@ module  traffic_gen #(
 
     
     reg                                 inject_en,cand_wr_vc_en,pck_rd;
-
+    reg     [PCK_SIZw-1              :0] pck_size, pck_size_next;
     
    
    
@@ -261,9 +261,19 @@ module  traffic_gen #(
     assign  time_stamp_h2h  =  rsv_time_stamp[rd_vc_bin] - flit_in[CLK_CNTw-1             :   0];
     assign  time_stamp_h2t  = clk_counter - flit_in[CLK_CNTw-1             :   0];
 
-    assign flit_out =   (hdr_flit)     ?    {2'b10,wr_vc,wr_class_hdr,wr_destport_hdr,wr_des_x_addr,wr_des_y_addr,wr_src_x_addr,wr_src_y_addr}:
-                        (tail_flit)    ?    {2'b01,wr_vc,{(Fpay-CLK_CNTw){1'b0}},wr_timestamp}:
-                                            {2'b00,wr_vc,{(Fpay-PCK_SIZw-PCK_CNTw){1'd0}},pck_number,flit_counter};
+	 wire [Fpay-1	:	0] flit_out_pyload;
+	 wire [1		:	0]	flit_out_hdr;
+	 
+	 assign flit_out_pyload =   (hdr_flit)     ?    {wr_class_hdr,wr_destport_hdr,wr_des_x_addr,wr_des_y_addr,wr_src_x_addr,wr_src_y_addr}:
+                               (tail_flit)    ?     wr_timestamp:
+																	{pck_number,flit_counter};
+	 assign flit_out_hdr    =   (hdr_flit)     ?    2'b10:
+									    (tail_flit)    ?    2'b01:
+																	2'b00;
+	 
+    assign flit_out = {flit_out_hdr, wr_vc, flit_out_pyload };   
+	 
+	 
 
 assign {rd_hdr_flg,rd_vc,rd_class_hdr,rd_destport_hdr,rd_des_x_addr,rd_des_y_addr,rd_src_x_addr,rd_src_y_addr} = flit_in;                                     
 
@@ -338,9 +348,11 @@ always @(*)begin
             pck_rd              = 1'b0;
             ns                  = ps;
             pck_rd              =1'b0;
+	    pck_size_next	= pck_size;
            
             case (ps) 
                 IDEAL: begin 
+		  pck_size_next  = pck_size_in;
                   if(pck_ready ) begin 
                         if(wr_vc_avb && valid_dst)begin
                             pck_rd=1'b1; 
@@ -360,6 +372,7 @@ always @(*)begin
                             flit_cnt_inc = 1'b1;
                         end else begin 
                             flit_cnt_rst   = 1'b1;
+			    pck_size_next  = pck_size_in;
                             sent_done       =1'b1;
                             cand_wr_vc_en   =1'b1;
                             if(cand_vc>0) begin 
@@ -399,6 +412,7 @@ always @(posedge clk or posedge reset )begin
             credit_out      <= {V{1'd0}};
             rsv_counter     <= 0;
             clk_counter     <=  0;
+	    pck_size	    <= 0;
            
         
         end
@@ -411,7 +425,7 @@ always @(posedge clk or posedge reset )begin
             if (flit_cnt_rst)      flit_counter    <= {PCK_SIZw{1'b0}};
             else if(flit_cnt_inc)   flit_counter    <= flit_counter + 1'b1;     
             credit_out      <= credit_out_next;
-            
+            pck_size  <= pck_size_next;
            
             //sink
             if(flit_in_wr) begin 
@@ -461,7 +475,7 @@ always @(posedge clk or posedge reset )begin
     wire     [PCK_CNTw-1             :   0] rsv_pck_number;
     reg      [PCK_CNTw-1             :   0] old_pck_number  [V-1   :   0];
     
-    assign {rsv_pck_number,rsv_flit_counter}=flit_in [PCK_CNTw+PCK_SIZw-1             :   0];
+    assign {rsv_pck_number,rsv_flit_counter}=flit_in;
     
     integer ii;
     always @(posedge clk or posedge reset )begin 
@@ -577,9 +591,9 @@ module injection_ratio_ctrl #
 			case(sent)
 				1'b1: begin 
 					next_state 			= state +  off_clks; 
-					next_flit_counter = (flit_counter == pck_size-1'b1) ? {PCK_SIZw{1'b0}} : flit_counter +1'b1;
+					next_flit_counter = (flit_counter >= pck_size-1'b1) ? {PCK_SIZw{1'b0}} : flit_counter +1'b1;
 					next_inject			= (flit_counter=={PCK_SIZw{1'b0}});
-					if (next_flit_counter == pck_size-1'b1) begin 
+					if (next_flit_counter >= pck_size-1'b1) begin 
 						 if( next_state  >= STATE_INIT ) next_sent =1'b0;
 					end
 				end
@@ -881,4 +895,5 @@ module distance_gen #(
 endmodule
  
  
+
 

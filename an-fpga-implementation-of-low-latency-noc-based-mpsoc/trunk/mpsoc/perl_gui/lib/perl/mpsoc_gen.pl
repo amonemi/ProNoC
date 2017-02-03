@@ -11,7 +11,6 @@ use interface;
 use POSIX 'strtol';
 
 use File::Path;
-use File::Find;
 use File::Copy;
 
 use Cwd 'abs_path';
@@ -27,6 +26,7 @@ require "widget.pl";
 require "mpsoc_verilog_gen.pl";
 require "hdr_file_gen.pl";
 require "readme_gen.pl";
+require "soc_gen.pl";
 
 sub get_pos{
 		my ($item,@list)=@_;
@@ -51,16 +51,13 @@ sub noc_param_widget{
 			$mpsoc->object_add_attribute_order($attribut1,$param);
 			$value=$default;
 	 }
-	 if( ! defined $ref_delay){
-	 	$ref_delay=($type eq "Entry") ? 10 : 1;
-
-	 }
+	 
 	 if ($type eq "Entry"){
 		$widget=gen_entry($value);
 		$widget-> signal_connect("changed" => sub{
 			my $new_param_value=$widget->get_text();
 			$mpsoc->object_add_attribute($attribut1,$param,$new_param_value);
-			set_gui_status($mpsoc,"ref",$ref_delay);
+			set_gui_status($mpsoc,"ref",$ref_delay) if(defined $ref_delay);
 			
 
 		});
@@ -80,7 +77,7 @@ sub noc_param_widget{
 		 $widget-> signal_connect("changed" => sub{
 		 my $new_param_value=$widget->get_active_text();
 		 $mpsoc->object_add_attribute($attribut1,$param,$new_param_value);
-		 set_gui_status($mpsoc,"ref",$ref_delay);
+		 set_gui_status($mpsoc,"ref",$ref_delay) if(defined $ref_delay);
 
 
 		 });
@@ -97,7 +94,7 @@ sub noc_param_widget{
 		  $widget-> signal_connect("value_changed" => sub{
 		  my $new_param_value=$widget->get_value_as_int();
 		  $mpsoc->object_add_attribute($attribut1,$param,$new_param_value);
-		  set_gui_status($mpsoc,"ref",$ref_delay);
+		  set_gui_status($mpsoc,"ref",$ref_delay) if(defined $ref_delay);
 
 		  });
 		 
@@ -140,7 +137,7 @@ sub noc_param_widget{
 				}
 				$mpsoc->object_add_attribute($attribut1,$param,$new_val);
 				#print "\$new_val=$new_val\n";
-				set_gui_status($mpsoc,"ref",$ref_delay);
+				set_gui_status($mpsoc,"ref",$ref_delay) if(defined $ref_delay);
 			});
 		}
 
@@ -150,6 +147,7 @@ sub noc_param_widget{
 	}
 	elsif ( $type eq "DIR_path"){
 			$widget =get_dir_in_object ($mpsoc,$attribut1,$param,$value,'ref',10);
+			set_gui_status($mpsoc,"ref",$ref_delay) if(defined $ref_delay);
 	}
 	
 	
@@ -160,14 +158,19 @@ sub noc_param_widget{
 
 	my $inf_bt= gen_button_message ($info,"icons/help.png");
 	if($show==1){
-		my $tmp=gen_label_in_left(" "); 
-		$table->attach_defaults ($label , 0, 4,  $row,$row+1);
-		$table->attach_defaults ($inf_bt , 4, 5, $row,$row+1);
-		$table->attach_defaults ($widget , 5, 9, $row,$row+1);
-		$table->attach_defaults ($tmp , 9, 10, $row,$row+1);
+		attach_widget_to_table ($table,$row,$label,$inf_bt,$widget);
 		$row++;
 	}
     return $row;
+}
+
+sub attach_widget_to_table {
+	my ($table,$row,$label,$inf_bt,$widget)=@_;
+	my $tmp=gen_label_in_left(" "); 
+	$table->attach  ($label , 0, 4,  $row,$row+1,'fill','shrink',2,2);
+	$table->attach  ($inf_bt , 4, 5, $row,$row+1,'fill','shrink',2,2);
+	$table->attach  ($widget , 5, 9, $row,$row+1,'fill','shrink',2,2);
+	$table->attach  ($tmp , 9, 10, $row,$row+1,'fill','shrink',2,2);
 }
 
 
@@ -749,7 +752,7 @@ sub noc_config{
 	$type='Combo-box';
     $info="    Input-queued: simple router with low performance and does not support fully adaptive routing.
     VC-based routers offer higher performance, fully adaptive routing  and traffic isolation for different packet classes."; 
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_type');
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_type',1);
 	my $router_type=$mpsoc->object_get_attribute('noc_type',"ROUTER_TYPE");
 	
 			
@@ -761,7 +764,7 @@ sub noc_config{
 	$content='2,16,1';
     $info= 'Number of NoC routers in row (X dimention)';
     $type= 'Spin-button';             
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param');
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',1);
 	
 
 
@@ -772,7 +775,7 @@ sub noc_config{
 	$content='2,16,1';
     $info= 'Number of NoC routers in column (Y dimention)';
     $type= 'Spin-button';             
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param');
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',1);
 
 	if($router_type eq '"VC_BASED"'){
 		#VC number per port
@@ -784,7 +787,7 @@ sub noc_config{
 		$type='Spin-button';
 		$content='2,16,1';
 		$info='Number of Virtual Channel per each router port';
-		$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param');
+		$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',1);
 	} else {
 		$mpsoc->object_add_attribute('noc_param','V',1);
 		$mpsoc->object_add_attribute('noc_param','C',0);
@@ -799,7 +802,7 @@ sub noc_config{
     $content='2,256,1';
     $type='Spin-button';
  	$info=($router_type eq '"VC_BASED"')?  'Buffer queue size per VC in flits' : 'Buffer queue size in flits';
-    $row= noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param');
+    $row= noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',undef);
 	
 	#packet payload width
 	$label='payload width';
@@ -808,7 +811,7 @@ sub noc_config{
 	$content='32,256,32';
 	$type='Spin-button';
     $info="The packet payload width in bits"; 
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info,$table,$row,$show_noc,'noc_param');
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info,$table,$row,$show_noc,'noc_param',undef);
 
 	#topology
 	$label='Topology';
@@ -817,7 +820,7 @@ sub noc_config{
 	$content='"MESH","TORUS"';
 	$type='Combo-box';
     $info="NoC topology"; 
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param');
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',1);
 
 	#routing algorithm
 	my $topology=$mpsoc->object_get_attribute('noc_param','TOPOLOGY');
@@ -836,7 +839,7 @@ sub noc_config{
 	}
 	$default=($topology eq '"MESH"')?  '"XY"':'"TRANC_XY"';
 	$info="Select the routing algorithm: XY(DoR) , partially adaptive (Turn models). Fully adaptive (Duato) "; 
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param');
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',1);
 
 
 	#SSA
@@ -845,8 +848,8 @@ sub noc_config{
 	$default='"NO"';
 	$content='"YES","NO"';
 	$type='Combo-box';
-    $info="Enable single cycle latency on packets traversing in the same direction using static straight allocator (SSA)"; 
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param');
+    	$info="Enable single cycle latency on packets traversing in the same direction using static straight allocator (SSA)"; 
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',undef);
 
 
 
@@ -883,7 +886,7 @@ sub noc_config{
 		   	$content="0,12,1";
 			$info="Congestion index determines how congestion information is collected from neighboring routers. Please refer to the usere manual for more information";
 		    $default=3;
-		   	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');
+		   	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);
 		   
 		}
 		#Fully adaptive routing setting
@@ -899,7 +902,7 @@ sub noc_config{
 			
 		
 		  	 $info="Select the escap VC for fully adaptive routing.";
-		  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,$adv_set,'noc_param');
+		  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set, 'noc_param',undef);
 	  	
 	  	 }
 		
@@ -910,7 +913,7 @@ sub noc_config{
                 $default='"NONATOMIC"';  
                 $content='"ATOMIC","NONATOMIC"';
                 $type='Combo-box';
-                $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');                                           
+                $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);                                           
 
 
 
@@ -923,7 +926,7 @@ sub noc_config{
                 $content='"BASELINE","COMB_SPEC1","COMB_SPEC2","COMB_NONSPEC"';
                 $type='Combo-box';
                 $info="The joint VC/ switch allocator type. using canonical combination is not recommanded";                    
-                $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');                   
+                $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);                   
 
 	}
 	
@@ -934,7 +937,7 @@ sub noc_config{
 		$content='"ONE_HOT","BINARY"';
 		$type='Combo-box';
 		$info="Crossbar multiplexer type";
-        $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');             
+        $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);             
        
 	if($router_type eq '"VC_BASED"'){
 	#class
@@ -944,7 +947,7 @@ sub noc_config{
 		$info='Number of message classes. Each specific class can use different set of VC'; 
 		$content='0,16,1';
 	    $type='Spin-button';
-	    $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');                             
+	    $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',5);                             
 		
 
 		my $class=$mpsoc->object_get_attribute('noc_param',"C");
@@ -961,7 +964,7 @@ sub noc_config{
 		  	 $type="Check-box";
 		  	 $content=$v;
 		  	 $info="Select the permitted VCs which the message class $i can be sent via them.";
-		  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');
+		  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);
 
 
 		}
@@ -1138,44 +1141,56 @@ return  $scrolled_win;
 #
 ###########
 
-sub gen_socs {
-	my ($mpsoc,$info)=@_;
-	my $path=$mpsoc->object_get_attribute('setting','soc_path');	
-	$path=~ s/ /\\ /g;
-    	my @socs;
-	my @files = glob "$path/*.SOC";
-	my @soc_list=$mpsoc-> mpsoc_get_soc_list();
-	my @used_socs;
-	foreach my $soc_name (@soc_list){
-		my @n=$mpsoc->mpsoc_get_soc_tiles_num($soc_name);
-		if(scalar @n){
-			#generate the verilog files of it
-			push(@used_socs,$soc_name);			
-		}		
-	}
+
+
+
+sub gen_all_tiles{
+	my ($mpsoc,$info, $hw_dir,$sw_dir)=@_;
+	my $nx= $mpsoc->object_get_attribute('noc_param',"NX");
+	my $ny= $mpsoc->object_get_attribute('noc_param',"NY");
+	my $mpsoc_name=$mpsoc->object_get_attribute('mpsoc_name');
+	my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name";
 	
-	for my $p (@files){
-		# Read
+	
+	
+	
+	
+	my @generated_tiles;
+	
+	#print "nx=$nx,ny=$ny\n";
+	for (my $y=0;$y<$ny;$y++){for (my $x=0; $x<$nx;$x++){
+		
+		my $tile_num= $y*$nx+$x;
+		#print "$tile_num\n";
+		my ($soc_name,$num)= $mpsoc->mpsoc_get_tile_soc_name($tile_num);
+		my $path=$mpsoc->object_get_attribute('setting','soc_path');	
+		$path=~ s/ /\\ /g;
+  		my $p = "$path/$soc_name.SOC";
 		my  $soc = eval { do $p };
 		if ($@ || !defined $soc){		
 			show_info(\$info,"**Error reading  $p file: $@\n");
 		       next; 
 		} 
-		my  $name=$soc->object_get_attribute('soc_name');
-		if( grep (/^$name$/,@used_socs)){
-		#generate the soc
-		generate_soc_files($mpsoc,$soc,$info);
 		
+		#update core id
+		$soc->object_add_attribute('global_param','CORE_ID',$tile_num);
 		
-		
-		
-		};
-		
-		
-	}
-		
-		
+		my $sw_path 	= "$sw_dir/tile$tile_num";
+		#print "$sw_path\n";
+		if( grep (/^$soc_name$/,@generated_tiles)){ # This soc is generated before only create the software file
+			generate_soc($soc,$info,$target_dir,$hw_dir,$sw_path,0,0);
+		}else{
+			generate_soc($soc,$info,$target_dir,$hw_dir,$sw_path,0,1);
+			move ("$hw_dir/$soc_name.v","$hw_dir/tiles/"); 	
+			
+		}	
+	
+	
+	}}
+	
+	
 }
+
 
 ################
 #	generate_soc
@@ -1190,7 +1205,7 @@ sub generate_soc_files{
 	# Write object file
 	open(FILE,  ">lib/soc/$soc_name.SOC") || die "Can not open: $!";
 	print FILE perl_file_header("$soc_name.SOC");
-	print FILE Data::Dumper->Dump([\%$soc],[$soc_name]);
+	print FILE Data::Dumper->Dump([\%$soc],['mpsoc']);
 	close(FILE) || die "Error closing file: $!";
 		
 	# Write verilog file
@@ -1203,9 +1218,9 @@ sub generate_soc_files{
 			
 	# copy all files in project work directory
 	my $dir = Cwd::getcwd();
-	#make target dir
 	my $project_dir	  = abs_path("$dir/../../");
-	my $target_dir  = "$project_dir/mpsoc_work/MPSOC/$mpsoc_name";
+	#make target dir
+	my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name";
 	mkpath("$target_dir/src_verilog/lib/",1,0755);
 	mkpath("$target_dir/src_verilog/tiles/",1,0755);
 	mkpath("$target_dir/sw",1,0755);
@@ -1271,55 +1286,139 @@ return $msg;
 sub generate_mpsoc{
 	my ($mpsoc,$info)=@_;
 	my $name=$mpsoc->object_get_attribute('mpsoc_name');
-		my $size= (defined $name)? length($name) :0;
-		if ($size >0){
-			gen_socs($mpsoc,$info);
-			my ($file_v,$tmp)=mpsoc_generate_verilog($mpsoc);
-			
-			# Write object file
-			open(FILE,  ">lib/mpsoc/$name.MPSOC") || die "Can not open: $!";
-			print FILE perl_file_header("$name.MPSOC");
-			print FILE Data::Dumper->Dump([\%$mpsoc],[$name]);
-			close(FILE) || die "Error closing file: $!";
-			
-			# Write verilog file
-			open(FILE,  ">lib/verilog/$name.v") || die "Can not open: $!";
-			print FILE $file_v;
-			close(FILE) || die "Error closing file: $!";
-			
-			
-			
-			
-			# copy all files in project work directory
-			my $dir = Cwd::getcwd();
-			#make target dir
-			my $project_dir	  = abs_path("$dir/../../");
-			my $target_dir  = "$project_dir/mpsoc_work/MPSOC/$name";
-			mkpath("$target_dir/src_verilog/lib/",1,0755);
-			mkpath("$target_dir/sw",1,0755);
-    		
-    		#gen_socs($mpsoc,$info);
-    		
-    		move ("$dir/lib/verilog/$name.v","$target_dir/src_verilog/"); 	
-    		
-    		
-    		
-    		
-    		
-			
-			
-			
-			message_dialog("SoC \"$name\" has been created successfully at $target_dir/ " );
+	if ( $name =~ /\W+/ ){
+		message_dialog('The mpsoc name must not contain any non-word character:("./\()\':,.;<>~!@#$%^&*|+=[]{}`~?-")!")');
+		return 0;
+	}
+	my $size= (defined $name)? length($name) :0;
+	if ($size ==0) {
+		message_dialog("Please define the MPSoC name!");
+		return 0;
+	}
+	
+	# make target dir
+	my $dir = Cwd::getcwd();
+	my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$name";
+	my $hw_dir 	= "$target_dir/src_verilog";
+	my $sw_dir 	= "$target_dir/sw";
+	
+	mkpath("$hw_dir/lib/",1,0755);
+	mkpath("$hw_dir/tiles",1,0755);
+	mkpath("$sw_dir",1,0755);
+	
+	
+	#generate/copy all tiles HDL/SW codes
+	gen_all_tiles($mpsoc,$info, $hw_dir,$sw_dir );
 		
-		}else {
-			message_dialog("Please define the MPSoC name!");
+	#copy all NoC HDL files
+	
+	my @files = glob( "$dir/../src_noc/*.v" );
+	copy_file_and_folders(\@files,$dir,"$hw_dir/lib/");  
+	
+	
+		
+	my ($file_v,$top_v)=mpsoc_generate_verilog($mpsoc);
+	
+	
+		
+	# Write object file
+	open(FILE,  ">lib/mpsoc/$name.MPSOC") || die "Can not open: $!";
+	print FILE perl_file_header("$name.MPSOC");
+	print FILE Data::Dumper->Dump([\%$mpsoc],[$name]);
+	close(FILE) || die "Error closing file: $!";
 			
-		}	
+	# Write verilog file
+	open(FILE,  ">lib/verilog/$name.v") || die "Can not open: $!";
+	print FILE $file_v;
+	close(FILE) || die "Error closing file: $!";
+			
+	my $l=autogen_warning().get_license_header("${name}_top.v");
+	open(FILE,  ">lib/verilog/${name}_top.v") || die "Can not open: $!";
+	print FILE "$l\n$top_v";
+	close(FILE) || die "Error closing file: $!";		
+			
+		
+	
+    		
+    #gen_socs($mpsoc,$info);
+    move ("$dir/lib/verilog/$name.v","$target_dir/src_verilog/");
+    move ("$dir/lib/verilog/${name}_top.v","$target_dir/src_verilog/"); 
+    
+    #generate makefile
+    open(FILE,  ">$sw_dir/Makefile") || die "Can not open: $!";
+	print FILE mpsoc_sw_make();
+	close(FILE) || die "Error closing file: $!";
+	
+	#generate prog_mem
+    open(FILE,  ">$sw_dir/program.sh") || die "Can not open: $!";
+	print FILE mpsoc_mem_prog();
+	close(FILE) || die "Error closing file: $!";
+    
+    
+   
+    	 	
+    message_dialog("SoC \"$name\" has been created successfully at $target_dir/ " );
+		
+		
 		
 return 1;	
 }	
 
+sub mpsoc_sw_make {
+	 my $make='
+ SUBDIRS := $(wildcard */.)
+ all: $(SUBDIRS)
+ $(SUBDIRS):
+	$(MAKE) -C $@
 
+ .PHONY: all $(SUBDIRS) 
+	
+ clean:
+	$(MAKE) -C $(CODE_DIR) clean	
+';
+return $make;
+	
+}
+
+
+sub mpsoc_mem_prog {
+	 my $string='
+#!/bin/sh
+
+
+JTAG_MAIN="$PRONOC_WORK/toolchain/bin/jtag_main"
+
+#reset and disable cpus, then release the reset but keep the cpus disabled
+
+$JTAG_MAIN -n 127  -d  "I:1,D:2:3,D:2:2,I:0"
+
+# jtag instruction 
+#	0: bypass
+#	1: getting data
+# jtag data :
+# 	bit 0 is reset 
+#	bit 1 is disable
+# I:1  set jtag_enable  in active mode
+# D:2:3 load jtag_enable data register with 0x3 reset=1 disable=1
+# D:2:2 load jtag_enable data register with 0x2 reset=0 disable=1
+# I:0  set jtag_enable  in bypass mode
+
+
+
+#programe the memory
+for i in $(ls -d */); do 
+	sh ${i%%/}/write_memory.sh 
+done
+ 
+#Enable the cpu
+$JTAG_MAIN -n 127  -d  "I:1,D:2:0,I:0"
+# I:1  set jtag_enable  in active mode
+# D:2:0 load jtag_enable data register with 0x0 reset=0 disable=0
+# I:0  set jtag_enable  in bypass mode
+';
+return $string;
+	
+}
 
 
 sub get_tile_LIST{
@@ -1771,40 +1870,4 @@ sub load_mpsoc{
 
 }
 
-##########
 
-##########
-sub copy_noc_files{
-	my ($project_dir,$dest)=@_;
-	
-my @noc_files=(
-    '/mpsoc/src_noc/arbiter.v',
-	'/mpsoc/src_noc/baseline.v',
-	'/mpsoc/src_noc/canonical_credit_count.v',
-	'/mpsoc/src_noc/class_table.v',
-	'/mpsoc/src_noc/combined_vc_sw_alloc.v',
-	'/mpsoc/src_noc/comb_nonspec.v',
-	'/mpsoc/src_noc/comb_spec2.v',
-	'/mpsoc/src_noc/comb-spec1.v',
-	'/mpsoc/src_noc/congestion_analyzer.v',
-	'/mpsoc/src_noc/credit_count.v',
-	'/mpsoc/src_noc/crossbar.v',
-	'/mpsoc/src_noc/flit_buffer.v',
-	'/mpsoc/src_noc/inout_ports.v',
-	'/mpsoc/src_noc/inout_ports.v.classic',
-	'/mpsoc/src_noc/input_ports.v',
-	'/mpsoc/src_noc/main_comp.v',
-	'/mpsoc/src_noc/noc.v',
-	'/mpsoc/src_noc/route_mesh.v',
-	'/mpsoc/src_noc/router.v',
-	'/mpsoc/src_noc/route_torus.v',
-	'/mpsoc/src_noc/routing.v',
-	'/mpsoc/src_noc/vc_alloc_request_gen.v',
-	'/mpsoc/src_noc/ss_allocator.v');
-	foreach my $f (@noc_files){
-		copy ("$project_dir$f",$dest); 
-		
-	}
-	
-	
-}	

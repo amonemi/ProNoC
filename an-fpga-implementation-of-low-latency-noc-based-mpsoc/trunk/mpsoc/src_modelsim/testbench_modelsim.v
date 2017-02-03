@@ -22,7 +22,7 @@ reg     reset ,clk;
 reg     start;
 wire    done;
 reg [RATIOw-1:0] ratio;
-reg [PCK_SIZw-1 :   0]pck_size;
+reg [PCK_SIZw-1 :   0]pck_size_in;
 
 
 
@@ -32,7 +32,7 @@ uut (
     .clk        (clk),
     .start  (start),
     .ratio   (ratio), 
-    .pck_size(pck_size),
+    .pck_size_in(pck_size_in),
     .all_done (done)
 );
 
@@ -47,7 +47,7 @@ integer i;
 initial begin 
     reset = 1'b1;
     start = 1'b0;
-    pck_size=4;
+    pck_size_in=4;
     ratio =50;
     i=0;
     #40
@@ -141,7 +141,7 @@ module testbench_sub #(
         clk,
         start,
         ratio,
-        pck_size, 
+        pck_size_in, 
         all_done
         
     );
@@ -191,7 +191,7 @@ module testbench_sub #(
 
 
     input                   reset ,clk,  start;
-    input   [PCK_SIZw-1:0]  pck_size;
+    input   [PCK_SIZw-1:0]  pck_size_in;
     input   [RATIOw-1  :0]  ratio; 
     output                  all_done;
     
@@ -325,7 +325,7 @@ end
             (
   //input          
                 .ratio (ratio),  
-                .pck_size(pck_size),
+                .pck_size_in(pck_size_in),
                 .current_x(x[Xw-1  :   0]),
                 .current_y(y[Yw-1  :   0]),
                 .dest_x(dest_x[IP_NUM]),
@@ -481,7 +481,7 @@ endgenerate
         fp = $fopen("Result.txt","w");
         `endif  
         $fwrite(fp,"TRAFFIC is   =%s\n",TRAFFIC);
-        $fwrite(fp,"Packet size in flit=%d\n ",pck_size);
+        $fwrite(fp,"Packet size in flit=%d\n ",pck_size_in);
         //$fwrite(fp,"ROUTE_ALGRMT  =%s",ROUTE_ALGRMT);
         $fwrite(fp,"VC_REALLOCATION_TYPE = %s\n",VC_REALLOCATION_TYPE);
         $fwrite(fp,"COMBINATION_TYPE    = %s\n",COMBINATION_TYPE);
@@ -516,7 +516,7 @@ task injection_ratio ;
                     total_clk   =   total_clk   +   clk_count;
                     total_pck   =   total_pck   +   packet_num;
                     total_router    = total_router +1'b1;
-                    ratio_avg <= (total_clk>0)? (total_pck* pck_size*100)/total_clk:0;
+                    ratio_avg <= (total_clk>0)? (total_pck* pck_size_in*100)/total_clk:0;
                 end
             end
             if(inject_report_in) begin 
@@ -525,7 +525,7 @@ task injection_ratio ;
                     $display("Injection ratio is =%f",ratio_avg);
                     $display("total_pck      =%f",total_pck);            
                     $display("TRAFFIC is   =%s",TRAFFIC);
-                    $display("Packet size in flit=%d ",pck_size);
+                    $display("Packet size in flit=%d ",pck_size_in);
                     $display("total_clk=%d ",total_clk);
                     $display("ROUTE_NAME    =%s",ROUTE_NAME);
                     $display("ROUTE_TYPE =%s",ROUTE_TYPE);                  

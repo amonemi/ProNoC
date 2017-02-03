@@ -197,8 +197,9 @@ generate
 	
 	
 	end else begin :mesh_torus
-    	for	(x=0;	x<NX; x=x+1) begin :x_loop
-    		for	(y=0;	y<NY;	y=y+1) begin: y_loop
+	for	(y=0;	y<NY;	y=y+1) begin: y_loop
+    		for	(x=0;	x<NX; x=x+1) begin :x_loop
+    		
     		localparam IP_NUM	=	(y * NX) +	x;
     	
     

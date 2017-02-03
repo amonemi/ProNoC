@@ -115,7 +115,6 @@ generate_parameter_v (){
 	printf " parameter ROUTE_TYPE = (ROUTE_NAME == \"XY\" || ROUTE_NAME == \"TRANC_XY\" )?    \"DETERMINISTIC\" : \n" >> parameter.v	
     printf "			            (ROUTE_NAME == \"DUATO\" || ROUTE_NAME == \"TRANC_DUATO\" )?   \"FULL_ADAPTIVE\": \"PAR_ADAPTIVE\"; \n" >> parameter.v	          
 	printf " parameter ADD_PIPREG_AFTER_CROSSBAR= $ADD_PIPREG_AFTER_CROSSBAR;\n" >>  parameter.v
-	printf " parameter ADD_PIPREG_BEFORE_CROSSBAR= $ADD_PIPREG_BEFORE_CROSSBAR;\n" >>  parameter.v
 	printf " parameter CVw=(C==0)? V : C * V;\n" >>  parameter.v
 	printf " parameter [CVw-1:   0] CLASS_SETTING = $CLASS_SETTING;\n">>  parameter.v 
 	printf " parameter [V-1	:	0] ESCAP_VC_MASK=$ESCAP_VC_MASK;\n" >> parameter.v		
@@ -156,7 +155,6 @@ generate_parameter_h (){
     printf "\t #define  PACKET_SIZE	$PACKET_SIZE\n" >> parameter.h  
     printf "\t #define	DEBUG_EN	$DEBUG_EN	\n" >> parameter.h 
     printf "\t #define  ADD_PIPREG_AFTER_CROSSBAR  $ADD_PIPREG_AFTER_CROSSBAR\n" >>   parameter.h
-	printf "\t #define  ADD_PIPREG_BEFORE_CROSSBAR  $ADD_PIPREG_BEFORE_CROSSBAR\n" >> parameter.h
 	printf "\t #define  CVw	(C==0)? V : C * V\n" >>  parameter.h
 	printf "\t #define  CLASS_SETTING   \"$CLASS_SETTING\"\n">>  parameter.h 
 	printf "\t #define  ESCAP_VC_MASK	$ESCAP_VC_MASK\n">>  parameter.h					 

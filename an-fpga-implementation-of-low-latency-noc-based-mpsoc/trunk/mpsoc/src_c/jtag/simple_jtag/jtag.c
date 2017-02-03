@@ -24,6 +24,17 @@
 #define TRACE_USB	0
 #define TRACE_JTAG	0
 
+#define TIMOUT 1000
+
+/* You may want to change the VENDOR_ID and PRODUCT_ID
+ * depending on your device.
+ */
+#define VENDOR_ID      0x09fb   // Altera
+#define PRODUCT_ID     0x6001   // usb blaster (DE2-115) 
+// Altera usb blaster  product IDs "6001", "6002", "6003", MODE="0666"   
+// dose not work for USB-Blaster II "6010", "6810"
+// run ./list_usb_dev  to see the list of all usb devices' vid and pid
+
 static struct libusb_device_handle *udev;
 static int usb_open(unsigned vid, unsigned pid) {
 	if (libusb_init(NULL) < 0)
@@ -106,7 +117,7 @@ int jtag_move(int count, unsigned bits){
 		}
 		bits >>= 1;
 	}
-	return usb_bulk(EP2_OUT, buf, n, 1000);
+	return usb_bulk(EP2_OUT, buf, n, TIMOUT);
 }
 
 int jtag_shift(int count, unsigned bits, unsigned *out) {
@@ -130,7 +141,7 @@ int jtag_shift(int count, unsigned bits, unsigned *out) {
 	}
 	buf[n-1] |= UB_TMS;
 	buf[n-2] |= UB_TMS;
-	r = usb_bulk(EP2_OUT, buf, n, 1000);
+	r = usb_bulk(EP2_OUT, buf, n, TIMOUT);
 	if (r < 0)
 		return r;
 	if (!out)
@@ -138,7 +149,7 @@ int jtag_shift(int count, unsigned bits, unsigned *out) {
 	bits = 0;
 	bit = 1;
 	while (readcount > 0) {
-		r = usb_bulk(EP1_IN, buf, BUFF_SZ, 1000);
+		r = usb_bulk(EP1_IN, buf, BUFF_SZ, TIMOUT);
 		if (r < 0)
 			return r;
 		if (r < 3)
@@ -185,7 +196,7 @@ int jtag_shift_long(int count, unsigned * bits, unsigned *out) {
 	}
 	buf[n-1] |= UB_TMS;
 	buf[n-2] |= UB_TMS;
-	r = usb_bulk(EP2_OUT, buf, n, 1000);
+	r = usb_bulk(EP2_OUT, buf, n, TIMOUT);
 	if (r < 0)
 		return r;
 	if (!out)
@@ -198,10 +209,10 @@ int jtag_shift_long(int count, unsigned * bits, unsigned *out) {
 	int shift=0;
 	while (readcount > 0) {
 
-		r = usb_bulk(EP1_IN, buf, BUFF_SZ, 1000);
+		r = usb_bulk(EP1_IN, buf, BUFF_SZ, TIMOUT);
 		//int j;
 		//for(j=0;j<r;j++)printf("%u",buf[j]&1);
-		printf("r=%u\n",r);		
+		//printf("r=%u\n",r);		
 		if (r < 0)
 			return r;
 		if (r < 3)
@@ -224,11 +235,11 @@ int jtag_shift_long(int count, unsigned * bits, unsigned *out) {
 					
 				}
 				readcount--;
-			if (readcount == 0) {
+			if (readcount == 0 ) {
 #if TRACE_JTAG
 				fprintf(stderr,"    : %08x\n", bits[p]);
 #endif
-				out[p]= B;
+				if (shift%32!=0) out[p]= B;
 				//printf("out[%u]=%x\n",p, out[p]);
 				return 0;
 			}
@@ -301,7 +312,7 @@ static int jtag_is_open = 0;
 int jtag_open(void) {
 	int r;
 	if (!jtag_is_open) {
-		r = usb_open(0x09fb, 0x6001);
+		r = usb_open(VENDOR_ID, PRODUCT_ID);
 		if (r < 0)
 			return r;
 		jtag_is_open = 1;

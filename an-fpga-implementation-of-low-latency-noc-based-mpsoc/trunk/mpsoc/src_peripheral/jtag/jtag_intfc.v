@@ -142,7 +142,7 @@ assign {reset_all_o,reset_cpus_o}=2'b01;
    wire start_source;
    wire [WR_RAMw        		:0] wr_pck_size;
    wire [X_Y_IN_HDR_WIDTH-1	:0] x_dest,y_dest;
-   wire [31:						:0] memory_pointer;
+   wire [31						:0] memory_pointer;
 	
 	localparam SOURCEw=32+WR_RAMw+1+X_Y_IN_HDR_WIDTH+X_Y_IN_HDR_WIDTH;
   

@@ -59,6 +59,7 @@ module noc_connection (
    `define  INCLUDE_PARAM
    
 	`include"parameter.v"
+         
 	
        localparam CONGw= (CONGESTION_INDEX==3)?  3:
                       (CONGESTION_INDEX==5)?  3:
@@ -72,7 +73,7 @@ module noc_connection (
                     P_1    =    P-1 ,
                     Fw     =    2+V+Fpay, //flit width; 
                     PFw    =    P       *   Fw,
-                    NC     =    NX      *   NY, //number of cores
+                    NC     =	(TOPOLOGY=="RING")? NX    :   NX*NY, //number of cores
                     NCFw   =    NC      *   Fw,
                     NCV    =    NC      *   V;
                     
@@ -110,7 +111,45 @@ output [NC-1			:0]		 start_o;
 
 genvar x,y;
 generate 
+	if( TOPOLOGY == "RING") begin : ring 
+		for  (x=0;   x<NX; x=x+1) begin :ring_loop
+			if(x    <   NX-1) begin: not_last_node
+				assign	router_flit_out_all 	 [`SELECT_WIRE(x,0,1,Fw)]	= router_flit_in_all 	[`SELECT_WIRE((x+1),0,2,Fw)];
+				assign	router_credit_out_all	 [`SELECT_WIRE(x,0,1,V)]	= router_credit_in_all	[`SELECT_WIRE((x+1),0,2,V)];
+				assign	router_flit_out_we_all	 [x][1]				= router_flit_in_we_all	[`CORE_NUM((x+1),0)][2];
+				assign	router_congestion_out_all[`SELECT_WIRE(x,0,1,CONGw)]	= router_congestion_in_all [`SELECT_WIRE((x+1),0,2,CONGw)];
+			end else begin :last_node
+				assign	router_flit_out_all 	[`SELECT_WIRE(x,0,1,Fw)] 		=	router_flit_in_all 	[`SELECT_WIRE(0,0,2,Fw)];
+				assign	router_credit_out_all	[`SELECT_WIRE(x,0,1,V)]			=	router_credit_in_all	[`SELECT_WIRE(0,0,2,V)];
+				assign	router_flit_out_we_all	[x][1]						=	router_flit_in_we_all	[`CORE_NUM(0,0)][2];
+				assign	router_congestion_out_all [`SELECT_WIRE(x,0,1,CONGw)]  = router_congestion_in_all [`SELECT_WIRE(0,0,2,CONGw)];
+			end 
+
+			// local port connection
+			    	assign     router_flit_out_all     [`SELECT_WIRE(x,0,0,Fw)]        =	ni_flit_in			[x];
+				assign     router_credit_out_all   [`SELECT_WIRE(x,0,0,V)]         =	ni_credit_in		[x];
+				assign     router_flit_out_we_all  [x][0]                     =	ni_flit_in_wr		[x];
+				assign     router_congestion_out_all[`SELECT_WIRE(x,0,0,CONGw)]     =   {CONGw{1'b0}};	
 	
+				assign		ni_flit_out	[x] = router_flit_in_all 	[`SELECT_WIRE(x,0,0,Fw)];
+				assign		ni_flit_out_wr	[x] = router_flit_in_we_all[x][0];
+				assign		ni_credit_out	[x] = router_credit_in_all	[`SELECT_WIRE(x,0,0,V)];
+	
+			    
+
+	
+		end//x		
+	end else begin :mesh_torus
+
+
+
+
+
+
+
+
+
+
 	for	(x=0;	x<NX; x=x+1) begin :x_loop
 		for	(y=0;	y<NY;	y=y+1) begin: y_loop
 		localparam IP_NUM	=	(y * NX) +	x;
@@ -275,7 +314,7 @@ end
 
 		end //y
 	end //x
-		
+end		
 	
 endgenerate
 
@@ -309,10 +348,12 @@ module start_delay_gen #(
 );
 
 	input reset,clk,start_i;
-	output reg [NC-1	:	0] start_o;
-	reg shift_en,start_i_reg;
+	output [NC-1	:	0] start_o;
+	reg start_i_reg;
 	wire start;
+	wire cnt_increase;
 	reg  [NC-1	:	0] start_o_next;
+	reg [NC-1	:	0] start_o_reg;
 	
 	assign start= start_i_reg|start_i;
 
@@ -324,20 +365,25 @@ module start_delay_gen #(
 		
 		end	
 	end
-
+	
+	reg [2:0] counter;
+	assign cnt_increase=(counter==3'd0);
 	always @(posedge clk or posedge reset) begin 
 		if(reset) begin 
-			shift_en		<=1'b0;
-			start_o		<= {NC{1'b0}};
+			
+			start_o_reg		<= {NC{1'b0}};
 			start_i_reg	<=1'b0;
+			counter		<=2'd0;
 		end else begin 
-			shift_en		<=~shift_en;
-			start_i_reg	<=start_i;
-			if(shift_en) start_o <=start_o_next;
+		   counter		<= counter+3'd1;
+		   start_i_reg	<=start_i;
+			if(cnt_increase | start) start_o_reg <=start_o_next;
+			
 
 		end//reset
 	end //always
 
+	assign start_o=(cnt_increase | start)? start_o_reg : {NC{1'b0}};
 
 endmodule
 

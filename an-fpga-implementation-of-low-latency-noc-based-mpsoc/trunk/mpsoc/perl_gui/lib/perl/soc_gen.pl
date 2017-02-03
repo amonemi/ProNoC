@@ -8,7 +8,7 @@ use interface;
 use POSIX 'strtol';
 
 use File::Path;
-use File::Find;
+#use File::Find;
 use File::Copy;
 use File::Copy::Recursive qw(dircopy);
 use Cwd 'abs_path';
@@ -166,7 +166,8 @@ sub get_module_parameter{
 		  $max=~ s/\D//g;
 		  $step=~ s/\D//g;
 		  my $spin=gen_spin($min,$max,$step);
-		  $spin->set_value($value);
+		  if(defined $value) {$spin->set_value($value);}
+		  else {$spin->set_value($min);}
 		  $table->attach ($spin, 3, 4, $row, $row+1,'expand','shrink',2,2);
 		  $spin-> signal_connect("value_changed" => sub{ $new_param_value{$p}=$spin->get_value_as_int(); });
 		 
@@ -853,89 +854,81 @@ sub get_all_files_list {
 #################
 
 sub generate_soc{
-	my ($soc,$info)=@_;
-	my $name=$soc->object_get_attribute('soc_name');
-		if (length($name)>0){
-			my @tmp=split('_',$name);
-			if ( $tmp[-1] =~ /^[0-9]+$/ ){
-				message_dialog("The soc name must not end with '_number'!");
-				return 0;
-			}
+	my ($soc,$info,$target_dir,$hw_path,$sw_path,$gen_top,$gen_hw_lib)=@_;
+		my $name=$soc->object_get_attribute('soc_name');
+	
+		
+		my ($file_v,$top_v,$readme,$prog)=soc_generate_verilog($soc);
 			
-			my ($file_v,$top_v,$readme)=soc_generate_verilog($soc);
+		# Write object file
+		open(FILE,  ">lib/soc/$name.SOC") || die "Can not open: $!";
+		print FILE perl_file_header("$name.SOC");
+		print FILE Data::Dumper->Dump([\%$soc],['soc']);
+		close(FILE) || die "Error closing file: $!";
 			
-			# Write object file
-			open(FILE,  ">lib/soc/$name.SOC") || die "Can not open: $!";
-			print FILE perl_file_header("$name.SOC");
-			print FILE Data::Dumper->Dump([\%$soc],[$name]);
-			close(FILE) || die "Error closing file: $!";
+		# Write verilog file
+		open(FILE,  ">lib/verilog/$name.v") || die "Can not open: $!";
+		print FILE $file_v;
+		close(FILE) || die "Error closing file: $!";
 			
-			# Write verilog file
-			open(FILE,  ">lib/verilog/$name.v") || die "Can not open: $!";
-			print FILE $file_v;
-			close(FILE) || die "Error closing file: $!";
-			
-			# Write Top module file
+		# Write Top module file
+		if($gen_top){
 			my $l=autogen_warning().get_license_header("${name}_top.v");
 			open(FILE,  ">lib/verilog/${name}_top.v") || die "Can not open: $!";
 			print FILE "$l\n$top_v";
 			close(FILE) || die "Error closing file: $!";
+		}
+			
+		# Write readme file
+		open(FILE,  ">lib/verilog/README") || die "Can not open: $!";
+		print FILE $readme;
+		close(FILE) || die "Error closing file: $!";
 
-			
-			# Write readme file
-			open(FILE,  ">lib/verilog/README") || die "Can not open: $!";
-			print FILE $readme;
-			close(FILE) || die "Error closing file: $!";
-			
-			# copy all files in project work directory
-			my $dir = Cwd::getcwd();
-			#make target dir
-			my $project_dir	  = abs_path("$dir/../../");
-			my $target_dir  = "$project_dir/mpsoc_work/SOC/$name";
-			mkpath("$target_dir/src_verilog/lib/",1,01777);
-			mkpath("$target_dir/sw",1,01777);
-    		
-    		#copy hdl codes in src_verilog
-    		
-    		my ($file_ref,$warnings)= get_all_files_list($soc,"hdl_files");
+
+		# Write memory prog file
+		open(FILE,  ">lib/verilog/write_memory.sh") || die "Can not open: $!";
+		print FILE $prog;
+		close(FILE) || die "Error closing file: $!";
 		
-		    copy_file_and_folders($file_ref,$project_dir,"$target_dir/src_verilog/lib");
-    		
+		my $dir = Cwd::getcwd();
+		my $project_dir	  = abs_path("$dir/../../"); 		
+		if($gen_hw_lib){
+
+			#make target dir
+			my $hw_lib="$hw_path/lib";
+			mkpath("$hw_lib/",1,01777);
+			mkpath("$sw_path/",1,01777);
+   		
+			#copy hdl codes in src_verilog   
+			
+			my ($file_ref,$warnings)= get_all_files_list($soc,"hdl_files");
+		
+			copy_file_and_folders($file_ref,$project_dir,$hw_lib);
 			show_info(\$info,$warnings)     		if(defined $warnings);  
     		
     		
-		#copy jtag control files 
-		my @jtags=(("/mpsoc/src_peripheral/jtag/jtag_wb"),("jtag"));
-		copy_file_and_folders(\@jtags,$project_dir,"$target_dir/src_verilog/lib");
-
-    		#my @pathes=("$dir/../src_peripheral","$dir/../src_noc","$dir/../src_processor");
-    		#foreach my $p(@pathes){
-    		#	find(
-    		#		sub {
-        	#			return unless ( -f $_ );
-        	#			$_ =~ /\.v$/ && copy( $File::Find::name, "$target_dir/src_verilog/lib/" );
-    		#		},
-    		#	$p
-			#	);
-    		#}
+			#copy jtag control files 
+			my @jtags=(("/mpsoc/src_peripheral/jtag/jtag_wb"),("jtag"));
+			copy_file_and_folders(\@jtags,$project_dir,$hw_lib);    		
+			move ("$dir/lib/verilog/$name.v","$hw_path/"); 
+			move ("$dir/lib/verilog/${name}_top.v","$hw_path/"); 		
+			move ("$dir/lib/verilog/README" ,"$sw_path/");
+			move ("$dir/lib/verilog/write_memory.sh" ,"$sw_path/");
+		}
+		
+		# Copy Software files
+		my ($file_ref,$warnings)= get_all_files_list($soc,"sw_files");
+		copy_file_and_folders($file_ref,$project_dir,$sw_path);
     		
-    		
-    		move ("$dir/lib/verilog/$name.v","$target_dir/src_verilog/"); 
-		move ("$dir/lib/verilog/${name}_top.v","$target_dir/src_verilog/"); 		
-    		move ("$dir/lib/verilog/README" ,"$target_dir/sw/");
-    		# Copy Software files
-			($file_ref,$warnings)= get_all_files_list($soc,"sw_files");
-			copy_file_and_folders($file_ref,$project_dir,"$target_dir/sw");
-    		
-    		# Write system.h and Software gen files
-			generate_header_file($soc,$project_dir,$target_dir,$dir);
+		# Write system.h and Software gen files
+		generate_header_file($soc,$project_dir,$sw_path,$dir);
 			 
     		
     			
 
 
 		# Write main.c file if not exist
-		my $n="$target_dir/sw/main.c";
+		my $n="$sw_path/main.c";
 		if (!(-f "$n")) { 
 			# Write main.c
 			open(FILE,  ">$n") || die "Can not open: $!";
@@ -947,15 +940,8 @@ sub generate_soc{
 			
 			
 			
-			message_dialog("SoC \"$name\" has been created successfully at $target_dir/ " );
-			exec($^X, $0, @ARGV);# reset ProNoC to apply changes
-		
-		}else {
-			message_dialog("Please define the SoC name!");
 			
-		}	
-		
-return 1;	
+
 }	
 
 
@@ -1419,7 +1405,7 @@ sub socgen_main{
 	my $soc = soc->soc_new();
 	set_gui_status($soc,"ideal",0);
 	#my $soc= eval { do 'lib/soc/soc.SOC' };
-	
+	#message_dialog("$ENV{'PRONOC_WORK'}\n");
 	
 	# main window
 	#my $window = def_win_size(1000,800,"Top");
@@ -1471,6 +1457,55 @@ sub socgen_main{
 	$main_table->attach ($generate, 10, 12, 19,20,'expand','shrink',2,2);
 	
 
+	
+		
+		
+	$generate-> signal_connect("clicked" => sub{ 
+		my $name=$soc->object_get_attribute('soc_name');
+		
+		if (length($name)==0){
+			message_dialog("Please define the SoC name!");
+			return ;
+		}	
+			
+		
+		my @tmp=split('_',$name);
+		if ( $tmp[-1] =~ /^[0-9]+$/ ){
+			message_dialog("The soc name must not end with '_number'!");
+			return ;
+		}
+		if ( $name =~ /\W+/ ){
+			message_dialog('The soc name must not contain any non-word character:("./\()\':,.;<>~!@#$%^&*|+=[]{}`~?-")!")');
+			return ;
+		}
+
+		my $target_dir  = "$ENV{'PRONOC_WORK'}/SOC/$name";
+		my $hw_dir 	= "$target_dir/src_verilog";
+		my $sw_path 	= "$target_dir/sw";
+    		
+		$soc->object_add_attribute('global_param','CORE_ID',0);	
+		generate_soc($soc,$info,$target_dir,$hw_dir,$sw_path,1,1);
+		message_dialog("SoC \"$name\" has been created successfully at $target_dir/ " );
+		exec($^X, $0, @ARGV);# reset ProNoC to apply changes	
+	
+	});
+
+	$wb-> signal_connect("clicked" => sub{ 
+		wb_address_setting($soc);
+	
+	});
+
+	$open-> signal_connect("clicked" => sub{ 
+		load_soc($soc,$info);
+	
+	});	
+
+	my $sc_win = new Gtk2::ScrolledWindow (undef, undef);
+		$sc_win->set_policy( "automatic", "automatic" );
+		$sc_win->add_with_viewport($main_table);
+
+
+
 	#check soc status every 0.5 second. referesh device table if there is any changes 
 	Glib::Timeout->add (100, sub{ 
 	 	my ($state,$timeout)= get_gui_status($soc);
@@ -1489,27 +1524,8 @@ sub socgen_main{
 		return TRUE;
 		
 	} );
-		
-		
-	$generate-> signal_connect("clicked" => sub{ 
-		generate_soc($soc,$info);
-		$refresh_dev_win->clicked;
-	
-	});
 
-	$wb-> signal_connect("clicked" => sub{ 
-		wb_address_setting($soc);
 	
-	});
-
-	$open-> signal_connect("clicked" => sub{ 
-		load_soc($soc,$info);
-	
-	});	
-
-	my $sc_win = new Gtk2::ScrolledWindow (undef, undef);
-		$sc_win->set_policy( "automatic", "automatic" );
-		$sc_win->add_with_viewport($main_table);	
 
 	return $sc_win;
 	#return $main_table;

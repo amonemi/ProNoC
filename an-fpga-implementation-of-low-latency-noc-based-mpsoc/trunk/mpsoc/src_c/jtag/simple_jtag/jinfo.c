@@ -24,6 +24,7 @@ int main(int argc, char **argv) {
 
 	if (jtag_reset() < 0)
 		return -1;
+	
 	if (jtag_dr(32, 0, &bits) < 0)
 		return -1;
 	fprintf(stderr,"IDCODE: %08x\n", bits);
