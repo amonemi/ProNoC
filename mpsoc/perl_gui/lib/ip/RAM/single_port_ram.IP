@@ -126,7 +126,7 @@ $wb_single_port_ram = bless( {
                                                                  },
                                                  'JTAG_CONNECT' => {
                                                                      'info' => 'JTAG_CONNECT:
-if it is not disabled then the actual memory implements as a dual port RAM with the second port is connected either to In-System Memory Content Editor or Jtag_to_wb  ',
+if it is not disabled then the actual memory is implemented as a dual port RAM with the second port is connected either to In-System Memory Content Editor or Jtag_to_wb. This allows that the memory content can be read/written using JTAG.   ',
                                                                      'deafult' => '"DISABLED"',
                                                                      'global_param' => 'Localparam',
                                                                      'content' => '"DISABLED", "JTAG_WB" , "ALTERA_IMCE"',
@@ -141,6 +141,14 @@ if it is not disabled then the actual memory implements as a dual port RAM with 
                                                                    'redefine_param' => 1,
                                                                    'type' => 'Combo-box'
                                                                  },
+                                                 'INIT_FILE_NAME' => {
+                                                                     'info' => 'The name of RAM content memory file (without extention). The file will be used by the JTAG programer to programe the memory at run time.',
+                                                                     'deafult' => '"ram0"',
+                                                                     'global_param' => 'Don\'t include',
+                                                                     'content' => '',
+                                                                     'redefine_param' => 1,
+                                                                     'type' => 'Entry'
+                                                                   },
                                                  'CTIw' => {
                                                              'info' => 'Parameter',
                                                              'deafult' => '3',
@@ -170,7 +178,8 @@ if it is not disabled then the actual memory implements as a dual port RAM with 
                                                        'CTIw',
                                                        'BTEw',
                                                        'WB_Aw',
-                                                       'BURST_MODE'
+                                                       'BURST_MODE',
+                                                       'INIT_FILE_NAME'
                                                      ],
                                'ports' => {
                                             'sa_tag_i' => {

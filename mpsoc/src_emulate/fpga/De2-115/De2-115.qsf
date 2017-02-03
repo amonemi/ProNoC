@@ -1271,39 +1271,39 @@ set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to *
 set_instance_assignment -name TSU_REQUIREMENT "10 ns" -from * -to *
 
 
-set_global_assignment -name VERILOG_FILE src/vjtag_wb.v
-set_global_assignment -name VERILOG_FILE src/vjtag.v
-set_global_assignment -name VERILOG_FILE src/noc_emulator.v
-set_global_assignment -name VERILOG_FILE src/jtag_system_en.v
-set_global_assignment -name VERILOG_FILE src/ram_single_port_jtag.v
-set_global_assignment -name VERILOG_FILE src/jtag_source_probe.v
-set_global_assignment -name VERILOG_FILE src/altera_reset_synchronizer.v
+
+set_global_assignment -name VERILOG_FILE src/jtag_wb/vjtag_wb.v
+set_global_assignment -name VERILOG_FILE src/jtag_wb/vjtag.v
+set_global_assignment -name VERILOG_FILE src/jtag_wb/jtag_system_en.v
+set_global_assignment -name VERILOG_FILE src/jtag_wb/jtag_source_probe.v
+set_global_assignment -name VERILOG_FILE src/src_noc/vc_alloc_request_gen.v
+set_global_assignment -name VERILOG_FILE src/src_noc/traffic_gen_old.v
+set_global_assignment -name VERILOG_FILE src/src_noc/traffic_gen.v
+set_global_assignment -name VERILOG_FILE src/src_noc/ss_allocator.v
+set_global_assignment -name VERILOG_FILE src/src_noc/routing.v
+set_global_assignment -name VERILOG_FILE src/src_noc/router.v
+set_global_assignment -name VERILOG_FILE src/src_noc/route_torus.v
+set_global_assignment -name VERILOG_FILE src/src_noc/route_mesh.v
+set_global_assignment -name VERILOG_FILE src/src_noc/noc.v
+set_global_assignment -name VERILOG_FILE src/src_noc/main_comp.v
+set_global_assignment -name VERILOG_FILE src/src_noc/input_ports.v
+set_global_assignment -name VERILOG_FILE src/src_noc/inout_ports.v
+set_global_assignment -name VERILOG_FILE src/src_noc/flit_buffer.v
+set_global_assignment -name VERILOG_FILE src/src_noc/crossbar.v
+set_global_assignment -name VERILOG_FILE src/src_noc/credit_count.v
+set_global_assignment -name VERILOG_FILE src/src_noc/congestion_analyzer.v
+set_global_assignment -name VERILOG_FILE src/src_noc/combined_vc_sw_alloc.v
+set_global_assignment -name VERILOG_FILE src/src_noc/comb_spec2.v
+set_global_assignment -name VERILOG_FILE src/src_noc/comb_nonspec.v
+set_global_assignment -name VERILOG_FILE "src/src_noc/comb-spec1.v"
+set_global_assignment -name VERILOG_FILE src/src_noc/class_table.v
+set_global_assignment -name VERILOG_FILE src/src_noc/canonical_credit_count.v
+set_global_assignment -name VERILOG_FILE src/src_noc/baseline.v
+set_global_assignment -name VERILOG_FILE src/src_noc/arbiter.v
 set_global_assignment -name VERILOG_FILE src/reset_jtag.v
-set_global_assignment -name VERILOG_FILE src/vc_alloc_request_gen.v
-set_global_assignment -name VERILOG_FILE src/traffic_gen_old.v
-set_global_assignment -name VERILOG_FILE src/traffic_gen.v
-set_global_assignment -name VERILOG_FILE src/ss_allocator.v
-set_global_assignment -name VERILOG_FILE src/routing.v
-set_global_assignment -name VERILOG_FILE src/router.v
-set_global_assignment -name VERILOG_FILE src/route_torus.v
-set_global_assignment -name VERILOG_FILE src/route_mesh.v
-set_global_assignment -name VERILOG_FILE src/noc.v
-set_global_assignment -name VERILOG_FILE src/main_comp.v
-set_global_assignment -name VERILOG_FILE src/input_ports.v
-set_global_assignment -name VERILOG_FILE src/inout_ports.v
-set_global_assignment -name VERILOG_FILE src/flit_buffer.v
-set_global_assignment -name VERILOG_FILE src/crossbar.v
-set_global_assignment -name VERILOG_FILE src/credit_count.v
-set_global_assignment -name VERILOG_FILE src/congestion_analyzer.v
-set_global_assignment -name VERILOG_FILE src/combined_vc_sw_alloc.v
-set_global_assignment -name VERILOG_FILE src/comb_spec2.v
-set_global_assignment -name VERILOG_FILE src/comb_nonspec.v
-set_global_assignment -name VERILOG_FILE "src/comb-spec1.v"
-set_global_assignment -name VERILOG_FILE src/class_table.v
-set_global_assignment -name VERILOG_FILE src/canonical_credit_count.v
-set_global_assignment -name VERILOG_FILE src/baseline.v
-set_global_assignment -name VERILOG_FILE src/arbiter.v
-set_global_assignment -name VERILOG_FILE src/altera_noc_emulator.v
-set_global_assignment -name VERILOG_FILE emulator_top.v
-set_global_assignment -name QIP_FILE probe.qip
+set_global_assignment -name VERILOG_FILE src/noc_emulator.v
+set_global_assignment -name VERILOG_FILE src/generic_ram.v
+set_global_assignment -name VERILOG_FILE src/emulator_top.v
+set_global_assignment -name VERILOG_FILE src/altera_reset_synchronizer.v
+
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

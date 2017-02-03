@@ -23,7 +23,9 @@ module  ss_allocator#(
     parameter NY   = 4, // number of node in y axis
     parameter TOPOLOGY =  "MESH",
     parameter X = 0, // router x address   
-    parameter Y = 0  // router y address   
+    parameter Y = 0,  // router y address   
+    parameter DEBUG_EN =   1,
+    parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000
    )
    (
         flit_in_we_all,
@@ -143,7 +145,9 @@ module  ss_allocator#(
                 .V(V),
                 .P(P),
                 .Fpay(Fpay),
-                .ROUTE_TYPE(ROUTE_TYPE)
+                .ROUTE_TYPE(ROUTE_TYPE),
+		.DEBUG_EN(DEBUG_EN),
+		.ESCAP_VC_MASK(ESCAP_VC_MASK)
         )
         the_ssa_per_vc
         (
@@ -164,7 +168,12 @@ module  ss_allocator#(
             .ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant_all[i]),
             .ivc_reset(ivc_reset_all[i]),
             .decreased_credit_in_ss_ovc(decreased_credit_in_ss_ovc_all[(SS_PORT*V)+(i%V)])
-           // .predict_flit_wr(predict_flit_wr_all[PREDICT_PO]),
+//synthesis translate_off 
+//synopsys  translate_off
+	    ,.clk(clk)
+//synthesis translate_on 
+//synopsys  translate_on	
+            // .predict_flit_wr(predict_flit_wr_all[PREDICT_PO]),
             
 
            );
@@ -222,7 +231,9 @@ module ssa_per_vc #(
     parameter V = 4,    // vc_num_per_port
     parameter P = 5,    // router port num
     parameter Fpay = 32, //pa
-    parameter ROUTE_TYPE="DETERMINISTIC" // "DETERMINISTIC", "FULL_ADAPTIVE", "PAR_ADAPTIVE"
+    parameter ROUTE_TYPE="DETERMINISTIC", // "DETERMINISTIC", "FULL_ADAPTIVE", "PAR_ADAPTIVE"
+    parameter DEBUG_EN =   1,
+    parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000
     )
     (
         flit_in_we,
@@ -241,7 +252,12 @@ module ssa_per_vc #(
         ovc_released,
         ovc_allocated,
         decreased_credit_in_ss_ovc,
-        ivc_reset      
+        ivc_reset
+//synthesis translate_off 
+//synopsys  translate_off
+	,clk
+//synthesis translate_on 
+//synopsys  translate_on	      
         
    );
    
@@ -251,7 +267,8 @@ module ssa_per_vc #(
 
 
 
- 
+   localparam SSA_EN = ((ROUTE_TYPE == "FULL_ADAPTIVE") && (SS_PORT==2 || SS_PORT == 4) && ((1<<V_LOCAL &  ~ESCAP_VC_MASK ) != {V{1'b0}})) ? 1'b0 :1'b1;
+		
       
    
     
@@ -283,6 +300,11 @@ module ssa_per_vc #(
     output                        ivc_reset;
     output                        decreased_credit_in_ss_ovc;
 
+//synthesis translate_off 
+//synopsys  translate_off
+    input clk;
+//synthesis translate_on
+//synopsys  translate_on
 
 
 
@@ -397,7 +419,26 @@ assign {aa,bb} = dest_port[1:0];
         assign ss_port_hdr_flit = b;
         assign ss_port_nonhdr_flit =   bb;
     end
-end   
+
+
+
+//synthesis translate_off 
+//synopsys  translate_off
+
+if(DEBUG_EN) begin :dbg
+	always @(posedge clk) begin
+	   //if(!reset)begin 
+			if(ivc_num_getting_sw_grant & aa & bb) $display("%t: SSA ERROR: There are two output ports that a non-header flit can be sent to. %m",$time);
+	   //end
+	end	
+end //dbg
+
+//synopsys  translate_on
+//synthesis translate_on
+
+
+
+end   //adaptive
 endgenerate
 
 
@@ -412,9 +453,15 @@ assign ss_ovc_ready = (ovc_is_assigned)?assigned_ss_ovc_ready : ovc_avalable_in_
 // check if ssa is permited by input port
 
 wire ssa_permited_by_iport;
-assign ssa_permited_by_iport = ss_ovc_ready & (~ivc_request) & condition_1_2_valid; 
 
 
+generate
+if (SSA_EN) begin : enable
+	assign ssa_permited_by_iport = ss_ovc_ready & (~ivc_request) & condition_1_2_valid;  
+end else begin : disabled
+	assign ssa_permited_by_iport = 1'b0;
+end
+endgenerate
 
 /*********************************
  check incomming packet conditions 

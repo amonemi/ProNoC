@@ -13,6 +13,8 @@ use Time::HiRes qw( usleep ualarm gettimeofday tv_interval nanosleep  clock_gett
 
 use File::Basename;
 use File::Path qw/make_path/;
+use File::Copy;
+use File::Find::Rule;
 
 require "widget.pl"; 
 require "emulate_ram_gen.pl"; 
@@ -21,6 +23,25 @@ require "mpsoc_verilog_gen.pl";
 require "readme_gen.pl";
 
 use List::MoreUtils qw(uniq);
+
+
+# hardware parameters taken from noc_emulator.v
+use constant PCK_CNTw =>30;  # packet counter width in bits (results in maximum of 2^30 = 1  G packets)
+use constant PCK_SIZw =>14;  # packet size width in bits (results in maximum packet size of 2^14 = 16 K flit)
+use constant MAXXw    =>4;   # maximum nodes in x dimention is 2^MAXXw equal to 16 nodes in x dimention
+use constant MAXYw    =>4;   # 16 nodes in y dimention : hence max emulator size is 16X16
+use constant MAXCw    =>4;   # 16 message classes  
+use constant RATIOw   =>7;   # log2(100)
+use constant MAX_PATTERN => 124;  
+use constant RAM_SIZE => (MAX_PATTERN+4);          
+
+    
+#use constant MAX_PCK_NUM => (2**PCK_CNTw)-1;
+use constant MAX_PCK_NUM => (2**PCK_CNTw)-1;
+use constant MAX_PCK_SIZ => (2**PCK_SIZw)-1; 
+use constant MAX_SIM_CLKs=> 100000000; # simulation end at if clock counter reach this number           
+
+use constant EMULATION_RTLS => "/mpsoc/src_emulate/rtl/noc_emulator.v , /mpsoc/src_peripheral/jtag/jtag_wb/ , /mpsoc/src_peripheral/ram/generic_ram.v, /mpsoc/src_noc/";
 
 
 
@@ -53,6 +74,10 @@ my @ginfo = (
 
 );	
 
+
+
+
+
 	if(defined  $sample_num){
 		my @color;
 		my $min_y=200;		
@@ -70,20 +95,25 @@ my @ginfo = (
 		}#for
 	my  @x1;
 	@x1 =  uniq(sort {$a<=>$b} @x) if (scalar @x);
-
+	#print "\@x1=@x1\n";
 	if (scalar @x1){
 		$results[0]=\@x1;
 		for (my $i=1;$i<=$sample_num; $i++) {
 			my $j=0;
 			my $ref=$emulate->object_get_attribute ("sample$i","result");
 			if(defined $ref){
+				#print "$i\n";
 				my %line=%$ref;
 				foreach my $k (@x1){
 					$results[$i][$j]=$line{$k};
 					$min_y= $line{$k} if (defined $line{$k} && $line{$k}!=0 && $min_y > $line{$k});
 					$j++;
 				}#$k
-			}#if			
+			}#if
+			else {
+				$results[$i][$j]=undef;
+
+			}			
 		}#$i
 		
 	}#if
@@ -98,7 +128,7 @@ my @ginfo = (
 		$graphs_info->{$d->{param_name}}= $d->{default_val} if(!defined $graphs_info->{$d->{param_name}});
 	}
 	
-	#print "gggggggggggggggg=".$graphs_info->{X_Title};
+	
 
 	$graph->set (
             	x_label         => $graphs_info->{X_Title},
@@ -485,50 +515,71 @@ sub get_injection_ratios{
 
 
 sub get_noc_configuration{
-		my ($emulate,$n) =@_;
-		my($width,$hight)=max_win_size();
-		my $win=def_popwin_size($width/2.5,$hight*.8,"NoC configuration setting");
-		my $table=def_table(10,2,FALSE);
-		my $entry=gen_entry();
-		my $row=0;
-		my @l;
-		my @u;
+	my ($emulate,$n) =@_;
+	my($width,$hight)=max_win_size();
+	my $win=def_popwin_size($width/2.5,$hight*.8,"NoC configuration setting");
+	my $table=def_table(10,2,FALSE);
+	my $row=0;
 		
-		my $traffics="tornado,transposed 1,transposed 2,bit reverse,bit complement,random"; #TODO hot spot 
 		
-		$l[$row]=gen_label_help("Select the SRAM Object File (sof) for this NoC configration.","SoF file:");
-		my $dir = Cwd::getcwd();
+	my $traffics="tornado,transposed 1,transposed 2,bit reverse,bit complement,random"; #TODO hot spot 
+		
+	my $dir = Cwd::getcwd();
+	my $open_in	  = abs_path("$ENV{PRONOC_WORK}/emulate/sof");	
+	attach_widget_to_table ($table,$row,gen_label_in_left("SoF file:"),gen_button_message ("Select the SRAM Object File (sof) for this NoC configration.","icons/help.png"), get_file_name_object ($emulate,"sample$n","sof_file",'sof',$open_in)); $row++;
 
+
+
+	my @siminfo = (
+	{ label=>'Configuration name:', param_name=>'line_name', type=>'Entry', default_val=>"NoC$n", content=>undef, info=>"NoC configration name. This name will be shown in load-latency graph for this configuration", param_parent=>"sample$n", ref_delay=> undef},
+
+  	{ label=>"Traffic name", param_name=>'traffic', type=>'Combo-box', default_val=>'random', content=>$traffics, info=>"Select traffic pattern", param_parent=>"sample$n", ref_delay=>undef},
+
+{ label=>"Packet size in flit:", param_name=>'PCK_SIZE', type=>'Spin-button', default_val=>4, content=>"2,".MAX_PCK_SIZ.",1", info=>undef, param_parent=>"sample$n", ref_delay=>undef},
+
+	{ label=>"Packet number limit:", param_name=>'PCK_NUM_LIMIT', type=>'Spin-button', default_val=>1000000, content=>"2,".MAX_PCK_NUM.",1", info=>"Each node stops sending packets when it reaches packet number limit  or simulation clock number limit", param_parent=>"sample$n", ref_delay=>undef},
+
+{ label=>"Emulation clocks limit:", param_name=>'SIM_CLOCK_LIMIT', type=>'Spin-button', default_val=>MAX_SIM_CLKs, content=>"2,".MAX_SIM_CLKs.",1", info=>"Each node stops sending packets when it reaches packet number limit  or simulation clock number limit", param_parent=>"sample$n", ref_delay=>undef},
+
+	
+);	
+	foreach my $d ( @siminfo) {
+	$row=noc_param_widget ($emulate, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,1, $d->{param_parent}, $d->{ref_delay});
+}
+
+
+
+
+		my $l= "Define injection ratios. You can define individual ratios seprating by comma (\',\') or define a range of injection ratios with \$min:\$max:\$step format.
+			As an example defining 2,3,4:10:2 will result in (2,3,4,6,8,10) injection ratios." ;
+		my $u=get_injection_ratios ($emulate,"sample$n","ratios");
 		
-		my $open_in	  = abs_path("$ENV{PRONOC_WORK}/emulate/sof");	
-		$u[$row]= get_file_name_object ($emulate,"sample$n","sof_file",'sof',$open_in);
-		$row++;
-		$l[$row]=gen_label_help("NoC configration name. This name will be shown in load-latency graph for this configuration","Configuration name:");
-		$u[$row]=gen_entry_object ($emulate,"sample$n","line_name","NoC$n");
-		$row++;
-		$l[$row]=gen_label_help("Traffic name","Traffic name:");
-		$u[$row]=gen_combobox_object ($emulate,"sample$n","traffic",$traffics,"random");
-		$row++;
-		$l[$row]=gen_label_help("Define injection ratios. You can define individual ratios seprating by comma (\',\') or define a range of injection ratios with \$min:\$max:\$step format.
-			As an example definnig 2,3,4:10:2 will results in (2,3,4,6,8,10) injection ratios.","Injection ratios:");
-		$u[$row]=get_injection_ratios ($emulate,"sample$n","ratios");
-		$row++;
-		my $i=0;
-		for ( $i=0; $i<12; $i++){
-			if($i<$row){
-				$table->attach ($l[$i] , 0, 1,  $i, $i+1,'fill','shrink',2,2);
-				$table->attach ($u[$i] , 1, 2,  $i, $i+1,'fill','shrink',2,2);
-			}else{
-				my $l=gen_label_in_left(" ");
-				$table->attach_defaults ($l , 0, 1,  $i, $i+1); 
-			}
-		}
-		
+attach_widget_to_table ($table,$row,gen_label_in_left("Injection ratios:"),gen_button_message ($l,"icons/help.png") , $u); $row++;
+	
+	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
+	$scrolled_win->set_policy( "automatic", "automatic" );
+	$scrolled_win->add_with_viewport($table);
 		
 	my $ok = def_image_button('icons/select.png','OK');
+	my $mtable = def_table(10, 1, TRUE);
+
+	$mtable->attach_defaults($scrolled_win,0,1,0,9);
+	$mtable-> attach ($ok , 0, 1,  9, 10,'expand','shrink',2,2); 
+	
+	$win->add ($mtable);
+	$win->show_all();
+
+
+
+
+
+		
+		
+		
+	 
 	
 	
-	$table->attach ($ok , 1, 2,  $i, $i+1,'expand','shrink',2,2); 
+	
 	
 	$ok->signal_connect("clicked"=> sub{
 		#check if sof file has been selected
@@ -547,9 +598,14 @@ sub get_noc_configuration{
 			}
 		}
 	});
+	
 		
-		$win->add($table);
-		$win->show_all;
+
+
+
+		
+		
+		
 	
 	
 }	
@@ -710,7 +766,14 @@ sub check_sample{
 			$emulate->object_add_attribute ("sample$i","status","failed");	
 			$status=0;
 		}else { #add info
-			my $p= do $sof_info ;
+			my $pp= do $sof_info ;
+
+			my $p=$pp->{'noc_param'};
+			
+
+
+
+
 			$status=0 if $@;
 			message_dialog("Error reading: $@") if $@;
 			if ($status==1){
@@ -878,6 +941,7 @@ sub run_emulator {
 		add_info($info, "jtagconfig could not find any USB blaster cable: $stdout \n");
 		$emulate->object_add_attribute('status',undef,'programer_failed');
 		set_gui_status($emulate,"ref",2);
+		#/***/
 		return;	
 	}else{
 		add_info($info, "find $usb_blaster\n");
@@ -896,7 +960,12 @@ sub run_emulator {
 			
 
 		my $cmd = "$Quartus_bin/quartus_pgm -c \"$usb_blaster\" -m jtag -o \"p;$sof\"";
+	
 		#my $output = `$cmd 2>&1 1>/dev/null`;           # either with backticks
+
+
+
+		#/***/
 		my ($stdout,$exit)=run_cmd_in_back_ground_get_stdout("$cmd");	
 		if($exit){#programming FPGA board has failed
 			$emulate->object_add_attribute('status',undef,'programer_failed');
@@ -904,27 +973,29 @@ sub run_emulator {
 			$emulate->object_add_attribute ("sample$i","status","failed");	
 			set_gui_status($emulate,"ref",2);
 			next;			
-		}		
+		}
+		#print "$stdout\n";
+		
 		# read noc configuration 
-		my $traffic = $emulate->object_get_attribute("sample$i","traffic");
 		
 		
-		my $ref=$emulate->object_get_attribute("sample$i","noc_info");
+		
+		
 			
-		foreach  my $ratio_in (@ratios){	
-						
+		foreach  my $ratio_in (@ratios){						
 	    	
-	    	add_info($info, "Configure packet generators for  injection ratio of $ratio_in \% \n");
-	    	next if(!programe_pck_gens($ref,$traffic,$ratio_in,$info));
-	    	
-	    	my $avg=read_pack_gen($ref,$info);
-	    	my $ref=$emulate->object_get_attribute ("sample$i","result");
-	    	my %results;
-	    	%results= %{$ref} if(defined $ref);
-	    	#push(@results,$avg);
-	    	$results{$ratio_in}=$avg;
-	    	$emulate->object_add_attribute ("sample$i","result",\%results);
-	    	set_gui_status($emulate,"ref",2);
+		    	add_info($info, "Configure packet generators for  injection ratio of $ratio_in \% \n");
+		    	next if(!programe_pck_gens($emulate,$i,$ratio_in,$info));
+		    	
+		    	my $avg=read_pack_gen($emulate,$i,$info);
+			next if (!defined $avg);
+		    	my $ref=$emulate->object_get_attribute ("sample$i","result");
+		    	my %results;
+		    	%results= %{$ref} if(defined $ref);
+		    	#push(@results,$avg);
+		    	$results{$ratio_in}=$avg;
+		    	$emulate->object_add_attribute ("sample$i","result",\%results);
+		    	set_gui_status($emulate,"ref",2);
 	    		    	
 		}
 		$emulate->object_add_attribute ("sample$i","status","done");	
@@ -978,69 +1049,39 @@ sub process_notebook_gen{
 
 
 sub get_noc_setting_gui {
-		my ($emulate,$info_text)=@_;
-		my $table=def_table(20,10,FALSE);#	my ($row,$col,$homogeneous)=@_;
-	    my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
-	    $scrolled_win->set_policy( "automatic", "automatic" );
-	    $scrolled_win->add_with_viewport($table);
-	    my $row=noc_config ($emulate,$table);
+	my ($emulate,$info_text)=@_;
+	my $table=def_table(20,10,FALSE);#	my ($row,$col,$homogeneous)=@_;
+	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
+	$scrolled_win->set_policy( "automatic", "automatic" );
+	$scrolled_win->add_with_viewport($table);
+	my $row=noc_config ($emulate,$table);
 	    
-		my($label,$param,$default,$content,$type,$info);
-		my @dirs = grep {-d} glob("../src_emulate/fpga/*");
-		my $fpgas;
-		foreach my $dir (@dirs) {
-			my ($name,$path,$suffix) = fileparse("$dir",qr"\..[^.]*$");
-			$default=$name;
-			$fpgas= (defined $fpgas)? "$fpgas,$name" : "$name";
-			
-		}
+	my($label,$param,$default,$content,$type,$info);
+	my @dirs = grep {-d} glob("../src_emulate/fpga/*");
+	my $fpgas;
+	foreach my $dir (@dirs) {
+		my ($name,$path,$suffix) = fileparse("$dir",qr"\..[^.]*$");
+		$default=$name;
+		$fpgas= (defined $fpgas)? "$fpgas,$name" : "$name";
+		
+	}
 	
-		
-		
-		$label='simulation param';		
-		$content=$fpgas;
-		$type='Entry';
-		$info="  I will add later"; 
-		
-		my %simparam;
-		$simparam{'MAX_PCK_NUM'}=2560000;
-		$simparam{'MAX_SIM_CLKs'}=1000000;
-		$simparam{'MAX_PCK_SIZ'}=10;
-		$simparam{'TIMSTMP_FIFO_NUM'}=16;
-		
-		foreach my $p (sort keys %simparam){
-					#	print "\$p, \$simparam{\$p}=$p, $simparam{$p}\n";
-				$row=noc_param_widget ($emulate,$label,$p, $simparam{$p},$type,$content,$info, $table,$row,0,'noc_param');
-		}
-		
-	   
-	    #FPGA NAME
-		$label='FPGA board';
-		$param='FPGA_BOARD';
-		$content=$fpgas;
-		$type='Combo-box';
-		$info="  I will add later"; 
-		$row=noc_param_widget ($emulate,$label,$param, $default,$type,$content,$info, $table,$row,1,'fpga_param');
-		
-		
-		#save as
-		$label='Save as:';
-		$param='SAVE_NAME';
-		$default='emulate1';
-		$content=undef;
-		$type="Entry";
-		$info="define generated sof file's name"; 
-		$row=noc_param_widget ($emulate,$label,$param, $default,$type,$content,$info, $table,$row,1,'fpga_param');
-		
-		
-		#Project_dir
-		$label='Project directory';
-		$param='SOF_DIR';
-		$default="../../mpsoc_work/emulate";
-		$content=undef;
-		$type="DIR_path";
-		$info="Define the working directory for generating .sof file"; 
-		$row=noc_param_widget ($emulate,$label,$param, $default,$type,$content,$info, $table,$row,1,'fpga_param');
+			
+
+	
+	
+	
+	my @fpgainfo = (
+	{ label=>'FPGA board', param_name=>'FPGA_BOARD', type=>'Combo-box', default_val=>undef, content=>$fpgas, info=>undef, param_parent=>'fpga_param', ref_delay=> undef},
+  	{ label=>'Save as:', param_name=>'SAVE_NAME', type=>"Entry", default_val=>'emulate1', content=>undef, info=>undef, param_parent=>'fpga_param', ref_delay=>undef},
+	{ label=>"Project directory", param_name=>"SOF_DIR", type=>"DIR_path", default_val=>"$ENV{'PRONOC_WORK'}/emulate", content=>undef, info=>"Define the working directory for generating .sof file", param_parent=>'fpga_param',ref_delay=>undef },
+
+);	
+	foreach my $d (@fpgainfo) {
+	$row=noc_param_widget ($emulate, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,1, $d->{param_parent}, $d->{ref_delay});
+}
+
+	
 	   
 	   	
 	   
@@ -1072,6 +1113,7 @@ sub generate_sof_file {
 		my $fpga_board=  $emulate->object_get_attribute ('fpga_param',"FPGA_BOARD");
 		#create work directory
 		my $dir_name=$emulate->object_get_attribute ('fpga_param',"SOF_DIR");
+		$dir_name="$dir_name/$fpga_board";
 		my $save_name=$emulate->object_get_attribute ('fpga_param',"SAVE_NAME"); 
 		$save_name=$fpga_board if (!defined $save_name);
 		$dir_name= "$dir_name/$save_name";
@@ -1080,16 +1122,24 @@ sub generate_sof_file {
 		
 		
 		#copy all noc source codes
-		my @files =("mpsoc/src_noc/*", "mpsoc/src_emulate/rtl/*","mpsoc/src_peripheral/jtag/jtag_wb/*");
-				
+		my @files = split(/\s*,\s*/,EMULATION_RTLS);
 
 		my $dir = Cwd::getcwd();
 		my $project_dir	  = abs_path("$dir/../../");
 		my ($stdout,$exit)=run_cmd_in_back_ground_get_stdout("mkdir -p $dir_name/src/" );
-		foreach my $f (@files){
-			($stdout,$exit) =run_cmd_in_back_ground_get_stdout("cp -Rf \"$project_dir\"/$f \"$dir_name/src/\"" );
-			if($exit != 0 ){ 	print "$stdout\n"; 	message_dialog($stdout); return;}
-		}		
+		copy_file_and_folders(\@files,$project_dir,"$dir_name/src/");
+		
+		foreach my $f(@files){
+    			my $n="$project_dir/$f";
+    			if (!(-f "$n") && !(-f "$f" ) && !(-d "$n") && !(-d "$f" )     ){
+    			 	add_info ($info, " WARNING: file/folder  \"$f\" ($n)  dose not exists \n"); 
+    			 	
+    			 }
+    			
+    		
+    		}		
+
+		
 
 		
 		
@@ -1098,39 +1148,63 @@ sub generate_sof_file {
 		($stdout,$exit)=run_cmd_in_back_ground_get_stdout("cp -Rf \"$project_dir/mpsoc/src_emulate/fpga/$fpga_board\"/*    \"$dir_name/\""); 
 		if($exit != 0 ){ 	print "$stdout\n"; 	message_dialog($stdout); return;}
 		
-		#generate emulator_top.v file
-		
-		open(FILE,  ">$dir_name/emulator_top.v") || die "Can not open: $!";
-		print FILE gen_emulate_top_v($emulate);
+		#generate parameters for emulator_top.v file
+		my ($localparam, $pass_param)=gen_noc_param_v( $emulate);
+		open(FILE,  ">$dir_name/src/noc_parameters.v") || die "Can not open: $!";
+		print FILE $localparam;
+		close(FILE) || die "Error closing file: $!";
+		open(FILE,  ">$dir_name/src/pass_parameters.v") || die "Can not open: $!";
+		print FILE $pass_param;
 		close(FILE) || die "Error closing file: $!";
 				
 		
 		#compile the code  
 		my $Quartus_bin=  $ENV{QUARTUS_BIN};
 		add_info($info, "Start Quartus compilation\n $stdout\n");
-		($stdout,$exit)=run_cmd_in_back_ground_get_stdout( " cd \"$dir_name/\" 
-					xterm  	-e $Quartus_bin/quartus_map --64bit $fpga_board --read_settings_files=on  
-					xterm  	-e $Quartus_bin/quartus_fit --64bit $fpga_board --read_settings_files=on
-					xterm  	-e $Quartus_bin/quartus_asm --64bit $fpga_board --read_settings_files=on
-					xterm  	-e $Quartus_bin/quartus_sta --64bit $fpga_board
-		");
-		if($exit != 0){			
-			print "Quartus compilation failed !\n";
-			add_info($info, "Quartus compilation failed !\n $stdout\n");
-			return;
+		my @compilation_command =("cd \"$dir_name/\" \n	xterm  	-e $Quartus_bin/quartus_map --64bit $fpga_board --read_settings_files=on ",
+					  "cd \"$dir_name/\" \n	xterm  	-e $Quartus_bin/quartus_fit --64bit $fpga_board --read_settings_files=on ",
+					  "cd \"$dir_name/\" \n	xterm  	-e $Quartus_bin/quartus_asm --64bit $fpga_board --read_settings_files=on ",
+					  "cd \"$dir_name/\" \n	xterm  	-e $Quartus_bin/quartus_sta --64bit $fpga_board ");
+
+
+
+
+
+		foreach my $cmd (@compilation_command){
+			($stdout,$exit)=run_cmd_in_back_ground_get_stdout( $cmd);
+			if($exit != 0){			
+				print "Quartus compilation failed !\n";
+				add_info($info, "Quartus compilation failed !\n$cmd\n $stdout\n");
+				return;
+			}
 			
-		} else {
+		}
+
+ 
+		
 			#save sof file
 			my $sofdir="$ENV{PRONOC_WORK}/emulate/sof";
-			mkpath("$sofdir/",1,01777);
-			open(FILE,  ">$sofdir/$save_name.inf") || die "Can not open: $!";
+			mkpath("$sofdir/$fpga_board/",1,01777);
+			open(FILE,  ">$sofdir/$fpga_board/$save_name.inf") || die "Can not open: $!";
 			print FILE perl_file_header("$save_name.inf");
-			print FILE Data::Dumper->Dump([$emulate->{'noc_param'}],["NoCparam"]);
+			my %pp;
+			$pp{'noc_param'}= $emulate->{'noc_param'};
+			$pp{'fpga_param'}= $emulate->{'fpga_param'};
+			print FILE Data::Dumper->Dump([\%pp],["emulate_info"]);
 			close(FILE) || die "Error closing file: $!";	
-			($stdout,$exit)=run_cmd_in_back_ground_get_stdout("cp $dir_name/output_files/$fpga_board.sof   $sofdir/$save_name.sof");
-			if($exit != 0 ){ 	print "$stdout\n"; 	message_dialog($stdout); return;}
-			message_dialog("sof file has been generated successfully"); return;			
-		}
+
+
+			#find  $dir_name -name \*.sof -exec cp '{}' $sofdir/$fpga_board/$save_name.sof" 
+			@files = File::Find::Rule->file()
+                            ->name( '*.sof' )
+                            ->in( "$dir_name" );
+			copy($files[0],"$sofdir/$fpga_board/$save_name.sof") or do { 
+				my $err= "Error copy($files[0] , $sofdir/$fpga_board/$save_name.sof";	
+				print "$err\n"; 	
+				message_dialog($err); 
+				return;
+			};
+			message_dialog("sof file has been generated successfully");	
 		
 		
 		

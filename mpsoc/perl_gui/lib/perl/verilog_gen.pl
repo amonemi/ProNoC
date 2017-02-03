@@ -27,7 +27,13 @@ sub soc_generate_verilog{
 	
 	my @instances=$soc->soc_get_all_instances();
 	my $io_sim_v;
-	my $param_as_in_v="\tparameter\tCORE_ID=0";
+	my $core_id= $soc->object_get_attribute('global_param','CORE_ID');
+	$core_id= 0 if(!defined $core_id);
+	my $param_as_in_v="\tparameter\tCORE_ID=$core_id";
+
+
+
+
 	my $param_pass_v="\t.CORE_ID(CORE_ID)";
 	my $body_v;
 	
@@ -88,8 +94,8 @@ sub soc_generate_verilog{
 
 	add_text_to_string(\$top_v,$local_param_v_all."\n".$io_full_v_all);
 	add_text_to_string(\$top_v,$ins);
-	my $readme=gen_system_info($soc,$param_as_in_v); 
-	return ("$soc_v",$top_v,$readme);
+	my ($readme,$prog)=gen_system_info($soc,$param_as_in_v); 
+	return ("$soc_v",$top_v,$readme,$prog);
 
 
 }	
@@ -647,15 +653,22 @@ sub gen_system_info {
 	#my (@newbase,@newend,@connects);
 	
 
-
+   $jtag='';
 
 	my @all_instances=$soc->soc_get_all_instances();
+
+my %jtagwb; my %ram;
+	
+	
 	foreach my $instance_id (@all_instances){
+		my $category=$soc->soc_get_category($instance_id);
+		
 		my @plugs= $soc->soc_get_all_plugs_of_an_instance($instance_id);
 		foreach my $plug (@plugs){
 			my @nums=$soc->soc_list_plug_nums($instance_id,$plug);
 			foreach my $num (@nums){
 				my ($addr,$base,$end,$name,$connect_id,$connect_socket,$connect_socket_num)=$soc->soc_get_plug($instance_id,$plug,$num);
+									
 				my $instance_name=$soc->soc_get_instance_name($instance_id);
 				my $connect_name=$soc->soc_get_instance_name($connect_id);
 				#get interfaces
@@ -663,7 +676,12 @@ sub gen_system_info {
 					
 					$base=sprintf("0x%08x", $base);
 					$end=sprintf("0x%08x", $end);					
-					add_text_to_string(\$wb_slaves, "\t$instance_name, $name, $connect_name, $base, $end\n");				
+					add_text_to_string(\$wb_slaves, "\t$instance_name, $name, $connect_name, $base, $end\n");	
+					if ($category eq 'RAM') {
+						$ram{$instance_id}{'base'}=$base;
+						$ram{$instance_id}{'end'}=$end;
+						$ram{$instance_id}{'connect'}=$connect_id;
+					}			
 					
 				}#if
 				elsif((defined $connect_socket) && ($connect_socket eq 'wb_master')){
@@ -676,8 +694,9 @@ sub gen_system_info {
 				# get jtag_wbs
 				if((defined $connect_socket) && ($connect_socket eq 'wb_master') && ($instance_id =~ /jtag_wb/)){						
 					my $index=$soc->soc_get_module_param_value($instance_id,'VJTAG_INDEX');
+					
 					add_text_to_string(\$jtag, "\t$instance_name,  $connect_name, $index\n");
-						
+					$jtagwb{$connect_id}{'index'}=$index;	
 				
 				}
 
@@ -685,6 +704,69 @@ sub gen_system_info {
 			}#foreach my $num
 		}#foreach my $plug
 	}#foreach my $instance_id
+
+	#Generate memory programming command
+my $prog='#!/bin/sh
+
+JTAG_MAIN="$PRONOC_WORK/toolchain/bin/jtag_main"
+
+';
+
+
+	foreach my $instance_id (@all_instances){
+		my $category=$soc->soc_get_category($instance_id);
+		if ($category eq 'RAM') {
+		
+			my $jtag_connect=$soc->soc_get_module_param_value($instance_id,'JTAG_CONNECT');
+			my $aw=$soc->soc_get_module_param_value($instance_id,'Aw');
+			my $dw=$soc->soc_get_module_param_value($instance_id,'Dw');
+			my $JTAG_INDEX=$soc->soc_get_module_param_value($instance_id,'JTAG_INDEX');
+			
+			#check if jtag_index is a parameter
+			my $v=$soc->soc_get_module_param_value($instance_id,$JTAG_INDEX);
+			$JTAG_INDEX = $v if (defined $v);
+			$v= $soc->object_get_attribute('global_param',$JTAG_INDEX);
+			$JTAG_INDEX = $v if (defined $v);
+			
+			my $BINFILE=$soc->soc_get_module_param_value($instance_id,'INIT_FILE_NAME');
+			($BINFILE)=$BINFILE=~ /"([^"]*)"/ if(defined $BINFILE);
+			$BINFILE=(defined $BINFILE) ? $BINFILE.'.bin' : 'ram0.bin';
+			
+			my $OFSSET="0x00000000";
+			my $end=((1<<$aw)*($dw/8))-1;
+			my $BOUNDRY=sprintf("0x%08x", $end);			
+			if($jtag_connect =~ /JTAG_WB/){
+				$prog= "$prog \$JTAG_MAIN -n $JTAG_INDEX -s \"$OFSSET\" -e \"$BOUNDRY\" -i  \"$BINFILE\" -c";
+				#print "prog= $prog\n";
+				
+			}elsif ($jtag_connect eq 'ALTERA_IMCE'){
+				#TODO add later
+				
+				
+			} else{
+				#disabled check if its connected to jtag_wb via the bus
+				my 	$connect_id = $ram{$instance_id}{'connect'};
+				my $OFSSET = $ram{$instance_id}{'base'};
+				my $BOUNDRY = $ram{$instance_id}{'end'};
+				if(defined $connect_id){
+					#print "id=$connect_id\n";
+					my $JTAG_INDEX= $jtagwb{$connect_id}{'index'};
+						if(defined $JTAG_INDEX){
+							$v= $soc->object_get_attribute('global_param',$JTAG_INDEX);
+							$JTAG_INDEX = $v if (defined $v);
+							$prog= "$prog \$JTAG_MAIN -n $JTAG_INDEX -s \"$OFSSET\" -e \"$BOUNDRY\" -i  \"$BINFILE\" -c";
+							#print "prog= $prog\n";
+							
+						}
+					
+				}
+			}
+			
+			
+		}	
+	
+		
+	}
 
 
 my $lisence= get_license_header("readme"); 
@@ -705,20 +787,7 @@ If the memory core and jtag_wb are connected to the same wishbone bus, you can p
 
 	sh program.sh  
 
-but first, you need to update these variables inside the program.sh file
 
-	OFSSET= [offset_in_hex]
-        	The RAM wishbone bus offset address e.g : 0x0000000.
-	BOUNDRY=[boundry_in_hex ]
-		The RAM boundary address in hex e.g: 0x00003fff.
-	VJTAG_INDEX=[Virtual jtag index number]
-	BINFILE=[file_name] 
-        memory file in binary format. eg ram00.bin
-
-
-	you can get OFSSET, BOUNDRY and VJTAG_INDEX values from following
-	wishbone buse(s)  info & Jtag to wishbone interface (jtag_wb) info sections. 
-	Also check the memory and jtag_wb are connected to the same bus (have same \"connected to\" filed). 
 
 ***************************
 **	soc parameters
@@ -747,7 +816,10 @@ $jtag
 
 ";
 
-	return $readme;
+
+
+
+	return ($readme,$prog);
 	
 	
 	

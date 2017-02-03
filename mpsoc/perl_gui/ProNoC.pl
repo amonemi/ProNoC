@@ -37,9 +37,19 @@ set_defualt_font_size();
 
 # check if envirement variables are defined
 if ( !defined $ENV{PRONOC_WORK} || !defined $ENV{QUARTUS_BIN}) {
-  	my $message;
-	$message= "Warning: QUARTUS_BIN environment variable has not been set. It is required only for working with NoC emulator." if(!defined $ENV{QUARTUS_BIN});
-	$message= $message."\n\nWarning: PRONOC_WORK envirement varibale has not been set." if(!defined $ENV{PRONOC_WORK});
+	my $message;
+	if ( !defined $ENV{PRONOC_WORK}) {
+		my $dir = Cwd::getcwd();
+		my $project_dir	  = abs_path("$dir/../../mpsoc_work");
+		$ENV{'PRONOC_WORK'}= $project_dir;
+		$message= "\n\nWarning: PRONOC_WORK envirement varibale has not been set. The PRONOC_WORK is autumatically set to $ENV{'PRONOC_WORK'}.\n";
+    
+	}
+
+
+  	
+	$message= $message."Warning: QUARTUS_BIN environment variable has not been set. It is required only for working with NoC emulator." if(!defined $ENV{QUARTUS_BIN});
+	
 	$message= $message."\n\nPlease add aformentioned variables to ~\.bashrc file e.g: export PRONOC_WORK=[path_to]/mpsoc_work.";
     	message_dialog("$message");
     

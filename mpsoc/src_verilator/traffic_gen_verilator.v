@@ -8,7 +8,7 @@
 module  traffic_gen_verilator (
     //input 
     ratio,
-    pck_size,   
+    pck_size_in,   
     current_x,
     current_y,
     dest_x,
@@ -82,7 +82,7 @@ module  traffic_gen_verilator (
     input  [Xw-1                    :0] dest_x;
     input  [Yw-1                    :0] dest_y;
     output [PCK_CNTw-1              :0] pck_number;
-    input  [PCK_SIZw-1              :0] pck_size;
+    input  [PCK_SIZw-1              :0] pck_size_in;
     output                              sent_done;
     output                              hdr_flit_sent;
     input  [Cw-1                    :0] pck_class_in;
@@ -100,28 +100,14 @@ module  traffic_gen_verilator (
 
     traffic_gen #(
         .V(V),
-        .P(P),
         .B(B),
         .NX(NX),
         .NY(NY),
         .Fpay(Fpay),
+        .C(C),
         .VC_REALLOCATION_TYPE(VC_REALLOCATION_TYPE),
         .TOPOLOGY(TOPOLOGY),
         .ROUTE_NAME(ROUTE_NAME),
-        .ROUTE_TYPE(ROUTE_TYPE),
-        .TRAFFIC(TRAFFIC),
-        .HOTSPOT_PERCENTAGE(HOTSPOT_PERCENTAGE),
-        .HOTSOPT_NUM(HOTSOPT_NUM),
-        .HOTSPOT_CORE_1(HOTSPOT_CORE_1),
-        .HOTSPOT_CORE_2(HOTSPOT_CORE_2),
-        .HOTSPOT_CORE_3(HOTSPOT_CORE_3),
-        .HOTSPOT_CORE_4(HOTSPOT_CORE_4),
-        .HOTSPOT_CORE_5(HOTSPOT_CORE_5),
-        .C(C),
-        .C0_p(C0_p),
-        .C1_p(C1_p),  
-        .C2_p(C2_p),  
-        .C3_p(C3_p),      
         .MAX_PCK_NUM(MAX_PCK_NUM),
         .MAX_SIM_CLKs(MAX_SIM_CLKs),
         .MAX_PCK_SIZ(MAX_PCK_SIZ),
@@ -131,7 +117,7 @@ module  traffic_gen_verilator (
     (
         //input 
         .ratio (ratio),
-        .pck_size(pck_size), 
+        .pck_size_in(pck_size_in), 
         .current_x(current_x),
         .current_y(current_y),
         .dest_x(dest_x),
@@ -161,7 +147,9 @@ module  traffic_gen_verilator (
                
             );
         
-        
+      //  always @(posedge start ) begin 
+	//	 $display(" (%d,%d) start at %t",current_x, current_y,$time);
+	//end 
 
 endmodule
 

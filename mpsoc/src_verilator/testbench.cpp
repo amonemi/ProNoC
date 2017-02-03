@@ -7,12 +7,16 @@
 #include "Vrouter.h"               // From Verilating "router.v"
 #include "Vnoc.h"
 #include "Vtraffic.h"
+
+
+
+
 #include "parameter.h"
 //#include "traffic_tabel.h"
 
 
 #define  NC		(NX*NY)
-#define  RATIO_INIT		5
+#define  RATIO_INIT		2
 
 unsigned char FIXED_SRC_DST_PAIR;
 
@@ -353,7 +357,8 @@ void update_noc_statistic (
         		sum_clk_pow2+=(double)clk_num_h2h * (double) clk_num_h2h;
         		sum_clk_pow2_per_class[class_num]+=(double)clk_num_h2h * (double) clk_num_h2h;
 #endif
-        		sum_clk_per_hop+= ((double)clk_num_h2h/(double)distance);
+			        		
+			sum_clk_per_hop+= ((double)clk_num_h2h/(double)distance);
         		total_pck_num_per_class[class_num]+=1;
         		sum_clk_h2h_per_class[class_num]+=clk_num_h2h ;
         		sum_clk_h2t_per_class[class_num]+=clk_num_h2t ;
@@ -412,11 +417,13 @@ void print_statistic (char * out_file_name){
 	                sprintf(file_name,"%s_all.txt",out_file_name);
 	                //update_file(file_name ,ratio,avg_latency );
 if(strcmp (AVG_LATENCY_METRIC,"HEAD_2_TAIL")==0){
-	                printf(" Total number of packet = %d \n average latency per hop = %f \n average latency = %f\n",total_pck_num,avg_latency_per_hop,avg_latency_flit);
-	                update_file(file_name ,avg_throughput,avg_latency_flit);
-}else{
-	                printf(" Total number of packet = %d \n average latency per hop = %f \n average latency = %f\n",total_pck_num,avg_latency_per_hop,avg_latency_pck);
+		  	printf(" Total number of packet = %d \n average latency per hop = %f \n average latency = %f\n",total_pck_num,avg_latency_per_hop,avg_latency_pck);
 	                update_file(file_name ,avg_throughput,avg_latency_pck);
+	               
+}else{
+			 printf(" Total number of packet = %d \n average latency per hop = %f \n average latency = %f\n",total_pck_num,avg_latency_per_hop,avg_latency_flit);
+	                update_file(file_name ,avg_throughput,avg_latency_flit);
+	              
 }
 	                //fwrite(fp,"%d,%f,%f,%f,",total_pck_num,avg_latency_per_hop,avg_latency,max_latency_per_hop);
 	                min_avg_latency_per_class=1000000;
@@ -426,15 +433,19 @@ if(strcmp (AVG_LATENCY_METRIC,"HEAD_2_TAIL")==0){
 						avg_latency_pck	   	 = (total_pck_num_per_class[i]>0)? (double)sum_clk_h2t_per_class[i]/total_pck_num_per_class[i]:0;
 						avg_latency_per_hop  = (total_pck_num_per_class[i]>0)? (double)sum_clk_per_hop_per_class[i]/total_pck_num_per_class[i]:0;
 if(strcmp (AVG_LATENCY_METRIC,"HEAD_2_TAIL")==0){
-						printf	 ("\nclass : %d  \n",i);
-	                    printf	(" Total number of packet  = %d \n avg_throughput = %f \n average latency per hop = %f \n average latency = %f\n",total_pck_num_per_class[i],avg_throughput,avg_latency_per_hop,avg_latency_flit);
-	                    sprintf(file_name,"%s_c%u.txt",out_file_name,i);
-	                    update_file( file_name,avg_throughput,avg_latency_flit );
-}else{
-	                    printf	 ("\nclass : %d  \n",i);
+						 printf	 ("\nclass : %d  \n",i);
 	                    printf	(" Total number of packet  = %d \n avg_throughput = %f \n average latency per hop = %f \n average latency = %f\n",total_pck_num_per_class[i],avg_throughput,avg_latency_per_hop,avg_latency_pck);
    	                    sprintf(file_name,"%s_c%u.txt",out_file_name,i);
    	                    update_file( file_name,avg_throughput,avg_latency_pck );
+}else{
+
+printf	 ("\nclass : %d  \n",i);
+	                    printf	(" Total number of packet  = %d \n avg_throughput = %f \n average latency per hop = %f \n average latency = %f\n",total_pck_num_per_class[i],avg_throughput,avg_latency_per_hop,avg_latency_flit);
+	                    sprintf(file_name,"%s_c%u.txt",out_file_name,i);
+	                    update_file( file_name,avg_throughput,avg_latency_flit );
+
+
+	                   
 
 }
 	                    if(min_avg_latency_per_class > avg_latency_flit) min_avg_latency_per_class=avg_latency_flit;
@@ -472,7 +483,7 @@ void print_parameter (){
 	    printf ("\tAVC_ATOMIC_EN:%d \n", AVC_ATOMIC_EN);
 	    printf ("\tCongestion Index:%d \n",CONGESTION_INDEX);
 	    printf ("\tADD_PIPREG_AFTER_CROSSBAR:%d\n",ADD_PIPREG_AFTER_CROSSBAR);
-	    printf ("\tADD_PIPREG_BEFORE_CROSSBAR:%d\n",ADD_PIPREG_BEFORE_CROSSBAR);
+	    
 
 
 #if(DEBUG_EN)
@@ -498,6 +509,7 @@ void print_parameter (){
 		printf ("\t Simulation timeout =%d\n", MAX_SIM_CLKs);
 		printf ("\t Simulation ends on total packet num of =%d\n", MAX_PCK_NUM);
 	    printf ("\tPacket size: %u flits\n",PACKET_SIZE);
+	    printf ("\t SSA_EN enabled:%s \n",SSA_EN);
 }
 
 
@@ -550,7 +562,7 @@ void reset_all_register (void){
 int update_ratio(){
 	//printf("current_avg_latency=%f\n",current_avg_latency_flit);
 	if(current_avg_latency_flit <= (2*first_avg_latency_flit)) ratio+=2;
-	else if(current_avg_latency_flit <= (6*first_avg_latency_flit)) ratio+=1;
+	else if(current_avg_latency_flit <= (4*first_avg_latency_flit)) ratio+=1;
 	else return 1;
 	return 0;
 }
@@ -692,7 +704,18 @@ void pck_dst_gen (
 		 (*dest_y)    = ((current_y + ((NY/2)-1))%NY);
 
 
-     }
+     }  else if( strcmp(TRAFFIC ,"CUSTOM") == 0){
+		//[(x+(k/2-1)) mod k, (y+(k/2-1)) mod k],
+		if(current_x ==0 && current_y == 0 ){
+		 (*dest_x)    =  NX-1;
+		 (*dest_y)    =  NY-1;
+		}else{// make it unvalid
+		 (*dest_x)    =  current_x;
+		 (*dest_y)    =  current_y;
+
+		}
+
+     }  
 
 	 else printf ("traffic %s is an unsupported traffic pattern\n",TRAFFIC);
 

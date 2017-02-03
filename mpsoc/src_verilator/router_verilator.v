@@ -1,4 +1,4 @@
-module router_verilator	
+module router_verilator
 (
 	current_x,
 	current_y,
@@ -73,7 +73,7 @@ module router_verilator
    
 
 	router # (
-		.V(V),
+	.V(V),
         .P(P),
         .B(B), 
         .NX(NX),
@@ -93,10 +93,10 @@ module router_verilator
         .CONGw(CONGw),
         .DEBUG_EN(DEBUG_EN),
         .ADD_PIPREG_AFTER_CROSSBAR(ADD_PIPREG_AFTER_CROSSBAR),
-        .ADD_PIPREG_BEFORE_CROSSBAR(ADD_PIPREG_BEFORE_CROSSBAR),
         .CVw(CVw),
         .CLASS_SETTING(CLASS_SETTING),   
-        .ESCAP_VC_MASK(ESCAP_VC_MASK) 
+        .ESCAP_VC_MASK(ESCAP_VC_MASK),
+        .SSA_EN(SSA_EN)
        
         
 	)

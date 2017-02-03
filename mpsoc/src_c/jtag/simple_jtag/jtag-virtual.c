@@ -98,6 +98,8 @@ int jtag_open_virtual_device(unsigned iid) {
 	hub_mfg = (bits >> 8) & 0x7FF;
 
 	if (hub_mfg != 0x06e) {
+		fprintf(stderr,"hub_version=%x,	hub_nodecount=%x, 	hub_mfg=%x \n",hub_version,	hub_nodecount, 	hub_mfg);
+
 		fprintf(stderr,"HUB:    Cannot Find Virtual JTAG HUB\n");
 		return -1;
 	}

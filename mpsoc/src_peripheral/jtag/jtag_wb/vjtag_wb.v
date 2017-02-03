@@ -109,8 +109,8 @@ localparam VJ_DW= (DW > AW)? DW : AW;
 	
 	always @(*)begin 
 		wb_addr_next= wb_addr;
-		if(wb_wr_addr_en) wb_addr_next <= data_out [AW-1	:	0];
-		else if (wb_addr_inc)  wb_addr_next <= wb_addr +1'b1;	
+		if(wb_wr_addr_en) wb_addr_next = data_out [AW-1	:	0];
+		else if (wb_addr_inc)  wb_addr_next = wb_addr +1'b1;	
 	end
 	
 	
