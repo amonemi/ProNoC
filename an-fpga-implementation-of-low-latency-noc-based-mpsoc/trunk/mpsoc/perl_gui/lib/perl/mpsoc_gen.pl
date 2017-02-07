@@ -1174,7 +1174,15 @@ sub gen_all_tiles{
 		
 		#update core id
 		$soc->object_add_attribute('global_param','CORE_ID',$tile_num);
-		
+		#update NoC param
+		#my %nocparam = %{$mpsoc->object_get_attribute('noc_param',undef)};
+		my $nocparam =$mpsoc->object_get_attribute('noc_param',undef);
+		$soc->soc_add_instance_param('ni0' ,$nocparam );
+		#foreach my $p ( sort keys %nocparam ) {
+			
+		#	print "$p = $nocparam{$p} \n";
+		#}
+
 		my $sw_path 	= "$sw_dir/tile$tile_num";
 		#print "$sw_path\n";
 		if( grep (/^$soc_name$/,@generated_tiles)){ # This soc is generated before only create the software file
@@ -1407,7 +1415,9 @@ $JTAG_MAIN -n 127  -d  "I:1,D:2:3,D:2:2,I:0"
 
 #programe the memory
 for i in $(ls -d */); do 
-	sh ${i%%/}/write_memory.sh 
+	cd ${i%%/}
+	sh write_memory.sh 
+	cd ..
 done
  
 #Enable the cpu
