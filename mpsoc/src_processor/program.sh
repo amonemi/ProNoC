@@ -1,9 +1,5 @@
 #!/bin/sh
 
-OFSSET="0x00000000"
-BOUNDRY="0x00003fff"
-BINFILE="ram0.bin"
-VJTAG_INDEX="0"
 
 JTAG_MAIN="$PRONOC_WORK/toolchain/bin/jtag_main"
 
@@ -25,7 +21,7 @@ $JTAG_MAIN -n 127  -d  "I:1,D:2:3,D:2:2,I:0"
 
 
 #programe the memory
-$JTAG_MAIN -n $VJTAG_INDEX -s $OFSSET -e $BOUNDRY -i  $BINFILE -c
+sh ./write_memory.sh
  
 #Enable the cpu
 $JTAG_MAIN -n 127  -d  "I:1,D:2:0,I:0"
