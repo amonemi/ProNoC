@@ -3,7 +3,7 @@
 ##    
 ##	Copyright (C) 2014-2016  Alireza Monemi
 ##    
-##	This file is part of ProNoC 1.5.0 
+##	This file is part of ProNoC 1.5.1 
 ##
 ## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
 ##	MAY CAUSE UNEXPECTED BEHAIVOR.
@@ -112,207 +112,100 @@ unsigned int * pck_buffer: the buffer for storing the packet; The read data star
 		${IP}_wait_for_reading_pck();
 	}',
                    'ip_name' => 'ni_sep',
-                   'gui_status' => {
-                                     'timeout' => 0,
-                                     'status' => 'ideal'
-                                   },
-                   'parameters' => {
-                                     'Dw' => {
-                                               'info' => undef,
-                                               'deafult' => ' 32',
-                                               'global_param' => 0,
-                                               'content' => '',
-                                               'redefine_param' => 1,
-                                               'type' => 'Fixed'
-                                             },
-                                     'DEBUG_EN' => {
-                                                     'info' => undef,
-                                                     'deafult' => '0',
-                                                     'global_param' => 1,
-                                                     'content' => '',
-                                                     'redefine_param' => 1,
-                                                     'type' => 'Fixed'
+                   'parameters_order' => [
+                                           'V',
+                                           'B',
+                                           'NX',
+                                           'NY',
+                                           'Fpay',
+                                           'TOPOLOGY',
+                                           'ROUTE_NAME',
+                                           'DEBUG_EN',
+                                           'COMB_MEM_PTR_W',
+                                           'COMB_PCK_SIZE_W',
+                                           'Dw',
+                                           'S_Aw',
+                                           'M_Aw',
+                                           'TAGw',
+                                           'SELw',
+                                           'Yw',
+                                           'Fw',
+                                           'Xw'
+                                         ],
+                   'ports_order' => [
+                                      'reset',
+                                      'clk',
+                                      'current_x',
+                                      'current_y',
+                                      'flit_out',
+                                      'flit_out_wr',
+                                      'credit_in',
+                                      'flit_in',
+                                      'flit_in_wr',
+                                      'credit_out',
+                                      's_dat_i',
+                                      's_sel_i',
+                                      's_addr_i',
+                                      's_cti_i',
+                                      's_stb_i',
+                                      's_cyc_i',
+                                      's_we_i',
+                                      's_dat_o',
+                                      's_ack_o',
+                                      'm_rd_sel_o',
+                                      'm_rd_dat_o',
+                                      'm_rd_addr_o',
+                                      'm_rd_cti_o',
+                                      'm_rd_stb_o',
+                                      'm_rd_cyc_o',
+                                      'm_rd_we_o',
+                                      'm_rd_ack_i',
+                                      'm_wr_sel_o',
+                                      'm_wr_addr_o',
+                                      'm_wr_cti_o',
+                                      'm_wr_stb_o',
+                                      'm_wr_cyc_o',
+                                      'm_wr_we_o',
+                                      'm_wr_dat_i',
+                                      'm_wr_ack_i',
+                                      'irq'
+                                    ],
+                   'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/ni/ni_sep.v',
+                   'sockets' => {
+                                  'ni' => {
+                                            'connection_num' => 'single connection',
+                                            '0' => {
+                                                     'name' => 'ni'
                                                    },
-                                     'NY' => {
-                                               'info' => undef,
-                                               'deafult' => ' 2',
-                                               'global_param' => 1,
-                                               'content' => '',
-                                               'redefine_param' => 1,
-                                               'type' => 'Fixed'
-                                             },
-                                     'NX' => {
-                                               'info' => undef,
-                                               'deafult' => ' 2',
-                                               'global_param' => 1,
-                                               'content' => '',
-                                               'redefine_param' => 1,
-                                               'type' => 'Fixed'
-                                             },
-                                     'V' => {
-                                              'info' => '',
-                                              'deafult' => ' 4',
-                                              'global_param' => 1,
-                                              'content' => '',
-                                              'redefine_param' => 1,
-                                              'type' => 'Fixed'
-                                            },
-                                     'CONGESTION_INDEX' => {
-                                                             'info' => undef,
-                                                             'deafult' => '3',
-                                                             'global_param' => 1,
-                                                             'content' => '',
-                                                             'redefine_param' => 1,
-                                                             'type' => 'Fixed'
-                                                           },
-                                     'Fw' => {
-                                               'info' => undef,
-                                               'deafult' => '2+V+Fpay',
-                                               'global_param' => 0,
-                                               'content' => '',
-                                               'redefine_param' => 0,
-                                               'type' => 'Fixed'
-                                             },
-                                     'COMB_PCK_SIZE_W' => {
-                                                            'info' => undef,
-                                                            'deafult' => '12',
-                                                            'global_param' => 0,
-                                                            'content' => '',
-                                                            'redefine_param' => 1,
-                                                            'type' => 'Fixed'
-                                                          },
-                                     'TAGw' => {
-                                                 'info' => undef,
-                                                 'deafult' => '3',
-                                                 'global_param' => 0,
-                                                 'content' => '',
-                                                 'redefine_param' => 1,
-                                                 'type' => 'Fixed'
-                                               },
-                                     'M_Aw' => {
-                                                 'info' => undef,
-                                                 'deafult' => '32',
-                                                 'global_param' => 0,
-                                                 'content' => '',
-                                                 'redefine_param' => 1,
-                                                 'type' => 'Fixed'
-                                               },
-                                     'COMB_MEM_PTR_W' => {
-                                                           'info' => undef,
-                                                           'deafult' => '20',
-                                                           'global_param' => 0,
-                                                           'content' => '',
-                                                           'redefine_param' => 1,
-                                                           'type' => 'Fixed'
-                                                         },
-                                     'ROUTE_NAME' => {
-                                                       'info' => undef,
-                                                       'deafult' => '"XY"',
-                                                       'global_param' => 1,
-                                                       'content' => '',
-                                                       'redefine_param' => 1,
-                                                       'type' => 'Fixed'
-                                                     },
-                                     'Xw         ' => {
-                                                        'info' => undef,
-                                                        'deafult' => 'log2(NX)',
-                                                        'global_param' => 0,
-                                                        'content' => '',
-                                                        'type' => 'Fixed',
-                                                        'redefine_param' => 0
-                                                      },
-                                     'Fpay' => {
-                                                 'info' => undef,
-                                                 'deafult' => ' 32',
-                                                 'global_param' => 1,
-                                                 'content' => '',
-                                                 'redefine_param' => 1,
-                                                 'type' => 'Fixed'
-                                               },
-                                     'ROUTE_TYPE' => {
-                                                       'info' => undef,
-                                                       'deafult' => '"DETERMINISTIC"',
-                                                       'global_param' => 1,
-                                                       'content' => '',
-                                                       'type' => 'Fixed',
-                                                       'redefine_param' => 1
-                                                     },
-                                     'SELw' => {
-                                                 'info' => undef,
-                                                 'deafult' => '4    ',
-                                                 'global_param' => 0,
-                                                 'content' => '',
-                                                 'redefine_param' => 1,
-                                                 'type' => 'Fixed'
-                                               },
-                                     'P' => {
-                                              'info' => undef,
-                                              'deafult' => ' 5',
-                                              'global_param' => 1,
-                                              'content' => '',
-                                              'type' => 'Fixed',
-                                              'redefine_param' => 1
-                                            },
-                                     'B' => {
-                                              'info' => '',
-                                              'deafult' => ' 4',
-                                              'global_param' => 1,
-                                              'content' => '',
-                                              'redefine_param' => 1,
-                                              'type' => 'Fixed'
-                                            },
-                                     'S_Aw' => {
-                                                 'info' => undef,
-                                                 'deafult' => ' 3',
-                                                 'global_param' => 0,
-                                                 'content' => '',
-                                                 'redefine_param' => 1,
-                                                 'type' => 'Fixed'
-                                               },
-                                     'TOPOLOGY' => {
-                                                     'info' => undef,
-                                                     'deafult' => '"MESH"',
-                                                     'global_param' => 1,
-                                                     'content' => '',
-                                                     'redefine_param' => 1,
-                                                     'type' => 'Fixed'
-                                                   },
-                                     'Xw' => {
-                                               'info' => undef,
-                                               'deafult' => 'log2(NX)',
-                                               'global_param' => 0,
-                                               'content' => '',
-                                               'type' => 'Fixed',
-                                               'redefine_param' => 0
-                                             },
-                                     'Yw' => {
-                                               'info' => undef,
-                                               'deafult' => 'log2(NY)',
-                                               'global_param' => 0,
-                                               'content' => '',
-                                               'redefine_param' => 0,
-                                               'type' => 'Fixed'
-                                             },
-                                     'SSA_EN' => {
-                                                   'info' => undef,
-                                                   'deafult' => '"NO"',
-                                                   'global_param' => 1,
-                                                   'content' => '',
-                                                   'redefine_param' => 1,
-                                                   'type' => 'Fixed'
-                                                 },
-                                     'Xwj' => {
-                                                'info' => undef,
-                                                'deafult' => 'fvf',
-                                                'global_param' => 0,
-                                                'content' => '',
-                                                'type' => 'Fixed',
-                                                'redefine_param' => 1
-                                              }
-                                   },
-                   'modules' => {
-                                  'ni_sep' => {}
+                                            'value' => 1,
+                                            'type' => 'num',
+                                            'ni' => {}
+                                          }
                                 },
+                   'module_name' => 'ni_sep',
+                   'unused' => {
+                                 'plug:wb_master[1]' => [
+                                                          'tag_o',
+                                                          'bte_o',
+                                                          'dat_o',
+                                                          'err_i',
+                                                          'rty_i'
+                                                        ],
+                                 'plug:wb_slave[0]' => [
+                                                         'err_o',
+                                                         'rty_o',
+                                                         'tag_i',
+                                                         'bte_i'
+                                                       ],
+                                 'plug:wb_master[0]' => [
+                                                          'tag_o',
+                                                          'dat_i',
+                                                          'bte_o',
+                                                          'err_i',
+                                                          'rty_i'
+                                                        ]
+                               },
+                   'category' => 'NoC',
                    'plugs' => {
                                 'wb_master' => {
                                                  'wb_master' => {},
@@ -356,7 +249,7 @@ unsigned int * pck_buffer: the buffer for storing the packet; The read data star
                                                          'addr' => '0x9100_0000	0x91ff_ffff		General-Purpose I/O'
                                                        },
                                                 '0' => {
-                                                         'width' => 5,
+                                                         'width' => 9,
                                                          'name' => 'wb_slave',
                                                          'addr' => '0xb800_0000	0xbfff_ffff		custom devices'
                                                        },
@@ -365,64 +258,207 @@ unsigned int * pck_buffer: the buffer for storing the packet; The read data star
                                                 'wb_slave' => {}
                                               }
                               },
-                   'ports_order' => [
-                                      'reset',
-                                      'clk',
-                                      'current_x',
-                                      'current_y',
-                                      'flit_out',
-                                      'flit_out_wr',
-                                      'credit_in',
-                                      'flit_in',
-                                      'flit_in_wr',
-                                      'credit_out',
-                                      's_dat_i',
-                                      's_sel_i',
-                                      's_addr_i',
-                                      's_cti_i',
-                                      's_stb_i',
-                                      's_cyc_i',
-                                      's_we_i',
-                                      's_dat_o',
-                                      's_ack_o',
-                                      'm_rd_sel_o',
-                                      'm_rd_dat_o',
-                                      'm_rd_addr_o',
-                                      'm_rd_cti_o',
-                                      'm_rd_stb_o',
-                                      'm_rd_cyc_o',
-                                      'm_rd_we_o',
-                                      'm_rd_ack_i',
-                                      'm_wr_sel_o',
-                                      'm_wr_addr_o',
-                                      'm_wr_cti_o',
-                                      'm_wr_stb_o',
-                                      'm_wr_cyc_o',
-                                      'm_wr_we_o',
-                                      'm_wr_dat_i',
-                                      'm_wr_ack_i',
-                                      'irq'
-                                    ],
-                   'parameters_order' => [
-                                           'V',
-                                           'B',
-                                           'NX',
-                                           'NY',
-                                           'Fpay',
-                                           'TOPOLOGY',
-                                           'ROUTE_NAME',
-                                           'DEBUG_EN',
-                                           'COMB_MEM_PTR_W',
-                                           'COMB_PCK_SIZE_W',
-                                           'Dw',
-                                           'S_Aw',
-                                           'M_Aw',
-                                           'TAGw',
-                                           'SELw',
-                                           'Yw',
-                                           'Fw',
-                                           'Xw'
-                                         ],
+                   'modules' => {
+                                  'ni_sep' => {}
+                                },
+                   'parameters' => {
+                                     'Dw' => {
+                                               'info' => undef,
+                                               'deafult' => ' 32',
+                                               'global_param' => 'Localparam',
+                                               'content' => '',
+                                               'redefine_param' => 1,
+                                               'type' => 'Fixed'
+                                             },
+                                     'DEBUG_EN' => {
+                                                     'info' => undef,
+                                                     'deafult' => '0',
+                                                     'global_param' => 'Parameter',
+                                                     'content' => '',
+                                                     'redefine_param' => 1,
+                                                     'type' => 'Fixed'
+                                                   },
+                                     'NY' => {
+                                               'info' => undef,
+                                               'deafult' => ' 2',
+                                               'global_param' => 'Parameter',
+                                               'content' => '',
+                                               'redefine_param' => 1,
+                                               'type' => 'Fixed'
+                                             },
+                                     'NX' => {
+                                               'info' => undef,
+                                               'deafult' => ' 2',
+                                               'global_param' => 'Parameter',
+                                               'content' => '',
+                                               'redefine_param' => 1,
+                                               'type' => 'Fixed'
+                                             },
+                                     'V' => {
+                                              'info' => '',
+                                              'deafult' => ' 4',
+                                              'global_param' => 'Parameter',
+                                              'content' => '',
+                                              'redefine_param' => 1,
+                                              'type' => 'Fixed'
+                                            },
+                                     'CONGESTION_INDEX' => {
+                                                             'info' => undef,
+                                                             'deafult' => '3',
+                                                             'global_param' => 1,
+                                                             'content' => '',
+                                                             'redefine_param' => 1,
+                                                             'type' => 'Fixed'
+                                                           },
+                                     'Fw' => {
+                                               'info' => undef,
+                                               'deafult' => '2+V+Fpay',
+                                               'global_param' => 'Localparam',
+                                               'content' => '',
+                                               'redefine_param' => 0,
+                                               'type' => 'Fixed'
+                                             },
+                                     'COMB_PCK_SIZE_W' => {
+                                                            'info' => undef,
+                                                            'deafult' => '12',
+                                                            'global_param' => 'Localparam',
+                                                            'content' => '',
+                                                            'redefine_param' => 1,
+                                                            'type' => 'Fixed'
+                                                          },
+                                     'TAGw' => {
+                                                 'info' => undef,
+                                                 'deafult' => '3',
+                                                 'global_param' => 'Localparam',
+                                                 'content' => '',
+                                                 'redefine_param' => 1,
+                                                 'type' => 'Fixed'
+                                               },
+                                     'M_Aw' => {
+                                                 'info' => undef,
+                                                 'deafult' => '32',
+                                                 'global_param' => 'Localparam',
+                                                 'content' => '',
+                                                 'redefine_param' => 1,
+                                                 'type' => 'Fixed'
+                                               },
+                                     'COMB_MEM_PTR_W' => {
+                                                           'info' => undef,
+                                                           'deafult' => '20',
+                                                           'global_param' => 'Localparam',
+                                                           'content' => '',
+                                                           'redefine_param' => 1,
+                                                           'type' => 'Fixed'
+                                                         },
+                                     'ROUTE_NAME' => {
+                                                       'info' => undef,
+                                                       'deafult' => '"XY"',
+                                                       'global_param' => 'Parameter',
+                                                       'content' => '',
+                                                       'redefine_param' => 1,
+                                                       'type' => 'Fixed'
+                                                     },
+                                     'Xw         ' => {
+                                                        'info' => undef,
+                                                        'deafult' => 'log2(NX)',
+                                                        'global_param' => 0,
+                                                        'content' => '',
+                                                        'type' => 'Fixed',
+                                                        'redefine_param' => 0
+                                                      },
+                                     'Fpay' => {
+                                                 'info' => undef,
+                                                 'deafult' => ' 32',
+                                                 'global_param' => 'Parameter',
+                                                 'content' => '',
+                                                 'redefine_param' => 1,
+                                                 'type' => 'Fixed'
+                                               },
+                                     'ROUTE_TYPE' => {
+                                                       'info' => undef,
+                                                       'deafult' => '"DETERMINISTIC"',
+                                                       'global_param' => 1,
+                                                       'content' => '',
+                                                       'type' => 'Fixed',
+                                                       'redefine_param' => 1
+                                                     },
+                                     'SELw' => {
+                                                 'info' => undef,
+                                                 'deafult' => '4    ',
+                                                 'global_param' => 'Localparam',
+                                                 'content' => '',
+                                                 'redefine_param' => 1,
+                                                 'type' => 'Fixed'
+                                               },
+                                     'P' => {
+                                              'info' => undef,
+                                              'deafult' => ' 5',
+                                              'global_param' => 1,
+                                              'content' => '',
+                                              'type' => 'Fixed',
+                                              'redefine_param' => 1
+                                            },
+                                     'B' => {
+                                              'info' => '',
+                                              'deafult' => ' 4',
+                                              'global_param' => 'Parameter',
+                                              'content' => '',
+                                              'redefine_param' => 1,
+                                              'type' => 'Fixed'
+                                            },
+                                     'S_Aw' => {
+                                                 'info' => undef,
+                                                 'deafult' => '7',
+                                                 'global_param' => 'Localparam',
+                                                 'content' => '',
+                                                 'redefine_param' => 1,
+                                                 'type' => 'Fixed'
+                                               },
+                                     'TOPOLOGY' => {
+                                                     'info' => undef,
+                                                     'deafult' => '"MESH"',
+                                                     'global_param' => 'Parameter',
+                                                     'content' => '',
+                                                     'redefine_param' => 1,
+                                                     'type' => 'Fixed'
+                                                   },
+                                     'Xw' => {
+                                               'info' => undef,
+                                               'deafult' => 'log2(NX)',
+                                               'global_param' => 'Localparam',
+                                               'content' => '',
+                                               'type' => 'Fixed',
+                                               'redefine_param' => 0
+                                             },
+                                     'Yw' => {
+                                               'info' => undef,
+                                               'deafult' => 'log2(NY)',
+                                               'global_param' => 'Localparam',
+                                               'content' => '',
+                                               'redefine_param' => 0,
+                                               'type' => 'Fixed'
+                                             },
+                                     'SSA_EN' => {
+                                                   'info' => undef,
+                                                   'deafult' => '"NO"',
+                                                   'global_param' => 1,
+                                                   'content' => '',
+                                                   'redefine_param' => 1,
+                                                   'type' => 'Fixed'
+                                                 },
+                                     'Xwj' => {
+                                                'info' => undef,
+                                                'deafult' => 'fvf',
+                                                'global_param' => 0,
+                                                'content' => '',
+                                                'type' => 'Fixed',
+                                                'redefine_param' => 1
+                                              }
+                                   },
+                   'gui_status' => {
+                                     'timeout' => 0,
+                                     'status' => 'ideal'
+                                   },
                    'ports' => {
                                 'm_rd_cyc_o' => {
                                                   'intfc_port' => 'cyc_o',
@@ -640,41 +676,5 @@ unsigned int * pck_buffer: the buffer for storing the packet; The read data star
                                                   'range' => '',
                                                   'type' => 'output'
                                                 }
-                              },
-                   'sockets' => {
-                                  'ni' => {
-                                            'connection_num' => 'single connection',
-                                            '0' => {
-                                                     'name' => 'ni'
-                                                   },
-                                            'value' => 1,
-                                            'type' => 'num',
-                                            'ni' => {}
-                                          }
-                                },
-                   'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/ni/ni_sep.v',
-                   'module_name' => 'ni_sep',
-                   'unused' => {
-                                 'plug:wb_master[1]' => [
-                                                          'tag_o',
-                                                          'bte_o',
-                                                          'dat_o',
-                                                          'err_i',
-                                                          'rty_i'
-                                                        ],
-                                 'plug:wb_slave[0]' => [
-                                                         'err_o',
-                                                         'rty_o',
-                                                         'tag_i',
-                                                         'bte_i'
-                                                       ],
-                                 'plug:wb_master[0]' => [
-                                                          'tag_o',
-                                                          'dat_i',
-                                                          'bte_o',
-                                                          'err_i',
-                                                          'rty_i'
-                                                        ]
-                               },
-                   'category' => 'NoC'
+                              }
                  }, 'ip_gen' );

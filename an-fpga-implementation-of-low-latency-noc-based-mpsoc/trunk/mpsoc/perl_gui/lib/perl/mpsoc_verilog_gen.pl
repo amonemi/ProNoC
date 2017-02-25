@@ -179,6 +179,11 @@ sub gen_noc_param_v{
 	my $class=$mpsoc->object_get_attribute('noc_param',"C");
 	my $str;
 	if( $class > 1){
+		for (my $i=0; $i<=$class-1; $i++){
+			my $n="Cn_$i";
+			my $val=$mpsoc->object_get_attribute('class_param',$n);
+			add_text_to_string (\$param_v,"\tlocalparam $n=$val;\n");
+		}
 		$str="CLASS_SETTING={";
 		for (my $i=$class-1; $i>=0;$i--){
 			$str=($i==0)?  "${str}Cn_0};\n " : "${str}Cn_$i,";
@@ -438,8 +443,9 @@ sub   gen_soc_v{
 	
 	# ni parameter
 	my $top=$mpsoc->mpsoc_get_soc($soc_name);
-	my @noc_param=$top->top_get_parameter_list('ni0');
-	my $inst_name=$top->top_get_def_of_instance('ni0','instance');
+	my @nis=get_NI_instance_list($top);
+	my @noc_param=$top->top_get_parameter_list($nis[0]);
+	my $inst_name=$top->top_get_def_of_instance($nis[0],'instance');
 	
 	#other parameters
 	my %params=$top->top_get_default_soc_param();

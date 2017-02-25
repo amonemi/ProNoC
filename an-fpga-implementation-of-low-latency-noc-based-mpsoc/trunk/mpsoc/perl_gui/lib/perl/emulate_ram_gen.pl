@@ -5,7 +5,7 @@ use List::Util 'shuffle';
 require "widget.pl"; 	
 
 
-use constant SIM_RAM_GEN	=> 1;			
+use constant SIM_RAM_GEN	=> 0;			
 
 use constant JTAG_RAM_INDEX	=> 128;
 use constant JTAG_DONE_RESET_INDEX	=> 127;

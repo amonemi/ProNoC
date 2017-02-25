@@ -156,7 +156,8 @@ module sub_ni_wr #(
     localparam  P_1    =    P-1 ,
                 Fw     =    2+V+Fpay, //flit width
                 Xw =   log2(NX),
-                Yw =   log2(NY); 
+                Yw =   log2(NY),
+					 Vw =   (V>1) ? log2(V) : 1;  
                    
   
     //wishbone slave addresses
@@ -415,7 +416,7 @@ endgenerate
       
     //status register
     assign  wr_busy            =   ps!=IDEAL;
-    assign  status_reg          =   {/*rd_vc_not_empty*/{Vw{1'b0}},wr_vc_not_empty,/*rsv_pck_isr*/1'b0, /*rd_done_isr*/1'b0,wr_done_isr,/*rsv_pck_int_en*/1'b0,/*rd_done_int_en*/1'b0,wr_done_int_en,all_vcs_full,/*any_vc_has_data*/1'b0,/*rd_no_pck_err*/1'b0,/*rd_ovr_size_err*/1'b0,/*rd_done*/1'b0,wr_done,/*rd_busy*/,wr_busy};
+    assign  status_reg          =   {/*rd_vc_not_empty*/{Vw{1'b0}}, wr_vc_not_empty,/*rsv_pck_isr*/1'b0, /*rd_done_isr*/1'b0, wr_done_isr,/*rsv_pck_int_en*/1'b0,/*rd_done_int_en*/1'b0,wr_done_int_en,all_vcs_full,/*any_vc_has_data*/1'b0,/*rd_no_pck_err*/1'b0,/*rd_ovr_size_err*/1'b0,/*rd_done*/1'b0,wr_done,/*rd_busy*/1'b0,wr_busy};
     assign  s_dat_o             =   status_reg;
    
     reg  [M_Aw-1          :   0] m_addr;
@@ -691,6 +692,7 @@ endgenerate
 
 
 endmodule
+
 
 
 

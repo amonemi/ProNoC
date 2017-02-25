@@ -181,7 +181,7 @@ sub initial_default_param{
 		my %param_value;
 		my $top=$mpsoc->mpsoc_get_soc($soc_name);
 		my @insts=$top->top_get_all_instances();
-		my @exceptions=('ni0');
+		my @exceptions=get_NI_instance_list($top);
 		@insts=get_diff_array(\@insts,\@exceptions);
 		foreach my $inst (@insts){
 			my @params=$top->top_get_parameter_list($inst);
@@ -221,8 +221,8 @@ sub get_soc_list {
 			my @instance_list=$top->top_get_all_instances();
 			#check if the soc has ni port
 			foreach my $instanc(@instance_list){
-				my $module=$top->top_get_def_of_instance($instanc,'module');
-				if($module eq 'ni') 
+				my $category=$top->top_get_def_of_instance($instanc,'category');
+				if($category eq 'NoC') 
 				{
 					my $name=$soc->object_get_attribute('soc_name');			
 					$mpsoc->mpsoc_add_soc($name,$top);
@@ -251,6 +251,20 @@ sub get_soc_list {
 
 
 }
+
+
+sub get_NI_instance_list {
+	my $top=shift;
+	my @nis;
+	my @instance_list=$top->top_get_all_instances();
+	#check if the soc has ni port
+	foreach my $instanc(@instance_list){
+			my $category=$top->top_get_def_of_instance($instanc,'category');
+			 push(@nis,$instanc) if($category eq 'NoC') ;
+	}
+	return @nis;
+}
+
 ####################
 # get_conflict_decision
 ###########################
@@ -419,7 +433,7 @@ sub get_soc_parameter_setting{
 	
 	
 	my @insts=$top->top_get_all_instances();
-	my @exceptions=('ni0');
+	my @exceptions=get_NI_instance_list($top);
 	@insts=get_diff_array(\@insts,\@exceptions);
 	foreach my $inst (@insts){
 		my @params=$top->top_get_parameter_list($inst);
@@ -964,7 +978,7 @@ sub noc_config{
 		  	 $type="Check-box";
 		  	 $content=$v;
 		  	 $info="Select the permitted VCs which the message class $i can be sent via them.";
-		  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);
+		  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'class_param',undef);
 
 
 		}
@@ -993,7 +1007,7 @@ sub noc_config{
 	$type="Check-box";
 	$content=1;
 	$default="1\'b0";
-	$info="If ebabled it adds a pipline register at the output port of the router.";
+	$info="If enabeled it adds a pipline register at the output port of the router.";
 	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');
 	  	
 	
@@ -1177,7 +1191,9 @@ sub gen_all_tiles{
 		#update NoC param
 		#my %nocparam = %{$mpsoc->object_get_attribute('noc_param',undef)};
 		my $nocparam =$mpsoc->object_get_attribute('noc_param',undef);
-		$soc->soc_add_instance_param('ni0' ,$nocparam );
+		my $top=$mpsoc->mpsoc_get_soc($soc_name);
+		my @nis=get_NI_instance_list($top);
+		$soc->soc_add_instance_param($nis[0] ,$nocparam );
 		#foreach my $p ( sort keys %nocparam ) {
 			
 		#	print "$p = $nocparam{$p} \n";

@@ -176,7 +176,7 @@ assign almost_full  = &cnt[CNT_WIDTH-2:0];
 	);
 */
     
-	simple_dual_port_ram
+	eth_simple_dual_port_ram
 	#(
 		.Dw(DATA_WIDTH), 
 		.Aw(CNT_WIDTH-1)
