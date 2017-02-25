@@ -3,13 +3,17 @@
 ##    
 ##	Copyright (C) 2014-2016  Alireza Monemi
 ##    
-##	This file is part of ProNoC 1.5.0 
+##	This file is part of ProNoC 1.5.1 
 ##
 ## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
 ##	MAY CAUSE UNEXPECTED BEHAIVOR.
 ################################################################################
 
 $lm32_noc = bless( {
+                     'class_param' => {
+                                        'Cn_1' => '2\'b11',
+                                        'Cn_0' => '2\'b11'
+                                      },
                      'socs' => {
                                  'test' => {
                                              'top' => bless( {
@@ -1706,13 +1710,6 @@ $lm32_noc = bless( {
                                                                                               'range' => 'led_PORT_WIDTH-1     :   0',
                                                                                               'type' => 'output'
                                                                                             },
-                                                                            'ni_flit_out' => {
-                                                                                               'intfc_port' => 'flit_out',
-                                                                                               'intfc_name' => 'socket:ni[0]',
-                                                                                               'instance_name' => 'ni0',
-                                                                                               'range' => 'ni_Fw-1   :   0',
-                                                                                               'type' => 'output'
-                                                                                             },
                                                                             'ni_current_y' => {
                                                                                                 'intfc_port' => 'current_y',
                                                                                                 'intfc_name' => 'socket:ni[0]',
@@ -1727,6 +1724,13 @@ $lm32_noc = bless( {
                                                                                                       'range' => '',
                                                                                                       'type' => 'output'
                                                                                                     },
+                                                                            'ni_flit_out' => {
+                                                                                               'intfc_port' => 'flit_out',
+                                                                                               'intfc_name' => 'socket:ni[0]',
+                                                                                               'instance_name' => 'ni0',
+                                                                                               'range' => 'ni_Fw-1   :   0',
+                                                                                               'type' => 'output'
+                                                                                             },
                                                                             'ni_credit_out' => {
                                                                                                  'intfc_port' => 'credit_out',
                                                                                                  'intfc_name' => 'socket:ni[0]',
@@ -2538,7 +2542,7 @@ $lm32_noc = bless( {
                                                 }
                                },
                      'setting' => {
-                                    'show_adv_setting' => 0,
+                                    'show_adv_setting' => 1,
                                     'soc_path' => 'lib/soc',
                                     'show_noc_setting' => 1,
                                     'show_tile_setting' => 1
@@ -2557,6 +2561,10 @@ $lm32_noc = bless( {
                                        'timeout' => 0
                                      },
                      'parameters_order' => {
+                                             'class_param' => [
+                                                                'Cn_0',
+                                                                'Cn_1'
+                                                              ],
                                              'noc_param' => [
                                                               'NX',
                                                               'NY',
@@ -2587,10 +2595,10 @@ $lm32_noc = bless( {
                                       'DEBUG_EN' => '0',
                                       'NX' => ' 2',
                                       'VC_REALLOCATION_TYPE' => '"NONATOMIC"',
-                                      'V' => '2',
-                                      'ROUTE_SUBFUNC' => '"XY"',
+                                      'V' => 2,
                                       'ADD_PIPREG_AFTER_CROSSBAR' => '1\'b0',
-                                      'C' => 0,
+                                      'ROUTE_SUBFUNC' => '"XY"',
+                                      'C' => 2,
                                       'ROUTE_NAME' => '"XY"',
                                       'Fpay' => '32',
                                       'MUX_TYPE' => '"BINARY"',

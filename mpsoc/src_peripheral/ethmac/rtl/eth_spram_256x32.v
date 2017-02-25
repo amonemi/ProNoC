@@ -254,7 +254,7 @@ module eth_spram_256x32(
       ); 
 
 
-	single_port_ram #(
+	eth_single_port_ram #(
 	    .Dw(32),
 	    .Aw(8)
 	)

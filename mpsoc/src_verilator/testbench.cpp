@@ -150,7 +150,7 @@ int main(int argc, char** argv) {
 					traffic[i]->current_x		= x;
 					traffic[i]->current_y		= y;
 					traffic[i]->start=0;
-					traffic[i]->pck_size=PACKET_SIZE;
+					traffic[i]->pck_size_in=PACKET_SIZE;
 					traffic[i]->ratio=ratio;
 					traffic[i]->pck_class_in=  pck_class_in_gen( i);
 					pck_dst_gen ( x,y,i, &dest_x, &dest_y);

@@ -356,6 +356,7 @@ localparam  NUMBER_OF_STATUS    =   4,
     
     reg  [Vw-1  :0] cand_rd_vc_binary;
     wire [V-1  :0]  cand_rd_vc_onehot;
+	 wire    [V-1  :0] rd_vc_not_empty;
     
     assign {wb_v_addr_binary, wb_wr_rd_addr, wb_general_reg_addr} = s_addr_i[3+Vw      :0];
     
@@ -683,7 +684,7 @@ localparam  NUMBER_OF_STATUS    =   4,
     
  );
   
-  
+  assign rd_vc_not_empty = ififo_vc_not_empty;
     
     
 
@@ -696,6 +697,8 @@ end
 //synthesis translate_on
 
 endmodule
+
+
 
 
 

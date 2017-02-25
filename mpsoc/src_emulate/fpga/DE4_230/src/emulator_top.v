@@ -83,7 +83,7 @@ module  emulator_top
  	assign  LED[7:3]	= 	5'b11111;
 
 
-	assign  reset		=	(jtag_reset | reset_in);
+	
 	
 	reg[31:0]time_cnt;
 

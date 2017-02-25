@@ -90,8 +90,8 @@ int ${IP}_rx_done;
 int ${IP}_rx_len;
 unsigned char ${IP}_tx_packet[1536];     //max length
 unsigned char ${IP}_rx_packet[1536];
-unsigned char * ethmac_tx_data= & ethmac_tx_packet[HDR_LEN];
-unsigned char * ethmac_rx_data= & ethmac_rx_packet[HDR_LEN];
+unsigned char * ${IP}_tx_data= & ${IP}_tx_packet[HDR_LEN];
+unsigned char * ${IP}_rx_data= & ${IP}_rx_packet[HDR_LEN];
 
 void ${IP}_recv_ack(void)
 {

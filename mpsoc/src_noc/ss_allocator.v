@@ -267,9 +267,7 @@ module ssa_per_vc #(
 
 
 
-   localparam SSA_EN = ((ROUTE_TYPE == "FULL_ADAPTIVE") && (SS_PORT==2 || SS_PORT == 4) && ((1<<V_LOCAL &  ~ESCAP_VC_MASK ) != {V{1'b0}})) ? 1'b0 :1'b1;
-		
-      
+  
    
     
     //header packet filds width
@@ -279,6 +277,11 @@ module ssa_per_vc #(
                 X_Y_IN_HDR_WIDTH   =4,
                 SW_LOC             =V_GLOBAL/V,
                 V_LOCAL            =V_GLOBAL%V;
+
+
+    localparam SSA_EN = ((ROUTE_TYPE == "FULL_ADAPTIVE") && (SS_PORT==2 || SS_PORT == 4) && ((1<<V_LOCAL &  ~ESCAP_VC_MASK ) != {V{1'b0}})) ? 1'b0 :1'b1;
+		
+      
                
 
     input   [Fw-1          :   0]  flit_in;

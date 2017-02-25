@@ -3,7 +3,7 @@
 ##    
 ##	Copyright (C) 2014-2016  Alireza Monemi
 ##    
-##	This file is part of ProNoC 1.5.0 
+##	This file is part of ProNoC 1.5.1 
 ##
 ## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
 ##	MAY CAUSE UNEXPECTED BEHAIVOR.
@@ -39,9 +39,8 @@ $ethtop = bless( {
                                     '/mpsoc/src_peripheral/ethmac/rtl/eth_wishbone.v',
                                     '/mpsoc/src_peripheral/ethmac/rtl/timescale.v',
                                     '/mpsoc/src_peripheral/ethmac/rtl/xilinx_dist_ram_16x32.v',
-                                    '/mpsoc/src_peripheral/ram/general_single_port_ram.v',
-                                    '/mpsoc/src_peripheral/ram/general_dual_port_ram.v',
-                                    '/mpsoc/src_peripheral/ethmac/ethtop.v'
+                                    '/mpsoc/src_peripheral/ethmac/ethtop.v',
+                                    '/mpsoc/src_peripheral/ethmac/eth_generic_ram.v'
                                   ],
                    'custom_file' => {
                                       '0' => {}
@@ -150,9 +149,56 @@ int ${IP}_send(int length);   //return (-1) or length (still processing previous
                                },
                    'category' => 'Eth',
                    'sw_files' => [],
+                   'modules' => {
+                                  'ethtop' => {}
+                                },
+                   'plugs' => {
+                                'wb_master' => {
+                                                 'wb_master' => {},
+                                                 '0' => {
+                                                          'name' => 'wb_master'
+                                                        },
+                                                 'value' => 1,
+                                                 'type' => 'num'
+                                               },
+                                'interrupt_peripheral' => {
+                                                            'interrupt_peripheral' => {},
+                                                            '0' => {
+                                                                     'name' => 'interrupt_peripheral'
+                                                                   },
+                                                            'value' => 1,
+                                                            'type' => 'num'
+                                                          },
+                                'reset' => {
+                                             'reset' => {},
+                                             '0' => {
+                                                      'name' => 'reset'
+                                                    },
+                                             'value' => 1,
+                                             'type' => 'num'
+                                           },
+                                'clk' => {
+                                           'clk' => {},
+                                           '0' => {
+                                                    'name' => 'clk'
+                                                  },
+                                           'value' => 1,
+                                           'type' => 'num'
+                                         },
+                                'wb_slave' => {
+                                                '0' => {
+                                                         'width' => 11,
+                                                         'name' => 'wb_slave',
+                                                         'addr' => '0x9200_0000	0x92ff_ffff		Ethernet Controller'
+                                                       },
+                                                'value' => 1,
+                                                'type' => 'num',
+                                                'wb_slave' => {}
+                                              }
+                              },
                    'gui_status' => {
-                                     'timeout' => 0,
-                                     'status' => 'ideal'
+                                     'status' => 'ideal',
+                                     'timeout' => 0
                                    },
                    'parameters' => {
                                      'RX_FIFO_DEPTH' => {
@@ -160,307 +206,260 @@ int ${IP}_send(int length);   //return (-1) or length (still processing previous
                                                           'deafult' => ' 16',
                                                           'global_param' => 0,
                                                           'content' => '',
-                                                          'type' => 'Fixed',
-                                                          'redefine_param' => 1
+                                                          'redefine_param' => 1,
+                                                          'type' => 'Fixed'
                                                         },
                                      'TX_FIFO_DATA_WIDTH' => {
                                                                'info' => undef,
                                                                'deafult' => ' 32',
                                                                'global_param' => 0,
                                                                'content' => '',
-                                                               'type' => 'Fixed',
-                                                               'redefine_param' => 1
+                                                               'redefine_param' => 1,
+                                                               'type' => 'Fixed'
                                                              },
                                      'RX_FIFO_DATA_WIDTH' => {
                                                                'info' => undef,
                                                                'deafult' => ' 32',
                                                                'global_param' => 0,
                                                                'content' => '',
-                                                               'type' => 'Fixed',
-                                                               'redefine_param' => 1
+                                                               'redefine_param' => 1,
+                                                               'type' => 'Fixed'
                                                              },
                                      'RX_FIFO_CNT_WIDTH' => {
                                                               'info' => undef,
                                                               'deafult' => ' 5',
                                                               'global_param' => 0,
                                                               'content' => '',
-                                                              'type' => 'Fixed',
-                                                              'redefine_param' => 1
+                                                              'redefine_param' => 1,
+                                                              'type' => 'Fixed'
                                                             },
                                      'TX_FIFO_CNT_WIDTH' => {
                                                               'info' => undef,
                                                               'deafult' => ' 5',
                                                               'global_param' => 0,
                                                               'content' => '',
-                                                              'type' => 'Fixed',
-                                                              'redefine_param' => 1
+                                                              'redefine_param' => 1,
+                                                              'type' => 'Fixed'
                                                             },
                                      'TX_FIFO_DEPTH' => {
                                                           'info' => undef,
                                                           'deafult' => ' 16',
                                                           'global_param' => 0,
                                                           'content' => '',
-                                                          'type' => 'Fixed',
-                                                          'redefine_param' => 1
+                                                          'redefine_param' => 1,
+                                                          'type' => 'Fixed'
                                                         }
                                    },
-                   'modules' => {
-                                  'ethtop' => {}
-                                },
-                   'plugs' => {
-                                'wb_master' => {
-                                                 'wb_master' => {},
-                                                 'value' => 1,
-                                                 '0' => {
-                                                          'name' => 'wb_master'
-                                                        },
-                                                 'type' => 'num'
-                                               },
-                                'clk' => {
-                                           'clk' => {},
-                                           'value' => 1,
-                                           '0' => {
-                                                    'name' => 'clk'
-                                                  },
-                                           'type' => 'num'
-                                         },
-                                'reset' => {
-                                             'reset' => {},
-                                             'value' => 1,
-                                             '0' => {
-                                                      'name' => 'reset'
-                                                    },
-                                             'type' => 'num'
-                                           },
-                                'interrupt_peripheral' => {
-                                                            'interrupt_peripheral' => {},
-                                                            'value' => 1,
-                                                            '0' => {
-                                                                     'name' => 'interrupt_peripheral'
-                                                                   },
-                                                            'type' => 'num'
-                                                          },
-                                'wb_slave' => {
-                                                'value' => 1,
-                                                '0' => {
-                                                         'width' => 11,
-                                                         'name' => 'wb_slave',
-                                                         'addr' => '0x9200_0000	0x92ff_ffff		Ethernet Controller'
-                                                       },
-                                                'type' => 'num',
-                                                'wb_slave' => {}
-                                              }
-                              },
                    'ports' => {
                                 'wb_sel_i' => {
-                                                'intfc_name' => 'plug:wb_slave[0]',
                                                 'intfc_port' => 'sel_i',
+                                                'intfc_name' => 'plug:wb_slave[0]',
                                                 'range' => '3:0',
                                                 'type' => 'input'
                                               },
                                 'm_wb_we_o' => {
-                                                 'intfc_name' => 'plug:wb_master[0]',
                                                  'intfc_port' => 'we_o',
+                                                 'intfc_name' => 'plug:wb_master[0]',
                                                  'range' => '',
                                                  'type' => 'output'
                                                },
-                                'wb_err_o' => {
-                                                'intfc_name' => 'plug:wb_slave[0]',
-                                                'intfc_port' => 'err_o',
-                                                'range' => '',
-                                                'type' => 'output'
-                                              },
                                 'wb_we_i' => {
-                                               'intfc_name' => 'plug:wb_slave[0]',
                                                'intfc_port' => 'we_i',
+                                               'intfc_name' => 'plug:wb_slave[0]',
                                                'range' => '',
                                                'type' => 'input'
                                              },
-                                'wb_dat_o' => {
+                                'wb_err_o' => {
+                                                'intfc_port' => 'err_o',
                                                 'intfc_name' => 'plug:wb_slave[0]',
+                                                'range' => '',
+                                                'type' => 'output'
+                                              },
+                                'wb_dat_o' => {
                                                 'intfc_port' => 'dat_o',
+                                                'intfc_name' => 'plug:wb_slave[0]',
                                                 'range' => '31:0',
                                                 'type' => 'output'
                                               },
                                 'wb_rst_i' => {
-                                                'intfc_name' => 'plug:reset[0]',
                                                 'intfc_port' => 'reset_i',
+                                                'intfc_name' => 'plug:reset[0]',
                                                 'range' => '',
                                                 'type' => 'input'
                                               },
                                 'wb_cyc_i' => {
-                                                'intfc_name' => 'plug:wb_slave[0]',
                                                 'intfc_port' => 'cyc_i',
+                                                'intfc_name' => 'plug:wb_slave[0]',
                                                 'range' => '',
                                                 'type' => 'input'
                                               },
                                 'm_wb_err_i' => {
-                                                  'intfc_name' => 'plug:wb_master[0]',
                                                   'intfc_port' => 'err_i',
+                                                  'intfc_name' => 'plug:wb_master[0]',
                                                   'range' => '',
                                                   'type' => 'input'
                                                 },
                                 'm_wb_dat_i' => {
-                                                  'intfc_name' => 'plug:wb_master[0]',
                                                   'intfc_port' => 'dat_i',
+                                                  'intfc_name' => 'plug:wb_master[0]',
                                                   'range' => '31:0',
                                                   'type' => 'input'
                                                 },
                                 'mdc_pad_o' => {
-                                                 'intfc_name' => 'IO',
                                                  'intfc_port' => 'IO',
+                                                 'intfc_name' => 'IO',
                                                  'range' => '',
                                                  'type' => 'output'
                                                },
                                 'm_wb_sel_o' => {
-                                                  'intfc_name' => 'plug:wb_master[0]',
                                                   'intfc_port' => 'sel_o',
+                                                  'intfc_name' => 'plug:wb_master[0]',
                                                   'range' => '3:0',
                                                   'type' => 'output'
                                                 },
                                 'md_pad_i' => {
-                                                'intfc_name' => 'IO',
                                                 'intfc_port' => 'IO',
+                                                'intfc_name' => 'IO',
                                                 'range' => '',
                                                 'type' => 'input'
                                               },
                                 'mcrs_pad_i' => {
-                                                  'intfc_name' => 'IO',
                                                   'intfc_port' => 'IO',
+                                                  'intfc_name' => 'IO',
                                                   'range' => '',
                                                   'type' => 'input'
                                                 },
                                 'm_wb_dat_o' => {
-                                                  'intfc_name' => 'plug:wb_master[0]',
                                                   'intfc_port' => 'dat_o',
+                                                  'intfc_name' => 'plug:wb_master[0]',
                                                   'range' => '31:0',
                                                   'type' => 'output'
                                                 },
                                 'md_padoe_o' => {
-                                                  'intfc_name' => 'IO',
                                                   'intfc_port' => 'IO',
+                                                  'intfc_name' => 'IO',
                                                   'range' => '',
                                                   'type' => 'output'
                                                 },
-                                'm_wb_adr_o' => {
-                                                  'intfc_name' => 'plug:wb_master[0]',
-                                                  'intfc_port' => 'adr_o',
-                                                  'range' => '31:0',
-                                                  'type' => 'output'
-                                                },
                                 'wb_adr_i' => {
-                                                'intfc_name' => 'plug:wb_slave[0]',
                                                 'intfc_port' => 'adr_i',
+                                                'intfc_name' => 'plug:wb_slave[0]',
                                                 'range' => '9:0',
                                                 'type' => 'input'
                                               },
+                                'm_wb_adr_o' => {
+                                                  'intfc_port' => 'adr_o',
+                                                  'intfc_name' => 'plug:wb_master[0]',
+                                                  'range' => '31:0',
+                                                  'type' => 'output'
+                                                },
                                 'mrxerr_pad_i' => {
-                                                    'intfc_name' => 'IO',
                                                     'intfc_port' => 'IO',
+                                                    'intfc_name' => 'IO',
                                                     'range' => '',
                                                     'type' => 'input'
                                                   },
                                 'mrxd_pad_i' => {
-                                                  'intfc_name' => 'IO',
                                                   'intfc_port' => 'IO',
+                                                  'intfc_name' => 'IO',
                                                   'range' => '3:0',
                                                   'type' => 'input'
                                                 },
                                 'mtxd_pad_o' => {
-                                                  'intfc_name' => 'IO',
                                                   'intfc_port' => 'IO',
+                                                  'intfc_name' => 'IO',
                                                   'range' => '3:0',
                                                   'type' => 'output'
                                                 },
                                 'wb_ack_o' => {
-                                                'intfc_name' => 'plug:wb_slave[0]',
                                                 'intfc_port' => 'ack_o',
+                                                'intfc_name' => 'plug:wb_slave[0]',
                                                 'range' => '',
                                                 'type' => 'output'
                                               },
                                 'mtxen_pad_o' => {
-                                                   'intfc_name' => 'IO',
                                                    'intfc_port' => 'IO',
+                                                   'intfc_name' => 'IO',
                                                    'range' => '',
                                                    'type' => 'output'
                                                  },
                                 'mcoll_pad_i' => {
-                                                   'intfc_name' => 'IO',
                                                    'intfc_port' => 'IO',
+                                                   'intfc_name' => 'IO',
                                                    'range' => '',
                                                    'type' => 'input'
                                                  },
                                 'int_o' => {
-                                             'intfc_name' => 'plug:interrupt_peripheral[0]',
                                              'intfc_port' => 'int_o',
+                                             'intfc_name' => 'plug:interrupt_peripheral[0]',
                                              'range' => '',
                                              'type' => 'output'
                                            },
                                 'm_wb_ack_i' => {
-                                                  'intfc_name' => 'plug:wb_master[0]',
                                                   'intfc_port' => 'ack_i',
+                                                  'intfc_name' => 'plug:wb_master[0]',
                                                   'range' => '',
                                                   'type' => 'input'
                                                 },
                                 'wb_stb_i' => {
-                                                'intfc_name' => 'plug:wb_slave[0]',
                                                 'intfc_port' => 'stb_i',
+                                                'intfc_name' => 'plug:wb_slave[0]',
                                                 'range' => '',
                                                 'type' => 'input'
                                               },
                                 'mrx_clk_pad_i' => {
-                                                     'intfc_name' => 'IO',
                                                      'intfc_port' => 'IO',
+                                                     'intfc_name' => 'IO',
                                                      'range' => '',
                                                      'type' => 'input'
                                                    },
                                 'wb_clk_i' => {
-                                                'intfc_name' => 'plug:clk[0]',
                                                 'intfc_port' => 'clk_i',
+                                                'intfc_name' => 'plug:clk[0]',
                                                 'range' => '',
                                                 'type' => 'input'
                                               },
                                 'md_pad_o' => {
-                                                'intfc_name' => 'IO',
                                                 'intfc_port' => 'IO',
+                                                'intfc_name' => 'IO',
                                                 'range' => '',
                                                 'type' => 'output'
                                               },
                                 'm_wb_cyc_o' => {
-                                                  'intfc_name' => 'plug:wb_master[0]',
                                                   'intfc_port' => 'cyc_o',
+                                                  'intfc_name' => 'plug:wb_master[0]',
                                                   'range' => '',
                                                   'type' => 'output'
                                                 },
                                 'mrxdv_pad_i' => {
-                                                   'intfc_name' => 'IO',
                                                    'intfc_port' => 'IO',
+                                                   'intfc_name' => 'IO',
                                                    'range' => '',
                                                    'type' => 'input'
                                                  },
                                 'mtxerr_pad_o' => {
-                                                    'intfc_name' => 'IO',
                                                     'intfc_port' => 'IO',
+                                                    'intfc_name' => 'IO',
                                                     'range' => '',
                                                     'type' => 'output'
                                                   },
                                 'mtx_clk_pad_i' => {
-                                                     'intfc_name' => 'IO',
                                                      'intfc_port' => 'IO',
+                                                     'intfc_name' => 'IO',
                                                      'range' => '',
                                                      'type' => 'input'
                                                    },
-                                'wb_dat_i' => {
-                                                'intfc_name' => 'plug:wb_slave[0]',
-                                                'intfc_port' => 'dat_i',
-                                                'range' => '31:0',
-                                                'type' => 'input'
-                                              },
                                 'm_wb_stb_o' => {
-                                                  'intfc_name' => 'plug:wb_master[0]',
                                                   'intfc_port' => 'stb_o',
+                                                  'intfc_name' => 'plug:wb_master[0]',
                                                   'range' => '',
                                                   'type' => 'output'
-                                                }
+                                                },
+                                'wb_dat_i' => {
+                                                'intfc_port' => 'dat_i',
+                                                'intfc_name' => 'plug:wb_slave[0]',
+                                                'range' => '31:0',
+                                                'type' => 'input'
+                                              }
                               }
                  }, 'ip_gen' );

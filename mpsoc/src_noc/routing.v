@@ -683,7 +683,7 @@ module conventional_routing #(
               
     input   [Xw-1         :0] current_x;
     input   [Yw-1         :0] current_y;
-    input   [Yw-1         :0] dest_x;
+    input   [Xw-1         :0] dest_x;
     input   [Yw-1         :0] dest_y;
     
     output  [DSTw-1       :0] destport;
@@ -961,7 +961,7 @@ module ni_conventional_routing #(
               
     input   [Xw-1         :0] current_x;
     input   [Yw-1         :0] current_y;
-    input   [Yw-1         :0] dest_x;
+    input   [Xw-1         :0] dest_x;
     input   [Yw-1         :0] dest_y;
     output  [P_1-1        :0] destport;
     
