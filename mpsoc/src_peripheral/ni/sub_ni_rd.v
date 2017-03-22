@@ -594,6 +594,24 @@ localparam  NUMBER_OF_STATUS    =   4,
             end//if
         end//IDEAL
         
+
+	RD_VC_CHECK: begin
+             if(cand_rd_vc_not_empty) begin 
+                        //synthesis translate_off
+                            //$display ("%t,\t   core (%d,%d) has recived a packet",$time,current_x,current_y);
+                        //synthesis translate_on                                                                
+                        ns  = WR_ON_RAM;
+                        rd_no_pck_err_next  = 1'b0;
+                        ififo_rd_en         = 1'b1; 
+                        credit_out          =   cand_rd_vc_onehot;
+                    end else  begin
+                            ns= IDEAL;
+                            rd_no_pck_err_next= 1'b1;
+                    end//if
+        
+        
+        end // RD_VC_CHECK    
+
        
             
         WR_ON_RAM:  begin

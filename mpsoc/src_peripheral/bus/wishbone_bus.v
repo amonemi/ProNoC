@@ -360,7 +360,7 @@ assign	m_rty_o_all	=	m_grant_onehot	& {M{any_s_rty}};
     );
     
     
-    
+   /* 
     binary_mux #( 
     	.IN_WIDTH 	(M),	
     	.OUT_WIDTH 	(1)
@@ -386,7 +386,37 @@ assign	m_rty_o_all	=	m_grant_onehot	& {M{any_s_rty}};
     	.sel			(m_grant_bin)
     
     );
+   */
+   // if m_grant_one_hot is zero the stb and cyc  must not be asserted hence have to use one-hot mux 
+   
+   
+    one_hot_mux #(
+       	.IN_WIDTH(M),
+       	.SEL_WIDTH(M),
+       	.OUT_WIDTH(1)
+    )
+    m_stb_mux
+    (
+        .mux_in(m_stb_i_all),
+        .mux_out(m_grant_stb),
+        .sel(m_grant_onehot)
     
+    );
+    
+    
+     one_hot_mux #(
+        .IN_WIDTH(M),
+        .SEL_WIDTH(M),
+        .OUT_WIDTH(1)
+    )
+     m_cyc_mux
+    (
+        .mux_in(m_cyc_i_all),
+        .mux_out(m_grant_cyc),
+        .sel(m_grant_onehot)
+    
+    );
+  
     
   
     

@@ -71,11 +71,11 @@ module input_ports
                 PFw     =	P*Fw;
 
 
-input   [Xw-1		:	0]      current_x;
-input   [Yw-1		:	0]      current_y;	
-input   [PV-1		:	0]      ivc_num_getting_sw_grant;
-input   [P-1        :   0]      any_ivc_sw_request_granted_all;
-input   [PFw-1      :   0]      flit_in_all;
+input   [Xw-1		:	0] current_x;
+input   [Yw-1		:	0] current_y;	
+input   [PV-1		:	0] ivc_num_getting_sw_grant;
+input   [P-1        :   0] any_ivc_sw_request_granted_all;
+input   [PFw-1      :   0] flit_in_all;
 input	[P-1		:	0]		flit_in_we_all;
 input	[PV-1		:	0]		reset_ivc_all;
 output  [PV-1		:	0]		flit_is_tail_all;
@@ -84,13 +84,13 @@ output  [PVP_1-1	:	0]		dest_port_all;
 output  [PVV-1      :	0]		candidate_ovcs_all;
 output  [PFw-1      :	0]		flit_out_all;
 input   [PVV-1      :	0]		assigned_ovc_num_all;
-input   [PV-1       :   0]      sel;
-output  [PV-1       :   0]      x_diff_is_one_all;
+input   [PV-1       :   0] sel;
+output  [PV-1       :   0] x_diff_is_one_all;
 input							reset,clk;
-output  [PVP_1-1    :   0]      lk_destination_all;
-input   [PV-1       :   0]      nonspec_first_arbiter_granted_ivc_all;
-input   [PV-1       :   0]      ssa_ivc_num_getting_sw_grant_all;
-input   [2*PV-1     :   0]      destport_ab_clear_all;
+output  [PVP_1-1    :   0] lk_destination_all;
+input   [PV-1       :   0] nonspec_first_arbiter_granted_ivc_all;
+input   [PV-1       :   0] ssa_ivc_num_getting_sw_grant_all;
+input   [2*PV-1     :   0] destport_ab_clear_all;
 
 genvar i;
 generate 
@@ -227,10 +227,15 @@ module input_queue_per_port
          end	
       end	
    endfunction // log2 
+   
+   localparam CLASS_HDR_WIDTH   =8,
+              ROUTING_HDR_WIDTH =8,
+              DST_ADR_HDR_WIDTH =8,
+              SRC_ADR_HDR_WIDTH =8;
+   
+   
 
-	localparam 	   PV		=	V		*	P,
-					VV		=	V		*	V,
-					PVV	   =	PV		*  V,	
+	localparam 	   	VV		=	V		*	V,
 					P_1	   =	P-1	,
 					VP_1	=	V		* 	P_1;
 
@@ -241,76 +246,88 @@ module input_queue_per_port
 
 
 
-	localparam	    HDR_FLG						=1,
-					TAIL_FLG						=0,
-					CLASS_IN_HDR_WIDTH		=8,
-					DEST_IN_HDR_WIDTH			=8,
-					X_Y_IN_HDR_WIDTH			=4,
-					HDR_ROUTING_INFO_WIDTH	=	CLASS_IN_HDR_WIDTH+DEST_IN_HDR_WIDTH+ 4* X_Y_IN_HDR_WIDTH,
+	localparam	    HDR_FLG  =1,
+					TAIL_FLG =0,
 					MAX_PCK = (VC_REALLOCATION_TYPE== "ATOMIC")?  1 : (B/2)+(B%2);// min packet size is two hence the max packet number in buffer is (B/2)
 					
 
 	
 
-input   [Xw-1       :   0]      current_x;
-input   [Yw-1		:   0]      current_y;					
-input   [V-1        :   0]      ivc_num_getting_sw_grant;
-input                           any_ivc_sw_request_granted;
-input   [Fw-1       :   0]      flit_in;
-input							flit_in_we;
-input	[V-1		:	0]		reset_ivc;
-output  [V-1		:	0]		flit_is_tail;
-output  [V-1		:	0]		ivc_request;
-output  [VP_1-1	    :	0]		dest_port;
-output  [VV-1		:	0]		candidate_ovcs;
-output  [Fw-1		:	0]		flit_out;
-input	[VV-1		:	0]		assigned_ovc_num;
-input   [V-1        :   0]      sel;
-input 						    reset,clk;
-output  [VP_1-1     :   0]      lk_destination;
-output  [V-1        :   0]      x_diff_is_one;
-input   [V-1        :   0]      nonspec_first_arbiter_granted_ivc;
-input   [V-1        :   0]      ssa_ivc_num_getting_sw_grant;	
-input   [2*V-1      :   0]      destport_ab_clear;			
+    input   [Xw-1       :   0] current_x;
+    input   [Yw-1		:   0] current_y;					
+    input   [V-1        :   0] ivc_num_getting_sw_grant;
+    input                      any_ivc_sw_request_granted;
+    input   [Fw-1       :   0] flit_in;
+    input					   flit_in_we;
+    input	[V-1		:	0] reset_ivc;
+    output  [V-1		:	0] flit_is_tail;
+    output  [V-1		:	0] ivc_request;
+    output  [VP_1-1	    :	0] dest_port;
+    output  [VV-1		:	0] candidate_ovcs;
+    output  [Fw-1		:	0] flit_out;
+    input	[VV-1		:	0] assigned_ovc_num;
+    input   [V-1        :   0] sel;
+    input 					   reset,clk;
+    output  [VP_1-1     :   0] lk_destination;
+    output  [V-1        :   0] x_diff_is_one;
+    input   [V-1        :   0] nonspec_first_arbiter_granted_ivc;
+    input   [V-1        :   0] ssa_ivc_num_getting_sw_grant;	
+    input   [2*V-1      :   0] destport_ab_clear;			
+    
+     
+    
+    wire    [Cw-1		:	0] class_in;
+    wire    [P_1-1      :	0] destport_in;
+    wire 	[Xw-1		:	0] x_dst_in;
+    wire 	[Yw-1		:	0] y_dst_in;
+    wire    [Xw-1       :   0] x_src_in;
+    wire    [Yw-1       :   0] y_src_in;
+    wire	[V-1		:	0] vc_num_in;
+    wire    [V-1		:	0] hdr_flit_wr,flit_wr;
+    reg 	[V-1		:	0] hdr_flit_wr_delayed;
+    wire	[V-1		:	0] class_rd_fifo,dst_rd_fifo;
+    reg     [V-1		:	0] lk_dst_rd_fifo;
+    wire	[P_1-1	    :	0] lk_destination_in;
+     
 
-wire 	[CLASS_IN_HDR_WIDTH-1	:	0]	class_hdr;
-wire    [DEST_IN_HDR_WIDTH-1	:	0]	destport_hdr;
-wire 	[X_Y_IN_HDR_WIDTH-1		:	0]	x_src_hdr, y_src_hdr, x_dst_hdr, y_dst_hdr;
 
-wire    [Cw-1		:	0]	class_in;
-wire    [P_1-1      :	0]	destport_in;
-wire 	[Xw-1		:	0]	x_dst_in;
-wire 	[Yw-1		:	0] y_dst_in;
-wire	[V-1		:	0]	vc_num_in;
-wire    [V-1		:	0] hdr_flit_wr,flit_wr;
-reg 	[V-1		:	0]	hdr_flit_wr_delayed;
-wire	[V-1		:	0] class_rd_fifo,dst_rd_fifo;
-reg     [V-1		:	0] lk_dst_rd_fifo;
-wire	[P_1-1	    :	0] lk_destination_in;
-//wire    [VP_1-1     :	0] lk_destination;
-
-
-wire 	[Fw-1		:	0] buffer_out;
-wire	[1			:	0]	flg_hdr_in;
-wire    [V-1		:	0]	ivc_not_empty;
-wire 	[Cw-1		:	0]	class_out	[V-1		:	0];
+    wire 	[Fw-1		:	0] buffer_out;
+    wire    [1          :   0] flg_hdr_in;  
+    wire    [V-1		:	0] ivc_not_empty;
+    wire 	[Cw-1		:	0] class_out	[V-1		:	0];
 
 
 //extract header flit info
-assign {class_hdr,destport_hdr, x_dst_hdr, y_dst_hdr, x_src_hdr, y_src_hdr}= flit_in [HDR_ROUTING_INFO_WIDTH-1		:0];
-assign vc_num_in = flit_in [Fpay+V-1	:	Fpay];
-assign flg_hdr_in= flit_in [Fw-1	:	Fw-2];
 
+     extract_header_flit_info #(
+     	.CLASS_HDR_WIDTH(CLASS_HDR_WIDTH),
+     	.ROUTING_HDR_WIDTH(ROUTING_HDR_WIDTH),
+     	.DST_ADR_HDR_WIDTH(DST_ADR_HDR_WIDTH),
+     	.SRC_ADR_HDR_WIDTH(SRC_ADR_HDR_WIDTH),
+     	.TOPOLOGY(TOPOLOGY),
+     	.V(V),
+     	.P(P),
+     	.NX(NX),
+     	.NY(NY),
+     	.C(C),
+     	.Fpay(Fpay)
+     )
+     header_extractor
+     (
+     	.flit_in(flit_in),
+     	.flit_in_we(flit_in_we),
+     	.class_in(class_in),
+     	.destport_in(destport_in),
+     	.x_dst_in(x_dst_in),
+     	.y_dst_in(y_dst_in),
+     	.x_src_in(x_src_in ),
+     	.y_src_in(y_src_in ),
+     	.vc_num_in(vc_num_in),
+     	.hdr_flit_wr(hdr_flit_wr),
+     	.flg_hdr_in(flg_hdr_in)
+     );
 
-
-
-
-
-assign class_in	= 	class_hdr 		[Cw-1     :	0];
-assign x_dst_in	=	x_dst_hdr 		[Xw-1	  :	0];
-assign y_dst_in	=	y_dst_hdr		[Yw-1     :	0];
-assign destport_in=	destport_hdr 	[P_1-1    :	0];
-assign hdr_flit_wr= (flit_in_we & flg_hdr_in[HDR_FLG] )? vc_num_in : {V{1'b0}};
+ 
 
 // genrate write enable for lk_routing result with one clock cycle latency after reciveing the flit
 always @(posedge clk or posedge reset) begin 
@@ -448,18 +465,7 @@ generate
                     .clear                  ({2'b00,destport_ab_clear[((i+1)*2)-1   :   i*2]})   // dest_port_in ={x,y,a,b}
                 
                 );          
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
+	
     			
 			end
 			
@@ -490,16 +496,10 @@ generate
 			
 			
 			end else begin : no_odd
-			     assign x_diff_is_one={V{1'bX}};
 			
+			     assign x_diff_is_one={V{1'bX}};		
 			
-			end
-			
-			
-			
-			
-			
-			
+			end		
 			
 		end//for i
 	
@@ -518,11 +518,7 @@ generate
 		assign    class_rd_fifo   = reset_ivc;
 		assign    ivc_request     = ivc_not_empty;
 		
-	
 
-
-
- 
 
 
 if(COMBINATION_TYPE == "COMB_NONSPEC") begin  : nonspec   
@@ -616,7 +612,8 @@ endgenerate
 		.V(V),
 		.P(P),
 		.Fpay(Fpay),
-		.X_Y_IN_HDR_WIDTH(X_Y_IN_HDR_WIDTH),
+		.DST_ADR_HDR_WIDTH(DST_ADR_HDR_WIDTH),
+        .SRC_ADR_HDR_WIDTH(SRC_ADR_HDR_WIDTH),
 		.ROUTE_TYPE(ROUTE_TYPE),
 		.SSA_EN(SSA_EN)
 
@@ -662,9 +659,9 @@ if(DEBUG_EN) begin :dbg
 	end
 
 localparam      LOCAL   =       0, 
-                EAST    =       1, 
+    //            EAST    =       1, 
                 NORTH   =       2,  
-                WEST    =       3,  
+     //           WEST    =       3,  
                 SOUTH   =       4; 
 
 
@@ -688,12 +685,12 @@ if(ROUTE_TYPE== "FULL_ADAPTIVE")begin :full_adpt
                     if( ROUTE_SUBFUNC== "XY") begin 
                         if((vc_num_in  & ESCAP_VC_MASK)>0 && (SW_LOC== SOUTH || SW_LOC== NORTH) )  begin // escape vc
                             // if (a & b) $display("%t  :Error EVC allocation violate subfunction routing rules %m",$time);
-                            if ((current_x- x_dst_in) !=0 && (current_y- y_dst_in) !=0) $display("%t  :Error EVC allocation violate subfunction routing rules src_x=%d src_y=%d dst_x%d   dst_y=%d %m",$time,x_src_hdr, y_src_hdr, x_dst_in,y_dst_in);
+                            if ((current_x- x_dst_in) !=0 && (current_y- y_dst_in) !=0) $display("%t  :Error EVC allocation violate subfunction routing rules src_x=%d src_y=%d dst_x%d   dst_y=%d %m",$time,x_src_in, y_src_in, x_dst_in,y_dst_in);
                         end
                      end else begin //NORTH LAST
                         if((vc_num_in  & ESCAP_VC_MASK)>0 && (SW_LOC== SOUTH ) )  begin // escape vc
                             // if (a & b) $display("%t  :Error EVC allocation violate subfunction routing rules %m",$time);
-                            if ((current_x- x_dst_in) !=0 && (current_y- y_dst_in) !=0) $display("%t  :Error EVC allocation violate subfunction routing rules src_x=%d src_y=%d dst_x%d   dst_y=%d %m",$time,x_src_hdr, y_src_hdr, x_dst_in,y_dst_in);
+                            if ((current_x- x_dst_in) !=0 && (current_y- y_dst_in) !=0) $display("%t  :Error EVC allocation violate subfunction routing rules src_x=%d src_y=%d dst_x%d   dst_y=%d %m",$time,x_src_in, y_src_in, x_dst_in,y_dst_in);
                         end
                       end
                 end//hdr_wr_in
@@ -712,10 +709,10 @@ if(ROUTE_TYPE== "FULL_ADAPTIVE")begin :full_adpt
         
            
         
-        assign low_x = (x_src_hdr < x_dst_hdr)?  x_src_hdr[Xw-1   : 0]: x_dst_hdr[Xw-1   : 0];
-        assign low_y = (y_src_hdr < y_dst_hdr)?  y_src_hdr[Yw-1   : 0]: y_dst_hdr[Yw-1   : 0];
-        assign high_x = (x_src_hdr < x_dst_hdr)? x_dst_hdr[Xw-1   : 0]: x_src_hdr[Xw-1   : 0];
-        assign high_y = (y_src_hdr < y_dst_hdr)? y_dst_hdr[Yw-1   : 0]: y_src_hdr[Yw-1   : 0];
+        assign low_x  = (x_src_in < x_dst_in)?  x_src_in : x_dst_in;
+        assign low_y  = (y_src_in < y_dst_in)?  y_src_in : y_dst_in;
+        assign high_x = (x_src_in < x_dst_in)?  x_dst_in : x_src_in;
+        assign high_y = (y_src_in < y_dst_in)?  y_dst_in : y_src_in;
         
           
         always@( posedge clk)begin 
@@ -749,7 +746,8 @@ module flit_update #(
     parameter V                         =   4,
     parameter P                         =   5,
     parameter Fpay                      =   32,
-    parameter X_Y_IN_HDR_WIDTH          =   4,
+    parameter DST_ADR_HDR_WIDTH  =8,
+    parameter SRC_ADR_HDR_WIDTH   =8,
     parameter ROUTE_TYPE                =   "DETERMINISTIC",
     parameter SSA_EN		="YES"
 )(
@@ -772,15 +770,15 @@ module flit_update #(
                     
      
 
-    input       [Fw-1       :   0]  flit_in;
-    output      [Fw-1       :   0]  flit_out;
-    input       [V-1        :   0]  vc_num_in;
-    input       [VP_1-1 :   0]  lk_dest_all_in;
-    input                           reset,clk;
-    input       [VV-1       :   0]  assigned_ovc_num;
-    input	[V-1        :   0]  sel;
-    input			    any_ivc_sw_request_granted;
-    input	[P_1-1	:	0]  lk_dest_not_registered;
+    input   [Fw-1       :   0]  flit_in;
+    output  [Fw-1       :   0]  flit_out;
+    input   [V-1        :   0]  vc_num_in;
+    input   [VP_1-1     :   0]  lk_dest_all_in;
+    input                       reset,clk;
+    input   [VV-1       :   0]  assigned_ovc_num;
+    input   [V-1        :   0]  sel;
+    input			            any_ivc_sw_request_granted;
+    input   [P_1-1      :	0]  lk_dest_not_registered;
 
     generate 
     if(ROUTE_TYPE == "DETERMINISTIC") begin :dtrmn
@@ -788,7 +786,8 @@ module flit_update #(
             .V(V),
             .P(P),
             .Fpay(Fpay),
-            .X_Y_IN_HDR_WIDTH(X_Y_IN_HDR_WIDTH),
+            .DST_ADR_HDR_WIDTH(DST_ADR_HDR_WIDTH),
+            .SRC_ADR_HDR_WIDTH(SRC_ADR_HDR_WIDTH),
             .SSA_EN(SSA_EN)
         )        
         the_flit_update
@@ -810,7 +809,8 @@ module flit_update #(
             .V(V),
             .P(P),
             .Fpay(Fpay),
-            .X_Y_IN_HDR_WIDTH(X_Y_IN_HDR_WIDTH),
+            .DST_ADR_HDR_WIDTH(DST_ADR_HDR_WIDTH),
+            .SRC_ADR_HDR_WIDTH(SRC_ADR_HDR_WIDTH),
             .SSA_EN(SSA_EN)
         )        
         the_flit_update
@@ -835,10 +835,11 @@ endmodule
 
 
 module flit_update_dtrmn #(
-	parameter V	           =   4,
-	parameter P                =   5,
-	parameter Fpay             =   32,
-	parameter X_Y_IN_HDR_WIDTH =   4,
+	parameter V    = 4,
+	parameter P    = 5,
+	parameter Fpay = 32,
+	parameter DST_ADR_HDR_WIDTH =8,
+    parameter SRC_ADR_HDR_WIDTH =8,
 	parameter SSA_EN	   ="YES"
 
 
@@ -859,7 +860,7 @@ module flit_update_dtrmn #(
 					VP_1		=	V		* 	P_1,
 					VV			=	V		*	V;
 					
-	localparam	DEST_LOC_LSB	=	4*X_Y_IN_HDR_WIDTH,
+	localparam	DEST_LOC_LSB	=	SRC_ADR_HDR_WIDTH+DST_ADR_HDR_WIDTH,
 					DEST_LOC_HSB	=	DEST_LOC_LSB+P_1-1;
 	
 
@@ -941,10 +942,11 @@ endmodule
 
 
 module flit_update_adaptive #(
-    parameter V                         =   4,
-    parameter P                         =   5,
-    parameter Fpay                      = 32,
-    parameter X_Y_IN_HDR_WIDTH          =   4,
+    parameter V  =   4,
+    parameter P  =   5,
+    parameter Fpay  = 32,
+    parameter DST_ADR_HDR_WIDTH = 8,
+    parameter SRC_ADR_HDR_WIDTH = 8,
     parameter SSA_EN	   ="YES"
 )(
     flit_in ,
@@ -964,7 +966,7 @@ module flit_update_adaptive #(
                 VP_1    =   V       *   P_1,
                 VV      =   V       *   V;
                     
-    localparam  DEST_LOC_LSB    =   4*X_Y_IN_HDR_WIDTH,
+    localparam  DEST_LOC_LSB    =   SRC_ADR_HDR_WIDTH+DST_ADR_HDR_WIDTH,
                 DEST_LOC_HSB    =   DEST_LOC_LSB+P_1-1;
     
 
@@ -1065,3 +1067,114 @@ module flit_update_adaptive #(
     end
 
 endmodule
+
+
+
+
+
+//extract header flit info
+
+module extract_header_flit_info #(
+    parameter CLASS_HDR_WIDTH     =8,
+    parameter ROUTING_HDR_WIDTH   =8,
+    parameter DST_ADR_HDR_WIDTH  =8,
+    parameter SRC_ADR_HDR_WIDTH   =8,
+    parameter TOPOLOGY =    "MESH",//"MESH","TORUS","RING" 
+    parameter V = 4,    // vc_num_per_port
+    parameter P = 5,    // router port num
+    parameter NX = 4,   // number of node in x axis
+    parameter NY = 4,   // number of node in y axis
+    parameter C = 4,    //  number of flit class 
+    parameter Fpay = 32     //payload width
+)(
+    
+    flit_in,
+    flit_in_we,
+    //outputs
+    class_in,
+    destport_in,
+    x_dst_in,
+    y_dst_in,
+    x_src_in,
+    y_src_in,
+    vc_num_in,
+    hdr_flit_wr,
+    flg_hdr_in 
+);
+// minimum flit size is 32 width
+/* header flit format
+31--------------24     23--------16     15--------8            7-----0
+message_class_data     routing_info     destination_address    source_address
+*/
+    function integer log2;
+      input integer number; begin   
+         log2=0;    
+         while(2**log2<number) begin    
+            log2=log2+1;    
+         end    
+      end   
+    endfunction // log2 
+   
+    localparam      ADDR_DIMENTION =   (TOPOLOGY ==    "MESH" || TOPOLOGY ==  "TORUS") ? 2 : 1,  // "RING" and FULLY_CONNECT 
+	                ALL_DATA_HDR_WIDTH  = CLASS_HDR_WIDTH+ROUTING_HDR_WIDTH+DST_ADR_HDR_WIDTH+SRC_ADR_HDR_WIDTH,
+	                HDR_FLG     =   1,
+	                P_1         =   P-1 ,
+                    Fw          =   2+V+Fpay,//flit width
+                    Xw          =   log2(NX),
+                    Yw          =   log2(NY),
+                    Cw          =  (C>1)? log2(C): 1;
+                    
+	 
+	
+	input     [Fw-1       :   0] flit_in;
+    input                        flit_in_we;
+	output    [Cw-1       :   0] class_in;
+    output    [P_1-1      :   0] destport_in;
+    output    [Xw-1       :   0] x_dst_in;
+    output    [Yw-1       :   0] y_dst_in;
+    output    [Xw-1       :   0] x_src_in;
+    output    [Yw-1       :   0] y_src_in;
+    //output    [Yw-1       :   0] Z_dst_in;
+    output    [V-1        :   0] vc_num_in;
+    output    [V-1        :   0] hdr_flit_wr;
+	output    [1          :   0] flg_hdr_in; 
+	
+	
+					
+    wire    [CLASS_HDR_WIDTH-1      :   0]  class_hdr;
+    wire    [ROUTING_HDR_WIDTH-1    :   0]  routing_hdr;
+    wire    [DST_ADR_HDR_WIDTH-1    :   0]  dst_adr_hdr; 
+    wire    [SRC_ADR_HDR_WIDTH-1    :   0]  src_adr_hdr;
+  				
+					
+					
+    assign {class_hdr,routing_hdr,dst_adr_hdr,src_adr_hdr}= flit_in [ALL_DATA_HDR_WIDTH-1      :0];				
+					
+   
+     //x_dst_hdr, y_dst_hdr, x_src_hdr, y_src_hdr       
+    generate
+        if (ADDR_DIMENTION==1) begin :one_dimen
+            assign x_dst_in =   dst_adr_hdr       [Xw-1     : 0];
+            assign x_src_in =   src_adr_hdr       [Xw-1     : 0];
+            assign y_dst_in =   1'b0; 
+            assign y_src_in =   1'b0;                   
+        end else begin :two_dimen
+            assign y_dst_in =  dst_adr_hdr       [Xw-1     : 0];
+            assign y_src_in =  src_adr_hdr       [Xw-1     : 0];
+            assign x_dst_in =  dst_adr_hdr       [(DST_ADR_HDR_WIDTH/2)+Xw-1     : DST_ADR_HDR_WIDTH/2];
+            assign x_src_in =  src_adr_hdr       [(SRC_ADR_HDR_WIDTH/2)+Xw-1     : SRC_ADR_HDR_WIDTH/2];          
+        end
+    endgenerate
+
+	
+	 
+	assign vc_num_in = flit_in [Fpay+V-1	:	Fpay];
+	assign flg_hdr_in= flit_in [Fw-1	:	Fw-2];
+	assign class_in	= 	class_hdr 		[Cw-1     :	0];
+	
+	assign destport_in=	routing_hdr 	[P_1-1    :	0];
+	assign hdr_flit_wr= (flit_in_we & flg_hdr_in[HDR_FLG] )? vc_num_in : {V{1'b0}};
+
+endmodule
+
+

@@ -1,3 +1,5 @@
+ `timescale	 1ns/1ps
+
 module wb_bram_ctrl #(
     parameter Dw=32, //RAM data_width in bits
     parameter Aw=10, //RAM address width
@@ -111,7 +113,7 @@ module wb_bram_ctrl #(
             if(reset) begin 
                 ack  <= 1'b0;
             end else begin 
-                ack  <= (~sa_ack_o) & sa_stb_i;;
+                ack  <= (~sa_ack_o) & sa_stb_i;
             end     
         end
 
@@ -235,7 +237,9 @@ module wb_burst_bram_ctrl #(
 	   case (state)
 	     ST_IDLE:
 	       if (sa_stb_i && sa_cyc_i && (sa_ack_o == 1'b0))
-		 if ((sa_cti_i == 3'b000) || (sa_cti_i == 3'b111))
+		 if(sa_cti_i ==3'b100)
+			state_nxt = ST_IDLE;
+		 else if ((sa_cti_i == 3'b000) || (sa_cti_i == 3'b111) )
 		   state_nxt = ST_END;
 		 else
 		   if (sa_we_i && (sa_sel_i != 4'b1111))
@@ -299,7 +303,7 @@ module wb_burst_bram_ctrl #(
 	      if ((sa_we_i
 		   && (// Word Burst Write (first write in a sequence)
 		       ((state == ST_IDLE) 
-			&& sa_cyc_i && sa_stb_i && (sa_cti_i != 3'b000) && (sa_cti_i != 3'b111) && (sa_sel_i == 4'b1111))
+			&& sa_cyc_i && sa_stb_i && (sa_cti_i != 3'b000) && (sa_cti_i !=3'b100) && (sa_cti_i != 3'b111) && (sa_sel_i == 4'b1111))
 		       // Single Write
 		       || (state == ST_END)
 		       // Burst Write (all writes beyond first write)
