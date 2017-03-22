@@ -24,7 +24,7 @@ require "emulator.pl";
 
 
 
-our $VERSION = '1.5.1'; 
+our $VERSION = '1.5.2'; 
 
 sub main{
 
