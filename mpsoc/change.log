@@ -1,6 +1,11 @@
 All notable changes to this project will be documented in this file.
 
 
+##[1.6.0] - 6-3-2017
+## Added
+- NoC GUI simulator (using Verilator) 
+
+
 ##[1.5.2] - 22-2-2017
 ## changed
 - fixed bug in wishbone bus 

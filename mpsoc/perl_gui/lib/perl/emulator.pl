@@ -69,6 +69,7 @@ my @ginfo = (
   { label=>"legend placement", param_name=>"legend_placement", type=>'Combo-box', default_val=>'BL', content=>"BL,BC,BR,RT,RC,RB", info=>$legend_info, param_parent=>'graph_param', ref_delay=>undef},
  { label=>"Y min", param_name=>"Y_MIN", type=>'Spin-button', default_val=>0, content=>"0,1024,1", info=>"Y axix minimum value", param_parent=>'graph_param', ref_delay=> 5},
  { label=>"X min", param_name=>"X_MIN", type=>'Spin-button', default_val=>0, content=>"0,1024,1", info=>"X axix minimum value", param_parent=>'graph_param', ref_delay=> 5},
+{ label=>"X max", param_name=>"X_MAX", type=>'Spin-button', default_val=>100, content=>"0,1024,1", info=>"X axix maximum value", param_parent=>'graph_param', ref_delay=> 5},
  { label=>"Line Width", param_name=>"LINEw", type=>'Spin-button', default_val=>3, content=>"1,20,1", info=>undef, param_parent=>'graph_param', ref_delay=> 5},
  
 
@@ -93,12 +94,21 @@ my @ginfo = (
 		    	}
 						
 		}#for
-	my  @x1;
-	@x1 =  uniq(sort {$a<=>$b} @x) if (scalar @x);
+	my  @x2;
+	@x2 =  uniq(sort {$a<=>$b} @x) if (scalar @x);
+	
+	my  @x1; #remove x values larger than x_max
+	my $x_max= $emulate->object_get_attribute( 'graph_param','X_MAX');
+	foreach  my $p (@x2){
+		if(defined $x_max) {push (@x1,$p) if($p<$x_max);}
+		else {push (@x1,$p);}
+	}
+
 	#print "\@x1=@x1\n";
 	if (scalar @x1){
 		$results[0]=\@x1;
-		for (my $i=1;$i<=$sample_num; $i++) {
+		my $i;
+		for ($i=1;$i<=$sample_num; $i++) {
 			my $j=0;
 			my $ref=$emulate->object_get_attribute ("sample$i","result");
 			if(defined $ref){
@@ -113,12 +123,24 @@ my @ginfo = (
 			else {
 				$results[$i][$j]=undef;
 
-			}			
+			}
+					
 		}#$i
 		
+		
+		
 	}#if
-	
 	my $max_y=$min_y*$scale;
+	
+	my $s=scalar @x1;
+	
+	# all results which is larger than ymax will be changed to ymax,
+	for (my $i=1;$i<=$sample_num; $i++) {
+		for (my $j=1;$j<=$s; $j++) {
+			$results[$i][$j]=($results[$i][$j]>$max_y)? $max_y: $results[$i][$j] if (defined $results[$i][$j]);
+		}	
+	}
+	
 	
 	
 
@@ -135,11 +157,15 @@ my @ginfo = (
                	y_label         => $graphs_info->{Y_Title},
                	y_max_value     => $max_y,
                	y_min_value	=> $graphs_info->{Y_MIN},
-               	x_min_value     => $graphs_info->{X_MIN}, # dosent work?
+		y_tick_number   => 8,
+               #	x_min_value     => $graphs_info->{X_MIN}, # dosent work?
                	title           => $graphs_info->{G_Title},
                	bar_spacing     => 1,
                 shadowclr       => 'dred',
-                transparent     => 0,
+		 
+		box_axis       => 0,
+		skip_undef=> 1,
+                transparent     => 1,
 				line_width 		=> $graphs_info->{LINEw},
 				cycle_clrs		=> 'blue',
 				legend_placement => $graphs_info->{legend_placement},
@@ -149,12 +175,19 @@ my @ginfo = (
 	$graph->set_legend(@legend_keys);
 	
 	
+
+
+	
+
+
 	my $data = GD::Graph::Data->new(\@results) or die GD::Graph::Data->error;
+	$data->make_strict();
+	
         my $image = my_get_image($emulate,$graph,$data);
         
+	
         
-        
-        
+      # print  Data::Dumper->Dump ([\@results],['ttt']); 
         
         
         
@@ -284,13 +317,18 @@ sub my_get_image {
 	my ($emulate,$self, $data) = @_;
 	$self->{graphdata} = $data;
 	my $graph = $self->{graph};
-	my $gd1=$graph->plot($data) or warn $graph->error;
+	my $gd2=$graph->plot($data) or warn $graph->error;
 	my $loader = Gtk2::Gdk::PixbufLoader->new;
 	
 	
+	#cut the upper side of the image to remove the stright line created by chaanging large results to ymax
+       
 	
-	#my $gd2=$graph->plot([[0],[0]]) or warn $graph->error;
-	#$gd2->copy( $gd1, 0, 20, 0, 20, 500, 230 );
+	my $gd1=  GD::Image->new($gd2->getBounds);
+	my $white= $gd1->colorAllocate(255,255,254);
+	my ($x,$h)=$gd2->getBounds;
+	$gd1->transparent($white);
+	$gd1->copy( $gd2, 0, 0, 0, ,$h*0.05, $x ,$h*.95 );
 	
 	
 	$loader->write ($gd1->png);
@@ -303,11 +341,11 @@ sub my_get_image {
 		my $ext=$emulate->object_get_attribute("graph_save","extension");
 		$emulate->object_add_attribute("graph_save","save",0);
 
-		
+		#image
 		open(my $out, '>', $file);
 		if (tell $out )
 		{
-			warn "Cannot open '$file' for write: $!";  
+			warn "Cannot open '$file' to write: $!";  
 		}else
 		{	
 			#my @extens=$graph->export_format();
@@ -316,12 +354,43 @@ sub my_get_image {
 			#print $out  $gd1->gif  if($ext eq 'gif');
 			close $out;
 		}
+		#text_file
+		open(  $out, '>', "$file.txt");
+		if (tell $out )
+		{
+			warn "Cannot open $file.txt to write: $!";  
+		}
+		else
+		{	
+			my $sample_num=$emulate->object_get_attribute("emulate_num",undef);			
+			if (defined  $sample_num){
+				for (my $i=1;$i<=$sample_num; $i++) {
+					my $l_name= $emulate->object_get_attribute("sample$i","line_name");
+					my $ref=$emulate->object_get_attribute ("sample$i","result");
+					my @x;
+					if(defined $ref) {
+						
+						print $out "$l_name\n";
+						foreach my $x (sort {$a<=>$b} keys $ref) {
+							my $y=$ref->{$x};
+							print $out "\t$x , $y\n";
+						}
+						print $out "\n\n";
+					}				
+				}#for
+
+			} 
+		
+			close $out;
+		}
 
 	}
 	
 		
 
 	my $image = Gtk2::Image->new_from_pixbuf($loader->get_pixbuf);
+
+
 	$self->{graphimage} = $image;
 	my $hotspotlist;
 	if ($self->{graphtype} eq 'bars' or
@@ -515,38 +584,90 @@ sub get_injection_ratios{
 
 
 sub get_noc_configuration{
-	my ($emulate,$n) =@_;
-	my($width,$hight)=max_win_size();
-	my $win=def_popwin_size($width/2.5,$hight*.8,"NoC configuration setting");
+	my ($emulate,$mode,$n,$set_win) =@_;
+	
 	my $table=def_table(10,2,FALSE);
 	my $row=0;
 		
 		
-	my $traffics="tornado,transposed 1,transposed 2,bit reverse,bit complement,random"; #TODO hot spot 
-		
+	my $traffics="tornado,transposed 1,transposed 2,bit reverse,bit complement,random"; #TODO hot spot for emulator
 	my $dir = Cwd::getcwd();
-	my $open_in	  = abs_path("$ENV{PRONOC_WORK}/emulate/sof");	
-	attach_widget_to_table ($table,$row,gen_label_in_left("SoF file:"),gen_button_message ("Select the SRAM Object File (sof) for this NoC configration.","icons/help.png"), get_file_name_object ($emulate,"sample$n","sof_file",'sof',$open_in)); $row++;
+	if($mode eq "simulate"){
+		$traffics=$traffics.",hot spot";
+		my $open_in	  = abs_path("$ENV{PRONOC_WORK}/simulate");	
+		attach_widget_to_table ($table,$row,gen_label_in_left("Verilated file:"),gen_button_message ("Select the the verilator simulation file. Different NoC simulators can be generated using Generate NoC configuration tab.","icons/help.png"), get_file_name_object ($emulate,"sample$n","sof_file",undef,$open_in)); $row++;
+		
+	}else{
+		
+		my $open_in	  = abs_path("$ENV{PRONOC_WORK}/emulate/sof");	
+		attach_widget_to_table ($table,$row,gen_label_in_left("SoF file:"),gen_button_message ("Select the SRAM Object File (sof) for this NoC configration.","icons/help.png"), get_file_name_object ($emulate,"sample$n","sof_file",'sof',$open_in)); $row++;
+	}
 
-
-
-	my @siminfo = (
+   my @emulateinfo = (
 	{ label=>'Configuration name:', param_name=>'line_name', type=>'Entry', default_val=>"NoC$n", content=>undef, info=>"NoC configration name. This name will be shown in load-latency graph for this configuration", param_parent=>"sample$n", ref_delay=> undef},
 
   	{ label=>"Traffic name", param_name=>'traffic', type=>'Combo-box', default_val=>'random', content=>$traffics, info=>"Select traffic pattern", param_parent=>"sample$n", ref_delay=>undef},
 
 { label=>"Packet size in flit:", param_name=>'PCK_SIZE', type=>'Spin-button', default_val=>4, content=>"2,".MAX_PCK_SIZ.",1", info=>undef, param_parent=>"sample$n", ref_delay=>undef},
 
-	{ label=>"Packet number limit:", param_name=>'PCK_NUM_LIMIT', type=>'Spin-button', default_val=>1000000, content=>"2,".MAX_PCK_NUM.",1", info=>"Each node stops sending packets when it reaches packet number limit  or simulation clock number limit", param_parent=>"sample$n", ref_delay=>undef},
+	{ label=>"Packet number limit per node:", param_name=>'PCK_NUM_LIMIT', type=>'Spin-button', default_val=>1000000, content=>"2,".MAX_PCK_NUM.",1", info=>"Each node stops sending packets when it reaches packet number limit  or simulation clock number limit", param_parent=>"sample$n", ref_delay=>undef},
 
 { label=>"Emulation clocks limit:", param_name=>'SIM_CLOCK_LIMIT', type=>'Spin-button', default_val=>MAX_SIM_CLKs, content=>"2,".MAX_SIM_CLKs.",1", info=>"Each node stops sending packets when it reaches packet number limit  or simulation clock number limit", param_parent=>"sample$n", ref_delay=>undef},
 
 	
-);	
-	foreach my $d ( @siminfo) {
-	$row=noc_param_widget ($emulate, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,1, $d->{param_parent}, $d->{ref_delay});
-}
+);
 
+
+
+	my @siminfo = (
+	{ label=>'Configuration name:', param_name=>'line_name', type=>'Entry', default_val=>"NoC$n", content=>undef, info=>"NoC configration name. This name will be shown in load-latency graph for this configuration", param_parent=>"sample$n", ref_delay=> undef, new_status=>undef},
+
+  	{ label=>"Traffic name", param_name=>'traffic', type=>'Combo-box', default_val=>'random', content=>$traffics, info=>"Select traffic pattern", param_parent=>"sample$n", ref_delay=>1, new_status=>'ref_set_win'},
+
+	{ label=>"Packet size in flit:", param_name=>'PCK_SIZE', type=>'Spin-button', default_val=>4, content=>"2,".MAX_PCK_SIZ.",1", info=>undef, param_parent=>"sample$n", ref_delay=>undef},
+
+	{ label=>"Total packet number limit:", param_name=>'PCK_NUM_LIMIT', type=>'Spin-button', default_val=>200000, content=>"2,".MAX_PCK_NUM.",1", info=>"Simulation will stop when total numbr of sent packets by all nodes reaches packet number limit  or total simulation clock reach its limit", param_parent=>"sample$n", ref_delay=>undef, new_status=>undef},
+
+	{ label=>"Simulator clocks limit:", param_name=>'SIM_CLOCK_LIMIT', type=>'Spin-button', default_val=>100000, content=>"2,".MAX_SIM_CLKs.",1", info=>"Each node stops sending packets when it reaches packet number limit  or simulation clock number limit", param_parent=>"sample$n", ref_delay=>undef,  new_status=>undef},
+	);
+
+my @hotspot_info=(
+	{ label=>'Hot Spot num:', param_name=>'HOTSPOT_NUM', type=>'Spin-button', default_val=>1, 
+	  content=>"1,5,1", info=>"Number of hot spot nodes in the network", 
+	  param_parent=>"sample$n", ref_delay=> 1, new_status=>'ref_set_win'},
+	{ label=>'Hot Spot traffic percentage:', param_name=>'HOTSPOT_PERCENTAGE', type=>'Spin-button', default_val=>1, 
+	  content=>"1,20,1", info=>"If it is set as n then each node sends n % of its traffic to each hotspot node", 
+	  param_parent=>"sample$n", ref_delay=> undef, new_status=>undef},
+	
+	);
+	
+	
+	
+	
+	
+	
+	my @info= ($mode eq "simulate")? @siminfo : @emulateinfo; 
+	
+		
+	foreach my $d ( @info) {
+	$row=noc_param_widget ($emulate, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,1, $d->{param_parent}, $d->{ref_delay}, $d->{new_status});
+	}
+	my $traffic=$emulate->object_get_attribute("sample$n","traffic");
+
+	if ($traffic eq 'hot spot'){
+		foreach my $d ( @hotspot_info) {
+			$row=noc_param_widget ($emulate, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,1, $d->{param_parent}, $d->{ref_delay}, $d->{new_status});
+		}
+		my $num=$emulate->object_get_attribute("sample$n","HOTSPOT_NUM");
+		for (my $i=0;$i<$num;$i++){
+			my $m=$i+1;
+			$row=noc_param_widget ($emulate, "Hotspot $m tile num:", "HOTSPOT_CORE_$m", 0, 'Spin-button', "0,256,1",
+			 "Defne the tile number which is  hotspt. All other nodes will send [Hot Spot traffic percentage] of their traffic to this node ", $table,$row,1,"sample$n" );
+		
+			
+		}
+	
+	}
 
 
 
@@ -566,10 +687,13 @@ attach_widget_to_table ($table,$row,gen_label_in_left("Injection ratios:"),gen_b
 	$mtable->attach_defaults($scrolled_win,0,1,0,9);
 	$mtable-> attach ($ok , 0, 1,  9, 10,'expand','shrink',2,2); 
 	
-	$win->add ($mtable);
-	$win->show_all();
+	$set_win->add ($mtable);
+	$set_win->show_all();
 
-
+	$set_win ->signal_connect (destroy => sub{
+		
+		$emulate->object_add_attribute("active_setting",undef,undef);
+	});
 
 
 
@@ -587,14 +711,16 @@ attach_widget_to_table ($table,$row,gen_label_in_left("Injection ratios:"),gen_b
 		#check if injection ratios are valid
 		my $r=$emulate->object_get_attribute("sample$n","ratios");
 		if(defined $s && defined $r) {	
-				$win->destroy;
+				$set_win->destroy;
+				#$emulate->object_add_attribute("active_setting",undef,undef);
 				set_gui_status($emulate,"ref",1);
 		} else {
 			
 			if(!defined $s){
-				 message_dialog("Please select sof file!")
+				my $m=($mode eq 'simulate') ? "Please select NoC verilated file" : "Please select sof file!";
+				message_dialog($m);  
 			} else {
-				 message_dialog("Please define valid injection ratio(s)!")
+				 message_dialog("Please define valid injection ratio(s)!");
 			}
 		}
 	});
@@ -602,7 +728,7 @@ attach_widget_to_table ($table,$row,gen_label_in_left("Injection ratios:"),gen_b
 		
 
 
-
+	
 		
 		
 		
@@ -617,38 +743,56 @@ attach_widget_to_table ($table,$row,gen_label_in_left("Injection ratios:"),gen_b
 ###################      
       
 sub gen_emulation_column {
-	my ($emulate,$title, $row_num,$info)=@_;
+	my ($emulate,$mode, $row_num,$info)=@_;
 	my $table=def_table($row_num,10,FALSE);
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
+	my($width,$hight)=max_win_size();
+	my $set_win=def_popwin_size($width/2.5,$hight*.8,"NoC configuration setting");
+		
 	$scrolled_win->set_policy( "automatic", "automatic" );
 	$scrolled_win->add_with_viewport($table);	
 	my $row=0;
+	
 	#title	
-	if(defined $title){
-		my $title=gen_label_in_center($title);
-		my $box=def_vbox(FALSE, 1);
-		$box->pack_start( $title, FALSE, FALSE, 3);
-		my $separator = Gtk2::HSeparator->new;
-		$box->pack_start( $separator, FALSE, FALSE, 3);
-		$table->attach_defaults ($box , 0, 10,  $row, $row+1); $row++;
-	}
+	my $title_l =($mode eq "simulate" ) ? "NoC Simulator" : "NoC Emulator";
+	my $title=gen_label_in_center($title_l);
+	my $box=def_vbox(FALSE, 1);
+	$box->pack_start( $title, FALSE, FALSE, 3);
+	my $separator = Gtk2::HSeparator->new;
+	$box->pack_start( $separator, FALSE, FALSE, 3);
+	$table->attach_defaults ($box , 0, 10,  $row, $row+1); $row++;
 	
 	
-	my $lb=gen_label_in_left("Number of emulations");
+	
+	my $lb=($mode ne "simulate" ) ?  gen_label_in_left("Number of emulations"): gen_label_in_left("Number of simulations");
 	my $spin= gen_spin_object ($emulate,"emulate_num",undef,"1,100,1",1,'ref','1');
-    $table->attach_defaults ($lb, 0, 2, $row, $row+1);
-    $table->attach_defaults ($spin, 2, 4, $row, $row+1);$row++;
+	$table->attach  ($lb, 0, 2, $row, $row+1,'expand','shrink',2,2);
+	$table->attach  ($spin, 2, 4, $row, $row+1,'expand','shrink',2,2);
 	
 	
-		
+	#my $mod=gen_combobox_object ($emulate,'mode',undef, 'Emulation,Simulation','Emulation','ref','1');
+
+
 	
+	 
+	#$table->attach  ($lb, 4, 6, $row, $row+1,'expand','shrink',2,2);
+	#$table->attach  ($mod, 6, 8, $row, $row+1,'expand','shrink',2,2);
+$row++; 
+
+
+
+
+	
+	$separator = Gtk2::HSeparator->new;	
+	$table->attach_defaults ($separator  , 0, 10,  $row, $row+1); $row++;
+
 	my @positions=(0,1,2,3,6,7);
 	my $col=0;
 	
-	my @title=(" NoC configuration", "Line's color", "Clear Graph","  ");
+	my @title=(" Name", " Configuration Setting   ", "Line's color", "Clear Graph","  ");
 	foreach my $t (@title){
 		
-		$table->attach_defaults (gen_label_in_center($title[$col]), $positions[$col], $positions[$col+1], $row, $row+1);$col++;
+		$table->attach (gen_label_in_left($title[$col]), $positions[$col], $positions[$col+1], $row, $row+1,'fill','shrink',2,2);$col++;
 	}
 	
 	my $traffics="Random,Transposed 1,Transposed 2,Tornado";
@@ -663,6 +807,7 @@ sub gen_emulation_column {
 	 	$emulate->object_add_attribute("emulate_num",undef,1);
 	 }
 	my $i=0;
+	my $active=$emulate->object_get_attribute("active_setting",undef);
 	for ($i=1;$i<=$sample_num; $i++){
 		$col=0;
 		my $sample="sample$i";
@@ -670,16 +815,29 @@ sub gen_emulation_column {
 		my $set=def_image_button("icons/setting.png");
 		my $name=$emulate->object_get_attribute($sample,"line_name");
 		my $l;
-		if (defined $name){
-			 $l=gen_label_in_left($name); 
+		my $s=$emulate->object_get_attribute("sample$n","sof_file");
+		#check if injection ratios are valid
+		my $r=$emulate->object_get_attribute("sample$n","ratios");
+		if(defined $s && defined $r && defined $name){
+			 $l=gen_label_in_left(" $i- ".$name); 
 		} else {
-			$l=gen_label_in_center("Define NoC configuration");
+			$l=gen_label_in_left("Define NoC configuration");
 			$l->set_markup("<span  foreground= 'red' ><b>Define NoC configuration</b></span>");			 
 		}
-		my $box=def_pack_hbox(FALSE,0,(gen_label_in_left("$i- "),$l,$set));
-		$table->attach ($box, $positions[$col], $positions[$col+1], $row, $row+1,'expand','shrink',2,2);$col++;
+		#my $box=def_pack_hbox(FALSE,0,(gen_label_in_left("$i- "),$l,$set));
+		$table->attach ($l, $positions[$col], $positions[$col+1], $row, $row+1,'fill','shrink',2,2);$col++;
+		$table->attach ($set, $positions[$col], $positions[$col+1], $row, $row+1,'shrink','shrink',2,2);$col++;
+
+		
+		if(defined $active){#The setting windows ask for refershing so open it again
+			get_noc_configuration($emulate,$mode,$n,$set_win) if	($active ==$n);
+		}
+		
+		
+		
 		$set->signal_connect("clicked"=> sub{
-			get_noc_configuration($emulate,$n);
+			$emulate->object_add_attribute("active_setting",undef,$n);
+			get_noc_configuration($emulate,$mode,$n,$set_win);
 		});
 		
 		
@@ -717,7 +875,8 @@ sub gen_emulation_column {
 			my $status= $emulate->object_get_attribute('status',undef);
 			if($status ne 'run'){
 				
-				run_emulator($emulate,$info); 
+				run_emulator($emulate,$info) if($mode eq 'emulate');
+				run_simulator($emulate,$info) if($mode eq 'simulate');  
 				set_gui_status($emulate,"ref",2);
 			}
 			
@@ -738,7 +897,7 @@ sub gen_emulation_column {
 
 
 
-	return $scrolled_win;
+	return ($scrolled_win,$set_win);
 }	      
 
 
@@ -1017,17 +1176,20 @@ sub run_emulator {
 
 
 sub process_notebook_gen{
-		my ($emulate,$info)=@_;
+		my ($emulate,$info,$mode)=@_;
 		my $notebook = Gtk2::Notebook->new;
 		$notebook->set_tab_pos ('left');
 		$notebook->set_scrollable(TRUE);
 		$notebook->can_focus(FALSE);
-		my $page1=gen_emulation_column($emulate,"NoC Configuration",10,$info);
-		$notebook->append_page ($page1,Gtk2::Label->new_with_mnemonic ("  _Run emulator  "));
+
+		
+		my ($page1,$set_win)=gen_emulation_column($emulate, $mode,10,$info);
+		$notebook->append_page ($page1,Gtk2::Label->new_with_mnemonic ("  _Run emulator  ")) if($mode eq "emulate");
+		$notebook->append_page ($page1,Gtk2::Label->new_with_mnemonic ("  _Run simulator ")) if($mode eq "simulate");
 		
 		
-		my $page2=get_noc_setting_gui ($emulate,$info);
-		my $pp=$notebook->append_page ($page2,Gtk2::Label->new_with_mnemonic ("  _Generate sof   "));
+		my $page2=get_noc_setting_gui ($emulate,$info,$mode);
+		my $pp=$notebook->append_page ($page2,Gtk2::Label->new_with_mnemonic (" _Generate NoC \n Configuration"));
 		
 		
 		
@@ -1043,13 +1205,13 @@ sub process_notebook_gen{
 					
 		});
 		
-		return $scrolled_win;
+		return ($scrolled_win,$set_win);
 	
 }
 
 
 sub get_noc_setting_gui {
-	my ($emulate,$info_text)=@_;
+	my ($emulate,$info_text,$mode)=@_;
 	my $table=def_table(20,10,FALSE);#	my ($row,$col,$homogeneous)=@_;
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
 	$scrolled_win->set_policy( "automatic", "automatic" );
@@ -1067,21 +1229,39 @@ sub get_noc_setting_gui {
 	}
 	
 			
-
+my @fpgainfo;
 	
+	if($mode eq "emulate"){
 	
-	
-	my @fpgainfo = (
+	@fpgainfo = (
 	{ label=>'FPGA board', param_name=>'FPGA_BOARD', type=>'Combo-box', default_val=>undef, content=>$fpgas, info=>undef, param_parent=>'fpga_param', ref_delay=> undef},
   	{ label=>'Save as:', param_name=>'SAVE_NAME', type=>"Entry", default_val=>'emulate1', content=>undef, info=>undef, param_parent=>'fpga_param', ref_delay=>undef},
 	{ label=>"Project directory", param_name=>"SOF_DIR", type=>"DIR_path", default_val=>"$ENV{'PRONOC_WORK'}/emulate", content=>undef, info=>"Define the working directory for generating .sof file", param_parent=>'fpga_param',ref_delay=>undef },
 
 );	
-	foreach my $d (@fpgainfo) {
+
+}
+else {
+
+@fpgainfo = (
+	#{ label=>'FPGA board', param_name=>'FPGA_BOARD', type=>'Combo-box', default_val=>undef, content=>$fpgas, info=>undef, param_parent=>'fpga_param', ref_delay=> undef},
+  	{ label=>'Save as:', param_name=>'SAVE_NAME', type=>"Entry", default_val=>'simulate1', content=>undef, info=>undef, param_parent=>'sim_param', ref_delay=>undef},
+	{ label=>"Project directory", param_name=>"BIN_DIR", type=>"DIR_path", default_val=>"$ENV{'PRONOC_WORK'}/simulate", content=>undef, info=>"Define the working directory for generating simulation executable binarry file", param_parent=>'sim_param',ref_delay=>undef },
+
+);	
+}
+
+
+	
+
+foreach my $d (@fpgainfo) {
 	$row=noc_param_widget ($emulate, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,1, $d->{param_parent}, $d->{ref_delay});
 }
 
-	
+
+
+
+
 	   
 	   	
 	   
@@ -1092,7 +1272,8 @@ sub get_noc_setting_gui {
 		$table->attach ($generate, 0,3, $row, $row+1,'expand','shrink',2,2);
       
 		$generate->signal_connect ('clicked'=> sub{
-			generate_sof_file($emulate,$info_text);
+			generate_sof_file($emulate,$info_text) if($mode eq "emulate");
+			generate_sim_bin_file($emulate,$info_text) if($mode eq "simulate");
 			
 		});
 		
@@ -1127,6 +1308,9 @@ sub generate_sof_file {
 		my $dir = Cwd::getcwd();
 		my $project_dir	  = abs_path("$dir/../../");
 		my ($stdout,$exit)=run_cmd_in_back_ground_get_stdout("mkdir -p $dir_name/src/" );
+		
+			
+		
 		copy_file_and_folders(\@files,$project_dir,"$dir_name/src/");
 		
 		foreach my $f(@files){
@@ -1290,7 +1474,7 @@ sub emulator_main{
 	
 	
 	
-	my $conf_box=process_notebook_gen($emulate,\$info);
+	my ($conf_box,$set_win)=process_notebook_gen($emulate,\$info,"emulate");
 	my $chart   =gen_chart  ($emulate);
     
 
@@ -1342,10 +1526,12 @@ sub emulator_main{
 
 
 		$conf_box->destroy();
+		$set_win->destroy();
 		$chart->destroy();
 		$image->destroy(); 
 		$image = get_status_gif($emulate);
-		$conf_box=process_notebook_gen($emulate,\$info);
+		
+		($conf_box,$set_win)=process_notebook_gen($emulate,\$info,"emulate");
 		$chart   =gen_chart  ($emulate);
 		$left_table->attach_defaults ($image , 0, 6, 20, 24);
 		$left_table->attach_defaults ($conf_box , 0, 6, 0, 12);
@@ -1367,6 +1553,16 @@ sub emulator_main{
 		if ($timeout>0){
 			$timeout--;
 			set_gui_status($emulate,$state,$timeout);	
+			
+		}
+		elsif($state eq 'ref_set_win'){
+			my $s=$emulate->object_get_attribute("active_setting",undef);
+			$set_win->destroy();
+			$emulate->object_add_attribute("active_setting",undef,$s);
+			$refresh->clicked;
+			#my $saved_name=$mpsoc->mpsoc_get_mpsoc_name();
+			#if(defined $saved_name) {$entry->set_text($saved_name);}
+			set_gui_status($emulate,"ideal",0);
 			
 		}
 		elsif( $state ne "ideal" ){
@@ -1418,6 +1614,107 @@ sub emulator_main{
 	
 
 }
+
+
+
+
+
+
+
+############
+#	run_simulator
+###########
+
+sub run_simulator {
+	my ($simulate,$info)=@_;
+	#return if(!check_samples($emulate,$info));
+	$simulate->object_add_attribute('status',undef,'run');
+	set_gui_status($simulate,"ref",1);
+	show_info($info, "Start Simulation\n");
+
+	my $sample_num=$simulate->object_get_attribute("emulate_num",undef);
+	for (my $i=1; $i<=$sample_num; $i++){
+		my $status=$simulate->object_get_attribute ("sample$i","status");	
+		next if($status ne "run");
+		next if(!check_sample($simulate,$i,$info));
+		my $r= $simulate->object_get_attribute("sample$i","ratios");
+		my @ratios=@{check_inserted_ratios($r)};
+		#$emulate->object_add_attribute ("sample$i","status","run");			
+		my $bin=$simulate->object_get_attribute ("sample$i","sof_file");
+		
+		#load traffic configuration
+		my $patern=$simulate->object_get_attribute ("sample$i",'traffic');
+		my $PCK_SIZE=$simulate->object_get_attribute ("sample$i","PCK_SIZE");
+		my $PCK_NUM_LIMIT=$simulate->object_get_attribute ("sample$i","PCK_NUM_LIMIT");
+		my $SIM_CLOCK_LIMIT=$simulate->object_get_attribute ("sample$i","SIM_CLOCK_LIMIT");
+		
+		
+		my $HOTSPOT_PERCENTAGE=$simulate->object_get_attribute ("sample$i",'HOTSPOT_PERCENTAGE');
+    	my $HOTSPOT_NUM=$simulate->object_get_attribute ("sample$i","HOTSPOT_NUM");           
+   		my $HOTSPOT_CORE_1=$simulate->object_get_attribute ("sample$i","HOTSPOT_CORE_1");
+    	my $HOTSPOT_CORE_2=$simulate->object_get_attribute ("sample$i","HOTSPOT_CORE_2");
+    	my $HOTSPOT_CORE_3=$simulate->object_get_attribute ("sample$i","HOTSPOT_CORE_3");
+    	my $HOTSPOT_CORE_4=$simulate->object_get_attribute ("sample$i","HOTSPOT_CORE_4");
+    	my $HOTSPOT_CORE_5=$simulate->object_get_attribute ("sample$i","HOTSPOT_CORE_5");
+			
+		$HOTSPOT_PERCENTAGE = 0 if (!defined $HOTSPOT_PERCENTAGE);
+		$HOTSPOT_NUM=0 if (!defined $HOTSPOT_NUM);           
+   		$HOTSPOT_CORE_1=0 if (!defined $HOTSPOT_CORE_1);
+    	$HOTSPOT_CORE_2=0 if (!defined $HOTSPOT_CORE_2);
+    	$HOTSPOT_CORE_3=0 if (!defined $HOTSPOT_CORE_3);
+    	$HOTSPOT_CORE_4=0 if (!defined $HOTSPOT_CORE_4);
+    	$HOTSPOT_CORE_5=0 if (!defined $HOTSPOT_CORE_5);
+		
+		
+		
+		
+		
+				
+		
+		foreach  my $ratio_in (@ratios){						
+	    	
+		    	add_info($info, "Run $bin with  injection ratio of $ratio_in \% \n");
+		    	my $cmd="$bin -t \"$patern\"  -s $PCK_SIZE  -n  $PCK_NUM_LIMIT  -c	$SIM_CLOCK_LIMIT   -i $ratio_in -p \"100,0,0,0,0\"  -h \"$HOTSPOT_PERCENTAGE,$HOTSPOT_NUM,$HOTSPOT_CORE_1,$HOTSPOT_CORE_2,$HOTSPOT_CORE_3,$HOTSPOT_CORE_4,$HOTSPOT_CORE_5\"";
+				add_info($info, "$cmd \n");
+	 			my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout("$cmd");
+	 			if($exit){
+	 				add_info($info, "Error in running simulation: $stderr \n");
+	 				return;
+	 			}
+	 			my @q =split  (/average latency =/,$stdout);
+				my $d=$q[1];
+				@q =split  (/\n/,$d);
+				my $avg=$q[0];
+				#my $avg = sprintf("%.1f", $avg);
+		    	   	
+		    	
+		    	
+		    	
+		    	next if (!defined $avg);
+		    	my $ref=$simulate->object_get_attribute ("sample$i","result");
+		    	my %results;
+		    	%results= %{$ref} if(defined $ref);
+		    	#push(@results,$avg);
+		    	$results{$ratio_in}=$avg;
+		    	$simulate->object_add_attribute ("sample$i","result",\%results);
+		    	set_gui_status($simulate,"ref",2);
+		    	
+		    	
+		    	
+		    	
+		    	
+	    		    	
+		}
+		$simulate->object_add_attribute ("sample$i","status","done");	
+    	
+	}
+	
+	add_info($info, "Simulation is done!\n");
+	$simulate->object_add_attribute('status',undef,'ideal');
+	set_gui_status($simulate,"ref",1);
+}
+	
+	
 
 
 

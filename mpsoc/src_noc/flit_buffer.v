@@ -21,12 +21,13 @@ module flit_buffer #(
         ssa_rd
     );
 
+   
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
     endfunction // log2 
     
@@ -460,12 +461,13 @@ module fifo_ram_mem_size     #(
        rd_data
     ); 
      
+    
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
     endfunction // log2 
 
@@ -557,14 +559,15 @@ module fwft_fifo #(
     
     );
     
+   
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
-   endfunction // log2 
+    endfunction // log2 
     
 
     
@@ -778,14 +781,15 @@ module fwft_fifo_with_output_clear #(
     
     
     
+  
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
-   endfunction // log2 
+    endfunction // log2 
     
 
     
@@ -977,12 +981,13 @@ module fifo  #(
     clk
 );
 
+ 
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
     endfunction // log2 
 

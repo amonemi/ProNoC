@@ -1104,7 +1104,7 @@ sub get_file_name_object {
 		
 	} else {
 			$lable=gen_label_in_center("Selecet a $extension file");
-			$lable->set_markup("<span  foreground= 'red' ><b>Selecet a sof file</b></span>");
+			$lable->set_markup("<span  foreground= 'red' ><b>No file has been selected yet</b></span>");
 	}
 	my $entry=gen_entry();
 	my $browse= get_file_name($object,undef,$entry,$attribute1,$attribute2,$extension,$lable,$open_in);

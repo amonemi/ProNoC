@@ -24,12 +24,13 @@ module   port_presel_based_dst_ports_vc #(
         port_pre_sel
      );
      
+    
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
     endfunction // log2 
          
@@ -129,12 +130,13 @@ module  port_presel_based_dst_ports_credit #(
     reset
 );
 
-     function integer log2;
+
+    function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
     endfunction // log2 
     
@@ -590,12 +592,13 @@ endmodule
     reset  
  
  );
-  function integer log2;
+
+    function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
     endfunction // log2 
  
@@ -1055,12 +1058,13 @@ endmodule
  
  );
     
+
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
     endfunction // log2 
     
@@ -1182,12 +1186,13 @@ module parallel_count_normalize #(
     out
 
 );
+
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
     endfunction // log2 
     
@@ -1236,12 +1241,13 @@ module parallel_count_normalize #(
  
  );
  
+ 
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
     endfunction // log2 
     
@@ -1472,12 +1478,13 @@ module  deadlock_detector #(
 
 );
     
+ 
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
     endfunction // log2 
     

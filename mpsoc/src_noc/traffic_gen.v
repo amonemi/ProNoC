@@ -22,8 +22,12 @@ module  traffic_gen #(
     parameter MAX_PCK_NUM   = 10000,
     parameter MAX_SIM_CLKs  = 100000,
     parameter MAX_PCK_SIZ   = 10,  // max packet size
-    parameter TIMSTMP_FIFO_NUM=16  
-    
+    parameter TIMSTMP_FIFO_NUM=16,  
+    //header flit filds' width 
+    parameter CLASS_HDR_WIDTH     =8,
+    parameter ROUTING_HDR_WIDTH   =8,
+    parameter DST_ADR_HDR_WIDTH  =8,
+    parameter SRC_ADR_HDR_WIDTH   =8
 )
 (
     //input 
@@ -60,14 +64,15 @@ module  traffic_gen #(
     clk
 );
 
+  
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
-   endfunction // log2 
+    endfunction // log2 
    
     localparam P=  (TOPOLOGY=="RING")? 3 : 5;  
     localparam ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
@@ -96,11 +101,7 @@ module  traffic_gen #(
                     PCK_SIZw    = log2(MAX_PCK_SIZ+1);
 
     
-    localparam      CLASS_IN_HDR_WIDTH      =8,
-                    DEST_IN_HDR_WIDTH       =8,
-                    X_Y_IN_HDR_WIDTH        =4;
-   
-    
+
     input reset, clk;
     input  [RATIOw-1                :0] ratio;
     input                               start;
@@ -137,31 +138,30 @@ module  traffic_gen #(
    
    
     wire    [P_1-1                  :   0] destport;   
-    wire    [DEST_IN_HDR_WIDTH-1    :   0] wr_destport_hdr;
     wire    [V-1                    :   0] ovc_wr_in;
     wire    [V-1                    :   0] full_vc,empty_vc;
     reg     [V-1                    :   0] wr_vc,wr_vc_next;
     wire    [V-1                    :   0] cand_vc;
-    wire    [X_Y_IN_HDR_WIDTH-1     :   0] wr_des_x_addr,wr_des_y_addr;
-    wire    [X_Y_IN_HDR_WIDTH-1     :   0] wr_src_x_addr,wr_src_y_addr;
-    wire    [CLASS_IN_HDR_WIDTH-1   :   0] wr_class_hdr;
+    
+    
     wire    [CLK_CNTw-1             :   0] wr_timestamp,pck_timestamp;
     wire                                   hdr_flit,tail_flit;
     reg     [PCK_SIZw-1             :   0] flit_counter;
     reg                                    flit_cnt_rst,flit_cnt_inc;
     wire    [1                      :   0] rd_hdr_flg;
-    wire    [CLASS_IN_HDR_WIDTH-1   :   0] rd_class_hdr;
-    wire    [DEST_IN_HDR_WIDTH-1    :   0] rd_destport_hdr;
-    wire    [X_Y_IN_HDR_WIDTH-1     :   0] rd_des_x_addr,   rd_des_y_addr,rd_src_x_addr,rd_src_y_addr;
-    reg     [CLK_CNTw-1             :   0] rsv_counter,last_pck_time;
+    wire    [Cw-1   :   0] rd_class_hdr;
+  //  wire    [P_1-1      :   0] rd_destport_hdr;
+    wire    [Xw-1		:	0] rd_des_x_addr, rd_src_x_addr;  
+    wire    [Yw-1		:	0] rd_des_y_addr, rd_src_y_addr;
+    reg     [CLK_CNTw-1             :   0] rsv_counter;
     reg     [CLK_CNTw-1             :   0] clk_counter;
-    wire    [Vw-1                   :   0] rd_vc_bin,wr_vc_bin;
+    wire    [Vw-1                   :   0] rd_vc_bin;//,wr_vc_bin;
     reg     [CLK_CNTw-1             :   0] rsv_time_stamp[V-1:0];
     wire    [V-1                    :   0] rd_vc; 
     wire                                   wr_vc_is_full,wr_vc_avb,wr_vc_is_empty;
     reg     [V-1                    :   0] credit_out_next;
-    reg     [X_Y_IN_HDR_WIDTH-1     :   0] rsv_pck_src_x        [V-1:0];
-    reg     [X_Y_IN_HDR_WIDTH-1     :   0] rsv_pck_src_y        [V-1:0];
+    reg     [Xw-1     :   0] rsv_pck_src_x        [V-1:0];
+    reg     [Yw-1     :   0] rsv_pck_src_y        [V-1:0];
     reg     [Cw-1                   :   0] rsv_pck_class_in     [V-1:0];  
       
     
@@ -239,17 +239,59 @@ module  traffic_gen #(
     	.valid_dst(valid_dst),
     	.destport(destport)
     );
+
+// for   flit size >= 32 bits
+/* header flit format
+31--------------24     23--------16     15--------8            7-----0
+message_class_data     routing_info     destination_address    source_address
+*/
+    localparam      ADDR_DIMENTION =   (TOPOLOGY ==    "MESH" || TOPOLOGY ==  "TORUS") ? 2 : /* ("RING" and FULLY_CONNECT)?*/ 1; 
+
+    reg    [CLASS_HDR_WIDTH-1      :   0]  wr_class_hdr;
+    reg    [ROUTING_HDR_WIDTH-1    :   0]  wr_routing_hdr;
+    reg    [DST_ADR_HDR_WIDTH-1    :   0]  wr_dst_adr_hdr; 
+    reg    [SRC_ADR_HDR_WIDTH-1    :   0]  wr_src_adr_hdr;
+    
+    
+    assign wr_timestamp    =pck_timestamp; 
+
+    always @(*) begin  
+        wr_class_hdr= {CLASS_HDR_WIDTH{1'b0}};
+        wr_class_hdr[Cw-1     :   0] = pck_class_in;
+        wr_routing_hdr ={ROUTING_HDR_WIDTH{1'b0}};
+        wr_routing_hdr[P_1-1  :   0] = destport;
+    end
+
+    generate
+        if (ADDR_DIMENTION==1) begin :one_dimen
+        
+            always @(*) begin 
+                 wr_src_adr_hdr=   {SRC_ADR_HDR_WIDTH{1'b0}}; 
+                 wr_dst_adr_hdr=   {DST_ADR_HDR_WIDTH{1'b0}};
+                 wr_src_adr_hdr  [Xw-1  :0]=   current_x; 
+                 wr_dst_adr_hdr  [Xw-1  :0]=   dest_x;       
+            end           
+	                 
+        end else begin :two_dimen
+	        
+	        always @(*) begin
+                 wr_src_adr_hdr=   {SRC_ADR_HDR_WIDTH{1'b0}}; 
+                 wr_dst_adr_hdr=   {DST_ADR_HDR_WIDTH{1'b0}};
+                 
+                 wr_src_adr_hdr[Yw-1 : 0] =  current_y;
+                 wr_src_adr_hdr[(SRC_ADR_HDR_WIDTH/2)+Xw-1 : (SRC_ADR_HDR_WIDTH/2)] =  current_x;
+                 
+                 wr_dst_adr_hdr[Yw-1 : 0]=  dest_y;  
+                 wr_dst_adr_hdr[(SRC_ADR_HDR_WIDTH/2)+Xw-1 : (SRC_ADR_HDR_WIDTH/2)]= dest_x;
+             end
+	                         
+        end
+    endgenerate
+
+
+   
     
 
-    
-   
-    assign wr_class_hdr    ={{(CLASS_IN_HDR_WIDTH-Cw){1'b0}},pck_class_in};
-    assign wr_destport_hdr ={{(DEST_IN_HDR_WIDTH-P_1){1'b0}},destport};
-    assign wr_des_x_addr   ={{(X_Y_IN_HDR_WIDTH-Xw){1'b0}},  dest_x};
-    assign wr_des_y_addr   ={{(X_Y_IN_HDR_WIDTH-Yw){1'b0}},  dest_y};
-    assign wr_src_x_addr   ={{(X_Y_IN_HDR_WIDTH-Yw){1'b0}},  current_x};
-    assign wr_src_y_addr   ={{(X_Y_IN_HDR_WIDTH-Yw){1'b0}},  current_y};
-    assign wr_timestamp    =pck_timestamp;
         
 
 
@@ -258,29 +300,66 @@ module  traffic_gen #(
     assign  update      = flit_in_wr & flit_in[Fw-2];
     assign  hdr_flit    = (flit_counter == 0);
     assign  tail_flit   = (flit_counter ==  pck_size-1'b1);
-    assign  time_stamp_h2h  =  rsv_time_stamp[rd_vc_bin] - flit_in[CLK_CNTw-1             :   0];
+    assign  time_stamp_h2h  = rsv_time_stamp[rd_vc_bin] - flit_in[CLK_CNTw-1             :   0];
     assign  time_stamp_h2t  = clk_counter - flit_in[CLK_CNTw-1             :   0];
 
-	 wire [Fpay-1	:	0] flit_out_pyload;
-	 wire [1		:	0]	flit_out_hdr;
+    wire [Fpay-1    :	0] flit_out_pyload;
+    wire [1         :	0] flit_out_hdr;
 	 
-	 assign flit_out_pyload =   (hdr_flit)     ?    {wr_class_hdr,wr_destport_hdr,wr_des_x_addr,wr_des_y_addr,wr_src_x_addr,wr_src_y_addr}:
-                               (tail_flit)    ?     wr_timestamp:
-																	{pck_number,flit_counter};
-	 assign flit_out_hdr    =   (hdr_flit)     ?    2'b10:
-									    (tail_flit)    ?    2'b01:
-																	2'b00;
+    assign flit_out_pyload = (hdr_flit)  ?    {wr_class_hdr,wr_routing_hdr,wr_dst_adr_hdr,wr_src_adr_hdr}:
+                             (tail_flit) ?     wr_timestamp:
+                                              {pck_number,flit_counter};
+
+    assign flit_out_hdr = (hdr_flit)  ? 2'b10:
+                          (tail_flit) ? 2'b01:
+                                        2'b00;
 	 
     assign flit_out = {flit_out_hdr, wr_vc, flit_out_pyload };   
 	 
 	 
 
-assign {rd_hdr_flg,rd_vc,rd_class_hdr,rd_destport_hdr,rd_des_x_addr,rd_des_y_addr,rd_src_x_addr,rd_src_y_addr} = flit_in;                                     
+
+
+
+
+//extract header flit info
+
+     extract_header_flit_info #(
+     	.CLASS_HDR_WIDTH(CLASS_HDR_WIDTH),
+     	.ROUTING_HDR_WIDTH(ROUTING_HDR_WIDTH),
+     	.DST_ADR_HDR_WIDTH(DST_ADR_HDR_WIDTH),
+     	.SRC_ADR_HDR_WIDTH(SRC_ADR_HDR_WIDTH),
+     	.TOPOLOGY(TOPOLOGY),
+     	.V(V),
+     	.P(P),
+     	.NX(NX),
+     	.NY(NY),
+     	.C(C),
+     	.Fpay(Fpay)
+     )
+     header_extractor
+     (
+     	.flit_in(flit_in),
+     	.flit_in_we(flit_in_wr),
+     	.class_in(rd_class_hdr),
+     	.destport_in(),//(rd_destport_hdr),
+     	.x_dst_in(rd_des_x_addr),
+     	.y_dst_in(rd_des_y_addr),
+     	.x_src_in(rd_src_x_addr),
+     	.y_src_in(rd_src_y_addr),
+     	.vc_num_in(rd_vc),
+     	.hdr_flit_wr( ),
+     	.flg_hdr_in(rd_hdr_flg)
+     );
+
+
+
+                                   
 
     wire [Xw-1        :   0]    src_x;
     wire [Yw-1        :   0]    src_y;
-    assign src_x            = rsv_pck_src_x[rd_vc_bin][Xw-1 :   0];
-    assign src_y            = rsv_pck_src_y[rd_vc_bin][Yw-1 :   0];
+    assign src_x            = rsv_pck_src_x[rd_vc_bin];
+    assign src_y            = rsv_pck_src_y[rd_vc_bin];
     assign pck_class_out    = rsv_pck_class_in[rd_vc_bin];
    
    
@@ -293,8 +372,8 @@ assign {rd_hdr_flg,rd_vc,rd_class_hdr,rd_destport_hdr,rd_des_x_addr,rd_des_y_add
     the_distance_gen
     (
     	.src_x(src_x),
-    	.dest_x(current_x),
     	.src_y(src_y),
+    	.dest_x(current_x),    	
     	.dest_y(current_y),
     	.distance(distance)
     );
@@ -302,7 +381,7 @@ assign {rd_hdr_flg,rd_vc,rd_class_hdr,rd_destport_hdr,rd_des_x_addr,rd_des_y_add
  generate 
  if(V==1) begin : v1
     assign rd_vc_bin=1'b0;
-    assign wr_vc_bin=1'b0;
+   // assign wr_vc_bin=1'b0;
  end else begin :vother  
 
     one_hot_to_bin #( .ONE_HOT_WIDTH (V)) conv1 
@@ -310,12 +389,13 @@ assign {rd_hdr_flg,rd_vc,rd_class_hdr,rd_destport_hdr,rd_des_x_addr,rd_des_y_add
         .one_hot_code   (rd_vc),
         .bin_code       (rd_vc_bin)
     );
-    
+    /*
     one_hot_to_bin #( .ONE_HOT_WIDTH (V)) conv2 
     (
         .one_hot_code   (wr_vc),
         .bin_code       (wr_vc_bin)
     );
+    */
  end 
  endgenerate
     
@@ -432,7 +512,7 @@ always @(posedge clk or posedge reset )begin
                     if (flit_in[Fw-1])begin 
                         rsv_pck_src_x[rd_vc_bin]    <=  rd_src_x_addr;
                         rsv_pck_src_y[rd_vc_bin]    <=  rd_src_y_addr;
-                        rsv_pck_class_in[rd_vc_bin]    <= rd_class_hdr[Cw-1                            :   0];
+                        rsv_pck_class_in[rd_vc_bin]    <= rd_class_hdr;
                         rsv_time_stamp[rd_vc_bin]   <= clk_counter;  
                         rsv_counter                 <= rsv_counter+1'b1;
                                             
@@ -446,7 +526,7 @@ always @(posedge clk or posedge reset )begin
         
         // synthesis translate_off
             if(report) begin 
-                 $display ("%t,\t toptal of %d pcks have been recived in core (%d,%d)", last_pck_time,rsv_counter,current_x,current_y);
+                 $display ("%t,\t toptal of %d pcks have been recived in core (%d,%d)",$time ,rsv_counter,current_x,current_y);
             end
         // synthesis translate_on
          
@@ -460,8 +540,8 @@ always @(posedge clk or posedge reset )begin
 
    // synthesis translate_off
     always @(posedge clk) begin     
-        if(flit_out_wr && hdr_flit && wr_des_x_addr[Xw-1    :   0] == current_x && wr_des_y_addr[Yw-1    :   0] == current_y) $display("%t: Error: The source and destination address of injected packet is the same in router(%d,%d) ",$time, wr_des_x_addr ,wr_des_y_addr);                                                             
-        if(flit_in_wr && rd_hdr_flg[1] && rd_des_x_addr [Xw-1    :   0]  != current_x && rd_des_y_addr [Yw-1    :   0] != current_y ) $display("%t: Error: packet with des(%d,%d) has been recieved in wrong router (%d,%d).  ",$time,rd_des_x_addr, rd_des_y_addr, current_x , current_y);        
+        if(flit_out_wr && hdr_flit && dest_x  == current_x &&  dest_y == current_y) $display("%t: Error: The source and destination address of injected packet is the same in router(%d,%d) ",$time, dest_x ,dest_y);                                                             
+        if(flit_in_wr && rd_hdr_flg[1] && (rd_des_x_addr    != current_x || rd_des_y_addr   != current_y )) $display("%t: Error: packet with des(%d,%d) has been recieved in wrong router (%d,%d).  ",$time,rd_des_x_addr, rd_des_y_addr, current_x , current_y);        
     end
     // synthesis translate_on
     
@@ -541,15 +621,15 @@ module injection_ratio_ctrl #
 
 );
 
+
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
-   endfunction // log2 
-   
+    endfunction // log2 
    
    
    localparam PCK_SIZw= log2(MAX_PCK_SIZ);
@@ -681,15 +761,15 @@ endmodule
  
  );
  
-  function integer log2;
+ 
+    function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
-   endfunction // log2 
-   
+    endfunction // log2 
  
     
     localparam      P_1         =   P-1,
@@ -799,12 +879,14 @@ module distance_gen #(
     distance
 
 );
+ 
+
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
     endfunction // log2 
  
@@ -831,7 +913,7 @@ module distance_gen #(
         
     
     
-    end else begin //torus
+    end else begin //torus ring
     
         wire tranc_x_plus,tranc_x_min,tranc_y_plus,tranc_y_min,same_x,same_y;
                 

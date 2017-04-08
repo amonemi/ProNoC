@@ -38,12 +38,13 @@ module pck_class_in_gen #(
 
 ); 
  
+    
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
     endfunction // log2 
    
@@ -92,7 +93,8 @@ endmodule
 
 *********************************/
  
-module pck_dst_gen #(
+ 
+module  pck_dst_gen  #(
     parameter NX = 4,
     parameter NY = 4,
     parameter TOPOLOGY="MESH",
@@ -116,18 +118,142 @@ module pck_dst_gen #(
     dest_y,  
     clk,
     reset,
-    valid_dst   
+    valid_dst 
+); 
+ 
+ 
+    localparam      ADDR_DIMENTION =   (TOPOLOGY ==    "MESH" || TOPOLOGY ==  "TORUS") ? 2 : 1;  // "RING" and FULLY_CONNECT 
+ 
+ 
+    function integer log2;
+      input integer number; begin   
+         log2=(number <=1) ? 1: 0;    
+         while(2**log2<number) begin    
+            log2=log2+1;    
+         end 	   
+      end   
+    endfunction // log2 
+     
+     
+    localparam  NC =    (TOPOLOGY=="RING")? NX    :   NX*NY,    //number of cores
+                Xw = log2(NX),
+                Yw = log2(NY), 
+                NCw= log2(NC),
+                PCK_CNTw = log2(MAX_PCK_NUM+1);
+    
+    input                       reset,clk,en;
+    input   [NCw-1      :   0]  core_num;
+    input   [PCK_CNTw-1 :   0]  pck_number; 
+    input   [Xw-1       :   0]  current_x; 
+    input   [Yw-1       :   0]  current_y;    
+    output  [Xw-1       :   0]  dest_x; 
+    output  [Yw-1       :   0]  dest_y;
+    output                      valid_dst;      
+ 
+ 
+     generate 
+     if ( ADDR_DIMENTION == 2) begin :two_dim
+     
+        two_dimention_pck_dst_gen #(
+        	.NX(NX),
+        	.NY(NY),
+        	.TOPOLOGY(TOPOLOGY),
+        	.TRAFFIC(TRAFFIC),
+        	.MAX_PCK_NUM(MAX_PCK_NUM),
+        	.HOTSPOT_PERCENTAGE(HOTSPOT_PERCENTAGE),
+        	.HOTSOPT_NUM(HOTSOPT_NUM),
+        	.HOTSPOT_CORE_1(HOTSPOT_CORE_1),
+        	.HOTSPOT_CORE_2(HOTSPOT_CORE_2),
+        	.HOTSPOT_CORE_3(HOTSPOT_CORE_3),
+        	.HOTSPOT_CORE_4(HOTSPOT_CORE_4),
+        	.HOTSPOT_CORE_5(HOTSPOT_CORE_5)
+        )
+        the_two_dimention_pck_dst_gen
+        (
+        	.reset(reset),
+        	.clk(clk),
+        	.en(en),
+        	.core_num(core_num),
+        	.pck_number(pck_number),
+        	.current_x(current_x),
+        	.current_y(current_y),
+        	.dest_x(dest_x),
+        	.dest_y(dest_y),
+        	.valid_dst(valid_dst)
+        );
+        
+     end else begin : one_dim
+     
+         one_dimention_pck_dst_gen #(
+        	.NX(NX),
+            .TOPOLOGY(TOPOLOGY),
+            .TRAFFIC(TRAFFIC),
+            .MAX_PCK_NUM(MAX_PCK_NUM),
+            .HOTSPOT_PERCENTAGE(HOTSPOT_PERCENTAGE),
+            .HOTSOPT_NUM(HOTSOPT_NUM),
+            .HOTSPOT_CORE_1(HOTSPOT_CORE_1),
+            .HOTSPOT_CORE_2(HOTSPOT_CORE_2),
+            .HOTSPOT_CORE_3(HOTSPOT_CORE_3),
+            .HOTSPOT_CORE_4(HOTSPOT_CORE_4),
+            .HOTSPOT_CORE_5(HOTSPOT_CORE_5)
+        )
+        the_one_dimention_pck_dst_gen
+        (
+        	.reset(reset),
+        	.clk(clk),
+        	.en(en),
+        	.pck_number(pck_number),
+        	.current_x(current_x),
+        	.dest_x(dest_x),
+        	.valid_dst(valid_dst)
+        );
+        assign dest_y = 1'b0;
+     end     
+     endgenerate 
+ 
+ 
+ 
+ endmodule
+ 
+ 
+ 
+ 
+ 
+module two_dimention_pck_dst_gen  #(
+    parameter NX = 4,
+    parameter NY = 4,
+    parameter TOPOLOGY="MESH",
+    parameter TRAFFIC =   "RANDOM",
+    parameter MAX_PCK_NUM = 10000,
+    parameter HOTSPOT_PERCENTAGE    =   3,   //maximum 20
+    parameter HOTSOPT_NUM           =   4, //maximum 4
+    parameter HOTSPOT_CORE_1        =   10,
+    parameter HOTSPOT_CORE_2        =   11,
+    parameter HOTSPOT_CORE_3        =   12,
+    parameter HOTSPOT_CORE_4        =   13,
+    parameter HOTSPOT_CORE_5        =   14
 
-
+)(
+    en,
+    current_x,
+    current_y,
+    core_num,
+    pck_number,
+    dest_x, 
+    dest_y,  
+    clk,
+    reset,
+    valid_dst 
 ); 
     
     
+   
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
     endfunction // log2 
      
@@ -230,7 +356,10 @@ module pck_dst_gen #(
                               
                     assign dest_x   = ~current_x;
                     assign dest_y   = ~current_y;              
-    
+    end else if( TRAFFIC == "TORNADO" ) begin :tornado
+        //[(x+(k/2-1)) mod k, (y+(k/2-1)) mod k],
+          assign dest_x  = (current_x> ((NX+1)/2))? current_x- ((NX+1)/2) -1   :  (NX/2)+current_x-1;  //  = ((current_x + ((NX/2)-1))%NX); 
+          assign dest_y  = (current_y> ((NY+1)/2))? current_y- ((NY+1)/2) -1   :  (NY/2)+current_y-1;  //  = ((current_y + ((NY/2)-1))%NY);
       
     end else if(TRAFFIC == "CUSTOM" )begin 
         /*
@@ -290,6 +419,209 @@ module pck_dst_gen #(
     endgenerate
      
 endmodule
+
+
+
+
+
+/************
+
+************/
+
+
+module one_dimention_pck_dst_gen #(
+    parameter NX = 4,
+    parameter TOPOLOGY="RING",//"FULLY_CONNECT"
+    parameter TRAFFIC =   "RANDOM",
+    parameter MAX_PCK_NUM = 10000,
+    parameter HOTSPOT_PERCENTAGE    =   3,   //maximum 20
+    parameter HOTSOPT_NUM           =   4, //maximum 4
+    parameter HOTSPOT_CORE_1        =   10,
+    parameter HOTSPOT_CORE_2        =   11,
+    parameter HOTSPOT_CORE_3        =   12,
+    parameter HOTSPOT_CORE_4        =   13,
+    parameter HOTSPOT_CORE_5        =   14
+
+)(
+    en,
+    current_x,
+    pck_number,
+    dest_x, 
+    clk,
+    reset,
+    valid_dst   
+); 
+    
+    
+  
+    function integer log2;
+      input integer number; begin   
+         log2=(number <=1) ? 1: 0;    
+         while(2**log2<number) begin    
+            log2=log2+1;    
+         end 	   
+      end   
+    endfunction // log2 
+     
+     
+     localparam Xw = log2(NX),
+                PCK_CNTw = log2(MAX_PCK_NUM+1);
+    
+    input                       reset,clk,en;
+  
+    input   [PCK_CNTw-1 :   0]  pck_number; 
+    input   [Xw-1       :   0]  current_x; 
+     
+    output  [Xw-1       :   0]  dest_x; 
+  
+    output                      valid_dst;      
+    
+    
+  
+    genvar i;
+            
+    generate     
+    if (TRAFFIC == "RANDOM") begin 
+        
+        pseudo_random_no_core #(
+            .MAX_RND    (NX-1),
+            .MAX_CORE   (NX-1),
+            .MAX_NUM    (MAX_PCK_NUM)
+        )
+        rnd_dest_gen
+        (
+            .core   (current_x),
+            .num    (pck_number),
+            .rnd    (dest_x),
+            .rnd_en (en),
+            .reset  (reset),
+            .clk    (clk)
+
+        );
+       
+      
+         
+        
+     end else if (TRAFFIC == "HOTSPOT") begin 
+                      
+                pseudo_hotspot_no_core #(
+                    .MAX_RND            (NX-1   ),
+                    .MAX_CORE           (NX-1   ),
+                    .MAX_NUM            (MAX_PCK_NUM),
+                    .HOTSPOT_PERCENTAGE (HOTSPOT_PERCENTAGE),   //maximum 25%
+                    .HOTSOPT_NUM        (HOTSOPT_NUM), //maximum 4
+                    .HOTSPOT_CORE_1     (HOTSPOT_CORE_1),
+                    .HOTSPOT_CORE_2     (HOTSPOT_CORE_2),
+                    .HOTSPOT_CORE_3     (HOTSPOT_CORE_3),
+                    .HOTSPOT_CORE_4     (HOTSPOT_CORE_4),
+                    .HOTSPOT_CORE_5     (HOTSPOT_CORE_5)
+                    
+                )rnd_dest_gen
+                (
+    
+                    .core  (current_x),
+                    .num   (pck_number),
+                    .rnd   (dest_x),
+                    .rnd_en(en),
+                    .reset (reset),
+                    .clk   (clk)
+
+                );
+       
+       
+   
+       
+    end else if( TRAFFIC == "TRANSPOSE1") begin :tran1
+       
+        assign dest_x= NX-current_x-1;            
+        
+  //  end else if( TRAFFIC == "TRANSPOSE2") begin :transpose2
+        
+              
+                //    assign dest_x   = current_y;
+                //    assign dest_y   = current_x;
+                    
+        
+    end  else if( TRAFFIC == "BIT_REVERSE") begin :bitreverse
+   
+                    wire [ Xw -1 :   0]  reverse_addr;
+                  
+                    
+                    for(i=0; i<Xw; i=i+1'b1) begin :lp//reverse the address
+                        assign reverse_addr[i]  = current_x [Xw-1-i];
+                    end
+                    assign  dest_x  = reverse_addr;
+   
+    end  else if( TRAFFIC == "BIT_COMPLEMENT") begin :bitcomp
+                              
+                    assign dest_x   = ~current_x;
+    end else if( TRAFFIC == "TORNADO" ) begin :tornado
+        //[(x+(k/2-1)) mod k, (y+(k/2-1)) mod k],
+          assign dest_x  = (current_x > ((NX+1)/2))? current_x- ((NX+1)/2) -1   :  (NX/2)+current_x-1;  //  = ((current_x + ((NX/2)-1))%NX);
+                      
+         
+    end else if(TRAFFIC == "CUSTOM" )begin 
+        /*
+        assign send_en = (current_x==0 && current_y==0);// core (0,0) sends packets to (7,7)
+        assign dest_x = 7;
+        assign dest_y = 7;
+   */
+        reg [Xw-1   :   0]dest_x_reg;
+         
+        reg               valid_dst_reg;
+        
+        always @(*) begin 
+            valid_dst_reg=1'b0;       
+            if( current_x==0   ) begin 
+                dest_x_reg=  NX/2-1;   valid_dst_reg=1'b1;
+            end
+/* 
+            if((current_x==1)  ) begin 
+                dest_x_reg=  NX-1;   valid_dst_reg=1'b1;
+            end
  
+          if((current_x==2)  ) begin 
+                dest_x_reg= NX-1;   valid_dst_reg=1'b1;
+            end
  
+           if((current_x==1) &&  (current_y== 1)) begin 
+                dest_x_reg=  1; dest_y_reg=  6; valid_dst_reg=1'b1;
+            end
+            if((current_x==1) &&  (current_y== 2)) begin 
+                dest_x_reg=  1; dest_y_reg=  5; valid_dst_reg=1'b1;
+            end
+            if((current_x==1) &&  (current_y== 3)) begin 
+                dest_x_reg=  1; dest_y_reg=  4; valid_dst_reg=1'b1;
+            end
+*/
+        end
+      /*
+        0  0   1  1
+        0  1   1  2
+        1  0   1  7
+        1  1   1  6
+        1  2   1  5
+        1  3   1  4
+        */
+        assign valid_dst = valid_dst_reg;
+       
+        assign dest_x = dest_x_reg;
+              
+    end
+   
+    
+     //check if destination address is valid
+     if(TRAFFIC != "CUSTOM" )begin 
+         assign valid_dst  =  (dest_x   !=   current_x)  &  (dest_x  <= (NX-1));
+     end
+   
+    endgenerate
+     
+endmodule
+ 
+
+ 
+
+
+
 

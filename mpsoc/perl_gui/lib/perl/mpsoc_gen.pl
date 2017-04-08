@@ -42,7 +42,7 @@ sub get_pos{
 
 
 sub noc_param_widget{
-	 my ($mpsoc,$name,$param, $default,$type,$content,$info, $table,$row,$show,$attribut1,$ref_delay)=@_;
+	 my ($mpsoc,$name,$param, $default,$type,$content,$info, $table,$row,$show,$attribut1,$ref_delay,$new_status)=@_;
 	 my $label =gen_label_in_left(" $name");
 	 my $widget;
 	 my $value=$mpsoc->object_get_attribute($attribut1,$param);
@@ -51,13 +51,15 @@ sub noc_param_widget{
 			$mpsoc->object_add_attribute_order($attribut1,$param);
 			$value=$default;
 	 }
-	 
+	 if(! defined $new_status){
+		$new_status='ref';
+	 }
 	 if ($type eq "Entry"){
 		$widget=gen_entry($value);
 		$widget-> signal_connect("changed" => sub{
 			my $new_param_value=$widget->get_text();
 			$mpsoc->object_add_attribute($attribut1,$param,$new_param_value);
-			set_gui_status($mpsoc,"ref",$ref_delay) if(defined $ref_delay);
+			set_gui_status($mpsoc,$new_status,$ref_delay) if(defined $ref_delay);
 			
 
 		});
@@ -77,7 +79,7 @@ sub noc_param_widget{
 		 $widget-> signal_connect("changed" => sub{
 		 my $new_param_value=$widget->get_active_text();
 		 $mpsoc->object_add_attribute($attribut1,$param,$new_param_value);
-		 set_gui_status($mpsoc,"ref",$ref_delay) if(defined $ref_delay);
+		 set_gui_status($mpsoc,$new_status,$ref_delay) if(defined $ref_delay);
 
 
 		 });
@@ -94,7 +96,7 @@ sub noc_param_widget{
 		  $widget-> signal_connect("value_changed" => sub{
 		  my $new_param_value=$widget->get_value_as_int();
 		  $mpsoc->object_add_attribute($attribut1,$param,$new_param_value);
-		  set_gui_status($mpsoc,"ref",$ref_delay) if(defined $ref_delay);
+		  set_gui_status($mpsoc,$new_status,$ref_delay) if(defined $ref_delay);
 
 		  });
 		 
@@ -137,7 +139,7 @@ sub noc_param_widget{
 				}
 				$mpsoc->object_add_attribute($attribut1,$param,$new_val);
 				#print "\$new_val=$new_val\n";
-				set_gui_status($mpsoc,"ref",$ref_delay) if(defined $ref_delay);
+				set_gui_status($mpsoc,$new_status,$ref_delay) if(defined $ref_delay);
 			});
 		}
 
@@ -147,7 +149,7 @@ sub noc_param_widget{
 	}
 	elsif ( $type eq "DIR_path"){
 			$widget =get_dir_in_object ($mpsoc,$attribut1,$param,$value,'ref',10);
-			set_gui_status($mpsoc,"ref",$ref_delay) if(defined $ref_delay);
+			set_gui_status($mpsoc,$new_status,$ref_delay) if(defined $ref_delay);
 	}
 	
 	
@@ -893,18 +895,21 @@ sub noc_config{
 	
 	#Fully and partially adaptive routing setting
 		my $route=$mpsoc->object_get_attribute('noc_param',"ROUTE_NAME");
-		if($route ne '"XY"' and $route ne '"TRANC_XY"' ){
+		
 			$label="Congestion index";	
 			$param="CONGESTION_INDEX";
 		   	$type="Spin-button";
 		   	$content="0,12,1";
 			$info="Congestion index determines how congestion information is collected from neighboring routers. Please refer to the usere manual for more information";
 		    $default=3;
+		if($route ne '"XY"' and $route ne '"TRANC_XY"' ){
 		   	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);
 		   
+		} else {
+			$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,0,'noc_param',undef);
 		}
 		#Fully adaptive routing setting
-		if( $route eq '"TRANC_DUATO"' or $route eq '"DUATO"'  ){
+		
 		  	 my $v=$mpsoc->object_get_attribute('noc_param',"V");
 		  	 $label="Select Escap VC";	
 		  	 $param="ESCAP_VC_MASK";
@@ -916,9 +921,13 @@ sub noc_config{
 			
 		
 		  	 $info="Select the escap VC for fully adaptive routing.";
+		if( $route eq '"TRANC_DUATO"' or $route eq '"DUATO"'  ){
 		  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set, 'noc_param',undef);
 	  	
 	  	 }
+		else{
+			 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,0, 'noc_param',undef);
+		}
 		
 	# VC reallocation type
 		$label=($router_type eq '"VC_BASED"')? 'VC reallocation type': 'Queue reallocation type';	
@@ -932,15 +941,19 @@ sub noc_config{
 
 
 
-	if ($router_type eq '"VC_BASED"'){
+	
 	#vc/sw allocator type
 		$label = 'VC/SW combination type';
  		$param='COMBINATION_TYPE';
                 $default='"COMB_NONSPEC"';
                 $content='"BASELINE","COMB_SPEC1","COMB_SPEC2","COMB_NONSPEC"';
                 $type='Combo-box';
-                $info="The joint VC/ switch allocator type. using canonical combination is not recommanded";                    
+                $info="The joint VC/ switch allocator type. using canonical combination is not recommanded";   
+	if ($router_type eq '"VC_BASED"'){                 
                 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);                   
+
+	} else{
+		 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,0,'noc_param',undef);  
 
 	}
 	

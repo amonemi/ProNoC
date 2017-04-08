@@ -210,6 +210,53 @@ sub gen_noc_param_v{
 }
 
 
+sub gen_noc_param_h{
+	my $mpsoc=shift;
+	my $param_h="\n\n//NoC parameters\n";
+	
+	my @params=$mpsoc->object_get_attribute_order('noc_param');
+	foreach my $p (@params){
+		my $val=$mpsoc->object_get_attribute('noc_param',$p);
+		add_text_to_string (\$param_h,"\t#define $p\t$val\n");
+		
+		#print "$p:$val\n";
+		
+	}
+	my $class=$mpsoc->object_get_attribute('noc_param',"C");
+	my $str;
+	if( $class > 1){
+		for (my $i=0; $i<=$class-1; $i++){
+			my $n="Cn_$i";
+			my $val=$mpsoc->object_get_attribute('class_param',$n);
+			add_text_to_string (\$param_h,"\t#define $n\t$val\n");
+		}
+		$str="CLASS_SETTING  {";
+		for (my $i=$class-1; $i>=0;$i--){
+			$str=($i==0)?  "${str}Cn_0};\n " : "${str}Cn_$i,";
+		}
+	}else {
+		$str="CLASS_SETTING={V{1\'b1}}\n";
+	}	
+	#add_text_to_string (\$param_h,"\t#define $str");
+	 
+	my $v=$mpsoc->object_get_attribute('noc_param',"V")-1;
+	my $escape=$mpsoc->object_get_attribute('noc_param',"ESCAP_VC_MASK");
+	if (! defined $escape){
+		#add_text_to_string (\$param_h,"\tlocalparam [$v	:0] ESCAP_VC_MASK=1;\n");
+		#add_text_to_string (\$pass_param,".ESCAP_VC_MASK(ESCAP_VC_MASK),\n"); 
+	}
+	#add_text_to_string (\$param_h," \tlocalparam  CVw=(C==0)? V : C * V;\n");
+	#add_text_to_string (\$pass_param,".CVw(CVw)\n");
+	
+	
+	return  $param_h;
+	
+	
+	
+}
+
+
+
 
 
 sub gen_noc_v{

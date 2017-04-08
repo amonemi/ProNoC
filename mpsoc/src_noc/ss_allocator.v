@@ -64,7 +64,7 @@ module  ss_allocator#(
                 PFw         =   P   *   Fw,
                 VV          =   V   *   V;
                 
-                
+     //p=5           
      localparam   LOCAL   =   3'd0,  
                   EAST    =   3'd1,
                   NORTH   =   3'd2, 
@@ -72,7 +72,8 @@ module  ss_allocator#(
                   SOUTH   =   3'd4,
                   DISABLED   =   3'b111;                   
                
-              
+      
+        
                 
                 
 
@@ -113,12 +114,19 @@ module  ss_allocator#(
 
     generate
     for (i=0; i<PV; i=i+1) begin : vc_loop
-       localparam  SS_PORT      =  ((i/V)== EAST)? WEST:
+        localparam  SS_PORT_P5 = ((i/V)== EAST)? WEST:
                                  ((i/V)== WEST)? EAST:
                                  ((i/V)== SOUTH)? NORTH:
                                  ((i/V)== NORTH)? SOUTH:
                                  DISABLED;
-       
+
+	localparam  SS_PORT_P3 = ((i/V)== 1)? 3'd2:
+                                 ((i/V)== 2)? 3'd1:
+                                 DISABLED;
+
+        localparam  SS_PORT      =   (P==5) ? SS_PORT_P5:
+				     (P==3) ? SS_PORT_P3: DISABLED;
+
        
         
        if (SS_PORT== DISABLED)begin : no_prefrable
@@ -188,11 +196,20 @@ module  ss_allocator#(
     
     
         for(i=0;i<P;i=i+1)begin: port_lp
-             localparam  SS_P =  (i== EAST)? WEST:
+             localparam  SS_P5 =  (i== EAST)? WEST:
                                  (i== WEST)? EAST:
                                  (i== SOUTH)? NORTH:
                                  (i== NORTH)? SOUTH:
                                  LOCAL;
+
+
+            localparam  SS_P3 =  (i== 1)? 2:
+                                 (i== 2)? 1:
+                                 LOCAL;
+
+	    localparam  SS_P =  (P==5) ? SS_P5 :
+				(P==3) ? SS_P3 : i;
+
         
             
             always @(posedge clk or posedge reset)begin
@@ -514,24 +531,35 @@ If no output is granted replace the output port with ss one
  
 
 module add_ss_port #(   
-    parameter SW_LOC=1
+    parameter SW_LOC=1,
+    parameter P=5
 )(
     destport_in,
     destport_out 
 );
-     localparam P=5,
-                P_1= P-1;
+     localparam P_1= P-1;
      
      localparam   LOCAL   =   3'd0,  
                   EAST    =   3'd1,
                   NORTH   =   3'd2, 
                   WEST    =   3'd3,
                   SOUTH   =   3'd4;
-                
-    localparam  SS_PORT = (SW_LOC== EAST   )? WEST-3'd1 : // the sender port must be removed from destination port code  
+
+
+
+     localparam  SS_PORT_P5 = (SW_LOC== EAST   )? WEST-3'd1 : // the sender port must be removed from destination port code  
                              (SW_LOC== NORTH  )? SOUTH-3'd1: // the sender port must be removed from destination port code  
                              (SW_LOC== WEST   )? EAST  :
                                                  NORTH ; 
+
+     localparam  SS_PORT_P3 =   2'd1;   
+                                 
+
+     localparam  SS_PORT      =   (P==5) ? SS_PORT_P5: SS_PORT_P3;
+
+
+                
+    
      
     input       [P_1-1  :   0] destport_in;
     output reg  [P_1-1  :   0] destport_out; 
