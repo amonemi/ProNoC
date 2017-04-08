@@ -1,4 +1,4 @@
-`timescale	 1ns/1ps
+`timescale     1ns/1ps
 /************************************
 
      look_ahead_routing
@@ -24,14 +24,15 @@ module look_ahead_routing #(
     reset,
     clk
 );
+    
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end        
       end   
-   endfunction // log2 
+    endfunction // log2 
    
     localparam  P_1     =   P-1,
                 Xw      =   log2(NX),   // number of node in x axis
@@ -54,20 +55,20 @@ module look_ahead_routing #(
     generate 
     if(ROUTE_TYPE=="DETERMINISTIC") begin :dtrmst
          deterministic_look_ahead_routing #(
-         	.P(P),
-         	.NX(NX),
-         	.NY(NY),
-         	.SW_LOC(SW_LOC),
-         	.TOPOLOGY(TOPOLOGY),
-         	.ROUTE_NAME(ROUTE_NAME)
+             .P(P),
+             .NX(NX),
+             .NY(NY),
+             .SW_LOC(SW_LOC),
+             .TOPOLOGY(TOPOLOGY),
+             .ROUTE_NAME(ROUTE_NAME)
          )
          deterministic_look_ahead(
-         	.current_x(current_x),
-         	.current_y(current_y),
-         	.dest_x(destx_delayed),
-         	.dest_y(desty_delayed),
-         	.destport(destport_delayed),
-         	.lkdestport(lkdestport)
+             .current_x(current_x),
+             .current_y(current_y),
+             .dest_x(destx_delayed),
+             .dest_y(desty_delayed),
+             .destport(destport_delayed),
+             .lkdestport(lkdestport)
          );
     
     end else begin :adapt
@@ -77,7 +78,7 @@ module look_ahead_routing #(
             .NY(NY),
             .TOPOLOGY(TOPOLOGY),
             .ROUTE_NAME(ROUTE_NAME),
-			.ROUTE_TYPE(ROUTE_TYPE)
+            .ROUTE_TYPE(ROUTE_TYPE)
          )
          adaptive_look_ahead
          (
@@ -137,13 +138,14 @@ module  deterministic_look_ahead_routing #(
       
  );
     
+   
     function integer log2;
-    input integer number; begin   
-        log2=0;    
-        while(2**log2<number) begin    
+      input integer number; begin   
+         log2=(number <=1) ? 1: 0;    
+         while(2**log2<number) begin    
             log2=log2+1;    
-        end    
-    end   
+         end        
+      end   
     endfunction // log2 
  
  
@@ -165,65 +167,67 @@ module  deterministic_look_ahead_routing #(
     wire    [Yw-1   :   0]  next_y; 
  
     add_sw_loc_one_hot #(
-   	    .P(P),
-   	    .SW_LOC(SW_LOC)
+           .P(P),
+           .SW_LOC(SW_LOC)
     ) add_sw_loc
-   	(
-   	    .destport_in(destport),
-   	    .destport_out(destport_one_hot)
+       (
+           .destport_in(destport),
+           .destport_out(destport_one_hot)
     );
     
     next_router_addr_predictor #(
-    	.P(P),
-    	.NX(NX),
-    	.NY(NY)
+        .P(P),
+        .TOPOLOGY(TOPOLOGY),
+        .NX(NX),
+        .NY(NY)
     )
     addr_predictor
     (
-    	.destport(destport_one_hot),
-    	.current_x(current_x),
-    	.current_y(current_y),
-    	.next_x(next_x),
-    	.next_y(next_y)
+        .destport(destport_one_hot),
+        .current_x(current_x),
+        .current_y(current_y),
+        .next_x(next_x),
+        .next_y(next_y)
     );
  
  
     next_router_inport_predictor #(
-    	.P(5)
+        .TOPOLOGY(TOPOLOGY),
+    .P(P)
     )
     inport_predictor
     (
-    	.destport(destport_one_hot),
-    	.receive_port(receive_port)
+        .destport(destport_one_hot),
+        .receive_port(receive_port)
     );
  
  
     conventional_routing #(
-    	.TOPOLOGY(TOPOLOGY),
-    	.ROUTE_NAME(ROUTE_NAME),
-    	.ROUTE_TYPE("DETERMINISTIC"),
-    	.P(P),
-    	.NX(NX),
-    	.NY(NY),
-    	.LOCATED_IN_NI(0)
+        .TOPOLOGY(TOPOLOGY),
+        .ROUTE_NAME(ROUTE_NAME),
+        .ROUTE_TYPE("DETERMINISTIC"),
+        .P(P),
+        .NX(NX),
+        .NY(NY),
+        .LOCATED_IN_NI(0)
     )
     conv_routing
     (
-    	.current_x(next_x),
-    	.current_y(next_y),
-    	.dest_x(dest_x),
-    	.dest_y(dest_y),
-    	.destport(lkdestport_one_hot)
-    	
+        .current_x(next_x),
+        .current_y(next_y),
+        .dest_x(dest_x),
+        .dest_y(dest_y),
+        .destport(lkdestport_one_hot)
+        
     );
  
     remove_receive_port_one_hot #(
-    	.P(P)
+        .P(P)
     )
     remove_receive_port_one_hot(
-    	.destport_in(lkdestport_one_hot),
-    	.receiver_port(receive_port),
-    	.destport_out(lkdestport)
+        .destport_in(lkdestport_one_hot),
+        .receiver_port(receive_port),
+        .destport_out(lkdestport)
     );
   
     
@@ -259,13 +263,14 @@ module  adaptive_look_ahead_routing #(
      
  );
     
+    
     function integer log2;
-    input integer number; begin   
-        log2=0;    
-        while(2**log2<number) begin    
+      input integer number; begin   
+         log2=(number <=1) ? 1: 0;    
+         while(2**log2<number) begin    
             log2=log2+1;    
-        end    
-    end   
+         end        
+      end   
     endfunction // log2 
  
  
@@ -312,6 +317,7 @@ module  adaptive_look_ahead_routing #(
     
     next_router_addr_predictor #(
         .P(P),
+        .TOPOLOGY(TOPOLOGY),
         .NX(NX),
         .NY(NY)
     )
@@ -327,6 +333,7 @@ module  adaptive_look_ahead_routing #(
     
      next_router_addr_predictor #(
         .P(P),
+        .TOPOLOGY(TOPOLOGY),
         .NX(NX),
         .NY(NY)
     )
@@ -344,7 +351,7 @@ module  adaptive_look_ahead_routing #(
     ni_conventional_routing #(
         .TOPOLOGY(TOPOLOGY),
         .ROUTE_NAME(ROUTE_NAME),
-		.ROUTE_TYPE(ROUTE_TYPE),
+        .ROUTE_TYPE(ROUTE_TYPE),
         .P(P),
         .NX(NX),
         .NY(NY),
@@ -362,7 +369,7 @@ module  adaptive_look_ahead_routing #(
     ni_conventional_routing #(
         .TOPOLOGY(TOPOLOGY),
         .ROUTE_NAME(ROUTE_NAME),
-		.ROUTE_TYPE(ROUTE_TYPE),
+        .ROUTE_TYPE(ROUTE_TYPE),
         .P(P),
         .NX(NX),
         .NY(NY),
@@ -395,6 +402,7 @@ Determine the next router address based on the packet destination port
 
 module next_router_addr_predictor #(
     parameter P     =   5,
+    parameter TOPOLOGY  ="MESH",
     parameter NX    =   4,//toutal number of router in x direction 
     parameter NY    =   4//toutal number of router in y direction 
     )
@@ -409,20 +417,23 @@ module next_router_addr_predictor #(
  
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end        
       end   
     endfunction // log2 
     
     localparam  Xw          =   log2(NX),
                 Yw          =   log2(NY);
-                
+    // mesh torus            
     localparam  EAST   =       3'd1, 
                 NORTH  =       3'd2,  
                 WEST   =       3'd3,  
-                SOUTH  =       3'd4; 
+                SOUTH  =       3'd4;
+    //ring line            
+    localparam  FORWARD =  2'd1,
+                BACKWARD=  2'd2;
     
     localparam [Xw-1  :   0] LAST_X_ADDR  =(NX[Xw-1 :   0]-1'b1);
     localparam [Yw-1  :   0] LAST_Y_ADDR  =(NY[Yw-1 :   0]-1'b1);                
@@ -432,29 +443,59 @@ module next_router_addr_predictor #(
     input       [Yw-1  :    0]  current_y;
     output reg  [Xw-1  :    0]  next_x;
     output reg  [Yw-1  :    0]  next_y;  
-                                            
-  
-    always @(*) begin
-         //default values 
-        next_x= current_x;
-        next_y= current_y;
-        if(destport[EAST]) begin   
-            next_x= (current_x==LAST_X_ADDR ) ? {Xw{1'b0}} : current_x+1'b1;
-            next_y=  current_y;    
-        end       
-        else if(destport[NORTH])  begin   
+    
+    generate                                             
+    if(TOPOLOGY=="MESH" || TOPOLOGY == "TORUS") begin : mesh
+        always @(*) begin
+             //default values 
             next_x= current_x;
-            next_y= (current_y==0)? LAST_Y_ADDR  : current_y-1'b1;
-        end
-        else  if(destport[WEST])       begin 
-            next_x= (current_x==0) ? LAST_X_ADDR  : current_x-1'b1;
-            next_y=  current_y;
-         end
-        else  if(destport[SOUTH])  begin
+            next_y= current_y;
+            if(destport[EAST]) begin   
+                next_x= (current_x==LAST_X_ADDR ) ? {Xw{1'b0}} : current_x+1'b1;
+                next_y=  current_y;    
+            end       
+            else if(destport[NORTH])  begin   
+                next_x= current_x;
+                next_y= (current_y==0)? LAST_Y_ADDR  : current_y-1'b1;
+            end
+            else  if(destport[WEST])       begin 
+                next_x= (current_x==0) ? LAST_X_ADDR  : current_x-1'b1;
+                next_y=  current_y;
+             end
+            else  if(destport[SOUTH])  begin
+                next_x= current_x;
+                next_y= (current_y== LAST_Y_ADDR ) ? {Yw{1'b0}}: current_y+1'b1;
+            end
+        end//always
+        
+    end else  if(TOPOLOGY=="RING" || TOPOLOGY == "LINE") begin : ring
+       
+        always @(*) begin
+             //default values 
             next_x= current_x;
-            next_y= (current_y== LAST_Y_ADDR ) ? {Yw{1'b0}}: current_y+1'b1;
-        end
-    end//always
+            next_y= 1'b0;
+            if(destport[FORWARD]) begin   
+                next_x= (current_x==LAST_X_ADDR ) ? {Xw{1'b0}} : current_x+1'b1;
+                
+            end       
+            else if(destport[BACKWARD])  begin   
+                next_x= (current_x=={Xw{1'b0}} ) ? LAST_X_ADDR  : current_x-1'b1;
+                 
+            end
+           
+        end//always
+    
+        
+    end
+    //synthesis translate_off
+    //synopsys  translate_off
+    else begin : wrong_topology initial $display("Error: next router inport is not predicted for %s   topology",TOPOLOGY); end
+    //synopsys  translate_on
+    //synthesis translate_on
+        
+        
+        
+     endgenerate 
 endmodule       
 
 /*******************************************************
@@ -465,12 +506,16 @@ endmodule
 ********************************************************/
 
 module next_router_inport_predictor #(
-    parameter P  =   5
+    parameter TOPOLOGY  ="MESH",
+    parameter P =5
 )(
     destport,
     receive_port
    
 );
+
+    
+
     input   [P-1    :   0] destport;
     output  [P-1    :   0] receive_port; 
            
@@ -479,12 +524,30 @@ module next_router_inport_predictor #(
                 NORTH   =       3'd2,  
                 WEST    =       3'd3,  
                 SOUTH   =       3'd4; 
-    
-    assign  receive_port[LOCAL]   = destport[LOCAL];
-    assign  receive_port[WEST]    = destport[EAST];
-    assign  receive_port[EAST]    = destport[WEST];
-    assign  receive_port[NORTH]   = destport[SOUTH];
-    assign  receive_port[SOUTH]   = destport[NORTH];
+    generate
+    if(TOPOLOGY=="MESH" || TOPOLOGY == "TORUS") begin : mesh
+      
+        assign  receive_port[LOCAL]   = destport[LOCAL];
+        assign  receive_port[WEST]    = destport[EAST];
+        assign  receive_port[EAST]    = destport[WEST];
+        assign  receive_port[NORTH]   = destport[SOUTH];
+        assign  receive_port[SOUTH]   = destport[NORTH];
+
+    end else  if(TOPOLOGY=="RING" || TOPOLOGY == "LINE") begin : ring
+        assign  receive_port[LOCAL]   = destport[LOCAL];
+        assign  receive_port[1]       = destport[2];
+        assign  receive_port[2]       = destport[1];
+    end
+    //synthesis translate_off
+    //synopsys  translate_off
+            else begin : wrong_topology initial $display("Error: next router inport is not predicted for %s   topology",TOPOLOGY); end
+    //synopsys  translate_on
+    //synthesis translate_on
+
+
+     
+
+    endgenerate
                                          
 endmodule 
 
@@ -546,12 +609,13 @@ module remove_receive_port_one_hot #(
 );
     
 
+
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end        
       end   
     endfunction // log2 
     
@@ -568,12 +632,12 @@ module remove_receive_port_one_hot #(
     
        
     one_hot_to_bin #(
-    	.ONE_HOT_WIDTH(P),
-    	.BIN_WIDTH(Pw)
+        .ONE_HOT_WIDTH(P),
+        .BIN_WIDTH(Pw)
     )
     convert1(
-    	.one_hot_code(receiver_port),
-    	.bin_code(receiver_port_bin)
+        .one_hot_code(receiver_port),
+        .bin_code(receiver_port_bin)
     );
     
      one_hot_to_bin #(
@@ -591,12 +655,12 @@ module remove_receive_port_one_hot #(
     assign destport_out_bin=temp[P_1w-1     :0];
     
     bin_to_one_hot #(
-    	.BIN_WIDTH(P_1w),
-    	.ONE_HOT_WIDTH(P_1)
+        .BIN_WIDTH(P_1w),
+        .ONE_HOT_WIDTH(P_1)
     )
     convert3(
-    	.bin_code(destport_out_bin),
-    	.one_hot_code(destport_out)
+        .bin_code(destport_out_bin),
+        .one_hot_code(destport_out)
     );
     
     
@@ -666,14 +730,15 @@ module conventional_routing #(
 
     );
     
+
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end        
       end   
-   endfunction // log2
+    endfunction // log2 
    
    localparam P_1   =   P-1,
               Xw    =   log2(NX),
@@ -794,9 +859,9 @@ module conventional_routing #(
                 );
             end //DUATO
             //synthesis translate_off
-	    //synopsys  translate_off
+        //synopsys  translate_off
             else begin : not_supported initial $display ("Error: %s is an unsupported routing algorithm for %s topology \n",ROUTE_NAME,TOPOLOGY); end
-	    //synopsys  translate_on
+        //synopsys  translate_on
             //synthesis translate_on
         end else if (TOPOLOGY == "TORUS" ) begin :torus
             if(ROUTE_NAME ==  "TRANC_XY") begin : tranc_routing_blk
@@ -881,17 +946,18 @@ module conventional_routing #(
                 );
             end //TRANC_DUATO
             //synthesis translate_off
-	    //synopsys  translate_off
+        //synopsys  translate_off
             else begin : not_supported2 initial $display("Error: %s is an unsupported routing algorithm for %s topology",ROUTE_NAME,TOPOLOGY); end
-	    //synopsys  translate_on
+        //synopsys  translate_on
             //synthesis translate_on
         end //TORUS
-        /*
+       
         else if (TOPOLOGY == "RING" ) begin :ring
+        if(ROUTE_NAME    ==  "TRANC_XY") begin : tranc_ring_blk
                 tranc_ring_routing #(
                     .NX(NX),
                     .OUT_BIN(0) 
-    
+        
                 )
                 tranc_ring                
                 (
@@ -899,14 +965,14 @@ module conventional_routing #(
                     .dest_x(dest_x),
                     .destport(destport)    
                 );
-        
-        
+            end // "TRANC"
+        else begin : not_supported2 initial $display("Error: %s is an unsupported routing algorithm for %s topology",ROUTE_NAME,TOPOLOGY); end       
         end //"RING" 
-        */
+       
         //synthesis translate_off
-	//synopsys  translate_off
+    //synopsys  translate_off
             else begin : wrong_topology initial $display("Error: %s is an unsupported topology",TOPOLOGY); end
-	//synopsys  translate_on
+    //synopsys  translate_on
         //synthesis translate_on
             
     endgenerate
@@ -942,14 +1008,15 @@ module ni_conventional_routing #(
 
     );
     
+ 
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end        
       end   
-   endfunction // log2
+    endfunction // log2 
    
    localparam P_1   =   P-1,
               Xw    =   log2(NX),
@@ -968,28 +1035,28 @@ module ni_conventional_routing #(
     wire [DSTw-1          :0] destport_one_hot;
    
     conventional_routing #(
-    	.TOPOLOGY(TOPOLOGY),
-    	.ROUTE_NAME(ROUTE_NAME),
-    	.ROUTE_TYPE(ROUTE_TYPE),
-    	.P(P),
-    	.NX(NX),
-    	.NY(NY),
-    	.LOCATED_IN_NI(LOCATED_IN_NI)
+        .TOPOLOGY(TOPOLOGY),
+        .ROUTE_NAME(ROUTE_NAME),
+        .ROUTE_TYPE(ROUTE_TYPE),
+        .P(P),
+        .NX(NX),
+        .NY(NY),
+        .LOCATED_IN_NI(LOCATED_IN_NI)
     )
     conventional
     (
-    	.current_x(current_x),
-    	.current_y(current_y),
-    	.dest_x(dest_x),
-    	.dest_y(dest_y),
-    	.destport(destport_one_hot)
-    	
+        .current_x(current_x),
+        .current_y(current_y),
+        .dest_x(dest_x),
+        .dest_y(dest_y),
+        .destport(destport_one_hot)
+        
     );
     
     generate 
     if(ROUTE_TYPE   ==   "DETERMINISTIC") begin: dtrmn
-	 //remove local port number 
-	assign destport = destport_one_hot[P-1	:	1];
+     //remove local port number 
+    assign destport = destport_one_hot[P-1    :    1];
            
     end else begin: adptv
     
@@ -1020,12 +1087,13 @@ module tranc_ring_routing #(
     
 );
 
+ 
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end        
       end   
     endfunction // log2 
 
@@ -1083,7 +1151,6 @@ module tranc_ring_routing #(
     end//always
     
     assign same_x = (xdiff == 0);
- 
 
 
 

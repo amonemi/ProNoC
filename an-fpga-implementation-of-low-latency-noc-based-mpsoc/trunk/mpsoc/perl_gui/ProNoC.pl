@@ -20,11 +20,12 @@ require "ip_gen.pl";
 require "soc_gen.pl";
 require "mpsoc_gen.pl";
 require "emulator.pl";
+require "simulator.pl";
 
 
 
 
-our $VERSION = '1.5.2'; 
+our $VERSION = '1.6.0'; 
 
 sub main{
 
@@ -70,6 +71,10 @@ $notebook->append_page ($socgen,Gtk2::Label->new_with_mnemonic ("  _Processing t
 my $mpsocgen =mpsocgen_main();
 $notebook->append_page ($mpsocgen,Gtk2::Label->new_with_mnemonic ("  _NoC based MPSoC generator  "));	
 
+
+my $simulator =simulator_main();
+$notebook->append_page ($simulator,Gtk2::Label->new_with_mnemonic (" _NoC simulator   "));		
+
 my $emulator =emulator_main();
 $notebook->append_page ($emulator,Gtk2::Label->new_with_mnemonic (" _NoC emulator "));								
 			
@@ -111,9 +116,10 @@ $notebook->append_page ($emulator,Gtk2::Label->new_with_mnemonic (" _NoC emulato
   ["/_Help/_About",  	"F1", 		\&about ,	0,	undef ],
   ["/_Help/_intf_gen",  "F2",		\&intfc_help, 	0,	undef ],
   ["/_Help/_ip_gen",  	"F3", 		\&ip_help ,	0,	undef ],
-  ["/_Help/_pt_gen",  	"F4", 		\&gt_help ,	0,	undef ],
+  ["/_Help/_pt_gen",  	"F4", 		\&pt_help ,	0,	undef ],
+  ["/_Help/_sim_help",  "F5",		\&sim_help ,	0,	undef ],
   ["/_Help/_Tutorial_1", undef, 	\&Tutorial_1 ,	0,	undef ],
-  ["/_Help/_Tutorial_2",  undef, 	\&Tutorial_2 ,	0,	undef ],
+  ["/_Help/_Tutorial_2", undef, 	\&Tutorial_2 ,	0,	undef ],
 
 
 
@@ -244,6 +250,15 @@ sub pt_help{
     system qq (xdg-open $help);
     return;
 }
+
+
+sub sim_help{ 
+    my $dir = Cwd::getcwd();
+    my $help="$dir/doc/ProNoC_simulator.pdf";	
+    system qq (xdg-open $help);
+    return;
+}
+
 
 sub Tutorial_1{
     my $dir = Cwd::getcwd();

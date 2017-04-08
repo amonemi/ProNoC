@@ -1,4 +1,4 @@
-`timescale	 1ns/1ps
+`timescale     1ns/1ps
 /**************************************
 
                 baseline allocator
@@ -6,142 +6,142 @@ Canonical VC allocator and speculative switch allocator
 
 *************************************/
 
-	
+    
 module baseline_allocator #(
-				parameter	V					=	4,// Virtual channel num per port
-				parameter 	P					=	5,//port number
-				parameter	TREE_ARBITER_EN     =	0,
-				parameter   DEBUG_EN            =   1
+    parameter    V =    4,// Virtual channel num per port
+    parameter     P =    5,//port number
+    parameter    TREE_ARBITER_EN =    0,
+    parameter   DEBUG_EN =   1
 )
 (
-	
-		dest_port_all,
-		ovc_is_assigned_all,
-		ivc_request_all,
-		assigned_ovc_not_full_all,
-		ovc_allocated_all,
-		granted_ovc_num_all,
-		ivc_num_getting_ovc_grant,
-		ivc_num_getting_sw_grant,
-		spec_first_arbiter_granted_ivc_all,
-		nonspec_first_arbiter_granted_ivc_all,
-		granted_dest_port_all,
-		nonspec_granted_dest_port_all,
-		spec_granted_dest_port_all,
-		any_ivc_sw_request_granted_all,
-		spec_ovc_num_all,
-		masked_ovc_request_all,
-		clk,reset
+    
+        dest_port_all,
+        ovc_is_assigned_all,
+        ivc_request_all,
+        assigned_ovc_not_full_all,
+        ovc_allocated_all,
+        granted_ovc_num_all,
+        ivc_num_getting_ovc_grant,
+        ivc_num_getting_sw_grant,
+        spec_first_arbiter_granted_ivc_all,
+        nonspec_first_arbiter_granted_ivc_all,
+        granted_dest_port_all,
+        nonspec_granted_dest_port_all,
+        spec_granted_dest_port_all,
+        any_ivc_sw_request_granted_all,
+        spec_ovc_num_all,
+        masked_ovc_request_all,
+        clk,reset
 
 );
 
 
 
-	localparam  PV		=	V		*	P,
-				PVV     =	PV		*  V,	
-				P_1     =	P-1	,
-				PP_1	=	P_1      *	P,
-				PVP_1	=	PV      *	P_1;
+    localparam  PV        =    V        *    P,
+                PVV     =    PV        *  V,    
+                P_1     =    P-1    ,
+                PP_1    =    P_1      *    P,
+                PVP_1    =    PV      *    P_1;
 
-					
-					
-	input  [PVP_1-1		    :	0]	dest_port_all;	
-	input  [PV-1			:	0]	ovc_is_assigned_all;
-	input  [PV-1			:	0]  ivc_request_all;
-	input  [PV-1			:	0]  assigned_ovc_not_full_all;
-	
-	
-	output [PV-1			:	0] ovc_allocated_all;
-	output [PVV-1			:	0] granted_ovc_num_all;
-	output [PV-1			:	0] ivc_num_getting_ovc_grant;
-	output [PV-1			:	0] ivc_num_getting_sw_grant;
-	output [PV-1			:	0] nonspec_first_arbiter_granted_ivc_all;
-	output [PV-1			:	0] spec_first_arbiter_granted_ivc_all;
-		
-	output [PP_1-1			:	0]	granted_dest_port_all;
-	output [PP_1-1			:	0]	nonspec_granted_dest_port_all;
-	output [PP_1-1			:	0]	spec_granted_dest_port_all;
-	output [P-1				:	0] any_ivc_sw_request_granted_all;
-	output [PVV-1			:	0]	spec_ovc_num_all;
+                    
+                    
+    input  [PVP_1-1            :    0]    dest_port_all;    
+    input  [PV-1            :    0]    ovc_is_assigned_all;
+    input  [PV-1            :    0]  ivc_request_all;
+    input  [PV-1            :    0]  assigned_ovc_not_full_all;
+    
+    
+    output [PV-1            :    0] ovc_allocated_all;
+    output [PVV-1            :    0] granted_ovc_num_all;
+    output [PV-1            :    0] ivc_num_getting_ovc_grant;
+    output [PV-1            :    0] ivc_num_getting_sw_grant;
+    output [PV-1            :    0] nonspec_first_arbiter_granted_ivc_all;
+    output [PV-1            :    0] spec_first_arbiter_granted_ivc_all;
+        
+    output [PP_1-1            :    0]    granted_dest_port_all;
+    output [PP_1-1            :    0]    nonspec_granted_dest_port_all;
+    output [PP_1-1            :    0]    spec_granted_dest_port_all;
+    output [P-1                :    0] any_ivc_sw_request_granted_all;
+    output [PVV-1            :    0]    spec_ovc_num_all;
     input   [PVV-1          :   0]  masked_ovc_request_all;
-	input								clk,reset;
+    input                                clk,reset;
 
-	
-	wire	[V-1				:	0]	spec_first_arbiter_granted_ivc	[P-1		:	0];
-	wire	[V-1				:	0] ivc_local_num_getting_ovc_grant  [P-1		:	0];
-	wire	[P-1				:	0]	valid_speculation;
-	 
-	
-	
-	
-	
-	// canonical VC allocator
-	
-	
-	canonical_vc_alloc #(
-		.TREE_ARBITER_EN  (TREE_ARBITER_EN),
-		.V(V),
-		.P(P)
-	)the_canonical_VC_allocator
-	(
-	.granted_ovc_num_all               (granted_ovc_num_all),
-	.ovc_allocated_all                 (ovc_allocated_all),
-	.ivc_num_getting_ovc_grant         (ivc_num_getting_ovc_grant),
-	.masked_ovc_request_all            (masked_ovc_request_all),
-	.dest_port_all                     (dest_port_all),
-	.spec_ovc_num_all                  (spec_ovc_num_all),
-	.clk                               (clk),
-	.reset                             (reset)
-	);
-			
-	//speculative switch allocator 
-	spec_sw_alloc_can #(
-		.V(V),
-		.P(P),
-		.DEBUG_EN(DEBUG_EN)
-	)speculative_sw_allocator
-	(
+    
+    wire    [V-1                :    0]    spec_first_arbiter_granted_ivc    [P-1        :    0];
+    wire    [V-1                :    0] ivc_local_num_getting_ovc_grant  [P-1        :    0];
+    wire    [P-1                :    0]    valid_speculation;
+     
+    
+    
+    
+    
+    // canonical VC allocator
+    
+    
+    canonical_vc_alloc #(
+        .TREE_ARBITER_EN  (TREE_ARBITER_EN),
+        .V(V),
+        .P(P)
+    )the_canonical_VC_allocator
+    (
+        .granted_ovc_num_all               (granted_ovc_num_all),
+        .ovc_allocated_all                 (ovc_allocated_all),
+        .ivc_num_getting_ovc_grant         (ivc_num_getting_ovc_grant),
+        .masked_ovc_request_all            (masked_ovc_request_all),
+        .dest_port_all                     (dest_port_all),
+        .spec_ovc_num_all                  (spec_ovc_num_all),
+        .clk                               (clk),
+        .reset                             (reset)
+    );
+            
+    //speculative switch allocator 
+    spec_sw_alloc_can #(
+        .V(V),
+        .P(P),
+        .DEBUG_EN(DEBUG_EN)
+    )speculative_sw_allocator
+    (
 
-		.ivc_granted_all                      (ivc_num_getting_sw_grant),
-		.ivc_request_all                      (ivc_request_all),
-		.ovc_is_assigned_all                  (ovc_is_assigned_all),
-		.assigned_ovc_not_full_all            (assigned_ovc_not_full_all),
-		.dest_port_all                        (dest_port_all),
-		.granted_dest_port_all                (granted_dest_port_all),
-		.nonspec_granted_dest_port_all        (nonspec_granted_dest_port_all),
-		.spec_granted_dest_port_all           (spec_granted_dest_port_all),
-		.valid_speculation                    (valid_speculation),
-		.spec_first_arbiter_granted_ivc_all   (spec_first_arbiter_granted_ivc_all),
-		.nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all),
-		.any_ivc_sw_request_granted_all       (any_ivc_sw_request_granted_all),
-		.clk                                  (clk),
-		.reset                                (reset)
-	
-	);
-	
-	// check valid speculation
-	genvar i;
-	generate 
-	for(i=0;i<P; i=i+1) begin :valid_chek_lp	
-	
-		assign spec_first_arbiter_granted_ivc[i]	=	spec_first_arbiter_granted_ivc_all[(i+1)*V-1	:	i*V];
-		assign ivc_local_num_getting_ovc_grant[i] = ivc_num_getting_ovc_grant	[(i+1)*V-1	:	i*V];
-		//speculative VC request multiplexer
-		one_hot_mux #(
-			.IN_WIDTH		(V),
-			.SEL_WIDTH  	(V)
-		)
-		multiplexer
-		(
-			.mux_in			   (ivc_local_num_getting_ovc_grant	[i]),
-			.mux_out			(valid_speculation					[i]),
-			.sel				(spec_first_arbiter_granted_ivc	[i])
-		);
-		
-		
-	
-	end//for
-	endgenerate
+        .ivc_granted_all                      (ivc_num_getting_sw_grant),
+        .ivc_request_all                      (ivc_request_all),
+        .ovc_is_assigned_all                  (ovc_is_assigned_all),
+        .assigned_ovc_not_full_all            (assigned_ovc_not_full_all),
+        .dest_port_all                        (dest_port_all),
+        .granted_dest_port_all                (granted_dest_port_all),
+        .nonspec_granted_dest_port_all        (nonspec_granted_dest_port_all),
+        .spec_granted_dest_port_all           (spec_granted_dest_port_all),
+        .valid_speculation                    (valid_speculation),
+        .spec_first_arbiter_granted_ivc_all   (spec_first_arbiter_granted_ivc_all),
+        .nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all),
+        .any_ivc_sw_request_granted_all       (any_ivc_sw_request_granted_all),
+        .clk                                  (clk),
+        .reset                                (reset)
+    
+    );
+    
+    // check valid speculation
+    genvar i;
+    generate 
+    for(i=0;i<P; i=i+1) begin :valid_chek_lp    
+    
+        assign spec_first_arbiter_granted_ivc[i]    =    spec_first_arbiter_granted_ivc_all[(i+1)*V-1    :    i*V];
+        assign ivc_local_num_getting_ovc_grant[i] = ivc_num_getting_ovc_grant    [(i+1)*V-1    :    i*V];
+        //speculative VC request multiplexer
+        one_hot_mux #(
+            .IN_WIDTH        (V),
+            .SEL_WIDTH      (V)
+        )
+        multiplexer
+        (
+            .mux_in               (ivc_local_num_getting_ovc_grant    [i]),
+            .mux_out            (valid_speculation                    [i]),
+            .sel                (spec_first_arbiter_granted_ivc    [i])
+        );
+        
+        
+    
+    end//for
+    endgenerate
 
 
 endmodule
@@ -443,7 +443,7 @@ module spec_sw_alloc_can #(
         assign spec_granted_dest_port_all_accepted[(i+1)*P_1-1      :   i*P_1]=valid_speculation[i]? (spec_request_acceptable[(i+1)*P_1-1       :   i*P_1] & spec_granted_dest_port_all_pre[(i+1)*P_1-1     :   i*P_1]): {P_1{1'b0}};
         
         //synthesis translate_off
-	//synopsys  translate_off
+    //synopsys  translate_off
 
         if(DEBUG_EN)begin :dbg
             always @(posedge clk) begin 
@@ -451,7 +451,7 @@ module spec_sw_alloc_can #(
                 if(nonspec_ivc_granted_all [(i+1)*V-1       :   i*V] >0 && spec_ivc_granted_all_accepted[(i+1)*V-1      :   i*V]>0 ) $display("%t: Error: Both speculative and nonspeculative is granted for one port",$time);
             end
         end
-	//synopsys  translate_on
+    //synopsys  translate_on
         //synthesis translate_on
     
     

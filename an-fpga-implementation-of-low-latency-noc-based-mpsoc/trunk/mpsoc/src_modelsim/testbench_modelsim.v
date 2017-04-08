@@ -6,14 +6,15 @@ module testbench_modelsim;
 parameter MAX_PCK_SIZ =10 ,
           PCK_SIZw    = log2(MAX_PCK_SIZ+1);
 
-function integer log2;
+
+    function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
-   endfunction // log2 
+    endfunction // log2 
 
 localparam RATIOw=log2(100);
 
@@ -89,8 +90,8 @@ endmodule
 module testbench_sub #(
     parameter V=2,
     parameter B=5,
-    parameter NX=4,
-    parameter NY=4,
+    parameter NX=6,
+    parameter NY=1,
     parameter C=2,
     parameter Fpay=32,
     parameter MUX_TYPE="ONE_HOT",
@@ -106,14 +107,14 @@ module testbench_sub #(
     parameter CVw=(C==0)? V : C * V,
     parameter [CVw-1:   0] CLASS_SETTING = 4'b1111, // shows how each class can use VCs   
     parameter [V-1  :   0] ESCAP_VC_MASK = 2'b10,  // mask scape vc, valid only for full adaptive 
-    parameter SSA_EN="YES", // "YES" , "NO"    
+    parameter SSA_EN=  "NO",//"YES", // "YES" , "NO"    
       
     parameter C0_p=50,
     parameter C1_p=50,
     parameter C2_p=0,
     parameter C3_p=0,
    // parameter TRAFFIC="TRANSPOSE1",
-    parameter TRAFFIC="RANDOM",
+    parameter TRAFFIC="RANDOM",//"RANDOM",
  //parameter TRAFFIC="CUSTOM",
     parameter HOTSPOT_PERCENTAGE=4,
     parameter HOTSOPT_NUM=4,
@@ -126,7 +127,7 @@ module testbench_sub #(
     parameter MAX_SIM_CLKs=1000000,
     parameter MAX_PCK_SIZ=10,
     parameter TIMSTMP_FIFO_NUM=2,
-    parameter ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
+    parameter ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY"   )?    "DETERMINISTIC" : 
                         (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE", 
     parameter DEBUG_EN=1,
     parameter AVG_LATENCY_METRIC= "HEAD_2_TAIL"
@@ -157,12 +158,12 @@ module testbench_sub #(
    
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
-   endfunction // log2 
+    endfunction // log2 
     
     function integer CORE_NUM;
         input integer x,y;

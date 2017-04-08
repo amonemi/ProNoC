@@ -24,10 +24,10 @@ module noc #(
 	parameter ROUTE_SUBFUNC ="XY",
 	parameter AVC_ATOMIC_EN=1,
 	parameter ADD_PIPREG_AFTER_CROSSBAR=0,
-    	parameter CVw=(C==0)? V : C * V,
-    	parameter [CVw-1:   0] CLASS_SETTING = {CVw{1'b1}}, // shows how each class can use VCs   
-    	parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000,  // mask scape vc, valid only for full adaptive
-    	parameter SSA_EN="YES" // "YES" , "NO"          
+    parameter CVw=(C==0)? V : C * V,
+    parameter [CVw-1:   0] CLASS_SETTING = {CVw{1'b1}}, // shows how each class can use VCs   
+    parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000,  // mask scape vc, valid only for full adaptive
+    parameter SSA_EN="YES" // "YES" , "NO"          
 
 )(
 	reset,
@@ -53,14 +53,14 @@ module noc #(
                            
     localparam P=  (TOPOLOGY=="RING")? 3 : 5;                                             
 
-	function integer log2;
-      input integer number;	begin	
-         log2=0;	
-         while(2**log2<number) begin	
-            log2=log2+1;	
-         end	
-      end	
-   endfunction // log2 
+    function integer log2;
+      input integer number; begin   
+         log2=(number <=1) ? 1: 0;    
+         while(2**log2<number) begin    
+            log2=log2+1;    
+         end 	   
+      end   
+    endfunction // log2 
 	
     localparam      PV     =	V		*	P,
 					P_1    =	P-1	,
@@ -169,6 +169,18 @@ generate
                 assign  router_credit_in_all    [`SELECT_WIRE(x,0,1,V)]         =   router_credit_out_all   [`SELECT_WIRE(0,0,2,V)];
                 assign  router_flit_in_we_all   [x][1]                     =   router_flit_out_we_all  [`CORE_NUM(0,0)][2];
                 assign  router_congestion_in_all [`SELECT_WIRE(x,0,1,CONGw)]  = router_congestion_out_all [`SELECT_WIRE(0,0,2,CONGw)];
+            end 
+            
+            if(x>0)begin :not_first_x
+                assign  router_flit_in_all      [`SELECT_WIRE(x,0,2,Fw)] = router_flit_out_all [`SELECT_WIRE((x-1),0,1,Fw)];
+                assign  router_credit_in_all    [`SELECT_WIRE(x,0,2,V)] =  router_credit_out_all    [`SELECT_WIRE((x-1),0,1,V)] ;
+                assign  router_flit_in_we_all   [x][2] =   router_flit_out_we_all  [`CORE_NUM((x-1),0)][1];
+                assign  router_congestion_in_all[`SELECT_WIRE(x,0,2,CONGw)]                    =   router_congestion_out_all [`SELECT_WIRE((x-1),0,1,CONGw)];
+            end else begin :first_x
+                assign  router_flit_in_all  [`SELECT_WIRE(x,0,2,Fw)]            =   router_flit_out_all     [`SELECT_WIRE((NX-1),0,1,Fw)] ;
+                assign  router_credit_in_all    [`SELECT_WIRE(x,0,2,V)] =  router_credit_out_all    [`SELECT_WIRE((NX-1),0,1,V)] ;
+                assign  router_flit_in_we_all   [x][2]                                     =   router_flit_out_we_all  [`CORE_NUM((NX-1),0)][1];
+                assign  router_congestion_in_all [`SELECT_WIRE(x,0,2,CONGw)]                    =   router_congestion_out_all [`SELECT_WIRE((NX-1),0,1,CONGw)];
             end 
             
             // local port connection

@@ -213,14 +213,15 @@ module one_hot_to_bin #(
 
 );
 
+  
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
-   endfunction // log2 
+    endfunction // log2 
 
 localparam MUX_IN_WIDTH =   BIN_WIDTH* ONE_HOT_WIDTH;
 
@@ -274,12 +275,13 @@ module binary_mux #(
 
     );
     
+  
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
     endfunction // log2 
 
@@ -324,14 +326,15 @@ module set_bits_counter #(
     output  [OUT_WIDTH-1        :   0]  out
     
 );
+  
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
-   endfunction // log2 
+    endfunction // log2 
 
     
     wire    [IN_WIDTH-2     :   0]  addrin2;
@@ -375,14 +378,15 @@ module check_single_bit_assertation #(
     output  result
     
     );
+  
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
-   endfunction // log2 
+    endfunction // log2 
 
 
     
@@ -458,14 +462,15 @@ module parallel_counter  #(
 );
     
     
+   
     function integer log2;
       input integer number; begin   
-         log2=0;    
+         log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end    
+         end 	   
       end   
-   endfunction // log2 
+    endfunction // log2 
     
   localparam OUT_WIDTH = log2(IN_WIDTH+1);
   localparam PCIw      = (IN_WIDTH < 8   )? 7    :

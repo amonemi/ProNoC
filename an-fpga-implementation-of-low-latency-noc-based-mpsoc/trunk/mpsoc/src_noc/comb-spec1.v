@@ -8,9 +8,9 @@ of switch allocation (comb-spec1).
 **********************************/    
     
 module comb_spec1_allocator #(
-                parameter   V                   =   4,// Virtual channel num per port
-                parameter   P                   =   5,
-                parameter   DEBUG_EN            =   1
+    parameter    V                   =   4,// Virtual channel num per port
+    parameter    P                   =   5,
+    parameter    DEBUG_EN            =   1
 )(
     
         dest_port_all,
@@ -370,7 +370,7 @@ module spec_sw_alloc #(
         assign spec_granted_dest_port_all_accepted[(i+1)*P_1-1      :   i*P_1]=(valid_speculation[i])? spec_request_accepted  [i]: {P_1{1'b0}};
     
         //synthesis translate_off
-	//synopsys  translate_off
+    //synopsys  translate_off
         if(DEBUG_EN)begin :dbg
             assign nonspec_check[i] = nonspec_granted_dest_port_all[(i+1)*P_1-1     :   i*P_1];
             assign spec_check[i]= spec_granted_dest_port_all_accepted[(i+1)*P_1-1       :   i*P_1];
@@ -380,7 +380,7 @@ module spec_sw_alloc #(
             end
         end //DEBUG
         //synthesis translate_on
-	//synopsys  translate_on
+    //synopsys  translate_on
     
     
     end//i

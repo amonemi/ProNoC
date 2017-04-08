@@ -1,54 +1,55 @@
-`timescale	  1ns/1ps
+`timescale      1ns/1ps
 
  module class_ovc_table #(
-	parameter C= 4,//number of class 
-	parameter V= 4, //VC number per port
-	parameter CVw=(C==0)? V : C * V,
+    parameter C= 4,//number of class 
+    parameter V= 4, //VC number per port
+    parameter CVw=(C==0)? V : C * V,
     parameter [CVw-1:   0] CLASS_SETTING = {CVw{1'b1}} // shows how each class can use VCs   
 
 
-	)
-	(
-		class_in,
-		candidate_ovcs
-	);
-	
-	function integer log2;
-      input integer number;	begin	
-         log2=0;	
-         while(2**log2<number) begin	
-            log2=log2+1;	
-         end	
-      end	
-   endfunction // log2 
-	
-	localparam Cw= (C>1)?  log2(C): 1;
-	
-	input [Cw-1	:	0]	class_in;
-	output[V-1	:	0]	candidate_ovcs;
-	
-    genvar i;	
-	generate 
+    )
+    (
+        class_in,
+        candidate_ovcs
+    );
+    
+   
+    function integer log2;
+      input integer number; begin   
+         log2=(number <=1) ? 1: 0;    
+         while(2**log2<number) begin    
+            log2=log2+1;    
+         end 	   
+      end   
+    endfunction // log2 
+    
+    localparam Cw= (C>1)?  log2(C): 1;
+    
+    input [Cw-1    :    0]    class_in;
+    output[V-1    :    0]    candidate_ovcs;
+    
+    genvar i;    
+    generate 
         if(C == 0 || C == 1) begin: no_class // 
-	
-	      assign  candidate_ovcs={V{1'b1}};
-	
-	    end else begin: width_class
-	    
-	       wire [V-1  :   0] class_table [C-1  :   0];
-	       for(i=0;i<C;i=i+1) begin : class_loop
-	           assign class_table[i]= CLASS_SETTING[(i+1)*V-1  :   i*V];
-	       end
-	       
-            	      
-	       assign  candidate_ovcs=class_table[class_in];
-	    
-	    
-	    
-	    end
-	 endgenerate
-	
-		
+    
+          assign  candidate_ovcs={V{1'b1}};
+    
+        end else begin: width_class
+        
+           wire [V-1  :   0] class_table [C-1  :   0];
+           for(i=0;i<C;i=i+1) begin : class_loop
+               assign class_table[i]= CLASS_SETTING[(i+1)*V-1  :   i*V];
+           end
+           
+                      
+           assign  candidate_ovcs=class_table[class_in];
+        
+        
+        
+        end
+     endgenerate
+    
+        
 endmodule
 
 
