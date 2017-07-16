@@ -1,29 +1,31 @@
-/*********************************************************************
-							
-	File: general_dual_port_ram.v
-	
-	Copyright (C) 2014  Alireza Monemi
+/**********************************************************************
+**	File:  generic_ram.v
+**	   
+**    
+**	Copyright (C) 2014-2017  Alireza Monemi
+**    
+**	This file is part of ProNoC 
+**
+**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**	you can redistribute it and/or modify it under the terms of the GNU
+**	Lesser General Public License as published by the Free Software Foundation,
+**	either version 2 of the License, or (at your option) any later version.
+**
+** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
+** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+** 	Public License for more details.
+**
+** 	You should have received a copy of the GNU Lesser General Public
+** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**
+**
+**	Description: 
+**	Generic single dual port ram
+**	
+**
+*******************************************************************/
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-	
-	
-	Purpose:
-	Generic_dual_port_ram. 
-
-	Info: monemi@fkegraduate.utm.my
-
-****************************************************************/
 `timescale 1ns / 1ps
 
 
@@ -34,7 +36,9 @@
 module generic_dual_port_ram #(
     parameter Dw=8, 
     parameter Aw=6,
-    parameter BYTE_WR_EN= "YES"//"YES","NO"
+    parameter BYTE_WR_EN= "YES",//"YES","NO"
+    parameter INITIAL_EN= "NO",
+    parameter INIT_FILE= "sw/ram/ram0.txt"// ram initial file in hex ascii format
 )
 (
    data_a,
@@ -63,7 +67,9 @@ if   ( BYTE_WR_EN == "NO") begin : no_byten
 
 	dual_port_ram #( 
 		.Dw (Dw),
-		.Aw (Aw)
+		.Aw (Aw),
+		.INITIAL_EN(INITIAL_EN),
+		.INIT_FILE(INIT_FILE)
 	)
 	the_ram
 	(
@@ -83,7 +89,9 @@ end else begin : byten
    byte_enabled_true_dual_port_ram #(
 		.BYTE_WIDTH(8),
 		.ADDRESS_WIDTH(Aw),
-		.BYTES(Dw/8)
+		.BYTES(Dw/8),
+		.INITIAL_EN(INITIAL_EN),
+		.INIT_FILE(INIT_FILE)
 		
 	)
 	the_ram
@@ -119,7 +127,9 @@ endmodule
 module generic_single_port_ram #(
     parameter Dw=8, 
     parameter Aw=6,
-    parameter BYTE_WR_EN= "YES"//"YES","NO"
+    parameter BYTE_WR_EN= "YES",//"YES","NO"
+    parameter INITIAL_EN= "NO",
+    parameter INIT_FILE= "sw/ram/ram0.txt"// ram initial file in hex ascii format
 )
 (
    data,
@@ -145,7 +155,9 @@ if   ( BYTE_WR_EN == "NO") begin : no_byten
 	
 	single_port_ram #( 
 		.Dw (Dw),
-		.Aw (Aw)
+		.Aw (Aw),
+		.INITIAL_EN(INITIAL_EN),
+		.INIT_FILE(INIT_FILE)
 	)
 	the_ram
 	(
@@ -161,7 +173,9 @@ end else begin : byten
 	byte_enabled_single_port_ram #(
 		.BYTE_WIDTH(8),
 		.ADDRESS_WIDTH(Aw),
-		.BYTES(Dw/8)
+		.BYTES(Dw/8),
+		.INITIAL_EN(INITIAL_EN),
+		.INIT_FILE(INIT_FILE)
 		
 	)
 	the_ram
@@ -208,7 +222,9 @@ endmodule
 module dual_port_ram
 #(
     parameter Dw=8, 
-    parameter Aw=6 
+    parameter Aw=6,
+    parameter INITIAL_EN= "NO",
+    parameter INIT_FILE= "sw/ram/ram0.txt"// ram initial file 
 )
 (
    data_a,
@@ -230,6 +246,14 @@ module dual_port_ram
 
     // Declare the RAM variable
     reg [Dw-1:0] ram[2**Aw-1:0];
+
+	// initial the memory if the file is defined
+	generate 
+		if (INITIAL_EN == "YES") begin : init
+		    initial $readmemh(INIT_FILE,ram);
+		end
+	endgenerate
+
 
     // Port A 
     always @ (posedge clk)
@@ -278,7 +302,9 @@ endmodule
 
 module simple_dual_port_ram #(
 	parameter Dw=8, 
-	parameter Aw=6
+	parameter Aw=6,
+        parameter INITIAL_EN= "NO",
+	parameter INIT_FILE= "sw/ram/ram0.txt"// ram initial file in hex ascii format
 )
 (
 	data,
@@ -299,6 +325,13 @@ module simple_dual_port_ram #(
 
 	// Declare the RAM variable
 	reg [Dw-1:0] ram [2**Aw-1:0];
+
+	// initial the memory if the file is defined
+	generate 
+		if (INITIAL_EN == "YES") begin : init
+		    initial $readmemh(INIT_FILE,ram);
+		end
+	endgenerate
 
 	always @ (posedge clk)
 	begin
@@ -333,7 +366,9 @@ endmodule
 
 module single_port_ram #(
     parameter Dw=8,
-    parameter Aw=6
+    parameter Aw=6,
+    parameter INITIAL_EN= "NO",
+    parameter INIT_FILE= "sw/ram/ram0.txt"// ram initial file in hex ascii format
 )
 (
     data,
@@ -350,6 +385,13 @@ module single_port_ram #(
 
     // Declare the RAM variable
     reg [Dw-1:0] ram[2**Aw-1:0];
+
+	// initial the memory if the file is defined
+	generate 
+		if (INITIAL_EN == "YES") begin : init
+		    initial $readmemh(INIT_FILE,ram);
+		end
+	endgenerate
 
     // Variable to hold the registered read address
     reg [Aw-1:0] addr_reg;

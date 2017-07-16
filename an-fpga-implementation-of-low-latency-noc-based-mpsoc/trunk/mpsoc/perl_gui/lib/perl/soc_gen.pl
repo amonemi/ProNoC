@@ -19,6 +19,7 @@ use Gtk2::Pango;
 
 
 
+
 # clean names for column numbers.
 use constant DISPLAY_COLUMN    => 0;
 use constant CATRGORY_COLUMN    => 1;
@@ -31,8 +32,9 @@ require "widget.pl";
 require "verilog_gen.pl";
 require "readme_gen.pl";
 require "hdr_file_gen.pl";
-
-
+require "diagram.pl";
+require "compile.pl";
+require  "software_editor.pl";
 
  
 
@@ -77,7 +79,11 @@ sub add_module_to_soc{
 		return;
 	}
 	$soc->soc_add_instance_order($instance_id);
-	
+	# Add IP version 
+	my $v=$ip->ip_get($category,$module,"version"); 
+	$v = 0 if(!defined $v);
+	#print "$v\n";
+	$soc->object_add_attribute($instance_id,"version",$v);
 	# Read default parameter from lib and add them to soc
 	my %param_default= $ip->get_param_default($category,$module);
 	
@@ -125,8 +131,7 @@ sub get_module_parameter{
 	my %new_param_value=%param_value;
 	#gui
 	my $table_size = ($param_num<10) ? 10 : $param_num;
-	my($width,$hight)=max_win_size();
-	my $window =  def_popwin_size(.6*$width,.6*$hight, "Parameter setting for $module ");
+	my $window =  def_popwin_size(60,60, "Parameter setting for $module ",'percent');
 	my $table = def_table($table_size, 7, FALSE);
 	
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
@@ -136,26 +141,37 @@ sub get_module_parameter{
 	
 	my $ok = def_image_button('icons/select.png','OK');
 	
+	my $at0= 'expand';
+	my $at1= 'shrink';
 	
-	$table->attach (gen_label_in_center("Parameter name"),0, 3, $row, $row+1,'expand','shrink',2,2);
-	$table->attach (gen_label_in_center("Value"),3, 6, $row, $row+1,'expand','shrink',2,2);
-	$table->attach (gen_label_in_center("Description"),6, 7, $row, $row+1,'expand','shrink',2,2);
+	$table->attach (gen_label_in_left("Parameter name"),0, 3, $row, $row+1,$at0,$at1,2,2);
+	$table->attach (gen_label_in_left("Value"),3, 6, $row, $row+1,$at0,$at1,2,2);
+	$table->attach (gen_label_in_left("Description"),6, 7, $row, $row+1,$at0,$at1,2,2);
 	$row++;
 	foreach my $p (@parameters){
 		my ($default,$type,$content,$info)= $ip->ip_get_parameter($category,$module,$p);
 		
 		my $value=$param_value{$p};
-		
-		if ($type eq "Entry"){
+		if ($type eq "File_Entry"){
 			my $entry=gen_entry($value);
-			$table->attach ($entry, 3, 6, $row, $row+1,'expand','shrink',2,2);
+			my $brows=get_file_name(undef,undef,$entry,undef,undef,undef,undef,undef);
+			my $box=def_hbox(TRUE,0);
+			$box->pack_start($entry,FALSE,FALSE,3);
+			$box->pack_start($brows,FALSE,FALSE,3);
+			$table->attach ($box, 3, 6, $row, $row+1,$at0,$at1,2,2);
+			$entry-> signal_connect("changed" => sub{$new_param_value{$p}=$entry->get_text();});
+		}
+		
+		elsif ($type eq "Entry"){
+			my $entry=gen_entry($value);
+			$table->attach ($entry, 3, 6, $row, $row+1,$at0,$at1,2,2);
 			$entry-> signal_connect("changed" => sub{$new_param_value{$p}=$entry->get_text();});
 		}
 		elsif ($type eq "Combo-box"){
 			my @combo_list=split(",",$content);
 			my $pos=get_item_pos($value, @combo_list);
 			my $combo=gen_combo(\@combo_list, $pos);
-			$table->attach ($combo, 3, 6, $row, $row+1,'expand','shrink',2,2);
+			$table->attach ($combo, 3, 6, $row, $row+1,$at0,$at1,2,2);
 			$combo-> signal_connect("changed" => sub{$new_param_value{$p}=$combo->get_active_text();});
 			
 		}
@@ -168,14 +184,14 @@ sub get_module_parameter{
 		  my $spin=gen_spin($min,$max,$step);
 		  if(defined $value) {$spin->set_value($value);}
 		  else {$spin->set_value($min);}
-		  $table->attach ($spin, 3, 4, $row, $row+1,'expand','shrink',2,2);
+		  $table->attach ($spin, 3, 4, $row, $row+1,$at0,$at1,2,2);
 		  $spin-> signal_connect("value_changed" => sub{ $new_param_value{$p}=$spin->get_value_as_int(); });
 		 
 		 # $box=def_label_spin_help_box ($param,$info, $value,$min,$max,$step, 2);
 		}
 		if (defined $info && $type ne "Fixed"){
 			my $info_button=def_image_button('icons/help.png');
-			$table->attach ($info_button, 6, 7, $row, $row+1,'expand','shrink',2,2);	
+			$table->attach ($info_button, 6, 7, $row, $row+1,$at0,$at1,2,2);	
 			$info_button->signal_connect('clicked'=>sub{
 				message_dialog($info);
 				
@@ -184,8 +200,8 @@ sub get_module_parameter{
 		}		
 		if ($type ne "Fixed"){
 			#print "$p:val:$value\n";
-			my $label =gen_label_in_center($p);
-			$table->attach ($label, 0, 3, $row, $row+1,'expand','shrink',2,2);
+			my $label =gen_label_in_left($p);
+			$table->attach ($label, 0, 3, $row, $row+1,$at0,$at1,2,2);
 			$row++;
 		}		 
 		
@@ -193,14 +209,16 @@ sub get_module_parameter{
 	}
 	#if ($row== 0){
 			#my $label =gen_label_in_left("The $module IP does not have any adjatable parameter");
-		#	$table->attach ($label, 0, 7, $row, $row+1,'expand','shrink',2,2);
+		#	$table->attach ($label, 0, 7, $row, $row+1,$at0,'shrink',2,2);
 
 	#}
+	
+	
 	
 	my $mtable = def_table(10, 1, FALSE);
 
 	$mtable->attach_defaults($scrolled_win,0,1,0,9);
-	$mtable->attach($ok,0,1,9,10,'expand','shrink',2,2);
+	$mtable->attach($ok,0,1,9,10,'expand','fill',2,2);
 	
 	$window->add ($mtable);
 	$window->show_all();
@@ -340,15 +358,38 @@ sub gen_instance{
 	my $module=$soc->soc_get_module($instance_id);
 	my $category=$soc->soc_get_category($instance_id);
 	my $module_name_label=box_label(FALSE,0,$module);
-	$table->attach_defaults ($module_name_label,0,1,$offset+0,$offset+1);
-	
+	my $box0=def_hbox(FALSE,5);
+	$box0->pack_start( $module_name_label, FALSE, FALSE, 3);
+
+	#module pdf
+	my $pdf=$soc->soc_get_description_pdf($instance_id);
+	if(defined $pdf){
+		my $b=def_image_button('icons/evince-icon.png');
+		$box0->pack_start( $b, FALSE, FALSE, 3);
+		$b->signal_connect ("clicked"  => sub{
+			my $dir = Cwd::getcwd();
+			my $project_dir	  = abs_path("$dir/../../"); #mpsoc directory address
+			#print "path ${project_dir}$pdf\n";
+			if (-f "${project_dir}$pdf"){
+				system qq (xdg-open ${project_dir}$pdf);
+			}elsif (-f "$pdf"){
+				system qq (xdg-open $pdf);
+			}else{
+				message_dialog("Error! $pdf or ${project_dir}$pdf did not find!\n");	
+			}
+
+		});
+
+	}
+	$table->attach  ($box0,0,1,$offset+0,$offset+1,'expand','shrink',2,2);
+
 	#parameter setting button
 	my $param_button = def_image_button('icons/setting.png','Setting');
 	my $box1=def_hbox(FALSE,5);
 	my $up=def_image_button("icons/up_sim.png");
 	$box1->pack_start( $up, FALSE, FALSE, 3);
 	$box1->pack_start($param_button,   FALSE, FALSE,3);
-	$table->attach_defaults ($box1 ,0,1,$offset+1,$offset+2);
+	$table->attach  ($box1 ,0,1,$offset+1,$offset+2,'expand','shrink',2,2);
 	$param_button->signal_connect (clicked => sub{
 		get_module_parameter($soc,$ip,$instance_id);	
 		
@@ -367,7 +408,7 @@ sub gen_instance{
 	my $dwn=def_image_button("icons/down_sim.png");
 	$box2->pack_start( $dwn, FALSE, FALSE, 3);
 	$box2->pack_start($cancel_button,   FALSE, FALSE,3);
-	$table->attach_defaults ($box2,0,1,$offset+2,$offset+3);
+	$table->attach  ($box2,0,1,$offset+2,$offset+3,'expand','shrink',2,2); 
 	$cancel_button->signal_connect (clicked => sub{
 		remove_instance_from_soc($soc,$instance_id);
 				
@@ -377,36 +418,85 @@ sub gen_instance{
 		set_gui_status($soc,"refresh_soc",0);
 		
 	});
+
 	
 	
 	#instance name
 	my $instance_name=$soc->soc_get_instance_name($instance_id);
-	my $instance_label=gen_label_in_left("Instance name");
+	my $instance_label=gen_label_in_left(" Instance name");
 	my $instance_entry = gen_entry($instance_name);
 	   
 	
 	
-	$table->attach_defaults ($instance_label,1,2,$offset+0,$offset+1);
-	$table->attach_defaults ($instance_entry,1,2,$offset+1,$offset+2);
+	$table->attach  ($instance_label,1,2,$offset+0,$offset+1,'expand','shrink',2,2);
+	#$table->attach_defaults ($instance_entry,1,2,$offset+1,$offset+2);
+
+
+	my $enter= def_image_button("icons/enter.png");
 	
-	$instance_entry->signal_connect (changed => sub{
+	my $box=def_pack_hbox(FALSE,0,$instance_entry );
+	$table->attach  ($box,1,2,$offset+1,$offset+2,'expand','shrink',2,2);
+
+	my ($old_v,$new_v)=  get_old_new_ip_version ($soc,$ip,$instance_id);
+	if($old_v != $new_v){
+		my $warn=def_image_button("icons/warnning.png");
+		$table->attach  ($warn,1,2,$offset+2,$offset+3,'expand','shrink',2,2);  #$box2->pack_start($warn, FALSE, FALSE, 3);  
+		$warn->signal_connect (clicked => sub{
+			message_dialog("Warning: ${module}'s version (V.$old_v) missmatches with the one exsiting in librray (V.$new_v). The generated system may not work correctly.  Please remove and then add $module again to update it with current version")
+				
+		});	
+
+
+	}
+	
+
+	$instance_entry->signal_connect ("activate"  => sub{
 		#print "changed\n";
-		$instance_name=$instance_entry->get_text();
+		my $new_name=$instance_entry->get_text();
 		#check if instance name exist in soc
+		set_gui_status($soc,"refresh_soc",1) if($instance_name eq $new_name );
 		my @instance_names= $soc->soc_get_all_instance_name();
-		if( grep {$_ eq $instance_name} @instance_names){
-			print "$instance_name exist\n";
+		if( grep {$_ eq $new_name} @instance_names){
+			print "$new_name exist\n";
 		}
 		else {
 		#add instance name to soc
-			$soc->soc_set_instance_name($instance_id,$instance_name);
+			$soc->soc_set_instance_name($instance_id,$new_name);
 		
-			set_gui_status($soc,"refresh_soc",25);
+			set_gui_status($soc,"refresh_soc",1);
 				
 		}	
 	});
+	my $change=0;
+	$instance_entry->signal_connect ("changed"  => sub{
+		if($change ==0){		
+			$box->pack_start( $enter, FALSE, FALSE, 0);
+			$box->show_all;
+			$change=1;
+		}
+
+	});
 	
-	
+	$enter->signal_connect ("clicked"  => sub{
+		my $new_name=$instance_entry->get_text();
+		#check if instance name exist in soc
+		set_gui_status($soc,"refresh_soc",1) if($instance_name eq $new_name );
+		my @instance_names= $soc->soc_get_all_instance_name();
+		if( grep {$_ eq $new_name} @instance_names){
+			print "$new_name exist\n";
+		}
+		else {
+		#add instance name to soc
+			$soc->soc_set_instance_name($instance_id,$new_name);
+		
+			set_gui_status($soc,"refresh_soc",1);
+				
+		}	
+
+
+	});
+
+
 	
 	#interface_pluges
 	my %plugs = $ip->get_module_plugs_value($category,$module);
@@ -484,11 +574,11 @@ sub gen_instance{
 			#plug name
 			my $plug_name=	$soc->soc_get_plug_name($instance_id,$plug,$k);
 			if(! defined $plug_name ){$plug_name=($plug_num>1)?"$plug\[$k\]":$plug}
-			$plug_name="    $plug_name";
+			$plug_name="  $plug_name  ";
 			my($plug_box, $plug_combo)= def_h_labeled_combo_scaled($plug_name,\@connettions_name,$pos,1,2);
 			
 			#if($row>2){$table->resize ($row, 2);}
-			$table->attach_defaults ($plug_box,2,5,$row+$offset,$row+$offset+1);$row=$row+1;
+			$table->attach ($plug_box,2,5,$row+$offset,$row+$offset+1,'fill','fill',2,2);	$row++;
 			
 			my $plug_num=$k;
 			my @ll=($soc,$instance_id,$plug,$info,$plug_num);
@@ -577,7 +667,7 @@ sub gen_instance{
 	my $separator = Gtk2::HSeparator->new;
 	#$box->pack_start($separator, FALSE, FALSE, 3);
 	if($row<3) {$row=3;}
-	$table->attach_defaults ($separator,0,5,$row+$offset,$row+$offset+1);$row=$row+1;
+	$table->attach ($separator,0,5,$row+$offset,$row+$offset+1,'fill','fill',2,2);	$row++;
 	return ($offset+$row);
 }	
 
@@ -619,8 +709,8 @@ sub generate_dev_table{
 	}
 	if($row<20){for ($i=$row; $i<20; $i++){
 		
-		my $temp=gen_label_in_center(" ");
-		$table->attach_defaults ($temp, 0, 1 , $i, $i+1);
+		#my $temp=gen_label_in_center(" ");
+		#$table->attach_defaults ($temp, 0, 1 , $i, $i+1);
 	}}	
 	
 	
@@ -858,7 +948,7 @@ sub generate_soc{
 		my $name=$soc->object_get_attribute('soc_name');
 	
 		
-		my ($file_v,$top_v,$readme,$prog)=soc_generate_verilog($soc);
+		my ($file_v,$top_v,$readme,$prog)=soc_generate_verilog($soc,$sw_path);
 			
 		# Write object file
 		open(FILE,  ">lib/soc/$name.SOC") || die "Can not open: $!";
@@ -867,13 +957,14 @@ sub generate_soc{
 		close(FILE) || die "Error closing file: $!";
 			
 		# Write verilog file
+		my $h=autogen_warning().get_license_header("${name}.v")."\n`timescale 1ns / 1ps\n";
 		open(FILE,  ">lib/verilog/$name.v") || die "Can not open: $!";
-		print FILE $file_v;
+		print FILE $h.$file_v;
 		close(FILE) || die "Error closing file: $!";
 			
 		# Write Top module file
 		if($gen_top){
-			my $l=autogen_warning().get_license_header("${name}_top.v");
+			my $l=autogen_warning().get_license_header("${name}_top.v")."\n`timescale 1ns / 1ps\n";
 			open(FILE,  ">lib/verilog/${name}_top.v") || die "Can not open: $!";
 			print FILE "$l\n$top_v";
 			close(FILE) || die "Error closing file: $!";
@@ -1034,7 +1125,7 @@ sub wb_address_setting {
 	my $soc=shift;
 		
 	
-	my $window = def_popwin_size(1200,500,"Wishbone slave port address setting");
+	my $window = def_popwin_size(80,50,"Wishbone slave port address setting",'percent');
 	my $table = def_table(10, 6, FALSE);
 	
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
@@ -1335,7 +1426,7 @@ return;
 #############
 
 sub load_soc{
-	my ($soc,$info)=@_;
+	my ($soc,$info,$ip)=@_;
 	my $file;
 	my $dialog = Gtk2::FileChooserDialog->new(
             	'Select a File', undef,
@@ -1363,34 +1454,129 @@ sub load_soc{
 				return;
 			} 
 			clone_obj($soc,$pp);
+			check_instances_version($soc,$ip);
 			set_gui_status($soc,"load_file",0);		
 		}					
      }
      $dialog->destroy;
 
-
+   
 
 	
 
 }
 
 
+sub check_instances_version{
+	my ($soc,$ip)=@_;
+
+ #check if the IP's version didnt increases 
+    my @all_instances=$soc->soc_get_all_instances();
+    foreach my $instance_id (@all_instances){
+	my ($old_v,$new_v)=  get_old_new_ip_version ($soc,$ip,$instance_id);
+	my $differences='';
+	$differences="$differences \t The $instance_id version (V.$old_v) missmatches with the one exsiting in the library (V.$new_v).\n " if($old_v != $new_v);
+		
+	
+	message_dialog("Warning: The generated system may not work correctly: \n $differences Please remove and then add the aforementioned instance(s) to update them with current version(s)") if(length($differences)>1);
+
+    }
+
+
+}
+
+sub get_old_new_ip_version{
+	my ($soc,$ip,$instance_id)=@_;
+	my $old_v=$soc->object_get_attribute($instance_id,"version",undef);
+	$old_v=0 if(!defined $old_v);
+	my $module=$soc->soc_get_module($instance_id);
+	my $category=$soc->soc_get_category($instance_id);
+	my $new_v=$ip->ip_get($category,$module,"version");
+	$new_v=0 if(!defined $new_v);
+	return ($old_v,$new_v);
+}
 
 
 
 
+sub get_ram_init{
+	my $soc=shift;
+	my $window = def_popwin_size(80,50,"Memory initial file setting setting",'percent');
+	my $table = def_table(10, 6, FALSE);
+	
+	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
+	$scrolled_win->set_policy( "automatic", "automatic" );
+	$scrolled_win->add_with_viewport($table);
+	my $row=0;
+	my $col=0;
+	my @instances=$soc->soc_get_all_instances();
+	foreach my $id (@instances){
+		my $category = $soc->soc_get_category($id);
+		if ($category eq 'RAM') {
+			my $ram_name=  $soc->soc_get_instance_name($id);
+			$table->attach (gen_label_in_left("$ram_name"),$col,$col+1, $row, $row+1,'fill','shrink',2,2);$col++;
+			my $init_type=gen_combobox_object ($soc,'RAM_INIT','type',"Dont_Care,Fill_0,Fill_1,Search_in_sw,Fixed_file","Search_in_sw",undef);
+			my $init_inf= "Define how the memory must be initialized :
+ Dont_Care: The memory wont be initialized
+ Fill_0: All memory bits will fill with value zero
+ Fill_1: All memory bits will fill with value one
+ Search_in_sw: Each instance of this processing core 
+               use different initial file that is 
+               located in its SW folder. 
+ Fixed_file: All instance of this processing core 
+             use the same initial file";
+			
+			$row++;
+		}
+	}
+	
+	
+	$window->add($scrolled_win);
+	$window->show_all;
+}
 
 
+sub software_edit_soc {
+	my $soc=shift;	
+	my $name=$soc->object_get_attribute('soc_name');
+	if (length($name)==0){
+		message_dialog("Please define the SoC name!");
+		return ;
+	}
+	my $target_dir  = "$ENV{'PRONOC_WORK'}/SOC/$name";
+	my $sw 	= "$target_dir/sw";
+	my ($app,$table,$tview) = software_main($sw);
+
+	
 
 
+	my $make = def_image_button('icons/gen.png','Compile');
+	my $regen=def_image_button('icons/refresh.png','Regenerate main.c');	
+	$table->attach ($regen,0, 1, 1,2,'shrink','shrink',0,0);	
+	$table->attach ($make,9, 10, 1,2,'shrink','shrink',0,0);
+	$regen -> signal_connect ("clicked" => sub{
+		my $dialog = Gtk2::MessageDialog->new (my $window,
+                                      'destroy-with-parent',
+                                      'question', # message type
+                                      'yes-no', # which set of buttons?
+                                      "Are you sure you want to regenaret the Top.v file? Note that any changes you have made will be lost");
+  		my $response = $dialog->run;
+  		if ($response eq 'yes') {
+      			
+			save_file ("$sw/main.c",main_c_template($name));
+			$app->load_source("$sw/main.c");	
+  		}		
 
 
+	});
 
+	$make -> signal_connect("clicked" => sub{
+		$app->do_save();
+		run_make_file($sw,$tview);	
 
+	});
 
-
-
-
+}
 
 
 
@@ -1429,14 +1615,18 @@ sub socgen_main{
 	my  $device_win=show_active_dev($soc,$ip,$infc,\$refresh_dev_win,$info);
 	
 	
-	my $generate = def_image_button('icons/gen.png','Generate');
+	my $generate = def_image_button('icons/gen.png','Generate RTL');
+	my $compile  = def_image_button('icons/gate.jpg','Compile RTL');
+	my $software = def_image_button('icons/binary.png','Software');
+	my $diagram  = def_image_button('icons/diagram.png','Diagram');
+	my $ram      = def_image_button('icons/RAM.png','Memory');
 	
 
 
 
 
 	
-	my $wb = def_image_button('icons/setting.png','Wishbone address setting');
+	my $wb = def_image_button('icons/setting.png','Wishbone-bus addr');
 	
 	
 	
@@ -1448,17 +1638,37 @@ sub socgen_main{
 	
 	
 	#$table->attach_defaults ($event_box, $col, $col+1, $row, $row+1);
-	$main_table->attach_defaults ($tree_box , 0, 2, 0, 17);
-	$main_table->attach_defaults ($device_win , 2, 12, 0, 17);
-	$main_table->attach_defaults ($infobox  , 0, 12, 17,19);
-	$main_table->attach ($open,0, 3, 19,20,'expand','shrink',2,2);
-	$main_table->attach_defaults ($entrybox,3, 7, 19,20);
-	$main_table->attach ($wb, 7, 10, 19,20,'expand','shrink',2,2);
-	$main_table->attach ($generate, 10, 12, 19,20,'expand','shrink',2,2);
-	
+
+
+
+
+	#$main_table->attach_defaults ($tree_box , 0, 2, 0, 17);
+	#$main_table->attach_defaults ($device_win , 2, 12, 0, 17);
+	#$main_table->attach_defaults ($infobox  , 0, 12, 17,19);
+
+
+	my $h1=gen_hpaned($tree_box,.15,$device_win);
+	my $v2=gen_vpaned($h1,.55,$infobox);
+	$main_table->attach_defaults ($v2  , 0, 12, 0,19);
+
+
+
 
 	
-		
+	$main_table->attach ($open,0, 2, 19,20,'expand','shrink',2,2);
+	$main_table->attach_defaults ($entrybox,2, 4, 19,20);
+	$main_table->attach ($wb, 4,6, 19,20,'expand','shrink',2,2);
+	$main_table->attach ($diagram, 6, 7, 19,20,'expand','shrink',2,2);
+	$main_table->attach ($generate, 7, 8, 19,20,'expand','shrink',2,2);
+	$main_table->attach ($software, 8, 9, 19,20,'expand','shrink',2,2);
+	#$main_table->attach ($ram, 9, 10, 19,20,'expand','shrink',2,2);
+	$main_table->attach ($compile, 10, 12, 19,20,'expand','shrink',2,2);
+	
+
+	$diagram-> signal_connect("clicked" => sub{ 
+		show_tile_diagram ($soc);
+	});
+	
 		
 	$generate-> signal_connect("clicked" => sub{ 
 		my $name=$soc->object_get_attribute('soc_name');
@@ -1474,8 +1684,9 @@ sub socgen_main{
 			message_dialog("The soc name must not end with '_number'!");
 			return ;
 		}
-		if ( $name =~ /\W+/ ){
-			message_dialog('The soc name must not contain any non-word character:("./\()\':,.;<>~!@#$%^&*|+=[]{}`~?-")!")');
+		my $error = check_verilog_identifier_syntax($name);
+		if ( defined $error ){
+			message_dialog("The \"$name\" is given with an unacceptable formatting. This name will be used as top level verilog module name so it must follow Verilog identifier declaration formatting:\n $error");
 			return ;
 		}
 
@@ -1485,9 +1696,50 @@ sub socgen_main{
     		
 		$soc->object_add_attribute('global_param','CORE_ID',0);	
 		generate_soc($soc,$info,$target_dir,$hw_dir,$sw_path,1,1);
-		message_dialog("SoC \"$name\" has been created successfully at $target_dir/ " );
-		exec($^X, $0, @ARGV);# reset ProNoC to apply changes	
+		#message_dialog("SoC \"$name\" has been created successfully at $target_dir/ " );
+		
+		my $dialog = Gtk2::MessageDialog->new (my $window,
+                                      'destroy-with-parent',
+                                      'question', # message type
+                                      'yes-no', # which set of buttons?
+                                      "Processing Tile  \"$name\" has been created successfully at $target_dir/.  In order to see this tile in MPSoC Generator you need to restar the ProNoC. Do you ant to reset the ProNoC now?");
+  		my $response = $dialog->run;
+  		if ($response eq 'yes') {
+      			exec($^X, $0, @ARGV);# reset ProNoC to apply changes	
+  		}
+  		$dialog->destroy;
 	
+	
+
+
+
+	});
+
+	$software -> signal_connect("clicked" => sub{
+		software_edit_soc($soc);
+
+	});
+
+	$ram-> signal_connect("clicked" => sub{
+		get_ram_init($soc);
+
+	});
+
+
+	$compile -> signal_connect("clicked" => sub{ 
+		my $name=$soc->object_get_attribute('soc_name');
+		if (length($name)==0){
+			message_dialog("Please define the SoC name!");
+			return ;
+		}
+		my $target_dir  = "$ENV{'PRONOC_WORK'}/SOC/$name";
+		my $top 	= "$target_dir/src_verilog/${name}_top.v";
+		if (-f $top){	
+			select_compiler($soc,$name,$top,$target_dir);
+		} else {
+			message_dialog("Cannot find $top file. Please run RTL Generator first!");
+			return;
+		}
 	});
 
 	$wb-> signal_connect("clicked" => sub{ 
@@ -1496,7 +1748,7 @@ sub socgen_main{
 	});
 
 	$open-> signal_connect("clicked" => sub{ 
-		load_soc($soc,$info);
+		load_soc($soc,$info,$ip);
 	
 	});	
 
@@ -1514,6 +1766,14 @@ sub socgen_main{
 			$timeout--;
 			set_gui_status($soc,$state,$timeout);
 				
+		}elsif ($state eq 'save_project'){
+			# Write object file
+			my $name=$soc->object_get_attribute('soc_name',undef);
+			open(FILE,  ">lib/soc/$name.SOC") || die "Can not open: $!";
+			print FILE perl_file_header("$name.SOC");
+			print FILE Data::Dumper->Dump([\%$soc],['soc']);
+			close(FILE) || die "Error closing file: $!";
+			set_gui_status($soc,"ideal",0);	
 		}
 		elsif( $state ne "ideal" ){
 			$refresh_dev_win->clicked;
@@ -1532,3 +1792,9 @@ sub socgen_main{
 	
 
 }
+
+
+
+
+
+

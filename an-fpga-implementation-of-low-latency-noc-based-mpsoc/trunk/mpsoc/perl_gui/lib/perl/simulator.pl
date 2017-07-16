@@ -54,7 +54,7 @@ sub generate_sim_bin_file() {
 	
 	
 	#verilate the noc
-	
+	my $start = localtime;
 	add_info($info_text, "verilate the NoC and make the library files");
 	my $command = "cd \"$script_dir/\" \n	xterm  	-l -lf logfile1.txt -e  sh verilator_compile_hw.sh";
 	my ($stdout,$exit)=run_cmd_in_back_ground_get_stdout( $command);
@@ -92,7 +92,7 @@ sub generate_sim_bin_file() {
 		add_info($info_text, "Verilator compilation failed !\n$command\n $stdout\n");
 		return;
 	}
-	 		
+	my $end = localtime; 		
 	
 
 	
@@ -101,24 +101,26 @@ sub generate_sim_bin_file() {
 	my $path=$simulate->object_get_attribute ('sim_param',"BIN_DIR");
 	my $name=$simulate->object_get_attribute ('sim_param',"SAVE_NAME");
 	
-	#create project didrectory if its not exist
+	#create project directory if its not exist
 	($stdout,$exit)=run_cmd_in_back_ground_get_stdout("mkdir -p $path" );
-	if($exit != 0 ){ 	print "$stdout\n"; 	message_dialog($stdout); return;}
+	if($exit != 0 ){ 	print "$stdout\n"; 	message_dialog($stdout,'error'); return;}
 	
 	#move the log file 
-	move("$script_dir/logfile1.txt" , "$path/$name.log1");
-	move("$script_dir/logfile2.txt" , "$path/$name.log2");
-	
+	unlink "$path/$name.log";
+	append_text_to_file("$path/$name.log","start:$start\n");
+	merg_files("$script_dir/logfile1.txt" , "$path/$name.log");
+	merg_files("$script_dir/logfile2.txt" , "$path/$name.log");
+	append_text_to_file("$path/$name.log","end:$end\n");
 	#check if the verilation was successful
 	if ((-e $bin)==0) {#something goes wrong 		
-    	message_dialog("Verilator compilation was unsuccessful please check the $path/$name.log files for more information"); 
+    	message_dialog("Verilator compilation was unsuccessful please check the $path/$name.log files for more information",'error'); 
     	return;
 	}
 	
 	
 	#copy ($bin,"$path/$name") or  die "Can not copy: $!";
 	($stdout,$exit)=run_cmd_in_back_ground_get_stdout("cp -f $bin $path/$name");
-	if($exit != 0 ){ 	print "$stdout\n"; 	message_dialog($stdout); return;}
+	if($exit != 0 ){ 	print "$stdout\n"; 	message_dialog($stdout,'error'); return;}
 		
 	#save noc info
 	open(FILE,  ">$path/$name.inf") || die "Can not open: $!";
@@ -147,7 +149,7 @@ sub generate_sim_bin_file() {
 
 
 ##########
-#	save_emulation
+#	save_simulation
 ##########
 sub save_simulation {
 	my ($simulate)=@_;

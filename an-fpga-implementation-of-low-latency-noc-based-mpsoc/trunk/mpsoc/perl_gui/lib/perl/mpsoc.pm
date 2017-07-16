@@ -90,6 +90,20 @@ sub mpsoc_remove_soc{
 	delete $self->{socs}{$name};		
 }
 
+sub mpsoc_remove_soc_top{
+	my ($self,$name)=@_;
+	delete $self->{socs}{$name}{top};		
+}
+
+
+sub mpsoc_remove_all_soc_tops{
+	my $self=shift;
+	foreach my $name (sort keys %{$self->{socs}}){
+		delete $self->{socs}{$name}{top};
+	}			
+}
+
+
 sub mpsoc_remove_all_soc{
 	my ($self)=@_;
 	delete $self->{socs};		
@@ -118,7 +132,7 @@ sub mpsoc_get_soc_tiles_num{
 		@nums = @{$self->{socs}{$name}{tile_nums}};
 		
 	}
-	return @ nums;		
+	return @nums;		
 }
 
 sub mpsoc_get_scolar_pos{
@@ -239,7 +253,17 @@ sub object_get_attribute_order{
 	return @{$self->{parameters_order}{$attribute}};
 }
 
+sub object_remove_attribute{
+	my ($self,$attribute1,$attribute2)=@_;
+	if(!defined $attribute2){
+		delete $self->{$attribute1} if ( exists( $self->{$attribute1})); 
+	}
+	else {
+		delete $self->{$attribute1}{$attribute2} if ( exists( $self->{$attribute1}{$attribute2})); ;
 
+	}
+
+}
 
 1
 

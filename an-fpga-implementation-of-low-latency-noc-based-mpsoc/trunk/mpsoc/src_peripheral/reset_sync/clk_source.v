@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module clk_source (
 	input   reset_in,
 	input   clk_in,

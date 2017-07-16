@@ -1,0 +1,205 @@
+#######################################################################
+##	File: dummy_module.IP
+##    
+##	Copyright (C) 2014-2016  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.6.0 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$wb_master_dummy_request = bless( {
+                                    'version' => 1,
+                                    'file_name' => '/home/alireza/mywork/mpsoc/src_peripheral/DMA/wb_master_dummy_request.v',
+                                    'ip_name' => 'dummy_module',
+                                    'ports' => {
+                                                 'clk' => {
+                                                            'intfc_name' => 'plug:clk[0]',
+                                                            'type' => 'input',
+                                                            'range' => '',
+                                                            'intfc_port' => 'clk_i'
+                                                          },
+                                                 'm_rd_addr_o' => {
+                                                                    'intfc_port' => 'adr_o',
+                                                                    'type' => 'output',
+                                                                    'intfc_name' => 'plug:wb_master[0]',
+                                                                    'range' => 'M_Aw-1          :   0'
+                                                                  },
+                                                 'm_rd_sel_o' => {
+                                                                   'intfc_port' => 'sel_o',
+                                                                   'range' => 'SELw-1          :   0',
+                                                                   'intfc_name' => 'plug:wb_master[0]',
+                                                                   'type' => 'output'
+                                                                 },
+                                                 'm_rd_we_o' => {
+                                                                  'range' => '',
+                                                                  'type' => 'output',
+                                                                  'intfc_name' => 'plug:wb_master[0]',
+                                                                  'intfc_port' => 'we_o'
+                                                                },
+                                                 'reset' => {
+                                                              'range' => '',
+                                                              'intfc_name' => 'plug:reset[0]',
+                                                              'type' => 'input',
+                                                              'intfc_port' => 'reset_i'
+                                                            },
+                                                 'm_rd_cyc_o' => {
+                                                                   'range' => '',
+                                                                   'type' => 'output',
+                                                                   'intfc_name' => 'plug:wb_master[0]',
+                                                                   'intfc_port' => 'cyc_o'
+                                                                 },
+                                                 'm_rd_cti_o' => {
+                                                                   'type' => 'output',
+                                                                   'intfc_name' => 'plug:wb_master[0]',
+                                                                   'range' => 'TAGw-1          :   0',
+                                                                   'intfc_port' => 'cti_o'
+                                                                 },
+                                                 'm_rd_ack_i' => {
+                                                                   'intfc_name' => 'plug:wb_master[0]',
+                                                                   'type' => 'input',
+                                                                   'range' => '',
+                                                                   'intfc_port' => 'ack_i'
+                                                                 },
+                                                 'm_rd_stb_o' => {
+                                                                   'type' => 'output',
+                                                                   'intfc_name' => 'plug:wb_master[0]',
+                                                                   'range' => '',
+                                                                   'intfc_port' => 'stb_o'
+                                                                 },
+                                                 'm_rd_dat_i' => {
+                                                                   'type' => 'input',
+                                                                   'intfc_name' => 'plug:wb_master[0]',
+                                                                   'range' => 'Dw-1           :  0',
+                                                                   'intfc_port' => 'dat_i'
+                                                                 }
+                                               },
+                                    'ports_order' => [
+                                                       'clk',
+                                                       'reset',
+                                                       'm_rd_sel_o',
+                                                       'm_rd_addr_o',
+                                                       'm_rd_cti_o',
+                                                       'm_rd_stb_o',
+                                                       'm_rd_cyc_o',
+                                                       'm_rd_we_o',
+                                                       'm_rd_dat_i',
+                                                       'm_rd_ack_i'
+                                                     ],
+                                    'module_name' => 'wb_master_dummy_request',
+                                    'parameters_order' => [
+                                                            'Dw',
+                                                            'S_Aw',
+                                                            'M_Aw',
+                                                            'TAGw',
+                                                            'SELw',
+                                                            'REQ_LEN_CLK_NUM',
+                                                            'REQ_WAIT_CLK_NUM'
+                                                          ],
+                                    'description' => 'This module have one  wishbone bus master port which is used for readding wishbone address zero for predefined clock cycle num that can be set using "REQ_LEN_CLK_NUM" parameter. Then it will remain deactivate for another  predefined clock cycle num that can be set using "REQ_WAIT_CLK_NUM". I wrote this module just for testing a processing tile.  ',
+                                    'plugs' => {
+                                                 'wb_master' => {
+                                                                  'wb_master' => {},
+                                                                  '0' => {
+                                                                           'name' => 'wb_master'
+                                                                         },
+                                                                  'value' => 1,
+                                                                  'type' => 'num'
+                                                                },
+                                                 'clk' => {
+                                                            '0' => {
+                                                                     'name' => 'clk'
+                                                                   },
+                                                            'value' => 1,
+                                                            'clk' => {},
+                                                            'type' => 'num'
+                                                          },
+                                                 'reset' => {
+                                                              'value' => 1,
+                                                              '0' => {
+                                                                       'name' => 'reset'
+                                                                     },
+                                                              'reset' => {},
+                                                              'type' => 'num'
+                                                            }
+                                               },
+                                    'parameters' => {
+                                                      'S_Aw' => {
+                                                                  'deafult' => '   7',
+                                                                  'type' => 'Fixed',
+                                                                  'info' => 'Parameter',
+                                                                  'redefine_param' => 1,
+                                                                  'global_param' => 'Parameter',
+                                                                  'content' => ''
+                                                                },
+                                                      'REQ_LEN_CLK_NUM' => {
+                                                                             'type' => 'Spin-button',
+                                                                             'deafult' => ' 10',
+                                                                             'info' => 'Parameter',
+                                                                             'content' => '1,100000,1',
+                                                                             'global_param' => 'Parameter',
+                                                                             'redefine_param' => 1
+                                                                           },
+                                                      'TAGw' => {
+                                                                  'info' => 'Parameter',
+                                                                  'type' => 'Fixed',
+                                                                  'deafult' => '   3',
+                                                                  'global_param' => 'Parameter',
+                                                                  'redefine_param' => 1,
+                                                                  'content' => ''
+                                                                },
+                                                      'M_Aw' => {
+                                                                  'global_param' => 'Parameter',
+                                                                  'redefine_param' => 1,
+                                                                  'content' => '',
+                                                                  'deafult' => '   32',
+                                                                  'type' => 'Fixed',
+                                                                  'info' => 'Parameter'
+                                                                },
+                                                      'REQ_WAIT_CLK_NUM' => {
+                                                                              'info' => 'Parameter',
+                                                                              'type' => 'Spin-button',
+                                                                              'deafult' => ' 20',
+                                                                              'global_param' => 'Parameter',
+                                                                              'redefine_param' => 1,
+                                                                              'content' => '1,100000,1'
+                                                                            },
+                                                      'SELw' => {
+                                                                  'info' => 'Parameter',
+                                                                  'type' => 'Fixed',
+                                                                  'deafult' => '   4',
+                                                                  'redefine_param' => 1,
+                                                                  'global_param' => 'Parameter',
+                                                                  'content' => ''
+                                                                },
+                                                      'Dw' => {
+                                                                'global_param' => 'Parameter',
+                                                                'redefine_param' => 1,
+                                                                'content' => '',
+                                                                'type' => 'Fixed',
+                                                                'deafult' => '   32',
+                                                                'info' => 'Parameter'
+                                                              }
+                                                    },
+                                    'modules' => {
+                                                   'wb_master_dummy_request' => {}
+                                                 },
+                                    'gui_status' => {
+                                                      'timeout' => 0,
+                                                      'status' => 'ideal'
+                                                    },
+                                    'hdl_files' => [
+                                                     '/mpsoc/src_peripheral/Other/wb_master_dummy_request.v'
+                                                   ],
+                                    'category' => 'Other',
+                                    'unused' => {
+                                                  'plug:wb_master[0]' => [
+                                                                           'dat_o',
+                                                                           'tag_o',
+                                                                           'rty_i',
+                                                                           'bte_o',
+                                                                           'err_i'
+                                                                         ]
+                                                }
+                                  }, 'ip_gen' );

@@ -1,5 +1,33 @@
 `timescale    1ns/1ps
 
+/**********************************************************************
+**	File:  input_ports.v
+**    
+**	Copyright (C) 2014-2017  Alireza Monemi
+**    
+**	This file is part of ProNoC 
+**
+**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**	you can redistribute it and/or modify it under the terms of the GNU
+**	Lesser General Public License as published by the Free Software Foundation,
+**	either version 2 of the License, or (at your option) any later version.
+**
+** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
+** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+** 	Public License for more details.
+**
+** 	You should have received a copy of the GNU Lesser General Public
+** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**
+**
+**	Description: 
+**	NoC router input Port. It consists of input buffer, control FIFO 
+**	and request masking/generation control modules
+**
+**************************************************************/
+
+
 module input_ports
  #(
     parameter V = 4,     // vc_num_per_port
@@ -526,7 +554,6 @@ if(COMBINATION_TYPE == "COMB_NONSPEC") begin  : nonspec
            
         flit_buffer #(
             .V(V)   ,
-            .P(P)   ,
             .B(B)   ,   // buffer space :flit per VC 
             .Fpay(Fpay),
             .DEBUG_EN(DEBUG_EN),
@@ -550,7 +577,6 @@ if(COMBINATION_TYPE == "COMB_NONSPEC") begin  : nonspec
  
      flit_buffer #(
             .V(V)   ,
-            .P(P)   ,
             .B(B)   ,   // buffer space :flit per VC 
             .Fpay(Fpay),
             .DEBUG_EN(DEBUG_EN),
@@ -1161,8 +1187,8 @@ message_class_data     routing_info     destination_address    source_address
             assign y_dst_in =   1'b0; 
             assign y_src_in =   1'b0;                   
         end else begin :two_dimen
-            assign y_dst_in =  dst_adr_hdr       [Xw-1     : 0];
-            assign y_src_in =  src_adr_hdr       [Xw-1     : 0];
+            assign y_dst_in =  dst_adr_hdr       [Yw-1     : 0];
+            assign y_src_in =  src_adr_hdr       [Yw-1     : 0];
             assign x_dst_in =  dst_adr_hdr       [(DST_ADR_HDR_WIDTH/2)+Xw-1     : DST_ADR_HDR_WIDTH/2];
             assign x_src_in =  src_adr_hdr       [(SRC_ADR_HDR_WIDTH/2)+Xw-1     : SRC_ADR_HDR_WIDTH/2];          
         end
@@ -1178,5 +1204,7 @@ message_class_data     routing_info     destination_address    source_address
     assign hdr_flit_wr= (flit_in_we & flg_hdr_in[HDR_FLG] )? vc_num_in : {V{1'b0}};
 
 endmodule
+
+
 
 

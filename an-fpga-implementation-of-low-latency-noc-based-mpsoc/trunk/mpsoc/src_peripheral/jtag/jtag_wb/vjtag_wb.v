@@ -77,7 +77,8 @@ localparam VJ_DW= (DW > AW)? DW : AW;
 	
 	vjtag_ctrl #(
 		.DW(VJ_DW),
-		.VJTAG_INDEX(VJTAG_INDEX)
+		.VJTAG_INDEX(VJTAG_INDEX),
+		.STW(SW)
 	)
 	vjtag_ctrl_inst
 	(

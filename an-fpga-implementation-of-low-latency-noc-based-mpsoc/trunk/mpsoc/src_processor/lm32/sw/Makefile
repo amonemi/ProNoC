@@ -1,7 +1,7 @@
 TOOLCHAIN=$(PRONOC_WORK)/toolchain/lm32
 IHEX2MIF =$(PRONOC_WORK)/toolchain/bin/ihex2mif
 IHEX2BIN =$(PRONOC_WORK)/toolchain/bin/ihex2bin
-
+BIN2HEX =$(PRONOC_WORK)/toolchain/bin/bin2str
 
 #SREC2VRAM ?= ../../../toolchain/lm32/srec2vram/srec2vram
 
@@ -26,8 +26,8 @@ LDFLAGS=-nostdlib -nodefaultlibs -Tlinker.ld
 #LDFLAGS=-nostdlib -T -Tlinker.ld
 SEGMENTS = -j .text -j .rodata -j .data
 
-all: image.srec $(VRAMFILE) 
-
+all: image.srec 	$(VRAMFILE) 
+	
 crt0ram.o: crt0ram.S
 	$(LM32_CC) $(CFLAGS) -c crt0ram.S
 
@@ -52,8 +52,11 @@ image.srec: image image.lst image.bin
 
 $(VRAMFILE): image.srec
 #$(SREC2VRAM) image.srec 0x40000000 0x1000 > $(VRAMFILE)
-	$(IHEX2MIF) -f image.ihex  -e $(RAMSIZE) -o ram0.mif
-	$(IHEX2BIN) -i image.ihex  -o ram0.bin
+	rm -Rf ./RAM
+	mkdir -p ./RAM
+	$(IHEX2MIF) -f image.ihex  -e $(RAMSIZE) -o RAM/ram0.mif
+	$(IHEX2BIN) -i image.ihex  -o RAM/ram0.bin
+	$(BIN2HEX) -f RAM/ram0.bin -h 
 
 clean:
 	rm -f image.ihex  image image.lst image.bin image.srec image.map  image.ram image.hex *.o *.d
@@ -62,4 +65,5 @@ DEPS := $(wildcard *.d)
 ifneq ($(DEPS),)
 include $(DEPS)
 endif
+
 

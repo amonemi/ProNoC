@@ -1,4 +1,49 @@
-`timescale   10ns/1ns
+/**********************************************************************
+**	File:  int_ctrl.v 
+**	
+**    
+**	Copyright (C) 2014-2017  Alireza Monemi
+**    
+**	This file is part of ProNoC 
+**
+**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**	you can redistribute it and/or modify it under the terms of the GNU
+**	Lesser General Public License as published by the Free Software Foundation,
+**	either version 2 of the License, or (at your option) any later version.
+**
+** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
+** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+** 	Public License for more details.
+**
+** 	You should have received a copy of the GNU Lesser General Public
+** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**
+**
+**	Description: 
+**	Intrrupt control module. It is used for CPUs with only one input 
+**	intrrupt pin to support multiple intrrupt signals 	
+**
+**
+*******************************************************************/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
+
 
 module int_ctrl #(
 	

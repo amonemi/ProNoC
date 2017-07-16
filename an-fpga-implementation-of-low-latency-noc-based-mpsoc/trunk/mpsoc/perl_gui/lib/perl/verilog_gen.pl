@@ -19,7 +19,7 @@ use Cwd;
 #####################
 
 sub soc_generate_verilog{ 
-	my ($soc)= @_;
+	my ($soc,$sw_path)= @_;
 	my $soc_name=$soc->object_get_attribute('soc_name');
 	#my $top_ip=ip_gen->ip_gen_new();
 	my $top_ip=ip_gen->top_gen_new();
@@ -29,12 +29,13 @@ sub soc_generate_verilog{
 	my $io_sim_v;
 	my $core_id= $soc->object_get_attribute('global_param','CORE_ID');
 	$core_id= 0 if(!defined $core_id);
-	my $param_as_in_v="\tparameter\tCORE_ID=$core_id";
+	my $param_as_in_v="\tparameter\tCORE_ID=$core_id,
+\tparameter\tSW_LOC=\"$sw_path\"";
 
 
 
 
-	my $param_pass_v="\t.CORE_ID(CORE_ID)";
+	my $param_pass_v="\t.CORE_ID(CORE_ID),\n\t.SW_LOC(SW_LOC)";
 	my $body_v;
 	
 	my ($param_v_all, $local_param_v_all, $wire_def_v_all, $inst_v_all, $plugs_assign_v_all, $sockets_assign_v_all,$io_full_v_all);
@@ -84,14 +85,14 @@ sub soc_generate_verilog{
 	add_text_to_string(\$soc_v,"endmodule\n\n");
 	
 	
-	$soc->soc_add_top($top_ip);
+	$soc->object_add_attribute('top_ip',undef,$top_ip);
 	#print @assigned_wires;
 
 	#generate topmodule
 	
 	my $top_v = (defined $param_as_in_v )? "module ${soc_name}_top #(\n $param_as_in_v\n)(\n$io_sim_v\n);\n": "module ${soc_name}_top (\n $io_sim_v\n);\n";
 	my $ins= gen_soc_instance_v($soc,$soc_name,$param_pass_v);
-
+	add_text_to_string(\$top_v,$functions_all);	
 	add_text_to_string(\$top_v,$local_param_v_all."\n".$io_full_v_all);
 	add_text_to_string(\$top_v,$ins);
 	my ($readme,$prog)=gen_system_info($soc,$param_as_in_v); 
@@ -728,12 +729,12 @@ JTAG_MAIN="$PRONOC_WORK/toolchain/bin/jtag_main"
 			$v= $soc->object_get_attribute('global_param',$JTAG_INDEX);
 			$JTAG_INDEX = $v if (defined $v);
 			
-			my $BINFILE=$soc->soc_get_module_param_value($instance_id,'INIT_FILE_NAME');
+			my $BINFILE=$soc->soc_get_module_param_value($instance_id,'JTAG_MEM_FILE');
 			($BINFILE)=$BINFILE=~ /"([^"]*)"/ if(defined $BINFILE);
 			$BINFILE=(defined $BINFILE) ? $BINFILE.'.bin' : 'ram0.bin';
 			
 			my $OFSSET="0x00000000";
-			my $end=((1<<$aw)*($dw/8))-1;
+			my $end=((1 << $aw)*($dw/8))-1;
 			my $BOUNDRY=sprintf("0x%08x", $end);			
 			if($jtag_connect =~ /JTAG_WB/){
 				$prog= "$prog \$JTAG_MAIN -n $JTAG_INDEX -s \"$OFSSET\" -e \"$BOUNDRY\" -i  \"$BINFILE\" -c";

@@ -1,6 +1,6 @@
 TOOLCHAIN:=${PRONOC_WORK}/toolchain
-SUBDIRS = ihex2bin  ihex2mif  jtag  plot
-BIN_FILES = ihex2bin/ihex2bin  ihex2mif/ihex2mif    
+SUBDIRS = ihex2bin  ihex2mif bin2str jtag  plot
+BIN_FILES = ihex2bin/ihex2bin  ihex2mif/ihex2mif    bin2str/bin2str
 PRONOC_WORK_BIN := $(TOOLCHAIN)/bin
 
 

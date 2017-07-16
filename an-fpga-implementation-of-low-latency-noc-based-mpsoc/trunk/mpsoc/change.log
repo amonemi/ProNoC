@@ -1,9 +1,20 @@
 All notable changes to this project will be documented in this file.
 
 
+##[1.7.0] - 15-7-2017
+## Added
+-  Software compilation text-editor
+-  Processing tile Diagrame Viewer 
+-  Modelsim/Verilator/QuartusII GUI compilation assist
+-  Multi-channel DMA
+## changed
+-  New multi-channel DMA-based NI
+
+
+
 ##[1.6.0] - 6-3-2017
 ## Added
-- NoC GUI simulator (using Verilator) 
+-  NoC GUI simulator (using Verilator) 
 
 
 ##[1.5.2] - 22-2-2017
@@ -13,8 +24,8 @@ All notable changes to this project will be documented in this file.
 ##[1.5.1] - 3-2-2017
 ## changed
 - src_c/jtag_main.c:  variable length memory support is added.
-- NoC emulator:  Jtag tabs are reduced to total of 3.   A 64 core 2-VC NoC emulation is sucessfully tested on DE4 FPGA board.
--ssa: Now can work with fully adaptive routing.
+- NoC emulator:  Jtag tabs are reduced to total of 3. A 64 core 2-VC NoC emulation is sucessfully tested on DE4 FPGA board.
+- ssa: Now can work with fully adaptive routing.
 
 
 ##[1.5.0] - 13-10-2016

@@ -1,29 +1,30 @@
-/*********************************************************************
-                            
-    File: single_port_ram.v 
-    
-    Copyright (C) 2014-2016  Alireza Monemi
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-    
-    
-    Purpose:
-    A single port ram with wishbone bus interface. 
-
-    Info: monemi@fkegraduate.utm.my
-
-****************************************************************/
+/**********************************************************************
+**	File:  wb_dual_port_ram.v
+**	   
+**    
+**	Copyright (C) 2014-2017  Alireza Monemi
+**    
+**	This file is part of ProNoC 
+**
+**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**	you can redistribute it and/or modify it under the terms of the GNU
+**	Lesser General Public License as published by the Free Software Foundation,
+**	either version 2 of the License, or (at your option) any later version.
+**
+** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
+** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+** 	Public License for more details.
+**
+** 	You should have received a copy of the GNU Lesser General Public
+** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**
+**
+**	Description: 
+**	wishbone based single port ram 
+**	
+**
+*******************************************************************/ 
 
 
 `timescale 1ns / 1ps
@@ -37,7 +38,9 @@ module wb_single_port_ram #(
     parameter FPGA_VENDOR= "ALTERA",//"ALTERA","GENERIC"
     parameter JTAG_CONNECT= "JTAG_WB",//"DISABLED", "JTAG_WB" , "ALTERA_IMCE", if not disabled then the actual memory implements as a dual port RAM with the second port is connected either to In-System Memory Content Editor or Jtag_to_wb  
     parameter JTAG_INDEX= 0,
-    
+    parameter INITIAL_EN= "NO",
+    parameter MEM_CONTENT_FILE_NAME= "ram0",// ram initial file name
+    parameter INIT_FILE_PATH = "path_to/sw", // The sw folder path. It will be used for finding initial file. The path will be rewriten by the top module. 
     // wishbon bus param
     parameter   BURST_MODE= "DISABLED", // "DISABLED" , "ENABLED" wisbone bus burst mode 
     parameter   TAGw   =   3,
@@ -100,6 +103,13 @@ module wb_single_port_ram #(
     wire            [Dw-1   :   0]  q;
 
 
+
+
+	localparam MEM_NAME = (FPGA_VENDOR== "ALTERA")? {MEM_CONTENT_FILE_NAME,".mif"} : 
+							{MEM_CONTENT_FILE_NAME,".hex"}; //Generic
+
+
+	localparam INIT_FILE =  {INIT_FILE_PATH,"/RAM/",MEM_NAME};
      
 
     wb_bram_ctrl #(
@@ -132,7 +142,7 @@ module wb_single_port_ram #(
 
 
 
- 
+  
 
     single_port_ram_top #(
     	.Dw(Dw),
@@ -140,7 +150,9 @@ module wb_single_port_ram #(
     	.BYTE_WR_EN(BYTE_WR_EN),
     	.FPGA_VENDOR(FPGA_VENDOR),
     	.JTAG_CONNECT(JTAG_CONNECT),
-    	.JTAG_INDEX(JTAG_INDEX)
+    	.JTAG_INDEX(JTAG_INDEX),
+	.INITIAL_EN(INITIAL_EN),
+	.INIT_FILE(INIT_FILE) 
     )
     ram_top
     (
@@ -179,7 +191,9 @@ module single_port_ram_top #(
     parameter BYTE_WR_EN= "YES",//"YES","NO"
     parameter FPGA_VENDOR= "ALTERA",//"ALTERA","GENERIC"
     parameter JTAG_CONNECT= "JTAG_WB",//"DISABLED", "JTAG_WB" , "ALTERA_IMCE", if not disabled then the actual memory implements as a dual port RAM with the second port is connected either to In-System Memory Content Editor or Jtag_to_wb  
-    parameter JTAG_INDEX= 0 
+    parameter JTAG_INDEX= 0,
+    parameter INITIAL_EN= "NO",
+    parameter INIT_FILE= "sw/ram/ram0.txt"// ram initial file 
 
     )
     (
@@ -224,15 +238,7 @@ output [Dw-1    :   0]  q_a;
 
   
     
-    localparam  RAM_TAG_STRING=i2s(JTAG_INDEX);     
-`ifdef MODEL_TECH  
-    localparam  INIT_FILE   = {"../../sw/ram",RAM_TAG_STRING,".mif"};
-`else       
-    localparam  INIT_FILE   = {"sw/ram",RAM_TAG_STRING,".mif"};
-`endif     
-    
-
-    
+       
     
     
 wire            [Dw-1   :   0]   data_b;
@@ -245,7 +251,7 @@ wire            [Dw-1   :   0]  q_b;
     
 generate 
 if(FPGA_VENDOR=="ALTERA")begin:altera_fpga
-
+ localparam  RAM_TAG_STRING=i2s(JTAG_INDEX);  
 localparam  RAM_ID =(JTAG_CONNECT== "ALTERA_IMCE") ?  {"ENABLE_RUNTIME_MOD=YES,INSTANCE_NAME=",RAM_TAG_STRING}
                                     : {"ENABLE_RUNTIME_MOD=NO"};
 
@@ -311,7 +317,7 @@ localparam  RAM_ID =(JTAG_CONNECT== "ALTERA_IMCE") ?  {"ENABLE_RUNTIME_MOD=YES,I
             .read_during_write_mode_mixed_ports("DONT_CARE"),
             .widthad_a(Aw),
             .width_byteena_a(BYTE_ENw),
-            .init_file(INIT_FILE)   
+	    .init_file(INIT_FILE)   
         )
         ram_inst
         (
@@ -351,7 +357,9 @@ else if(FPGA_VENDOR=="GENERIC")begin:generic_ram
         generic_wb_dual_port_ram #(
             .Dw(Dw),
             .Aw(Aw),
-            .BYTE_WR_EN(BYTE_WR_EN)
+            .BYTE_WR_EN(BYTE_WR_EN),
+	    .INITIAL_EN(INITIAL_EN),
+	    .INIT_FILE(INIT_FILE) 
         )
         ram_inst
         (
@@ -377,7 +385,9 @@ else if(FPGA_VENDOR=="GENERIC")begin:generic_ram
         generic_single_port_ram #(
             .Dw(Dw),
             .Aw(Aw),
-            .BYTE_WR_EN(BYTE_WR_EN)
+            .BYTE_WR_EN(BYTE_WR_EN),
+	    .INITIAL_EN(INITIAL_EN),
+	    .INIT_FILE(INIT_FILE) 
         )
         ram_inst
         (
@@ -400,7 +410,7 @@ if(JTAG_CONNECT == "JTAG_WB")begin:jtag_wb
     wire    jtag_we_o, jtag_stb_o;
 
     localparam Sw= log2(Aw+1);
-
+    localparam [Sw-1    :   0] ST = Aw;
     vjtag_wb #(
         .VJTAG_INDEX(JTAG_INDEX),
         .DW(Dw),
@@ -415,7 +425,7 @@ if(JTAG_CONNECT == "JTAG_WB")begin:jtag_wb
     (
         .clk(clk),
         .reset(reset),  
-        .status_i(Aw), // Jtag can read memory size as status
+        .status_i(ST), // Jtag can read memory size as status
          //wishbone master interface signals
         .m_sel_o(),
         .m_dat_o(data_b),

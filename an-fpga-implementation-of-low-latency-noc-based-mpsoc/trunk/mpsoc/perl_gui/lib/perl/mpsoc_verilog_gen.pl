@@ -12,9 +12,17 @@ use rvp;
 
 
 sub mpsoc_generate_verilog{
-	my $mpsoc=shift;
+	my ($mpsoc,$sw_dir)=@_;
 	my $mpsoc_name=$mpsoc->object_get_attribute('mpsoc_name');
+	my $top_ip=ip_gen->top_gen_new();
 	my $io_v="\tclk,\n\treset";
+
+	
+                                                                     
+	#$top_ip->top_add_port($inst,$port,$range,$type,$intfc_name,$intfc_port);
+	$top_ip->top_add_port('IO','reset','', 'input' ,'plug:reset[0]','reset_i');
+	$top_ip->top_add_port('IO','clk','', 'input' ,'plug:clk[0]','clk_i');
+	
 	my $io_def_v="
 //IO
 \tinput\tclk,reset;\n";
@@ -33,15 +41,16 @@ sub mpsoc_generate_verilog{
 	my $noc_v=gen_noc_v($pass_param);
 	
 	#generate socs
-	my $socs_v=gen_socs_v($mpsoc,\$io_v,\$io_def_v,\$top_io);
+	my $socs_v=gen_socs_v($mpsoc,\$io_v,\$io_def_v,\$top_io,$top_ip,$sw_dir);
 	
 	#functions
 	my $functions=get_functions();
 	
 	my $mpsoc_v = (defined $param_as_in_v )? "module $mpsoc_name #(\n $param_as_in_v\n)(\n$io_v\n);\n": "module $mpsoc_name (\n$io_v\n);\n";
+	add_text_to_string (\$mpsoc_v,$noc_param);
 	add_text_to_string (\$mpsoc_v,$functions);
 	add_text_to_string (\$mpsoc_v,$socs_param);
-	add_text_to_string (\$mpsoc_v,$noc_param);
+	
 	add_text_to_string (\$mpsoc_v,$io_def_v);
 	add_text_to_string (\$mpsoc_v,$noc_v);
 	add_text_to_string (\$mpsoc_v,$socs_v);
@@ -80,6 +89,7 @@ endmodule
 
 	#add_text_to_string(\$top_v,$local_param_v_all."\n".$io_full_v_all);
 	#add_text_to_string(\$top_v,$ins);
+	$mpsoc->object_add_attribute('top_ip',undef,$top_ip);
 	return ($mpsoc_v,$top_v);
 }
 
@@ -262,7 +272,7 @@ sub gen_noc_param_h{
 sub gen_noc_v{
 	my $pass_param = shift;
 	
-	my $noc =  read_file("../src_noc/noc.v");
+	my $noc =  read_verilog_file("../src_noc/noc.v");
 	my @noc_param=$noc->get_modules_parameters_not_local_order('noc');
 	
 	
@@ -380,7 +390,7 @@ endgenerate
 
 
 sub gen_socs_v{
-	my ($mpsoc,$io_v_ref,$io_def_v,$top_io_ref)=@_;
+	my ($mpsoc,$io_v_ref,$io_def_v,$top_io_ref,$top_ip,$sw_dir)=@_;
 	
 	#generate loop
 	
@@ -427,7 +437,7 @@ sub gen_socs_v{
    
    
  my $socs_v;  
-                
+        
    my $nx= $mpsoc->object_get_attribute('noc_param',"NX");
    my $ny= $mpsoc->object_get_attribute('noc_param',"NY");
    my $processors_en=0;
@@ -440,7 +450,7 @@ sub gen_socs_v{
 				
 				
 	
-				my ($soc_v,$en)= gen_soc_v($mpsoc,$soc_name,$tile_num,$x,$y,$soc_num,$io_v_ref,$io_def_v,$top_io_ref);
+				my ($soc_v,$en)= gen_soc_v($mpsoc,$soc_name,$tile_num,$x,$y,$soc_num,$io_v_ref,$io_def_v,$top_io_ref,$top_ip,$sw_dir);
 				add_text_to_string(\$socs_v,$soc_v);	
 				$processors_en|=$en;
 			
@@ -463,6 +473,7 @@ sub gen_socs_v{
     	add_text_to_string($io_v_ref,",\n\tprocessors_en");
     	add_text_to_string($io_def_v,"\t input processors_en;");
     	add_text_to_string($top_io_ref,",\n\t\t.processors_en(processors_en_anded_jtag)");
+	$top_ip->top_add_port('IO','processors_en','' ,'input','plug:enable[0]','enable_i');
     	
     }            
                 
@@ -478,15 +489,15 @@ sub gen_socs_v{
 
 
 sub   gen_soc_v{
-	my ($mpsoc,$soc_name,$tile_num,$x,$y,$soc_num,$io_v_ref,$io_def_v,$top_io_ref)=@_;
+	my ($mpsoc,$soc_name,$tile_num,$x,$y,$soc_num,$io_v_ref,$io_def_v,$top_io_ref,$top_ip,$sw_path)=@_;
 	my $soc_v;
 	my $processor_en=0;
 	my $xw= log2($mpsoc->object_get_attribute('noc_param',"NX"));
 	my $yw= log2($mpsoc->object_get_attribute('noc_param',"NY"));
 	$soc_v="\n\n // Tile:$tile_num (x=$x,y=$y)\n   \t$soc_name #(\n";
 	
-	# core id
-	add_text_to_string(\$soc_v,"\t\t.CORE_ID($tile_num)");
+	# Global parameter
+	add_text_to_string(\$soc_v,"\t\t.CORE_ID($tile_num),\n\t\t.SW_LOC(\"$sw_path/tile$tile_num\")");
 	
 	# ni parameter
 	my $top=$mpsoc->mpsoc_get_soc($soc_name);
@@ -521,7 +532,7 @@ sub   gen_soc_v{
 	my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name";
 	my $soc_file="$target_dir/src_verilog/tiles/$soc_name.v";
 			
-	my $vdb =read_file($soc_file);
+	my $vdb =read_verilog_file($soc_file);
 		
 	my %soc_localparam = $vdb->get_modules_parameters($soc_name);
 	
@@ -607,7 +618,7 @@ sub   gen_soc_v{
 			my $new_range = add_instantc_name_to_parameters(\%params,"${soc_name}_$soc_num",$range);
 			#my $new_range=$range;
 			my $port_def=(length ($range)>1 )? 	"\t$type\t [ $new_range    ] $io_port;\n": "\t$type\t\t\t$io_port;\n";			 
-			
+			$top_ip->top_add_port("${soc_name}_$tile_num" ,$io_port, $new_range ,$type,$intfc_name,$intfc_port);
 			
 			add_text_to_string($io_def_v,"$port_def");
 			add_text_to_string(\$soc_v,',') if ($i);	

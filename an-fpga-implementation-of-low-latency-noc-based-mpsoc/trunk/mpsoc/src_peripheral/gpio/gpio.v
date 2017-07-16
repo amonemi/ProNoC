@@ -1,43 +1,50 @@
-/*********************************************************************
-							
-	File: gpio.v 
-	
-	Copyright (C) 2014  Alireza Monemi
+/**********************************************************************
+**	File:  gpio.v 
+**	
+**    
+**	Copyright (C) 2014-2017  Alireza Monemi
+**    
+**	This file is part of ProNoC 
+**
+**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**	you can redistribute it and/or modify it under the terms of the GNU
+**	Lesser General Public License as published by the Free Software Foundation,
+**	either version 2 of the License, or (at your option) any later version.
+**
+** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
+** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+** 	Public License for more details.
+**
+** 	You should have received a copy of the GNU Lesser General Public
+** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**
+**
+**	Description: 
+**	a simple wishbone compatible output/input port 
+**	each port has three registers. 
+**	
+**	  addr
+**		0	DIR_REG							
+**		1	WRITE_REG	port 0 					
+**		2	READ_REG		
+**		
+**		32	DIR_REG		
+**		33	WRITE_REG	port 1
+**		34	READ_REG	
+**		.
+**		.
+**		.
+**
+*******************************************************************/
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-	
-	
-	Purpose:
-	a simple wishbone compatible output/input port 
-	each port has three registers. 
-	
-	  addr
-		0	DIR_REG							
-		1	WRITE_REG	port 0 					
-		2	READ_REG		
-		
-		32	DIR_REG		
-		33	WRITE_REG	port 1
-		34	READ_REG	
-		.
-		.
-		.
-		
-	Info: monemi@fkegraduate.utm.my
 
-****************************************************************/
-`timescale   10ns/1ns
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
+
 
 
 

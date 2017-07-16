@@ -3,108 +3,71 @@
 ##    
 ##	Copyright (C) 2014-2016  Alireza Monemi
 ##    
-##	This file is part of ProNoC 1.5.0 
+##	This file is part of ProNoC 1.6.0 
 ##
 ## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
 ##	MAY CAUSE UNEXPECTED BEHAIVOR.
 ################################################################################
 
 $gpo = bless( {
+                'version' => 1,
+                'description' => 'General output port',
                 'hdl_files' => [
                                  '/mpsoc/src_peripheral/gpio/gpio.v'
                                ],
-                'system_h' => '#define	${IP}_WRITE_REG	   		(*((volatile unsigned int *) ($BASE+4)))
-#define 	${IP}_WRITE(value)		       ${IP}_WRITE_REG=value	
-
-',
-                'description' => 'General output port',
-                'ip_name' => 'gpo',
-                'plugs' => {
-                             'clk' => {
-                                        'clk' => {},
-                                        'value' => 1,
-                                        '0' => {
-                                                 'name' => 'clk'
-                                               },
-                                        'type' => 'num'
-                                      },
-                             'reset' => {
-                                          'reset' => {},
-                                          '0' => {
-                                                   'name' => 'reset'
-                                                 },
-                                          'value' => 1,
-                                          'type' => 'num'
-                                        },
-                             'wb_slave' => {
-                                             'value' => 1,
-                                             '0' => {
-                                                      'width' => 5,
-                                                      'name' => 'wb',
-                                                      'addr' => '0x9100_0000	0x91ff_ffff		General-Purpose I/O'
-                                                    },
-                                             'type' => 'num',
-                                             'wb_slave' => {}
-                                           }
-                           },
-                'modules' => {
-                               'gpi' => {},
-                               'gpio' => {},
-                               'gpo' => {}
-                             },
                 'parameters' => {
-                                  'PORT_WIDTH' => {
-                                                    'info' => 'output port width',
-                                                    'deafult' => '   1',
-                                                    'global_param' => 'Parameter',
-                                                    'content' => '1,32,1',
-                                                    'type' => 'Spin-button',
-                                                    'redefine_param' => 1
-                                                  },
+                                  'SELw' => {
+                                              'type' => 'Fixed',
+                                              'global_param' => 'Localparam',
+                                              'info' => undef,
+                                              'redefine_param' => 1,
+                                              'deafult' => '    4',
+                                              'content' => ''
+                                            },
                                   'Aw' => {
-                                            'info' => undef,
-                                            'deafult' => '    2',
+                                            'type' => 'Fixed',
                                             'global_param' => 'Localparam',
+                                            'deafult' => '    2',
                                             'content' => '',
+                                            'info' => undef,
+                                            'redefine_param' => 1
+                                          },
+                                  'Dw' => {
+                                            'global_param' => 'Localparam',
+                                            'type' => 'Fixed',
+                                            'content' => '',
+                                            'deafult' => 'PORT_WIDTH',
                                             'redefine_param' => 1,
-                                            'type' => 'Fixed'
+                                            'info' => undef
                                           },
                                   'TAGw' => {
                                               'info' => undef,
-                                              'deafult' => '    3',
-                                              'global_param' => 'Localparam',
-                                              'content' => '',
-                                              'type' => 'Fixed',
-                                              'redefine_param' => 1
-                                            },
-                                  'SELw' => {
-                                              'info' => undef,
-                                              'deafult' => '    4',
-                                              'global_param' => 'Localparam',
-                                              'content' => '',
                                               'redefine_param' => 1,
+                                              'deafult' => '    3',
+                                              'content' => '',
+                                              'global_param' => 'Localparam',
                                               'type' => 'Fixed'
                                             },
-                                  'Dw' => {
-                                            'info' => undef,
-                                            'deafult' => 'PORT_WIDTH',
-                                            'global_param' => 'Localparam',
-                                            'content' => '',
-                                            'type' => 'Fixed',
-                                            'redefine_param' => 1
-                                          }
+                                  'PORT_WIDTH' => {
+                                                    'deafult' => '   1',
+                                                    'content' => '1,32,1',
+                                                    'info' => 'output port width',
+                                                    'redefine_param' => 1,
+                                                    'type' => 'Spin-button',
+                                                    'global_param' => 'Parameter'
+                                                  }
                                 },
-                'gui_status' => {
-                                  'status' => 'ideal',
-                                  'timeout' => 0
-                                },
-                'parameters_order' => [
-                                        'PORT_WIDTH',
-                                        'Aw',
-                                        'TAGw',
-                                        'SELw',
-                                        'Dw'
-                                      ],
+                'unused' => {
+                              'plug:wb_slave[0]' => [
+                                                      'bte_i',
+                                                      'cti_i'
+                                                    ]
+                            },
+                'modules' => {
+                               'gpo' => {},
+                               'gpi' => {},
+                               'gpio' => {}
+                             },
                 'ports' => {
                              'sa_tag_i' => {
                                              'intfc_port' => 'tag_i',
@@ -112,93 +75,131 @@ $gpo = bless( {
                                              'range' => 'TAGw-1     :   0',
                                              'type' => 'input'
                                            },
-                             'sa_rty_o' => {
-                                             'intfc_port' => 'rty_o',
-                                             'intfc_name' => 'plug:wb_slave[0]',
-                                             'range' => '',
-                                             'type' => 'output'
-                                           },
-                             'sa_dat_o' => {
-                                             'intfc_name' => 'plug:wb_slave[0]',
-                                             'intfc_port' => 'dat_o',
-                                             'range' => 'Dw-1       :   0',
-                                             'type' => 'output'
-                                           },
-                             'sa_sel_i' => {
-                                             'intfc_name' => 'plug:wb_slave[0]',
-                                             'intfc_port' => 'sel_i',
-                                             'range' => 'SELw-1     :   0',
-                                             'type' => 'input'
-                                           },
-                             'sa_dat_i' => {
-                                             'intfc_name' => 'plug:wb_slave[0]',
-                                             'intfc_port' => 'dat_i',
-                                             'range' => 'Dw-1       :   0',
-                                             'type' => 'input'
-                                           },
-                             'port_o' => {
-                                           'intfc_port' => 'IO',
-                                           'intfc_name' => 'IO',
-                                           'range' => 'PORT_WIDTH-1     :   0',
-                                           'type' => 'output'
-                                         },
-                             'sa_we_i' => {
-                                            'intfc_port' => 'we_i',
-                                            'intfc_name' => 'plug:wb_slave[0]',
-                                            'range' => '',
-                                            'type' => 'input'
-                                          },
-                             'sa_cyc_i' => {
-                                             'intfc_name' => 'plug:wb_slave[0]',
-                                             'intfc_port' => 'cyc_i',
-                                             'range' => '',
-                                             'type' => 'input'
-                                           },
-                             'sa_err_o' => {
-                                             'intfc_name' => 'plug:wb_slave[0]',
-                                             'intfc_port' => 'err_o',
-                                             'range' => '',
-                                             'type' => 'output'
-                                           },
                              'reset' => {
-                                          'intfc_port' => 'reset_i',
+                                          'type' => 'input',
                                           'intfc_name' => 'plug:reset[0]',
                                           'range' => '',
-                                          'type' => 'input'
+                                          'intfc_port' => 'reset_i'
                                         },
-                             'clk' => {
-                                        'intfc_name' => 'plug:clk[0]',
-                                        'intfc_port' => 'clk_i',
-                                        'range' => '',
-                                        'type' => 'input'
-                                      },
                              'sa_ack_o' => {
                                              'intfc_name' => 'plug:wb_slave[0]',
-                                             'intfc_port' => 'ack_o',
                                              'range' => '',
-                                             'type' => 'output'
+                                             'type' => 'output',
+                                             'intfc_port' => 'ack_o'
                                            },
-                             'sa_addr_i' => {
-                                              'intfc_name' => 'plug:wb_slave[0]',
-                                              'intfc_port' => 'adr_i',
-                                              'range' => 'Aw-1       :   0',
-                                              'type' => 'input'
-                                            },
                              'sa_stb_i' => {
                                              'intfc_port' => 'stb_i',
                                              'intfc_name' => 'plug:wb_slave[0]',
                                              'range' => '',
                                              'type' => 'input'
+                                           },
+                             'sa_sel_i' => {
+                                             'type' => 'input',
+                                             'range' => 'SELw-1     :   0',
+                                             'intfc_name' => 'plug:wb_slave[0]',
+                                             'intfc_port' => 'sel_i'
+                                           },
+                             'clk' => {
+                                        'intfc_port' => 'clk_i',
+                                        'type' => 'input',
+                                        'range' => '',
+                                        'intfc_name' => 'plug:clk[0]'
+                                      },
+                             'sa_cyc_i' => {
+                                             'intfc_port' => 'cyc_i',
+                                             'type' => 'input',
+                                             'intfc_name' => 'plug:wb_slave[0]',
+                                             'range' => ''
+                                           },
+                             'sa_dat_i' => {
+                                             'intfc_port' => 'dat_i',
+                                             'type' => 'input',
+                                             'intfc_name' => 'plug:wb_slave[0]',
+                                             'range' => 'Dw-1       :   0'
+                                           },
+                             'port_o' => {
+                                           'intfc_port' => 'IO',
+                                           'type' => 'output',
+                                           'intfc_name' => 'IO',
+                                           'range' => 'PORT_WIDTH-1     :   0'
+                                         },
+                             'sa_addr_i' => {
+                                              'intfc_port' => 'adr_i',
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'range' => 'Aw-1       :   0',
+                                              'type' => 'input'
+                                            },
+                             'sa_we_i' => {
+                                            'intfc_name' => 'plug:wb_slave[0]',
+                                            'range' => '',
+                                            'type' => 'input',
+                                            'intfc_port' => 'we_i'
+                                          },
+                             'sa_dat_o' => {
+                                             'range' => 'Dw-1       :   0',
+                                             'intfc_name' => 'plug:wb_slave[0]',
+                                             'type' => 'output',
+                                             'intfc_port' => 'dat_o'
+                                           },
+                             'sa_rty_o' => {
+                                             'type' => 'output',
+                                             'intfc_name' => 'plug:wb_slave[0]',
+                                             'range' => '',
+                                             'intfc_port' => 'rty_o'
+                                           },
+                             'sa_err_o' => {
+                                             'type' => 'output',
+                                             'range' => '',
+                                             'intfc_name' => 'plug:wb_slave[0]',
+                                             'intfc_port' => 'err_o'
                                            }
                            },
-                'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/gpio/gpio.v',
-                'sockets' => {},
-                'module_name' => 'gpo',
+                'gui_status' => {
+                                  'status' => 'ideal',
+                                  'timeout' => 0
+                                },
                 'category' => 'GPIO',
-                'unused' => {
-                              'plug:wb_slave[0]' => [
-                                                      'cti_i',
-                                                      'bte_i'
-                                                    ]
-                            }
+                'ip_name' => 'gpo',
+                'system_h' => '#define	${IP}_WRITE_REG	   		(*((volatile unsigned int *) ($BASE+4)))
+#define 	${IP}_WRITE(value)		       ${IP}_WRITE_REG=value	
+
+',
+                'parameters_order' => [
+                                        'PORT_WIDTH',
+                                        'Aw',
+                                        'TAGw',
+                                        'SELw',
+                                        'Dw'
+                                      ],
+                'plugs' => {
+                             'reset' => {
+                                          'reset' => {},
+                                          'type' => 'num',
+                                          '0' => {
+                                                   'name' => 'reset'
+                                                 },
+                                          'value' => 1
+                                        },
+                             'wb_slave' => {
+                                             'value' => 1,
+                                             'wb_slave' => {},
+                                             '0' => {
+                                                      'width' => 5,
+                                                      'name' => 'wb',
+                                                      'addr' => '0x9100_0000	0x91ff_ffff		General-Purpose I/O'
+                                                    },
+                                             'type' => 'num'
+                                           },
+                             'clk' => {
+                                        'value' => 1,
+                                        'clk' => {},
+                                        '0' => {
+                                                 'name' => 'clk'
+                                               },
+                                        'type' => 'num'
+                                      }
+                           },
+                'sockets' => {},
+                'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/gpio/gpio.v',
+                'module_name' => 'gpo'
               }, 'ip_gen' );
