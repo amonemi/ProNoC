@@ -50,7 +50,7 @@ sub software_main {
 sub build_gui {
 	my ($self,$sw) = @_;
 
-	my $window = def_popwin_size (75,75,'Source Editore','percent');
+	my $window = def_popwin_size (75,75,'Source Editor','percent');
 	my $table= def_table(2,10,FALSE);
 	
 
