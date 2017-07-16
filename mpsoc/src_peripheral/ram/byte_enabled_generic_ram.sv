@@ -5,7 +5,13 @@
 
 // Read during write produces old data on ports A and B and old data on mixed ports
 // For device families that do not support this mode (e.g. Stratix V) the ram is not inferred
+
+
+`timescale 1ns / 1ps
+
 module byte_enabled_true_dual_port_ram	#(
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v format
+		parameter INITIAL_EN= "NO",
 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
@@ -29,7 +35,9 @@ if (BYTES==1) begin : byte_en1
 	byte_enabled_true_dual_port_ram_1 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -50,7 +58,9 @@ if (BYTES==2) begin : byte_en2
 	byte_enabled_true_dual_port_ram_2 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -71,7 +81,9 @@ if (BYTES==3) begin : byte_en3
 	byte_enabled_true_dual_port_ram_3 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -92,7 +104,9 @@ if (BYTES==4) begin : byte_en4
 	byte_enabled_true_dual_port_ram_4 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -113,7 +127,9 @@ if (BYTES==5) begin : byte_en5
 	byte_enabled_true_dual_port_ram_5 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -134,7 +150,9 @@ if (BYTES==6) begin : byte_en6
 	byte_enabled_true_dual_port_ram_6 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -155,7 +173,9 @@ if (BYTES==7) begin : byte_en7
 	byte_enabled_true_dual_port_ram_7 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -176,7 +196,9 @@ if (BYTES==8) begin : byte_en8
 	byte_enabled_true_dual_port_ram_8 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -197,7 +219,9 @@ if (BYTES==9) begin : byte_en9
 	byte_enabled_true_dual_port_ram_9 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -218,7 +242,9 @@ if (BYTES==10) begin : byte_en10
 	byte_enabled_true_dual_port_ram_10 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -239,7 +265,9 @@ if (BYTES==11) begin : byte_en11
 	byte_enabled_true_dual_port_ram_11 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -260,7 +288,9 @@ if (BYTES==12) begin : byte_en12
 	byte_enabled_true_dual_port_ram_12 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -281,7 +311,9 @@ if (BYTES==13) begin : byte_en13
 	byte_enabled_true_dual_port_ram_13 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -302,7 +334,9 @@ if (BYTES==14) begin : byte_en14
 	byte_enabled_true_dual_port_ram_14 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -323,7 +357,9 @@ if (BYTES==15) begin : byte_en15
 	byte_enabled_true_dual_port_ram_15 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -344,7 +380,9 @@ endgenerate
 endmodule:  byte_enabled_true_dual_port_ram
 
 module byte_enabled_true_dual_port_ram_1	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 1,
@@ -377,6 +415,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg1;
 	reg [DATA_WIDTH_R-1:0] data_reg2;
@@ -411,7 +455,9 @@ endgenerate
 endmodule : byte_enabled_true_dual_port_ram_1
 
 module byte_enabled_true_dual_port_ram_2	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 2,
@@ -444,6 +490,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg1;
 	reg [DATA_WIDTH_R-1:0] data_reg2;
@@ -480,7 +532,9 @@ endgenerate
 endmodule : byte_enabled_true_dual_port_ram_2
 
 module byte_enabled_true_dual_port_ram_3	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 3,
@@ -513,6 +567,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg1;
 	reg [DATA_WIDTH_R-1:0] data_reg2;
@@ -551,7 +611,9 @@ endgenerate
 endmodule : byte_enabled_true_dual_port_ram_3
 
 module byte_enabled_true_dual_port_ram_4	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 4,
@@ -584,6 +646,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg1;
 	reg [DATA_WIDTH_R-1:0] data_reg2;
@@ -624,7 +692,9 @@ endgenerate
 endmodule : byte_enabled_true_dual_port_ram_4
 
 module byte_enabled_true_dual_port_ram_5	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 5,
@@ -657,6 +727,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg1;
 	reg [DATA_WIDTH_R-1:0] data_reg2;
@@ -699,7 +775,9 @@ endgenerate
 endmodule : byte_enabled_true_dual_port_ram_5
 
 module byte_enabled_true_dual_port_ram_6	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 6,
@@ -732,6 +810,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg1;
 	reg [DATA_WIDTH_R-1:0] data_reg2;
@@ -776,7 +860,9 @@ endgenerate
 endmodule : byte_enabled_true_dual_port_ram_6
 
 module byte_enabled_true_dual_port_ram_7	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 7,
@@ -809,6 +895,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg1;
 	reg [DATA_WIDTH_R-1:0] data_reg2;
@@ -855,7 +947,9 @@ endgenerate
 endmodule : byte_enabled_true_dual_port_ram_7
 
 module byte_enabled_true_dual_port_ram_8	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 8,
@@ -888,6 +982,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg1;
 	reg [DATA_WIDTH_R-1:0] data_reg2;
@@ -936,7 +1036,9 @@ endgenerate
 endmodule : byte_enabled_true_dual_port_ram_8
 
 module byte_enabled_true_dual_port_ram_9	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 9,
@@ -969,6 +1071,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg1;
 	reg [DATA_WIDTH_R-1:0] data_reg2;
@@ -1019,7 +1127,9 @@ endgenerate
 endmodule : byte_enabled_true_dual_port_ram_9
 
 module byte_enabled_true_dual_port_ram_10	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 10,
@@ -1052,6 +1162,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg1;
 	reg [DATA_WIDTH_R-1:0] data_reg2;
@@ -1104,7 +1220,9 @@ endgenerate
 endmodule : byte_enabled_true_dual_port_ram_10
 
 module byte_enabled_true_dual_port_ram_11	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 11,
@@ -1137,6 +1255,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg1;
 	reg [DATA_WIDTH_R-1:0] data_reg2;
@@ -1191,7 +1315,9 @@ endgenerate
 endmodule : byte_enabled_true_dual_port_ram_11
 
 module byte_enabled_true_dual_port_ram_12	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 12,
@@ -1224,6 +1350,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg1;
 	reg [DATA_WIDTH_R-1:0] data_reg2;
@@ -1280,7 +1412,9 @@ endgenerate
 endmodule : byte_enabled_true_dual_port_ram_12
 
 module byte_enabled_true_dual_port_ram_13	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 13,
@@ -1313,6 +1447,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg1;
 	reg [DATA_WIDTH_R-1:0] data_reg2;
@@ -1371,7 +1511,9 @@ endgenerate
 endmodule : byte_enabled_true_dual_port_ram_13
 
 module byte_enabled_true_dual_port_ram_14	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 14,
@@ -1404,6 +1546,13 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg1;
 	reg [DATA_WIDTH_R-1:0] data_reg2;
@@ -1464,7 +1613,9 @@ endgenerate
 endmodule : byte_enabled_true_dual_port_ram_14
 
 module byte_enabled_true_dual_port_ram_15	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 15,
@@ -1497,6 +1648,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg1;
 	reg [DATA_WIDTH_R-1:0] data_reg2;
@@ -1559,7 +1716,9 @@ endgenerate
 endmodule : byte_enabled_true_dual_port_ram_15
 
 module byte_enabled_single_port_ram	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 4,
@@ -1579,7 +1738,9 @@ if (BYTES==1) begin : byte_en1
 	byte_enabled_single_port_ram_1 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -1596,7 +1757,9 @@ if (BYTES==2) begin : byte_en2
 	byte_enabled_single_port_ram_2 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -1613,7 +1776,9 @@ if (BYTES==3) begin : byte_en3
 	byte_enabled_single_port_ram_3 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -1630,7 +1795,9 @@ if (BYTES==4) begin : byte_en4
 	byte_enabled_single_port_ram_4 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -1647,7 +1814,9 @@ if (BYTES==5) begin : byte_en5
 	byte_enabled_single_port_ram_5 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -1664,7 +1833,9 @@ if (BYTES==6) begin : byte_en6
 	byte_enabled_single_port_ram_6 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -1681,7 +1852,9 @@ if (BYTES==7) begin : byte_en7
 	byte_enabled_single_port_ram_7 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -1698,7 +1871,9 @@ if (BYTES==8) begin : byte_en8
 	byte_enabled_single_port_ram_8 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -1715,7 +1890,9 @@ if (BYTES==9) begin : byte_en9
 	byte_enabled_single_port_ram_9 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -1732,7 +1909,9 @@ if (BYTES==10) begin : byte_en10
 	byte_enabled_single_port_ram_10 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -1749,7 +1928,9 @@ if (BYTES==11) begin : byte_en11
 	byte_enabled_single_port_ram_11 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -1766,7 +1947,9 @@ if (BYTES==12) begin : byte_en12
 	byte_enabled_single_port_ram_12 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -1783,7 +1966,9 @@ if (BYTES==13) begin : byte_en13
 	byte_enabled_single_port_ram_13 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -1800,7 +1985,9 @@ if (BYTES==14) begin : byte_en14
 	byte_enabled_single_port_ram_14 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -1817,7 +2004,9 @@ if (BYTES==15) begin : byte_en15
 	byte_enabled_single_port_ram_15 
 		#(
 		.BYTE_WIDTH(BYTE_WIDTH),
-		.ADDRESS_WIDTH(ADDRESS_WIDTH)		
+		.ADDRESS_WIDTH(ADDRESS_WIDTH),
+		 .INITIAL_EN(INITIAL_EN),
+		 .INIT_FILE(INIT_FILE) 		
 	)
 	ram_inst
 	(
@@ -1834,7 +2023,9 @@ endgenerate
 endmodule : byte_enabled_single_port_ram
 
 module byte_enabled_single_port_ram_1	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 1,
@@ -1864,6 +2055,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+	
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg;
 	
@@ -1885,7 +2082,9 @@ endgenerate
 endmodule : byte_enabled_single_port_ram_1
 
 module byte_enabled_single_port_ram_2	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 2,
@@ -1915,6 +2114,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+	
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg;
 	
@@ -1937,7 +2142,9 @@ endgenerate
 endmodule : byte_enabled_single_port_ram_2
 
 module byte_enabled_single_port_ram_3	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 3,
@@ -1967,6 +2174,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+	
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg;
 	
@@ -1990,7 +2203,9 @@ endgenerate
 endmodule : byte_enabled_single_port_ram_3
 
 module byte_enabled_single_port_ram_4	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 4,
@@ -2020,6 +2235,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+	
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg;
 	
@@ -2044,7 +2265,9 @@ endgenerate
 endmodule : byte_enabled_single_port_ram_4
 
 module byte_enabled_single_port_ram_5	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 5,
@@ -2074,6 +2297,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+	
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg;
 	
@@ -2099,7 +2328,9 @@ endgenerate
 endmodule : byte_enabled_single_port_ram_5
 
 module byte_enabled_single_port_ram_6	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 6,
@@ -2129,7 +2360,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
-
+	
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 	reg [DATA_WIDTH_R-1:0] data_reg;
 	
 
@@ -2155,7 +2391,9 @@ endgenerate
 endmodule : byte_enabled_single_port_ram_6
 
 module byte_enabled_single_port_ram_7	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 7,
@@ -2185,7 +2423,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
-
+	
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 	reg [DATA_WIDTH_R-1:0] data_reg;
 	
 
@@ -2212,7 +2455,9 @@ endgenerate
 endmodule : byte_enabled_single_port_ram_7
 
 module byte_enabled_single_port_ram_8	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 8,
@@ -2242,6 +2487,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+	
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg;
 	
@@ -2270,7 +2521,9 @@ endgenerate
 endmodule : byte_enabled_single_port_ram_8
 
 module byte_enabled_single_port_ram_9	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 9,
@@ -2300,6 +2553,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+	
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg;
 	
@@ -2329,7 +2588,9 @@ endgenerate
 endmodule : byte_enabled_single_port_ram_9
 
 module byte_enabled_single_port_ram_10	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 10,
@@ -2359,10 +2620,14 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
-
-	reg [DATA_WIDTH_R-1:0] data_reg;
 	
-
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
+	
+	reg [DATA_WIDTH_R-1:0] data_reg;
 	// port A
 	integer k;
 	
@@ -2389,7 +2654,9 @@ endgenerate
 endmodule : byte_enabled_single_port_ram_10
 
 module byte_enabled_single_port_ram_11	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 11,
@@ -2409,7 +2676,7 @@ wire [BYTE_WIDTH-1	:	0] data_in_sep[BYTES-1	:	0];
 
 genvar i;
 generate 
-for (i=0;i<BYTES;i=i+1)begin : bloop
+for (i=0;i<BYTES;i=i+1) begin : bloop
 	assign data_in_sep[i]=data_in[(i+1)*BYTE_WIDTH-1	:	i*BYTE_WIDTH];
 	
 end
@@ -2419,6 +2686,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+	
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg;
 	
@@ -2450,7 +2723,9 @@ endgenerate
 endmodule : byte_enabled_single_port_ram_11
 
 module byte_enabled_single_port_ram_12	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 12,
@@ -2480,6 +2755,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+	
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg;
 	
@@ -2512,7 +2793,9 @@ endgenerate
 endmodule : byte_enabled_single_port_ram_12
 
 module byte_enabled_single_port_ram_13	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 13,
@@ -2542,6 +2825,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg;
 	
@@ -2575,7 +2864,9 @@ endgenerate
 endmodule : byte_enabled_single_port_ram_13
 
 module byte_enabled_single_port_ram_14	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 14,
@@ -2605,6 +2896,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+	
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg;
 	
@@ -2639,7 +2936,9 @@ endgenerate
 endmodule : byte_enabled_single_port_ram_14
 
 module byte_enabled_single_port_ram_15	#(
-		parameter int
+		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v forma
+		parameter INITIAL_EN= "NO", 
+ 		parameter int
 		BYTE_WIDTH = 8,
 		ADDRESS_WIDTH = 6,
 		BYTES = 15,
@@ -2669,6 +2968,12 @@ endgenerate
 
 	// model the RAM with two dimensional packed array
 	logic [BYTES-1:0][BYTE_WIDTH-1:0] ram[0:RAM_DEPTH-1];
+	
+	generate 
+		if (INITIAL_EN ==  "YES") begin : init
+		   initial $readmemh(INIT_FILE,ram);	
+		end
+	endgenerate
 
 	reg [DATA_WIDTH_R-1:0] data_reg;
 	

@@ -1,15 +1,32 @@
 `timescale      1ns/1ps
 
-/***************************************
-
-        comb-nonspec
-        
-VC allocator combined with non-speculative switch
-allocator where the free VC availability is checked at
-the beginning of switch allocation (comb-nonspec).        
-
-
-************************************/    
+/**********************************************************************
+**	File:  comb-nonspec.v
+**    
+**	Copyright (C) 2014-2017  Alireza Monemi
+**    
+**	This file is part of ProNoC 
+**
+**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**	you can redistribute it and/or modify it under the terms of the GNU
+**	Lesser General Public License as published by the Free Software Foundation,
+**	either version 2 of the License, or (at your option) any later version.
+**
+** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
+** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+** 	Public License for more details.
+**
+** 	You should have received a copy of the GNU Lesser General Public
+** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**
+**
+**	Description: 
+**	VC allocator combined with non-speculative switch
+**	allocator where the free VC availability is checked at
+**	the beginning of switch allocation (comb-nonspec).        
+**
+***********************************************************************/    
 
     
 module comb_nonspec_allocator #(

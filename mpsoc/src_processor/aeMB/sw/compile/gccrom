@@ -40,6 +40,9 @@ echo "ihex2mif=$?"
 $TOOLCHAIN/bin/ihex2bin -i $ELFFILE.ihex  -o ram.bin && \
 echo "ihex2bin=$?" 
 
+$TOOLCHAIN/bin/bin2str -f ram.bin -h   && \
+echo "bin2str=$?" 
+
 # echo the checksum
 #MD5=$(sha1sum $ELFFILE | cut -c1-32) && \
 #echo "sha1=$MD5" 

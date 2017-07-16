@@ -286,7 +286,7 @@ sub button_box{
 }
 	
 
-sub def_image{
+sub def_icon{
 	my $image_file=shift;
 	my $font_size=get_defualt_font_size();
 	my $size=($font_size==10)? 25:
@@ -302,18 +302,35 @@ sub def_image{
 }
 
 
+sub open_image{
+	my ($image_file,$x,$y,$unit)=@_;
+	if(defined $unit){
+		my($width,$hight)=max_win_size();
+		if($unit eq 'percent'){
+			$x= ($x * $width)/100;
+			$y= ($y * $hight)/100;
+		} # else its pixels
+			
+	}
+	my $pixbuf = Gtk2::Gdk::Pixbuf->new_from_file_at_scale($image_file,$x,$y,TRUE);
+ 	my $image = Gtk2::Image->new_from_pixbuf($pixbuf);
+	return $image;
+
+}
+
+
 
 sub def_image_button{
 	my ($image_file, $label_text, $homogeneous)=@_;
 	# create box for image and label 
 	$homogeneous = FALSE if(!defined $homogeneous);
 	my $box = def_hbox($homogeneous,0);
-	my $image = def_image($image_file);
+	my $image = def_icon($image_file) if(-f $image_file);
 		
 	
 	# now on to the image stuff
 	#my $image = Gtk2::Image->new_from_file($image_file);
-	$box->pack_start($image, FALSE, FALSE, 0);
+	$box->pack_start($image, FALSE, FALSE, 0) if(-f $image_file);
 	$box->set_border_width(0);
 	$box->set_spacing (0);
 	# Create a label for the button
@@ -337,7 +354,7 @@ sub def_image_label{
 	# create box for image and label 
 	my $box = def_hbox(FALSE,1);
 	# now on to the image stuff
-	my $image = def_image($image_file);
+	my $image = def_icon($image_file);
 	$box->pack_start($image, TRUE, FALSE, 0);
 	# Create a label for the button
 	if(defined $label_text ) {
@@ -454,13 +471,14 @@ sub show_gif{
 ############
 
 sub message_dialog {
-  my @message=@_;
+  my ($message,$type)=@_;
+  $type = 'info' if (!defined $type);
   my $window;
   my $dialog = Gtk2::MessageDialog->new ($window,
 				   [qw/modal destroy-with-parent/],
-				   'info',
+				   $type,
 				   'ok',
-				    @message);
+				    $message);
   $dialog->run;
   $dialog->destroy;
  
@@ -500,12 +518,18 @@ sub def_win_size {
 
 
 sub def_popwin_size {
-	my $x=shift;
-	my $y=shift;
-	my @titel=shift;
+	my ($x,$y,$titel,$unit)=@_;
+	if(defined $unit){
+		my($width,$hight)=max_win_size();
+		if($unit eq 'percent'){
+			$x= ($x * $width)/100;
+			$y= ($y * $hight)/100;
+		} # else its pixels
+			
+	}
 	#my $window = Gtk2::Window->new('popup');
 	my $window = Gtk2::Window->new('toplevel');
-	$window->set_title(@titel);
+	$window->set_title($titel);
 	$window->set_position("center");
 	$window->set_default_size($x, $y);
 	$window->set_border_width(20);
@@ -549,7 +573,7 @@ sub get_defualt_font_size{
 	#print "($width,$hight)\n";
 	my $font_size=($width>=1600)? 10:
 			      ($width>=1400)? 9:
-				  ($width>=1200)? 8:
+				  ($width>=1200)? 9:
 				  ($width>=1000)? 7:6;
 	#print "$font_size\n";	
 	return $font_size;
@@ -597,7 +621,48 @@ sub def_pack_hbox{
 
 }
 
+sub def_pack_vbox{
+	my( $homogeneous, $spacing , @box_list)=@_;
+	my $box=def_vbox($homogeneous, $spacing); 
+	foreach my $subbox (@box_list){
+		$box->pack_start( $subbox, FALSE, FALSE, 3);
+	}
+	return $box;	
 
+}
+
+
+##########
+# Paned
+#########
+
+
+sub gen_vpaned {
+	my ($w1,$loc,$w2) = @_;
+	my $vpaned = Gtk2::VPaned -> new;
+	my($width,$hight)=max_win_size();
+
+	
+	$vpaned -> pack1($w1, TRUE, TRUE); 	
+	$vpaned -> set_position ($hight*$loc);	
+	$vpaned -> pack2($w2, TRUE, TRUE); 
+	
+	return $vpaned;
+}
+
+
+sub gen_hpaned {
+	my ($w1,$loc,$w2) = @_;
+	my $hpaned = Gtk2::HPaned -> new;
+	my($width,$hight)=max_win_size();
+
+	
+	$hpaned -> pack1($w1, TRUE, TRUE); 	
+	$hpaned -> set_position ($width*$loc);	
+	$hpaned -> pack2($w2, TRUE, TRUE); 
+	
+	return $hpaned;
+}
 
 #############
 # text_view 
@@ -688,14 +753,38 @@ sub add_info{
 	
 }
 
+sub show_colored_info{
+	my ($textview_ref,$info,$color)=@_;
+	my $buffer = $$textview_ref->get_buffer();
+  	#$buffer->set_text($info);
+	my $textiter = $buffer->get_start_iter();
+	$buffer->insert_with_tags_by_name ($textiter, "$info", "${color}_tag");
+}
 
+sub add_colored_info{
+	my ($textview_ref,$info,$color)=@_;
+	my $buffer = $$textview_ref->get_buffer();
+	my $textiter = $buffer->get_end_iter();
+	#Insert some text into the buffer
+	#$buffer->insert($textiter,$info);
+	$buffer->insert_with_tags_by_name ($textiter, "$info", "${color}_tag");
+	
+}
+
+sub add_colored_tag{
+	my ($textview_ref,$color)=@_;
+	my $buffer = $textview_ref->get_buffer();
+  	$buffer->create_tag ("${color}_tag", foreground => $color);  
+}
+
+ 
 
 ####################
-#	read verilog file
+#	 file
 ##################
 
 
-sub read_file{
+sub read_verilog_file{
 	my @files            = @_;
 	my %cmd_line_defines = ();
 	my $quiet            = 1;
@@ -718,17 +807,129 @@ sub read_file{
 
 sub add_color_to_gd{
 	foreach (my $i=0;$i<32;$i++ ) {
-		my ($red,$green,$blue)=get_color($i);
-		
-	    
+		my ($red,$green,$blue)=get_color($i);	    
 		add_colour("my_color$i"=>[$red>>8,$green>>8,$blue>>8]);
-	
-	
-	}
-	
-	
-	
+		
+	}	
 }
+
+
+
+sub append_text_to_file {
+	my  ($file_path,$text)=@_;
+	open(my $fd, ">>$file_path");
+	print $fd $text;
+	close $fd;
+}
+
+
+
+
+sub save_file {
+	my  ($file_path,$text)=@_;
+	open(my $fd, ">$file_path");
+	print $fd $text;
+	close $fd;	
+}
+
+sub load_file {
+	my $file_path=shift;
+	my $str;
+	if (-f "$file_path") { 
+				
+		$str = do {
+	    		local $/ = undef;
+	    		open my $fh, "<", $file_path
+			or die "could not open $file_path: $!";
+	    		<$fh>;
+		};
+
+	}
+	return $str;
+}
+
+
+
+
+sub merg_files {
+	my  ($source_file_path,$dest_file_path)=@_;
+	local $/=undef;
+  	open FILE, $source_file_path or die "Couldn't open file: $!";
+  	my $string = <FILE>;
+  	close FILE;
+	 append_text_to_file ($dest_file_path,$string);	
+}
+
+
+
+sub copy_file_and_folders{
+	my ($file_ref,$project_dir,$target_dir)=@_;
+
+	foreach my $f(@{$file_ref}){
+		my $name= basename($f);				
+		my $n="$project_dir$f";
+		if (-f "$n") { #copy file
+			copy ("$n","$target_dir"); 		
+		}elsif(-f "$f" ){
+			copy ("$f","$target_dir");     			 	
+		}elsif (-d "$n") {#copy folder
+			dircopy ("$n","$target_dir/$name"); 		
+		}elsif(-d "$f" ){
+			dircopy ("$f","$target_dir/$name"); 		
+    			 	
+		}
+	}
+
+}
+
+sub read_file_cntent {
+	my ($f,$project_dir)=@_;
+	my $n="$project_dir$f";
+	my $str;
+	if (-f "$n") { 
+				
+		$str = do {
+	    		local $/ = undef;
+	    		open my $fh, "<", $n
+			or die "could not open $n: $!";
+	    		<$fh>;
+		};
+
+	}elsif(-f "$f" ){
+		$str = do {
+	    		local $/ = undef;
+	    		open my $fh, "<", $f
+			or die "could not open $f: $!";
+	    		<$fh>;
+		};
+		
+						 	
+	}
+	return $str;
+
+}
+
+
+sub check_file_has_string {
+    my ($file,$string)=@_;
+    my $r;
+    open(FILE,$file);
+    if (grep{/$string/} <FILE>){
+       $r= 1; #print "word  found\n";
+    }else{
+       $r= 0; #print "word not found\n";
+    }
+    close FILE;
+    return $r;
+}
+
+
+###########
+#  color
+#########
+
+
+
 
 
 	
@@ -779,6 +980,49 @@ sub get_color {
 	
 }
 
+
+sub get_color_hex_string {
+	my $num=shift;
+	
+	my @colors=(
+	"6495ED",#Cornflower Blue
+	"FAEBD7",#Antiquewhite
+	"C71585",#Violet Red
+	"C0C0C0",#silver
+	"ADD8E6",#Lightblue	
+	"6A5ACD",#Slate Blue
+	"00CED1",#Dark Turquoise
+	"008080",#Teal
+	"2E8B57",#SeaGreen
+	"FFB6C1",#Light Pink
+	"008000",#Green
+	"FF0000",#red
+	"808080",#Gray
+	"808000",#Olive
+	"FF69B4",#Hot Pink
+	"FFD700",#Gold
+	"DAA520",#Goldenrod
+	"FFA500",#Orange
+	"32CD32",#LimeGreen
+	"0000FF",#Blue
+	"FF8C00",#DarkOrange
+	"A0522D",#Sienna
+	"FF6347",#Tomato
+	"0000CD",#Medium Blue
+	"FF4500",#OrangeRed
+	"DC143C",#Crimson	
+	"9932CC",#Dark Orchid
+	"800000",#marron
+	"800080",#Purple
+	"4B0082",#Indigo
+	"FFFFFF",#white	
+	"000000" #Black		
+		);
+	
+	my $color= 	($num< scalar (@colors))? $colors[$num]: "FFFFFF";	
+	return $color;
+	
+}
 
 
 
@@ -888,6 +1132,8 @@ sub get_directory_name {
 sub get_file_name {
 	my ($object,$title,$entry,$attribute1,$attribute2,$extension,$lable,$open_in)= @_;
 	my $browse= def_image_button("icons/browse.png");
+	my $dir = Cwd::getcwd();
+	my $project_dir	  = abs_path("$dir/../../"); #mpsoc directory address
 
 	$browse->signal_connect("clicked"=> sub{
 		my $entry_ref=$_[1];
@@ -912,12 +1158,16 @@ sub get_file_name {
 	}
 		
 			if ( "ok" eq $dialog->run ) {
-		    	$file = $dialog->get_filename;
+		    		$file = $dialog->get_filename;
+				#remove $project_dir form beginig of each file
+            			$file =~ s/$project_dir//; 
 				$$entry_ref->set_text($file);
-				$object->object_add_attribute($attribute1,$attribute2,$file);
+				$object->object_add_attribute($attribute1,$attribute2,$file) if(defined $object);
 				my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
-				$lable->set_markup("<span  foreground= 'black' ><b>$name$suffix</b></span>");
-				$lable->show;
+				if(defined $lable){
+					$lable->set_markup("<span  foreground= 'black' ><b>$name$suffix</b></span>");
+					$lable->show;
+				}
 						
 				#check_input_file($file,$socgen,$soc_state,$info);
 		    		#print "file = $file\n";
@@ -1028,8 +1278,10 @@ sub gen_spin_object {
 }
 
 
-sub gen_check_box_object {
-		my ($object,$attribute1,$attribute2,$content,$value,$default,$status,$timeout)=@_;
+sub gen_check_box_object_array {
+		my ($object,$attribute1,$attribute2,$content,$default,$status,$timeout)=@_;
+    		my $value=$object->object_get_attribute($attribute1,$attribute2);
+		$value = $default if (!defined $value);
 		my $widget = def_hbox(FALSE,0);
 		my @check;
 		for (my $i=0;$i<$content;$i++){
@@ -1074,6 +1326,39 @@ sub gen_check_box_object {
 
 
 
+
+
+sub gen_check_box_object {
+		my ($object,$attribute1,$attribute2,$default,$status,$timeout)=@_;
+    		my $value=$object->object_get_attribute($attribute1,$attribute2);
+		if (!defined $value){
+			#set initial value
+			$object->object_add_attribute($attribute1,$attribute2,$default);
+			$value = $default 
+		}
+		my $widget = Gtk2::CheckButton->new;
+		if($value == 1) {$widget->set_active(TRUE);}
+		else {$widget->set_active(FALSE);}
+		
+		#get new value
+		$widget-> signal_connect("toggled" => sub{
+			my $new_val;
+			if($widget->get_active()) {$new_val=1;}
+			else {$new_val=0;}
+			$object->object_add_attribute($attribute1,$attribute2,$new_val);
+			#print "\$new_val=$new_val\n";
+			set_gui_status($object,$status,$timeout) if (defined $status);
+		});
+	
+	return $widget;
+
+}
+
+
+
+
+
+
 sub get_dir_in_object {
 	my ($object,$attribute1,$attribute2,$content,$status,$timeout)=@_;
 	my $widget = def_hbox(FALSE,0);
@@ -1103,7 +1388,7 @@ sub get_file_name_object {
 		$lable=gen_label_in_center($name.$suffix);
 		
 	} else {
-			$lable=gen_label_in_center("Selecet a $extension file");
+			$lable=gen_label_in_center("Selecet a file");
 			$lable->set_markup("<span  foreground= 'red' ><b>No file has been selected yet</b></span>");
 	}
 	my $entry=gen_entry();
@@ -1269,53 +1554,6 @@ sub compress_nums{
 }
 
 
-sub copy_file_and_folders{
-	my ($file_ref,$project_dir,$target_dir)=@_;
-
-	foreach my $f(@{$file_ref}){
-		my $name= basename($f);				
-		my $n="$project_dir$f";
-		if (-f "$n") { #copy file
-			copy ("$n","$target_dir"); 		
-		}elsif(-f "$f" ){
-			copy ("$f","$target_dir");     			 	
-		}elsif (-d "$n") {#copy folder
-			dircopy ("$n","$target_dir/$name"); 		
-		}elsif(-d "$f" ){
-			dircopy ("$f","$target_dir/$name"); 		
-    			 	
-		}
-	}
-
-}
-
-sub read_file_cntent {
-	my ($f,$project_dir)=@_;
-	my $n="$project_dir$f";
-	my $str;
-	if (-f "$n") { #copy file
-				
-		$str = do {
-	    		local $/ = undef;
-	    		open my $fh, "<", $n
-			or die "could not open $n: $!";
-	    		<$fh>;
-		};
-
-	}elsif(-f "$f" ){
-		$str = do {
-	    		local $/ = undef;
-	    		open my $fh, "<", $f
-			or die "could not open $f: $!";
-	    		<$fh>;
-		};
-		
-						 	
-	}
-	return $str
-
-}
-
 
 sub metric_conversion{
 	my $size=shift;	
@@ -1326,5 +1564,39 @@ sub metric_conversion{
 					 join (' ', ($size>>30,"G")) ;
 return $size_text;
 }
+
+
+
+sub check_verilog_identifier_syntax {
+	my $in=shift;
+	my $error=0;
+	my $message='';
+# an Identifiers must begin with an alphabetic character or the underscore character
+	if ($in =~ /^[0-9\$]/){
+		return 'an Identifier must begin with an alphabetic character or the underscore character';
+	}
+	
+
+#	Identifiers may contain alphabetic characters, numeric characters, the underscore, and the dollar sign (a-z A-Z 0-9 _ $ )
+	if ($in =~ /[^a-zA-Z0-9_\$]+/){
+		 print "use of illegal character after\n" ;
+		 my @w= split /([^a-zA-Z0-9_\$]+)/, $in; 
+		 return "Contain illegal character of \"$w[1]\". Identifiers may contain alphabetic characters, numeric characters, the underscore, and the dollar sign (a-z A-Z 0-9 _ \$ )\n";
+		
+	}
+
+
+# check Verilog reserved words
+	my @keys =			("always","and","assign","automatic","begin","buf","bufif0","bufif1","case","casex","casez","cell","cmos","config","deassign","default","defparam","design","disable","edge","else","end","endcase","endconfig","endfunction","endgenerate","endmodule","endprimitive","endspecify","endtable","endtask","event","for","force","forever","fork","function","generate","genvar","highz0","highz1","if","ifnone","incdir","include","initial","inout","input","instance","integer","join","large","liblist","library","localparam","macromodule","medium","module","nand","negedge","nmos","nor","noshowcancelled","not","notif0","notif1","or","output","parameter","pmos","posedge","primitive","pull0","pull1","pulldown","pullup","pulsestyle_onevent","pulsestyle_ondetect","remos","real","realtime","reg","release","repeat","rnmos","rpmos","rtran","rtranif0","rtranif1","scalared","showcancelled","signed","small","specify","specparam","strong0","strong1","supply0","supply1","table","task","time","tran","tranif0","tranif1","tri","tri0","tri1","triand","trior","trireg","unsigned","use","vectored","wait","wand","weak0","weak1","while","wire","wor","xnor","xor");
+	if( grep (/^$in$/,@keys)){
+		return  "$in is a Verlig reserved word.";
+	}
+	return undef;
+	
+}
+
+
+
+
 
 1

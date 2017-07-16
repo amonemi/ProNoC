@@ -1,12 +1,38 @@
  `timescale     1ns/1ps
- 
- 
+/**********************************************************************
+**	File: arbiter.v
+**    
+**	Copyright (C) 2014-2017  Alireza Monemi
+**    
+**	This file is part of ProNoC 
+**
+**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**	you can redistribute it and/or modify it under the terms of the GNU
+**	Lesser General Public License as published by the Free Software Foundation,
+**	either version 2 of the License, or (at your option) any later version.
+**
+** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
+** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+** 	Public License for more details.
+**
+** 	You should have received a copy of the GNU Lesser General Public
+** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**
+**
+**
+**	Description: 
+**	This file contains several Fixed prority and round robin 
+**	arbiters 
+**
+******************************************************************************/ 
+
 
 /*****************************************
-        
-        round robin arbiter
- 
-
+*        
+* general round robin arbiter
+* 
+*
 ******************************************/
 
 module arbiter #(
@@ -66,9 +92,10 @@ module arbiter #(
 endmodule
 
 /*****************************************
-
-        arbiter_priority_en
-
+*
+*        arbiter_priority_en
+* RRA with external priority enable signal
+*
 ******************************************/
 
 module arbiter_priority_en #(
@@ -131,66 +158,18 @@ module arbiter_priority_en #(
         );
     end
 endgenerate
-
-
-    
 endmodule
-    
 
-module my_one_hot_arbiter_priority_en #(
-    parameter ARBITER_WIDTH    =4
-    
-    
-)
-(
-    input        [ARBITER_WIDTH-1             :    0]    request,
-    output    [ARBITER_WIDTH-1            :    0]    grant,
-    output                                            any_grant,
-    input                                                clk,
-    input                                                reset,
-    input                                                priority_en
-);
-   
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end 	   
-      end   
-    endfunction // log2 
-    
-    localparam ARBITER_BIN_WIDTH= log2(ARBITER_WIDTH);
-    reg     [ARBITER_BIN_WIDTH-1        :    0]     low_pr;
-    wire     [ARBITER_BIN_WIDTH-1        :    0]     grant_bcd;
-    
-    one_hot_to_bin #(
-        .ONE_HOT_WIDTH    (ARBITER_WIDTH)
-    )conv 
-    (
-        .one_hot_code(grant),
-        .bin_code(grant_bcd)
-    );
-    
-    always@(posedge clk or posedge reset) begin
-        if(reset) begin
-            low_pr    <=    {ARBITER_BIN_WIDTH{1'b0}};
-        end else begin
-            if(priority_en) low_pr <= grant_bcd;
-        end
-    end
-    
 
-    assign any_grant = | request;
 
-    generate 
-        if(ARBITER_WIDTH    ==2) begin :w2        arbiter_2_one_hot arb( .in(request) , .out(grant), .low_pr(low_pr)); end
-        if(ARBITER_WIDTH    ==3) begin :w3        arbiter_3_one_hot arb( .in(request) , .out(grant), .low_pr(low_pr)); end
-        if(ARBITER_WIDTH    ==4) begin :w4        arbiter_4_one_hot arb( .in(request) , .out(grant), .low_pr(low_pr)); end
-    endgenerate
-
-endmodule    
-    
+/******************************************************
+*	my_one_hot_arbiter
+* RRA with binary-coded priority register. Binary-coded 
+* Priority results in less area cost and CPD for arbire 
+* width of 4 and smaller only. 
+*
+******************************************************/
+      
     
 
 module my_one_hot_arbiter #(
@@ -332,11 +311,73 @@ always @(*) begin
  endmodule 
 
 
+/******************************************************
+*	my_one_hot_arbiter_priority_en
+* 
+******************************************************/
+
+
+
+module my_one_hot_arbiter_priority_en #(
+    parameter ARBITER_WIDTH    =4
+    
+    
+)
+(
+    input        [ARBITER_WIDTH-1             :    0]    request,
+    output    [ARBITER_WIDTH-1            :    0]    grant,
+    output                                            any_grant,
+    input                                                clk,
+    input                                                reset,
+    input                                                priority_en
+);
+   
+    function integer log2;
+      input integer number; begin   
+         log2=(number <=1) ? 1: 0;    
+         while(2**log2<number) begin    
+            log2=log2+1;    
+         end 	   
+      end   
+    endfunction // log2 
+    
+    localparam ARBITER_BIN_WIDTH= log2(ARBITER_WIDTH);
+    reg     [ARBITER_BIN_WIDTH-1        :    0]     low_pr;
+    wire     [ARBITER_BIN_WIDTH-1        :    0]     grant_bcd;
+    
+    one_hot_to_bin #(
+        .ONE_HOT_WIDTH    (ARBITER_WIDTH)
+    )conv 
+    (
+        .one_hot_code(grant),
+        .bin_code(grant_bcd)
+    );
+    
+    always@(posedge clk or posedge reset) begin
+        if(reset) begin
+            low_pr    <=    {ARBITER_BIN_WIDTH{1'b0}};
+        end else begin
+            if(priority_en) low_pr <= grant_bcd;
+        end
+    end
+    
+
+    assign any_grant = | request;
+
+    generate 
+        if(ARBITER_WIDTH    ==2) begin :w2        arbiter_2_one_hot arb( .in(request) , .out(grant), .low_pr(low_pr)); end
+        if(ARBITER_WIDTH    ==3) begin :w3        arbiter_3_one_hot arb( .in(request) , .out(grant), .low_pr(low_pr)); end
+        if(ARBITER_WIDTH    ==4) begin :w4        arbiter_4_one_hot arb( .in(request) , .out(grant), .low_pr(low_pr)); end
+    endgenerate
+
+endmodule   
+
+
 
 /*******************
-
-    thermo_arbiter
-
+*
+*    thermo_arbiter RRA
+*
 ********************/
 
 module thermo_gen #(
@@ -568,13 +609,9 @@ endmodule
 
 
 /********************************
-    
-    
-    
-    Tree arbiter
-
-    
-    
+*    
+*   Tree arbiter
+* 
 *******************************/
 
 module tree_arbiter #(

@@ -1,3 +1,5 @@
+ `timescale  1ns/1ps
+
 module aeMB_top (
     
   dwb_adr_o,      

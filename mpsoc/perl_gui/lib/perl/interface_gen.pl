@@ -17,7 +17,7 @@ sub read_file_modules{
 	
 	if (!defined $file) {return; }
 	if (-e $file) { 
-		my $vdb =  read_file($file);
+		my $vdb =  read_verilog_file($file);
 		my @modules=sort $vdb->get_modules($file);
 		#foreach my $p(@module_list) {print "$p\n"}
 		$intfc_gen->intfc_set_interface_file($file);
@@ -177,13 +177,13 @@ sub get_ports_rang{
 
 sub get_interface_ports {
 	my ($intfc_gen,$info)=@_;
-	my $window=def_popwin_size(800,600,"Import Ports");
+	my $window=def_popwin_size(60,60,"Import Ports",'percent');
 
 	my $file=$intfc_gen->intfc_get_interface_file();
 	if (!defined $file){show_info(\$info,"File name has not been defined yet!");  return;}
 	my $module=$intfc_gen->intfc_get_module_name();
 	if (!defined $module){  show_info(\$info,"Module name has not been selected yet!");  return;}
-	my $vdb=read_file($file);
+	my $vdb=read_verilog_file($file);
 	my %port_type=get_ports_type($vdb,$module);
 	my %port_range=get_ports_rang($vdb,$module);
 	
@@ -331,8 +331,8 @@ sub interface_type_select {
 	my $combo=gen_combobox_object($intfc_gen,'connection_num',undef,"single connection,multi connection","single connection",'refresh',1);
 	my $combo_box=labele_widget_info(" Select soket type:",$combo,'Define the soket as multi connection if only all interfaces ports all output and they can feed more than one plug connection');
 	
-	$table->attach_defaults ($entrybox, 0, 2 , $row, $row+1);
-	$table->attach_defaults ($combo_box, 3, 5 , $row, $row+1);
+	$table->attach ($entrybox, 0, 2 , $row, $row+1,'expand','shrink',2,2);
+	$table->attach ($combo_box, 3, 6 , $row, $row+1,'expand','shrink',2,2);
 	
 }	
 
@@ -349,7 +349,7 @@ sub port_select{
 	my $size = keys %types;
 	if($size >0){
 		my $sep = Gtk2::HSeparator->new;
-		$table->attach_defaults ($sep, 0, 10 , $row, $row+1);	$row++;
+		$table->attach ($sep, 0, 10 , $row, $row+1,'fill','fill',2,2);	$row++;
 		
 		
 		my $swap= def_image_button("icons/swap.png","swap");
@@ -388,26 +388,26 @@ sub port_select{
 		my $sep2 = Gtk2::HSeparator->new;
 		
 		
-		$table->attach ($lab1, 1, 2 , $row, $row+1,'shrink','shrink',2,2);
-		$table->attach ($swap, 3, 4 , $row, $row+1,'shrink','shrink',2,2);
-		$table->attach ($lab2, 5, 6 , $row, $row+1,'shrink','shrink',2,2);	$row++;		
-		$table->attach_defaults ($sep2, 0, 9 , $row, $row+1);	$row++;
+		$table->attach ($lab1, 1, 2 , $row, $row+1,'expand','shrink',2,2);
+		$table->attach ($swap, 3, 4 , $row, $row+1,'expand','shrink',2,2);
+		$table->attach ($lab2, 5, 6 , $row, $row+1,'expand','shrink',2,2);	$row++;		
+		$table->attach ($sep2, 0, 9 , $row, $row+1,'fill','fill',2,2);	$row++;
 		
 		
 		my $lab3= gen_label_in_center("Type");
 		my $lab4= gen_label_in_center("Range");
 		my $lab5= gen_label_in_center("Name");
-		$table->attach_defaults ($lab3, 0, 1 , $row, $row+1);
-		$table->attach_defaults ($lab4, 1, 2 , $row, $row+1);
-		$table->attach_defaults ($lab5, 2, 3 , $row, $row+1); 
+		$table->attach ($lab3, 0, 1 , $row, $row+1,'expand','shrink',2,2);
+		$table->attach ($lab4, 1, 2 , $row, $row+1,'expand','shrink',2,2);
+		$table->attach ($lab5, 2, 3 , $row, $row+1,'expand','shrink',2,2);
 		my $lab6= gen_label_in_center("Type");
 		my $lab7= gen_label_in_center("Range");
 		my $lab8= gen_label_in_center("Name");
-		$table->attach_defaults ($lab6, 4, 5 , $row, $row+1);
-		$table->attach_defaults ($lab7, 5, 6 , $row, $row+1);
-		$table->attach_defaults ($lab8, 6, 7 , $row, $row+1); 
+		$table->attach ($lab6, 4, 5 , $row, $row+1,'expand','shrink',2,2);
+		$table->attach ($lab7, 5, 6 , $row, $row+1,'expand','shrink',2,2);
+		$table->attach ($lab8, 6, 7 , $row, $row+1,'expand','shrink',2,2);
 		my $lab9= gen_label_help ("When an IP core does not have any of interface output port, the default value will be send to the IP core's input port which is supposed to be connected to that port","Output port Default ");
-		$table->attach_defaults ($lab9, 8, 9 , $row, $row+1); 
+		$table->attach ($lab9, 8, 9 , $row, $row+1,'expand','shrink',2,2);
 		$row++;
 	
 		foreach my $id (sort keys %ranges){
@@ -456,15 +456,15 @@ sub port_select{
 			#$box->pack_start($entry3,TRUE,FALSE,3);
 			#$box->pack_start($separator,TRUE,FALSE,3);
 		
-			$table->attach_defaults ($combo1, 0, 1 , $row, $row+1);
-			$table->attach_defaults ($entry2, 1, 2 , $row, $row+1);
-			$table->attach_defaults ($entry3, 2, 3 , $row, $row+1);
+			$table->attach ($combo1, 0, 1 , $row, $row+1,'expand','shrink',2,2);
+			$table->attach ($entry2, 1, 2 , $row, $row+1,'expand','shrink',2,2);
+			$table->attach ($entry3, 2, 3 , $row, $row+1,'expand','shrink',2,2);
 		
 			
-			$table->attach_defaults ($connect_type_lable, 4, 5 , $row, $row+1);
-			$table->attach_defaults ($entry4, 5, 6 , $row, $row+1);
-			$table->attach_defaults ($entry5, 6, 7 , $row, $row+1);
-			$table->attach_defaults ($combentry, 8, 9 , $row, $row+1);
+			$table->attach ($connect_type_lable, 4, 5 , $row, $row+1,'expand','shrink',2,2);
+			$table->attach ($entry4, 5, 6 , $row, $row+1,'expand','shrink',2,2);
+			$table->attach ($entry5, 6, 7 , $row, $row+1,'expand','shrink',2,2);
+			$table->attach ($combentry, 8, 9 , $row, $row+1,'expand','shrink',2,2);
 		
 			$combo1->signal_connect("changed"=>sub{
 				my $new_type=$combo1->get_active_text();
@@ -546,7 +546,7 @@ sub dev_box_show{
 	my $row=port_select($intfc_gen,$info,$table,1);	
 	for (my $i=$row; $i<20; $i++){
 		my $temp=gen_label_in_center(" ");
-		$table->attach_defaults ($temp, 0, 1 , $i, $i+1);
+		#$table->attach_defaults ($temp, 0, 1 , $i, $i+1);
 	}	
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
 	$scrolled_win->set_policy( "automatic", "automatic" );
@@ -595,10 +595,21 @@ sub generate_lib{
 		print FILE Data::Dumper->Dump([\%$intfc_gen],["HashRef"]);
 		close(FILE) || die "Error closing file: $!";
 		#store \%$intfc_gen, "lib/$name.ITC";
-		my $message="Interface $name has been generated successfully" ;
-		message_dialog($message);
-		exec($^X, $0, @ARGV);# reset ProNoC to apply changes
-		#$hashref = retrieve('file');
+		
+		my $message="Interface $name has been generated successfully. In order to see this interface in IP generator you need to reset the ProNoC. Do you want to reset the ProNoC now?" ;
+			
+		my $dialog = Gtk2::MessageDialog->new (my $window,
+			'destroy-with-parent',
+			'question', # message type
+			'yes-no', # which set of buttons?
+			"$message");
+		my $response = $dialog->run;
+		if ($response eq 'yes') {
+			exec($^X, $0, @ARGV);# reset ProNoC to apply changes	
+  		}
+  		$dialog->destroy;
+
+		
 	}else{
 		my $message="Category must be defined!";
 		message_dialog($message);
@@ -619,7 +630,7 @@ sub get_intfc_description{
 	my ($intfc_gen,$info)=@_;
 	my $description = $intfc_gen->intfc_get_description();	
 	my $table = Gtk2::Table->new (15, 15, TRUE);
-	my $window=def_popwin_size(500,500,"Add description");
+	my $window=def_popwin_size(50,50,"Add description",'percent');
 	my ($scrwin,$text_view)=create_text();
 	#my $buffer = $textbox->get_buffer();
 	my $ok=def_image_button("icons/select.png",' Ok ');
@@ -704,10 +715,17 @@ sub intfc_main{
 	
 	my $devbox=dev_box_show($intfc_gen,$info);
 	
-	$main_table->attach_defaults ($fbox , 0, 12, 0,1);
-	$main_table->attach_defaults ($sbox , 0, 12, 1,2);
-	$main_table->attach_defaults ($devbox , 0, 12, 2,12);
-	$main_table->attach_defaults ($infobox  , 0, 12, 12,14);
+	#$main_table->attach_defaults ($fbox , 0, 12, 0,1);
+	#$main_table->attach_defaults ($sbox , 0, 12, 1,2);
+	#$main_table->attach_defaults ($devbox , 0, 12, 2,12);
+	#$main_table->attach_defaults ($infobox  , 0, 12, 12,14);
+
+	my $v1=def_pack_vbox(TRUE,0,$fbox,$sbox);
+	my $v2=gen_vpaned($v1,.1,$devbox);
+	my $v3=gen_vpaned($v2,.6,$infobox);
+	$main_table->attach_defaults ($v3  , 0, 12, 0,14);
+
+
 	$main_table->attach ($generate	, 6, 8, 14,15,'shrink','shrink',2,2);
 
 
@@ -721,17 +739,19 @@ sub intfc_main{
 		$devbox->destroy();
 		$fbox->destroy();
 		$sbox->destroy();
+		$v1->destroy();
 		select(undef, undef, undef, 0.1); #wait 10 ms
 		$devbox=dev_box_show($intfc_gen,$info);
 		$fbox=file_box($intfc_gen,$info);	
-		$sbox=module_select($intfc_gen,$info);	
-		$main_table->attach_defaults ($fbox , 0, 12, 0,1);
-		$main_table->attach_defaults ($sbox , 0, 12, 1,2);
-		$main_table->attach_defaults ($devbox , 0, 12, 3,12);
+		$sbox=module_select($intfc_gen,$info);
+		$v1=def_pack_vbox(TRUE,0,$fbox,$sbox);	
+		$v2->pack1($v1,TRUE, TRUE); 	
+		$v2->pack2($devbox,TRUE, TRUE); 	
+		$v3-> pack1($v2, TRUE, TRUE); 	
+		#$main_table->attach_defaults ($v3  , 0, 12, 0,14);
+				
+		$v3->show_all();
 		
-		$devbox->show_all();
-		$sbox->show_all();
-		$fbox->show_all();	
 	});
 
 

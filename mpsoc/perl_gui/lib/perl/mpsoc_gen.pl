@@ -285,7 +285,7 @@ sub get_conflict_decision{
 	my ($mpsoc,$name,$inserted,$conflicts,$msg)=@_;
 	$msg="\tThe inserted tile number(s) have been mapped previously to \n\t\t\"$msg\".\n\tDo you want to remove the conflicted tiles number(s) in newly \n\tinsterd range or remove them from the previous ones? ";
 	
-	my $wind=def_popwin_size(100,300,"warning");
+	my $wind=def_popwin_size(10,30,"warning",'percent');
 	my $label= gen_label_in_left($msg);	
 	my $table=def_table(2,6,FALSE);
 	$table->attach_defaults ($label , 0, 6, 0,1);
@@ -419,7 +419,7 @@ sub check_inserted_ip_nums{
 sub get_soc_parameter_setting{
 	my ($mpsoc,$soc_name,$tile)=@_;
 	
-	my $window = (defined $tile)? def_popwin_size(600,400,"Parameter setting for $soc_name located in tile($tile) "):def_popwin_size(600,400,"Default Parameter setting for $soc_name ");
+	my $window = (defined $tile)? def_popwin_size(40,40,"Parameter setting for $soc_name located in tile($tile) ",'percent'):def_popwin_size(40,40,"Default Parameter setting for $soc_name ",'percent');
 	my $table = def_table(10, 7, TRUE);
 	
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
@@ -1101,9 +1101,9 @@ sub noc_config{
 sub get_config{
 	my ($mpsoc,$info)=@_;
 	my $table=def_table(20,10,FALSE);#	my ($row,$col,$homogeneous)=@_;
-	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
-	$scrolled_win->set_policy( "automatic", "automatic" );
-	$scrolled_win->add_with_viewport($table);
+	#my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
+	#$scrolled_win->set_policy( "automatic", "automatic" );
+	#$scrolled_win->add_with_viewport($table);
 
 	#noc_setting
 	my $row=noc_config ($mpsoc,$table);
@@ -1159,7 +1159,7 @@ sub get_config{
 
 
 
-return  $scrolled_win;
+return  $table;
 
 }
 
@@ -1237,7 +1237,17 @@ sub generate_soc_files{
 	my ($mpsoc,$soc,$info)=@_;
 	my $mpsoc_name=$mpsoc->object_get_attribute('mpsoc_name');
 	my $soc_name=$soc->object_get_attribute('soc_name');
-	my ($file_v,$tmp)=soc_generate_verilog($soc);
+	
+	# copy all files in project work directory
+	my $dir = Cwd::getcwd();
+	my $project_dir	  = abs_path("$dir/../../");
+	#make target dir
+	my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name";
+	mkpath("$target_dir/src_verilog/lib/",1,0755);
+	mkpath("$target_dir/src_verilog/tiles/",1,0755);
+	mkpath("$target_dir/sw",1,0755);
+
+	my ($file_v,$tmp)=soc_generate_verilog($soc,"$target_dir/sw");
 		
 	# Write object file
 	open(FILE,  ">lib/soc/$soc_name.SOC") || die "Can not open: $!";
@@ -1253,14 +1263,7 @@ sub generate_soc_files{
 			
 			
 			
-	# copy all files in project work directory
-	my $dir = Cwd::getcwd();
-	my $project_dir	  = abs_path("$dir/../../");
-	#make target dir
-	my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name";
-	mkpath("$target_dir/src_verilog/lib/",1,0755);
-	mkpath("$target_dir/src_verilog/tiles/",1,0755);
-	mkpath("$target_dir/sw",1,0755);
+	
     		
     #copy hdl codes in src_verilog
     	
@@ -1316,6 +1319,19 @@ return $msg;
 }	
 
 
+sub generate_mpsoc_lib_file {
+	my ($mpsoc,$info) = @_;
+	my $name=$mpsoc->object_get_attribute('mpsoc_name');
+	$mpsoc->mpsoc_remove_all_soc_tops(); 
+	open(FILE,  ">lib/mpsoc/$name.MPSOC") || die "Can not open: $!";
+	print FILE perl_file_header("$name.MPSOC");
+	print FILE Data::Dumper->Dump([\%$mpsoc],[$name]);
+	close(FILE) || die "Error closing file: $!";
+	get_soc_list($mpsoc,$info); 
+	
+}	
+
+
 ################
 #	generate_mpsoc
 #################
@@ -1323,8 +1339,9 @@ return $msg;
 sub generate_mpsoc{
 	my ($mpsoc,$info)=@_;
 	my $name=$mpsoc->object_get_attribute('mpsoc_name');
-	if ( $name =~ /\W+/ ){
-		message_dialog('The mpsoc name must not contain any non-word character:("./\()\':,.;<>~!@#$%^&*|+=[]{}`~?-")!")');
+	my $error = check_verilog_identifier_syntax($name);
+	if ( defined $error ){
+		message_dialog("The \"$name\" is given with an unacceptable formatting. The mpsoc name will be used as top level verilog module name so it must follow Verilog identifier declaration formatting:\n $error");
 		return 0;
 	}
 	my $size= (defined $name)? length($name) :0;
@@ -1354,15 +1371,12 @@ sub generate_mpsoc{
 	
 	
 		
-	my ($file_v,$top_v)=mpsoc_generate_verilog($mpsoc);
+	my ($file_v,$top_v)=mpsoc_generate_verilog($mpsoc,$sw_dir);
 	
 	
 		
 	# Write object file
-	open(FILE,  ">lib/mpsoc/$name.MPSOC") || die "Can not open: $!";
-	print FILE perl_file_header("$name.MPSOC");
-	print FILE Data::Dumper->Dump([\%$mpsoc],[$name]);
-	close(FILE) || die "Error closing file: $!";
+	generate_mpsoc_lib_file($mpsoc,$info);
 			
 	# Write verilog file
 	open(FILE,  ">lib/verilog/$name.v") || die "Can not open: $!";
@@ -1581,7 +1595,7 @@ sub get_tile{
 	}
 	
 	$button->signal_connect("clicked" => sub{ 
-		my $window = def_popwin_size(400,400,"Parameter setting for Tile $tile ");
+		my $window = def_popwin_size(40,40,"Parameter setting for Tile $tile ",'percent');
 		my $table = def_table(6, 2, TRUE);
 	
 		my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
@@ -1717,7 +1731,33 @@ sub gen_tiles{
 
 
 
+sub software_edit_mpsoc {
+	my $self=shift;	
+	my $name=$self->object_get_attribute('mpsoc_name');
+	if (length($name)==0){
+		message_dialog("Please define the MPSoC name!");
+		return ;
+	}
+	my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$name/sw";
+	my $sw 	= "$target_dir";
+	my ($app,$table,$tview) = software_main($sw);
 
+	
+
+
+	my $make = def_image_button('icons/gen.png','Compile');
+	
+		
+	$table->attach ($make,9, 10, 1,2,'shrink','shrink',0,0);
+	
+
+	$make -> signal_connect("clicked" => sub{
+		$app->do_save();
+		run_make_file($sw,$tview);	
+
+	});
+
+}
 
 
 
@@ -1753,7 +1793,9 @@ sub mpsocgen_main{
 	my $noc_conf_box=get_config ($mpsoc,$info);
 	my $noc_tiles=gen_tiles($mpsoc);
 
-
+	my $scr_conf = new Gtk2::ScrolledWindow (undef, undef);
+	$scr_conf->set_policy( "automatic", "automatic" );
+	$scr_conf->add_with_viewport($noc_conf_box);
 
 	$main_table->set_row_spacings (4);
 	$main_table->set_col_spacings (1);
@@ -1767,35 +1809,53 @@ sub mpsocgen_main{
 	
 	
 	my $open = def_image_button('icons/browse.png','Load MPSoC');
-	
-	
+	my $compile  = def_image_button('icons/run.png','Compile');
+	my $software = def_image_button('icons/binary.png','Software');
 	my $entry=gen_entry_object($mpsoc,'mpsoc_name',undef,undef,undef,undef);
 	my $entrybox=labele_widget_info(" MPSoC name:",$entry);
 	
 	
 	
 	#$table->attach_defaults ($event_box, $col, $col+1, $row, $row+1);
-	$main_table->attach_defaults ($noc_conf_box , 0, 4, 0, 22);
-	$main_table->attach_defaults ($noc_tiles , 4, 12, 0, 22);
-	$main_table->attach_defaults ($infobox  , 0, 12, 22,24);
+	#$main_table->attach_defaults ($noc_conf_box , 0, 4, 0, 22);
+	#$main_table->attach_defaults ($noc_tiles , 4, 12, 0, 22);
+	#$main_table->attach_defaults ($infobox  , 0, 12, 22,24);
+
+	my $h1=gen_hpaned($scr_conf,.3,$noc_tiles);
+	my $v2=gen_vpaned($h1,.55,$infobox);
+	$main_table->attach_defaults ($v2  , 0, 12, 0,24);
+
+
+
+
+
 	$main_table->attach ($open,0, 3, 24,25,'expand','shrink',2,2);
 	$main_table->attach_defaults ($entrybox,3, 7, 24,25);
 	
-	$main_table->attach ($generate, 10, 12, 24,25,'expand','shrink',2,2);
-	
+	$main_table->attach ($generate, 8, 9, 24,25,'expand','shrink',2,2);
+	$main_table->attach ($software, 9, 10, 24,25,'expand','shrink',2,2);	
+	$main_table->attach ($compile, 10, 12, 24,25,'expand','shrink',2,2);
 
 	#referesh the mpsoc generator 
 	$refresh-> signal_connect("clicked" => sub{ 
 		$noc_conf_box->destroy();
 		$noc_conf_box=get_config ($mpsoc,$info);
-		$main_table->attach_defaults ($noc_conf_box , 0, 4, 0, 22);
-		$noc_conf_box->show_all();			
+		$scr_conf->add_with_viewport($noc_conf_box);
+		#$main_table->attach_defaults ($noc_conf_box , 0, 4, 0, 22);
+		#$noc_conf_box->show_all();			
 		
 
 
 		$noc_tiles->destroy();
 		$noc_tiles=gen_tiles($mpsoc);
-		$main_table->attach_defaults ($noc_tiles , 4, 12, 0, 22);
+		#$h1->destroy();
+		#$h1=gen_hpaned($noc_conf_box,.3,$noc_tiles);
+		$h1 -> pack1($scr_conf, TRUE, TRUE); 	
+		$h1 -> pack2($noc_tiles, TRUE, TRUE); 
+		
+		$v2-> pack1($h1, TRUE, TRUE); 	
+		$h1->show_all;
+		#$main_table->attach_defaults ($noc_tiles , 4, 12, 0, 22);
 
 		$main_table->show_all();
 
@@ -1812,6 +1872,14 @@ sub mpsocgen_main{
 		if ($timeout>0){
 			$timeout--;
 			set_gui_status($mpsoc,$state,$timeout);						
+		}elsif ($state eq 'save_project'){
+			# Write object file
+			my $name=$mpsoc->object_get_attribute('mpsoc_name');
+			open(FILE,  ">lib/mpsoc/$name.MPSOC") || die "Can not open: $!";
+			print FILE perl_file_header("$name.MPSOC");
+			print FILE Data::Dumper->Dump([\%$mpsoc],[$name]);
+			close(FILE) || die "Error closing file: $!";
+			set_gui_status($mpsoc,"ideal",0);	
 		}
 		elsif( $state ne "ideal" ){
 			$refresh->clicked;
@@ -1841,7 +1909,29 @@ sub mpsocgen_main{
 		set_gui_status($mpsoc,"ref",5);
 		load_mpsoc($mpsoc,$info);
 	
+	});
+
+
+	$compile -> signal_connect("clicked" => sub{ 
+		my $name=$mpsoc->object_get_attribute('mpsoc_name');
+		if (length($name)==0){
+			message_dialog("Please define the MPSoC name!");
+			return ;
+		}
+		my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$name";
+		my $top_file 	= "$target_dir/src_verilog/${name}_top.v";
+		if (-f $top_file){	
+			select_compiler($mpsoc,$name,$top_file,$target_dir);
+		} else {
+			message_dialog("Cannot find $top_file file. Please run RTL Generator first!");
+			return;
+		}
 	});	
+	
+	$software -> signal_connect("clicked" => sub{
+		software_edit_mpsoc($mpsoc);
+
+	});
 
 	
 	my $sc_win = new Gtk2::ScrolledWindow (undef, undef);
@@ -1882,21 +1972,41 @@ sub load_mpsoc{
 	$dialog->add_filter ($filter);
 		my $dir = Cwd::getcwd();
 	$dialog->set_current_folder ("$dir/lib/mpsoc")	;
-
-
+	my @newsocs=$mpsoc->mpsoc_get_soc_list();
+	add_info(\$info,'');
 	if ( "ok" eq $dialog->run ) {
 		$file = $dialog->get_filename;
 		my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
 		if($suffix eq '.MPSOC'){
 			my $pp= eval { do $file };
 			if ($@ || !defined $pp){		
-				show_info(\$info,"**Error reading  $file file: $@\n");
+				add_info(\$info,"**Error: cannot open $file file: $@\n");
 				 $dialog->destroy;
 				return;
 			} 
-
+			
 
 			clone_obj($mpsoc,$pp);
+			#read save mpsoc socs
+			my @oldsocs=$mpsoc->mpsoc_get_soc_list();
+			#add exsiting SoCs and add them to mpsoc
+			
+			my $error;
+			#print "old: @oldsocs\n new @newsocs \n"; 
+			foreach my $p (@oldsocs) {
+				#print "$p\n";
+				my @num= $mpsoc->mpsoc_get_soc_tiles_num($p);
+				if (scalar @num && ( grep (/^$p$/,@newsocs)==0)){
+					my $m="Processing tile $p that has been used for ties  @num but is not located in librray anymore\n";
+				 	$error = (defined $error ) ? "$error $m" : $m;
+				} 
+				$mpsoc->mpsoc_remove_soc ($p) if (grep (/^$p$/,@newsocs)==0); 
+				 	
+
+			}
+			@newsocs=get_soc_list($mpsoc,$info); # add all existing socs
+			add_info(\$info,"**Error:  \n $error\n") if(defined $error);
+
 			set_gui_status($mpsoc,"load_file",0);
 					
 		}					

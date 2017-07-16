@@ -1,4 +1,6 @@
 all:
 	cd compile; sh gccrom	../main.c; 
-	cd compile; cp ram.mif ../ram0.mif; cp ram.bin ../ram0.bin;
+	rm -Rf ./RAM
+	mkdir -p ./RAM	
+	cd compile; cp ram.mif ../RAM/ram0.mif; cp ram.bin ../RAM/ram0.bin; cp ram.hex ../RAM/ram0.hex;
 	

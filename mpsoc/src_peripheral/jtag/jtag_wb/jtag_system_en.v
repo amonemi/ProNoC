@@ -1,11 +1,41 @@
-/*******************
-	jtag_system_en:
-	each system single core or many core must have one jtag_system_en module in order to allow mmeory programming.
-	This module has two output ports which can be programed using jtag interface:
-	cpu_en: which can enable/disable the cpu cores. This port must be connected to all cpus enable port in order tio deactiavte them during memory programming
-	system_reset: This pin must be ored by sytem global reset pin. The jtag memory programmer will reset the system before and after perogramming the memories.
+/**********************************************************************
+**	File:  jtag_system_en.v 
+**	
+**    
+**	Copyright (C) 2014-2017  Alireza Monemi
+**    
+**	This file is part of ProNoC 
+**
+**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**	you can redistribute it and/or modify it under the terms of the GNU
+**	Lesser General Public License as published by the Free Software Foundation,
+**	either version 2 of the License, or (at your option) any later version.
+**
+** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
+** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+** 	Public License for more details.
+**
+** 	You should have received a copy of the GNU Lesser General Public
+** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**
+**
+**	Description: 
+**	each system single core or many core must have one jtag_system_en module in order
+**	to allow mmeory programming.
+**	This module has two output ports which can be programed using jtag interface:
+**	cpu_en: which can enable/disable the cpu cores. This port must be connected to all
+**		cpus enable port in order tio deactiavte them during memory programming
+**	system_reset: This pin must be ored by sytem global reset pin. The jtag memory 
+**		programmer will reset the system before and after perogramming the memories.
+**
+*******************************************************************/
 
-*****************/
+
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
+
 
 module jtag_system_en (
 	cpu_en,

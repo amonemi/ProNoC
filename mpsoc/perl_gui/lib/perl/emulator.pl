@@ -62,17 +62,23 @@ sub gen_chart {
 	$results[1]= [0];
 my $legend_info="This attribute controls placement of the legend within the graph image. The value is supplied as a two-letter string, where the first letter is placement (a B or an R for bottom or right, respectively) and the second is alignment (L, R, C, T, or B for left, right, center, top, or bottom, respectively). ";
 	
+my $fontsize="Tiny,Small,MediumBold,Large,Giant";
+
+
+
 my @ginfo = (
-{ label=>"Graph Title", param_name=>"G_Title", type=>"Entry", default_val=>undef, content=>undef, info=>undef, param_parent=>'graph_param', ref_delay=>undef },  
+#{ label=>"Graph Title", param_name=>"G_Title", type=>"Entry", default_val=>undef, content=>undef, info=>undef, param_parent=>'graph_param', ref_delay=>undef },  
 { label=>"Y Axix Title", param_name=>"Y_Title", type=>"Entry", default_val=>'Latency (clock)', content=>undef, info=>undef, param_parent=>'graph_param', ref_delay=>undef },
   { label=>"X Axix Title", param_name=>"X_Title", type=>"Entry", default_val=>'Load per router (flits/clock (%))', content=>undef, info=>undef, param_parent=>'graph_param',ref_delay=>undef },
-  { label=>"legend placement", param_name=>"legend_placement", type=>'Combo-box', default_val=>'BL', content=>"BL,BC,BR,RT,RC,RB", info=>$legend_info, param_parent=>'graph_param', ref_delay=>undef},
+  { label=>"legend placement", param_name=>"legend_placement", type=>'Combo-box', default_val=>'BL', content=>"BL,BC,BR,RT,RC,RB", info=>$legend_info, param_parent=>'graph_param', ref_delay=>1},
+ 
  { label=>"Y min", param_name=>"Y_MIN", type=>'Spin-button', default_val=>0, content=>"0,1024,1", info=>"Y axix minimum value", param_parent=>'graph_param', ref_delay=> 5},
  { label=>"X min", param_name=>"X_MIN", type=>'Spin-button', default_val=>0, content=>"0,1024,1", info=>"X axix minimum value", param_parent=>'graph_param', ref_delay=> 5},
 { label=>"X max", param_name=>"X_MAX", type=>'Spin-button', default_val=>100, content=>"0,1024,1", info=>"X axix maximum value", param_parent=>'graph_param', ref_delay=> 5},
  { label=>"Line Width", param_name=>"LINEw", type=>'Spin-button', default_val=>3, content=>"1,20,1", info=>undef, param_parent=>'graph_param', ref_delay=> 5},
- 
-
+{ label=>"legend font size", param_name=>"legend_font", type=>'Combo-box', default_val=>'MediumBold', content=>$fontsize, info=>undef, param_parent=>'graph_param', ref_delay=>1}, 
+{ label=>"label font size", param_name=>"label_font", type=>'Combo-box', default_val=>'MediumBold', content=>$fontsize, info=>undef, param_parent=>'graph_param', ref_delay=>1},
+  { label=>"label font size", param_name=>"x_axis_font", type=>'Combo-box', default_val=>'MediumBold', content=>$fontsize, info=>undef, param_parent=>'graph_param', ref_delay=>1},
 );	
 
 
@@ -147,10 +153,13 @@ my @ginfo = (
 	my $graphs_info;
 	foreach my $d ( @ginfo){
 		$graphs_info->{$d->{param_name}}=$emulate->object_get_attribute( 'graph_param',$d->{param_name});
-		$graphs_info->{$d->{param_name}}= $d->{default_val} if(!defined $graphs_info->{$d->{param_name}});
+		if(!defined $graphs_info->{$d->{param_name}}){
+			$graphs_info->{$d->{param_name}}= $d->{default_val}; 
+			$emulate->object_add_attribute( 'graph_param',$d->{param_name},$d->{default_val} );
+		}
 	}
 	
-	
+	 
 
 	$graph->set (
             	x_label         => $graphs_info->{X_Title},
@@ -165,11 +174,25 @@ my @ginfo = (
 		 
 		box_axis       => 0,
 		skip_undef=> 1,
-                transparent     => 1,
-				line_width 		=> $graphs_info->{LINEw},
-				cycle_clrs		=> 'blue',
-				legend_placement => $graphs_info->{legend_placement},
-				dclrs=>\@color,
+           #     transparent     => 1,
+
+	 	transparent       => '0',
+	   	bgclr             => 'white',
+	   	boxclr            => 'white',
+	   	fgclr             => 'black',
+		textclr		  => 'black',
+		labelclr	  => 'black',
+		axislabelclr	  => 'black',
+		legendclr	  =>  'black',
+	   cycle_clrs        => '1',
+
+		line_width 		=> $graphs_info->{LINEw},
+	#	cycle_clrs		=> 'black',
+		legend_placement => $graphs_info->{legend_placement},
+		dclrs=>\@color,
+		y_number_format=>"%.1f",
+		BACKGROUND=>'black', 
+		
        		);
      }#if
 	$graph->set_legend(@legend_keys);
@@ -317,6 +340,19 @@ sub my_get_image {
 	my ($emulate,$self, $data) = @_;
 	$self->{graphdata} = $data;
 	my $graph = $self->{graph};
+	my $font;
+	
+	$font=  $emulate->object_get_attribute( 'graph_param','label_font');
+	$graph->set_x_label_font(GD::Font->$font);
+  	$graph->set_y_label_font(GD::Font->$font);
+	$font=  $emulate->object_get_attribute( 'graph_param','legend_font');
+	$graph->set_legend_font(GD::Font->$font);
+
+	$font=  $emulate->object_get_attribute( 'graph_param','x_axis_font');
+  	#$graph->set_values_font(GD::gdGiantFont);
+	$graph->set_x_axis_font(GD::Font->$font);
+	$graph->set_y_axis_font(GD::Font->$font);
+
 	my $gd2=$graph->plot($data) or warn $graph->error;
 	my $loader = Gtk2::Gdk::PixbufLoader->new;
 	
@@ -438,8 +474,7 @@ sub my_get_image {
 
 sub get_graph_setting {
 	my ($emulate,$ref)=@_;
-	my($width,$hight)=max_win_size();
-	my $window=def_popwin_size($width/3,$hight/3,'Graph Setting');
+	my $window=def_popwin_size(33,33,'Graph Setting','percent');
 	my $table = def_table(10, 2, FALSE);
 	my $row=0;
 
@@ -490,7 +525,7 @@ foreach my $d (@data) {
  
  sub get_color_window{
 	 my ($emulate,$atrebute1,$atrebute2)=@_;     
-	 my $window=def_popwin_size(800,600,"Select line color");
+	 my $window=def_popwin_size(40,40,"Select line color",'percent');
 	 my ($r,$c)=(4,8);	 
 	 my $table= def_table(5,6,TRUE);
 	 for (my $col=0;$col<$c;$col++){
@@ -746,8 +781,7 @@ sub gen_emulation_column {
 	my ($emulate,$mode, $row_num,$info)=@_;
 	my $table=def_table($row_num,10,FALSE);
 	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
-	my($width,$hight)=max_win_size();
-	my $set_win=def_popwin_size($width/2.5,$hight*.8,"NoC configuration setting");
+	my $set_win=def_popwin_size(40,80,"NoC configuration setting",'percent');
 		
 	$scrolled_win->set_policy( "automatic", "automatic" );
 	$scrolled_win->add_with_viewport($table);	
@@ -1062,8 +1096,8 @@ sub gen_noc_status_image {
 	my $image;
 	my $vbox = Gtk2::HBox->new (TRUE,1);
 	$image = Gtk2::Image->new_from_file ("icons/load.gif") if($status eq "run");
-	$image = def_image("icons/button_ok.png") if($status eq "done");
-	$image = def_image("icons/cancel.png") if($status eq "failed");
+	$image = def_icon("icons/button_ok.png") if($status eq "done");
+	$image = def_icon("icons/cancel.png") if($status eq "failed");
 	#$image_file = "icons/load.gif" if($status eq "run");
 	
 	if (defined $image) {
@@ -1631,7 +1665,10 @@ sub run_simulator {
 	$simulate->object_add_attribute('status',undef,'run');
 	set_gui_status($simulate,"ref",1);
 	show_info($info, "Start Simulation\n");
-
+	my $name=$simulate->object_get_attribute ("simulate_name",undef);	
+	my $log= (defined $name)? "$ENV{PRONOC_WORK}/simulate/$name.log": "$ENV{PRONOC_WORK}/simulate/sim.log";
+	#unlink $log; # remove old log file
+	
 	my $sample_num=$simulate->object_get_attribute("emulate_num",undef);
 	for (my $i=1; $i<=$sample_num; $i++){
 		my $status=$simulate->object_get_attribute ("sample$i","status");	
@@ -1676,11 +1713,17 @@ sub run_simulator {
 		    	add_info($info, "Run $bin with  injection ratio of $ratio_in \% \n");
 		    	my $cmd="$bin -t \"$patern\"  -s $PCK_SIZE  -n  $PCK_NUM_LIMIT  -c	$SIM_CLOCK_LIMIT   -i $ratio_in -p \"100,0,0,0,0\"  -h \"$HOTSPOT_PERCENTAGE,$HOTSPOT_NUM,$HOTSPOT_CORE_1,$HOTSPOT_CORE_2,$HOTSPOT_CORE_3,$HOTSPOT_CORE_4,$HOTSPOT_CORE_5\"";
 				add_info($info, "$cmd \n");
+				my $time_strg = localtime;
+				append_text_to_file($log,"started at:$time_strg\n"); #save simulation output
 	 			my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout("$cmd");
 	 			if($exit){
 	 				add_info($info, "Error in running simulation: $stderr \n");
 	 				return;
 	 			}
+	 			
+	 			append_text_to_file($log,$stdout); #save simulation output
+	 			$time_strg = localtime;
+	 			append_text_to_file($log,"Ended at:$time_strg\n"); #save simulation output
 	 			my @q =split  (/average latency =/,$stdout);
 				my $d=$q[1];
 				@q =split  (/\n/,$d);

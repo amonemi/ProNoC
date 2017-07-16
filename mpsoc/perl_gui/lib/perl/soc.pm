@@ -64,6 +64,9 @@ sub soc_add_instance{
 			}	
 		}
 	}
+
+
+	$self->{instances}{$instance_id}{description_pdf}=$ip->ip_get($category,$module,'description_pdf');
 	
 	return 1;
 }
@@ -149,6 +152,11 @@ sub soc_get_module_name{
 	return $module_name;	
 }	
 
+
+sub soc_get_description_pdf{
+	my ($self,$instance_id)=@_;
+	return $self->{instances}{$instance_id}{description_pdf};
+}
 
 sub soc_get_plug_name {
 	my ($self,$instance_id,$plug,$num)=@_;
@@ -278,7 +286,21 @@ sub soc_get_all_plugs_of_an_instance{
 	}
 	return @list;
 	
-}	
+}
+
+sub soc_get_all_sockets_of_an_instance{
+	my ($self,$instance_id)=@_;
+	my @list;
+	
+	if(exists ($self->{instances}{$instance_id}{sockets})){
+		foreach my $p (sort keys %{$self->{instances}{$instance_id}{sockets}}){
+		push (@list,$p);
+		
+		}	
+	}
+	return @list;
+	
+}		
 
 
 ##############################################
@@ -536,7 +558,19 @@ sub soc_list_plug_nums{
 		}
 	}
 	return @list;
+}
+
+sub soc_list_socket_nums{
+	my ($self,$instance_id,$socket)=@_;
+	my @list;
+	if(exists($self->{instances}{$instance_id}{sockets}{$socket})){
+		foreach my $num (sort keys  %{$self->{instances}{$instance_id}{sockets}{$socket}{nums}}){
+			push (@list,$num);
+		}
+	}
+	return @list;
 }	
+	
 
 
 sub soc_get_plug{
@@ -668,13 +702,88 @@ sub object_get_attribute_order{
 }
 
 
+sub object_remove_attribute{
+	my ($self,$attribute1,$attribute2)=@_;
+	if(!defined $attribute2){
+		delete $self->{$attribute1} if ( exists( $self->{$attribute1})); 
+	}
+	else {
+		delete $self->{$attribute1}{$attribute2} if ( exists( $self->{$attribute1}{$attribute2})); ;
+
+	}
+
+}
+
+
+sub board_new {
+    # be backwards compatible with non-OO call
+    my $class = ("ARRAY" eq ref $_[0]) ? "soc" : shift;
+    my $self;
+  
+    $self->{'Input'}{'*VCC'}{'*VCC'}   =  ['*undefine*']; 
+    $self->{'Input'}{'*GND'}{'*GND'}   =  ['*undefine*']; 
+    $self->{'Input'}{'*NOCONNECT'}{'*NOCONNECT'}    = ['*undefine*']; 
+    $self->{'Output'}{'*NOCONNECT'}{'*NOCONNECT'}   = ['*undefine*']; 
+    $self->{'Bidir'}{'*NOCONNECT'}{'*NOCONNECT'}    = ['*undefine*'];   
+  
+    bless($self,$class);
+  
+    return $self;
+} 
 
 
 
+sub board_add_pin {
+	my ($self,$direction,$name)=@_;
+	my ($intfc,$pin_name,$pin_num);
+	my @f= split('_',$name);
+	if(!defined $f[1]){ # There is no '_' in pin name
+		
+		my @p= split(/\[/,$name);
+		$intfc=$p[0];
+		$pin_name=$p[0];
+		if(defined $p[1]){ #it is an array
+			my @q= split(/\]/,$p[1]);
+			$pin_num=$q[0]; #save pin num
+		}else{
+			$pin_num='*undefine*';			
+		}
+	}
+	else{ # take the word before '_' as interface
+		$intfc=$f[0];
+		my @p= split(/\[/,$name);
+		$pin_name=$p[0];
+		if(defined $p[1]){
+			my @q= split(/\]/,$p[1]);
+			$pin_num=$q[0];
+		}else{
+			$pin_num='*undefine*';			
+		}
+	}
+	
+	my @a;
+	@a=   @{$self->{$direction}{$intfc}{$pin_name}} if(exists $self->{$direction}{$intfc}{$pin_name});
+	push (@a,$pin_num);
+	@{$self->{$direction}{$intfc}{$pin_name}}=@a;	
 
+}
 
+sub board_get_pin {
+	my ($self,$direction)=@_;
+	my %p=%{$self->{$direction}};
+	return %p;	
 
+}
 
+sub board_get_pin_range {
+	my ($self,$direction,$pin_name)=@_;
+	my @f= split('_',$pin_name);
+	my $intfc = $f[0];
+	my $ref =$self->{$direction}{$intfc}{$pin_name};
+	my @range;
+	@range= @{$ref} if(defined $ref);
+	return @range;
+}
 
 
 1

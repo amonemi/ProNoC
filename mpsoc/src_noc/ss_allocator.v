@@ -1,16 +1,34 @@
-/**************************************
-* Module: ss_allocator
-* Date:2016-06-19  
-* Author: alireza     
-*
-* Description: static straight allocator : The incomming packet targetting outputport located in same direction 
-* will be forwarded with one clock cycle latency if the following contions met in current clock cycle:
-*    1) If no ivc is granted in the input port 
-*    2) The ss output port is not granted for any other input port 
-*    3) Packet destionation port match with ss port
-*    4) The requested output VC is available in ss port 
-* The ss ports for each input potrt must be diffrent with the rest
-* This result in one clock cycle latency                
+/**********************************************************************
+**	File:  ss_allocator.v
+**	Date:2016-06-19  
+**    
+**	Copyright (C) 2014-2017  Alireza Monemi
+**    
+**	This file is part of ProNoC 
+**
+**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**	you can redistribute it and/or modify it under the terms of the GNU
+**	Lesser General Public License as published by the Free Software Foundation,
+**	either version 2 of the License, or (at your option) any later version.
+**
+** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
+** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+** 	Public License for more details.
+**
+** 	You should have received a copy of the GNU Lesser General Public
+** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**
+**
+**	Description: 
+**	static straight allocator : The incomming packet targetting outputport located in same direction 
+** 	will be forwarded with one clock cycle latency if the following contions met in current clock cycle:
+**	1) If no ivc is granted in the input port 
+**	2) The ss output port is not granted for any other input port 
+**	3) Packet destionation port match with ss port
+**	4) The requested output VC is available in ss port 
+**	   The ss ports for each input potrt must be diffrent with the rest
+**	   This result in one clock cycle latency                
 ***************************************/
 `timescale  1ns/1ps
 

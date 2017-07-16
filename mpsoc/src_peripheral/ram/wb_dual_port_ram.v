@@ -1,29 +1,31 @@
-/*********************************************************************
-							
-	File: single_port_ram.v 
-	
-	Copyright (C) 2014-2016  Alireza Monemi
+/**********************************************************************
+**	File:  wb_dual_port_ram.v
+**	   
+**    
+**	Copyright (C) 2014-2017  Alireza Monemi
+**    
+**	This file is part of ProNoC 
+**
+**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**	you can redistribute it and/or modify it under the terms of the GNU
+**	Lesser General Public License as published by the Free Software Foundation,
+**	either version 2 of the License, or (at your option) any later version.
+**
+** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
+** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+** 	Public License for more details.
+**
+** 	You should have received a copy of the GNU Lesser General Public
+** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**
+**
+**	Description: 
+**	wishbone based dual port ram 
+**	
+**
+*******************************************************************/ 
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-	
-	
-	Purpose:
-	A single port ram with wishbone bus interface. 
-
-	Info: monemi@fkegraduate.utm.my
-
-****************************************************************/
 
 
 `timescale 1ns / 1ps
@@ -31,6 +33,9 @@
 
 
 module wb_dual_port_ram #(
+	parameter INITIAL_EN= "NO",
+    	parameter MEM_CONTENT_FILE_NAME= "ram0",// ram initial file name
+    	parameter INIT_FILE_PATH = "path_to/sw", // The sw folder path. It will be used for finding initial file. The path will be rewriten by the top module. 
 	parameter Dw=32, //RAM data_width in bits
 	parameter Aw=10, //RAM address width
 	parameter BYTE_WR_EN= "YES",//"YES","NO"
@@ -38,7 +43,7 @@ module wb_dual_port_ram #(
 	parameter RAM_INDEX=0, // use for initialing
 	// wishbon bus param
 	parameter   PORT_A_BURST_MODE= "DISABLED", // "DISABLED" , "ENABLED" wisbone bus burst mode 
-    parameter   PORT_B_BURST_MODE= "DISABLED", // "DISABLED" , "ENABLED" wisbone bus burst mode 
+	parameter   PORT_B_BURST_MODE= "DISABLED", // "DISABLED" , "ENABLED" wisbone bus burst mode 
 	parameter 	TAGw   =   3,
 	parameter	SELw   =   Dw/8,
 	parameter	CTIw   =   3,
@@ -129,12 +134,7 @@ localparam	BYTE_ENw= ( BYTE_WR_EN == "YES")? Dw/8 : 1;
 	output                              sa_err_o,sb_err_o;
 	output                              sa_rty_o,sb_rty_o;
     
-localparam  RAM_TAG_STRING=i2s(RAM_INDEX);     
-`ifdef MODEL_TECH  
-    localparam  INIT_FILE   = {"../../sw/ram",RAM_TAG_STRING,".mif"};
-`else       
-    localparam  INIT_FILE   = {"sw/ram",RAM_TAG_STRING,".mif"};
-`endif     
+
 
 
 
@@ -146,7 +146,13 @@ localparam  RAM_TAG_STRING=i2s(RAM_INDEX);
     
 
 
+	localparam MEM_NAME = (FPGA_VENDOR== "ALTERA")? {MEM_CONTENT_FILE_NAME,".mif"} : 
+							{MEM_CONTENT_FILE_NAME,".hex"}; //Generic
 
+
+	localparam INIT_FILE =  {INIT_FILE_PATH,"/RAM/",MEM_NAME};
+
+	
    
         
     wb_bram_ctrl #(
@@ -271,7 +277,9 @@ localparam  RAM_TAG_STRING=i2s(RAM_INDEX);
     		generic_dual_port_ram #(
     			.Dw(Dw),
     			.Aw(Aw),
-    			.BYTE_WR_EN(BYTE_WR_EN)
+    			.BYTE_WR_EN(BYTE_WR_EN),
+			.INITIAL_EN(INITIAL_EN),
+			.INIT_FILE(INIT_FILE) 
     		)
     		ram_inst
     		(

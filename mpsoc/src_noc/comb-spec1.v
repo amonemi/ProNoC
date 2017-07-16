@@ -1,11 +1,32 @@
 `timescale    1ns/1ps
 
-/**********************************
-            comb-spec1
-VC allocator combined with speculative switch allo-
-cator where free VC availability is checked at the end
-of switch allocation (comb-spec1).
-**********************************/    
+/**********************************************************************
+**	File:  comb_spec1.v
+**    
+**	Copyright (C) 2014-2017  Alireza Monemi
+**    
+**	This file is part of ProNoC 
+**
+**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**	you can redistribute it and/or modify it under the terms of the GNU
+**	Lesser General Public License as published by the Free Software Foundation,
+**	either version 2 of the License, or (at your option) any later version.
+**
+** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
+** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+** 	Public License for more details.
+**
+** 	You should have received a copy of the GNU Lesser General Public
+** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**
+**
+**	Description: 
+**	VC allocator combined with speculative switch allo-
+**	cator where free VC availability is checked at the end
+**	of switch allocation (comb-spec1).
+**
+***********************************************************************/    
     
 module comb_spec1_allocator #(
     parameter    V                   =   4,// Virtual channel num per port

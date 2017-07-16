@@ -1,0 +1,229 @@
+#######################################################################
+##	File: sim_uart.IP
+##    
+##	Copyright (C) 2014-2016  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.7.0 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$simulator_UART = bless( {
+                           'file_name' => '/home/alireza/mywork/mpsoc/src_peripheral/Other/simulator_UART.v',
+                           'gui_status' => {
+                                             'status' => 'ideal',
+                                             'timeout' => 0
+                                           },
+                           'version' => 6,
+                           'modules' => {
+                                          'simulator_UART' => {}
+                                        },
+                           'ports' => {
+                                        's_stb_i' => {
+                                                       'intfc_name' => 'plug:wb_slave[0]',
+                                                       'intfc_port' => 'stb_i',
+                                                       'range' => '',
+                                                       'type' => 'input'
+                                                     },
+                                        's_cyc_i' => {
+                                                       'type' => 'input',
+                                                       'range' => '',
+                                                       'intfc_name' => 'plug:wb_slave[0]',
+                                                       'intfc_port' => 'cyc_i'
+                                                     },
+                                        's_sel_i' => {
+                                                       'intfc_port' => 'sel_i',
+                                                       'intfc_name' => 'plug:wb_slave[0]',
+                                                       'type' => 'input',
+                                                       'range' => 'SELw-1     :   0'
+                                                     },
+                                        'reset' => {
+                                                     'range' => '',
+                                                     'type' => 'input',
+                                                     'intfc_name' => 'plug:reset[0]',
+                                                     'intfc_port' => 'reset_i'
+                                                   },
+                                        's_cti_i' => {
+                                                       'intfc_port' => 'cti_i',
+                                                       'intfc_name' => 'plug:wb_slave[0]',
+                                                       'type' => 'input',
+                                                       'range' => 'TAGw-1     :   0'
+                                                     },
+                                        's_dat_i' => {
+                                                       'intfc_port' => 'dat_i',
+                                                       'intfc_name' => 'plug:wb_slave[0]',
+                                                       'type' => 'input',
+                                                       'range' => 'Dw-1       :   0'
+                                                     },
+                                        's_ack_o' => {
+                                                       'intfc_port' => 'ack_o',
+                                                       'intfc_name' => 'plug:wb_slave[0]',
+                                                       'range' => '',
+                                                       'type' => 'output'
+                                                     },
+                                        's_addr_i' => {
+                                                        'intfc_port' => 'adr_i',
+                                                        'intfc_name' => 'plug:wb_slave[0]',
+                                                        'type' => 'input',
+                                                        'range' => 'S_Aw-1     :   0'
+                                                      },
+                                        's_dat_o' => {
+                                                       'range' => 'Dw-1       :   0',
+                                                       'type' => 'output',
+                                                       'intfc_name' => 'plug:wb_slave[0]',
+                                                       'intfc_port' => 'dat_o'
+                                                     },
+                                        's_we_i' => {
+                                                      'intfc_port' => 'we_i',
+                                                      'intfc_name' => 'plug:wb_slave[0]',
+                                                      'range' => '',
+                                                      'type' => 'input'
+                                                    },
+                                        'clk' => {
+                                                   'intfc_port' => 'clk_i',
+                                                   'intfc_name' => 'plug:clk[0]',
+                                                   'range' => '',
+                                                   'type' => 'input'
+                                                 }
+                                      },
+                           'unused' => {
+                                         'plug:wb_slave[0]' => [
+                                                                 'tag_i',
+                                                                 'bte_i',
+                                                                 'rty_o',
+                                                                 'err_o'
+                                                               ]
+                                       },
+                           'description' => 'A simple uart that display input characters on simulator terminal using $write command.
+',
+                           'parameters_order' => [
+                                                   'Dw',
+                                                   'S_Aw',
+                                                   'M_Aw',
+                                                   'TAGw',
+                                                   'SELw',
+                                                   'BUFFER_SIZE',
+                                                   'WAIT_COUNT'
+                                                 ],
+                           'plugs' => {
+                                        'reset' => {
+                                                     'value' => 1,
+                                                     'reset' => {},
+                                                     '0' => {
+                                                              'name' => 'reset'
+                                                            },
+                                                     'type' => 'num'
+                                                   },
+                                        'clk' => {
+                                                   'type' => 'num',
+                                                   'clk' => {},
+                                                   '0' => {
+                                                            'name' => 'clk'
+                                                          },
+                                                   'value' => 1
+                                                 },
+                                        'wb_slave' => {
+                                                        'wb_slave' => {},
+                                                        'type' => 'num',
+                                                        '0' => {
+                                                                 'width' => 1,
+                                                                 'name' => 'wb_slave',
+                                                                 'addr' => '0xa500_0000	0xa5ff_ffff		Debug'
+                                                               },
+                                                        'value' => 1
+                                                      }
+                                      },
+                           'ip_name' => 'sim_uart',
+                           'ports_order' => [
+                                              'reset',
+                                              'clk',
+                                              's_dat_i',
+                                              's_sel_i',
+                                              's_addr_i',
+                                              's_cti_i',
+                                              's_stb_i',
+                                              's_cyc_i',
+                                              's_we_i',
+                                              's_dat_o',
+                                              's_ack_o'
+                                            ],
+                           'hdl_files' => [
+                                            '/mpsoc/src_peripheral/Other/simulator_UART.v'
+                                          ],
+                           'system_h' => '#define ${IP}_DATA_REG					(*((volatile unsigned int *) ($BASE)))
+
+void ${IP}_putchar(char ch){ //print one char from jtag_uart
+	${IP}_DATA_REG=ch;
+}
+
+
+void ${IP}_putstring (char * buffer, char sz){
+	while (sz){
+		${IP}_putchar(*buffer);
+    		*buffer++;
+		sz--;
+	}
+}
+',
+                           'category' => 'Other',
+                           'parameters' => {
+                                             'SELw' => {
+                                                         'content' => '',
+                                                         'type' => 'Fixed',
+                                                         'global_param' => 'Localparam',
+                                                         'info' => 'Parameter',
+                                                         'redefine_param' => 1,
+                                                         'deafult' => '   4'
+                                                       },
+                                             'S_Aw' => {
+                                                         'deafult' => '   7',
+                                                         'redefine_param' => 1,
+                                                         'info' => 'Parameter',
+                                                         'content' => '',
+                                                         'type' => 'Fixed',
+                                                         'global_param' => 'Localparam'
+                                                       },
+                                             'M_Aw' => {
+                                                         'redefine_param' => 1,
+                                                         'global_param' => 'Localparam',
+                                                         'type' => 'Fixed',
+                                                         'content' => '',
+                                                         'info' => 'Parameter',
+                                                         'deafult' => '   32'
+                                                       },
+                                             'WAIT_COUNT' => {
+                                                               'deafult' => '1000',
+                                                               'info' => 'If internal buffer has a data, the internal module timer starts counting up in each clock cycle. If Timer reach the WAIT_COUNT value, it writes the buffer vakue on simulator terminal.',
+                                                               'global_param' => 'Localparam',
+                                                               'type' => 'Spin-button',
+                                                               'content' => '2,100000,1',
+                                                               'redefine_param' => 1
+                                                             },
+                                             'Dw' => {
+                                                       'redefine_param' => 1,
+                                                       'content' => '',
+                                                       'global_param' => 'Localparam',
+                                                       'type' => 'Fixed',
+                                                       'info' => 'Parameter',
+                                                       'deafult' => '   32'
+                                                     },
+                                             'BUFFER_SIZE' => {
+                                                                'info' => 'Internal buffer size ',
+                                                                'content' => '2,1000,1',
+                                                                'global_param' => 'Localparam',
+                                                                'type' => 'Spin-button',
+                                                                'redefine_param' => 1,
+                                                                'deafult' => '100'
+                                                              },
+                                             'TAGw' => {
+                                                         'deafult' => '   3',
+                                                         'redefine_param' => 1,
+                                                         'content' => '',
+                                                         'type' => 'Fixed',
+                                                         'global_param' => 'Localparam',
+                                                         'info' => 'Parameter'
+                                                       }
+                                           },
+                           'module_name' => 'simulator_UART'
+                         }, 'ip_gen' );

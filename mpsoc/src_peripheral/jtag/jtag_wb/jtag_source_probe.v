@@ -1,4 +1,37 @@
 
+/**********************************************************************
+**	File:  jtag_source_probe.v 
+**	
+**    
+**	Copyright (C) 2014-2017  Alireza Monemi
+**    
+**	This file is part of ProNoC 
+**
+**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**	you can redistribute it and/or modify it under the terms of the GNU
+**	Lesser General Public License as published by the Free Software Foundation,
+**	either version 2 of the License, or (at your option) any later version.
+**
+** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
+** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+** 	Public License for more details.
+**
+** 	You should have received a copy of the GNU Lesser General Public
+** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**
+**
+**	Description: 
+**	Jtag source probe which can be read/write using host PC 
+**	C-based software located in src_c/jtag
+**		.
+**
+*******************************************************************/
+
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
+
 module jtag_source_probe #(
 	parameter VJTAG_INDEX=127,
 	 parameter Dw=2	//probe/probe width in bits	

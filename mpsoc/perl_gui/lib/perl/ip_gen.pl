@@ -72,7 +72,7 @@ sub read_all_module{
 	
 	if (!defined $file) {return; }
 	if (-e $file) { 
-		my $vdb =  read_file($file);
+		my $vdb =  read_verilog_file($file);
 		my @modules=sort $vdb->get_modules($file);
 		#foreach my $p(@module_list) {print "$p\n"}
 		$ipgen->ipgen_add("file_name",$file);
@@ -438,7 +438,7 @@ sub load_deafult_setting{
 	my ($ipgen,$module)=@_; 
 	my $file= $ipgen->ipgen_get("file_name");
 	$ipgen->ipgen_add("module_name",$module);
-	my $vdb =read_file($file);
+	my $vdb =read_verilog_file($file);
 	my %parameters = $vdb->get_modules_parameters_not_local($module);
 	my @parameters_order= $vdb->get_modules_parameters_not_local_order($module);
 	my @ports_order=$vdb->get_module_ports_order($module);
@@ -586,8 +586,8 @@ sub get_parameter_setting {
 	}		
 	my $module = $ipgen->ipgen_get("module_name");
 	
-	my($width,$hight)=max_win_size();
-	my $window =  def_popwin_size(.85*$width,.5*$hight,"Define parameters detail");	
+	
+	my $window =  def_popwin_size(85,50,"Define parameters detail",'percent');	
 	
 	
 	
@@ -656,7 +656,7 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 	my @allowed;
 	
 	my $row=1;
-	
+	my $error;
 	push(@parameters,"#new#");
 	foreach my $p (@parameters) {
 		my ($saved_deafult,$saved_widget_type,$saved_content,$saved_info,$vfile_param_type,$redefine_param)=  $ipgen->ipgen_get_parameter_detail($p);
@@ -725,6 +725,16 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 				my $check_result=$check_redefine->get_active();
 				my $redefine_param=($check_result eq 1)? 1:0;
 				$ipgen->ipgen_add_parameter($p,$deafult,$type,$content,$saved_info,$vfile_param_type,$redefine_param);
+				
+				if 	($type eq "Spin-button"){ 
+					my @d=split(",",$content);
+					 if( scalar @d != 3){
+						$error=$error."wrong content setting for parameter $p\n" ;
+						print "$error";
+					}
+				}
+
+
 			}
 		});
 		$add_remove->signal_connect (clicked => sub{
@@ -749,6 +759,7 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 			} else { #remove the parameter
 				$ipgen->ipgen_remove_parameter($p);
 				$ipgen->ipgen_remove_parameters_order($p);
+				$p = "#new#";
 				set_gui_status($ipgen,"change_parameter",0);
 				$ok->clicked;
 					#$window->destroy();
@@ -797,8 +808,18 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 	});
 	
 	$ok->signal_connect (clicked => sub{
+
+		
+
+
 				
-		$window->destroy();
+		
+		if (defined $error){
+			message_dialog("$error");
+			$error=undef;
+		}else {
+			$window->destroy();
+		}
 
 	});
 	
@@ -823,8 +844,7 @@ sub get_def_setting {
 	my ($ipgen,$info)=@_;
 	my $table = Gtk2::Table->new (15, 15, TRUE);
 	my $table2 = Gtk2::Table->new (15, 15, TRUE);
-	my($width,$hight)=max_win_size();
-	my $window =  def_popwin_size(.7*$width,.7*$hight,"Add definition file");
+	my $window =  def_popwin_size(70,70,"Add definition file",'percent');
 	my $ok=def_image_button("icons/select.png",' Ok ');
 	my $scrwin=  new Gtk2::ScrolledWindow (undef, undef);
 	$scrwin->set_policy( "automatic", "automatic" );
@@ -852,13 +872,14 @@ sub get_Description{
 	my ($ipgen,$info)=@_;
 	my $description = $ipgen->ipgen_get("description");	
 	my $table = Gtk2::Table->new (15, 15, FALSE);
-	my($width,$hight)=max_win_size();
-	my $window =  def_popwin_size(.4*$width,.4*$hight, "Add description");
+	my $window =  def_popwin_size(40,40, "Add description",'percent');
 	my ($scrwin,$text_view)=create_text();
 	#my $buffer = $textbox->get_buffer();
 	my $ok=def_image_button("icons/select.png",' Ok ');
-	
-	$table->attach_defaults($scrwin,0,15,0,14);
+	$table->attach_defaults(gen_label_help("User can open the PDF file when oppening IP parameter setting","IP Documentation file in PDF"),0,7,0,1);
+	$table->attach_defaults(gen_label_help("Description will be shown on IP generator text view when selecting this IP","Short Description"),5,10,1,2);
+	$table->attach_defaults(get_file_name_object ( $ipgen, 'description_pdf',undef,"pdf",undef),7,15,0,1);
+	$table->attach_defaults($scrwin,0,15,2,14);
 	$table->attach($ok,6,9,14,15,'expand','shrink',2,2);
 	my $text_buffer = $text_view->get_buffer;
 	if(defined $description) {$text_buffer->set_text($description)};
@@ -964,8 +985,7 @@ sub gen_file_list{
 sub get_param_info{
 	my ($ipgen,$saved_info)=@_;
 	my $table = Gtk2::Table->new (15, 15, FALSE);
-	my($width,$hight)=max_win_size();
-	my $window =  def_popwin_size(.5*$width,.5*$hight,"Add description");
+	my $window =  def_popwin_size(50,50,"Add description",'percent');
 	my ($scrwin,$text_view)=create_text();
 	my $ok=def_image_button("icons/select.png",' Ok ');
 	
@@ -1175,9 +1195,7 @@ sub interface_info_box {
 sub get_intfc_setting{
 	
 	my ($ipgen,$intfc_name, $intfc_type)=@_;
-	
-	my($width,$hight)=max_win_size();
-	my $window =  def_popwin_size(.7*$width,.7*$hight,"Interface parameter setting");
+	my $window =  def_popwin_size(70,70,"Interface parameter setting",'percent');
 	my $table=def_table(7,6,FALSE);
 	my $ok = def_image_button('icons/select.png','OK');
 	
@@ -1564,7 +1582,40 @@ sub port_info_box {
 }
 
 
+sub write_ip{
+	my $ipgen=shift;	
+	my $name=$ipgen->ipgen_get("module_name");
+	my $category=$ipgen->ipgen_get("category");
+	my $ip_name= $ipgen->ipgen_get("ip_name");
+	my $dir = Cwd::getcwd();
 
+	#Increase IP version
+	my $v=$ipgen->object_get_attribute("version",undef);
+	$v = 0 if(!defined $v);
+	$v++;
+	$ipgen->object_add_attribute("version",undef,$v);
+	#print "$v\n";
+
+	# Write
+	mkpath("$dir/lib/ip/$category/",1,01777);	
+	open(FILE,  ">lib/ip/$category/$ip_name.IP") || die "Can not open: $!";
+	print FILE perl_file_header("$ip_name.IP");
+	print FILE Data::Dumper->Dump([\%$ipgen],[$name]);
+	close(FILE) || die "Error closing file: $!";
+	my $message="IP $ip_name has been generated successfully. In order to see the generated IP in processing tile generator you need to reset the ProNoC. Do you want to reset the ProNoC now?" ;
+			
+	my $dialog = Gtk2::MessageDialog->new (my $window,
+                     'destroy-with-parent',
+                     'question', # message type
+                     'yes-no', # which set of buttons?
+                     "$message");
+  	my $response = $dialog->run;
+  	if ($response eq 'yes') {
+      		exec($^X, $0, @ARGV);# reset ProNoC to apply changes	
+  	}
+  	$dialog->destroy;
+
+}
 
 
 
@@ -1575,10 +1626,19 @@ sub generate_ip{
 	my $ip_name= $ipgen->ipgen_get("ip_name");
 	my $dir = Cwd::getcwd();
 	
+	
 
 	#check if name has been set
 	if(defined ($name) && defined ($category)){
 		if (!defined $ip_name) {$ip_name= $name}
+		my $error = check_verilog_identifier_syntax($ip_name);
+		if ( defined $error ){
+			message_dialog("The IP name \"$ip_name\" is given with an unacceptable formatting. This name will be used as a verilog module name so it must follow Verilog identifier declaration formatting:\n $error");
+			return ;
+		}
+
+
+
 		#check if any source file has been added for this ip
 		my @l=$ipgen->ipgen_get_list("hdl_files");
 		if( scalar @l ==0){
@@ -1590,15 +1650,9 @@ sub generate_ip{
                                       "No hdl library file has been set for this IP. Do you want to generate this IP?");
   			my $response = $dialog->run;
   			if ($response eq 'yes') {
-      			# Write
-				mkpath("$dir/lib/ip/$category/",1,01777);				
-				open(FILE,  ">lib/ip/$category/$ip_name.IP") || die "Can not open: \">lib/ip/$category/$ip_name.IP\" $!";
-				print FILE perl_file_header("$ip_name.IP");				
-				print FILE Data::Dumper->Dump([\%$ipgen],[$name]);
-				close(FILE) || die "Error closing file: $!";
-				my $message="IP $ip_name has been generated successfully" ;
-				message_dialog($message);
-				exec($^X, $0, @ARGV);# reset ProNoC to apply changes
+	      			write_ip($ipgen);
+				
+				
   			}
   			$dialog->destroy;
 
@@ -1606,15 +1660,8 @@ sub generate_ip{
   			#$dialog->show_all;
 			
 		}else{
-			# Write
-			mkpath("$dir/lib/ip/$category/",1,01777);	
-			open(FILE,  ">lib/ip/$category/$ip_name.IP") || die "Can not open: $!";
-			print FILE perl_file_header("$ip_name.IP");
-			print FILE Data::Dumper->Dump([\%$ipgen],[$name]);
-			close(FILE) || die "Error closing file: $!";
-			my $message="IP $ip_name has been generated successfully" ;
-			message_dialog($message);
-			exec($^X, $0, @ARGV);# reset ProNoC to apply changes
+
+			write_ip($ipgen);
 		}
 	}else{
 		my $message;
@@ -1697,8 +1744,8 @@ ${BASE}: is the wishbone base addresse(s) and will be added during soc generatio
 ;
 	my $var_help=gen_button_message($var_list,"icons/info.png","Global variables");
 	
-	my($width,$hight)=max_win_size();
-	my $window = def_popwin_size($width*2/3,$hight*2/3,$title);
+	
+	my $window = def_popwin_size(75,75,$title,'percent');
 	
 	my $notebook=source_notebook($ipgen,$info,$window,$page,$dest,$page_info_ref);
 	my $table=def_table (15, 15, FALSE);						
@@ -1862,7 +1909,6 @@ sub get_file_content{
 	#my $hdr = $ipgen->ipgen_get_hdr();
 	my  $hdr = $ipgen-> ipgen_get($page_info{filed_name});	
 	my $table = Gtk2::Table->new (14, 15, FALSE);
-	#my $window=def_popwin_size(600,600,"Add header file");
 	my ($scrwin,$text_view)=create_text();
 
 	my $help=gen_label_help($page_info{help}); 
@@ -1981,6 +2027,32 @@ sub ipgen_main{
 	
 	#  The main table containg the lib tree, selected modules and info section 
 	my $main_table = def_table (15, 12, FALSE);
+
+
+
+
+	
+	#my $vpaned = Gtk2::VPaned -> new;
+	#$table->attach_defaults ($vpaned,0, 10, 0,1);
+	#my $make = def_image_button('icons/run.png','Compile');
+	#$table->attach ($make,9, 10, 1,2,'shrink','shrink',0,0);
+	#$make -> signal_connect("clicked" => sub{
+		#$self->do_save();
+		#run_make_file($sw,$tview);	
+
+	#});
+
+	#$window -> add ( $table);
+
+	#my($width,$hight)=max_win_size();
+	
+	#my $scwin_dirs = Gtk2::ScrolledWindow -> new;
+	#$scwin_dirs -> set_policy ('automatic', 'automatic');
+	
+
+
+
+
 	
 	# The box which holds the info, warning, error ...  mesages
 	my ($infobox,$info)= create_text();	
@@ -2009,12 +2081,20 @@ sub ipgen_main{
 	
 	
 	#$table->attach_defaults ($event_box, $col, $col+1, $row, $row+1);
-	$main_table->attach_defaults ($tree_box , 0, 2, 0, 13);
-	$main_table->attach_defaults ($file_info , 2, 12, 0, 2);
-	$main_table->attach_defaults ($intfc_info , 2, 12, 2, 6);
+
+	my $v1=gen_vpaned($file_info,.2,$intfc_info);
+	my $v2=gen_vpaned($v1,.4,$port_info);
+	my $h1=gen_hpaned($tree_box,.15,$v2);
+	my $v3=gen_vpaned($h1,.6,$infobox);
+
+
+	#$main_table->attach_defaults ($tree_box , 0, 2, 0, 13);
+	#$main_table->attach_defaults ($file_info , 2, 12, 0, 2);
+	#$main_table->attach_defaults ($intfc_info , 2, 12, 2, 6);
 	
-	$main_table->attach_defaults ($port_info  , 2, 12, 6,13);
-	$main_table->attach_defaults ($infobox  , 0, 12, 13,14);
+	#$main_table->attach_defaults ($port_info  , 2, 12, 6,13);
+	#$main_table->attach_defaults ($infobox  , 0, 12, 13,14);
+	$main_table->attach_defaults  ($v3, 0, 12, 0,14);
 	$main_table->attach ($generate, 6, 8, 14,15,'expand','shrink',2,2);
 	$main_table->attach ($open,0, 1, 14,15,'expand','shrink',2,2);
 

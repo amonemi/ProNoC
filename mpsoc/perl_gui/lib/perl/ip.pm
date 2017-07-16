@@ -436,7 +436,7 @@ sub add_ip{
 		ip_add_port($self,$category,$module,$port,$type,$range,$intfc_name,$intfc_port);
 	}
 	
-	my @fileds =("system_h","hdl_files","sw_files","gen_sw_files","sw_params_list","unused","parameters_order","description");
+	my @fileds =("system_h","hdl_files","sw_files","gen_sw_files","sw_params_list","unused","parameters_order","description","version",'description_pdf');
 	foreach my $p (@fileds){
 		my $val=$ipgen->ipgen_get($p);
 		$self->{categories}{$category}{names}{$module}{$p}=$ipgen->ipgen_get($p) if(defined $val );	
@@ -448,7 +448,20 @@ sub add_ip{
 	
 
 
+sub object_add_attribute{
+	my ($self,$attribute1,$attribute2,$value)=@_;
+	if(!defined $attribute2){$self->{$attribute1}=$value;}
+	else {$self->{$attribute1}{$attribute2}=$value;}
 
+}
+
+sub object_get_attribute{
+	my ($self,$attribute1,$attribute2)=@_;
+	if(!defined $attribute2) {return $self->{$attribute1};}
+	return $self->{$attribute1}{$attribute2};
+
+
+}
 
 
 

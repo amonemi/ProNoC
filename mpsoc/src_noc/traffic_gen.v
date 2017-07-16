@@ -2,13 +2,34 @@
 
 `define CHECK_PCKS_CONTENT       // if defined check flit ordering, 
 
-/**************************************
-* Module: traffic_gen
-* Date:2015-03-05  
-* Author: alireza     
-*
-* Description: 
+
+/**********************************************************************
+**	File:  traffic_gen.v
+**	Date:2015-03-05  
+**    
+**	Copyright (C) 2014-2017  Alireza Monemi
+**    
+**	This file is part of ProNoC 
+**
+**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**	you can redistribute it and/or modify it under the terms of the GNU
+**	Lesser General Public License as published by the Free Software Foundation,
+**	either version 2 of the License, or (at your option) any later version.
+**
+** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
+** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+** 	Public License for more details.
+**
+** 	You should have received a copy of the GNU Lesser General Public
+** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**
+**
+**	Description: 
+**	Inject/sink different syntetic traffic patterns to/from NoC	
+**
 ***************************************/
+
 module  traffic_gen #(
     parameter V = 4,    // VC num per port
     parameter B = 4,    // buffer space :flit per VC 
