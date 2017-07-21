@@ -54,10 +54,13 @@ sub generate_sim_bin_file() {
 	
 	
 	#verilate the noc
+	my $command = "rm -f  $script_dir/logfile1.txt  $script_dir/logfile2.txt"; 
+	my ($stdout,$exit)=run_cmd_in_back_ground_get_stdout( $command);
+	
 	my $start = localtime;
 	add_info($info_text, "verilate the NoC and make the library files");
-	my $command = "cd \"$script_dir/\" \n	xterm  	-l -lf logfile1.txt -e  sh verilator_compile_hw.sh";
-	my ($stdout,$exit)=run_cmd_in_back_ground_get_stdout( $command);
+	$command = "cd \"$script_dir/\" \n	xterm  	-l -lf logfile1.txt -e  sh verilator_compile_hw.sh";
+	($stdout,$exit)=run_cmd_in_back_ground_get_stdout( $command);
 	if($exit != 0){			
 		print "Verilator compilation failed !\n";
 		add_info($info_text, "Verilator compilation failed !\n$command\n $stdout\n");
@@ -170,7 +173,7 @@ sub save_simulation {
 }
 
 #############
-#	load_emulation
+#	load_simulation
 ############
 
 sub load_simulation {

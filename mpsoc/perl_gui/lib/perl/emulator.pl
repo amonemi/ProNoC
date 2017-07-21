@@ -945,6 +945,12 @@ sub check_sample{
 	my ($emulate,$i,$info)=@_;
 	my $status=1;
 	my $sof=$emulate->object_get_attribute ("sample$i","sof_file");
+	
+	my $dir = Cwd::getcwd();
+	my $project_dir	  = abs_path("$dir/../../"); #mpsoc directory address
+	$sof= "$project_dir/$sof"   if(!(-f $sof));
+	
+	
 	# ckeck if sample have sof file
 	if(!defined $sof){
 		add_info($info, "Error: SoF file has not set for NoC$i!\n");
@@ -953,7 +959,7 @@ sub check_sample{
 	} else {
 		# ckeck if sof file has info file 
 		my ($name,$path,$suffix) = fileparse("$sof",qr"\..[^.]*$");
-		my $sof_info="$path$name.inf";	
+		my $sof_info= "$path$name.inf";
 		if(!(-f $sof_info)){
 			add_info($info, "Could not find $name.inf file in $path. An information file is required for each sof file containig the device name and  NoC configuration. Press F4 for more help.\n");
 			$emulate->object_add_attribute ("sample$i","status","failed");	
@@ -1147,7 +1153,11 @@ sub run_emulator {
 		my $r= $emulate->object_get_attribute("sample$i","ratios");
 		my @ratios=@{check_inserted_ratios($r)};
 		#$emulate->object_add_attribute ("sample$i","status","run");			
-		my $sof=$emulate->object_get_attribute ("sample$i","sof_file");		
+		my $sof=$emulate->object_get_attribute ("sample$i","sof_file");	
+		my $dir = Cwd::getcwd();
+		my $project_dir	  = abs_path("$dir/../../"); #mpsoc directory address
+		$sof= "$project_dir/$sof"   if(!(-f $sof));	
+		
 		add_info($info, "Programe FPGA device using $sof\n");
 		my $Quartus_bin=  $ENV{QUARTUS_BIN};
 			
@@ -1678,6 +1688,9 @@ sub run_simulator {
 		my @ratios=@{check_inserted_ratios($r)};
 		#$emulate->object_add_attribute ("sample$i","status","run");			
 		my $bin=$simulate->object_get_attribute ("sample$i","sof_file");
+		my $dir = Cwd::getcwd();
+		my $project_dir	  = abs_path("$dir/../../"); #mpsoc directory address
+		$bin= "$project_dir/$bin"   if(!(-f $bin));
 		
 		#load traffic configuration
 		my $patern=$simulate->object_get_attribute ("sample$i",'traffic');
@@ -1718,6 +1731,8 @@ sub run_simulator {
 	 			my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout("$cmd");
 	 			if($exit){
 	 				add_info($info, "Error in running simulation: $stderr \n");
+	 				$simulate->object_add_attribute ("sample$i","status","failed");	
+	 				$simulate->object_add_attribute('status',undef,'ideal');
 	 				return;
 	 			}
 	 			
