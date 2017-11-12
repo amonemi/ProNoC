@@ -96,7 +96,7 @@ my @ginfo = (
 			push(@color, "my_color$color_num");
 			my $ref=$emulate->object_get_attribute ("sample$i","result");
 			if(defined $ref) {
-				push(@x, sort {$a<=>$b} keys $ref);		    	
+				push(@x, sort {$a<=>$b} keys %{$ref});		    	
 		    	}
 						
 		}#for
@@ -407,7 +407,7 @@ sub my_get_image {
 					if(defined $ref) {
 						
 						print $out "$l_name\n";
-						foreach my $x (sort {$a<=>$b} keys $ref) {
+						foreach my $x (sort {$a<=>$b} keys %{$ref}) {
 							my $y=$ref->{$x};
 							print $out "\t$x , $y\n";
 						}

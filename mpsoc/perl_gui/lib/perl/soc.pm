@@ -658,7 +658,7 @@ sub wire_get{
 
 sub wires_list{
 	my($self)=shift;
-	my @list=	sort keys $self->{assigned_name};
+	my @list=	sort keys %{$self->{assigned_name}};
 	return @list;
 }
 
