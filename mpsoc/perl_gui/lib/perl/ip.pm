@@ -44,11 +44,11 @@ sub lib_new {
 
 
 sub ip_add_parameter {
-	my ($self,$category,$module,$parameter,$deafult,$type,$content,$info,$glob_param,$redefine_param)=@_;
+	my ($self,$category,$module,$parameter,$default,$type,$content,$info,$glob_param,$redefine_param)=@_;
 	if (!defined($category) ) {return 0;} 
 	if ( exists ($self->{categories}{$category}{names}{$module}) ){
 		$self->{categories}{$category}{names}{$module}{parameters}{$parameter}={};
-		$self->{categories}{$category}{names}{$module}{parameters}{$parameter}{deafult}=$deafult;
+		$self->{categories}{$category}{names}{$module}{parameters}{$parameter}{"default"}=$default;
 		$self->{categories}{$category}{names}{$module}{parameters}{$parameter}{type}=$type;
 		$self->{categories}{$category}{names}{$module}{parameters}{$parameter}{content}=$content;
 		$self->{categories}{$category}{names}{$module}{parameters}{$parameter}{info}=$info;
@@ -72,16 +72,16 @@ sub ip_remove_parameter {
 
 sub ip_get_parameter {
 	my ($self,$category,$module,$parameter)=@_;
-	my ($deafult,$type,$content,$info,$glob_param,$redefine_param);
+	my ($default,$type,$content,$info,$glob_param,$redefine_param);
 	if ( exists ($self->{categories}{$category}{names}{$module}) ){
-		$deafult	=$self->{categories}{$category}{names}{$module}{parameters}{$parameter}{deafult};
+		$default	=$self->{categories}{$category}{names}{$module}{parameters}{$parameter}{"default"};
 		$type		=$self->{categories}{$category}{names}{$module}{parameters}{$parameter}{type};
 		$content	=$self->{categories}{$category}{names}{$module}{parameters}{$parameter}{content};
 		$info		=$self->{categories}{$category}{names}{$module}{parameters}{$parameter}{info};
 		$glob_param	=$self->{categories}{$category}{names}{$module}{parameters}{$parameter}{glob_param};
 		$redefine_param	=$self->{categories}{$category}{names}{$module}{parameters}{$parameter}{redefine_param};
 	}
-	return ($deafult,$type,$content,$info,$glob_param,$redefine_param); 
+	return ($default,$type,$content,$info,$glob_param,$redefine_param); 
 }
 
 
@@ -226,7 +226,7 @@ sub get_param_default{
 	my %r;
 	if (!defined($module) ) {return %r;} 
 	foreach my $p (sort keys %{$self->{categories}{$category}{names}{$module}{parameters}}){
-			$r{$p}=$self->{categories}{$category}{names}{$module}{parameters}{$p}{deafult};
+			$r{$p}=$self->{categories}{$category}{names}{$module}{parameters}{$p}{"default"};
 			#print "$p=$r{$p}\n";
 		}
 	return %r;
@@ -425,8 +425,8 @@ sub add_ip{
 	}	
 	my @parameters=  $ipgen->ipgen_get_all_parameters_list();
 	foreach my $param (@parameters){
-		my ($deafult,$type,$content,$info,$glob_param,$redefine_param)=$ipgen->ipgen_get_parameter_detail($param);
-		ip_add_parameter($self,$category,$module,$param,$deafult,$type,$content,$info,$glob_param,$redefine_param);
+		my ($default,$type,$content,$info,$glob_param,$redefine_param)=$ipgen->ipgen_get_parameter_detail($param);
+		ip_add_parameter($self,$category,$module,$param,$default,$type,$content,$info,$glob_param,$redefine_param);
 				
 	}
 	
@@ -436,7 +436,7 @@ sub add_ip{
 		ip_add_port($self,$category,$module,$port,$type,$range,$intfc_name,$intfc_port);
 	}
 	
-	my @fileds =("system_h","hdl_files","sw_files","gen_sw_files","sw_params_list","unused","parameters_order","description","version",'description_pdf');
+	my @fileds =("system_h","hdl_files","sw_files","gen_sw_files","gen_hw_files","sw_params_list","unused","parameters_order","description","version",'description_pdf');
 	foreach my $p (@fileds){
 		my $val=$ipgen->ipgen_get($p);
 		$self->{categories}{$category}{names}{$module}{$p}=$ipgen->ipgen_get($p) if(defined $val );	

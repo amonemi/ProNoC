@@ -64,7 +64,7 @@ sub replace_golb_var{
 
 
 sub generate_header_file{ 
-	my ($soc,$project_dir,$sw_path,$dir)= @_;
+	my ($soc,$project_dir,$sw_path,$hw_path,$dir)= @_;
 	my $soc_name=$soc->object_get_attribute('soc_name');
 	$soc_name = uc($soc_name);
 	if(!defined $soc_name){$soc_name='soc'};
@@ -139,6 +139,30 @@ sub generate_header_file{
 				}
 			}
 		}
+
+		# Write Hardware gen files
+		my @hw_file_gen = $ip->ip_get_list($category,$module,"gen_hw_files");		
+		foreach my $file (@hw_file_gen){
+			if(defined $file ){
+				my ($path,$rename)=split('frename_sep_t',$file);
+				$rename=replace_golb_var($rename,\%params);
+				#read the file content
+				my $content=read_file_cntent($path,$project_dir);
+				$content=replace_golb_var($content,\%params);
+
+
+				if(defined $rename){
+			
+					open(FILE,  ">lib/verilog/tmp") || die "Can not open: $!";
+					print FILE $content;
+					close(FILE) || die "Error closing file: $!";
+					move ("$dir/lib/verilog/tmp","$hw_path/$rename"); 
+
+				
+				}
+			}
+		}
+
 
 		
 	}

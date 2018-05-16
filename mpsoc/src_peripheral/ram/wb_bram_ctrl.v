@@ -35,9 +35,10 @@ module wb_bram_ctrl #(
     parameter Aw=10, //RAM address width
 
     // wishbon bus param
-    parameter   BURST_MODE= "DISABLED", // "DISABLED" , "ENABLED" wisbone bus burst mode 
-    parameter   SELw   =   Dw/8,
-    parameter   CTIw   =   3
+    parameter BURST_MODE = "DISABLED", // "DISABLED" , "ENABLED" wisbone bus burst mode 
+    parameter SELw = Dw/8,
+    parameter CTIw = 3,
+    parameter BTEw = 2 
 )(
     clk,
     reset,
@@ -46,7 +47,8 @@ module wb_bram_ctrl #(
     sa_dat_i,
     sa_sel_i,
     sa_addr_i,  
-    sa_cti_i,   
+    sa_cti_i, 
+    sa_bte_i,  
     sa_stb_i,
     sa_cyc_i,
     sa_we_i,    
@@ -56,38 +58,41 @@ module wb_bram_ctrl #(
     sa_rty_o,
     
     // BRAM interface 
+    byteena_a,
     d,
     addr,
     we,
     q
-         
+      
 
 );
 
-    input                  clk;
-    input                  reset;
+    input            clk;
+    input            reset;
     
    // BRAM interface 
     output   [Dw-1   :   0]  d;
     output   [Aw-1   :   0]  addr;
-    output                       we;
+    output                 we;
     input  [Dw-1    :   0]  q;
+    output [SELw-1 :   0]  byteena_a;
 
 // Wishbone bus interface
     input       [Dw-1       :   0]      sa_dat_i;
     input       [SELw-1     :   0]      sa_sel_i;
     input       [Aw-1       :   0]      sa_addr_i;  
     
-    input                               sa_stb_i;
-    input                               sa_cyc_i;
-    input                               sa_we_i;
+    input                      sa_stb_i;
+    input                      sa_cyc_i;
+    input                      sa_we_i;
     input       [CTIw-1     :   0]      sa_cti_i;
+    input       [BTEw-1     :   0]      sa_bte_i;
     
     
     output     [Dw-1       :   0]      sa_dat_o;
-    output                             sa_ack_o;
-    output                              sa_err_o;
-    output                              sa_rty_o;
+    output                    sa_ack_o;
+    output                     sa_err_o;
+    output                     sa_rty_o;
 
     wire sa_ack;
     
@@ -99,54 +104,57 @@ module wb_bram_ctrl #(
     assign sa_ack_o =  sa_ack;
 
     generate if (BURST_MODE== "ENABLED") begin : burst_wb
-
+	assign byteena_a =  {SELw{1'b1}}; // byte enable has been supported by the bram controller 
         wb_burst_bram_ctrl #(
-        	.Dw(Dw),
-        	.Aw(Aw),
-        	.SELw(SELw),
-        	.CTIw(CTIw)
+         	.Dw(Dw),
+         	.Aw(Aw),
+         	.SELw(SELw),
+         	.CTIw(CTIw),
+         	.BTEw(BTEw)
         )
-       bram_ctrl
-       (
-        	.clk(clk),
-        	.reset(reset),
-        	.d(d),
-        	.addr(addr),
-        	.we(we),
-        	.q(q),
-        	.sa_dat_i(sa_dat_i),
-        	.sa_sel_i(sa_sel_i),
-        	.sa_addr_i(sa_addr_i),
-        	.sa_stb_i(sa_stb_i),
-        	.sa_cyc_i(sa_cyc_i),
-        	.sa_we_i(sa_we_i),
-        	.sa_cti_i(sa_cti_i),
-        	.sa_dat_o(sa_dat_o),
-        	.sa_ack_o(sa_ack),
-        	.sa_err_o(sa_err_o),
-        	.sa_rty_o(sa_rty_o)
-        );
+        bram_ctrl
+        (
+         	.clk(clk),
+         	.reset(reset),
+         	.d(d),
+         	.addr(addr),
+         	.we(we),
+         	.q(q),
+         	.sa_dat_i(sa_dat_i),
+         	.sa_sel_i(sa_sel_i),
+         	.sa_addr_i(sa_addr_i),
+         	.sa_stb_i(sa_stb_i),
+         	.sa_cyc_i(sa_cyc_i),
+         	.sa_we_i(sa_we_i),
+         	.sa_cti_i(sa_cti_i),
+		.sa_bte_i(sa_bte_i),
+         	.sa_dat_o(sa_dat_o),
+         	.sa_ack_o(sa_ack),
+         	.sa_err_o(sa_err_o),
+         	.sa_rty_o(sa_rty_o)
+     );
 
     end else begin : no_burst
 
 
-        assign sa_dat_o =   q;
-        assign d        =   sa_dat_i ;
-        assign addr     =   sa_addr_i;
-        assign we       =   sa_stb_i &  sa_we_i;
-        assign sa_err_o =   1'b0;
-        assign sa_rty_o =   1'b0; 
-        
-        reg ack; 
-        assign sa_ack = ack;
-        
-        always @(posedge clk ) begin
-            if(reset) begin 
-                ack  <= 1'b0;
-            end else begin 
-                ack  <= (~sa_ack_o) & sa_stb_i;
-            end     
-        end
+     assign sa_dat_o =   q;
+     assign d     =   sa_dat_i ;
+     assign addr     =   sa_addr_i;
+     assign we       =   sa_stb_i &  sa_we_i;
+     assign sa_err_o =   1'b0;
+     assign sa_rty_o =   1'b0; 
+     assign byteena_a= sa_sel_i;
+     
+     reg ack; 
+     assign sa_ack = ack;
+     
+     always @(posedge clk ) begin
+         if(reset) begin 
+          ack  <= 1'b0;
+         end else begin 
+          ack  <= (~sa_ack_o) & sa_stb_i;
+         end     
+     end
 
     end
     endgenerate
@@ -167,8 +175,10 @@ module wb_burst_bram_ctrl #(
 	parameter Aw=10, //RAM address width
 
 	// wishbon bus param
-	parameter	SELw   =   Dw/8,
-	parameter	CTIw   =   3
+	parameter	SELw   = Dw/8,
+	parameter	CTIw   = 3,
+	parameter   BTEw   = 2
+	
 )(
 	clk,
 	reset,
@@ -177,7 +187,8 @@ module wb_burst_bram_ctrl #(
 	sa_dat_i,
 	sa_sel_i,
 	sa_addr_i,	
-	sa_cti_i,	
+	sa_cti_i,
+	sa_bte_i,  	
 	sa_stb_i,
 	sa_cyc_i,
 	sa_we_i,    
@@ -197,8 +208,8 @@ module wb_burst_bram_ctrl #(
 
     `define UDLY  1 
 
-	input                  clk;
-	input                  reset;
+	input            clk;
+	input            reset;
     
    // BRAM interface 
 	output   [Dw-1   :   0]  d;
@@ -213,21 +224,27 @@ module wb_burst_bram_ctrl #(
 	input       [SELw-1     :   0]      sa_sel_i;
 	input       [Aw-1       :   0]      sa_addr_i;  
 	
-	input                               sa_stb_i;
-	input                               sa_cyc_i;
-	input                               sa_we_i;
+	input                      sa_stb_i;
+	input                      sa_cyc_i;
+	input                      sa_we_i;
 	input       [CTIw-1     :   0]      sa_cti_i;
+	input       [BTEw-1     :   0]      sa_bte_i;
 	
     
 	output  reg   [Dw-1       :   0]      sa_dat_o;
-	output  reg                           sa_ack_o;
-	output  reg                            sa_err_o;
-	output  reg                            sa_rty_o;
+	output  reg                  sa_ack_o;
+	output  reg                   sa_err_o;
+	output  reg                   sa_rty_o;
 
 	
 
-
-
+    //Burst Type Extension for Incrementing and Decrementing bursts
+    localparam [1:0]
+        LINEAR  = 2'b00,
+        FOUR_BEAT =2'b01,
+        EIGHT_BEAT=2'b10,
+        SIXTEEN_BEAT =2'b11;
+     
 	
 
   
@@ -246,10 +263,12 @@ module wb_burst_bram_ctrl #(
 	 /*----------------------------------------------------------------------
 	  Internal Nets and Registers
 	  ----------------------------------------------------------------------*/
-	 wire [Dw-1:0] data;         // Data read from RAM
+	 wire [Dw-1:0] data;      // Data read from RAM
 	 reg 			 write_enable; // RAM write enable
 	 reg [Dw-1:0]  write_data, write_data_d;   // RAM write data
-	 reg [Aw+1:0]  pmi_address, pmi_address_nxt;
+	 reg [Aw+1:0]  pmi_address,  pmi_address_nxt;
+	 reg [Aw+1:0]  adr_linear_incr,adr_4_beat,adr_8_beat,adr_16_beat;
+	 
 	 reg [Aw-1:0]  read_address, write_address;   
 	 reg 			 sa_ack_o_nxt;
 	 reg [Dw-1:0]  read_data;
@@ -259,6 +278,7 @@ module wb_burst_bram_ctrl #(
 	 reg [3:0] 		 sa_sel_i_d;
 	 reg 			 delayed_write;
 	 
+	 wire [Aw+1 : 0] addr_init = {sa_addr_i,2'b00};
 	 /*----------------------------------------------------------------------
 	  State Machine
 	  ----------------------------------------------------------------------*/
@@ -364,44 +384,83 @@ module wb_burst_bram_ctrl #(
 				   : (sa_sel_i[3] ? sa_dat_i[31:24] : data[31:24]));
 	   end
 	 
-	 /*----------------------------------------------------------------------
-	  Set up address to EBR
-	  ----------------------------------------------------------------------*/
-	 always @(*)
-	   begin
-	      if (// First address of any access is obtained from Wishbone signals
+	 
+    /*----------------------------------------------------------------------
+	Set up address to EBR
+	----------------------------------------------------------------------*/
+	always @(*) begin
+        if (// First address of any access is obtained from Wishbone signals
 		  (state == ST_IDLE)
 		  // Read for a Sub-Word Wishbone Burst Write
-		  || (state == ST_SUB))
-		read_address = sa_addr_i;
-	      else
-		read_address = pmi_address[Aw+1:2];
+		  || (state == ST_SUB)) read_address = sa_addr_i;
+        else read_address = pmi_address[Aw+1:2];
 	      
-	      if ((state == ST_SUB) || (state == ST_SUBWR))
-		write_address = pmi_address[Aw+1:2];
-	      else
-		write_address = sa_addr_i;
+        if ((state == ST_SUB) || (state == ST_SUBWR))  write_address = pmi_address[Aw+1:2];
+        else write_address = sa_addr_i;
 	      
-	      // Keep track of first address and subsequently increment it by 4
-	      // bytes on a burst read
-	      if (sa_we_i)
-		pmi_address_nxt = {2'b00,sa_addr_i};
-	      else
-		if (state == ST_IDLE)
-		  if ((sa_sel_i == 4'b1000) || (sa_sel_i == 4'b0100) || (sa_sel_i == 4'b0010) || (sa_sel_i == 4'b0001))
-		    pmi_address_nxt = sa_addr_i + 1'b1;
-		  else if ((sa_sel_i == 4'b1100) || (sa_sel_i == 4'b0011))
-		    pmi_address_nxt = {(sa_addr_i  + 1'b1), 1'b0};
+        // Keep track of first address and subsequently increment it by 4
+        // bytes on a burst read
+	    if (sa_we_i) begin
+	        //pmi_address_nxt = sa_addr_i[Aw+1:0];
+            adr_linear_incr= addr_init;
+            adr_4_beat= addr_init;
+            adr_8_beat= addr_init;
+            adr_16_beat=addr_init;
+	    end else
+            if (state == ST_IDLE)
+                if ((sa_sel_i == 4'b1000) || (sa_sel_i == 4'b0100) || (sa_sel_i == 4'b0010) || (sa_sel_i == 4'b0001))begin 
+		            //pmi_address_nxt = sa_addr_i[Aw+1:0] + 1'b1;
+		            adr_linear_incr= addr_init + 1'b1;
+                    adr_4_beat= {addr_init[Aw+1 :4], addr_init[3:0] + 1'b1};
+                    adr_8_beat= {addr_init[Aw+1 :5], addr_init[4:0] + 1'b1};
+                    adr_16_beat={addr_init[Aw+1 :6], addr_init[5:0] + 1'b1};
+                end else if ((sa_sel_i == 4'b1100) || (sa_sel_i == 4'b0011))begin 
+                    //pmi_address_nxt = {(sa_addr_i[Aw+1:1] + 1'b1), 1'b0};
+                    adr_linear_incr= {(addr_init[Aw+1:1]  + 1'b1), 1'b0};
+                    adr_4_beat= {addr_init[Aw+1 :4], {addr_init[3:1] +1'b1},1'b0};
+                    adr_8_beat= {addr_init[Aw+1 :5], {addr_init[4:1] +1'b1},1'b0};
+                    adr_16_beat={addr_init[Aw+1 :6], {addr_init[5:1] +1'b1},1'b0};           
+               end else begin 
+		           //pmi_address_nxt = {(sa_addr_i[Aw+1:2] + 1'b1), 2'b00};
+		            adr_linear_incr= {(addr_init[Aw+1:2]  + 1'b1), 2'b00};
+		            adr_4_beat= {addr_init[Aw+1 :4], {addr_init[3:2] +1'b1},2'b00};
+                    adr_8_beat= {addr_init[Aw+1 :5], {addr_init[4:2] +1'b1},2'b00};
+                    adr_16_beat={addr_init[Aw+1 :6], {addr_init[5:2] +1'b1},2'b00};                       
+		       end
 		  else
-		    pmi_address_nxt = {(sa_addr_i  + 1'b1), 2'b00};
-		else
-		  if ((sa_sel_i == 4'b1000) || (sa_sel_i == 4'b0100) || (sa_sel_i == 4'b0010) || (sa_sel_i == 4'b0001))
-		    pmi_address_nxt = pmi_address + 1'b1;
-		  else if ((sa_sel_i == 4'b1100) || (sa_sel_i == 4'b0011))
-		    pmi_address_nxt = {(pmi_address[Aw+1:1] + 1'b1), 1'b0};
-		  else
-		    pmi_address_nxt = {(pmi_address[Aw+1:2] + 1'b1), 2'b00};
+    		  if ((sa_sel_i == 4'b1000) || (sa_sel_i == 4'b0100) || (sa_sel_i == 4'b0010) || (sa_sel_i == 4'b0001))begin 
+                    //pmi_address_nxt_linear_incr = pmi_address + 1'b1;
+                    adr_linear_incr= pmi_address + 1'b1;
+                    adr_4_beat= {pmi_address[Aw+1 :4], pmi_address[3:0] + 1'b1};
+                    adr_8_beat= {pmi_address[Aw+1 :5], pmi_address[4:0] + 1'b1};
+                    adr_16_beat={pmi_address[Aw+1 :6], pmi_address[5:0] + 1'b1};      
+    		  end else if ((sa_sel_i == 4'b1100) || (sa_sel_i == 4'b0011)) begin 
+    		       // pmi_address_nxt = {pmi_address[Aw+1:1] + 1'b1), 1'b0};
+    		        adr_linear_incr= {(pmi_address[Aw+1:1] + 1'b1), 1'b0};
+    		        adr_4_beat= {pmi_address[Aw+1 :4], {pmi_address[3:1] + 1'b1},1'b0};
+                    adr_8_beat= {pmi_address[Aw+1 :5], {pmi_address[4:1] + 1'b1},1'b0};
+                    adr_16_beat={pmi_address[Aw+1 :6], {pmi_address[5:1] + 1'b1},1'b0}; 
+    		  end else begin
+                    //pmi_address_nxt_linear_incr = {(pmi_address[Aw+1:2] + 1'b1), 2'b00};
+                    adr_linear_incr= {(pmi_address[Aw+1:2] + 1'b1), 2'b00};
+                    adr_4_beat= {pmi_address[Aw+1 :4], {pmi_address[3:2] +1'b1},2'b00};
+                    adr_8_beat= {pmi_address[Aw+1 :5], {pmi_address[4:2] +1'b1},2'b00};
+                    adr_16_beat={pmi_address[Aw+1 :6], {pmi_address[5:2] +1'b1},2'b00};   
+    		  end
 	   end
+	   
+	   
+	 
+	   
+	   always @(*)begin 
+	       case(sa_bte_i)
+                LINEAR:      pmi_address_nxt = adr_linear_incr;
+                FOUR_BEAT:   pmi_address_nxt = adr_4_beat;
+                EIGHT_BEAT:  pmi_address_nxt = adr_8_beat;
+                SIXTEEN_BEAT:pmi_address_nxt = adr_16_beat;
+    	   endcase
+	  end
+	   
 	 
 	 /*----------------------------------------------------------------------
 	  Set up outgoing wishbone signals

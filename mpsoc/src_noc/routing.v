@@ -81,7 +81,9 @@ module look_ahead_routing #(
     
     // routing algorithm
     generate 
+    /* verilator lint_off WIDTH */ 
     if(ROUTE_TYPE=="DETERMINISTIC") begin :dtrmst
+    /* verilator lint_on WIDTH */ 
          deterministic_look_ahead_routing #(
              .P(P),
              .NX(NX),
@@ -472,8 +474,10 @@ module next_router_addr_predictor #(
     output reg  [Xw-1  :    0]  next_x;
     output reg  [Yw-1  :    0]  next_y;  
     
-    generate                                             
+    generate 
+    /* verilator lint_off WIDTH */                                             
     if(TOPOLOGY=="MESH" || TOPOLOGY == "TORUS") begin : mesh
+    /* verilator lint_on WIDTH */ 
         always @(*) begin
              //default values 
             next_x= current_x;
@@ -495,8 +499,9 @@ module next_router_addr_predictor #(
                 next_y= (current_y== LAST_Y_ADDR ) ? {Yw{1'b0}}: current_y+1'b1;
             end
         end//always
-        
+    /* verilator lint_off WIDTH */     
     end else  if(TOPOLOGY=="RING" || TOPOLOGY == "LINE") begin : ring
+    /* verilator lint_on WIDTH */ 
        
         always @(*) begin
              //default values 
@@ -553,18 +558,21 @@ module next_router_inport_predictor #(
                 WEST    =       3'd3,  
                 SOUTH   =       3'd4; 
     generate
+    /* verilator lint_off WIDTH */ 
     if(TOPOLOGY=="MESH" || TOPOLOGY == "TORUS") begin : mesh
+    /* verilator lint_on WIDTH */ 
       
         assign  receive_port[LOCAL]   = destport[LOCAL];
         assign  receive_port[WEST]    = destport[EAST];
         assign  receive_port[EAST]    = destport[WEST];
         assign  receive_port[NORTH]   = destport[SOUTH];
         assign  receive_port[SOUTH]   = destport[NORTH];
-
+    /* verilator lint_off WIDTH */ 
     end else  if(TOPOLOGY=="RING" || TOPOLOGY == "LINE") begin : ring
-        assign  receive_port[LOCAL]   = destport[LOCAL];
-        assign  receive_port[1]       = destport[2];
-        assign  receive_port[2]       = destport[1];
+    /* verilator lint_on WIDTH */ 
+        assign  receive_port[0] = destport[0];
+        assign  receive_port[1] = destport[2];
+        assign  receive_port[2] = destport[1];
     end
     //synthesis translate_off
     //synopsys  translate_off
@@ -783,8 +791,10 @@ module conventional_routing #(
   
   
     generate 
+        /* verilator lint_off WIDTH */ 
         if (TOPOLOGY == "MESH")begin :mesh
             if(ROUTE_NAME ==  "XY") begin : xy_routing_blk
+        /* verilator lint_on WIDTH */ 
                 
                 xy_mesh_routing #(
                     .NX(NX),
@@ -802,8 +812,9 @@ module conventional_routing #(
                 
                 
             end //"XY"
+            /* verilator lint_off WIDTH */ 
             else if(ROUTE_NAME    ==  "WEST_FIRST") begin : west_first_routing_blk
-            
+            /* verilator lint_on WIDTH */ 
                 west_first_routing #(
                     .NX         (NX),
                     .NY         (NY)
@@ -818,8 +829,9 @@ module conventional_routing #(
                    
                 );
             end // WEST_FIRST
+            /* verilator lint_off WIDTH */ 
             else if(ROUTE_NAME    ==  "NORTH_LAST") begin : north_last_routing_blk
-            
+            /* verilator lint_on WIDTH */ 
                 north_last_routing #(
                     .NX         (NX),
                     .NY         (NY)
@@ -835,8 +847,9 @@ module conventional_routing #(
                 );
                        
             end // NORTH_LAST
+            /* verilator lint_off WIDTH */ 
             else if(ROUTE_NAME    ==  "NEGETIVE_FIRST") begin : negetive_first_routing_blk
-            
+            /* verilator lint_on WIDTH */ 
                 negetive_first_routing #(
                     .NX         (NX),
                     .NY         (NY)
@@ -852,9 +865,9 @@ module conventional_routing #(
                 );
                        
             end // NEGETIVE_FIRST           
-            
+            /* verilator lint_off WIDTH */ 
             else if(ROUTE_NAME    ==  "ODD_EVEN") begin : odd_even_routing_blk
-            
+            /* verilator lint_on WIDTH */ 
                 odd_even_routing #(
                     .NX         (NX),
                     .NY         (NY),
@@ -870,7 +883,9 @@ module conventional_routing #(
                 );
                 
             end //ODD_EVEN
+            /* verilator lint_off WIDTH */ 
             else if(ROUTE_NAME    ==  "DUATO") begin : duato_routing_blk
+            /* verilator lint_on WIDTH */ 
                 duato_mesh_routing #(
                     .NX         (NX),
                     .NY         (NY)                    
@@ -886,13 +901,15 @@ module conventional_routing #(
                     
                 );
             end //DUATO
-            //synthesis translate_off
+        //synthesis translate_off
         //synopsys  translate_off
             else begin : not_supported initial $display ("Error: %s is an unsupported routing algorithm for %s topology \n",ROUTE_NAME,TOPOLOGY); end
         //synopsys  translate_on
-            //synthesis translate_on
+        //synthesis translate_on
+        /* verilator lint_off WIDTH */ 
         end else if (TOPOLOGY == "TORUS" ) begin :torus
             if(ROUTE_NAME ==  "TRANC_XY") begin : tranc_routing_blk
+        /* verilator lint_on WIDTH */ 
                 tranc_xy_routing #(
                     .NX (NX),
                     .NY (NY)
@@ -909,8 +926,9 @@ module conventional_routing #(
                 );
                 
             end //"TRANC_XY"
+            /* verilator lint_off WIDTH */ 
             else if(ROUTE_NAME    ==  "TRANC_WEST_FIRST") begin : tranc_west_first_routing_blk
-            
+            /* verilator lint_on WIDTH */ 
                 tranc_west_first_routing #(
                     .NX         (NX),
                     .NY         (NY)
@@ -925,8 +943,9 @@ module conventional_routing #(
                    
                 );
              end // TRANC_WEST_FIRST
+             /* verilator lint_off WIDTH */ 
              else if(ROUTE_NAME    ==  "TRANC_WEST_FIRST") begin : tranc_north_last_routing_blk
-            
+             /* verilator lint_on WIDTH */ 
                 tranc_north_last_routing #(
                     .NX         (NX),
                     .NY         (NY)
@@ -941,8 +960,9 @@ module conventional_routing #(
                    
                 );
              end // TRANC_NORTH_LAST
+             /* verilator lint_off WIDTH */ 
              else if(ROUTE_NAME    ==  "TRANC_NEGETIVE_FIRST") begin : tranc_negetive_first_routing_blk
-            
+             /* verilator lint_on WIDTH */ 
                 tranc_negetive_first_routing #(
                     .NX         (NX),
                     .NY         (NY)
@@ -957,8 +977,9 @@ module conventional_routing #(
                    
                 );
              end // TRANC_NEGETIVE_FIRST
-            
+            /* verilator lint_off WIDTH */ 
             else if(ROUTE_NAME    ==  "TRANC_DUATO") begin : tranc_duato_routing_blk
+            /* verilator lint_on WIDTH */ 
                 tranc_duato_routing #(
                     .NX         (NX),
                     .NY         (NY)
@@ -973,15 +994,17 @@ module conventional_routing #(
                    
                 );
             end //TRANC_DUATO
-            //synthesis translate_off
+        //synthesis translate_off
         //synopsys  translate_off
             else begin : not_supported2 initial $display("Error: %s is an unsupported routing algorithm for %s topology",ROUTE_NAME,TOPOLOGY); end
         //synopsys  translate_on
-            //synthesis translate_on
+        //synthesis translate_on
         end //TORUS
-       
+        
+        /* verilator lint_off WIDTH */ 
         else if (TOPOLOGY == "RING" ) begin :ring
-        if(ROUTE_NAME    ==  "TRANC_XY") begin : tranc_ring_blk
+            if(ROUTE_NAME == "TRANC_XY") begin : tranc_ring_blk
+        /* verilator lint_on WIDTH */ 
                 tranc_ring_routing #(
                     .NX(NX),
                     .OUT_BIN(0) 
@@ -994,14 +1017,42 @@ module conventional_routing #(
                     .destport(destport)    
                 );
             end // "TRANC"
-        else begin : not_supported2 initial $display("Error: %s is an unsupported routing algorithm for %s topology",ROUTE_NAME,TOPOLOGY); end       
+	//synthesis translate_off
+        //synopsys  translate_off
+        else begin : not_supported2 initial $display("Error: %s is an unsupported routing algorithm for %s topology",ROUTE_NAME,TOPOLOGY); end  
+	//synopsys  translate_on
+        //synthesis translate_on     
         end //"RING" 
+        
+        /* verilator lint_off WIDTH */ 
+        else if (TOPOLOGY == "LINE" ) begin :ring
+            if(ROUTE_NAME == "XY") begin : tranc_ring_blk
+        /* verilator lint_on WIDTH */ 
+                xy_line_routing #(
+                    .NX(NX),
+                    .OUT_BIN(0)//one hot
+                )
+                 xy_routing
+                (
+                    .current_x(current_x),
+                    .dest_x(dest_x),
+                    .destport(destport)
+                 );       
+            end // "XY"
+	//synthesis translate_off
+        //synopsys  translate_off
+        else begin : not_supported2 initial $display("Error: %s is an unsupported routing algorithm for %s topology",ROUTE_NAME,TOPOLOGY); end
+	//synopsys  translate_on
+        //synthesis translate_on           
+        end //"LINE" 
+        
+        
        
-        //synthesis translate_off
+    //synthesis translate_off
     //synopsys  translate_off
             else begin : wrong_topology initial $display("Error: %s is an unsupported topology",TOPOLOGY); end
     //synopsys  translate_on
-        //synthesis translate_on
+    //synthesis translate_on
             
     endgenerate
 
@@ -1050,9 +1101,9 @@ module ni_conventional_routing #(
               Xw    =   log2(NX),
               Yw    =   log2(NY); 
               
-   
+   /* verilator lint_off WIDTH */ 
     localparam DSTw     =   (ROUTE_TYPE ==   "DETERMINISTIC")? P : P_1;           
-              
+   /* verilator lint_on WIDTH */            
               
     input   [Xw-1         :0] current_x;
     input   [Yw-1         :0] current_y;
@@ -1081,9 +1132,11 @@ module ni_conventional_routing #(
         
     );
     
-    generate 
+    generate
+    /* verilator lint_off WIDTH */  
     if(ROUTE_TYPE   ==   "DETERMINISTIC") begin: dtrmn
-     //remove local port number 
+    /* verilator lint_on WIDTH */ 
+    //remove local port number 
     assign destport = destport_one_hot[P-1    :    1];
            
     end else begin: adptv
@@ -1191,6 +1244,66 @@ module tranc_ring_routing #(
          end
     end
 
+    assign destport= destport_next;
+    
+endmodule
+
+
+
+/********************************************
+                        TRANC_ring
+*********************************************/
+
+module xy_line_routing #(
+    parameter NX   =    8,
+    parameter OUT_BIN =    0   // 1: destination port is in binary format 0: onehot 
+    
+)
+(
+    current_x,
+    dest_x,
+    destport
+    
+);
+
+ 
+    function integer log2;
+      input integer number; begin   
+         log2=(number <=1) ? 1: 0;    
+         while(2**log2<number) begin    
+            log2=log2+1;    
+         end        
+      end   
+    endfunction // log2 
+
+    
+    localparam  P           =   3,
+                Xw          =   log2(NX),
+                Pw          =   log2(P),
+                DSTw        =   (OUT_BIN)? Pw : P;
+    
+    
+    input   [Xw-1       :   0] current_x;
+    input   [Xw-1       :   0] dest_x;
+    output  [DSTw -1    :   0] destport;
+    
+    localparam      LOCAL   =   (OUT_BIN)?  3'd0    : 3'b001,  
+                    PLUS    =   (OUT_BIN)?  3'd1    : 3'b010,   
+                    MINUS   =   (OUT_BIN)?  3'd2    : 3'b100;         
+                    
+               
+                    
+    reg [DSTw-1            :0] destport_next;
+    
+    
+    always@(*)begin
+            destport_next    = LOCAL [DSTw-1    :0];
+            if           (dest_x    > current_x)        destport_next    = PLUS  [DSTw-1    :0];
+            else if      (dest_x    < current_x)        destport_next    = MINUS [DSTw-1    :0];
+            
+            
+    end
+    
     assign destport= destport_next;
     
 endmodule

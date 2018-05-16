@@ -7,12 +7,21 @@ require "widget.pl";
 
 use constant SIM_RAM_GEN	=> 0;			
 
-use constant JTAG_RAM_INDEX	=> 128;
+use constant JTAG_STATIC_INDEX	=> 124;
+use constant JTAG_RAM_INDEX	=> 125;
+use constant JTAG_COUNTER_INDEX=>126;
 use constant JTAG_DONE_RESET_INDEX	=> 127;
-use constant RESET_NOC 		=> " $ENV{'PRONOC_WORK'}/toolchain/bin/jtag_main -n ".JTAG_DONE_RESET_INDEX." -d \"I:1,D:2:1,I:0\" ";
-use constant UNRESET_NOC 	=> " $ENV{'PRONOC_WORK'}/toolchain/bin/jtag_main -n ".JTAG_DONE_RESET_INDEX." -d \"I:1,D:2:0,I:0\" ";
+use constant STATISTIC_NUM =>8;
 
-use constant READ_DONE_CMD 	=> " $ENV{'PRONOC_WORK'}/toolchain/bin/jtag_main -n ".JTAG_DONE_RESET_INDEX." -d \"I:2,R:2:0,I:0\" ";
+use constant CLK_CNTw=> 30; #log2(MAX_SIM_CLKs); 
+
+
+#use constant RESET_NOC 		=> " $ENV{'JTAG_INTFC'} -n ".JTAG_DONE_RESET_INDEX." -d \"I:1,D:2:1,I:0\" ";
+#use constant UNRESET_NOC 	=> " $ENV{'JTAG_INTFC'} -n ".JTAG_DONE_RESET_INDEX." -d \"I:1,D:2:0,I:0\" ";
+
+use constant READ_DONE_CMD 	=> " \" -n ".JTAG_DONE_RESET_INDEX." -d I:2,R:2:0,I:0 \" ";
+use constant READ_COUNTER_CMD => " \" -n ".JTAG_COUNTER_INDEX." -d I:2,R:".CLK_CNTw.":0,I:0 \" ";
+
 
 use constant UPDATE_WB_ADDR  	=> 0x7; 
 use constant UPDATE_WB_WR_DATA  => 0x6;
@@ -29,15 +38,21 @@ use constant RAM_SIM_FILE	=> "$ENV{'PRONOC_WORK'}/emulate/ram";
 
 
 sub reset_cmd {
-	my ($ctrl_reset, $noc_reset)=@_;
+	my ($ctrl_reset, $noc_reset,$jtag_intfc)=@_;
 	my $reset_vector= (($ctrl_reset & 0x1) << 1) +  ($noc_reset & 0x1);
-	my $cmd = " $ENV{'PRONOC_WORK'}/toolchain/bin/jtag_main -n ".JTAG_DONE_RESET_INDEX." -d \"I:1,D:2:$reset_vector,I:0\" ";
+	my $cmd = "sh $jtag_intfc \" -n ".JTAG_DONE_RESET_INDEX."  -d I:1,D:2:$reset_vector,I:0 \" ";
 	#print "$cmd\n";
 	return	$cmd;
 
 }
 
-
+sub set_time_limit_cmd {
+	my ($time_limit,$jtag_intfc)=@_;
+	my $hex = sprintf("0x%X", $time_limit);
+	my $cmd = "sh $jtag_intfc \" -n ".JTAG_COUNTER_INDEX."  -d I:1,D:".CLK_CNTw.":$hex,I:0 \" ";
+	print "$cmd\n";
+	return	$cmd;
+}
 
 
 sub help {
@@ -78,8 +93,8 @@ sub run_cmd_update_info {
 	my ($cmd,$info)=@_;
 	my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($cmd);
 		if($exit){
-			add_info($info, "$stdout\n") if(defined $stdout);
-			add_info($info, "$stderr\n") if(defined $stderr);
+			add_colored_info($info, "$stdout\n",'red') if(defined $stdout);
+			add_colored_info($info, "$stderr\n",'red') if(defined $stderr);
 			
 		}
 	#print	"\n$cmd \n $stdout";
@@ -152,19 +167,19 @@ sub synthetic_destination{
 
 
 sub gen_synthetic_traffic_ram_line{
-	my ($emulate,  $x, $y,  $sample_num,$ratio ,$line_num,$rnd)=@_;
+	my ($emulate,  $x, $y,  $sample,$ratio ,$line_num,$rnd)=@_;
 
 	
 	
-	my $ref=$emulate->object_get_attribute("sample$sample_num","noc_info"); 
+	my $ref=$emulate->object_get_attribute("$sample","noc_info"); 
 	my %noc_info= %$ref;
 	my $xn=$noc_info{NX};
 	my $yn=$noc_info{NY};	
-	my $traffic=$emulate->object_get_attribute("sample$sample_num","traffic"); 
+	my $traffic=$emulate->object_get_attribute($sample,"traffic"); 
 
 	
-	my $pck_num_to_send=$emulate->object_get_attribute("sample$sample_num","PCK_NUM_LIMIT");
-	my $pck_size=$emulate->object_get_attribute("sample$sample_num","PCK_SIZE");
+	my $pck_num_to_send=$emulate->object_get_attribute($sample,"PCK_NUM_LIMIT");
+	my $pck_size=$emulate->object_get_attribute($sample,"PCK_SIZE");
 	my $pck_class_in=0;
 	
 	
@@ -208,11 +223,8 @@ sub gen_synthetic_traffic_ram_line{
 
 
 sub generate_synthetic_traffic_ram{
-	my ($emulate,$x,$y,$sample_num,$ratio , $file,$rnd,$num)=@_;
-	my $RAM_size=MAX_PATTERN+4; 
-
-
-	
+	my ($emulate,$x,$y,$sample,$ratio , $file,$rnd,$num)=@_;
+		
 	my $line_num;
 	my $line_value;
 	my $ram;
@@ -220,8 +232,8 @@ sub generate_synthetic_traffic_ram{
 		my $ext= sprintf("%02u.txt",$num);
 		open( $ram, '>', RAM_SIM_FILE.$ext) || die "Can not create: \">lib/emulate/emulate_ram.bin\" $!";
 	}
-	for ($line_num= 0; $line_num<MAX_PATTERN+4; $line_num++ ) {
-		my ($value_s,$value_l)=gen_synthetic_traffic_ram_line ($emulate,  $x, $y,  $sample_num, $ratio ,$line_num,$rnd);
+	for ($line_num= 0; $line_num<RAM_SIZE; $line_num++ ) {
+		my ($value_s,$value_l)=gen_synthetic_traffic_ram_line ($emulate,  $x, $y,  $sample, $ratio ,$line_num,$rnd);
 		
 		
 		#printf ("\n%08x\t",$value_s);
@@ -258,15 +270,15 @@ sub print_32_bit {
 
 
 sub generate_emulator_ram {
-	my ($emulate, $sample_num,$ratio_in,$info)=@_;
-	my $ref=$emulate->object_get_attribute("sample$sample_num","noc_info"); 
+	my ($emulate, $sample,$ratio_in,$info)=@_;
+	my $ref=$emulate->object_get_attribute($sample,"noc_info"); 
 	my %noc_info= %$ref;
 	my $C=$noc_info{C};
 	my $xn=$noc_info{NX};
 	my $yn=$noc_info{NY};
 	my $xc=$xn*$yn;
 	my $rnd=random_dest_gen($xc); # generate a matrix of sudo random number
-	my $traffic=$emulate->object_get_attribute("sample$sample_num","traffic"); 
+	my $traffic=$emulate->object_get_attribute($sample,"traffic"); 
 	my @traffics=("tornado", "transposed 1", "transposed 2", "bit reverse", "bit complement","random", "hot spot" );
 	
 	if ( !defined $xn || $xn!~ /\s*\d+\b/ ){ add_info($info,"programe_pck_gens:invalid X value\n"); help(); return 0;}
@@ -282,7 +294,7 @@ sub generate_emulator_ram {
 	for (my $y=0; $y<$yn; $y=$y+1){
 		for (my $x=0; $x<$xn; $x=$x+1){
 			my $num=($y * $xn) +	$x;
-			generate_synthetic_traffic_ram($emulate,$x,$y,$sample_num,$ratio_in, $file,$rnd,$num);
+			generate_synthetic_traffic_ram($emulate,$x,$y,$sample,$ratio_in, $file,$rnd,$num);
 
 		}
 	}
@@ -292,23 +304,33 @@ sub generate_emulator_ram {
 }
 
 sub programe_pck_gens{
-	my ($emulate, $sample_num,$ratio_in,$info)= @_;
+	my ($emulate, $sample,$ratio_in,$info,$jtag_intfc)= @_;
 	
-	return 0 if(!generate_emulator_ram($emulate, $sample_num,$ratio_in,$info));
+	 if(!generate_emulator_ram($emulate, $sample,$ratio_in,$info)){
+	 	add_colored_info($info, "Error in generate_emulator_ram function\n",'red');	
+	 	return 0;
+	 	
+	 }
 
 	#reset the FPGA board	
 	#run_cmd_in_back_ground("quartus_stp -t ./lib/tcl/mem.tcl reset");
-	return 0 if(run_cmd_update_info(reset_cmd(1,1),$info)); #reset both noc and jtag
-	return 0 if(run_cmd_update_info(reset_cmd(0,1),$info)); #enable jtag keep noc in reset
+	return 0 if(run_cmd_update_info(reset_cmd(1,1,$jtag_intfc),$info)); #reset both noc and jtag
+	return 0 if(run_cmd_update_info(reset_cmd(0,1,$jtag_intfc),$info)); #enable jtag keep noc in reset
+	#set time limit	
+	my $time_limit = $emulate->object_get_attribute($sample,"SIM_CLOCK_LIMIT");  
+	return 0 if(run_cmd_update_info(set_time_limit_cmd($time_limit,$jtag_intfc),$info));
+
+	
+
 	#programe packet generators rams
-	my $cmd= "$ENV{'PRONOC_WORK'}/toolchain/bin/jtag_main -n ".JTAG_RAM_INDEX." -w 8 -i ".RAM_BIN_FILE." -c";
+	my $cmd= "sh $jtag_intfc \"-n ".JTAG_RAM_INDEX."  -w 8 -i ".RAM_BIN_FILE." -c\" ";
 	#my ($result,$exit) = run_cmd_in_back_ground_get_stdout($cmd);
 	
 	return 0 if(run_cmd_update_info ($cmd,$info));
 	#print $result;
 	
-	return 0 if(run_cmd_update_info(reset_cmd(1,1),$info)); #reset both
-	return 0 if(run_cmd_update_info(reset_cmd(0,0),$info)); #enable both
+	return 0 if(run_cmd_update_info(reset_cmd(1,1,$jtag_intfc),$info)); #reset both
+	return 0 if(run_cmd_update_info(reset_cmd(0,0,$jtag_intfc),$info)); #enable both
 #run_cmd_in_back_ground("quartus_stp -t ./lib/tcl/mem.tcl unreset");
 #add_info($info,"$r\n");
 
@@ -318,10 +340,18 @@ return 1;
 
 
 sub read_jtag_memory{
-	my $addr=shift;
-	my $cmd= "$ENV{'PRONOC_WORK'}/toolchain/bin/jtag_main -n ".JTAG_RAM_INDEX." -w 8 -d \"I:".UPDATE_WB_ADDR.",D:64:$addr,I:5,R:64:$addr,I:0\"";
+	my ($addr,$jtag_intfc,$info)=@_;
+	my $cmd= "sh $jtag_intfc \" -n ".JTAG_STATIC_INDEX." -w 8 -d I:".UPDATE_WB_ADDR.",D:64:$addr,I:5,R:64:$addr,I:0\"";
 	#print "$cmd\n";	
-	my ($result,$exit) = run_cmd_in_back_ground_get_stdout($cmd);
+	my ($result,$exit,$stderr) = run_cmd_in_back_ground_get_stdout($cmd);
+	if($exit){
+			add_colored_info($info, "$result\n",'red') if(defined $result);
+			add_colored_info($info, "$stderr\n",'red') if(defined $stderr);
+			return undef;
+			
+	}
+	#print "$result\n";	
+	
 	my @q =split  (/###read data#/,$result);
 	my $d=$q[1];
 	my $s= substr $d,2;
@@ -330,13 +360,103 @@ sub read_jtag_memory{
 }
 
 
+sub read_statistic_mem {
+	my($yn,$xn,$jtag_intfc,$info)=@_;
+	my %results;
+	my $sum_of_latency=0;
+	my $sum_of_pck=0;
+	my $total_router=0;
+	for (my $y=0; $y<$yn; $y=$y+1){
+		for (my $x=0; $x<$xn; $x=$x+1){
+			my $num=($y * $xn) +	$x; 
+			my $read_addr=($num * STATISTIC_NUM);
+
+			my $sent_pck_addr=  sprintf ("%X",$read_addr);
+			my $got_pck_addr =  sprintf ("%X",$read_addr+1);
+			my $latency_addr =  sprintf ("%X",$read_addr+2);
+			my $worst_latency_addr =  sprintf ("%X",$read_addr+3);
+
+			$results{$num}{sent_pck}=read_jtag_memory($sent_pck_addr,$jtag_intfc,$info);
+			$results{$num}{got_pck}=read_jtag_memory($got_pck_addr,$jtag_intfc,$info);	
+			$results{$num}{latency}=read_jtag_memory($latency_addr,$jtag_intfc,$info);
+			$results{$num}{worst_latency}=read_jtag_memory($worst_latency_addr,$jtag_intfc,$info);
+			add_info($info, "$num, ");
+			
+			$sum_of_latency+=$results{$num}{latency};
+			$sum_of_pck+=$results{$num}{got_pck};
+			$total_router++ if($results{$num}{sent_pck}>0); 
+		#$i=$i+2;
+	}}
+	
+	
+	
+	add_info($info, "\n");
+	
+	return (\%results,$sum_of_latency,$sum_of_pck,$total_router);
+	
+}
 
 
+sub read_statistic_mem_fast {
+	my($yn,$xn,$jtag_intfc,$info)=@_;
+	my %results;
+	my $sum_of_latency=0;
+	my $sum_of_pck=0;
+	my $total_router=0;
+	#read static memory
+	my $end= STATISTIC_NUM * 8 *$yn * $xn;
+	$end=sprintf ("%X",$end);
+	my $cmd= "sh $jtag_intfc \"-n ".JTAG_STATIC_INDEX."  -w 8 -r -s 0 -e $end\"";
+	#print "$cmd\n";
+	my ($result,$exit,$stderr) = run_cmd_in_back_ground_get_stdout($cmd);
+	if($exit){
+			add_colored_info($info, "$result\n",'red') if(defined $result);
+			add_colored_info($info, "$stderr\n",'red') if(defined $stderr);
+			return undef;
+			
+	}
+	#print "$result\n";
+	my @q =split  (/###read data#\n/,$result);
+	my @data= split  (/\n/,$q[1]);
+	#print "$data[0]\n";
+	
+	
+	
+	
+	for (my $y=0; $y<$yn; $y=$y+1){
+		for (my $x=0; $x<$xn; $x=$x+1){
+			my $num=($y * $xn) +	$x; 
+			my $read_addr=($num * STATISTIC_NUM);
+
+			my $sent_pck_addr=  $read_addr;
+			my $got_pck_addr =  $read_addr+1;
+			my $latency_addr =  $read_addr+2;
+			my $worst_latency_addr =  $read_addr+3;
+
+			$results{$num}{sent_pck}=hex($data[$sent_pck_addr]);
+			$results{$num}{got_pck}=hex($data[$got_pck_addr]);
+			$results{$num}{latency}=hex($data[$latency_addr]);
+			$results{$num}{worst_latency}=hex($data[$worst_latency_addr]);
+			#add_info($info, "$num, ");
+			
+			$sum_of_latency+=$results{$num}{latency};
+			$sum_of_pck+=$results{$num}{got_pck};
+			$total_router++ if($results{$num}{sent_pck}>0); 
+		#$i=$i+2;
+	}}
+	
+	
+	
+	#add_info($info, "\n");
+	
+	return (\%results,$sum_of_latency,$sum_of_pck,$total_router);
+	
+}
 
 
 sub read_pack_gen{ 
-	my ($emulate,$sample_num,$info)= @_;
-	my $ref=$emulate->object_get_attribute("sample$sample_num","noc_info"); 
+	my ($emulate,$sample,$info,$jtag_intfc,$ratio_in)= @_;
+	my $ref=$emulate->object_get_attribute($sample,"noc_info"); 
 	my %noc_info= %$ref;
 	my $xn=$noc_info{NX};
 	my $yn=$noc_info{NY};
@@ -347,9 +467,9 @@ sub read_pack_gen{
     while ($done ==0){
 		usleep(300000);
 		#my ($result,$exit) = run_cmd_in_back_ground_get_stdout("quartus_stp -t ./lib/tcl/read.tcl done");
-		my ($result,$exit) = run_cmd_in_back_ground_get_stdout(READ_DONE_CMD);
+		my ($result,$exit) = run_cmd_in_back_ground_get_stdout("sh $jtag_intfc".READ_DONE_CMD);
 		if($exit != 0 ){
-			add_info($info,$result);
+			add_colored_info($info,$result,'red');
 			return undef;
 		}
 		my @q =split  (/###read data#/,$result);
@@ -362,54 +482,66 @@ sub read_pack_gen{
 		$counter++;
 		if($counter == 15){ # 
 			add_info($info,"Done is not asserted. I reset the board and try again\n");
-			return if(run_cmd_update_info (reset_cmd(1,1),$info));
+			return if(run_cmd_update_info (reset_cmd(1,1,$jtag_intfc),$info));
 			#run_cmd_in_back_ground("quartus_stp -t ./lib/tcl/mem.tcl reset");
 			usleep(300000);
-			return if(run_cmd_update_info (reset_cmd(0,0),$info));
+			return if(run_cmd_update_info (reset_cmd(0,0,$jtag_intfc),$info));
 			#run_cmd_in_back_ground("quartus_stp -t ./lib/tcl/mem.tcl unreset");			
 		}
 		if($counter>30){
 			  #something is wrong
-			add_info($info,"Done is not asserted again. I  am going to ignore this test case"); 
+			add_colored_info($info,"Done is not asserted again. I  am going to ignore this test case\n",'green'); 
 			return undef;
 		}
 	}
     
-	add_info($info,"Done is asserted\n");
+	add_info($info,"Done is asserted\nStart reading statistic data from cores:\n\t");
 	#print" Done is asserted\n";
 	#my $i=0;
-	my %results;
-	my $sum_of_latency=0;
-	my $sum_of_pck=0;
-	for (my $y=0; $y<$yn; $y=$y+1){
-		for (my $x=0; $x<$xn; $x=$x+1){
-			my $num=($y * $xn) +	$x; 
-			my $read_addr=($num * RAM_SIZE) + MAX_PATTERN +1;
-
-			my $sent_pck_addr=  sprintf ("%X",$read_addr);
-			my $got_pck_addr =  sprintf ("%X",$read_addr+1);
-			my $latency_addr =  sprintf ("%X",$read_addr+2);
-
-			$results{$num}{sent_pck}=read_jtag_memory($sent_pck_addr);
-			$results{$num}{got_pck}=read_jtag_memory($got_pck_addr);	
-			$results{$num}{latency}=read_jtag_memory($latency_addr);
-			print "read pckgen $num\n";
-			
-			$sum_of_latency+=$results{$num}{latency};
-			$sum_of_pck+=$results{$num}{got_pck};
-		#$i=$i+2;
-	}}
+	#my ($results_ref,$sum_of_latency,$sum_of_pck,$total_router)= read_statistic_mem($yn,$xn,$jtag_intfc,$info);
+	my ($results_ref,$sum_of_latency,$sum_of_pck,$total_router)= read_statistic_mem_fast($yn,$xn,$jtag_intfc,$info);
+	my %results=%$results_ref;
+	
 	
 	foreach my $p (sort keys %results){
-		
-		
+		update_result($emulate,$sample,"packet_rsvd_result",$ratio_in,$p,$results{$p}{got_pck} );
+		update_result($emulate,$sample,"packet_sent_result",$ratio_in,$p,$results{$p}{sent_pck});
+		update_result($emulate,$sample,"worst_delay_rsvd_result",$ratio_in,$p,$results{$p}{worst_latency});
 		#print "$p  : \n latency: $results{$p}{latency}\n";
-		#print " got_pck : $results{$p}{got_pck}\n";
+		#print "got_pck : $results{$p}{got_pck}\n";
 		#print "sent_pck:$results{$p}{sent_pck}\n\n";
+		#print "worst_delay:$results{$p}{worst_latency}\n\n";
 
 	} 
-	my $avg= ($sum_of_pck>0)? $sum_of_latency/$sum_of_pck : 0;
+	#print "total active router=$total_router\n";
+	#read clock counter
+	my $clk_counter;
+	my ($result,$exit) = run_cmd_in_back_ground_get_stdout("sh $jtag_intfc".READ_COUNTER_CMD);
+	if($exit != 0 ){
+		add_colored_info($info,$result,'red');
+		
+	}else {
+		
+		my @q =split  (/###read data#/,$result);
+		my $d=$q[1];
+		my $s= substr $d,2;
+		$clk_counter= hex($s);
+		
+	}
 	
-	return sprintf("%.1f", $avg);
+	my $avg_latency= ($sum_of_pck>0)? $sum_of_latency/$sum_of_pck : 0;
+	my $packet_size=$emulate->object_get_attribute($sample,"PCK_SIZE");
+	my $avg_throughput= ($sum_of_pck>0 && $total_router>0 && $clk_counter>0 )? (($sum_of_pck * $packet_size *100)/ $total_router )/$clk_counter:0;
+	#print "($sum_of_pck * $packet_size *100)/ $total_router )/$clk_counter = $avg_throughput)";
+	
+	#print "$avg = $sum_of_latency/$sum_of_pck ";
+	$avg_latency= sprintf("%.1f", $avg_latency);
+	
+	 update_result ($emulate,$sample,"latency_result",$ratio_in,$avg_latency);
+	 update_result ($emulate,$sample,"throughput_result",$ratio_in,$avg_throughput);
+	 update_result ($emulate,$sample,"exe_time_result",$ratio_in,$clk_counter);
+	 
+	
+	return 1;
 }	
 

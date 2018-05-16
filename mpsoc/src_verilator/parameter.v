@@ -1,46 +1,41 @@
  `ifdef     INCLUDE_PARAM 
-
- parameter V=4;
- parameter TOPOLOGY="MESH";
- parameter P=(TOPOLOGY=="RING")? 3 : 5;
- parameter B=5;
- parameter NX=8;
- parameter NY=8;
- parameter C=4;
- parameter Fpay=32;
- parameter MUX_TYPE="ONE_HOT";
- parameter VC_REALLOCATION_TYPE="NONATOMIC";
- parameter COMBINATION_TYPE="COMB_NONSPEC";
- parameter FIRST_ARBITER_EXT_P_EN=0;
- parameter ROUTE_NAME="XY";
- parameter CONGESTION_INDEX=3;
- parameter C0_p=25;
- parameter C1_p=25;
- parameter C2_p=25;
- parameter C3_p=25;
- parameter TRAFFIC="RANDOM";
- parameter HOTSPOT_PERCENTAGE=3;
- parameter HOTSOPT_NUM=4;
- parameter HOTSPOT_CORE_1=18;
- parameter HOTSPOT_CORE_2=50;
- parameter HOTSPOT_CORE_3=22;
- parameter HOTSPOT_CORE_4=54;
- parameter HOTSPOT_CORE_5=18;
- parameter MAX_PCK_NUM=256000;
- parameter MAX_SIM_CLKs=100000;
- parameter MAX_PCK_SIZ=10;
- parameter TIMSTMP_FIFO_NUM=8;
- parameter ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
-			            (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE"; 
- parameter DEBUG_EN=1;
- parameter ROUTE_SUBFUNC= "NORTH_LAST";
- parameter AVC_ATOMIC_EN= 0;
- parameter AVG_LATENCY_METRIC= "HEAD_2_TAIL";
- parameter ADD_PIPREG_AFTER_CROSSBAR= 0;
- parameter CVw=(C==0)? V : C * V;
- parameter [CVw-1:   0] CLASS_SETTING = 16'b111111111111111;
- parameter [V-1	:	0] ESCAP_VC_MASK=4'b0001;
- parameter SSA_EN= "NO";
  
+ 
+	
 
- `endif 
+//NoC parameters
+ 	localparam TOPOLOGY="MESH";
+ 	localparam NX= 2;
+ 	localparam NY= 2;
+ 	localparam V=2;
+ 	localparam B=4;
+ 	localparam Fpay=32;
+ 	localparam ROUTE_NAME="XY";
+ 	localparam SSA_EN="NO";
+ 	localparam CONGESTION_INDEX=3;
+ 	localparam ESCAP_VC_MASK=2'b01;
+ 	localparam VC_REALLOCATION_TYPE="NONATOMIC";
+ 	localparam COMBINATION_TYPE="COMB_NONSPEC";
+ 	localparam MUX_TYPE="BINARY";
+ 	localparam C=0;
+ 	localparam DEBUG_EN=0;
+ 	localparam ADD_PIPREG_AFTER_CROSSBAR=1'b0;
+ 	localparam SWA_ARBITER_TYPE="RRA";
+ 	localparam FIRST_ARBITER_EXT_P_EN=1;
+ 	localparam AVC_ATOMIC_EN=0;
+ 	localparam ROUTE_SUBFUNC="XY";
+ 	localparam CLASS_SETTING={V{1'b1}};
+  	localparam  CVw=(C==0)? V : C * V;
+   
+	localparam  P=(TOPOLOGY=="RING" || TOPOLOGY=="LINE")? 3 : 5;
+ 	localparam  ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
+                        (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE"; 
+	
+	//simulation parameter	
+	localparam MAX_PCK_NUM = 100000000;
+	localparam MAX_PCK_SIZ = 16383; 
+	localparam MAX_SIM_CLKs=  100000000;
+	localparam TIMSTMP_FIFO_NUM = 16;
+
+ 
+ `endif

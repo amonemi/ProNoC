@@ -233,10 +233,12 @@ generate
             if(~reset)begin
                 if (wr[i] && (depth[i] == B) && !rd[i])
                     $display("%t: ERROR: Attempt to write to full FIFO: %m",$time);
+                /* verilator lint_off WIDTH */
                 if (rd[i] && (depth[i] == {DEPTHw{1'b0}} &&  SSA_EN !="YES"  ))
                     $display("%t: ERROR: Attempt to read an empty FIFO: %m",$time);
                 if (rd[i] && !wr[i] && (depth[i] == {DEPTHw{1'b0}} &&  SSA_EN =="YES" ))
                     $display("%t: ERROR: Attempt to read an empty FIFO: %m",$time);
+                /* verilator lint_on WIDTH */
           end//~reset      
         //if (wr_en)       $display($time, " %h is written on fifo ",din);
         end//always
@@ -278,10 +280,11 @@ generate
         assign  rd_addr_all[(i+1)*BVw- 1        :   i*BVw]   =       rd_ptr[i];       
         assign  vc_not_empty    [i] =   (depth[i] > 0);
     
-    
+     /* verilator lint_off WIDTH */ 
         always @(posedge clk or posedge reset)
         begin
             if (reset) begin
+               
                 rd_ptr  [i] <= (B*i);
                 wr_ptr  [i] <= (B*i);
                 depth   [i] <= {DEPTHw{1'b0}};
@@ -305,7 +308,7 @@ generate
                    depth[i] - 1'h1;
             end//else
         end//always  
-        
+         /* verilator lint_on WIDTH */ 
         
 //synthesis translate_off
 //synopsys  translate_off
@@ -314,10 +317,12 @@ generate
             if(~reset)begin
                 if (wr[i] && (depth[i] == B) && !rd[i])
                     $display("%t: ERROR: Attempt to write to full FIFO: %m",$time);
+                /* verilator lint_off WIDTH */
                 if (rd[i] && (depth[i] == {DEPTHw{1'b0}}  &&  SSA_EN !="YES"  ))
                     $display("%t: ERROR: Attempt to read an empty FIFO: %m",$time);
                 if (rd[i] && !wr[i] && (depth[i] == {DEPTHw{1'b0}} &&  SSA_EN =="YES" ))
                     $display("%t: ERROR: Attempt to read an empty FIFO: %m",$time);
+                /* verilator lint_on WIDTH */
                 
         //if (wr_en)       $display($time, " %h is written on fifo ",din);
             end//~reset
@@ -450,27 +455,35 @@ module fifo_ram     #(
 	 
 	
 	 
-	 generate 
+    generate 
+    /* verilator lint_off WIDTH */
     if(SSA_EN =="YES") begin :predict
+    /* verilator lint_on WIDTH */
 		//add bypass
         reg [DATA_WIDTH-1:0]  bypass_reg;
-		  reg rd_en_delayed;
+        reg rd_en_delayed;
         always @(posedge clk ) begin
 			 bypass_reg 	<=wr_data;
 			 rd_en_delayed	<=rd_en;
-		  end
+        end
 		  
-		  assign rd_data = (rd_en_delayed)? memory_rd_data  : bypass_reg;
+        assign rd_data = (rd_en_delayed)? memory_rd_data  : bypass_reg;
 		  
 		  
     
     end else begin : no_predict
         assign rd_data =  memory_rd_data;
     end
-	 endgenerate
+    endgenerate
 endmodule
 
 
+
+/*********************
+*
+*   fifo_ram_mem_size
+*
+**********************/
 
 
 module fifo_ram_mem_size     #(
@@ -500,18 +513,20 @@ module fifo_ram_mem_size     #(
 
     localparam ADDR_WIDTH=log2(MEM_SIZE);
     
-     input [DATA_WIDTH-1         :       0]  wr_data;       
-     input [ADDR_WIDTH-1         :       0]  wr_addr;
-     input [ADDR_WIDTH-1         :       0]  rd_addr;
-     input                                   wr_en;
-     input                                   rd_en;
-     input                                   clk;
-     output reg  [DATA_WIDTH-1   :       0]  rd_data;
+    input [DATA_WIDTH-1         :       0]  wr_data;       
+    input [ADDR_WIDTH-1         :       0]  wr_addr;
+    input [ADDR_WIDTH-1         :       0]  rd_addr;
+    input                                   wr_en;
+    input                                   rd_en;
+    input                                   clk;
+    output reg  [DATA_WIDTH-1   :       0]  rd_data;
     
     
      
     generate 
+    /* verilator lint_off WIDTH */
     if(SSA_EN =="YES") begin :predict
+    /* verilator lint_on WIDTH */
         reg [DATA_WIDTH-1:0] queue [MEM_SIZE-1:0] /* synthesis ramstyle = "no_rw_check , M9K" */;
                 
         always @(posedge clk ) begin
@@ -682,7 +697,7 @@ module fwft_fifo #(
     end else begin :mw1 // MAX_DEPTH == 1 
         assign out_ld       = wr_en;
         assign dout_next    =   din;
-        assign full         = depth == MAX_DEPTH;
+        assign full         = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1            :   0];
         assign nearly_full= 1'b1;
         assign recieve_more_than_0 = full;
         assign recieve_more_than_1 = 1'b0;
@@ -735,12 +750,14 @@ always @(posedge clk or posedge reset) begin
                 if (wr_en && ~rd_en && full) begin
                     $display("%t ERROR: Attempt to write to full FIFO: %m", $time);
                 end
+                /* verilator lint_off WIDTH */
                 if (rd_en && !recieve_more_than_0 && IGNORE_SAME_LOC_RD_WR_WARNING == "NO") begin
                     $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
                 end
                 if (rd_en && ~wr_en && !recieve_more_than_0 && IGNORE_SAME_LOC_RD_WR_WARNING == "YES") begin
                     $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
                 end
+                /* verilator lint_on WIDTH */
             end //~reset
         end // always @ (posedge clk)
     
@@ -964,12 +981,14 @@ endgenerate
                 if (wr_en && ~rd_en && full) begin
                     $display("%t ERROR: Attempt to write to full FIFO: %m", $time);
                 end
+                /* verilator lint_off WIDTH */
                 if (rd_en && !recieve_more_than_0 && IGNORE_SAME_LOC_RD_WR_WARNING == "NO") begin
                     $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
                 end
                 if (rd_en && ~wr_en && !recieve_more_than_0 && IGNORE_SAME_LOC_RD_WR_WARNING == "YES") begin
                     $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
                 end
+                /* verilator lint_on WIDTH */
             end// ~reset
         end // always @ (posedge clk)
    

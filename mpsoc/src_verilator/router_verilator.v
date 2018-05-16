@@ -6,12 +6,14 @@ module router_verilator
 	flit_in_all,
 	flit_in_we_all,
 	credit_out_all,
-    congestion_in_all,
+	congestion_in_all,
+	//iport_weight_in_all,
     
 	flit_out_all,
 	flit_out_we_all,
 	credit_in_all,
 	congestion_out_all,
+	//iport_weight_out_all,
 
 	clk,reset
 
@@ -47,14 +49,16 @@ module router_verilator
                       (CONGESTION_INDEX==12)? 3:2;
 
 
-	localparam 	Xw		= 	log2(NX),
-				Yw		=  log2(NY),
-                PV		=	V		*	P,
-                P_1     =	P-1,
-                Fw      =	2+V+Fpay,	//flit width;
-                PFw		=	P*Fw,
-                CONG_ALw=   CONGw* P;    //  congestion width per router      
-
+	localparam
+        Xw = log2(NX),
+        Yw = log2(NY),
+        PV = V * P,
+        P_1 = P-1,
+        Fw = 2+V+Fpay,	//flit width;
+        PFw = P * Fw,
+        CONG_ALw = CONGw * P,    //  congestion width per router      
+        W = WEIGHTw,
+        WP = W * P;  
 
     input  [Xw-1        :	0]	current_x;
     input  [Yw-1        :	0]	current_y;
@@ -63,18 +67,20 @@ module router_verilator
 	input  [P-1         :	0]	flit_in_we_all;
 	output [PV-1        :	0]	credit_out_all;
     input  [CONG_ALw-1  :   0]  congestion_in_all;
-    
+   // input  [WP-1        :   0]  iport_weight_in_all;
+     
 	output [PFw-1		:	0]	flit_out_all;
 	output [P-1			:	0]	flit_out_we_all;
     input  [PV-1        :	0]	credit_in_all;
     output [CONG_ALw-1  :   0]  congestion_out_all;
+ //   output [WP-1        :   0]  iport_weight_out_all;
 
 	input clk,reset;
 
    
 
 	router # (
-	.V(V),
+        .V(V),
         .P(P),
         .B(B), 
         .NX(NX),
@@ -97,7 +103,9 @@ module router_verilator
         .CVw(CVw),
         .CLASS_SETTING(CLASS_SETTING),   
         .ESCAP_VC_MASK(ESCAP_VC_MASK),
-        .SSA_EN(SSA_EN)
+        .SSA_EN(SSA_EN),
+        .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
+        .WEIGHTw(WEIGHTw) 
        
         
 	)
@@ -109,10 +117,12 @@ module router_verilator
 		.flit_in_we_all(flit_in_we_all),
 		.credit_out_all(credit_out_all),
 		.congestion_in_all(congestion_in_all),
+	//	.iport_weight_in_all(iport_weight_in_all),
 		.flit_out_all(flit_out_all),
 		.flit_out_we_all(flit_out_we_all),
 		.credit_in_all(credit_in_all),
 		.congestion_out_all(congestion_out_all),
+	//	.iport_weight_out_all(iport_weight_out_all),
 		.clk(clk),
 		.reset(reset)
 

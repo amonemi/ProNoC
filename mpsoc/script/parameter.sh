@@ -12,7 +12,7 @@ CORE_NUM(){
 # NoC parameters:
     V=2   # number of VC per port
     TOPOLOGY="MESH" #"MESH" or "TORUS"
-    P="(TOPOLOGY==\"RING\")? 3 : 5"    # number of port per router 
+    P="localparam P=  (TOPOLOGY==\"RING\" || TOPOLOGY==\"LINE\")? 3 : 5"    # number of port per router 
     B=4   # buffer space :flit per VC 
     NX=8  # number of node in x axis
     NY=8  # number of node in y axis
@@ -30,8 +30,9 @@ CORE_NUM(){
     
     CLASS_SETTING="{CVw{1'b1}}"   
     
-    SSA_EN="NO"  
-   
+    SSA_EN="NO"  # "YES","NO"
+    SWA_ARBITER_TYPE="RRA" # "RRA"  ,"WRRA"
+    WEIGHTw=4
     
     ADD_PIPREG_AFTER_CROSSBAR=0
     
@@ -129,7 +130,9 @@ generate_parameter_v (){
     printf " parameter CVw=(C==0)? V : C * V;\n" >>  parameter.v
     printf " parameter [CVw-1:   0] CLASS_SETTING = $CLASS_SETTING;\n">>  parameter.v 
     printf " parameter [V-1    :    0] ESCAP_VC_MASK=$ESCAP_VC_MASK;\n" >> parameter.v    
-    printf " parameter SSA_EN= \"$SSA_EN\";\n">> parameter.v                     
+    printf " parameter SSA_EN= \"$SSA_EN\";\n">> parameter.v  
+    printf " parameter SWA_ARBITER_TYPE=\"$SWA_ARBITER_TYPE\";\n">> parameter.v    
+    printf " parameter WEIGHTw=$WEIGHTw;\n">> parameter.v                    
     printf " \n\n \`endif " >> parameter.v        
     
     
@@ -150,10 +153,10 @@ generate_parameter_h (){
     printf "\t #define    FIRST_ARBITER_EXT_P_EN    $FIRST_ARBITER_EXT_P_EN\n" >> parameter.h     
     printf "\t #define    TOPOLOGY    \"$TOPOLOGY\"\n" >> parameter.h    
     printf "\t #define    ROUTE_NAME    \"$ROUTE_NAME\"\n" >> parameter.h    
-    printf "\t #define  C0_p    $C0_p\n" >> parameter.h    
-    printf "\t #define  C1_p    $C1_p\n" >> parameter.h 
-    printf "\t #define  C2_p    $C2_p\n" >> parameter.h
-    printf "\t #define  C3_p    $C3_p\n" >> parameter.h       
+    printf "\t #define    C0_p    $C0_p\n" >> parameter.h    
+    printf "\t #define    C1_p    $C1_p\n" >> parameter.h 
+    printf "\t #define    C2_p    $C2_p\n" >> parameter.h
+    printf "\t #define    C3_p    $C3_p\n" >> parameter.h       
     printf "\t #define    TRAFFIC    \"$TRAFFIC\"\n" >> parameter.h    
     printf "\t #define    HOTSPOT_PERCENTAGE    $HOTSPOT_PERCENTAGE\n" >> parameter.h    
     printf "\t #define    HOTSOPT_NUM    $HOTSOPT_NUM\n" >> parameter.h    
@@ -172,12 +175,14 @@ generate_parameter_h (){
     printf "\t #define    AVC_ATOMIC_EN $AVC_ATOMIC_EN\n" >> parameter.h    
     printf "\t #define    CONGESTION_INDEX $CONGESTION_INDEX\n">>parameter.h
     printf "\t #define    STND_DEV_EN    $STND_DEV_EN\n">> parameter.h
-    printf "\t #define  AVG_LATENCY_METRIC    \"$AVG_LATENCY_METRIC\"\n">> parameter.h    
-    printf "\t #define  ADD_PIPREG_AFTER_CROSSBAR  $ADD_PIPREG_AFTER_CROSSBAR\n" >>   parameter.h
-    printf "\t #define  CVw    (C==0)? V : C * V\n" >>  parameter.h
-    printf "\t #define  CLASS_SETTING   \"$CLASS_SETTING\"\n">>  parameter.h 
-    printf "\t #define  ESCAP_VC_MASK    $ESCAP_VC_MASK\n">>  parameter.h
-    printf "\t #define    SSA_EN \"$SSA_EN\"\n" >> parameter.h                         
+    printf "\t #define    AVG_LATENCY_METRIC    \"$AVG_LATENCY_METRIC\"\n">> parameter.h    
+    printf "\t #define    ADD_PIPREG_AFTER_CROSSBAR  $ADD_PIPREG_AFTER_CROSSBAR\n" >>   parameter.h
+    printf "\t #define    CVw    (C==0)? V : C * V\n" >>  parameter.h
+    printf "\t #define    CLASS_SETTING   \"$CLASS_SETTING\"\n">>  parameter.h 
+    printf "\t #define    ESCAP_VC_MASK    $ESCAP_VC_MASK\n">>  parameter.h
+    printf "\t #define    SSA_EN \"$SSA_EN\"\n" >> parameter.h 
+    printf "\t #define    SWA_ARBITER_TYPE \"$SWA_ARBITER_TYPE\"\n">> parameter.h    
+    printf "\t #define    WEIGHTw=$WEIGHTw\n">> parameter.h                                            
     printf " \n\n #endif " >> parameter.h        
         
 }

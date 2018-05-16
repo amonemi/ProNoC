@@ -1,24 +1,39 @@
+#######################################################################
+##	File: interrupt_cpu.ITC
+##    
+##	Copyright (C) 2014-2016  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.7.0 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
 $HashRef = bless( {
-                    'connection_num' => 'single connection',
-                    'name' => 'interrupt_cpu',
+                    'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/int_ctrl/int_ctrl.v',
                     'description' => 'interrupt signal between interrupt controller and cpu',
                     'modules' => {
                                    'int_ctrl' => {}
                                  },
+                    'gui_status' => {
+                                      'timeout' => 0,
+                                      'status' => 'ideal'
+                                    },
+                    'connection_num' => 'single connection',
+                    'name' => 'interrupt_cpu',
+                    'type' => 'plug',
+                    'category' => 'interrupt',
                     'ports' => {
                                  'int_o' => {
+                                              'type' => 'output',
                                               'outport_type' => 'concatenate',
                                               'connect_name' => 'int_i',
-                                              'name' => 'int_o',
                                               'range' => '',
-                                              'connect_type' => 'input',
-                                              'connect_range' => '',
                                               'default_out' => 'Active low',
-                                              'type' => 'output'
+                                              'name' => 'int_o',
+                                              'connect_type' => 'input',
+                                              'connect_range' => ''
                                             }
                                },
-                    'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/int_ctrl/int_ctrl.v',
-                    'module_name' => 'int_ctrl',
-                    'type' => 'socket',
-                    'category' => 'interrupt'
+                    'module_name' => 'int_ctrl'
                   }, 'intfc_gen' );

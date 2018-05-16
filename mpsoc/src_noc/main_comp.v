@@ -586,8 +586,10 @@ module CS_GEN (
     wire    [1  :   0] j2;
     
     assign {in2,in1} =  in;
+/* verilator lint_off WIDTH */
     assign j1= in1[3]+in1[2]+in1[1]+in1[0];
     assign j2= in2[2]+in2[1]+in2[0];
+/* verilator lint_on WIDTH */
     
     //s is asserted when both in1 and in2 have odd number of ones.
     assign s    = j1[0] ^ j2[0];

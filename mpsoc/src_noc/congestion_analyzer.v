@@ -469,8 +469,9 @@ module port_pre_sel_gen #(
     
     
 generate
+    /* verilator lint_off WIDTH */
     if(ROUTE_TYPE    ==   "DETERMINISTIC") begin : detrministic
-    
+    /* verilator lint_on WIDTH */
        assign port_pre_sel = {P_1{1'bx}};
     
     end else begin : adaptive
@@ -1295,9 +1296,10 @@ module parallel_count_normalize #(
     genvar i;
     generate 
     for(i=0;i< OUT_ON_HOT_NUM;i=i+1)begin :lp
+	/* verilator lint_off WIDTH */
        if(i==0) begin : i0 assign one_hot_out[i]= (in<= (MAX_IN /OUT_ON_HOT_NUM)); end
        else begin :ib0   assign one_hot_out[i]= ((in> ((MAX_IN *i)/OUT_ON_HOT_NUM)) &&  (in<= ((MAX_IN *(i+1))/OUT_ON_HOT_NUM))); end
-    
+    	/* verilator lint_on WIDTH */
     end//for
     endgenerate
     

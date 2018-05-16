@@ -82,8 +82,7 @@ sub build_gui {
 	
 
 	my ($scwin_info,$tview)= create_text();
-	add_colored_tag($tview,'red');
-	add_colored_tag($tview,'blue');
+	add_colors_to_textview($tview);
 	$vpaned-> pack1 ($hpaned, TRUE, TRUE);
 	$vpaned ->set_position ($hight*.5);
 	$vpaned-> pack2 ($scwin_info, TRUE, TRUE);
@@ -730,25 +729,34 @@ sub populate_tree {
 
 
 sub run_make_file {
-	my ($dir,$outtext)=@_;
-	my $cmd =	"cd \"$dir/\" \n  make ";
+	my ($dir,$outtext, $args)=@_;
+	my $cmd =	(defined $args) ? "cd \"$dir/\" \n  make $args" :  "cd \"$dir/\" \n  make ";
 	my $error=0;		
-	show_info(\$outtext,"$cmd\n");
+	add_info(\$outtext,"$cmd\n");
 	
 	my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout( $cmd);
-	
+	#($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout( $cmd);
 
 	
-	if($stderr){
-		$stderr=~ s/[‘,’]//g;
-		add_info(\$outtext,"$stdout\n"); 
-		add_colored_info(\$outtext,"$stderr\n","red"); 
+	if($exit){
+		if($stderr){
+			$stderr=~ s/[‘,’]//g;
+			add_info(\$outtext,"$stdout\n"); 
+			add_colored_info(\$outtext,"$stderr\n","red"); 
+		}
 		add_colored_info(\$outtext,"Compilation failed.\n",'red'); 
+		return 0;
 
 	}else{
-
 		add_info(\$outtext,"$stdout\n"); 
+		if($stderr){ #probebly had warning
+			$stderr=~ s/[‘,’]//g;
+			#add_info(\$outtext,"$stdout\n"); 
+			add_colored_info(\$outtext,"$stderr\n","green"); 
+		}
+		
 		add_colored_info(\$outtext,"Compilation finished successfully.\n",'blue');  
+		return 1;
 	}
 			
 	#add_info(\$outtext,"**********Quartus compilation is done successfully in $target_dir!*************\n") if($error==0);

@@ -22,7 +22,7 @@
 **
 **
 **	Description: 
-**	wishbone based timer 
+**	A simple, general purpose, Wishbone bus-based, 32-bit timer
 **	
 **
 *******************************************************************/ 
@@ -31,6 +31,7 @@
 `timescale 1ns / 1ps
 
 module timer #(
+		parameter PRESCALER_WIDTH		=	8, // Prescaler counter width.
 		parameter Dw  =	32,   // wishbone bus data width
 		parameter Aw  = 3,     // wishbone bus address width
 		parameter SELw=	4,    // wishbone bus sel width
@@ -95,13 +96,13 @@ module timer #(
 
 
 
-    localparam TCSR_REG_ADDR	=	0;	//timer control register
-    localparam TLR_REG_ADDR		=	1;	//timer load register
-    localparam TCMP_REG_ADDR	=	2;// timer compare value register
+    localparam TCSR_ADDR	=	0;	//timer control register
+    localparam TLR_ADDR		=	1;	//timer load register
+    localparam TCMR_ADDR	=	2;// timer compare value register
     
-    localparam	MAX_CLK_DEV		=	256;
-    localparam	DEV_COUNT_WIDTH=	log2(MAX_CLK_DEV);
-    localparam	DEV_CTRL_WIDTH	=	log2(DEV_COUNT_WIDTH);
+    
+   
+    localparam	DEV_CTRL_WIDTH	=	log2(PRESCALER_WIDTH);
     
     localparam TCSR_REG_WIDTH	=	4+DEV_CTRL_WIDTH;
     localparam TCR_REG_WIDTH	=	TCSR_REG_WIDTH-1;
@@ -109,7 +110,7 @@ module timer #(
 tcr: timer control register
 bit 
 
-6-3:	clk_dev_ctrl
+PRESCALER_WIDTH+3: 4:	prescaler_ctrl
 3	:	timer_isr
 2	:	rst_on_cmp_value
 1	:	int_enble_on_cmp_value
@@ -124,14 +125,14 @@ bit
     reg	[TCR_REG_WIDTH-1		:	0]	tcr_next;
     reg	timer_isr_next;
     
-    reg 	[DEV_COUNT_WIDTH-1	:	0]	clk_dev_counter,clk_dev_counter_next;
+    reg 	[PRESCALER_WIDTH-1	:	0]	prescaler_counter,prescaler_counter_next;
     
-    wire 	[DEV_COUNT_WIDTH-1	:	0]	dev_one_hot;
-    wire	[DEV_COUNT_WIDTH-2	:	0]	dev_cmp_val;
+    wire 	[PRESCALER_WIDTH-1	:	0]	dev_one_hot;
+    wire	[PRESCALER_WIDTH-2	:	0]	dev_cmp_val;
     
     wire timer_en,int_en,rst_on_cmp,timer_isr;
-    wire clk_dev_rst,counter_rst;
-    wire [DEV_CTRL_WIDTH-1	:	0] clk_dev_ctrl;
+    wire prescaler_rst,counter_rst;
+    wire [DEV_CTRL_WIDTH-1	:	0] prescaler_ctrl;
     
     
     
@@ -139,9 +140,9 @@ bit
 
 
 
-    assign {timer_isr,clk_dev_ctrl,rst_on_cmp,int_en,timer_en} = tcsr;
-    assign dev_cmp_val	=	dev_one_hot[DEV_COUNT_WIDTH-1	:	1];
-    assign clk_dev_rst	=	clk_dev_counter	==	dev_cmp_val;
+    assign {timer_isr,prescaler_ctrl,rst_on_cmp,int_en,timer_en} = tcsr;
+    assign dev_cmp_val	=	dev_one_hot[PRESCALER_WIDTH-1	:	1];
+    assign prescaler_rst	=	prescaler_counter [PRESCALER_WIDTH-2 :   0]	==	dev_cmp_val;
     assign counter_rst	=	(rst_on_cmp)? (counter		==	cmp) : 1'b0;
     assign sa_dat_o		=	read;
     assign irq = timer_isr;
@@ -150,11 +151,11 @@ bit
 
     bin_to_one_hot #(
 	   .BIN_WIDTH		(DEV_CTRL_WIDTH),
-	   .ONE_HOT_WIDTH	(DEV_COUNT_WIDTH)
+	   .ONE_HOT_WIDTH	(PRESCALER_WIDTH)
 	)
 	conv
 	(
-	   .bin_code		(clk_dev_ctrl),
+	   .bin_code		(prescaler_ctrl),
 	   .one_hot_code	(dev_one_hot)
 	);
 
@@ -162,14 +163,14 @@ bit
 		if(reset) begin 
 			counter				<= {CNTw{1'b0}};
 			cmp					<=	{CNTw{1'b1}};
-			clk_dev_counter	<=	{DEV_COUNT_WIDTH{1'b0}};
-			tcsr					<=	{TCR_REG_WIDTH{1'b0}};
+			prescaler_counter	<=	{PRESCALER_WIDTH{1'b0}};
+			tcsr					<=	{TCSR_REG_WIDTH{1'b0}};
 			read					<=	{CNTw{1'b0}};
 			sa_ack_o				<=	1'b0;
 		end else begin 
 			counter				<= counter_next;
 			cmp					<=	cmp_next;
-			clk_dev_counter	<=	clk_dev_counter_next;
+			prescaler_counter	<=	prescaler_counter_next;
 			tcsr					<=	tcsr_next;
 			read					<= read_next;
 			sa_ack_o				<= sa_stb_i && ~sa_ack_o;
@@ -178,42 +179,42 @@ bit
 	
 	always@(*)begin 
 		counter_next			= counter;
-		clk_dev_counter_next	= clk_dev_counter;
-		timer_isr_next			=(timer_isr | (counter_rst & clk_dev_rst) ) &  int_en;
+		prescaler_counter_next	= prescaler_counter;
+		timer_isr_next			=(timer_isr | (counter_rst & prescaler_rst) ) &  int_en;
 		tcr_next					= tcsr[TCR_REG_WIDTH-1		:	0];
 		cmp_next					= cmp;
 		read_next				=	read;
 		//counters
 		if(timer_en)begin 
-				if(clk_dev_rst)	begin 
-					clk_dev_counter_next	=	{DEV_COUNT_WIDTH{1'b0}};
+				if(prescaler_rst)	begin 
+					prescaler_counter_next	=	{PRESCALER_WIDTH{1'b0}};
 					if(counter_rst) begin 
 						counter_next	=	{CNTw{1'b0}};
 					end else begin 
 						counter_next	=	counter +1'b1;
 					end // count_rst
 				end else begin
-						clk_dev_counter_next	=	clk_dev_counter	+1'b1;
+						prescaler_counter_next	=	prescaler_counter	+1'b1;
 				end //dev_rst
 		end//time_en
 		
 		if(sa_stb_i )begin
 			if(sa_we_i ) begin 
 				case(sa_addr_i)
-					TCSR_REG_ADDR:	begin 
+					TCSR_ADDR:	begin 
 						tcr_next 		= 	sa_dat_i[TCR_REG_WIDTH-1	:	0];
 						timer_isr_next	=	timer_isr & ~sa_dat_i[TCSR_REG_WIDTH-1];// reset isr by writting 1
 					end
-					TLR_REG_ADDR:	counter_next	= 	sa_dat_i[CNTw-1	:	0];
-					TCMP_REG_ADDR:	cmp_next			=	sa_dat_i[CNTw-1	:	0];	
+					TLR_ADDR:	counter_next	= 	sa_dat_i[CNTw-1	:	0];
+					TCMR_ADDR:	cmp_next			=	sa_dat_i[CNTw-1	:	0];	
 					default:			cmp_next			= 	cmp;
 				endcase
 			end//we
 			else begin
 				case(sa_addr_i)
-					TCSR_REG_ADDR:	read_next		=	tcsr;
-					TLR_REG_ADDR:	read_next		=	counter;
-					TCMP_REG_ADDR:	read_next		=	cmp;
+					TCSR_ADDR:	read_next		=	{{(Dw-TCSR_REG_WIDTH){1'b0}},tcsr};
+					TLR_ADDR:	read_next		=	counter;
+					TCMR_ADDR:	read_next		=	cmp;
 					default:			read_next		=	read;
 				endcase
 			end

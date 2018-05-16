@@ -243,8 +243,9 @@ module  vc_alloc_request_gen_adaptive #(
            .current_x_0        (current_x_0)
 	      // .route_subfunc_violated(route_subfunc_violated[i])
 	      );
-	      
+	    /* verilator lint_off WIDTH */   
         if(ROUTE_TYPE ==  "FULL_ADAPTIVE") begin: full_adpt
+        /* verilator lint_on WIDTH */ 
             assign candidate_ovc_y_all[((i+1)*V)-1 : i*V] =  (y_evc_forbiden[i]) ? candidate_ovc_all[((i+1)*V)-1 : i*V] & (~ESCAP_VC_MASK) :  candidate_ovc_all[((i+1)*V)-1 : i*V];
             assign candidate_ovc_x_all[((i+1)*V)-1 : i*V] =  (x_evc_forbiden[i]) ? candidate_ovc_all[((i+1)*V)-1 : i*V] & (~ESCAP_VC_MASK) :  candidate_ovc_all[((i+1)*V)-1 : i*V];
             assign avc_unavailable[i] = (masked_ovc_request_all [((i+1)*V)-1 : i*V] & ~ESCAP_VC_MASK) == {V{1'b0}};
@@ -280,13 +281,12 @@ module  vc_alloc_request_gen_adaptive #(
         end// ROUTE_TYPE
     end//for
     
-    //assign candidate_ovc_x_all=  candidate_ovc_all;
-        
-    
-    
+    //assign candidate_ovc_x_all=  candidate_ovc_all;   
 endgenerate
-
 endmodule
+
+
+
 
 /**********************
 
@@ -511,11 +511,11 @@ module port_selector #(
   //  wire o1,o2;
     reg [4:0] portout;
 
-    localparam LOCAL    =       3'd0,  
-               EAST     =       3'd1, 
-               NORTH    =       3'd2,  
-               WEST     =       3'd3,  
-               SOUTH    =       3'd4;  
+    localparam LOCAL    =       0,  
+               EAST     =       1, 
+               NORTH    =       2,  
+               WEST     =       3,  
+               SOUTH    =       4;  
 
     localparam LOCAL_SEL = (SW_LOC == NORTH || SW_LOC == SOUTH )? 1'b1 : 1'b0; 
    
@@ -569,20 +569,25 @@ module port_selector #(
  
 // check if EVC is allowed to be used     
     generate 
-       
-    if(ROUTE_SUBFUNC=="XY") begin :xy_lp 
+    /* verilator lint_off WIDTH */    
+    if(ROUTE_SUBFUNC=="XY") begin :xy_lp
+    /* verilator lint_on WIDTH */  
         // Using of all EVCs located in y dimention are restricted when the packet can be sent into both x&y direction 
         assign y_evc_forbiden = a&b;
         
         //there is no restriction in using EVCs located in x dimention
         assign x_evc_forbiden = 1'b0; 
         //assign route_subfunc_violated = a&b;
+    /* verilator lint_off WIDTH */         
     end else if (ROUTE_SUBFUNC=="NORTH_LAST") begin :north_last_lp
+    /* verilator lint_on WIDTH */ 
         // Using of all EVCs located in y dimention are restricted when the packet can be sent into both -x& y direction  
         assign y_evc_forbiden = a&b&(~x);  
         //there is no restriction in using EVCs located in x dimention
-        assign x_evc_forbiden = 1'b0;  
+        assign x_evc_forbiden = 1'b0; 
+    /* verilator lint_off WIDTH */      
     end else if (ROUTE_SUBFUNC=="ODD_EVEN") begin :odd
+    /* verilator lint_on WIDTH */ 
         assign y_evc_forbiden = (a&b) & ((x & (~current_x_0) & (SW_LOC!=0) ) | ( ~x & current_x_0)) ;  
         assign x_evc_forbiden = a & b  & x & current_x_0  & x_diff_is_one;  
        
@@ -621,7 +626,7 @@ endmodule
 
 module  vc_alloc_request_gen_adaptive_classic #(
     parameter V = 4,
-    parameter ROUTE_TYPE           =  "FULL_ADAPTIVE",    // "FULL_ADAPTIVE", "PAR_ADAPTIVE"  
+    parameter ROUTE_TYPE =  "FULL_ADAPTIVE",    // "FULL_ADAPTIVE", "PAR_ADAPTIVE"  
     parameter [V-1  :   0] ESCAP_VC_MASK = 4'b001,   // mask scape vc, valid only for full adaptive  
     parameter ROUTE_SUBFUNC = "XY"
 
@@ -722,14 +727,13 @@ generate
         // mask unavailable ovc from requests
         assign masked_ovc_request_all  [(i+1)*V-1   :   i*V ]     =   ovc_avb_muxed[i] & ovc_request_ivc [i];
         
-           
-         
        
         portsel_classic #(
            .SW_LOC    (i/V),
            .ROUTE_SUBFUNC   (ROUTE_SUBFUNC)
         )
-        the_portsel(
+        the_portsel
+        (
            .reset             (reset),
            .clk               (clk),
            .port_pre_sel      (port_pre_sel_perport[i/V]),
@@ -740,7 +744,9 @@ generate
           // .multi_dir         (multi_dir[i])
            .route_subfunc_violated    (route_subfunc_violated[i])
         );
+           /* verilator lint_off WIDTH */ 
            if(ROUTE_TYPE ==  "FULL_ADAPTIVE") begin: full_adpt
+           /* verilator lint_on WIDTH */ 
              // in full adaptive a packet which can be set to both x and y direction is not allowed to use escape VC in the y direction 
               assign candidate_ovc_y_all[((i+1)*V)-1 : i*V]=  (route_subfunc_violated[i]) ? candidate_ovc_all[((i+1)*V)-1 : i*V] & (~ESCAP_VC_MASK) :  candidate_ovc_all[((i+1)*V)-1 : i*V];       
           end else begin : partial_adpt
@@ -850,15 +856,14 @@ module portsel_classic #(
     );
     
     generate 
+    /* verilator lint_off WIDTH */ 
     if(ROUTE_SUBFUNC=="XY") begin :xy_lp
+    /* verilator lint_on WIDTH */ 
         assign route_subfunc_violated = a&b;
     end else begin : nonxy
         assign route_subfunc_violated = a&b&y;    
     end
     endgenerate
-    
-    
-
 
 endmodule
 

@@ -1,0 +1,58 @@
+#######################################################################
+##	File: RxD_sim.ITC
+##    
+##	Copyright (C) 2014-2016  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.8.0 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$HashRef = bless( {
+                    'modules' => {
+                                   'jtag_uart_wb' => {}
+                                 },
+                    'category' => 'Communication',
+                    'gui_status' => {
+                                      'status' => 'ideal',
+                                      'timeout' => 0
+                                    },
+                    'connection_num' => 'single connection',
+                    'file_name' => '/home/alireza/mywork/mpsoc/src_peripheral/jtag/jtag_uart/jtag_uart_wb.v',
+                    'module_name' => 'jtag_uart_wb',
+                    'name' => 'RxD_sim',
+                    'ports' => {
+                                 'RxD_wr_sim' => {
+                                                   'outport_type' => 'concatenate',
+                                                   'range' => '',
+                                                   'name' => 'RxD_wr_sim',
+                                                   'type' => 'input',
+                                                   'connect_range' => '',
+                                                   'connect_type' => 'output',
+                                                   'default_out' => 'Active low',
+                                                   'connect_name' => 'RxD_wr_sim'
+                                                 },
+                                 'RxD_din_sim' => {
+                                                    'connect_name' => 'RxD_din_sim',
+                                                    'range' => '7:0',
+                                                    'name' => 'RxD_din_sim',
+                                                    'connect_range' => '7:0',
+                                                    'type' => 'input',
+                                                    'default_out' => 'Active low',
+                                                    'connect_type' => 'output',
+                                                    'outport_type' => 'concatenate'
+                                                  },
+                                 'RxD_ready_sim' => {
+                                                      'outport_type' => 'concatenate',
+                                                      'range' => '',
+                                                      'name' => 'RxD_ready_sim',
+                                                      'connect_type' => 'input',
+                                                      'default_out' => 'Active low',
+                                                      'type' => 'output',
+                                                      'connect_range' => '',
+                                                      'connect_name' => 'RxD_ready_sim'
+                                                    }
+                               },
+                    'type' => 'socket'
+                  }, 'intfc_gen' );

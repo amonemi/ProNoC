@@ -96,16 +96,24 @@ module wb_single_port_ram #(
     output                              sa_err_o;
     output                              sa_rty_o;
     
+    wire [SELw-1 :   0]  byteena_a;
+    wire [Dw-1   :   0]  d;
+    wire [Aw-1   :   0]  addr;
+    wire                 we;
+    wire [Dw-1   :   0]  q;
 
-    wire            [Dw-1   :   0]   d;
-    wire            [Aw-1   :   0]   addr;
-    wire                             we;
-    wire            [Dw-1   :   0]  q;
+`ifdef VERILATOR // verilatore does not recognize altsyncram
+	localparam FPGA_VENDOR_MDFY= "GENERIC";
+`else 
+    `ifdef MODEL_TECH
+        localparam FPGA_VENDOR_MDFY= "GENERIC";
+    `else
+	   localparam FPGA_VENDOR_MDFY= FPGA_VENDOR;
+	`endif
+`endif
 
 
-
-
-	localparam MEM_NAME = (FPGA_VENDOR== "ALTERA")? {MEM_CONTENT_FILE_NAME,".mif"} : 
+	localparam MEM_NAME = (FPGA_VENDOR_MDFY== "ALTERA")? {MEM_CONTENT_FILE_NAME,".mif"} : 
 							{MEM_CONTENT_FILE_NAME,".hex"}; //Generic
 
 
@@ -117,7 +125,8 @@ module wb_single_port_ram #(
        	.Aw(Aw),
        	.BURST_MODE(BURST_MODE),
        	.SELw(SELw),
-       	.CTIw(CTIw)
+       	.CTIw(CTIw),
+       	.BTEw(BTEw)
     )
    ctrl
    (
@@ -127,6 +136,7 @@ module wb_single_port_ram #(
        	.addr(addr),
        	.we(we),
        	.q(q),
+	.byteena_a(byteena_a),
        	.sa_dat_i(sa_dat_i),
        	.sa_sel_i(sa_sel_i),
        	.sa_addr_i(sa_addr_i),
@@ -134,6 +144,7 @@ module wb_single_port_ram #(
        	.sa_cyc_i(sa_cyc_i),
        	.sa_we_i(sa_we_i),
        	.sa_cti_i(sa_cti_i),
+       	.sa_bte_i(sa_bte_i),
        	.sa_dat_o(sa_dat_o),
        	.sa_ack_o(sa_ack_o),
        	.sa_err_o(sa_err_o),
@@ -148,7 +159,7 @@ module wb_single_port_ram #(
     	.Dw(Dw),
     	.Aw(Aw),
     	.BYTE_WR_EN(BYTE_WR_EN),
-    	.FPGA_VENDOR(FPGA_VENDOR),
+    	.FPGA_VENDOR(FPGA_VENDOR_MDFY),
     	.JTAG_CONNECT(JTAG_CONNECT),
     	.JTAG_INDEX(JTAG_INDEX),
 	.INITIAL_EN(INITIAL_EN),
@@ -162,7 +173,7 @@ module wb_single_port_ram #(
     	.addr_a(addr),
     	.we_a(we),
     	.q_a(q),
-    	.byteena_a(sa_sel_i) 
+    	.byteena_a(byteena_a) 
     );
   
 
@@ -354,7 +365,7 @@ else if(FPGA_VENDOR=="GENERIC")begin:generic_ram
     if(JTAG_CONNECT== "JTAG_WB")begin:dual_ram
         
 
-        generic_wb_dual_port_ram #(
+        generic_dual_port_ram #(
             .Dw(Dw),
             .Aw(Aw),
             .BYTE_WR_EN(BYTE_WR_EN),

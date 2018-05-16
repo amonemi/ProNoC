@@ -1,0 +1,72 @@
+
+
+/**************************************************************************
+**	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+**	OVERWRITTEN AND LOST. Rename this file if you wish to do any modification.
+****************************************************************************/
+
+
+
+/**********************************************************************
+**	File: readme
+**    
+**	Copyright (C) 2014-2018  Alireza Monemi
+**    
+**	This file is part of ProNoC 1.7.0 
+**
+**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**	you can redistribute it and/or modify it under the terms of the GNU
+**	Lesser General Public License as published by the Free Software Foundation,
+**	either version 2 of the License, or (at your option) any later version.
+**
+** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
+** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+** 	Public License for more details.
+**
+** 	You should have received a copy of the GNU Lesser General Public
+** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+******************************************************************************/ 
+
+
+***********************
+**	Program the memories
+***********************
+
+If the memory core and jtag_wb are connected to the same wishbone bus, you can program the memory using 
+
+	sh program.sh  
+
+
+
+***************************
+**	soc parameters
+***************************
+
+	parameter	CORE_ID=0,
+	parameter	SW_LOC="/home/alireza/mywork/mpsoc_work/SOC/ram_test/sw" ,
+	parameter	ram_Dw=32 ,
+	parameter	ram_Aw=12
+
+****************************
+**	wishbone bus(es)  info
+****************************
+	#slave interfaces:
+	#instance name,  interface name, connected to, base address, boundray address 	
+	ram, wb, bus, 0x00000000, 0x00003fff
+
+
+	#master interfaces:
+	#instance name,  interface name, connected to
+	programer, wbm, bus
+
+
+****************************
+**	Jtag to wishbone interface (jtag_wb) info:
+****************************
+
+	#instance name, instance name,  VJTAG_INDEX
+ 	programer,  bus, CORE_ID
+
+
+

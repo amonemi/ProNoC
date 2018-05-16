@@ -166,14 +166,7 @@ sub noc_param_widget{
     return $row;
 }
 
-sub attach_widget_to_table {
-	my ($table,$row,$label,$inf_bt,$widget)=@_;
-	my $tmp=gen_label_in_left(" "); 
-	$table->attach  ($label , 0, 4,  $row,$row+1,'fill','shrink',2,2);
-	$table->attach  ($inf_bt , 4, 5, $row,$row+1,'fill','shrink',2,2);
-	$table->attach  ($widget , 5, 9, $row,$row+1,'fill','shrink',2,2);
-	$table->attach  ($tmp , 9, 10, $row,$row+1,'fill','shrink',2,2);
-}
+
 
 
 sub initial_default_param{
@@ -584,10 +577,10 @@ sub tile_set_widget{
 
 	
 if($show){
-	$table->attach_defaults ( $button, 0, 4, $row,$row+1);
-	$table->attach_defaults ( $remove, 4, 5, $row,$row+1);
-	$table->attach_defaults ( $entry , 5, 9, $row,$row+1);	
-	$table->attach_defaults ( $set, 9, 10, $row,$row+1);
+	$table->attach ( $button, 0, 1, $row,$row+1,'fill','fill',2,2);
+	$table->attach ( $remove, 1, 2, $row,$row+1,'fill','shrink',2,2);
+	$table->attach ( $entry , 2, 3, $row,$row+1,'fill','shrink',2,2);	
+	$table->attach ( $set, 3, 4, $row,$row+1,'fill','shrink',2,2);
 	
 
 		
@@ -618,7 +611,7 @@ sub defualt_tilles_setting {
 	$box1->pack_start( $separator1, FALSE, FALSE, 3);
 	$box1->pack_start( $title2, FALSE, FALSE, 3);
 	$box1->pack_start( $separator2, FALSE, FALSE, 3);
-	if($show){$table->attach_defaults ($box1 ,0,10, $row,$row+1);$row++;}
+	if($show){$table->attach_defaults ($box1 ,0,4, $row,$row+1);$row++;}
 	
 	
 	
@@ -677,10 +670,10 @@ sub defualt_tilles_setting {
 	
 	if($show){
 		my $tmp=gen_label_in_left(" "); 
-		$table->attach_defaults ($label, 0, 4 , $row,$row+1);
-		$table->attach_defaults ($tmp, 4, 5 , $row,$row+1);		
-		$table->attach_defaults ($entry, 5, 9 , $row,$row+1);
-		$table->attach_defaults ($browse, 9, 10, $row,$row+1);
+		$table->attach  ($label, 0, 1 , $row,$row+1,'fill','shrink',2,2);
+		$table->attach ($tmp, 1, 2 , $row,$row+1,'fill','shrink',2,2);		
+		$table->attach ($entry, 2, 3 , $row,$row+1,'fill','shrink',2,2);
+		$table->attach ($browse, 3, 4, $row,$row+1,'fill','shrink',2,2);
 		$row++;
 	}
 	
@@ -702,8 +695,8 @@ you can add individual numbers or ranges as follow
 	eg: 0,2,5:10
 	', ' Tile numbers ');
 	if($show){
-		$table->attach_defaults ($lab1 ,0,3, $row,$row+1);
-		$table->attach_defaults ($lab2 ,5,10, $row,$row+1);$row++;
+		$table->attach_defaults ($lab1 ,0,1, $row,$row+1);
+		$table->attach_defaults ($lab2 ,2,3, $row,$row+1);$row++;
 	}	
 	
 	my $soc_num=0;
@@ -729,12 +722,11 @@ sub noc_config{
 
 	
 	#title	
+	my $row=0;
 	my $title=gen_label_in_center("NoC Configuration");
-	my $box=def_vbox(FALSE, 1);
-	$box->pack_start( $title, FALSE, FALSE, 3);
-	my $separator = Gtk2::HSeparator->new;
-	$box->pack_start( $separator, FALSE, FALSE, 3);
-	$table->attach_defaults ($box , 0, 10, 0,1);
+	$table->attach ($title , 0, 4,  $row, $row+1,'expand','shrink',2,2); $row++;
+	my $separator = Gtk2::HSeparator->new;	
+	$table->attach ($separator , 0, 4 , $row, $row+1,'fill','fill',2,2);	$row++;
 
 	my $label;
 	my $param;
@@ -742,7 +734,7 @@ sub noc_config{
 	my $type;
 	my $content;
 	my $info;
-	my $row=1;
+	
 	
 	#parameter start
 	my $b1;
@@ -755,8 +747,9 @@ sub noc_config{
 	if($show_noc == 0){	
 		$b1= def_image_button("icons/down.png","NoC Parameters");
 		$label=gen_label_in_center(' ');
-		$table->attach_defaults ( $label , 2, 10, $row,$row+1);	
-		$table->attach_defaults ( $b1 , 0, 4, $row,$row+1);$row++;	
+		$table->attach  ( $label , 2, 3, $row,$row+1 ,'fill','shrink',2,2);
+		$table->attach  ( $b1 , 0, 2, $row,$row+1,'fill','shrink',2,2);
+		$row++;	
 	}
 	
 	
@@ -771,30 +764,43 @@ sub noc_config{
 	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_type',1);
 	my $router_type=$mpsoc->object_get_attribute('noc_type',"ROUTER_TYPE");
 	
+	#topology
+	$label='Topology';
+	$param='TOPOLOGY';
+	$default='"MESH"';
+	$content='"MESH","TORUS","RING","LINE"';
+	$type='Combo-box';
+    $info="NoC topology"; 
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',1);
 			
-
+	my $topology=$mpsoc->object_get_attribute('noc_param','TOPOLOGY');
+	
 	#Routers per row
 	$label= 'Routers per row';
 	$param= 'NX';
     $default=' 2';
-	$content='2,16,1';
+	$content=($topology eq '"MESH"' || $topology eq '"TORUS"') ? '2,16,1':'2,64,1';
     $info= 'Number of NoC routers in row (X dimention)';
     $type= 'Spin-button';             
 	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',1);
 	
 
-
+	
 	#Routers per column
-	$label= 'Routers per column';
-	$param= 'NY';
-    $default=' 2';
-	$content='2,16,1';
-    $info= 'Number of NoC routers in column (Y dimention)';
-    $type= 'Spin-button';             
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',1);
-
-	if($router_type eq '"VC_BASED"'){
-		#VC number per port
+	if($topology eq '"MESH"' || $topology eq '"TORUS"') {
+		$label= 'Routers per column';
+		$param= 'NY';
+	    $default=' 2';
+		$content='2,16,1';
+	    $info= 'Number of NoC routers in column (Y dimention)';
+	    $type= 'Spin-button';             
+		$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',1);
+	} else {
+		$mpsoc->object_add_attribute('noc_param','NY',1);		
+	}
+	
+	#VC number per port
+	if($router_type eq '"VC_BASED"'){	
 		my $v=$mpsoc->object_get_attribute('noc_param','V');
 		if(defined $v){ $mpsoc->object_add_attribute('noc_param','V',2) if($v eq 1);}
 		$label='VC number per port';
@@ -806,9 +812,7 @@ sub noc_config{
 		$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',1);
 	} else {
 		$mpsoc->object_add_attribute('noc_param','V',1);
-		$mpsoc->object_add_attribute('noc_param','C',0);
-		
-		
+		$mpsoc->object_add_attribute('noc_param','C',0);		
 	}
 	
 	#buffer width per VC
@@ -829,31 +833,25 @@ sub noc_config{
     $info="The packet payload width in bits"; 
 	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info,$table,$row,$show_noc,'noc_param',undef);
 
-	#topology
-	$label='Topology';
-	$param='TOPOLOGY';
-	$default='"MESH"';
-	$content='"MESH","TORUS"';
-	$type='Combo-box';
-    $info="NoC topology"; 
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',1);
 
 	#routing algorithm
-	my $topology=$mpsoc->object_get_attribute('noc_param','TOPOLOGY');
 	$label='Routing Algorithm';
 	$param="ROUTE_NAME";
 	$type="Combo-box";
 	if($router_type eq '"VC_BASED"'){
-		$content=($topology eq '"MESH"')?  '"XY","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","DUATO"' :
-				   	   	    '"TRANC_XY","TRANC_WEST_FIRST","TRANC_NORTH_LAST","TRANC_NEGETIVE_FIRST","TRANC_DUATO"';
+		$content=($topology eq '"MESH"')?  '"XY","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","ODD_EVEN","DUATO"' :
+				 ($topology eq '"TORUS"')? '"TRANC_XY","TRANC_WEST_FIRST","TRANC_NORTH_LAST","TRANC_NEGETIVE_FIRST","TRANC_DUATO"':
+				 ($topology eq '"RING"')? '"TRANC_XY"' : '"XY"';
+				  
 	
 	}else{
-		$content=($topology eq '"MESH"')?  '"XY","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST"' :
-				   	   	    '"TRANC_XY","TRANC_WEST_FIRST","TRANC_NORTH_LAST","TRANC_NEGETIVE_FIRST"';
+		$content=($topology eq '"MESH"')?  '"XY","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","ODD_EVEN"' :
+				 ($topology eq '"TORUS"')? '"TRANC_XY","TRANC_WEST_FIRST","TRANC_NORTH_LAST","TRANC_NEGETIVE_FIRST"':
+				 ($topology eq '"RING"')? '"TRANC_XY"' : '"XY"';
 	
 		
 	}
-	$default=($topology eq '"MESH"')?  '"XY"':'"TRANC_XY"';
+	$default=($topology eq '"MESH"' || $topology eq '"LINE"' )?  '"XY"':'"TRANC_XY"';
 	$info="Select the routing algorithm: XY(DoR) , partially adaptive (Turn models). Fully adaptive (Duato) "; 
 	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',1);
 
@@ -864,110 +862,99 @@ sub noc_config{
 	$default='"NO"';
 	$content='"YES","NO"';
 	$type='Combo-box';
-    	$info="Enable single cycle latency on packets traversing in the same direction using static straight allocator (SSA)"; 
+	$info="Enable single cycle latency on packets traversing in the same direction using static straight allocator (SSA)"; 
 	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',undef);
 
 
-
-
+	
 
 	if($show_noc == 1){	
 		$b1= def_image_button("icons/up.png","NoC Parameters");
-		$table->attach_defaults ( $b1 , 0, 2, $row,$row+1);$row++;	
+		$table->attach  ( $b1 , 0, 2, $row,$row+1,'fill','shrink',2,2);
+		$row++;	
 	}
 	$b1->signal_connect("clicked" => sub{ 
 		$show_noc=($show_noc==1)?0:1;
 		$mpsoc->object_add_attribute('setting','show_noc_setting',$show_noc);
 		set_gui_status($mpsoc,"ref",1);
-
 	});
+
 
 	#advance parameter start
 	my $advc;
 	my $adv_set=$mpsoc->object_get_attribute('setting','show_adv_setting');
 	if($adv_set == 0){	
 		$advc= def_image_button("icons/down.png","Advance Parameters");
-		$table->attach_defaults ( $advc , 0, 4, $row,$row+1);$row++;
-	
+		$table->attach ( $advc , 0, 2, $row,$row+1,'fill','shrink',2,2);
+		$row++;	
 	}
-	
 	
 	
 	#Fully and partially adaptive routing setting
-		my $route=$mpsoc->object_get_attribute('noc_param',"ROUTE_NAME");
-		
-			$label="Congestion index";	
-			$param="CONGESTION_INDEX";
-		   	$type="Spin-button";
-		   	$content="0,12,1";
-			$info="Congestion index determines how congestion information is collected from neighboring routers. Please refer to the usere manual for more information";
-		    $default=3;
-		if($route ne '"XY"' and $route ne '"TRANC_XY"' ){
-		   	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);
-		   
-		} else {
-			$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,0,'noc_param',undef);
-		}
-		#Fully adaptive routing setting
-		
-		  	 my $v=$mpsoc->object_get_attribute('noc_param',"V");
-		  	 $label="Select Escap VC";	
-		  	 $param="ESCAP_VC_MASK";
-		  	 $type="Check-box";
-		  	 $content=$v;
-		  	 $default="$v\'b";
-		  	 for (my $i=1; $i<=$v-1; $i++){$default=  "${default}0";}
-		  	 $default=  "${default}1";
-			
-		
-		  	 $info="Select the escap VC for fully adaptive routing.";
-		if( $route eq '"TRANC_DUATO"' or $route eq '"DUATO"'  ){
-		  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set, 'noc_param',undef);
-	  	
-	  	 }
-		else{
-			 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,0, 'noc_param',undef);
-		}
+	my $route=$mpsoc->object_get_attribute('noc_param',"ROUTE_NAME");
+	$label="Congestion index";	
+	$param="CONGESTION_INDEX";
+	$type="Spin-button";
+	$content="0,12,1";
+	$info="Congestion index determines how congestion information is collected from neighboring routers. Please refer to the usere manual for more information";
+	$default=3;
+	if($route ne '"XY"' and $route ne '"TRANC_XY"' ){
+	   	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);
+	} else {
+		$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,0,'noc_param',undef);
+	}
+	
+	#Fully adaptive routing setting
+	my $v=$mpsoc->object_get_attribute('noc_param',"V");
+	$label="Select Escap VC";	
+	$param="ESCAP_VC_MASK";
+	$type="Check-box";
+	$content=$v;
+	$default="$v\'b";
+	for (my $i=1; $i<=$v-1; $i++){$default=  "${default}0";}
+	$default=  "${default}1";
+	$info="Select the escap VC for fully adaptive routing.";
+	if( $route eq '"TRANC_DUATO"' or $route eq '"DUATO"'  ){
+	  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set, 'noc_param',undef);
+	 }
+	else{
+		 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,0, 'noc_param',undef);
+	}
 		
 	# VC reallocation type
-		$label=($router_type eq '"VC_BASED"')? 'VC reallocation type': 'Queue reallocation type';	
-		$param='VC_REALLOCATION_TYPE';
-                $info="VC reallocation type: If set as atomic only empty VCs can be allocated for new packets. Whereas, in non-atomic a non-empty VC which has received the last packet tail flit can accept a new  packet"; 
-                $default='"NONATOMIC"';  
-                $content='"ATOMIC","NONATOMIC"';
-                $type='Combo-box';
-                $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);                                           
+	$label=($router_type eq '"VC_BASED"')? 'VC reallocation type': 'Queue reallocation type';	
+	$param='VC_REALLOCATION_TYPE';
+    $info="VC reallocation type: If set as atomic only empty VCs can be allocated for new packets. Whereas, in non-atomic a non-empty VC which has received the last packet tail flit can accept a new  packet"; 
+    $default='"NONATOMIC"';  
+    $content='"ATOMIC","NONATOMIC"';
+    $type='Combo-box';
+    $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);                                           
 
 
-
-
-	
 	#vc/sw allocator type
-		$label = 'VC/SW combination type';
- 		$param='COMBINATION_TYPE';
-                $default='"COMB_NONSPEC"';
-                $content='"BASELINE","COMB_SPEC1","COMB_SPEC2","COMB_NONSPEC"';
-                $type='Combo-box';
-                $info="The joint VC/ switch allocator type. using canonical combination is not recommanded";   
+	$label = 'VC/SW combination type';
+	$param='COMBINATION_TYPE';
+    $default='"COMB_NONSPEC"';
+    $content='"BASELINE","COMB_SPEC1","COMB_SPEC2","COMB_NONSPEC"';
+    $type='Combo-box';
+    $info="The joint VC/ switch allocator type. using canonical combination is not recommanded";   
 	if ($router_type eq '"VC_BASED"'){                 
-                $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);                   
-
+	    $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);                   
 	} else{
 		 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,0,'noc_param',undef);  
-
 	}
 	
 	# Crossbar mux type 
-		$label='Crossbar mux type';
-		$param='MUX_TYPE';
-		$default='"BINARY"';
-		$content='"ONE_HOT","BINARY"';
-		$type='Combo-box';
-		$info="Crossbar multiplexer type";
-        $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);             
-       
+	$label='Crossbar mux type';
+	$param='MUX_TYPE';
+	$default='"BINARY"';
+	$content='"ONE_HOT","BINARY"';
+	$type='Combo-box';
+	$info="Crossbar multiplexer type";
+    $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',undef);             
+    
+    #class   
 	if($router_type eq '"VC_BASED"'){
-	#class
 		$label='class number';
 		$param='C';
 		$default= 0;
@@ -992,29 +979,23 @@ sub noc_config{
 		  	 $content=$v;
 		  	 $info="Select the permitted VCs which the message class $i can be sent via them.";
 		  	 $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'class_param',undef);
-
-
 		}
-
-
 	
 	}#($router_type eq '"VC_BASED"')
 	 
 	 
 
-	 #simulation debuge enable     
-		$label='Debug enable';
-		$param='DEBUG_EN';
-                $info= "Add extra verilog code for debuging NoC for simulation";
-		$default='0';
-                $content='0,1';
-                $type='Combo-box';
-                $row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');  
-
-
+	#simulation debuge enable     
+	$label='Debug enable';
+	$param='DEBUG_EN';
+    $info= "Add extra verilog code for debuging NoC for simulation";
+	$default='0';
+	$content='0,1';
+	$type='Combo-box';
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');  
 
 	
-	
+	#pipeline reg	
 	$label="Add pipeline reg after crossbar";	
 	$param="ADD_PIPREG_AFTER_CROSSBAR";
 	$type="Check-box";
@@ -1022,15 +1003,60 @@ sub noc_config{
 	$default="1\'b0";
 	$info="If enabeled it adds a pipline register at the output port of the router.";
 	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');
+	 
+	#FIRST_ARBITER_EXT_P_EN
+	$label='Swich allocator first level 
+arbiters extenal priority enable';
+	$param='FIRST_ARBITER_EXT_P_EN';
+	$default= 1;
+	$info='If set as 1 then the switch allocator\'s input (first) arbiters\' priority registers are enabled only when a request get both input and output arbiters\' grants'; 
+	$content='0,1';
+	$type="Combo-box";
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info,$table,$row,$adv_set,'noc_param');     
 	  	
 	
+	#Arbiter type
+	$label='SW allocator arbiteration type'; 
+	$param='SWA_ARBITER_TYPE';
+	$default='"RRA"';
+	$content='"RRA","WRRA"'; #,"WRRA_CLASSIC"';
+	$type='Combo-box';
+    $info="Switch allocator arbitertion type: 
+    RRA: Round robin arbiter. Only local fairness in a router. 
+    WRRA: Weighted round robin arbiter. Results in global fairness in the NoC. 
+          Switch allocation requests are grated acording to their weight which increases due to contention"; 
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param',1);
 	
 	  	
+	
+    my $arbiter=$mpsoc->object_get_attribute('noc_param',"SWA_ARBITER_TYPE");
+    my $wrra_show = ($arbiter ne  '"RRA"' && $adv_set == 1 )? 1 : 0;
+	# weight width
+	$label='Weight width';
+	$param='WEIGHTw';
+	$default='4';
+	$content='2,7,1';
+	$info= 'Maximum weight width';
+	$type= 'Spin-button';  
+	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$wrra_show,'noc_param',undef);  
+	
+	#WRRA_CONFIG_INDEX
+	$label='Weight configuration index';
+	$param='WRRA_CONFIG_INDEX';
+	$default='0';
+	$content='0,7,1';
+	$info= 'WRRA_CONFIG_INDEX:
 
+';
+	$type= 'Spin-button';  
+	#$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$wrra_show,'noc_param',undef);  
+	
+	
 	
 	if($adv_set == 1){	
 		$advc= def_image_button("icons/up.png","Advance Parameters");
-		$table->attach_defaults ( $advc , 0, 4, $row,$row+1);$row++;
+		$table->attach ( $advc , 0, 2, $row,$row+1,'fill','shrink',2,2);
+		$row++;
 	}
 	$advc->signal_connect("clicked" => sub{ 
 		$adv_set=($adv_set==1)?0:1;
@@ -1041,15 +1067,9 @@ sub noc_config{
 	
 	#other fixed parameters       
 	
-
-	#FIRST_ARBITER_EXT_P_EN
-	$label='FIRST_ARBITER_EXT_P_EN';
-	$param='FIRST_ARBITER_EXT_P_EN';
-	$default= 0;
-	$info='FIRST_ARBITER_EXT_P_EN'; 
-	$content='0,1';
-	$type="Combo-box";
-	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info,$table,$row,0,'noc_param');         
+               
+    
+	    
 	
 	   
 	
@@ -1115,7 +1135,8 @@ sub get_config{
 	
 	if($show == 0){	
 		$tile_set= def_image_button("icons/down.png","Tiles setting");
-		$table->attach_defaults ( $tile_set , 0, 4, $row,$row+1);$row++;
+		$table->attach ( $tile_set , 0, 2, $row,$row+1,'fill','shrink',2,2);
+		$row++;
 	
 	}
 	
@@ -1135,7 +1156,8 @@ sub get_config{
 	#end tile setting
 	if($show == 1){	
 		$tile_set= def_image_button("icons/up.png","Tiles setting");
-		$table->attach_defaults ( $tile_set , 0, 1, $row,$row+1);$row++;
+		$table->attach ( $tile_set , 0, 2, $row,$row+1,'fill','shrink',2,2);
+		$row++;
 	}
 	$tile_set->signal_connect("clicked" => sub{ 
 		$show=($show==1)?0:1;
@@ -1148,11 +1170,11 @@ sub get_config{
 
 
 	
-	for(my $i=$row; $i<25; $i++){
-		my $empty_col=gen_label_in_left(' ');
-		$table->attach_defaults ($empty_col , 0, 1, $i,$i+1);
+	#for(my $i=$row; $i<25; $i++){
+		#my $empty_col=gen_label_in_left(' ');
+		#$table->attach_defaults ($empty_col , 0, 1, $i,$i+1);
 
-	}
+	#}
 	
 	   
 
@@ -1252,7 +1274,7 @@ sub generate_soc_files{
 	# Write object file
 	open(FILE,  ">lib/soc/$soc_name.SOC") || die "Can not open: $!";
 	print FILE perl_file_header("$soc_name.SOC");
-	print FILE Data::Dumper->Dump([\%$soc],['mpsoc']);
+	print FILE Data::Dumper->Dump([\%$soc],['soc']);
 	close(FILE) || die "Error closing file: $!";
 		
 	# Write verilog file
@@ -1300,7 +1322,7 @@ sub generate_soc_files{
     		
     		
     		# Write header file
-			generate_header_file($soc,$project_dir,$target_dir,$dir);
+			generate_header_file($soc,$project_dir,$target_dir,$target_dir,$dir);
 			
     		
     				
@@ -1325,7 +1347,7 @@ sub generate_mpsoc_lib_file {
 	$mpsoc->mpsoc_remove_all_soc_tops(); 
 	open(FILE,  ">lib/mpsoc/$name.MPSOC") || die "Can not open: $!";
 	print FILE perl_file_header("$name.MPSOC");
-	print FILE Data::Dumper->Dump([\%$mpsoc],[$name]);
+	print FILE Data::Dumper->Dump([\%$mpsoc],['mpsoc']);
 	close(FILE) || die "Error closing file: $!";
 	get_soc_list($mpsoc,$info); 
 	
@@ -1437,11 +1459,13 @@ sub mpsoc_mem_prog {
 #!/bin/sh
 
 
-JTAG_MAIN="$PRONOC_WORK/toolchain/bin/jtag_main"
+#JTAG_INTFC="$PRONOC_WORK/toolchain/bin/JTAG_INTFC"
+source ./jtag_intfc.sh
+
 
 #reset and disable cpus, then release the reset but keep the cpus disabled
 
-$JTAG_MAIN -n 127  -d  "I:1,D:2:3,D:2:2,I:0"
+$JTAG_INTFC -n 127  -d  "I:1,D:2:3,D:2:2,I:0"
 
 # jtag instruction 
 #	0: bypass
@@ -1464,7 +1488,7 @@ for i in $(ls -d */); do
 done
  
 #Enable the cpu
-$JTAG_MAIN -n 127  -d  "I:1,D:2:0,I:0"
+$JTAG_INTFC -n 127  -d  "I:1,D:2:0,I:0"
 # I:1  set jtag_enable  in active mode
 # D:2:0 load jtag_enable data register with 0x0 reset=0 disable=0
 # I:0  set jtag_enable  in bypass mode
@@ -1587,11 +1611,13 @@ sub get_tile{
 	my ($soc_name,$num)= $mpsoc->mpsoc_get_tile_soc_name($tile);
 	
 	my $button;
+	my $topology=$mpsoc->object_get_attribute('noc_param','TOPOLOGY');
+	my $cordibate =	 ($topology eq '"RING"' || $topology eq '"LINE"' ) ? "" : "($x,$y)";
 	if( defined $soc_name){
 		my $setting=$mpsoc->mpsoc_get_tile_param_setting($tile);
-		$button=($setting eq 'Custom')? def_colored_button("Tile $tile ($x,$y)*\n$soc_name",$num) :	def_colored_button("Tile $tile ($x,$y)\n$soc_name",$num) ;
+		$button=($setting eq 'Custom')? def_colored_button("Tile $tile ${cordibate}*\n$soc_name",$num) :	def_colored_button("Tile $tile ${cordibate}\n$soc_name",$num) ;
 	}else {
-		$button =def_colored_button("Tile $tile ($x,$y)\n",50) if(! defined $soc_name);
+		$button =def_colored_button("Tile $tile ${cordibate}\n",50) if(! defined $soc_name);
 	}
 	
 	$button->signal_connect("clicked" => sub{ 
@@ -1710,9 +1736,7 @@ sub gen_tiles{
 
 	#print "($nx,$ny);\n";
 	my $table=def_table($nx,$ny,FALSE);#	my ($row,$col,$homogeneous)=@_;
-	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
-	$scrolled_win->set_policy( "automatic", "automatic" );
-	$scrolled_win->add_with_viewport($table);
+	
 
 
 
@@ -1728,6 +1752,11 @@ sub gen_tiles{
 
 
 	}}
+	return $table;
+}
+
+
+
 
 
 
@@ -1753,202 +1782,12 @@ sub software_edit_mpsoc {
 
 	$make -> signal_connect("clicked" => sub{
 		$app->do_save();
+		apend_to_textview($tview,' ');
 		run_make_file($sw,$tview);	
 
 	});
 
 }
-
-
-
-
-
-
-
-############
-#    main
-############
-sub mpsocgen_main{
-	
-	my $infc = interface->interface_new(); 
-	my $soc = ip->lib_new ();
-	#my $soc = soc->soc_new();
-
-	my $mpsoc= mpsoc->mpsoc_new();
-	
-	set_gui_status($mpsoc,"ideal",0);
-	
-	# main window
-	#my $window = def_win_size(1000,800,"Top");
-	#  The main table containg the lib tree, selected modules and info section 
-	my $main_table = Gtk2::Table->new (25, 12, FALSE);
-	
-	# The box which holds the info, warning, error ...  mesages
-	my ($infobox,$info)= create_text();	
-	
-	
-	my $refresh = Gtk2::Button->new_from_stock('ref');
-	
-	
-	my $noc_conf_box=get_config ($mpsoc,$info);
-	my $noc_tiles=gen_tiles($mpsoc);
-
-	my $scr_conf = new Gtk2::ScrolledWindow (undef, undef);
-	$scr_conf->set_policy( "automatic", "automatic" );
-	$scr_conf->add_with_viewport($noc_conf_box);
-
-	$main_table->set_row_spacings (4);
-	$main_table->set_col_spacings (1);
-	
-	#my  $device_win=show_active_dev($soc,$soc,$infc,\$refresh,$info);
-	
-	
-	my $generate = def_image_button('icons/gen.png','Generate');
-	
-	
-	
-	
-	my $open = def_image_button('icons/browse.png','Load MPSoC');
-	my $compile  = def_image_button('icons/run.png','Compile');
-	my $software = def_image_button('icons/binary.png','Software');
-	my $entry=gen_entry_object($mpsoc,'mpsoc_name',undef,undef,undef,undef);
-	my $entrybox=labele_widget_info(" MPSoC name:",$entry);
-	
-	
-	
-	#$table->attach_defaults ($event_box, $col, $col+1, $row, $row+1);
-	#$main_table->attach_defaults ($noc_conf_box , 0, 4, 0, 22);
-	#$main_table->attach_defaults ($noc_tiles , 4, 12, 0, 22);
-	#$main_table->attach_defaults ($infobox  , 0, 12, 22,24);
-
-	my $h1=gen_hpaned($scr_conf,.3,$noc_tiles);
-	my $v2=gen_vpaned($h1,.55,$infobox);
-	$main_table->attach_defaults ($v2  , 0, 12, 0,24);
-
-
-
-
-
-	$main_table->attach ($open,0, 3, 24,25,'expand','shrink',2,2);
-	$main_table->attach_defaults ($entrybox,3, 7, 24,25);
-	
-	$main_table->attach ($generate, 8, 9, 24,25,'expand','shrink',2,2);
-	$main_table->attach ($software, 9, 10, 24,25,'expand','shrink',2,2);	
-	$main_table->attach ($compile, 10, 12, 24,25,'expand','shrink',2,2);
-
-	#referesh the mpsoc generator 
-	$refresh-> signal_connect("clicked" => sub{ 
-		$noc_conf_box->destroy();
-		$noc_conf_box=get_config ($mpsoc,$info);
-		$scr_conf->add_with_viewport($noc_conf_box);
-		#$main_table->attach_defaults ($noc_conf_box , 0, 4, 0, 22);
-		#$noc_conf_box->show_all();			
-		
-
-
-		$noc_tiles->destroy();
-		$noc_tiles=gen_tiles($mpsoc);
-		#$h1->destroy();
-		#$h1=gen_hpaned($noc_conf_box,.3,$noc_tiles);
-		$h1 -> pack1($scr_conf, TRUE, TRUE); 	
-		$h1 -> pack2($noc_tiles, TRUE, TRUE); 
-		
-		$v2-> pack1($h1, TRUE, TRUE); 	
-		$h1->show_all;
-		#$main_table->attach_defaults ($noc_tiles , 4, 12, 0, 22);
-
-		$main_table->show_all();
-
-
-	});
-
-
-
-	#check soc status every 0.5 second. referesh device table if there is any changes 
-	Glib::Timeout->add (100, sub{ 
-		my ($state,$timeout)= get_gui_status($mpsoc);
-		
-
-		if ($timeout>0){
-			$timeout--;
-			set_gui_status($mpsoc,$state,$timeout);						
-		}elsif ($state eq 'save_project'){
-			# Write object file
-			my $name=$mpsoc->object_get_attribute('mpsoc_name');
-			open(FILE,  ">lib/mpsoc/$name.MPSOC") || die "Can not open: $!";
-			print FILE perl_file_header("$name.MPSOC");
-			print FILE Data::Dumper->Dump([\%$mpsoc],[$name]);
-			close(FILE) || die "Error closing file: $!";
-			set_gui_status($mpsoc,"ideal",0);	
-		}
-		elsif( $state ne "ideal" ){
-			$refresh->clicked;
-			my $saved_name=$mpsoc->object_get_attribute('mpsoc_name');
-			if(defined $saved_name) {$entry->set_text($saved_name);}
-			set_gui_status($mpsoc,"ideal",0);
-			
-			
-		}	
-		return TRUE;
-		
-	} );
-		
-		
-	$generate-> signal_connect("clicked" => sub{ 
-		generate_mpsoc($mpsoc,$info);
-		$refresh->clicked;
-
-	});
-
-#	$wb-> signal_connect("clicked" => sub{ 
-#		wb_address_setting($mpsoc);
-#	
-#	});
-
-	$open-> signal_connect("clicked" => sub{ 
-		set_gui_status($mpsoc,"ref",5);
-		load_mpsoc($mpsoc,$info);
-	
-	});
-
-
-	$compile -> signal_connect("clicked" => sub{ 
-		my $name=$mpsoc->object_get_attribute('mpsoc_name');
-		if (length($name)==0){
-			message_dialog("Please define the MPSoC name!");
-			return ;
-		}
-		my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$name";
-		my $top_file 	= "$target_dir/src_verilog/${name}_top.v";
-		if (-f $top_file){	
-			select_compiler($mpsoc,$name,$top_file,$target_dir);
-		} else {
-			message_dialog("Cannot find $top_file file. Please run RTL Generator first!");
-			return;
-		}
-	});	
-	
-	$software -> signal_connect("clicked" => sub{
-		software_edit_mpsoc($mpsoc);
-
-	});
-
-	
-	my $sc_win = new Gtk2::ScrolledWindow (undef, undef);
-		$sc_win->set_policy( "automatic", "automatic" );
-		$sc_win->add_with_viewport($main_table);	
-
-	return $sc_win;
-	
-
-}
-
-
-
-
-	return $scrolled_win;
-}
-
 
 
 
@@ -2012,11 +1851,150 @@ sub load_mpsoc{
 		}					
      }
      $dialog->destroy;
+}
 
+############
+#    main
+############
+sub mpsocgen_main{
+	
+	my $infc = interface->interface_new(); 
+	my $soc = ip->lib_new ();
+	my $mpsoc= mpsoc->mpsoc_new();
+	
+	
+	set_gui_status($mpsoc,"ideal",0);
+	
+	my $main_table = Gtk2::Table->new (25, 12, FALSE);
+	
+	# The box which holds the info, warning, error ...  mesages
+	my ($infobox,$info)= create_text();	
+		
+	my $noc_conf_box=get_config ($mpsoc,$info);
+	my $noc_tiles=gen_tiles($mpsoc);
 
+	my $scr_conf = new Gtk2::ScrolledWindow (undef, undef);
+	$scr_conf->set_policy( "automatic", "automatic" );
+	$scr_conf->add_with_viewport($noc_conf_box);
+	
+	my $scr_tile = new Gtk2::ScrolledWindow (undef, undef);
+	$scr_tile->set_policy( "automatic", "automatic" );
+	$scr_tile->add_with_viewport($noc_tiles);
+
+	$main_table->set_row_spacings (4);
+	$main_table->set_col_spacings (1);
+	
+		
+	my $generate = def_image_button('icons/gen.png','Generate RTL');
+	my $open = def_image_button('icons/browse.png','Load MPSoC');
+	my $compile  = def_image_button('icons/gate.png','Compile RTL');
+	my $software = def_image_button('icons/binary.png','Software');
+	my $entry=gen_entry_object($mpsoc,'mpsoc_name',undef,undef,undef,undef);
+	my $entrybox=labele_widget_info(" MPSoC name:",$entry);
+	
+	my $h1=gen_hpaned($scr_conf,.3,$scr_tile);
+	my $v2=gen_vpaned($h1,.55,$infobox);
+
+	$main_table->attach_defaults ($v2  , 0, 12, 0,24);
+	$main_table->attach ($open,0, 3, 24,25,'expand','shrink',2,2);
+	$main_table->attach_defaults ($entrybox,3, 7, 24,25);
+	$main_table->attach ($generate, 8, 9, 24,25,'expand','shrink',2,2);
+	$main_table->attach ($software, 9, 10, 24,25,'expand','shrink',2,2);	
+	$main_table->attach ($compile, 10, 12, 24,25,'expand','shrink',2,2);
 
 	
 
+
+	#check soc status every 0.5 second. referesh device table if there is any changes 
+	Glib::Timeout->add (100, sub{ 
+		my ($state,$timeout)= get_gui_status($mpsoc);
+		
+
+		if ($timeout>0){
+			$timeout--;
+			set_gui_status($mpsoc,$state,$timeout);						
+		}elsif ($state eq 'save_project'){
+			# Write object file
+			my $name=$mpsoc->object_get_attribute('mpsoc_name');
+			open(FILE,  ">lib/mpsoc/$name.MPSOC") || die "Can not open: $!";
+			print FILE perl_file_header("$name.MPSOC");
+			print FILE Data::Dumper->Dump([\%$mpsoc],[$name]);
+			close(FILE) || die "Error closing file: $!";
+			set_gui_status($mpsoc,"ideal",0);	
+		}
+		elsif( $state ne "ideal" ){
+			$noc_conf_box->destroy();
+			$noc_conf_box=get_config ($mpsoc,$info);
+			$scr_conf->add_with_viewport($noc_conf_box);
+			$noc_tiles->destroy();
+			$noc_tiles=gen_tiles($mpsoc);
+			$scr_tile->add_with_viewport($noc_tiles);
+			$h1 -> pack1($scr_conf, TRUE, TRUE); 	
+			$h1 -> pack2($scr_tile, TRUE, TRUE); 		
+			$v2-> pack1($h1, TRUE, TRUE); 	
+			$h1->show_all;
+			$main_table->show_all();
+			my $saved_name=$mpsoc->object_get_attribute('mpsoc_name');
+			if(defined $saved_name) {$entry->set_text($saved_name);}
+			set_gui_status($mpsoc,"ideal",0);
+			
+			
+		}	
+		return TRUE;
+		
+	} );
+		
+		
+	$generate-> signal_connect("clicked" => sub{ 
+		generate_mpsoc($mpsoc,$info);
+		set_gui_status($mpsoc,"refresh_soc",1);
+
+	});
+
+
+	$open-> signal_connect("clicked" => sub{ 
+		set_gui_status($mpsoc,"ref",5);
+		load_mpsoc($mpsoc,$info);
+	
+	});
+
+
+	$compile -> signal_connect("clicked" => sub{ 
+		$mpsoc->object_add_attribute('compile','compilers',"QuartusII,Verilator,Modelsim");
+		my $name=$mpsoc->object_get_attribute('mpsoc_name');
+		if (length($name)==0){
+			message_dialog("Please define the MPSoC name!");
+			return ;
+		}
+		my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$name";
+		my $top_file 	= "$target_dir/src_verilog/${name}_top.v";
+		if (-f $top_file){	
+			select_compiler($mpsoc,$name,$top_file,$target_dir);
+		} else {
+			message_dialog("Cannot find $top_file file. Please run RTL Generator first!");
+			return;
+		}
+	});	
+	
+	$software -> signal_connect("clicked" => sub{
+		software_edit_mpsoc($mpsoc);
+
+	});
+
+	
+	my $sc_win = new Gtk2::ScrolledWindow (undef, undef);
+		$sc_win->set_policy( "automatic", "automatic" );
+		$sc_win->add_with_viewport($main_table);	
+
+	return $sc_win;
+	
+
 }
+
+
+
+
+
+
 
 

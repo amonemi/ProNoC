@@ -32,7 +32,7 @@
  parameter MAX_PCK_SIZ=10;
  parameter TIMSTMP_FIFO_NUM=64;
  parameter [V-1	:	0] ESCAP_VC_MASK=1;
- parameter ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
+ parameter ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" || ROUTE_NAME == "TRANC")?    "DETERMINISTIC" : 
 			            (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE"; 
  parameter DEBUG_EN=0;
  parameter ROUTE_SUBFUNC= "NORTH_LAST";

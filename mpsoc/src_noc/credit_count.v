@@ -75,10 +75,10 @@ module credit_counter #(
                     VP_1    =    V        *     P_1,                
                     PP_1    =    P_1    *    P,
                     PVP_1    =    PV        *    P_1,
-                    Bw        =    log2(B),
+                    Bw        =    log2(B+1),
                     B_1     =    B-1;        
 
-    localparam      [Bw-1    :    0] Bint    =    B_1[Bw-1    :    0];
+    localparam      [Bw-1    :    0] Bint    =    B[Bw-1    :    0];
 
     localparam  NORTH  =       3'd2,  
                 SOUTH  =       3'd4; 
@@ -137,7 +137,9 @@ module credit_counter #(
     integer k;
     genvar i,j;
     generate
+        /* verilator lint_off WIDTH */
         if(VC_REALLOCATION_TYPE=="ATOMIC") begin :atomic
+        /* verilator lint_on WIDTH */
             reg    [PV-1        :    0]    empty_all,empty_all_next;
             
             always @(posedge clk or posedge reset) begin
@@ -150,7 +152,7 @@ module credit_counter #(
     
     
             always @(*) begin
-                for(k=0;    k<PV; k=k+1'b1) begin 
+                for(k=0;    k<PV; k=k+1) begin 
                     empty_all_next[k]            =     (credit_counter_next[k]         == Bint);
                 end // for    
             end//always
@@ -159,7 +161,9 @@ module credit_counter #(
             assign ovc_avalable_all                 = ~ovc_status & empty_all;
             
         end else begin :nonatomic //NONATOMIC
+            /* verilator lint_off WIDTH */
             if(ROUTE_TYPE  == "FULL_ADAPTIVE") begin :full_adpt
+            /* verilator lint_on WIDTH */
                 
                 reg [PV-1       :   0] full_adaptive_ovc_mask,full_adaptive_ovc_mask_next; 
                  
@@ -167,7 +171,7 @@ module credit_counter #(
     
     
                 always @(*) begin
-                    for(k=0;    k<PV; k=k+1'b1) begin
+                    for(k=0;    k<PV; k=k+1) begin
                      //in full adaptive routing, adaptive VCs located in y axies can not be reallocated non-atomicly   
                         if( AVC_ATOMIC_EN== 0) begin :avc_atomic
                             if((((k/V) == NORTH ) || ((k/V) == SOUTH )) && (  ADAPTIVE_VC_MASK[k%V]))  

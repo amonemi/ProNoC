@@ -1,5 +1,26 @@
 All notable changes to this project will be documented in this file.
 
+##[1.8.0] - 16-5-2018
+## Added
+-  Support hard-built QoS/EoS support in NoC using weighted Round-Robin arbiter
+-  Add real application task grah simulation support in NoC simulator 
+-  add new 
+-  Add two new (OpenRISC) softprocessors: Or1200 & Mor1kx 
+-  Add documention for timer, ni-master, ni-slave, memory, and dma IP cores.
+-  Add User manual file
+-  Add USB blaster II suooprt in JTAG controller
+-  Add GUI for adding new Altera FPGA boards. 
+-  The simulator/ emulator now can provide additional smulation results 
+	(a) Average latency per average desired flit injection ratio
+	(b) Average throughput per average desired flit injection ratio
+	(c) send/received packets number for each router at different injection ratios
+	(d) send/received worst-case delay for each router at different injection ratios
+	(e) Simulation execution clock cycles
+## changed
+-  Fixe the bug in NoC that halts the simulation when B is defined as 2.
+-  Support Burst Type Extension for Incrementing and Decrementing bursts in RAM controller 
+
+
 
 ##[1.7.0] - 15-7-2017
 ## Added

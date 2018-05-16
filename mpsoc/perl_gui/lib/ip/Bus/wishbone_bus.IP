@@ -117,7 +117,7 @@ $wishbone_bus = bless( {
                                                      'content' => '4,128,1',
                                                      'info' => 'The wishbone Bus address width',
                                                      'type' => 'Spin-button',
-                                                     'deafult' => '32'
+                                                     'default' => '32'
                                                    },
                                            'M' => {
                                                     'global_param' => 'Localparam',
@@ -125,10 +125,10 @@ $wishbone_bus = bless( {
                                                     'redefine_param' => 1,
                                                     'type' => 'Spin-button',
                                                     'info' => 'Number of wishbone master interface',
-                                                    'deafult' => ' 4'
+                                                    'default' => ' 4'
                                                   },
                                            'TAGw' => {
-                                                       'deafult' => '3',
+                                                       'default' => '3',
                                                        'type' => 'Fixed',
                                                        'info' => undef,
                                                        'redefine_param' => 1,
@@ -141,13 +141,13 @@ $wishbone_bus = bless( {
                                                        'redefine_param' => 1,
                                                        'type' => 'Fixed',
                                                        'info' => undef,
-                                                       'deafult' => '2 '
+                                                       'default' => '2 '
                                                      },
                                            'S' => {
                                                     'content' => '1,256,1',
                                                     'redefine_param' => 1,
                                                     'global_param' => 'Localparam',
-                                                    'deafult' => '4',
+                                                    'default' => '4',
                                                     'info' => 'Number of wishbone slave interface',
                                                     'type' => 'Spin-button'
                                                   },
@@ -155,14 +155,14 @@ $wishbone_bus = bless( {
                                                      'content' => '8,512,8',
                                                      'redefine_param' => 1,
                                                      'global_param' => 'Localparam',
-                                                     'deafult' => '32',
+                                                     'default' => '32',
                                                      'type' => 'Spin-button',
                                                      'info' => 'The wishbone Bus data width in bits.'
                                                    },
                                            'CTIw' => {
                                                        'type' => 'Fixed',
                                                        'info' => undef,
-                                                       'deafult' => '3',
+                                                       'default' => '3',
                                                        'global_param' => 'Localparam',
                                                        'content' => '',
                                                        'redefine_param' => 1
@@ -173,7 +173,7 @@ $wishbone_bus = bless( {
                                                        'content' => '',
                                                        'type' => 'Fixed',
                                                        'info' => undef,
-                                                       'deafult' => 'Dw/8'
+                                                       'default' => 'Dw/8'
                                                      }
                                          },
                          'hdl_files' => [

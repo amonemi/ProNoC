@@ -3,17 +3,15 @@
 ##    
 ##	Copyright (C) 2014-2016  Alireza Monemi
 ##    
-##	This file is part of ProNoC 1.5.0 
+##	This file is part of ProNoC 1.8.0 
 ##
 ## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
 ##	MAY CAUSE UNEXPECTED BEHAIVOR.
 ################################################################################
 
-$lcd_2x16 = bless( {
-                     'hdl_files' => [
-                                      '/mpsoc/src_peripheral/display/lcd_2x16/lcd_2x16.v'
-                                    ],
-                     'system_h' => '#define  ${IP}_WR_CMD   (*((volatile unsigned int *) ($BASE)))   
+$ipgen = bless( {
+                  'sw_params_list' => [],
+                  'system_h' => '#define  ${IP}_WR_CMD   (*((volatile unsigned int *) ($BASE)))   
 #define  ${IP}_RD_CMD    (*((volatile unsigned int *) ($BASE+4)))   
 #define  ${IP}_WR_DATA  (*((volatile unsigned int *) ($BASE+8)))   
 #define  ${IP}_RD_DATA   (*((volatile unsigned int *) ($BASE+16)))   
@@ -21,185 +19,188 @@ $lcd_2x16 = bless( {
 #define ${IP}_CLK_MHZ	 $CLK_MHZ
 
 #include "$IP.h"',
-                     'ip_name' => 'lcd_2x16',
-                     'sw_params_list' => [],
-                     'parameters_order' => [
-                                             'Dw',
-                                             'Aw',
-                                             'CLK_MHZ'
-                                           ],
-                     'ports_order' => [
-                                        'clk',
-                                        'reset',
-                                        's_dat_i',
-                                        's_addr_i',
-                                        's_stb_i',
-                                        's_cyc_i',
-                                        's_we_i',
-                                        's_dat_o',
-                                        's_ack_o',
-                                        'lcd_en',
-                                        'lcd_rs',
-                                        'lcd_rw',
-                                        'lcd_data'
-                                      ],
-                     'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/display/lcd_2x16/lcd_2x16.v',
-                     'module_name' => 'lcd_2x16',
-                     'gen_sw_files' => [
-                                         '/mpsoc/src_peripheral/display/lcd_2x16/lcd_2x16frename_sep_t${IP}.h'
-                                       ],
-                     'unused' => {
-                                   'plug:wb_slave[0]' => [
-                                                           'err_o',
-                                                           'rty_o',
-                                                           'tag_i',
-                                                           'cti_i',
-                                                           'sel_i',
-                                                           'bte_i'
-                                                         ]
-                                 },
-                     'category' => 'Display',
-                     'sw_files' => [],
-                     'description' => 'Alphabet Display LCD  2x16',
-                     'modules' => {
-                                    'lcd_2x16' => {}
+                  'parameters_order' => [
+                                          'Dw',
+                                          'Aw',
+                                          'CLK_MHZ'
+                                        ],
+                  'module_name' => 'lcd_2x16',
+                  'gui_status' => {
+                                    'timeout' => 0,
+                                    'status' => 'ideal'
                                   },
-                     'plugs' => {
-                                  'clk' => {
-                                             'clk' => {},
-                                             'value' => 1,
-                                             '0' => {
-                                                      'name' => 'clk'
-                                                    },
-                                             'type' => 'num'
+                  'ip_name' => 'lcd_2x16',
+                  'ports' => {
+                               'lcd_rw' => {
+                                             'type' => 'output',
+                                             'intfc_name' => 'IO',
+                                             'range' => '',
+                                             'intfc_port' => 'IO'
                                            },
-                                  'reset' => {
-                                               'reset' => {},
-                                               'value' => 1,
-                                               '0' => {
-                                                        'name' => 'reset'
-                                                      },
-                                               'type' => 'num'
-                                             },
-                                  'wb_slave' => {
-                                                  'value' => 1,
-                                                  '0' => {
-                                                           'width' => 5,
-                                                           'name' => 'wb',
-                                                           'addr' => '0x9100_0000	0x91ff_ffff		General-Purpose I/O'
-                                                         },
-                                                  'type' => 'num',
-                                                  'wb_slave' => {}
-                                                }
-                                },
-                     'gui_status' => {
-                                       'status' => 'ideal',
-                                       'timeout' => 0
-                                     },
-                     'parameters' => {
-                                       'Aw' => {
-                                                 'info' => undef,
-                                                 'deafult' => ' 2',
-                                                 'global_param' => 0,
-                                                 'content' => '',
-                                                 'type' => 'Fixed',
-                                                 'redefine_param' => 1
-                                               },
-                                       'Dw' => {
-                                                 'info' => undef,
-                                                 'deafult' => '	8',
-                                                 'global_param' => 0,
-                                                 'content' => '',
-                                                 'type' => 'Fixed',
-                                                 'redefine_param' => 1
-                                               },
-                                       'CLK_MHZ' => {
-                                                      'info' => 'The LCD controller clock speed in MHZ. It will be used for measuring the lcd enable delay. You can define a larger value than the actual clk speed but not smaller.',
-                                                      'deafult' => '100',
-                                                      'global_param' => 0,
-                                                      'content' => '2,1000,2',
-                                                      'type' => 'Spin-button',
-                                                      'redefine_param' => 1
-                                                    }
-                                     },
-                     'ports' => {
-                                  's_cyc_i' => {
-                                                 'intfc_name' => 'plug:wb_slave[0]',
-                                                 'intfc_port' => 'cyc_i',
-                                                 'range' => '',
-                                                 'type' => 'input'
-                                               },
-                                  's_dat_i' => {
-                                                 'intfc_name' => 'plug:wb_slave[0]',
-                                                 'intfc_port' => 'dat_i',
-                                                 'range' => 'Dw-1       :   0',
-                                                 'type' => 'input'
-                                               },
-                                  'lcd_en' => {
-                                                'intfc_name' => 'IO',
-                                                'intfc_port' => 'IO',
-                                                'range' => '',
-                                                'type' => 'output'
-                                              },
-                                  's_ack_o' => {
-                                                 'intfc_name' => 'plug:wb_slave[0]',
-                                                 'intfc_port' => 'ack_o',
-                                                 'range' => '',
-                                                 'type' => 'output'
-                                               },
-                                  's_we_i' => {
-                                                'intfc_name' => 'plug:wb_slave[0]',
-                                                'intfc_port' => 'we_i',
-                                                'range' => '',
-                                                'type' => 'input'
-                                              },
-                                  's_stb_i' => {
-                                                 'intfc_name' => 'plug:wb_slave[0]',
-                                                 'intfc_port' => 'stb_i',
-                                                 'range' => '',
-                                                 'type' => 'input'
-                                               },
-                                  'lcd_data' => {
-                                                  'intfc_name' => 'IO',
-                                                  'intfc_port' => 'IO',
-                                                  'range' => '  7: 0',
-                                                  'type' => 'inout'
-                                                },
-                                  'lcd_rs' => {
-                                                'intfc_name' => 'IO',
-                                                'intfc_port' => 'IO',
-                                                'range' => '',
-                                                'type' => 'output'
-                                              },
-                                  'reset' => {
-                                               'intfc_name' => 'plug:reset[0]',
-                                               'intfc_port' => 'reset_i',
-                                               'range' => '',
+                               'lcd_en' => {
+                                             'intfc_name' => 'IO',
+                                             'range' => '',
+                                             'intfc_port' => 'IO',
+                                             'type' => 'output'
+                                           },
+                               's_we_i' => {
+                                             'type' => 'input',
+                                             'intfc_port' => 'we_i',
+                                             'range' => '',
+                                             'intfc_name' => 'plug:wb_slave[0]'
+                                           },
+                               's_dat_o' => {
+                                              'type' => 'output',
+                                              'range' => 'Dw-1       :   0',
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'intfc_port' => 'dat_o'
+                                            },
+                               'clk' => {
+                                          'type' => 'input',
+                                          'intfc_name' => 'plug:clk[0]',
+                                          'range' => '',
+                                          'intfc_port' => 'clk_i'
+                                        },
+                               's_ack_o' => {
+                                              'type' => 'output',
+                                              'intfc_port' => 'ack_o',
+                                              'range' => '',
+                                              'intfc_name' => 'plug:wb_slave[0]'
+                                            },
+                               's_stb_i' => {
+                                              'type' => 'input',
+                                              'range' => '',
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'intfc_port' => 'stb_i'
+                                            },
+                               'lcd_rs' => {
+                                             'range' => '',
+                                             'intfc_name' => 'IO',
+                                             'intfc_port' => 'IO',
+                                             'type' => 'output'
+                                           },
+                               'reset' => {
+                                            'intfc_port' => 'reset_i',
+                                            'range' => '',
+                                            'intfc_name' => 'plug:reset[0]',
+                                            'type' => 'input'
+                                          },
+                               's_dat_i' => {
+                                              'type' => 'input',
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'range' => 'Dw-1       :   0',
+                                              'intfc_port' => 'dat_i'
+                                            },
+                               's_cyc_i' => {
+                                              'type' => 'input',
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'range' => '',
+                                              'intfc_port' => 'cyc_i'
+                                            },
+                               's_addr_i' => {
+                                               'intfc_name' => 'plug:wb_slave[0]',
+                                               'range' => 'Aw-1       :   0',
+                                               'intfc_port' => 'adr_i',
                                                'type' => 'input'
                                              },
-                                  'lcd_rw' => {
-                                                'intfc_name' => 'IO',
-                                                'intfc_port' => 'IO',
-                                                'range' => '',
-                                                'type' => 'output'
-                                              },
-                                  'clk' => {
-                                             'intfc_name' => 'plug:clk[0]',
-                                             'intfc_port' => 'clk_i',
-                                             'range' => '',
-                                             'type' => 'input'
-                                           },
-                                  's_addr_i' => {
-                                                  'intfc_name' => 'plug:wb_slave[0]',
-                                                  'intfc_port' => 'adr_i',
-                                                  'range' => 'Aw-1       :   0',
-                                                  'type' => 'input'
-                                                },
-                                  's_dat_o' => {
-                                                 'intfc_name' => 'plug:wb_slave[0]',
-                                                 'intfc_port' => 'dat_o',
-                                                 'range' => 'Dw-1       :   0',
-                                                 'type' => 'output'
-                                               }
-                                }
-                   }, 'ip_gen' );
+                               'lcd_data' => {
+                                               'range' => '  7: 0',
+                                               'intfc_name' => 'IO',
+                                               'intfc_port' => 'IO',
+                                               'type' => 'inout'
+                                             }
+                             },
+                  'ports_order' => [
+                                     'clk',
+                                     'reset',
+                                     's_dat_i',
+                                     's_addr_i',
+                                     's_stb_i',
+                                     's_cyc_i',
+                                     's_we_i',
+                                     's_dat_o',
+                                     's_ack_o',
+                                     'lcd_en',
+                                     'lcd_rs',
+                                     'lcd_rw',
+                                     'lcd_data'
+                                   ],
+                  'version' => 1,
+                  'gen_sw_files' => [
+                                      '/mpsoc/src_peripheral/display/lcd_2x16/lcd_2x16frename_sep_t${IP}.h'
+                                    ],
+                  'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/display/lcd_2x16/lcd_2x16.v',
+                  'unused' => {
+                                'plug:wb_slave[0]' => [
+                                                        'sel_i',
+                                                        'tag_i',
+                                                        'bte_i',
+                                                        'err_o',
+                                                        'rty_o',
+                                                        'cti_i'
+                                                      ]
+                              },
+                  'plugs' => {
+                               'clk' => {
+                                          '0' => {
+                                                   'name' => 'clk'
+                                                 },
+                                          'type' => 'num',
+                                          'value' => 1,
+                                          'clk' => {}
+                                        },
+                               'wb_slave' => {
+                                               'type' => 'num',
+                                               '0' => {
+                                                        'addr' => '0x9100_0000	0x91ff_ffff		General-Purpose I/O',
+                                                        'name' => 'wb',
+                                                        'width' => 5
+                                                      },
+                                               'value' => 1,
+                                               'wb_slave' => {}
+                                             },
+                               'reset' => {
+                                            'type' => 'num',
+                                            'reset' => {},
+                                            '0' => {
+                                                     'name' => 'reset'
+                                                   },
+                                            'value' => 1
+                                          }
+                             },
+                  'modules' => {
+                                 'lcd_2x16' => {}
+                               },
+                  'category' => 'Display',
+                  'description' => '2x16 Character Alphabet Liquid Crystal Display (LCD) driver module  ',
+                  'parameters' => {
+                                    'CLK_MHZ' => {
+                                                   'content' => '2,1000,2',
+                                                   'redefine_param' => 1,
+                                                   'type' => 'Spin-button',
+                                                   'global_param' => 0,
+                                                   'default' => '100',
+                                                   'info' => 'The LCD controller clock speed in MHZ. It will be used for measuring the lcd enable delay. You can define a larger value than the actual clk speed but not smaller.'
+                                                 },
+                                    'Aw' => {
+                                              'global_param' => 0,
+                                              'default' => ' 2',
+                                              'info' => undef,
+                                              'content' => '',
+                                              'redefine_param' => 1,
+                                              'type' => 'Fixed'
+                                            },
+                                    'Dw' => {
+                                              'type' => 'Fixed',
+                                              'redefine_param' => 1,
+                                              'content' => '',
+                                              'info' => undef,
+                                              'default' => '	8',
+                                              'global_param' => 0
+                                            }
+                                  },
+                  'hdl_files' => [
+                                   '/mpsoc/src_peripheral/display/lcd_2x16/lcd_2x16.v'
+                                 ],
+                  'sw_files' => []
+                }, 'ip_gen' );

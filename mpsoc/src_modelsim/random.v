@@ -6,12 +6,13 @@ module pseudo_hotspot_no_core #(
         parameter MAX_NUM                 = 10,
         parameter MAX_RND_WIDTH         =log2(MAX_RND+1), 
         parameter HOTSPOT_PERCENTAGE    = 8,    //maximum 20%
-        parameter HOTSOPT_NUM            =    5, //maximum 5
+        parameter HOTSPOT_NUM            =    5, //maximum 5
         parameter [MAX_RND_WIDTH-1    :0]     HOTSPOT_CORE_1        =    2,
         parameter [MAX_RND_WIDTH-1    :0]    HOTSPOT_CORE_2        =    3,
         parameter [MAX_RND_WIDTH-1    :0]    HOTSPOT_CORE_3        =    4,
         parameter [MAX_RND_WIDTH-1    :0]    HOTSPOT_CORE_4        =    5,
         parameter [MAX_RND_WIDTH-1    :0]    HOTSPOT_CORE_5        =    6,
+        parameter HOTSPOT_SEND_EN =0,
 
         
         parameter MAX_CORE_WIDTH         =log2(MAX_CORE+1), 
@@ -72,14 +73,32 @@ module pseudo_hotspot_no_core #(
         .clk        (clk)
     );
     
+    localparam  MAX_PERCENT =100/HOTSPOT_NUM,
+                MAX1 = 1 * MAX_PERCENT,
+                MAX2 = 2 * MAX_PERCENT,
+                MAX3 = 3 * MAX_PERCENT,
+                MAX4 = 4 * MAX_PERCENT;
+    
+    
     always @(*) begin 
+       
         if(hotspot_rnd < HOTSPOT_PERCENTAGE    && core!=HOTSPOT_CORE_1)    rnd = HOTSPOT_CORE_1;
-        else if((HOTSOPT_NUM > 1)    && (hotspot_rnd >= 20 )    && (hotspot_rnd < (20+HOTSPOT_PERCENTAGE)) && core!=HOTSPOT_CORE_2 )  rnd = HOTSPOT_CORE_2;
-        else if((HOTSOPT_NUM > 2)    && (hotspot_rnd >= 40)    && (hotspot_rnd < (40+HOTSPOT_PERCENTAGE)) && core!=HOTSPOT_CORE_3 )  rnd = HOTSPOT_CORE_3;
-        else if((HOTSOPT_NUM > 3)    && (hotspot_rnd >= 60)    && (hotspot_rnd < (60+HOTSPOT_PERCENTAGE)) && core!=HOTSPOT_CORE_4 )  rnd = HOTSPOT_CORE_4;
-        else if((HOTSOPT_NUM > 4)    && (hotspot_rnd >= 80)    && (hotspot_rnd < (80+HOTSPOT_PERCENTAGE)) && core!=HOTSPOT_CORE_5 )  rnd = HOTSPOT_CORE_5;
-
+        else if((HOTSPOT_NUM > 1) && (hotspot_rnd >= MAX1)    && (hotspot_rnd < (MAX1+HOTSPOT_PERCENTAGE)) && core!=HOTSPOT_CORE_2 )  rnd = HOTSPOT_CORE_2;
+        else if((HOTSPOT_NUM > 2) && (hotspot_rnd >= MAX2)    && (hotspot_rnd < (MAX2+HOTSPOT_PERCENTAGE)) && core!=HOTSPOT_CORE_3 )  rnd = HOTSPOT_CORE_3;
+        else if((HOTSPOT_NUM > 3) && (hotspot_rnd >= MAX3)    && (hotspot_rnd < (MAX3+HOTSPOT_PERCENTAGE)) && core!=HOTSPOT_CORE_4 )  rnd = HOTSPOT_CORE_4;
+        else if((HOTSPOT_NUM > 4) && (hotspot_rnd >= MAX4)    && (hotspot_rnd < (MAX4+HOTSPOT_PERCENTAGE)) && core!=HOTSPOT_CORE_5 )  rnd = HOTSPOT_CORE_5;
         else rnd = uniform_rnd;
+
+        if(HOTSPOT_SEND_EN==0)begin 
+            if(core ==HOTSPOT_CORE_1) rnd = core;
+            else if((HOTSPOT_NUM > 1)   && (core ==HOTSPOT_CORE_2)) rnd = core;
+            else if((HOTSPOT_NUM > 2)   && (core ==HOTSPOT_CORE_3)) rnd = core;
+            else if((HOTSPOT_NUM > 3)   && (core ==HOTSPOT_CORE_4)) rnd = core;
+            else if((HOTSPOT_NUM > 4)   && (core ==HOTSPOT_CORE_5)) rnd = core;
+       end
+
+
+
     end
 
 endmodule
@@ -90,12 +109,13 @@ module pseudo_hotspot #(
         parameter MAX_NUM                 = 10,
         parameter MAX_RND_WIDTH         =log2(MAX_RND+1), 
         parameter HOTSPOT_PERCENTAGE    = 8,    //maximum 20%
-        parameter HOTSOPT_NUM            =    5, //maximum 5
+        parameter HOTSPOT_NUM            =    5, //maximum 5
         parameter [MAX_RND_WIDTH-1    :0] HOTSPOT_CORE_1        =    2,
         parameter [MAX_RND_WIDTH-1    :0]    HOTSPOT_CORE_2        =    3,
         parameter [MAX_RND_WIDTH-1    :0]    HOTSPOT_CORE_3        =    4,
         parameter [MAX_RND_WIDTH-1    :0]    HOTSPOT_CORE_4        =    5,
         parameter [MAX_RND_WIDTH-1    :0]    HOTSPOT_CORE_5        =    6,
+        parameter HOTSPOT_SEND_EN =0,
 
         
         parameter MAX_CORE_WIDTH         =log2(MAX_CORE+1), 
@@ -156,14 +176,27 @@ module pseudo_hotspot #(
         .clk        (clk)
     );
     
+      localparam  MAX_PERCENT =100/HOTSPOT_NUM,
+                MAX1 = 1 * MAX_PERCENT,
+                MAX2 = 2 * MAX_PERCENT,
+                MAX3 = 3 * MAX_PERCENT,
+                MAX4 = 4 * MAX_PERCENT;
+    
     always @(*) begin 
-        if(hotspot_rnd < HOTSPOT_PERCENTAGE    )    rnd = HOTSPOT_CORE_1;
-        else if((HOTSOPT_NUM > 1)    && (hotspot_rnd >= 20 )    && (hotspot_rnd < (20+HOTSPOT_PERCENTAGE)) )  rnd = HOTSPOT_CORE_2;
-        else if((HOTSOPT_NUM > 2)    && (hotspot_rnd >= 40)    && (hotspot_rnd < (40+HOTSPOT_PERCENTAGE)) )  rnd = HOTSPOT_CORE_3;
-        else if((HOTSOPT_NUM > 3)    && (hotspot_rnd >= 60)    && (hotspot_rnd < (60+HOTSPOT_PERCENTAGE)) )  rnd = HOTSPOT_CORE_4;
-        else if((HOTSOPT_NUM > 4)    && (hotspot_rnd >= 80)    && (hotspot_rnd < (80+HOTSPOT_PERCENTAGE)) )  rnd = HOTSPOT_CORE_5;
-
+         if(hotspot_rnd < HOTSPOT_PERCENTAGE    && core!=HOTSPOT_CORE_1)    rnd = HOTSPOT_CORE_1;
+        else if((HOTSPOT_NUM > 1) && (hotspot_rnd >= MAX1)    && (hotspot_rnd < (MAX1+HOTSPOT_PERCENTAGE)) && core!=HOTSPOT_CORE_2 )  rnd = HOTSPOT_CORE_2;
+        else if((HOTSPOT_NUM > 2) && (hotspot_rnd >= MAX2)    && (hotspot_rnd < (MAX2+HOTSPOT_PERCENTAGE)) && core!=HOTSPOT_CORE_3 )  rnd = HOTSPOT_CORE_3;
+        else if((HOTSPOT_NUM > 3) && (hotspot_rnd >= MAX3)    && (hotspot_rnd < (MAX3+HOTSPOT_PERCENTAGE)) && core!=HOTSPOT_CORE_4 )  rnd = HOTSPOT_CORE_4;
+        else if((HOTSPOT_NUM > 4) && (hotspot_rnd >= MAX4)    && (hotspot_rnd < (MAX4+HOTSPOT_PERCENTAGE)) && core!=HOTSPOT_CORE_5 )  rnd = HOTSPOT_CORE_5;
         else rnd = uniform_rnd;
+
+        if(HOTSPOT_SEND_EN==0)begin 
+            if(core ==HOTSPOT_CORE_1) rnd = core;
+            else if((HOTSPOT_NUM > 1)   && (core ==HOTSPOT_CORE_2)) rnd = core;
+            else if((HOTSPOT_NUM > 2)   && (core ==HOTSPOT_CORE_3)) rnd = core;
+            else if((HOTSPOT_NUM > 3)   && (core ==HOTSPOT_CORE_4)) rnd = core;
+            else if((HOTSPOT_NUM > 4)   && (core ==HOTSPOT_CORE_5)) rnd = core;
+       end
     end
 
 endmodule

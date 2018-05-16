@@ -182,7 +182,7 @@
     wire [CHANNEL-1 :   0] channel_fifo_wr, channel_fifo_rd;
     wire [CHANNEL-1 :   0] channel_fifo_full, channel_fifo_nearly_full, channel_fifo_empty;
     wire [CHANNEL-1 :   0] channel_rd_is_active,channel_wr_is_active;
-    wire [CHw-1     :   0] rd_enable_binarry,wr_enable_binarry;
+    wire [CHw-1     :   0] rd_enable_binary,wr_enable_binary;
      
      
      
@@ -220,7 +220,7 @@
     localparam STATUSw= 2 * CHw + 3 * CHANNEL;
     wire  [STATUSw-1  :0] status;  
     wire [CHANNEL-1 :   0] channel_is_active = channel_rd_is_busy|channel_wr_is_busy;
-    assign status= {rd_enable_binarry,wr_enable_binarry,channel_rd_is_busy,channel_wr_is_busy,channel_is_active};
+    assign status= {rd_enable_binary,wr_enable_binary,channel_rd_is_busy,channel_wr_is_busy,channel_is_active};
     assign s_dat_o={{(Dw-STATUSw){1'b0}}, status};
     
     
@@ -384,7 +384,7 @@
         rd_en_conv
         (
             .one_hot_code(channel_rd_enable),
-            .bin_code(rd_enable_binarry)
+            .bin_code(rd_enable_binary)
         );
         
         
@@ -395,36 +395,36 @@
         wr_en_conv
         (
             .one_hot_code(channel_wr_enable),
-            .bin_code(wr_enable_binarry)
+            .bin_code(wr_enable_binary)
         );
         
         
     end else begin : single_channel // if we have just one channel there is no needs for arbitration
         assign channel_wr_enable =  channel_wr_is_busy;
         assign channel_rd_enable =  channel_rd_is_busy;
-        assign rd_enable_binarry = 1'b0;
-        assign wr_enable_binarry = 1'b0;
+        assign rd_enable_binary = 1'b0;
+        assign wr_enable_binary = 1'b0;
     end
     endgenerate  
     
     
     //wb multiplexors
     
-    assign m_rd_sel_o  = channel_m_rd_sel_o[rd_enable_binarry];
-    assign m_rd_addr_o = channel_m_rd_addr_o[rd_enable_binarry];
-    assign m_rd_cti_o  = channel_m_rd_cti_o[rd_enable_binarry];
-    assign m_rd_stb_o  = channel_m_rd_stb_o[rd_enable_binarry];
-    assign m_rd_cyc_o  = channel_m_rd_cyc_o[rd_enable_binarry];
-    assign m_rd_we_o   = channel_m_rd_we_o[rd_enable_binarry];
+    assign m_rd_sel_o  = channel_m_rd_sel_o[rd_enable_binary];
+    assign m_rd_addr_o = channel_m_rd_addr_o[rd_enable_binary];
+    assign m_rd_cti_o  = channel_m_rd_cti_o[rd_enable_binary];
+    assign m_rd_stb_o  = channel_m_rd_stb_o[rd_enable_binary];
+    assign m_rd_cyc_o  = channel_m_rd_cyc_o[rd_enable_binary];
+    assign m_rd_we_o   = channel_m_rd_we_o[rd_enable_binary];
        
             
             
-    assign m_wr_sel_o = channel_m_wr_sel_o[wr_enable_binarry];
-    assign m_wr_addr_o= channel_m_wr_addr_o[wr_enable_binarry];
-    assign m_wr_cti_o = channel_m_wr_cti_o[wr_enable_binarry];
-    assign m_wr_stb_o = channel_m_wr_stb_o[wr_enable_binarry];
-    assign m_wr_cyc_o = channel_m_wr_cyc_o[wr_enable_binarry];
-    assign m_wr_we_o  = channel_m_wr_we_o[wr_enable_binarry];
+    assign m_wr_sel_o = channel_m_wr_sel_o[wr_enable_binary];
+    assign m_wr_addr_o= channel_m_wr_addr_o[wr_enable_binary];
+    assign m_wr_cti_o = channel_m_wr_cti_o[wr_enable_binary];
+    assign m_wr_stb_o = channel_m_wr_stb_o[wr_enable_binary];
+    assign m_wr_cyc_o = channel_m_wr_cyc_o[wr_enable_binary];
+    assign m_wr_we_o  = channel_m_wr_we_o[wr_enable_binary];
     
     
           
