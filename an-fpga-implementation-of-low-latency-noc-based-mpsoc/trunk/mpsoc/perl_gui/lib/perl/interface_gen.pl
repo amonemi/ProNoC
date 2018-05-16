@@ -329,7 +329,7 @@ sub interface_type_select {
 	my $entrybox=labele_widget_info(" Interface name:",$entry);
 
 	my $combo=gen_combobox_object($intfc_gen,'connection_num',undef,"single connection,multi connection","single connection",'refresh',1);
-	my $combo_box=labele_widget_info(" Select soket type:",$combo,'Define the soket as multi connection if only all interfaces ports all output and they can feed more than one plug connection');
+	my $combo_box=labele_widget_info(" Select soket type:",$combo,'Define the soket as multi connection if only if all interfaces ports are output oprts and they can feed more than one plug interface. E.g. clk is defined as multi connection');
 	
 	$table->attach ($entrybox, 0, 2 , $row, $row+1,'expand','shrink',2,2);
 	$table->attach ($combo_box, 3, 6 , $row, $row+1,'expand','shrink',2,2);

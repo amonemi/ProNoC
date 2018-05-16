@@ -59,8 +59,8 @@ sub ipgen_get_module_list{
 
 
 sub ipgen_add_parameter{
-	my ($self,$parameter,$deafult,$type,$content,$info,$global_param,$redefine)=@_;
-	$self->{parameters}{$parameter}{deafult}=$deafult;	
+	my ($self,$parameter,$default,$type,$content,$info,$global_param,$redefine)=@_;
+	$self->{parameters}{$parameter}{"default"}=$default;	
 	$self->{parameters}{$parameter}{type}=$type;
 	$self->{parameters}{$parameter}{content}=$content;
 	$self->{parameters}{$parameter}{info}=$info;
@@ -119,9 +119,9 @@ sub ipgen_remove_parameter{
 	
 sub ipgen_get_parameter_detail{
 	my ($self,$parameter)=@_;
-	my ($deafult,$type,$content,$info,$global_param,$redefine);
+	my ($default,$type,$content,$info,$global_param,$redefine);
 	if(exists ($self->{parameters}{$parameter})){
-		$deafult		=$self->{parameters}{$parameter}{deafult};
+		$default		=$self->{parameters}{$parameter}{"default"};
 		$type 			=$self->{parameters}{$parameter}{type};
 		$content 		=$self->{parameters}{$parameter}{content};
 		$info			=$self->{parameters}{$parameter}{info};
@@ -129,7 +129,7 @@ sub ipgen_get_parameter_detail{
 		$redefine		=$self->{parameters}{$parameter}{redefine_param};	
 		
 	}		
-	return ($deafult,$type,$content,$info,$global_param,$redefine);	
+	return ($default,$type,$content,$info,$global_param,$redefine);	
 }		
 
 sub ipgen_get_all_parameters_list{
@@ -520,8 +520,8 @@ sub top_get_port_list{
 
 
 sub top_add_parameter{
-	my ($self,$inst,$parameter,$deafult,$type,$content,$info,$global_param,$redefine)=@_;
-	$self->{instance_ids}{$inst}{parameters}{$parameter}{deafult}=$deafult;	
+	my ($self,$inst,$parameter,$default,$type,$content,$info,$global_param,$redefine)=@_;
+	$self->{instance_ids}{$inst}{parameters}{$parameter}{"default"}=$default;	
 	$self->{instance_ids}{$inst}{parameters}{$parameter}{type}=$type;
 	$self->{instance_ids}{$inst}{parameters}{$parameter}{content}=$content;
 	$self->{instance_ids}{$inst}{parameters}{$parameter}{info}=$info;
@@ -531,14 +531,14 @@ sub top_add_parameter{
 
 sub top_get_parameter{
 	my ($self,$inst,$parameter)=@_;
-	my ($deafult,$type,$content,$info,$global_param,$redefine);
-	$deafult=$self->{instance_ids}{$inst}{parameters}{$parameter}{deafult};	
+	my ($default,$type,$content,$info,$global_param,$redefine);
+	$default=$self->{instance_ids}{$inst}{parameters}{$parameter}{"default"};	
 	$type=$self->{instance_ids}{$inst}{parameters}{$parameter}{type};
 	$content=$self->{instance_ids}{$inst}{parameters}{$parameter}{content};
 	$info=$self->{instance_ids}{$inst}{parameters}{$parameter}{info};
 	$global_param=$self->{instance_ids}{$inst}{parameters}{$parameter}{global_param};
 	$redefine=$self->{instance_ids}{$inst}{parameters}{$parameter}{redefine_param};	
-	return  ($deafult,$type,$content,$info,$global_param,$redefine);					
+	return  ($default,$type,$content,$info,$global_param,$redefine);					
 }	
 
 sub top_get_parameter_list{

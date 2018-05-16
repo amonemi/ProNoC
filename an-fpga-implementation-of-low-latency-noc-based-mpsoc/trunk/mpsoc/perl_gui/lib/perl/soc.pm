@@ -51,7 +51,7 @@ sub soc_add_instance{
 	foreach my $plug(@plugs){
 		my ($type,$value,$connection_num)=$ip->ip_get_plug ($category,$module,$plug);
 		soc_add_plug_to_instance($self,$instance_id,$plug,$type,$value,$connection_num);
-		#add plug names anf deafult connection as IO
+		#add plug names anf Default connection as IO
 		my $int_num=($type eq 'num')? $value :1;
 		for (my $i=0;$i<$int_num;$i++){
 			my $name=$ip->ip_get_plug_name($category,$module, $plug,$i);

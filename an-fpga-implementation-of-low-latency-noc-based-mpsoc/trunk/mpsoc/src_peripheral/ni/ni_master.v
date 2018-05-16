@@ -49,6 +49,9 @@ module  ni_master #(
     parameter B = 4,
     parameter Fpay = 32,
     parameter CRC_EN= "NO",// "YES","NO" if CRC is enable then the CRC32 of all packet data is calculated and sent via tail flit. 
+    parameter SWA_ARBITER_TYPE = "RRA", // RRA WRRA
+    parameter WEIGHTw          = 4, // weight width of WRRA
+   
     //wishbone port parameters
     parameter Dw            =   32,
     parameter S_Aw          =   7,
@@ -113,7 +116,7 @@ module  ni_master #(
     irq    
 
 );
-     localparam P=  (TOPOLOGY=="RING")? 3 : 5; 
+     localparam P=  (TOPOLOGY=="RING" || TOPOLOGY=="LINE")? 3 : 5;   
      localparam ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
                            (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE";    
 
@@ -815,20 +818,25 @@ module  ni_master #(
         .NX(NX),
         .NY(NY),
         .C(C),
-        .Fpay(Fpay)
+        .Fpay(Fpay),
+        .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
+        .WEIGHTw(WEIGHTw)
+        
     )
-    extract_header_flit_info(
+    extract_header_info
+    (
         .flit_in(fifo_dout),
         .flit_in_we(),
-        .class_in(class_in_next),
-        .destport_in(),
-        .x_dst_in(),
-        .y_dst_in(),
-        .x_src_in(x_src_in_next),
-        .y_src_in(y_src_in_next),
-        .vc_num_in(),
-        .hdr_flit_wr( ),
-        .flg_hdr_in( )
+        .class_o(class_in_next),
+        .destport_o(),
+        .x_dst_o(),
+        .y_dst_o(),
+        .x_src_o(x_src_in_next),
+        .y_src_o(y_src_in_next),
+        .vc_num_o(),
+        .hdr_flit_wr_o( ),
+        .flg_hdr_o( ),
+        .weight_o()
     );  
   
   

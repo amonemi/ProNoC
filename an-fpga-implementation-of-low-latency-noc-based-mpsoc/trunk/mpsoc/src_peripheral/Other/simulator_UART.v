@@ -127,6 +127,9 @@ module  simulator_UART #(
        if (print_en)  for(i=0;i<  ptr;i=i+1) $write("%c",buffer[i]);       
     end
   end
+
+
+
   
  //synopsys  translate_on
 //synthesis translate_on 

@@ -22,6 +22,7 @@ sub emulator_new {
    
     $self = {};
     $self->{file_name}        = (); # information on each file
+    $self->{samples} = ();
     emulator_initial_setting($self);
 	
 
@@ -34,7 +35,6 @@ sub emulator_new {
 sub emulator_initial_setting{
 	my $self=shift;
 	$self->{status}="ideal";
-	$self->{graph_scale}=5;
 	$self->{setting}{show_noc_setting}=1;
 	$self->{setting}{show_adv_setting}=0;
 	$self->{setting}{show_tile_setting}=0;	
@@ -75,9 +75,46 @@ sub object_add_attribute_order{
 
 sub object_get_attribute_order{
 	my ($self,$attribute)=@_;
-	return @{$self->{parameters_order}{$attribute}};
+	my @array;
+	@array =  @{$self->{parameters_order}{$attribute}} if (defined $self->{parameters_order}{$attribute});
+	return @array;
 }
 
+
+sub object_delete_attribute_order{
+	my ($self,$attribute,@param)=@_;
+	my @array=object_get_attribute_order($self,$attribute);
+	foreach my $p (@param){
+		@array=remove_scolar_from_array(\@array,$p);
+
+	}
+	$self->{'parameters_order'}{$attribute}=[];
+	object_add_attribute_order($self,$attribute,@array);
+}
+
+sub object_remove_attribute{
+	my ($self,$attribute1,$attribute2)=@_;
+	if(!defined $attribute2){
+		delete $self->{$attribute1} if ( exists( $self->{$attribute1})); 
+	}
+	else {
+		delete $self->{$attribute1}{$attribute2} if ( exists( $self->{$attribute1}{$attribute2})); ;
+
+	}
+
+}
+	
+sub remove_scolar_from_array{
+	my ($array_ref,$item)=@_;
+	my @array=@{$array_ref};
+	my @new;
+	foreach my $p (@array){
+		if($p ne $item ){
+			push(@new,$p);
+		}		
+	}
+	return @new;	
+}	
 
 
 

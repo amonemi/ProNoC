@@ -16,7 +16,7 @@ mkdir -p $work_path/bin
 rm -rf $work_path/bin/testbench
  
 cp Makefile $obj_dir_path
-cp $src_verilator_path/simulator.cpp  $obj_dir_path/testbench.cpp
+cp $src_verilator_path/simulator2.cpp  $obj_dir_path/testbench.cpp
 cp $src_verilator_path/parameter.h  $obj_dir_path
 cd $obj_dir_path
 make sim

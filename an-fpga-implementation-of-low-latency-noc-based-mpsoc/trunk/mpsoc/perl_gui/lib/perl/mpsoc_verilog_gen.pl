@@ -115,7 +115,7 @@ sub get_functions{
         
 
 	localparam	Fw      =   2+V+Fpay,
-				NC     =	(TOPOLOGY=="RING")? NX    :   NX*NY,	//number of cores
+				NC     =	(TOPOLOGY=="RING" || TOPOLOGY=="LINE" )? NX    :   NX*NY,	//number of cores
 				Xw      =   log2(NX),
 				Yw      =   log2(NY) , 
 				Cw      =   (C>1)? log2(C): 1,

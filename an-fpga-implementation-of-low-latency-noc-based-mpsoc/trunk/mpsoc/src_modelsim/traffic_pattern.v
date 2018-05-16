@@ -49,7 +49,7 @@ module pck_class_in_gen #(
     endfunction // log2 
    
     localparam Cw = (C>1)? log2(C) : 1,
-               NC =	(TOPOLOGY=="RING")? NX    :   NX*NY,	//number of cores
+               NC =	(TOPOLOGY=="RING" || TOPOLOGY == "LINE")?  NX    :   NX*NY,	//number of cores
                NCw= log2(NC),
                PCK_CNTw = log2(MAX_PCK_NUM+1),
                RNDw = log2(100);
@@ -100,13 +100,14 @@ module  pck_dst_gen  #(
     parameter TOPOLOGY="MESH",
     parameter TRAFFIC =   "RANDOM",
     parameter MAX_PCK_NUM = 10000,
-    parameter HOTSPOT_PERCENTAGE    =   3,   //maximum 20
-    parameter HOTSOPT_NUM           =   4, //maximum 4
+    parameter HOTSPOT_NUM           =   4, //maximum 5
+    parameter HOTSPOT_PERCENTAGE    =   3,  //max 100/HOTSPOT_NUM
     parameter HOTSPOT_CORE_1        =   10,
     parameter HOTSPOT_CORE_2        =   11,
     parameter HOTSPOT_CORE_3        =   12,
     parameter HOTSPOT_CORE_4        =   13,
-    parameter HOTSPOT_CORE_5        =   14
+    parameter HOTSPOT_CORE_5        =   14,
+    parameter HOTSPOT_SEND_EN       =   0
 
 )(
     en,
@@ -135,7 +136,7 @@ module  pck_dst_gen  #(
     endfunction // log2 
      
      
-    localparam  NC =    (TOPOLOGY=="RING")? NX    :   NX*NY,    //number of cores
+    localparam  NC =    (TOPOLOGY=="RING" || TOPOLOGY == "LINE")?  NX    :   NX*NY,    //number of cores
                 Xw = log2(NX),
                 Yw = log2(NY), 
                 NCw= log2(NC),
@@ -161,12 +162,13 @@ module  pck_dst_gen  #(
         	.TRAFFIC(TRAFFIC),
         	.MAX_PCK_NUM(MAX_PCK_NUM),
         	.HOTSPOT_PERCENTAGE(HOTSPOT_PERCENTAGE),
-        	.HOTSOPT_NUM(HOTSOPT_NUM),
+        	.HOTSPOT_NUM(HOTSPOT_NUM),
         	.HOTSPOT_CORE_1(HOTSPOT_CORE_1),
         	.HOTSPOT_CORE_2(HOTSPOT_CORE_2),
         	.HOTSPOT_CORE_3(HOTSPOT_CORE_3),
         	.HOTSPOT_CORE_4(HOTSPOT_CORE_4),
-        	.HOTSPOT_CORE_5(HOTSPOT_CORE_5)
+        	.HOTSPOT_CORE_5(HOTSPOT_CORE_5),
+        	.HOTSPOT_SEND_EN(HOTSPOT_SEND_EN)
         )
         the_two_dimention_pck_dst_gen
         (
@@ -190,12 +192,13 @@ module  pck_dst_gen  #(
             .TRAFFIC(TRAFFIC),
             .MAX_PCK_NUM(MAX_PCK_NUM),
             .HOTSPOT_PERCENTAGE(HOTSPOT_PERCENTAGE),
-            .HOTSOPT_NUM(HOTSOPT_NUM),
+            .HOTSPOT_NUM(HOTSPOT_NUM),
             .HOTSPOT_CORE_1(HOTSPOT_CORE_1),
             .HOTSPOT_CORE_2(HOTSPOT_CORE_2),
             .HOTSPOT_CORE_3(HOTSPOT_CORE_3),
             .HOTSPOT_CORE_4(HOTSPOT_CORE_4),
-            .HOTSPOT_CORE_5(HOTSPOT_CORE_5)
+            .HOTSPOT_CORE_5(HOTSPOT_CORE_5),
+            .HOTSPOT_SEND_EN(HOTSPOT_SEND_EN)
         )
         the_one_dimention_pck_dst_gen
         (
@@ -226,12 +229,13 @@ module two_dimention_pck_dst_gen  #(
     parameter TRAFFIC =   "RANDOM",
     parameter MAX_PCK_NUM = 10000,
     parameter HOTSPOT_PERCENTAGE    =   3,   //maximum 20
-    parameter HOTSOPT_NUM           =   4, //maximum 4
+    parameter HOTSPOT_NUM           =   4, //maximum 4
     parameter HOTSPOT_CORE_1        =   10,
     parameter HOTSPOT_CORE_2        =   11,
     parameter HOTSPOT_CORE_3        =   12,
     parameter HOTSPOT_CORE_4        =   13,
-    parameter HOTSPOT_CORE_5        =   14
+    parameter HOTSPOT_CORE_5        =   14,
+    parameter HOTSPOT_SEND_EN = 0
 
 )(
     en,
@@ -258,7 +262,7 @@ module two_dimention_pck_dst_gen  #(
     endfunction // log2 
      
      
-     localparam NC =	(TOPOLOGY=="RING")? NX    :   NX*NY,	//number of cores
+     localparam NC =	(TOPOLOGY=="RING" || TOPOLOGY == "LINE")?  NX    :   NX*NY,	//number of cores
                 Xw = log2(NX),
                 Yw = log2(NY), 
                 NCw= log2(NC),
@@ -307,14 +311,16 @@ module two_dimention_pck_dst_gen  #(
                     .MAX_CORE           (NC-1   ),
                     .MAX_NUM            (MAX_PCK_NUM),
                     .HOTSPOT_PERCENTAGE (HOTSPOT_PERCENTAGE),   //maximum 25%
-                    .HOTSOPT_NUM        (HOTSOPT_NUM), //maximum 4
+                    .HOTSPOT_NUM        (HOTSPOT_NUM), //maximum 4
                     .HOTSPOT_CORE_1     (HOTSPOT_CORE_1),
                     .HOTSPOT_CORE_2     (HOTSPOT_CORE_2),
                     .HOTSPOT_CORE_3     (HOTSPOT_CORE_3),
                     .HOTSPOT_CORE_4     (HOTSPOT_CORE_4),
-                    .HOTSPOT_CORE_5     (HOTSPOT_CORE_5)
+                    .HOTSPOT_CORE_5     (HOTSPOT_CORE_5),
+                    .HOTSPOT_SEND_EN    (HOTSPOT_SEND_EN)
                     
-                )rnd_dest_gen
+                )
+                rnd_dest_gen
                 (
     
                     .core  (core_num),
@@ -435,12 +441,13 @@ module one_dimention_pck_dst_gen #(
     parameter TRAFFIC =   "RANDOM",
     parameter MAX_PCK_NUM = 10000,
     parameter HOTSPOT_PERCENTAGE    =   3,   //maximum 20
-    parameter HOTSOPT_NUM           =   4, //maximum 4
+    parameter HOTSPOT_NUM           =   4, //maximum 4
     parameter HOTSPOT_CORE_1        =   10,
     parameter HOTSPOT_CORE_2        =   11,
     parameter HOTSPOT_CORE_3        =   12,
     parameter HOTSPOT_CORE_4        =   13,
-    parameter HOTSPOT_CORE_5        =   14
+    parameter HOTSPOT_CORE_5        =   14,
+    parameter HOTSPOT_SEND_EN       =   0
 
 )(
     en,
@@ -509,12 +516,13 @@ module one_dimention_pck_dst_gen #(
                     .MAX_CORE           (NX-1   ),
                     .MAX_NUM            (MAX_PCK_NUM),
                     .HOTSPOT_PERCENTAGE (HOTSPOT_PERCENTAGE),   //maximum 25%
-                    .HOTSOPT_NUM        (HOTSOPT_NUM), //maximum 4
+                    .HOTSPOT_NUM        (HOTSPOT_NUM), //maximum 4
                     .HOTSPOT_CORE_1     (HOTSPOT_CORE_1),
                     .HOTSPOT_CORE_2     (HOTSPOT_CORE_2),
                     .HOTSPOT_CORE_3     (HOTSPOT_CORE_3),
                     .HOTSPOT_CORE_4     (HOTSPOT_CORE_4),
-                    .HOTSPOT_CORE_5     (HOTSPOT_CORE_5)
+                    .HOTSPOT_CORE_5     (HOTSPOT_CORE_5),
+                    .HOTSPOT_SEND_EN    (HOTSPOT_SEND_EN)
                     
                 )rnd_dest_gen
                 (
@@ -532,14 +540,14 @@ module one_dimention_pck_dst_gen #(
    
        
     end else if( TRAFFIC == "TRANSPOSE1") begin :tran1
-       
-        assign dest_x= NX-current_x-1;            
+        assign dest_x=  NX-current_x-1;    
+       // assign dest_x= (current_x<NX/2)? NX-current_x-1: current_x;            
         
-  //  end else if( TRAFFIC == "TRANSPOSE2") begin :transpose2
+   //end else if( TRAFFIC == "TRANSPOSE2") begin :transpose2
         
               
-                //    assign dest_x   = current_y;
-                //    assign dest_y   = current_x;
+                   // assign dest_x   = current_y;
+                   // assign dest_y   = current_x;
                     
         
     end  else if( TRAFFIC == "BIT_REVERSE") begin :bitreverse
@@ -572,18 +580,19 @@ module one_dimention_pck_dst_gen #(
         
         always @(*) begin 
             valid_dst_reg=1'b0;       
-            if( current_x==0   ) begin 
-                dest_x_reg=  NX/2-1;   valid_dst_reg=1'b1;
-            end
-/* 
-            if((current_x==1)  ) begin 
-                dest_x_reg=  NX-1;   valid_dst_reg=1'b1;
+            if( current_x>=0 && current_x<=6   ) begin 
+                dest_x_reg=  8;   valid_dst_reg=1'b1;
             end
  
-          if((current_x==2)  ) begin 
-                dest_x_reg= NX-1;   valid_dst_reg=1'b1;
+            if((current_x==7)  ) begin 
+                dest_x_reg=  10;   valid_dst_reg=1'b1;
             end
  
+           if((current_x>=8 && current_x<=14 )  ) begin 
+                dest_x_reg= 14;   valid_dst_reg=1'b1;
+            end
+	end
+ /*
            if((current_x==1) &&  (current_y== 1)) begin 
                 dest_x_reg=  1; dest_y_reg=  6; valid_dst_reg=1'b1;
             end
@@ -593,7 +602,7 @@ module one_dimention_pck_dst_gen #(
             if((current_x==1) &&  (current_y== 3)) begin 
                 dest_x_reg=  1; dest_y_reg=  4; valid_dst_reg=1'b1;
             end
-*/
+
         end
       /*
         0  0   1  1

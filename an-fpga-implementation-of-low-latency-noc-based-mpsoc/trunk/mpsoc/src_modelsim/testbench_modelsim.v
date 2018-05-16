@@ -89,15 +89,15 @@ endmodule
 
 module testbench_sub #(
     parameter V=2,
-    parameter B=5,
-    parameter NX=6,
-    parameter NY=1,
-    parameter C=2,
+    parameter B=2,
+    parameter NX=8,
+    parameter NY=8,
+    parameter C=1,
     parameter Fpay=32,
     parameter MUX_TYPE="ONE_HOT",
     parameter VC_REALLOCATION_TYPE="NONATOMIC",
     parameter COMBINATION_TYPE="COMB_NONSPEC",
-    parameter FIRST_ARBITER_EXT_P_EN=0,
+    parameter FIRST_ARBITER_EXT_P_EN=1,
     parameter TOPOLOGY="MESH",
     parameter ROUTE_NAME="XY",
     parameter CONGESTION_INDEX=7,
@@ -108,25 +108,29 @@ module testbench_sub #(
     parameter [CVw-1:   0] CLASS_SETTING = 4'b1111, // shows how each class can use VCs   
     parameter [V-1  :   0] ESCAP_VC_MASK = 2'b10,  // mask scape vc, valid only for full adaptive 
     parameter SSA_EN=  "NO",//"YES", // "YES" , "NO"    
-      
-    parameter C0_p=50,
-    parameter C1_p=50,
+    parameter SWA_ARBITER_TYPE = "RRA",//"RRA","WRRA". SWA: Switch Allocator.  RRA: Round Robin Arbiter. WRRA Weighted Round Robin Arbiter          
+    parameter WEIGHTw=6, // WRRA weights' max width
+  
+    parameter C0_p=100,
+    parameter C1_p=0,
     parameter C2_p=0,
     parameter C3_p=0,
-   // parameter TRAFFIC="TRANSPOSE1",
-    parameter TRAFFIC="RANDOM",//"RANDOM",
- //parameter TRAFFIC="CUSTOM",
-    parameter HOTSPOT_PERCENTAGE=4,
-    parameter HOTSOPT_NUM=4,
-    parameter HOTSPOT_CORE_1=26,
+   // parameter TRAFFIC="HOTSPOT",
+   parameter TRAFFIC="TRANSPOSE1",
+   //parameter TRAFFIC="RANDOM", 
+   // parameter TRAFFIC="CUSTOM",
+    parameter HOTSPOT_PERCENTAGE=100,
+    parameter HOTSPOT_NUM=1,
+    parameter HOTSPOT_CORE_1=0,
     parameter HOTSPOT_CORE_2=52,
     parameter HOTSPOT_CORE_3=22,
     parameter HOTSPOT_CORE_4=54,
     parameter HOTSPOT_CORE_5=18,
-    parameter MAX_PCK_NUM=2560000,
+    parameter HOTSPOT_SEND_EN=0,
+    parameter MAX_PCK_NUM=256000,
     parameter MAX_SIM_CLKs=1000000,
     parameter MAX_PCK_SIZ=10,
-    parameter TIMSTMP_FIFO_NUM=2,
+    parameter TIMSTMP_FIFO_NUM=16,
     parameter ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY"   )?    "DETERMINISTIC" : 
                         (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE", 
     parameter DEBUG_EN=1,
@@ -175,7 +179,7 @@ module testbench_sub #(
         
 
     localparam      Fw      =   2+V+Fpay,
-                    NC     =	(TOPOLOGY=="RING")? NX    :   NX*NY, //number of cores
+                    NC     =	(TOPOLOGY=="RING" || TOPOLOGY=="LINE")? NX    :   NX*NY, //number of cores
                     Xw      =   log2(NX),
                     Yw      =   log2(NY) , 
                     Cw      =   (C>1)? log2(C): 1,
@@ -185,7 +189,8 @@ module testbench_sub #(
                     NCFw    =   NC  * Fw,
                     PCK_CNTw=   log2(MAX_PCK_NUM+1),
                     CLK_CNTw=   log2(MAX_SIM_CLKs+1),
-                    PCK_SIZw=   log2(MAX_PCK_SIZ+1);
+                    PCK_SIZw=   log2(MAX_PCK_SIZ+1),
+                    DSTw = log2(NC+1);
                     
 
 
@@ -228,7 +233,7 @@ module testbench_sub #(
     wire    [NC-1           :0] noc_report;
     wire    [NC-1           :0] update;
     wire    [CLK_CNTw-1     :0] time_stamp      [NC-1           :0];
-    wire    [31             :0] distance        [NC-1           :0];    
+    wire    [DSTw-1         :0] distance        [NC-1           :0];    
     wire    [Cw-1           :0] msg_class       [NC-1           :0];    
     
     reg                         count_en;
@@ -268,7 +273,9 @@ module testbench_sub #(
         .CVw(CVw),
         .CLASS_SETTING(CLASS_SETTING), // shows how each class can use VCs   
         .ESCAP_VC_MASK(ESCAP_VC_MASK), //
-        .SSA_EN(SSA_EN)
+        .SSA_EN(SSA_EN),
+        .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
+        .WEIGHTw(WEIGHTw) 
                
 
     )
@@ -320,18 +327,22 @@ end
                 .MAX_PCK_NUM(MAX_PCK_NUM),
                 .MAX_SIM_CLKs(MAX_SIM_CLKs),
                 .MAX_PCK_SIZ(MAX_PCK_SIZ),
-                .TIMSTMP_FIFO_NUM(TIMSTMP_FIFO_NUM)
+                .MAX_RATIO(100),
+                .TIMSTMP_FIFO_NUM(TIMSTMP_FIFO_NUM),
+                .WEIGHTw(WEIGHTw)
             )
             the_traffic_gen
             (
   //input          
-                .ratio (ratio),  
+                .ratio (ratio),
+                .avg_pck_size_in(pck_size_in),  
                 .pck_size_in(pck_size_in),
                 .current_x(x[Xw-1  :   0]),
                 .current_y(y[Yw-1  :   0]),
                 .dest_x(dest_x[IP_NUM]),
                 .dest_y(dest_y[IP_NUM]), 
                 .pck_class_in(pck_class_in[IP_NUM]),  
+                .init_weight({{(WEIGHTw-1){1'b0}},1'b1}),
    
    //output
                 .hdr_flit_sent(hdr_flit_sent[IP_NUM]),
@@ -339,11 +350,14 @@ end
             	.reset(reset),
             	.clk(clk),
             	.start(start),
+		.stop(1'b0),
             	.sent_done(),
             	.update(update[IP_NUM]),
             	.time_stamp_h2h(time_stamp[IP_NUM]),
             	.time_stamp_h2t(),
             	.distance(distance[IP_NUM]),
+                .src_x(),
+                .src_y(),
             	.pck_class_out(msg_class[IP_NUM]),
    //noc         	
             	.flit_out  (ni_flit_out [IP_NUM]),  
@@ -401,12 +415,13 @@ end
     .TRAFFIC(TRAFFIC),
     .MAX_PCK_NUM(MAX_PCK_NUM),
     .HOTSPOT_PERCENTAGE(HOTSPOT_PERCENTAGE),
-    .HOTSOPT_NUM(HOTSOPT_NUM),
+    .HOTSPOT_NUM(HOTSPOT_NUM),
     .HOTSPOT_CORE_1(HOTSPOT_CORE_1),
     .HOTSPOT_CORE_2(HOTSPOT_CORE_2),
     .HOTSPOT_CORE_3(HOTSPOT_CORE_3),
     .HOTSPOT_CORE_4(HOTSPOT_CORE_4),
-    .HOTSPOT_CORE_5(HOTSPOT_CORE_5)
+    .HOTSPOT_CORE_5(HOTSPOT_CORE_5),
+    .HOTSPOT_SEND_EN(HOTSPOT_SEND_EN)
    )
    the_pck_dst_gen
    (
@@ -431,7 +446,7 @@ end
                 noc_analyze(    update      [IP_NUM],
                                     noc_report  [IP_NUM],
                                     time_stamp  [IP_NUM],
-                                    distance        [IP_NUM],
+                                    {{(32-DSTw){1'b0}},distance        [IP_NUM]},
                                     msg_class   [IP_NUM]
                                     );
             end//always
@@ -522,12 +537,12 @@ task injection_ratio ;
             end
             if(inject_report_in) begin 
                     
-    
+    		    $display("simulation clk number=%d",clk_counter);
                     $display("Injection ratio is =%f",ratio_avg);
                     $display("total_pck      =%f",total_pck);            
                     $display("TRAFFIC is   =%s",TRAFFIC);
                     $display("Packet size in flit=%d ",pck_size_in);
-                    $display("total_clk=%d ",total_clk);
+                    $display("total_latency_accum=%d ",total_clk);
                     $display("ROUTE_NAME    =%s",ROUTE_NAME);
                     $display("ROUTE_TYPE =%s",ROUTE_TYPE);                  
                     $display("VC_REALLOCATION_TYPE = %s",VC_REALLOCATION_TYPE);

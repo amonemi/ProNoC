@@ -5,8 +5,30 @@ use warnings;
 
 
 
+
 use Gtk2::Pango;
 #use Tk::Animation;
+
+use String::Similarity;
+
+ 
+sub find_the_most_similar_position{
+	my ($item ,@list)=@_;
+	my $most_similar_pos=0;
+	my $lastsim=0;
+	my $i=0;
+	# convert item to lowercase
+	$item = lc $item;
+	foreach my $p(@list){
+		my $similarity= similarity $item, $p;
+		if ($similarity > $lastsim){
+			$lastsim=$similarity;
+			$most_similar_pos=$i;
+		}
+		$i++;
+	}
+	return $most_similar_pos;
+}
 
 ##############
 # combo box
@@ -485,6 +507,16 @@ sub message_dialog {
 }
 
 
+
+sub set_tip{
+	my ($widget,$tip)=@_;
+	my $tooltips = Gtk2::Tooltips->new;
+	$tooltips->set_tip($widget,$tip);
+	
+	
+}
+
+
 ############
 # window
 ###########
@@ -549,13 +581,9 @@ sub def_scrolled_window_box{
 	my $scrolled_window = new Gtk2::ScrolledWindow (undef, undef);
 	$scrolled_window->set_policy( "automatic", "automatic" );
 	$scrolled_window->add_with_viewport($box);
-
-		
-
 	$window->add($scrolled_window);
 	$window->show_all;
 	$box->show_all;
-
 	return ($box,$window);
 
 }
@@ -590,6 +618,69 @@ sub set_defualt_font_size{
 			widget "*" style "normal"
 __
 
+}
+
+sub gen_scr_win_with_adjst {
+	my ($self,$name)=@_;
+	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);	
+	$scrolled_win->set_policy( "automatic", "automatic" );	
+	$scrolled_win->signal_connect("destroy"=> sub{
+	 	save_scrolled_win_adj($self,$scrolled_win, $name);
+	 	
+	 });
+	 my $adjast=0;
+	 $scrolled_win->signal_connect("size-allocate"=> sub{
+	 	if($adjast==0){
+	 		load_scrolled_win_adj($self,$scrolled_win, $name);
+	 		$adjast=1;
+	 	}
+	 	
+	 });	
+	return $scrolled_win;
+}
+
+
+sub save_scrolled_win_adj {
+	my ($self,$scrolled_win,$name)=@_;  	
+	my $ha= $scrolled_win->get_hadjustment();
+    my $va =$scrolled_win->get_vadjustment();
+    return if(!defined $ha);
+    return if(!defined $va);
+    save_adj ($self,$ha,$name,"ha"); 
+	save_adj ($self,$va,$name,"va"); 
+}
+
+
+sub load_scrolled_win_adj {
+	my ($self,$scrolled_win,$name)=@_;  
+	my $ha= $scrolled_win->get_hadjustment();
+    my $va =$scrolled_win->get_vadjustment();
+	my $h=load_adj ($self,$ha,$name,"ha"); 
+	my $v=load_adj ($self,$va,$name,"va"); 
+	#$ha->set_value($h) if(defined $h);
+    #$va->set_value($v) if(defined $v);    
+}
+  
+    
+    
+    
+sub save_adj {
+	my ($self,$adjustment,$at1,$at2)=@_;  	
+	my $value = $adjustment->value;
+	$self->object_add_attribute($at1,$at2,$value);
+}
+
+
+sub load_adj {
+	my ($self,$adjustment,$at1,$at2)=@_;
+	return if(!defined $at1);
+    my $value=  $self->object_get_attribute($at1,$at2);
+    return if(!defined $value);
+    my $lower =  $adjustment->lower;
+    my $upper = $adjustment->upper - $adjustment->page_size;
+    $value=  ($value < $lower || $value > $upper ) ? 0 : $value; 
+    
+    $adjustment->set_value($value);   
 }
 
 
@@ -679,6 +770,7 @@ sub create_text {
   $tview->set_wrap_mode ('word');
   $tview->set_pixels_above_lines (2);
   $tview->set_pixels_below_lines (2);
+ # $scrolled_window->set_placement('bottom_left' );
   return ($scrolled_window,$tview);
 }
 
@@ -696,9 +788,27 @@ sub def_table{
 
 }
 
+sub attach_widget_to_table {
+	my ($table,$row,$label,$inf_bt,$widget,$column)=@_;
+	$column = 0 if(!defined $column);
+	$column *=4;
+	#my $tmp=gen_label_in_left(" "); 
+	if(defined $label)  {$table->attach  ($label , $column, $column+1,  $row,$row+1,'fill','shrink',2,2);$column++;}
+	if(defined $inf_bt) {$table->attach  ($inf_bt , $column, $column+1, $row,$row+1,'fill','shrink',2,2);$column++;}
+	if(defined $widget) {$table->attach  ($widget , $column, $column+1, $row,$row+1,'fill','shrink',2,2);$column++;}
+	#$table->attach  ($tmp , $column+3, $column+4, $row,$row+1,'fill','shrink',2,2);
+}
 
 
-
+#sub attach_widget_to_table2 {
+#	my ($table,$row,$label,$inf_bt,$widget)=@_;
+	
+#	my $tmp=gen_label_in_left(" "); 
+#	$table->attach  ($label , 0, 4,  $row,$row+1,'fill','shrink',2,2);
+#	$table->attach  ($inf_bt , 4, 5, $row,$row+1,'fill','shrink',2,2);
+#	$table->attach  ($widget , 5, 9, $row,$row+1,'fill','shrink',2,2);
+#	$table->attach  ($tmp , 9, 10, $row,$row+1,'fill','shrink',2,2);
+#}
 
 
 ######
@@ -753,6 +863,24 @@ sub add_info{
 	
 }
 
+
+sub new_on_textview{
+	my ($textview,$info)=@_;
+	my $buffer = $textview->get_buffer();
+  	$buffer->set_text($info);
+}
+
+sub append_to_textview{
+	my ($textview,$info)=@_;
+	my $buffer = $textview->get_buffer();
+	my $textiter = $buffer->get_end_iter();
+	#Insert some text into the buffer
+	$buffer->insert($textiter,$info);
+	
+	
+}
+
+
 sub show_colored_info{
 	my ($textview_ref,$info,$color)=@_;
 	my $buffer = $$textview_ref->get_buffer();
@@ -770,6 +898,14 @@ sub add_colored_info{
 	$buffer->insert_with_tags_by_name ($textiter, "$info", "${color}_tag");
 	
 }
+
+sub add_colors_to_textview{
+	my $tview= shift;
+	add_colored_tag($tview,'red');
+	add_colored_tag($tview,'blue');
+	add_colored_tag($tview,'green');
+}
+
 
 sub add_colored_tag{
 	my ($textview_ref,$color)=@_;
@@ -827,7 +963,7 @@ sub append_text_to_file {
 
 sub save_file {
 	my  ($file_path,$text)=@_;
-	open(my $fd, ">$file_path");
+	open my $fd, ">$file_path" or die "could not open $file_path: $!";
 	print $fd $text;
 	close $fd;	
 }
@@ -1051,23 +1187,23 @@ sub clone_obj{
 						my $ref= ref ($self->{$p}{$q}{$z});
 						if( $ref eq 'HASH' ){
 							
-							foreach my $w (keys %{$clone->{$p}{$q}{$q}}){
+							foreach my $w (keys %{$clone->{$p}{$q}{$z}}){
 								$self->{$p}{$q}{$z}{$w}= $clone->{$p}{$q}{$z}{$w};	
 								my $ref= ref ($self->{$p}{$q}{$z}{$w});
 								if( $ref eq 'HASH' ){
 									
 							
-									foreach my $m (keys %{$clone->{$p}{$q}{$q}{$w}}){
+									foreach my $m (keys %{$clone->{$p}{$q}{$z}{$w}}){
 										$self->{$p}{$q}{$z}{$w}{$m}= $clone->{$p}{$q}{$z}{$w}{$m};	
 										my $ref= ref ($self->{$p}{$q}{$z}{$w}{$m});
 										if( $ref eq 'HASH' ){
 											
-											foreach my $n (keys %{$clone->{$p}{$q}{$q}{$w}{$m}}){
+											foreach my $n (keys %{$clone->{$p}{$q}{$z}{$w}{$m}}){
 												$self->{$p}{$q}{$z}{$w}{$m}{$n}= $clone->{$p}{$q}{$z}{$w}{$m}{$n};	
 												my $ref= ref ($self->{$p}{$q}{$z}{$w}{$m}{$n});	
 												if( $ref eq 'HASH' ){
 												
-													foreach my $l (keys %{$clone->{$p}{$q}{$q}{$w}{$m}{$n}}){
+													foreach my $l (keys %{$clone->{$p}{$q}{$z}{$w}{$m}{$n}}){
 														$self->{$p}{$q}{$z}{$w}{$m}{$n}{$l}= $clone->{$p}{$q}{$z}{$w}{$m}{$n}{$l};	
 														my $ref= ref ($self->{$p}{$q}{$z}{$w}{$m}{$n}{$l});	
 														if( $ref eq 'HASH' ){
@@ -1128,13 +1264,27 @@ sub get_directory_name {
 
 }
 
+sub remove_project_dir_from_addr{
+	my $file=shift;
+	my $dir = Cwd::getcwd();
+	my $project_dir	  = abs_path("$dir/../../"); #mpsoc directory address
+	$file =~ s/$project_dir//; 
+	return $file;	
+}
+
+sub add_project_dir_to_addr{
+	my $file=shift;
+	my $dir = Cwd::getcwd();
+	my $project_dir	  = abs_path("$dir/../../"); #mpsoc directory address
+	return $file if(-f $file ); 
+	return "$project_dir/$file";	
+	
+}
 
 sub get_file_name {
 	my ($object,$title,$entry,$attribute1,$attribute2,$extension,$lable,$open_in)= @_;
 	my $browse= def_image_button("icons/browse.png");
-	my $dir = Cwd::getcwd();
-	my $project_dir	  = abs_path("$dir/../../"); #mpsoc directory address
-
+	
 	$browse->signal_connect("clicked"=> sub{
 		my $entry_ref=$_[1];
  		my $file;
@@ -1158,9 +1308,9 @@ sub get_file_name {
 	}
 		
 			if ( "ok" eq $dialog->run ) {
-		    		$file = $dialog->get_filename;
+		    	$file = $dialog->get_filename;
 				#remove $project_dir form beginig of each file
-            			$file =~ s/$project_dir//; 
+            	$file =remove_project_dir_from_addr($file); 
 				$$entry_ref->set_text($file);
 				$object->object_add_attribute($attribute1,$attribute2,$file) if(defined $object);
 				my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
@@ -1263,14 +1413,17 @@ sub gen_spin_object {
 		$value=$default;
 		$object->object_add_attribute($attribute1,$attribute2,$value);
 	}
-	$value=~ s/\D//g;
-	$min=~ s/\D//g;
-	$max=~ s/\D//g;
-	$step=~ s/\D//g;
+	
+	$value=~ s/[^0-9.]//g;
+	$min=~   s/[^0-9.]//g;
+	$max=~   s/[^0-9.]//g;
+	$step=~  s/[^0-9.]//g;
+	
+	
 	my $widget=gen_spin($min,$max,$step);
 	$widget->set_value($value);
 	$widget-> signal_connect("value_changed" => sub{
-		my $new_param_value=$widget->get_value_as_int();
+		my $new_param_value=$widget->get_value();
 		$object->object_add_attribute($attribute1,$attribute2,$new_param_value);
 		set_gui_status($object,$status,$timeout) if (defined $status);
 	});
@@ -1360,9 +1513,11 @@ sub gen_check_box_object {
 
 
 sub get_dir_in_object {
-	my ($object,$attribute1,$attribute2,$content,$status,$timeout)=@_;
+	my ($object,$attribute1,$attribute2,$content,$status,$timeout,$default)=@_;
 	my $widget = def_hbox(FALSE,0);
 	my $value=$object->object_get_attribute($attribute1,$attribute2);
+	$object->object_add_attribute($attribute1,$attribute2,  $default) if (!defined $value );
+	$value = $default if (!defined $value );
 	my $entry=gen_entry($value);
 	$entry-> signal_connect("changed" => sub{
 		my $new_param_value=$entry->get_text();
@@ -1397,6 +1552,152 @@ sub get_file_name_object {
 	$widget->pack_start( $browse, FALSE, FALSE, 0);
 	return $widget;
 }
+
+
+
+
+
+
+
+
+
+
+
+sub add_param_widget {
+	 my ($mpsoc,$name,$param, $default,$type,$content,$info, $table,$row,$column,$show,$attribut1,$ref_delay,$new_status,$loc)=@_;
+	 my $label;
+	 $label =gen_label_in_left(" $name") if(defined $name);
+	 my $widget;
+	 my $value=$mpsoc->object_get_attribute($attribut1,$param);
+	 if(! defined $value) {
+			$mpsoc->object_add_attribute($attribut1,$param,$default);
+			$mpsoc->object_add_attribute_order($attribut1,$param);
+			$value=$default;
+	 }
+	 if(! defined $new_status){
+		$new_status='ref';
+	 }
+	 if ($type eq "Entry"){
+		$widget=gen_entry($value);
+		$widget-> signal_connect("changed" => sub{
+			my $new_param_value=$widget->get_text();
+			$mpsoc->object_add_attribute($attribut1,$param,$new_param_value);
+			set_gui_status($mpsoc,$new_status,$ref_delay) if(defined $ref_delay);
+			
+
+		});
+		
+		
+	 }
+	 elsif ($type eq "Combo-box"){
+		 my @combo_list=split(",",$content);
+		 my $pos=get_pos($value, @combo_list) if(defined $value);
+		 if(!defined $pos){
+		 	$mpsoc->object_add_attribute($attribut1,$param,$default);	
+		 	$pos=get_item_pos($default, @combo_list) if (defined $default);
+		 		 	
+		 }
+		#print " my $pos=get_item_pos($value, @combo_list);\n";
+		 $widget=gen_combo(\@combo_list, $pos);
+		 $widget-> signal_connect("changed" => sub{
+		 my $new_param_value=$widget->get_active_text();
+		 $mpsoc->object_add_attribute($attribut1,$param,$new_param_value);
+		 set_gui_status($mpsoc,$new_status,$ref_delay) if(defined $ref_delay);
+
+
+		 });
+		 
+	 }
+	 elsif 	($type eq "Spin-button"){ 
+		  my ($min,$max,$step)=split(",",$content);
+		  $value=~ s/\D//g;
+		  $min=~ s/\D//g;
+		  $max=~ s/\D//g;
+		  $step=~ s/\D//g;
+		  $widget=gen_spin($min,$max,$step);
+		  $widget->set_value($value);
+		  $widget-> signal_connect("value_changed" => sub{
+		  my $new_param_value=$widget->get_value_as_int();
+		  $mpsoc->object_add_attribute($attribut1,$param,$new_param_value);
+		  set_gui_status($mpsoc,$new_status,$ref_delay) if(defined $ref_delay);
+
+		  });
+		 
+		 # $box=def_label_spin_help_box ($param,$info, $value,$min,$max,$step, 2);
+	 }
+	
+	elsif ( $type eq "Check-box"){
+		$widget = def_hbox(FALSE,0);
+		my @check;
+		for (my $i=0;$i<$content;$i++){
+			$check[$i]= Gtk2::CheckButton->new;
+		}
+		for (my $i=0;$i<$content;$i++){
+			$widget->pack_end(  $check[$i], FALSE, FALSE, 0);
+			
+			my @chars = split("",$value);
+			#check if saved value match the size of check box
+			if($chars[0] ne $content ) {
+				$mpsoc->object_add_attribute($attribut1,$param,$default);
+				$value=$default;
+				@chars = split("",$value);
+			}
+			#set initial value
+			
+			#print "\@chars=@chars\n";
+			for (my $i=0;$i<$content;$i++){
+				my $loc= (scalar @chars) -($i+1);
+					if( $chars[$loc] eq '1') {$check[$i]->set_active(TRUE);}
+					else {$check[$i]->set_active(FALSE);}
+			}
+
+
+			#get new value
+			$check[$i]-> signal_connect("toggled" => sub{
+				my $new_val="$content\'b";			
+ 				
+				for (my $i=$content-1; $i >= 0; $i--){
+					if($check[$i]->get_active()) {$new_val="${new_val}1" ;}
+					else {$new_val="${new_val}0" ;}
+				}
+				$mpsoc->object_add_attribute($attribut1,$param,$new_val);
+				#print "\$new_val=$new_val\n";
+				set_gui_status($mpsoc,$new_status,$ref_delay) if(defined $ref_delay);
+			});
+		}
+
+
+
+
+	}
+	elsif ( $type eq "DIR_path"){
+			$widget =get_dir_in_object ($mpsoc,$attribut1,$param,$value,'ref',10);
+			set_gui_status($mpsoc,$new_status,$ref_delay) if(defined $ref_delay);
+	}	
+	elsif ( $type eq "FILE_path"){ # use $content as extention
+			$widget =get_file_name_object ($mpsoc,$attribut1,$param,$content,undef);
+			set_gui_status($mpsoc,$new_status,$ref_delay) if(defined $ref_delay);
+	}	
+	
+	else {
+		 $widget =gen_label_in_left("unsuported widget type!");
+	}
+
+	my $inf_bt= (defined $info)? gen_button_message ($info,"icons/help.png"):gen_label_in_left(" ");
+	if($show==1){
+		attach_widget_to_table ($table,$row,$label,$inf_bt,$widget,$column);
+		if ($loc eq "vertical"){
+			#print "$loc\n";
+			 $row ++;}
+		else {
+			$column+=4;
+		}	 
+	}
+    return ($row,$column);
+}
+
+
+
 
 ################
 # ADD info and label to widget
@@ -1491,7 +1792,7 @@ sub get_common_array{
 	my @B=@{$b_ref};
 	my @C;
 	foreach my $p (@A){
-		if( grep (/^$p$/,@B)){push(@C,$p)};
+		if( grep (/^\Q$p\E$/,@B)){push(@C,$p)};
 	}
 	return  @C;	
 }
@@ -1503,7 +1804,7 @@ sub get_diff_array{
 	my @B=@{$b_ref};
 	my @C;
 	foreach my $p (@A){
-		if( !grep (/^$p$/,@B)){push(@C,$p)};
+		if( !grep  (/^\Q$p\E$/,@B)){push(@C,$p)};
 	}
 	return  @C;	
 	
@@ -1596,7 +1897,21 @@ sub check_verilog_identifier_syntax {
 }
 
 
+sub capture_number_after {
+	my ($after,$text)=@_;
+	my @q =split  (/$after/,$text);
+	#my $d=$q[1];
+	my @d = split (/[^0-9. ]/,$q[1]);
+	return $d[0]; 
 
+}
+
+sub capture_string_between {
+	my ($start,$text,$end)=@_;
+	my @q =split  (/$start/,$text);
+	my @d = split (/$end/,$q[1]);
+	return $d[0];
+}
 
 
 1

@@ -116,7 +116,7 @@ set text "##                       END OF COMPILATION"
 set text "###################################################################"
 
 
-#vsim -t ps work.testbench_noc
+#vsim -t ps work.testbench_router
 vsim  -t ps  work.testbench_modelsim
 
 run 100 ms

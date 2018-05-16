@@ -37,11 +37,6 @@ module  ss_allocator#(
     parameter P = 5,
     parameter ROUTE_TYPE="DETERMINISTIC",
     parameter Fpay = 32,
-    parameter NX   = 4,   // number of node in x axis
-    parameter NY   = 4, // number of node in y axis
-    parameter TOPOLOGY =  "MESH",
-    parameter X = 0, // router x address   
-    parameter Y = 0,  // router y address   
     parameter DEBUG_EN =   1,
     parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000
    )
@@ -75,23 +70,21 @@ module  ss_allocator#(
     localparam  PV          =   V   *   P,
                 PVV         =   PV  *   V,
                 P_1         =   P-1 ,
-                PP_1        =   P_1 *   P,
-                VP_1        =   V   *   P_1,
                 PVP_1       =   PV  *   P_1,
                 Fw          =   2+V+Fpay,//flit width
-                PFw         =   P   *   Fw,
-                VV          =   V   *   V;
+                PFw         =   P   *   Fw;
                 
      //p=5           
-     localparam   LOCAL   =   3'd0,  
-                  EAST    =   3'd1,
-                  NORTH   =   3'd2, 
-                  WEST    =   3'd3,
-                  SOUTH   =   3'd4,
-                  DISABLED   =   3'b111;                   
+     localparam   LOCAL   =   0,  
+                  EAST    =   1,
+                  NORTH   =   2, 
+                  WEST    =   3,
+                  SOUTH   =   4;           
                
       
-        
+     // p=3 : ring line            
+    localparam  FORWARD =  1,
+                BACKWARD=  2;  
                 
                 
 
@@ -121,17 +114,22 @@ module  ss_allocator#(
 
  
 
-
-
+    wire [PV-1   :   0] any_ovc_granted_in_ss_port;
+    wire [PV-1   :   0] ovc_avalable_in_ss_port;
+    wire [PV-1   :   0] ovc_allocated_in_ss_port;
+    wire [PV-1   :   0] ovc_released_in_ss_port;
+    wire [PV-1   :   0] decreased_credit_in_ss_ovc;
+    wire [PV-1   :   0] ivc_num_getting_sw_grantin_SS_all;
 
 
 
  genvar i;
-    // there is no ssa for local port
-   
+    // there is no ssa for local port in 5 and 3 port routers
+   localparam DISABLED_SSA_PORT=  0; 
 
     generate
     for (i=0; i<PV; i=i+1) begin : vc_loop
+    /*
         localparam  SS_PORT_P5 = ((i/V)== EAST)? WEST:
                                  ((i/V)== WEST)? EAST:
                                  ((i/V)== SOUTH)? NORTH:
@@ -145,9 +143,9 @@ module  ss_allocator#(
         localparam  SS_PORT      =   (P==5) ? SS_PORT_P5:
 				     (P==3) ? SS_PORT_P3: DISABLED;
 
-       
+    */   
         
-       if (SS_PORT== DISABLED)begin : no_prefrable
+       if ((i/V)== DISABLED_SSA_PORT)begin : no_prefrable
        
        
             assign   ovc_allocated_all[i]= 1'b0;
@@ -165,35 +163,102 @@ module  ss_allocator#(
        
        
        end else begin : ssa
+       // some old synthezier does not accept definig localparam insde generate loop  to
+       // adapt with we assign wires manually using if-else conditions
+       if(P==5)begin :p5
+        
+           if((i/V)== EAST)begin : SS_WEST
+             assign   any_ovc_granted_in_ss_port[i]=any_ovc_granted_in_outport_all[WEST];
+             assign   ovc_avalable_in_ss_port[i]=ovc_avalable_all[(WEST*V)+(i%V)];
+             assign   ovc_allocated_all[(WEST*V)+(i%V)]=ovc_allocated_in_ss_port[i];
+             assign   ovc_released_all[(WEST*V)+(i%V)]=ovc_released_in_ss_port[i];
+             assign   decreased_credit_in_ss_ovc_all[(WEST*V)+(i%V)]=decreased_credit_in_ss_ovc[i]; 
+             assign   ivc_num_getting_sw_grantin_SS_all[i]=  ivc_num_getting_sw_grant_all[(WEST*V)+(i%V)];         
+            end   
+            
+          else if((i/V)== WEST)begin : SS_EAST
+             assign   any_ovc_granted_in_ss_port[i]=any_ovc_granted_in_outport_all[EAST];
+             assign   ovc_avalable_in_ss_port[i]=ovc_avalable_all[(EAST*V)+(i%V)];
+             assign   ovc_allocated_all[(EAST*V)+(i%V)]=ovc_allocated_in_ss_port[i];
+             assign   ovc_released_all[(EAST*V)+(i%V)]=ovc_released_in_ss_port[i];
+             assign   decreased_credit_in_ss_ovc_all[(EAST*V)+(i%V)]=decreased_credit_in_ss_ovc[i]; 
+             assign   ivc_num_getting_sw_grantin_SS_all[i]=  ivc_num_getting_sw_grant_all[(EAST*V)+(i%V)];                    
+          end 
+          
+          else if((i/V)== NORTH)begin : SS_SOUTH
+             assign   any_ovc_granted_in_ss_port[i]=any_ovc_granted_in_outport_all[SOUTH];
+             assign   ovc_avalable_in_ss_port[i]=ovc_avalable_all[(SOUTH*V)+(i%V)];
+             assign   ovc_allocated_all[(SOUTH*V)+(i%V)]=ovc_allocated_in_ss_port[i];
+             assign   ovc_released_all [(SOUTH*V)+(i%V)]=ovc_released_in_ss_port[i];
+             assign   decreased_credit_in_ss_ovc_all[(SOUTH*V)+(i%V)]=decreased_credit_in_ss_ovc[i];
+             assign   ivc_num_getting_sw_grantin_SS_all[i]=  ivc_num_getting_sw_grant_all[(SOUTH*V)+(i%V)];           
+                       
+          end  else begin : SS_NORTH
+             assign   any_ovc_granted_in_ss_port[i]=any_ovc_granted_in_outport_all[NORTH];
+             assign   ovc_avalable_in_ss_port[i]=ovc_avalable_all[(NORTH*V)+(i%V)];
+             assign   ovc_allocated_all[(NORTH*V)+(i%V)]=ovc_allocated_in_ss_port[i];
+             assign   ovc_released_all [(NORTH*V)+(i%V)]=ovc_released_in_ss_port[i];
+             assign   decreased_credit_in_ss_ovc_all[(NORTH*V)+(i%V)]=decreased_credit_in_ss_ovc[i]; 
+             assign   ivc_num_getting_sw_grantin_SS_all[i]=  ivc_num_getting_sw_grant_all[(NORTH*V)+(i%V)];                   
+          
+          end                 
+       
+        end else begin :P3
+            if((i/V)== FORWARD ) begin : SS_BACKWARD
+                assign   any_ovc_granted_in_ss_port[i]=any_ovc_granted_in_outport_all[BACKWARD];
+                assign   ovc_avalable_in_ss_port[i]=ovc_avalable_all[(BACKWARD*V)+(i%V)];
+                assign   ovc_allocated_all[(BACKWARD*V)+(i%V)]=ovc_allocated_in_ss_port[i];
+                assign   ovc_released_all [(BACKWARD*V)+(i%V)]=ovc_released_in_ss_port[i];
+                assign   decreased_credit_in_ss_ovc_all[(BACKWARD*V)+(i%V)]=decreased_credit_in_ss_ovc[i]; 
+                assign   ivc_num_getting_sw_grantin_SS_all[i]=  ivc_num_getting_sw_grant_all[(BACKWARD*V)+(i%V)];          
+            end else begin : SS_FORWARD
+                assign   any_ovc_granted_in_ss_port[i]=any_ovc_granted_in_outport_all[FORWARD];
+                assign   ovc_avalable_in_ss_port[i]=ovc_avalable_all[(FORWARD*V)+(i%V)];
+                assign   ovc_allocated_all[(FORWARD*V)+(i%V)]=ovc_allocated_in_ss_port[i];
+                assign   ovc_released_all [(FORWARD*V)+(i%V)]=ovc_released_in_ss_port[i];
+                assign   decreased_credit_in_ss_ovc_all[(FORWARD*V)+(i%V)]=decreased_credit_in_ss_ovc[i]; 
+                assign   ivc_num_getting_sw_grantin_SS_all[i]=  ivc_num_getting_sw_grant_all[(FORWARD*V)+(i%V)];                       
+            end             
+       
+       end
+      
+       
         ssa_per_vc #(
-                .V_GLOBAL(i),
-                .SS_PORT(SS_PORT),
-                .V(V),
-                .P(P),
-                .Fpay(Fpay),
-                .ROUTE_TYPE(ROUTE_TYPE),
-		.DEBUG_EN(DEBUG_EN),
-		.ESCAP_VC_MASK(ESCAP_VC_MASK)
+            .V_GLOBAL(i),
+            .V(V),
+            .P(P),
+            .Fpay(Fpay),
+            .ROUTE_TYPE(ROUTE_TYPE),
+            .DEBUG_EN(DEBUG_EN),
+            .ESCAP_VC_MASK(ESCAP_VC_MASK)
         )
         the_ssa_per_vc
         (
             .flit_in_we(flit_in_we_all[(i/V)]),
             .flit_in(flit_in_all[((i/V)+1)*Fw-1 :   (i/V)*Fw]),
             .any_ivc_sw_request_granted(any_ivc_sw_request_granted_all[(i/V)]),
-            .any_ovc_granted_in_ss_port(any_ovc_granted_in_outport_all[SS_PORT]),
-            .ovc_avalable_in_ss_port(ovc_avalable_all[(SS_PORT*V)+(i%V)]),
+            
+            .any_ovc_granted_in_ss_port(any_ovc_granted_in_ss_port[i]),
+            
+            .ovc_avalable_in_ss_port(ovc_avalable_in_ss_port[i]),
+            
             .ivc_request(ivc_request_all[i]),
             .assigned_ovc_not_full(assigned_ovc_not_full_all[i]),
             .dest_port(dest_port_all[(i+1)*P_1-1 :   i*P_1]),
             .assigned_to_ssovc(assigned_ovc_num_all[(i*V)+(i%V)]),
             .ovc_is_assigned(ovc_is_assigned_all[i]),
-            .ovc_allocated(ovc_allocated_all[(SS_PORT*V)+(i%V)]),
-            .ovc_released(ovc_released_all  [(SS_PORT*V)+(i%V)]),
+            
+            .ovc_allocated(ovc_allocated_in_ss_port[i]),
+            
+            .ovc_released(ovc_released_in_ss_port[i]),
+            
             .granted_ovc_num(granted_ovc_num_all[(i+1)*V-1 : i*V]),
             .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant_all[i]),
             .ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant_all[i]),
             .ivc_reset(ivc_reset_all[i]),
-            .decreased_credit_in_ss_ovc(decreased_credit_in_ss_ovc_all[(SS_PORT*V)+(i%V)])
+            
+            .decreased_credit_in_ss_ovc(decreased_credit_in_ss_ovc[i])
+
 //synthesis translate_off 
 //synopsys  translate_off
 	    ,.clk(clk)
@@ -214,6 +279,7 @@ module  ss_allocator#(
     
     
         for(i=0;i<P;i=i+1)begin: port_lp
+        /*
              localparam  SS_P5 =  (i== EAST)? WEST:
                                  (i== WEST)? EAST:
                                  (i== SOUTH)? NORTH:
@@ -228,13 +294,13 @@ module  ss_allocator#(
 	    localparam  SS_P =  (P==5) ? SS_P5 :
 				(P==3) ? SS_P3 : i;
 
-        
+        */
             
             always @(posedge clk or posedge reset)begin
                 if(reset)begin
-                    ssa_flit_wr_all[SS_P]<=1'b0;
+                    ssa_flit_wr_all[i]<=1'b0;
                 end else begin
-                    ssa_flit_wr_all[SS_P]<= |ivc_num_getting_sw_grant_all[(i+1)*V-1    :   i*V];                
+                    ssa_flit_wr_all[i]<= |ivc_num_getting_sw_grantin_SS_all[(i+1)*V-1    :   i*V];                
                 end
              end
          end// port_lp
@@ -262,7 +328,6 @@ endmodule
 
 module ssa_per_vc #(
     parameter V_GLOBAL = 1,
-    parameter SS_PORT=3,
     parameter V = 4,    // vc_num_per_port
     parameter P = 5,    // router port num
     parameter Fpay = 32, //pa
@@ -296,12 +361,36 @@ module ssa_per_vc #(
         
    );
    
-     localparam   LOCAL   =   3'd0,  
-                  EAST    =   3'd1,
-                  WEST    =   3'd3;
+
+                  
+                  
+     //p=5           
+     localparam   LOCAL   =   0,  
+                  EAST    =   1,
+                  NORTH   =   2, 
+                  WEST    =   3,
+                  SOUTH   =   4,
+                  DISABLED= P;           
+               
+      
+     // p=3 : ring line            
+    localparam  FORWARD =  1,
+                BACKWARD=  2;      
 
 
+    localparam  
+        SS_PORT_P5 = ((V_GLOBAL/V)== EAST)? WEST:
+                     ((V_GLOBAL/V)== WEST)? EAST:
+                     ((V_GLOBAL/V)== SOUTH)? NORTH:
+                     ((V_GLOBAL/V)== NORTH)? SOUTH:
+                                      DISABLED;
 
+    localparam  SS_PORT_P3 = ((V_GLOBAL/V)== FORWARD)? BACKWARD:
+                                 ((V_GLOBAL/V)== BACKWARD)?  FORWARD:
+                                 DISABLED;
+
+    localparam  SS_PORT      =   (P==5) ? SS_PORT_P5:
+                     (P==3) ? SS_PORT_P3: DISABLED;
   
    
     
@@ -313,9 +402,9 @@ module ssa_per_vc #(
                 SW_LOC             =V_GLOBAL/V,
                 V_LOCAL            =V_GLOBAL%V;
 
-
+    /* verilator lint_off WIDTH */ 
     localparam SSA_EN = ((ROUTE_TYPE == "FULL_ADAPTIVE") && (SS_PORT==2 || SS_PORT == 4) && ((1<<V_LOCAL &  ~ESCAP_VC_MASK ) != {V{1'b0}})) ? 1'b0 :1'b1;
-		
+	/* verilator lint_on WIDTH */ 	
       
                
 
@@ -393,7 +482,9 @@ assign condition_1_2_valid = ~(any_ovc_granted_in_ss_port  | any_ivc_sw_request_
 wire ss_port_hdr_flit, ss_port_nonhdr_flit;
 
 generate 
+/* verilator lint_off WIDTH */ 
 if(ROUTE_TYPE=="DETERMINISTIC") begin :dtrm
+/* verilator lint_on WIDTH */ 
 
     wire [P-1   :   0] dest_port_num,assigned_dest_port_num;
     
@@ -535,13 +626,6 @@ endmodule
 
 
 
-
-
-
-
-
-
-
 /**************************
             add_ss_port
 If no output is granted replace the output port with ss one
@@ -555,28 +639,27 @@ module add_ss_port #(
     destport_in,
     destport_out 
 );
-     localparam P_1= P-1;
-     
-     localparam   LOCAL   =   3'd0,  
-                  EAST    =   3'd1,
-                  NORTH   =   3'd2, 
-                  WEST    =   3'd3,
-                  SOUTH   =   3'd4;
+     localparam
+        P_1     =   P-1,
+        LOCAL   =   0,  
+        EAST    =   1,
+        NORTH   =   2, 
+        WEST    =   3,
+        SOUTH   =   4;
 
 
 
-     localparam  SS_PORT_P5 = (SW_LOC== EAST   )? WEST-3'd1 : // the sender port must be removed from destination port code  
-                             (SW_LOC== NORTH  )? SOUTH-3'd1: // the sender port must be removed from destination port code  
+     localparam  SS_PORT_P5 = (SW_LOC== EAST   )? WEST-1 : // the sender port must be removed from destination port code  
+                             (SW_LOC== NORTH  )? SOUTH-1: // the sender port must be removed from destination port code  
                              (SW_LOC== WEST   )? EAST  :
                                                  NORTH ; 
 
-     localparam  SS_PORT_P3 =   2'd1;   
+     localparam  SS_PORT_P3 =   1;   
                                  
 
      localparam  SS_PORT      =   (P==5) ? SS_PORT_P5: SS_PORT_P3;
 
-
-                
+        
     
      
     input       [P_1-1  :   0] destport_in;
@@ -593,24 +676,6 @@ module add_ss_port #(
      
 
 endmodule
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

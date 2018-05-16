@@ -3,106 +3,106 @@
 ##    
 ##	Copyright (C) 2014-2016  Alireza Monemi
 ##    
-##	This file is part of ProNoC 1.5.0 
+##	This file is part of ProNoC 1.7.0 
 ##
 ## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
-##	MAY RESULTS IN SOFTWARE CRUSH.
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
 ################################################################################
 
 $HashRef = bless( {
-                    'name' => 'ni',
+                    'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/ni/ni.v',
+                    'ports' => {
+                                 'current_x' => {
+                                                  'default_out' => 'Active low',
+                                                  'outport_type' => 'concatenate',
+                                                  'connect_name' => 'current_x',
+                                                  'connect_type' => 'output',
+                                                  'type' => 'input',
+                                                  'range' => 'Xw-1:0',
+                                                  'name' => 'current_x',
+                                                  'connect_range' => 'Xw-1:0'
+                                                },
+                                 'flit_in' => {
+                                                'name' => 'flit_in',
+                                                'range' => 'Fw-1:0',
+                                                'type' => 'input',
+                                                'connect_range' => 'Fw-1:0',
+                                                'connect_name' => 'flit_out',
+                                                'default_out' => 'Active low',
+                                                'outport_type' => 'concatenate',
+                                                'connect_type' => 'output'
+                                              },
+                                 'flit_in_wr' => {
+                                                   'name' => 'flit_in_wr',
+                                                   'type' => 'input',
+                                                   'range' => '',
+                                                   'connect_range' => '',
+                                                   'connect_name' => 'flit_out_wr',
+                                                   'outport_type' => 'concatenate',
+                                                   'default_out' => 'Active low',
+                                                   'connect_type' => 'output'
+                                                 },
+                                 'flit_out' => {
+                                                 'connect_type' => 'input',
+                                                 'default_out' => 'Active low',
+                                                 'outport_type' => 'concatenate',
+                                                 'connect_name' => 'flit_in',
+                                                 'connect_range' => 'Fw-1:0',
+                                                 'type' => 'output',
+                                                 'range' => 'Fw-1:0',
+                                                 'name' => 'flit_out'
+                                               },
+                                 'credit_out' => {
+                                                   'connect_type' => 'input',
+                                                   'outport_type' => 'concatenate',
+                                                   'default_out' => 'Active low',
+                                                   'connect_name' => 'credit_in',
+                                                   'connect_range' => 'V-1:0',
+                                                   'range' => 'V-1:0',
+                                                   'type' => 'output',
+                                                   'name' => 'credit_out'
+                                                 },
+                                 'credit_in' => {
+                                                  'connect_name' => 'credit_out',
+                                                  'outport_type' => 'concatenate',
+                                                  'default_out' => 'Active low',
+                                                  'connect_type' => 'output',
+                                                  'name' => 'credit_in',
+                                                  'type' => 'input',
+                                                  'range' => 'V-1:0',
+                                                  'connect_range' => 'V-1:0'
+                                                },
+                                 'flit_out_wr' => {
+                                                    'outport_type' => 'concatenate',
+                                                    'default_out' => 'Active low',
+                                                    'connect_name' => 'flit_in_wr',
+                                                    'connect_type' => 'input',
+                                                    'range' => '',
+                                                    'type' => 'output',
+                                                    'name' => 'flit_out_wr',
+                                                    'connect_range' => ''
+                                                  },
+                                 'current_y' => {
+                                                  'connect_range' => 'Yw-1:0',
+                                                  'name' => 'current_y',
+                                                  'range' => 'Yw-1:0',
+                                                  'type' => 'input',
+                                                  'connect_type' => 'output',
+                                                  'connect_name' => 'current_y',
+                                                  'default_out' => 'Active low',
+                                                  'outport_type' => 'concatenate'
+                                                }
+                               },
+                    'modules' => {
+                                   'ni' => {}
+                                 },
                     'gui_status' => {
                                       'timeout' => 0,
                                       'status' => 'ideal'
                                     },
-                    'modules' => {
-                                   'ni' => {}
-                                 },
-                    'module_name' => 'ni',
-                    'category' => 'NoC',
-                    'type' => 'socket',
                     'connection_num' => 'single connection',
-                    'ports' => {
-                                 'flit_out_wr' => {
-                                                    'default_out' => 'Active low',
-                                                    'connect_name' => 'flit_out_wr',
-                                                    'range' => '',
-                                                    'connect_range' => '',
-                                                    'name' => 'flit_out_wr',
-                                                    'outport_type' => 'concatenate',
-                                                    'type' => 'output',
-                                                    'connect_type' => 'input'
-                                                  },
-                                 'credit_out' => {
-                                                   'default_out' => 'Active low',
-                                                   'connect_name' => 'credit_out',
-                                                   'range' => 'V-1:0',
-                                                   'connect_range' => 'V-1:0',
-                                                   'outport_type' => 'concatenate',
-                                                   'name' => 'credit_out',
-                                                   'connect_type' => 'input',
-                                                   'type' => 'output'
-                                                 },
-                                 'flit_out' => {
-                                                 'name' => 'flit_out',
-                                                 'outport_type' => 'concatenate',
-                                                 'type' => 'output',
-                                                 'connect_type' => 'input',
-                                                 'default_out' => 'Active low',
-                                                 'range' => 'Fw-1:0',
-                                                 'connect_name' => 'flit_out',
-                                                 'connect_range' => 'Fw-1:0'
-                                               },
-                                 'flit_in_wr' => {
-                                                   'connect_range' => '',
-                                                   'default_out' => 'Active low',
-                                                   'connect_name' => 'flit_in_wr',
-                                                   'range' => '',
-                                                   'connect_type' => 'output',
-                                                   'type' => 'input',
-                                                   'outport_type' => 'concatenate',
-                                                   'name' => 'flit_in_wr'
-                                                 },
-                                 'current_y' => {
-                                                  'connect_range' => 'Yw-1:0',
-                                                  'default_out' => 'Active low',
-                                                  'connect_name' => 'current_y',
-                                                  'range' => 'Yw-1:0',
-                                                  'type' => 'input',
-                                                  'connect_type' => 'output',
-                                                  'name' => 'current_y',
-                                                  'outport_type' => 'concatenate'
-                                                },
-                                 'flit_in' => {
-                                                'connect_type' => 'output',
-                                                'type' => 'input',
-                                                'outport_type' => 'concatenate',
-                                                'name' => 'flit_in',
-                                                'connect_range' => 'Fw-1:0',
-                                                'range' => 'Fw-1:0',
-                                                'connect_name' => 'flit_in',
-                                                'default_out' => 'Active low'
-                                              },
-                                 'credit_in' => {
-                                                  'connect_range' => 'V-1:0',
-                                                  'range' => 'V-1:0',
-                                                  'connect_name' => 'credit_in',
-                                                  'default_out' => 'Active low',
-                                                  'type' => 'input',
-                                                  'connect_type' => 'output',
-                                                  'name' => 'credit_in',
-                                                  'outport_type' => 'concatenate'
-                                                },
-                                 'current_x' => {
-                                                  'outport_type' => 'concatenate',
-                                                  'name' => 'current_x',
-                                                  'connect_type' => 'output',
-                                                  'type' => 'input',
-                                                  'default_out' => 'Active low',
-                                                  'connect_name' => 'current_x',
-                                                  'range' => 'Xw-1:0',
-                                                  'connect_range' => 'Xw-1:0'
-                                                }
-                               },
-                    'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/ni/ni.v'
+                    'module_name' => 'ni',
+                    'name' => 'ni',
+                    'type' => 'socket',
+                    'category' => 'NoC'
                   }, 'intfc_gen' );

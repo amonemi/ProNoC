@@ -91,6 +91,8 @@ module vjtag #(
 	wire  virtual_state_e2dr = sub_wire9;
 	wire  virtual_state_sdr = sub_wire10;
 
+`ifndef VERILATOR
+`ifndef MODEL_TECH
 	sld_virtual_jtag	sld_virtual_jtag_component (
 				.ir_out (ir_out),
 				.tdo (tdo),
@@ -126,6 +128,8 @@ module vjtag #(
 				.tms ()
 				// synopsys translate_on
 				);
+
+
 	defparam
 		sld_virtual_jtag_component.sld_auto_instance_index = "NO",
 		sld_virtual_jtag_component.sld_instance_index = VJTAG_INDEX,
@@ -133,7 +137,8 @@ module vjtag #(
 		sld_virtual_jtag_component.sld_sim_action = "((0,1,7,3),(0,2,ff,20),(0,1,6,3),(0,2,ffffffff,20),(0,2,1,20),(0,2,2,20),(0,2,3,20),(0,2,4,20))",
 		sld_virtual_jtag_component.sld_sim_n_scan = 8,
 		sld_virtual_jtag_component.sld_sim_total_length = 198;
-
+`endif //MODEL_TECH
+`endif //VERILATOR
 
 endmodule
 

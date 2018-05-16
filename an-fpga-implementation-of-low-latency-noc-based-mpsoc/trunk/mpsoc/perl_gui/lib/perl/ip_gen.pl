@@ -18,26 +18,7 @@ use Gtk2;
 require "widget.pl"; 
 require "readme_gen.pl";
 
-use String::Similarity;
 
- 
-sub find_the_most_similar_position{
-	my ($item ,@list)=@_;
-	my $most_similar_pos=0;
-	my $lastsim=0;
-	my $i=0;
-	# convert item to lowercase
-	$item = lc $item;
-	foreach my $p(@list){
-		my $similarity= similarity $item, $p;
-		if ($similarity > $lastsim){
-			$lastsim=$similarity;
-			$most_similar_pos=$i;
-		}
-		$i++;
-	}
-	return $most_similar_pos;
-}
 
 
 use constant DISPLY_COLUMN    => 0;
@@ -81,7 +62,7 @@ sub read_all_module{
 
 		$ipgen->ipgen_add("module_name",$modules[0]);
 		$ipgen->ipgen_set_module_list(@modules);
-		load_deafult_setting($ipgen,$modules[0]);
+		load_default_setting($ipgen,$modules[0]);
 		
 		
 		set_gui_status($ipgen,"file_selected",1);
@@ -352,7 +333,7 @@ sub select_module{
 	$combo->signal_connect("changed"=> sub{
 		
 		my $module= $combo->get_active_text();
-		load_deafult_setting($ipgen,$module); 
+		load_default_setting($ipgen,$module); 
 		set_gui_status($ipgen,'intfc_changed',0);
 		
 		
@@ -377,7 +358,7 @@ sub select_module{
 	$header_h->signal_connect("clicked"=> sub{
 		my %page_info;
 		my $help1="The files and folder that selected here will be copied in genertated processing tile SW folder.";
-		my $help2="The file listed here can contain some variable with \${var_name} format. The file genertor will replace them with their values during file generation. The variable can be selected from above listed global vairable";
+		my $help2="The file listed here can contain some variable with \${var_name} format. The file genertor will replace them with their values during file generation. The variable can be selected from above listed global vairables";
 		my $help3='Define the header file for this peripheral device. You can use global vriables listed at the top.  
   		
 header file example 
@@ -397,14 +378,14 @@ header file example
 		$page_info{0}{folder_en}=1;
 		$page_info{0}{help}=$help1;
 
-		$page_info{1}{page_name} = "_Add file generator(s)";
+		$page_info{1}{page_name} = "_Add files contain variables";
 		$page_info{1}{filed_name}= "gen_sw_files";
-		$page_info{1}{filed_type}= "file_generators";
+		$page_info{1}{filed_type}= "file_with_variables";
 		$page_info{1}{rename_file}=1; 
 		$page_info{1}{folder_en}=0;
 		$page_info{1}{help}=$help2;
 
-		$page_info{2}{page_name} = "_Add to system.h";
+		$page_info{2}{page_name} = "_Add to tile.h";
 		$page_info{2}{filed_name}= "system_h";
 		$page_info{2}{filed_type}= "file_content";
 		$page_info{2}{rename_file}=undef; 
@@ -418,6 +399,7 @@ header file example
 	});	
 	$lib_hdl->signal_connect("clicked"=> sub{
 		my $help1="The files and folder that selected here will be copied in genertated processing tile RTL  folder.";
+		my $help2="The file listed here can contain some variable with \${var_name} format. The file genertor will replace them with their values during file generation. The variable can be selected from above listed global vairables";
 		my %page_info;
 		$page_info{0}{page_name} = "_Add exsiting HDL file/folder";
 		$page_info{0}{filed_name}= "hdl_files";
@@ -425,6 +407,13 @@ header file example
 		$page_info{0}{rename_file}=undef;
 		$page_info{0}{folder_en}=1; 
 		$page_info{0}{help}=$help1;
+
+		$page_info{1}{page_name} = "_Add files contain variables";
+		$page_info{1}{filed_name}= "gen_hw_files";
+		$page_info{1}{filed_type}= "file_with_variables";
+		$page_info{1}{rename_file}=1; 
+		$page_info{1}{folder_en}=0;
+		$page_info{1}{help}=$help2;
 
 		get_source_file($ipgen,$info,0,"Add HDL file(s)", "hw",\%page_info);
 
@@ -434,7 +423,7 @@ header file example
 	});	
 }
 
-sub load_deafult_setting{
+sub load_default_setting{
 	my ($ipgen,$module)=@_; 
 	my $file= $ipgen->ipgen_get("file_name");
 	$ipgen->ipgen_add("module_name",$module);
@@ -444,7 +433,7 @@ sub load_deafult_setting{
 	my @ports_order=$vdb->get_module_ports_order($module);
 	#print "@port_order\n";
 	
-	#add deafult parameter setting
+	#add default parameter setting
 	$ipgen->ipgen_remove_all_parameters();
 	foreach my $p (keys %parameters){
 			#print "$p\n";
@@ -619,11 +608,11 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 	#title
 	my @title;
 	$title[0]=gen_label_in_center("Parameter name");
-	$title[1]=gen_label_in_center("Deafult value");
+	$title[1]=gen_label_in_center("Default value");
 	$title[2]=gen_label_help($type_info,"Widget type");
 	$title[3]=gen_label_help($content_info,"Widget content");
-	$title[4]=gen_label_help($param_info);
-	$title[5]=gen_label_help($redefine_info);
+	$title[4]=gen_label_help($param_info,"Type");
+	$title[5]=gen_label_help($redefine_info,"");
 	$title[6]=gen_label_help("You can add aditional information about this parameter.","info");
 	$title[7]=gen_label_in_center("add/remove");
 	
@@ -659,8 +648,8 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 	my $error;
 	push(@parameters,"#new#");
 	foreach my $p (@parameters) {
-		my ($saved_deafult,$saved_widget_type,$saved_content,$saved_info,$vfile_param_type,$redefine_param)=  $ipgen->ipgen_get_parameter_detail($p);
-		#print 	"($saved_deafult,$saved_type,$saved_content)\n";
+		my ($saved_default,$saved_widget_type,$saved_content,$saved_info,$vfile_param_type,$redefine_param)=  $ipgen->ipgen_get_parameter_detail($p);
+		#print 	"($saved_default,$saved_type,$saved_content)\n";
 		my $parameter_box = def_hbox(TRUE,5);
 		my $param_name;
 		my $add_remove;
@@ -672,7 +661,7 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 			$add_remove=def_image_button("icons/plus.png","add");
 		}
 
-		my $deafult_entry= gen_entry($saved_deafult);
+		my $default_entry= gen_entry($saved_default);
 		my $pos=(defined $saved_widget_type ) ? get_scolar_pos( $saved_widget_type,@widget_type_list) : 0;
 		my $widget_type_combo=gen_combo(\@widget_type_list, $pos);
 		my $content_entry= gen_entry($saved_content);
@@ -703,7 +692,7 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 		#print "\$vfile_param_type =$vfile_param_type\n";
 		
 		$col=0;
-		my @all_widget=($param_name,$deafult_entry,$widget_type_combo,$content_entry,$check_param,$check_redefine,$info,$add_remove);
+		my @all_widget=($param_name,$default_entry,$widget_type_combo,$content_entry,$check_param,$check_redefine,$info,$add_remove);
 		foreach my $t (@all_widget){
 			$table->attach ($t, $positions[$col], $positions[$col+1], $row, $row+1,'expand','shrink',2,2);$col++;
 
@@ -718,13 +707,13 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 				
 		$ok->signal_connect (clicked => sub{
 			if($p ne "#new#"){		
-				my $deafult=$deafult_entry->get_text();
+				my $default=$default_entry->get_text();
 				my $type= $widget_type_combo->get_active_text();
 				my $content=$content_entry->get_text();
 				my $vfile_param_type=$check_param->get_active_text();					
 				my $check_result=$check_redefine->get_active();
 				my $redefine_param=($check_result eq 1)? 1:0;
-				$ipgen->ipgen_add_parameter($p,$deafult,$type,$content,$saved_info,$vfile_param_type,$redefine_param);
+				$ipgen->ipgen_add_parameter($p,$default,$type,$content,$saved_info,$vfile_param_type,$redefine_param);
 				
 				if 	($type eq "Spin-button"){ 
 					my @d=split(",",$content);
@@ -743,13 +732,13 @@ For Spin button define it as "minimum, maximum, step" e.g 0,10,1.';
 				$param=remove_all_white_spaces($param);
 			        
 				if( length($param) ){
-					my $deafult=$deafult_entry->get_text();
+					my $default=$default_entry->get_text();
 					my $type=$widget_type_combo->get_active_text();
 					my $content=$content_entry->get_text();
 					my $vfile_param_type=$check_param->get_active_text();	
 					my $check_result=$check_redefine->get_active();
 					my $redefine_param=($check_result eq 1)? 1:0;
-					$ipgen->ipgen_add_parameter($param,$deafult,$type,$content,$saved_info,$vfile_param_type,$redefine_param);
+					$ipgen->ipgen_add_parameter($param,$default,$type,$content,$saved_info,$vfile_param_type,$redefine_param);
 					$ipgen->ipgen_push_parameters_order($param);
 					set_gui_status($ipgen,"change_parameter",0);
 					$ok->clicked;
@@ -1600,7 +1589,7 @@ sub write_ip{
 	mkpath("$dir/lib/ip/$category/",1,01777);	
 	open(FILE,  ">lib/ip/$category/$ip_name.IP") || die "Can not open: $!";
 	print FILE perl_file_header("$ip_name.IP");
-	print FILE Data::Dumper->Dump([\%$ipgen],[$name]);
+	print FILE Data::Dumper->Dump([\%$ipgen],["ipgen"]);
 	close(FILE) || die "Error closing file: $!";
 	my $message="IP $ip_name has been generated successfully. In order to see the generated IP in processing tile generator you need to reset the ProNoC. Do you want to reset the ProNoC now?" ;
 			
@@ -1771,7 +1760,7 @@ sub source_notebook{
 	foreach my $p (sort keys %page_info){
 		my $page_ref;
 		$page_ref=get_file_folder($ipgen,$info,$window,$p,$page_info_ref) if($page_info{$p}{filed_type} eq "exsiting_file/folder"); 
-		$page_ref=get_file_folder($ipgen,$info,$window,$p,$page_info_ref) if($page_info{$p}{filed_type} eq "file_generators"); 
+		$page_ref=get_file_folder($ipgen,$info,$window,$p,$page_info_ref) if($page_info{$p}{filed_type} eq "file_with_variables"); 
 		$page_ref=get_file_content($ipgen,$info,$window,$page_info{$p},$page_info_ref) if($page_info{$p}{filed_type} eq "file_content"); 
 		$notebook->append_page ($page_ref,Gtk2::Label->new_with_mnemonic ($page_info{$p}{page_name}));
 

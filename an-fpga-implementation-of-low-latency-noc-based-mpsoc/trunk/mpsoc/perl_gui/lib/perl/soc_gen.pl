@@ -152,6 +152,8 @@ sub get_module_parameter{
 		my ($default,$type,$content,$info)= $ip->ip_get_parameter($category,$module,$p);
 		
 		my $value=$param_value{$p};
+		#$value = $default if (!defined $value && defined $default);
+		#print "$value\n";
 		if ($type eq "File_Entry"){
 			my $entry=gen_entry($value);
 			my $brows=get_file_name(undef,undef,$entry,undef,undef,undef,undef,undef);
@@ -980,6 +982,13 @@ sub generate_soc{
 		open(FILE,  ">lib/verilog/write_memory.sh") || die "Can not open: $!";
 		print FILE $prog;
 		close(FILE) || die "Error closing file: $!";
+
+		#generate prog_mem
+    		open(FILE,  ">lib/verilog/program.sh") || die "Can not open: $!";
+		print FILE soc_mem_prog();
+		close(FILE) || die "Error closing file: $!";
+
+
 		
 		my $dir = Cwd::getcwd();
 		my $project_dir	  = abs_path("$dir/../../"); 		
@@ -1005,6 +1014,7 @@ sub generate_soc{
 			move ("$dir/lib/verilog/${name}_top.v","$hw_path/"); 		
 			move ("$dir/lib/verilog/README" ,"$sw_path/");
 			move ("$dir/lib/verilog/write_memory.sh" ,"$sw_path/");
+			move ("$dir/lib/verilog/program.sh" ,"$sw_path/");
 		}
 		
 		# Copy Software files
@@ -1012,7 +1022,7 @@ sub generate_soc{
 		copy_file_and_folders($file_ref,$project_dir,$sw_path);
     		
 		# Write system.h and Software gen files
-		generate_header_file($soc,$project_dir,$sw_path,$dir);
+		generate_header_file($soc,$project_dir,$sw_path,$hw_path,$dir);
 			 
     		
     			
@@ -1496,7 +1506,19 @@ sub get_old_new_ip_version{
 	return ($old_v,$new_v);
 }
 
+sub check_for_ni{
+	my $self=shift;
+	my $ckeck=0;
+	my @instances=$self->soc_get_all_instances();
+	foreach my $id (@instances){
+		my $category = $self->soc_get_category($id);
+		if ($category eq 'NoC') {
+		$ckeck=1;
+		}
+	}
+	return $ckeck;
 
+}
 
 
 sub get_ram_init{
@@ -1540,7 +1562,7 @@ sub software_edit_soc {
 	my $soc=shift;	
 	my $name=$soc->object_get_attribute('soc_name');
 	if (length($name)==0){
-		message_dialog("Please define the SoC name!");
+		message_dialog("Please define the Tile name!");
 		return ;
 	}
 	my $target_dir  = "$ENV{'PRONOC_WORK'}/SOC/$name";
@@ -1551,22 +1573,25 @@ sub software_edit_soc {
 
 
 	my $make = def_image_button('icons/gen.png','Compile');
-	my $regen=def_image_button('icons/refresh.png','Regenerate main.c');	
+	my $regen= def_image_button('icons/refresh.png','Regenerate main.c');
+	my $prog= def_image_button('icons/write.png','Program the memory');
+
 	$table->attach ($regen,0, 1, 1,2,'shrink','shrink',0,0);	
-	$table->attach ($make,9, 10, 1,2,'shrink','shrink',0,0);
+	$table->attach ($make,5, 6, 1,2,'shrink','shrink',0,0);
+	$table->attach ($prog,9, 10, 1,2,'shrink','shrink',0,0); 
 	$regen -> signal_connect ("clicked" => sub{
 		my $dialog = Gtk2::MessageDialog->new (my $window,
                                       'destroy-with-parent',
                                       'question', # message type
                                       'yes-no', # which set of buttons?
-                                      "Are you sure you want to regenaret the Top.v file? Note that any changes you have made will be lost");
+                                      "Are you sure you want to regenaret the main.c file? Note that any changes you have made will be lost");
   		my $response = $dialog->run;
   		if ($response eq 'yes') {
       			
 			save_file ("$sw/main.c",main_c_template($name));
 			$app->load_source("$sw/main.c");	
   		}		
-
+		$dialog->destroy;
 
 	});
 
@@ -1576,6 +1601,80 @@ sub software_edit_soc {
 
 	});
 
+	#Programe the board 
+	$prog-> signal_connect("clicked" => sub{ 
+		my $error = 0;
+		my $bash_file="$target_dir/sw/program.sh";
+
+		add_info(\$tview,"Programe the board using quartus_pgm and $bash_file file\n");
+		#check if the programming file exists
+		unless (-f $bash_file) {
+			add_colored_info(\$tview,"\tThe $bash_file does not exists! \n", 'red');
+			$error=1;
+		}
+		
+		return if($error);
+		my $command = "cd $target_dir/sw; sh program.sh";
+		add_info(\$tview,"$command\n");
+		my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($command);
+		if(length $stderr>1){			
+			add_colored_info(\$tview,"$stderr\n",'red');
+			add_colored_info(\$tview,"Memory was not programed successfully!\n",'red');
+		}else {
+
+			if($exit){
+				add_colored_info(\$tview,"$stdout\n",'red');
+				add_colored_info(\$tview,"Memory was not programed successfully!\n",'red');
+			}else{
+				add_info(\$tview,"$stdout\n");
+				add_colored_info(\$tview,"Memory is programed successfully!\n",'blue');
+
+			}
+			
+		}		
+	});
+
+}
+
+
+sub soc_mem_prog {
+	 my $string='
+#!/bin/sh
+
+
+#JTAG_INTFC="$PRONOC_WORK/toolchain/bin/JTAG_INTFC"
+source ./jtag_intfc.sh
+
+#reset and disable cpus, then release the reset but keep the cpus disabled
+
+$JTAG_INTFC -n 127  -d  "I:1,D:2:3,D:2:2,I:0"
+
+# jtag instruction 
+#	0: bypass
+#	1: getting data
+# jtag data :
+# 	bit 0 is reset 
+#	bit 1 is disable
+# I:1  set jtag_enable  in active mode
+# D:2:3 load jtag_enable data register with 0x3 reset=1 disable=1
+# D:2:2 load jtag_enable data register with 0x2 reset=0 disable=1
+# I:0  set jtag_enable  in bypass mode
+
+
+
+#programe the memory
+
+	sh write_memory.sh 
+
+ 
+#Enable the cpu
+$JTAG_INTFC -n 127  -d  "I:1,D:2:0,I:0"
+# I:1  set jtag_enable  in active mode
+# D:2:0 load jtag_enable data register with 0x0 reset=0 disable=0
+# I:0  set jtag_enable  in bypass mode
+';
+return $string;
+	
 }
 
 
@@ -1590,6 +1689,7 @@ sub socgen_main{
 	my $ip = ip->lib_new ();
 	my $soc = soc->soc_new();
 	set_gui_status($soc,"ideal",0);
+	
 	#my $soc= eval { do 'lib/soc/soc.SOC' };
 	#message_dialog("$ENV{'PRONOC_WORK'}\n");
 	
@@ -1616,7 +1716,7 @@ sub socgen_main{
 	
 	
 	my $generate = def_image_button('icons/gen.png','Generate RTL');
-	my $compile  = def_image_button('icons/gate.jpg','Compile RTL');
+	my $compile  = def_image_button('icons/gate.png','Compile RTL');
 	my $software = def_image_button('icons/binary.png','Software');
 	my $diagram  = def_image_button('icons/diagram.png','Diagram');
 	my $ram      = def_image_button('icons/RAM.png','Memory');
@@ -1674,7 +1774,7 @@ sub socgen_main{
 		my $name=$soc->object_get_attribute('soc_name');
 		
 		if (length($name)==0){
-			message_dialog("Please define the SoC name!");
+			message_dialog("Please define the Tile name!");
 			return ;
 		}	
 			
@@ -1697,18 +1797,22 @@ sub socgen_main{
 		$soc->object_add_attribute('global_param','CORE_ID',0);	
 		generate_soc($soc,$info,$target_dir,$hw_dir,$sw_path,1,1);
 		#message_dialog("SoC \"$name\" has been created successfully at $target_dir/ " );
-		
-		my $dialog = Gtk2::MessageDialog->new (my $window,
-                                      'destroy-with-parent',
-                                      'question', # message type
-                                      'yes-no', # which set of buttons?
-                                      "Processing Tile  \"$name\" has been created successfully at $target_dir/.  In order to see this tile in MPSoC Generator you need to restar the ProNoC. Do you ant to reset the ProNoC now?");
-  		my $response = $dialog->run;
-  		if ($response eq 'yes') {
-      			exec($^X, $0, @ARGV);# reset ProNoC to apply changes	
-  		}
-  		$dialog->destroy;
-	
+		my $has_ni= check_for_ni($soc);
+		if($has_ni){
+			my $dialog = Gtk2::MessageDialog->new (my $window,
+		                              'destroy-with-parent',
+		                              'question', # message type
+		                              'yes-no', # which set of buttons?
+		                              "Processing Tile  \"$name\" has been created successfully at $target_dir/.  In order to include this tile in MPSoC Generator you need to restar the ProNoC. Do you ant to reset the ProNoC now?");
+	  		my $response = $dialog->run;
+	  		if ($response eq 'yes') {
+	      			exec($^X, $0, @ARGV);# reset ProNoC to apply changes	
+	  		}
+	  		$dialog->destroy;
+		} else {
+			message_dialog("Processing Tile  \"$name\" has been created successfully at $target_dir/.");
+
+		}
 	
 
 
@@ -1725,16 +1829,20 @@ sub socgen_main{
 
 	});
 
-
+	
 	$compile -> signal_connect("clicked" => sub{ 
+		$soc->object_add_attribute('compile','compilers',"QuartusII,Verilator,Modelsim");
 		my $name=$soc->object_get_attribute('soc_name');
 		if (length($name)==0){
-			message_dialog("Please define the SoC name!");
+			message_dialog("Please define the Tile name!");
 			return ;
 		}
 		my $target_dir  = "$ENV{'PRONOC_WORK'}/SOC/$name";
+		my $hw_dir 	= "$target_dir/src_verilog";
+		my $sw_path 	= "$target_dir/sw";
 		my $top 	= "$target_dir/src_verilog/${name}_top.v";
-		if (-f $top){	
+		if (-f $top){
+			generate_soc($soc,$info,$target_dir,$hw_dir,$sw_path,1,1);	
 			select_compiler($soc,$name,$top,$target_dir);
 		} else {
 			message_dialog("Cannot find $top file. Please run RTL Generator first!");

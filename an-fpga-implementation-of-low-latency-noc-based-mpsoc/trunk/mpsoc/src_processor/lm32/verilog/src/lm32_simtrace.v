@@ -8,6 +8,7 @@
 // =============================================================================
 
 `include "lm32_include.v"
+`define  DISPLAY_INST  0
 
 // Index of opcode field in an instruction
 `define LM32_OPCODE_RNG         31:26
@@ -85,7 +86,7 @@ begin
 		instruction_m <= instruction_x;
 	instruction <= instruction_m;
 
-	if ((valid_w == `TRUE) && (!kill_w)) begin
+	if ((valid_w == `TRUE) && (!kill_w) && `DISPLAY_INST) begin
 		// $write ( $stime/10 );
 		//$writeh( " [", pc_w << 2);
 		//$writeh( "]\t" );

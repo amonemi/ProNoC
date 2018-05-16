@@ -1,0 +1,567 @@
+#######################################################################
+##	File: Or1200.IP
+##    
+##	Copyright (C) 2014-2016  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.7.0 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$or1200 = bless( {
+                   'system_h' => ' #include "or1200/system.h" 
+
+
+inline void nop (){
+	__asm__("l.nop 1");
+}',
+                   'category' => 'Processor',
+                   'sw_files' => [
+                                   '/mpsoc/src_processor/or1200/sw/Makefile',
+                                   '/mpsoc/src_processor/or1200/sw/or1200',
+                                   '/mpsoc/src_processor/or1200/sw/link.ld',
+                                   '/mpsoc/src_processor/or1200/sw/define_printf.h',
+                                   '/mpsoc/src_processor/src_lib/simple-printf'
+                                 ],
+                   'file_name' => '/home/alireza/mywork/mpsoc/src_processor/or1200/verilog/or1200.v',
+                   'hdl_files' => [
+                                    '/mpsoc/src_processor/or1200/verilog/or1200.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_alu.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_amultp2_32x32.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_cfgr.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_cpu.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_ctrl.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_dc_fsm.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_dc_ram.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_dc_tag.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_dc_top.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_dmmu_tlb.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_dmmu_top.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_dpram.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_dpram_32x32.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_dpram_256x32.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_du.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_except.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_fpu.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_fpu_addsub.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_fpu_arith.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_fpu_div.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_fpu_fcmp.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_fpu_intfloat_conv.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_fpu_intfloat_conv_except.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_fpu_mul.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_fpu_post_norm_addsub.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_fpu_post_norm_div.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_fpu_post_norm_intfloat_conv.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_fpu_post_norm_mul.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_fpu_pre_norm_addsub.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_fpu_pre_norm_div.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_fpu_pre_norm_mul.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_freeze.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_genpc.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_gmultp2_32x32.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_ic_fsm.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_ic_ram.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_ic_tag.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_ic_top.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_if.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_immu_tlb.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_immu_top.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_iwb_biu.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_lsu.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_mem2reg.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_mult_mac.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_operandmuxes.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_pic.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_pm.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_qmem_top.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_reg2mem.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_rf.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_rfram_generic.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_sb.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_sb_fifo.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_spram.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_spram_32_bw.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_spram_32x24.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_spram_64x14.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_spram_64x22.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_spram_64x24.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_spram_128x32.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_spram_256x21.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_spram_512x20.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_spram_1024x8.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_spram_1024x32.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_spram_1024x32_bw.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_spram_2048x8.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_spram_2048x32.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_spram_2048x32_bw.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_sprs.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_top.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_tpram_32x32.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_tt.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_wb_biu.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_wbmux.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/or1200_xcv_ram32x8d.v',
+                                    '/mpsoc/src_processor/or1200/verilog/src/timescale.v'
+                                  ],
+                   'ip_name' => 'Or1200',
+                   'plugs' => {
+                                'reset' => {
+                                             'type' => 'num',
+                                             'value' => 1,
+                                             '0' => {
+                                                      'name' => 'reset'
+                                                    }
+                                           },
+                                'enable' => {
+                                              '0' => {
+                                                       'name' => 'enable'
+                                                     },
+                                              'enable' => {},
+                                              'value' => 1,
+                                              'type' => 'num'
+                                            },
+                                'wb_master' => {
+                                                 '0' => {
+                                                          'name' => 'iwb'
+                                                        },
+                                                 'type' => 'num',
+                                                 'value' => 2,
+                                                 '1' => {
+                                                          'name' => 'dwb'
+                                                        }
+                                               },
+                                'clk' => {
+                                           '0' => {
+                                                    'name' => 'clk'
+                                                  },
+                                           'type' => 'num',
+                                           'value' => 1
+                                         }
+                              },
+                   'ports' => {
+                                'reset' => {
+                                             'intfc_port' => 'reset_i',
+                                             'intfc_name' => 'plug:reset[0]',
+                                             'type' => 'input'
+                                           },
+                                'dwb_sel_o' => {
+                                                 'type' => 'output',
+                                                 'range' => '3:0',
+                                                 'intfc_port' => 'sel_o',
+                                                 'intfc_name' => 'plug:wb_master[1]'
+                                               },
+                                'dwb_cti_o' => {
+                                                 'intfc_port' => 'cti_o',
+                                                 'intfc_name' => 'plug:wb_master[1]',
+                                                 'type' => 'output',
+                                                 'range' => '2:0'
+                                               },
+                                'dwb_bte_o' => {
+                                                 'type' => 'output',
+                                                 'range' => '1:0',
+                                                 'intfc_port' => 'bte_o',
+                                                 'intfc_name' => 'plug:wb_master[1]'
+                                               },
+                                'iwb_cyc_o' => {
+                                                 'intfc_port' => 'cyc_o',
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'type' => 'output',
+                                                 'range' => ''
+                                               },
+                                'dwb_adr_o' => {
+                                                 'intfc_port' => 'adr_o',
+                                                 'intfc_name' => 'plug:wb_master[1]',
+                                                 'range' => 'aw-1:0',
+                                                 'type' => 'output'
+                                               },
+                                'iwb_err_i' => {
+                                                 'intfc_port' => 'err_i',
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'range' => '',
+                                                 'type' => 'input'
+                                               },
+                                'dwb_we_o' => {
+                                                'range' => '',
+                                                'type' => 'output',
+                                                'intfc_name' => 'plug:wb_master[1]',
+                                                'intfc_port' => 'we_o'
+                                              },
+                                'dwb_rty_i' => {
+                                                 'intfc_name' => 'plug:wb_master[1]',
+                                                 'intfc_port' => 'rty_i',
+                                                 'type' => 'input',
+                                                 'range' => ''
+                                               },
+                                'dwb_dat_o' => {
+                                                 'intfc_port' => 'dat_o',
+                                                 'intfc_name' => 'plug:wb_master[1]',
+                                                 'type' => 'output',
+                                                 'range' => 'dw-1:0'
+                                               },
+                                'iwb_dat_o' => {
+                                                 'intfc_port' => 'dat_o',
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'type' => 'output',
+                                                 'range' => 'dw-1:0'
+                                               },
+                                'iwb_rty_i' => {
+                                                 'intfc_port' => 'rty_i',
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'type' => 'input',
+                                                 'range' => ''
+                                               },
+                                'iwb_sel_o' => {
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'intfc_port' => 'sel_o',
+                                                 'type' => 'output',
+                                                 'range' => '3:0'
+                                               },
+                                'clk' => {
+                                           'range' => '',
+                                           'type' => 'input',
+                                           'intfc_port' => 'clk_i',
+                                           'intfc_name' => 'plug:clk[0]'
+                                         },
+                                'en_i' => {
+                                            'intfc_port' => 'enable_i',
+                                            'intfc_name' => 'plug:enable[0]',
+                                            'type' => 'input',
+                                            'range' => ''
+                                          },
+                                'dwb_cyc_o' => {
+                                                 'type' => 'output',
+                                                 'range' => '',
+                                                 'intfc_port' => 'cyc_o',
+                                                 'intfc_name' => 'plug:wb_master[1]'
+                                               },
+                                'iwb_dat_i' => {
+                                                 'range' => 'dw-1:0',
+                                                 'type' => 'input',
+                                                 'intfc_port' => 'dat_i',
+                                                 'intfc_name' => 'plug:wb_master[0]'
+                                               },
+                                'iwb_stb_o' => {
+                                                 'type' => 'output',
+                                                 'range' => '',
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'intfc_port' => 'stb_o'
+                                               },
+                                'dwb_ack_i' => {
+                                                 'type' => 'input',
+                                                 'range' => '',
+                                                 'intfc_name' => 'plug:wb_master[1]',
+                                                 'intfc_port' => 'ack_i'
+                                               },
+                                'dwb_dat_i' => {
+                                                 'type' => 'input',
+                                                 'range' => 'dw-1:0',
+                                                 'intfc_name' => 'plug:wb_master[1]',
+                                                 'intfc_port' => 'dat_i'
+                                               },
+                                'iwb_cti_o' => {
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'intfc_port' => 'cti_o',
+                                                 'type' => 'output',
+                                                 'range' => '2:0'
+                                               },
+                                'iwb_we_o' => {
+                                                'intfc_port' => 'we_o',
+                                                'intfc_name' => 'plug:wb_master[0]',
+                                                'range' => '',
+                                                'type' => 'output'
+                                              },
+                                'iwb_adr_o' => {
+                                                 'range' => 'aw-1:0',
+                                                 'type' => 'output',
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'intfc_port' => 'adr_o'
+                                               },
+                                'dwb_err_i' => {
+                                                 'range' => '',
+                                                 'type' => 'input',
+                                                 'intfc_port' => 'err_i',
+                                                 'intfc_name' => 'plug:wb_master[1]'
+                                               },
+                                'iwb_bte_o' => {
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'intfc_port' => 'bte_o',
+                                                 'type' => 'output',
+                                                 'range' => '1:0'
+                                               },
+                                'dwb_stb_o' => {
+                                                 'intfc_port' => 'stb_o',
+                                                 'intfc_name' => 'plug:wb_master[1]',
+                                                 'type' => 'output',
+                                                 'range' => ''
+                                               },
+                                'iwb_ack_i' => {
+                                                 'range' => '',
+                                                 'type' => 'input',
+                                                 'intfc_port' => 'ack_i',
+                                                 'intfc_name' => 'plug:wb_master[0]'
+                                               },
+                                'pic_ints_i' => {
+                                                  'intfc_port' => 'int_i',
+                                                  'intfc_name' => 'socket:interrupt_peripheral[array]',
+                                                  'range' => 'ppic_ints-1:0',
+                                                  'type' => 'input'
+                                                }
+                              },
+                   'parameters_order' => [
+                                           'dw',
+                                           'aw',
+                                           'ppic_ints',
+                                           'boot_adr',
+                                           'Data_cashe_size',
+                                           'Instruction_cashe_size',
+                                           'Data_cashe_enable',
+                                           'Instruction_cashe_enable',
+                                           'Data_MMU_enable',
+                                           'Instruction_MMU_enable',
+                                           'implementation_addc',
+                                           'implement_sub',
+                                           'implement_cy',
+                                           'implement_0v',
+                                           'implement_OVE',
+                                           'implement_alu_rotate',
+                                           'implement_alu_compare',
+                                           'implement_alu_ext',
+                                           'multiplier_type',
+                                           'divider_type'
+                                         ],
+                   'unused' => {
+                                 'plug:wb_master[1]' => [
+                                                          'tag_o'
+                                                        ],
+                                 'plug:wb_master[0]' => [
+                                                          'tag_o'
+                                                        ]
+                               },
+                   'parameters' => {
+                                     'implement_0v' => {
+                                                         'content' => '0V,NO_0V',
+                                                         'redefine_param' => 0,
+                                                         'global_param' => 'Don\'t include',
+                                                         'info' => 'Implement carry bit SR[OV] 
+Compiler doesn\'t use this, but other code may like  to.',
+                                                         'default' => '0V',
+                                                         'type' => 'Combo-box'
+                                                       },
+                                     'implement_alu_ext' => {
+                                                              'global_param' => 'Don\'t include',
+                                                              'content' => 'EXT,NO_EXT',
+                                                              'redefine_param' => 0,
+                                                              'type' => 'Combo-box',
+                                                              'info' => 'Implement l.extXs and l.extXz instructions',
+                                                              'default' => 'NO_EXT'
+                                                            },
+                                     'Data_MMU_enable' => {
+                                                            'content' => 'NO,YES',
+                                                            'redefine_param' => 0,
+                                                            'global_param' => 'Don\'t include',
+                                                            'default' => 'YES',
+                                                            'info' => undef,
+                                                            'type' => 'Combo-box'
+                                                          },
+                                     'aw' => {
+                                               'type' => 'Fixed',
+                                               'info' => 'Parameter',
+                                               'default' => '32',
+                                               'global_param' => 'Parameter',
+                                               'content' => '',
+                                               'redefine_param' => 1
+                                             },
+                                     'Data_cashe_enable' => {
+                                                              'info' => undef,
+                                                              'default' => 'YES',
+                                                              'type' => 'Combo-box',
+                                                              'redefine_param' => 0,
+                                                              'content' => 'NO,YES',
+                                                              'global_param' => 'Don\'t include'
+                                                            },
+                                     'implement_OVE' => {
+                                                          'redefine_param' => 0,
+                                                          'content' => 'OVE,NO_OVE',
+                                                          'global_param' => 'Don\'t include',
+                                                          'info' => 'Implement carry bit SR[OVE]
+Overflow interrupt indicator. When enabled, SR[OV] flag does not remain asserted after exception.',
+                                                          'default' => 'NO_OVE',
+                                                          'type' => 'Combo-box'
+                                                        },
+                                     'implementation_addc' => {
+                                                                'global_param' => 'Don\'t include',
+                                                                'content' => 'ADDC,NO_ADDC',
+                                                                'redefine_param' => 0,
+                                                                'type' => 'Combo-box',
+                                                                'default' => 'ADDC',
+                                                                'info' => 'Implement l.addc/l.addic instructions
+By default implementation of l.addc/l.addic  instructions is enabled in case you need them.
+If you don\'t use them, then disable implementation  to save area.'
+                                                              },
+                                     'implement_sub' => {
+                                                          'type' => 'Combo-box',
+                                                          'default' => 'SUB',
+                                                          'info' => 'Implement l.sub instruction
+By default implementation of l.sub instructions  is enabled to be compliant with the simulator.
+If you don\'t use carry bit, then disable  implementation to save area.',
+                                                          'global_param' => 'Don\'t include',
+                                                          'content' => 'SUB,NO_SUB',
+                                                          'redefine_param' => 0
+                                                        },
+                                     'divider_type' => {
+                                                         'type' => 'Combo-box',
+                                                         'default' => 'SERIAL',
+                                                         'info' => undef,
+                                                         'global_param' => 'Don\'t include',
+                                                         'redefine_param' => 0,
+                                                         'content' => 'SERIAL,PARALLEL'
+                                                       },
+                                     'Instruction_MMU_enable' => {
+                                                                   'global_param' => 'Don\'t include',
+                                                                   'content' => 'NO,YES',
+                                                                   'redefine_param' => 0,
+                                                                   'type' => 'Combo-box',
+                                                                   'default' => 'YES',
+                                                                   'info' => undef
+                                                                 },
+                                     'implement_alu_rotate' => {
+                                                                 'global_param' => 'Don\'t include',
+                                                                 'redefine_param' => 0,
+                                                                 'content' => 'ROTATE,NO_ROTATE',
+                                                                 'type' => 'Combo-box',
+                                                                 'info' => 'Implement rotate in the ALU
+At the time of writing this, or32  C/C++ compiler doesn\'t generate rotate instructions. However or32 assembler can assemble code that uses rotate insn. 
+This means that rotate instructions must be used manually inserted.
+By default implementation of rotate is disabled to save area and increase is disabled to save area and increase clock frequency.',
+                                                                 'default' => 'ROTATE'
+                                                               },
+                                     'multiplier_type' => {
+                                                            'global_param' => 'Don\'t include',
+                                                            'redefine_param' => 0,
+                                                            'content' => 'SERIAL,PARALLEL',
+                                                            'type' => 'Combo-box',
+                                                            'info' => undef,
+                                                            'default' => 'SERIAL'
+                                                          },
+                                     'boot_adr' => {
+                                                     'content' => '',
+                                                     'redefine_param' => 1,
+                                                     'global_param' => 'Parameter',
+                                                     'info' => 'Parameter',
+                                                     'default' => '32\'h00000100',
+                                                     'type' => 'Fixed'
+                                                   },
+                                     'Instruction_cashe_enable' => {
+                                                                     'global_param' => 'Don\'t include',
+                                                                     'redefine_param' => 0,
+                                                                     'content' => 'NO,YES',
+                                                                     'type' => 'Combo-box',
+                                                                     'info' => undef,
+                                                                     'default' => 'YES'
+                                                                   },
+                                     'ppic_ints' => {
+                                                      'content' => '3,31,1',
+                                                      'redefine_param' => 1,
+                                                      'global_param' => 'Parameter',
+                                                      'info' => 'Number of interrupts',
+                                                      'default' => '20',
+                                                      'type' => 'Spin-button'
+                                                    },
+                                     'Data_cashe_size' => {
+                                                            'content' => '512,4K,8K,16K,32K',
+                                                            'redefine_param' => 0,
+                                                            'global_param' => 'Don\'t include',
+                                                            'info' => 'Data Cashe Size in B',
+                                                            'default' => '8K',
+                                                            'type' => 'Combo-box'
+                                                          },
+                                     'Instruction_cashe_size' => {
+                                                                   'default' => '8K',
+                                                                   'info' => 'Instruction Cashe Size in B',
+                                                                   'type' => 'Combo-box',
+                                                                   'content' => '512,4K,8K,16K,32K',
+                                                                   'redefine_param' => 0,
+                                                                   'global_param' => 'Don\'t include'
+                                                                 },
+                                     'implement_alu_compare' => {
+                                                                  'global_param' => 'Don\'t include',
+                                                                  'redefine_param' => 0,
+                                                                  'content' => '1,2,3',
+                                                                  'type' => 'Combo-box',
+                                                                  'default' => '2',
+                                                                  'info' => 'Type of ALU compare to implement
+Try to find which synthesizes with most efficient logic use or highest speed.'
+                                                                },
+                                     'dw' => {
+                                               'default' => '32',
+                                               'info' => 'Parameter',
+                                               'type' => 'Fixed',
+                                               'redefine_param' => 1,
+                                               'content' => '',
+                                               'global_param' => 'Parameter'
+                                             },
+                                     'implement_cy' => {
+                                                         'type' => 'Combo-box',
+                                                         'info' => 'Implement carry bit SR[CY]
+By default implementation of SR[CY] is enabled  to be compliant with the simulator. However SR[CY] is explicitly only used by l.addc/l.addic/l.sub instructions and if these three insns are not implemented there is not much point having SR[CY].',
+                                                         'default' => 'CY',
+                                                         'global_param' => 'Don\'t include',
+                                                         'redefine_param' => 0,
+                                                         'content' => 'CY,NO_CY'
+                                                       }
+                                   },
+                   'modules' => {
+                                  'or1200' => {}
+                                },
+                   'sockets' => {
+                                  'interrupt_peripheral' => {
+                                                              'type' => 'param',
+                                                              'value' => 'ppic_ints',
+                                                              'connection_num' => 'single connection',
+                                                              '0' => {
+                                                                       'name' => 'interrupt'
+                                                                     }
+                                                            }
+                                },
+                   'ports_order' => [
+                                      'clk',
+                                      'reset',
+                                      'en_i',
+                                      'pic_ints_i',
+                                      'iwb_ack_i',
+                                      'iwb_err_i',
+                                      'iwb_rty_i',
+                                      'iwb_dat_i',
+                                      'iwb_cyc_o',
+                                      'iwb_adr_o',
+                                      'iwb_stb_o',
+                                      'iwb_we_o',
+                                      'iwb_sel_o',
+                                      'iwb_dat_o',
+                                      'iwb_cti_o',
+                                      'iwb_bte_o',
+                                      'dwb_ack_i',
+                                      'dwb_err_i',
+                                      'dwb_rty_i',
+                                      'dwb_dat_i',
+                                      'dwb_cyc_o',
+                                      'dwb_adr_o',
+                                      'dwb_stb_o',
+                                      'dwb_we_o',
+                                      'dwb_sel_o',
+                                      'dwb_dat_o',
+                                      'dwb_cti_o',
+                                      'dwb_bte_o'
+                                    ],
+                   'module_name' => 'or1200',
+                   'gen_hw_files' => [
+                                       '/mpsoc/src_processor/or1200/verilog/or1200_definesfrename_sep_tlib/or1200_defines.v'
+                                     ],
+                   'gui_status' => {
+                                     'timeout' => 0,
+                                     'status' => 'ideal'
+                                   },
+                   'version' => 32
+                 }, 'ip_gen' );

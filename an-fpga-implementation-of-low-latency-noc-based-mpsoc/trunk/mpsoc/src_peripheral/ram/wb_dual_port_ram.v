@@ -34,8 +34,8 @@
 
 module wb_dual_port_ram #(
 	parameter INITIAL_EN= "NO",
-    	parameter MEM_CONTENT_FILE_NAME= "ram0",// ram initial file name
-    	parameter INIT_FILE_PATH = "path_to/sw", // The sw folder path. It will be used for finding initial file. The path will be rewriten by the top module. 
+    parameter MEM_CONTENT_FILE_NAME= "ram0",// ram initial file name
+    parameter INIT_FILE_PATH = "path_to/sw", // The sw folder path. It will be used for finding initial file. The path will be rewriten by the top module. 
 	parameter Dw=32, //RAM data_width in bits
 	parameter Aw=10, //RAM address width
 	parameter BYTE_WR_EN= "YES",//"YES","NO"
@@ -97,16 +97,16 @@ module wb_dual_port_ram #(
 	end   
 	endfunction // log2 
 	
-	  function   [15:0]i2s;   
-	  input   integer c;  integer i;  integer tmp; begin 
-	  tmp =0; 
-	  for (i=0; i<2; i=i+1'b1) begin 
+    function   [15:0]i2s;   
+    input   integer c;  integer i;  integer tmp; begin 
+    tmp =0; 
+    for (i=0; i<2; i=i+1'b1) begin 
 			tmp =  tmp +    (((c % 10)   + 6'd48) << i*8); 
 			c       =   c/10; 
-	  end 
-	  i2s = tmp[15:0];
-	  end     
-	  endfunction //i2s
+    end 
+    i2s = tmp[15:0];
+    end     
+    endfunction //i2s
 
 localparam	BYTE_ENw= ( BYTE_WR_EN == "YES")? Dw/8 : 1;
 
@@ -145,8 +145,18 @@ localparam	BYTE_ENw= ( BYTE_WR_EN == "YES")? Dw/8 : 1;
     wire   [Dw-1    :   0]  q_a,q_b;
     
 
+`ifdef VERILATOR // verilatore does not recognize altsyncram
+    localparam FPGA_VENDOR_MDFY= "GENERIC";
+`else 
+    `ifdef MODEL_TECH
+        localparam FPGA_VENDOR_MDFY= "GENERIC";
+    `else
+       localparam FPGA_VENDOR_MDFY= FPGA_VENDOR;
+    `endif
+`endif
 
-	localparam MEM_NAME = (FPGA_VENDOR== "ALTERA")? {MEM_CONTENT_FILE_NAME,".mif"} : 
+
+	localparam MEM_NAME = (FPGA_VENDOR_MDFY== "ALTERA")? {MEM_CONTENT_FILE_NAME,".mif"} : 
 							{MEM_CONTENT_FILE_NAME,".hex"}; //Generic
 
 
@@ -160,7 +170,8 @@ localparam	BYTE_ENw= ( BYTE_WR_EN == "YES")? Dw/8 : 1;
         .Aw(Aw),
         .BURST_MODE(PORT_A_BURST_MODE),
         .SELw(SELw),
-        .CTIw(CTIw)
+        .CTIw(CTIw),
+        .BTEw(BTEw)
     )
    ctrl_a
    (
@@ -177,6 +188,7 @@ localparam	BYTE_ENw= ( BYTE_WR_EN == "YES")? Dw/8 : 1;
         .sa_cyc_i(sa_cyc_i),
         .sa_we_i(sa_we_i),
         .sa_cti_i(sa_cti_i),
+        .sa_bte_i(sa_bte_i),
         .sa_dat_o(sa_dat_o),
         .sa_ack_o(sa_ack_o),
         .sa_err_o(sa_err_o),
@@ -189,7 +201,8 @@ localparam	BYTE_ENw= ( BYTE_WR_EN == "YES")? Dw/8 : 1;
         .Aw(Aw),
         .BURST_MODE(PORT_B_BURST_MODE),
         .SELw(SELw),
-        .CTIw(CTIw)
+        .CTIw(CTIw),
+        .BTEw(BTEw)
     )
     ctrl_b
     (
@@ -206,6 +219,7 @@ localparam	BYTE_ENw= ( BYTE_WR_EN == "YES")? Dw/8 : 1;
         .sa_cyc_i(sb_cyc_i),
         .sa_we_i(sb_we_i),
         .sa_cti_i(sb_cti_i),
+        .sa_bte_i(sa_bte_i),
         .sa_dat_o(sb_dat_o),
         .sa_ack_o(sb_ack_o),
         .sa_err_o(sb_err_o),
@@ -215,7 +229,7 @@ localparam	BYTE_ENw= ( BYTE_WR_EN == "YES")? Dw/8 : 1;
      
 
     generate 
-    if(FPGA_VENDOR=="ALTERA")begin:altera_fpga
+    if(FPGA_VENDOR_MDFY=="ALTERA")begin:altera_fpga
     	localparam  RAM_ID ={"ENABLE_RUNTIME_MOD=NO"};
          // aletra dual port ram 
     		altsyncram #(
@@ -236,73 +250,67 @@ localparam	BYTE_ENw= ( BYTE_WR_EN == "YES")? Dw/8 : 1;
     	
     		) ram_inst
     		(
-    			.clock0			(clk),
-    		
-    			.address_a		(addr_a),
-    			.wren_a			(we_a),
-    			.data_a			(data_a),
-    			.q_a			(q_a),
-    			.byteena_a      	(sa_sel_i),		 
-    		
-    		
-    			.address_b		(addr_b),
-    			.wren_b			(we_b),
-    			.data_b			(data_b),
-    			.q_b			(q_b),
-    			.byteena_b		(1'b1),	
-    		
+    			.clock0(clk),
+     			.address_a(addr_a),
+    			.wren_a(we_a),
+    			.data_a(data_a),
+    			.q_a(q_a),
+    			.byteena_a(sa_sel_i),		 
+    		    		
+    			.address_b(addr_b),
+    			.wren_b(we_b),
+    			.data_b(data_b),
+    			.q_b(q_b),
+    			.byteena_b(1'b1),	    		
     
-    			.rden_a 		(1'b1),
-    			.rden_b			(1'b1),
-    			.clock1			(1'b1),
-    			.clocken0 		(1'b1),
-    			.clocken1 		(1'b1),
-    			.clocken2 		(1'b1),
-    			.clocken3 		(1'b1),
-    			.aclr0			(1'b0),
-    			.aclr1			(1'b0),		
-    			.addressstall_a		(1'b0),
-    			.addressstall_b 	(1'b0),
-    			.eccstatus		(    )
+    			.rden_a(1'b1),
+    			.rden_b(1'b1),
+    			.clock1(1'b1),
+    			.clocken0(1'b1),
+    			.clocken1(1'b1),
+    			.clocken2(1'b1),
+    			.clocken3(1'b1),
+    			.aclr0(1'b0),
+    			.aclr1(1'b0),		
+    			.addressstall_a(1'b0),
+    			.addressstall_b(1'b0),
+    			.eccstatus(   )
     
     		);
     
     	
     end
     
-    else if(FPGA_VENDOR=="GENERIC")begin:generic_ram
+    else if(FPGA_VENDOR_MDFY=="GENERIC")begin:generic_ram
     	
     		
     
-    		generic_dual_port_ram #(
-    			.Dw(Dw),
-    			.Aw(Aw),
-    			.BYTE_WR_EN(BYTE_WR_EN),
+        generic_dual_port_ram #(
+            .Dw(Dw),
+            .Aw(Aw),
+            .BYTE_WR_EN(BYTE_WR_EN),
 			.INITIAL_EN(INITIAL_EN),
 			.INIT_FILE(INIT_FILE) 
-    		)
-    		ram_inst
-    		(
-    			.data_a     (data_a), 
-    			.data_b     (data_b),
-    			.addr_a     (addr_a),
-    			.addr_b     (addr_b),
-    			.byteena_a  (sa_sel_i),
-    			.byteena_b  ({BYTE_ENw{1'b1}}),
-    			.we_a       (we_a),
-    			.we_b       (we_b),
-    			.clk        (clk),
-    			.q_a        (q_a),
-    			.q_b        (q_b)
+        )
+        ram_inst
+        (
+            .data_a(data_a), 
+    		.data_b(data_b),
+    		.addr_a(addr_a),
+    		.addr_b(addr_b),
+    		.byteena_a(sa_sel_i),
+    		.byteena_b({BYTE_ENw{1'b1}}),
+    		.we_a(we_a),
+    		.we_b(we_b),
+    		.clk(clk),
+    		.q_a(q_a),
+    		.q_b(q_b)
     			
-    		);
-    
-    
+    	);   
     	
     end //Generic
     
-    
-    
+        
     endgenerate
 
 

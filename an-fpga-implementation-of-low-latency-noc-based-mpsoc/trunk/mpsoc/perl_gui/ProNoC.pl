@@ -21,11 +21,12 @@ require "soc_gen.pl";
 require "mpsoc_gen.pl";
 require "emulator.pl";
 require "simulator.pl";
+require "trace_gen.pl";
+
+use File::Basename;
 
 
-
-
-our $VERSION = '1.7.0'; 
+our $VERSION = '1.8.0'; 
 
 sub main{
 
@@ -55,88 +56,33 @@ if ( !defined $ENV{PRONOC_WORK} || !defined $ENV{QUARTUS_BIN}) {
     	message_dialog("$message");
     
 }
+my $table = Gtk2::Table->new (1, 3, FALSE);
 
-
-my $notebook = Gtk2::Notebook->new;
-
-my $intfc_gen=  intfc_main();
-$notebook->append_page ($intfc_gen,Gtk2::Label->new_with_mnemonic ("  _Interface generator  "));
-
-my $ipgen=ipgen_main();
-$notebook->append_page ($ipgen,Gtk2::Label->new_with_mnemonic ("  _IP generator  "));
-
-my $socgen=socgen_main();			
-$notebook->append_page ($socgen,Gtk2::Label->new_with_mnemonic ("  _Processing tile generator  "));
-
-my $mpsocgen =mpsocgen_main();
-$notebook->append_page ($mpsocgen,Gtk2::Label->new_with_mnemonic ("  _NoC based MPSoC generator  "));	
-
-
-my $simulator =simulator_main();
-$notebook->append_page ($simulator,Gtk2::Label->new_with_mnemonic (" _NoC simulator   "));		
-
-my $emulator =emulator_main();
-$notebook->append_page ($emulator,Gtk2::Label->new_with_mnemonic (" _NoC emulator "));								
 			
+	#________
+	#radio btn "Generator"	
+	my $rbtn_generator = Gtk2::RadioToolButton->new (undef);		
 			
-			
-		my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
-		$scrolled_win->set_policy( "automatic", "automatic" );
-		$scrolled_win->add_with_viewport($notebook);	
-		
-		my $window = def_win_size($width-100,$hight-100,"ProNoC");
-		#$window->add($scrolled_win);
-		
-
-		my $navIco = Gtk2::Gdk::Pixbuf->new_from_file("./icons/ProNoC.png");         # advance1.png");  
-		$window->set_default_icon($navIco); 
+	my ($notebook,$noteref) = generate_main_notebook('Generator');
+	my $window = def_win_size($width-100,$hight-100,"ProNoC");
+	my $navIco = Gtk2::Gdk::Pixbuf->new_from_file("./icons/ProNoC.png");         # advance1.png");  
+	$window->set_default_icon($navIco); 
 
 
-	
-
-
-
-
-
-		my @menu_items = (
-     
-
+ my @menu_items = (
   [ "/_File",            undef,        undef,          0, "<Branch>" ],
- # [ "/File/_New",        "<control>N", \&menuitem_cb,  0, "<StockItem>", 'gtk-new' ],
- # [ "/File/_Open",       "<control>O", \&menuitem_cb,  0, "<StockItem>", 'gtk-open' ],
- # [ "/File/_Save",       "<control>S", \&menuitem_cb,  0, "<StockItem>", 'gtk-save' ],
- # [ "/File/Save _As...", undef,        \&menuitem_cb,  0, "<StockItem>", 'gtk-save' ],
- # [ "/File/sep1",        undef,        \&menuitem_cb,  0, "<Separator>" ],
   [ "/File/_Quit",       "<control>Q", sub { Gtk2->main_quit },  0, "<StockItem>", 'gtk-quit' ],
-
   [ "/_View",                  undef, undef,         0, "<Branch>" ],
-
-
-  ["/_Help", 		undef,		undef,          0, 	"<Branch>" ],
-  ["/_Help/_About",  	"F1", 		\&about ,	0,	undef ],
-  ["/_Help/_intf_gen",  "F2",		\&intfc_help, 	0,	undef ],
-  ["/_Help/_ip_gen",  	"F3", 		\&ip_help ,	0,	undef ],
-  ["/_Help/_pt_gen",  	"F4", 		\&pt_help ,	0,	undef ],
-  ["/_Help/_sim_help",  "F5",		\&sim_help ,	0,	undef ],
-  ["/_Help/_Tutorial_1", undef, 	\&Tutorial_1 ,	0,	undef ],
-  ["/_Help/_Tutorial_2", undef, 	\&Tutorial_2 ,	0,	undef ],
-
-
-
-
-  #["/_View/_Font12",    undef,         sub{ setfont(12,,$window)} ,   0, "<RadioItem>" ],	
+  [ "/_View/_ProNoC System Generator",  undef, 	sub{ open_page($notebook,$noteref,$table,'Generator'); } ,	0,	undef ],
+  [ "/_View/_ProNoC Simulator",  undef, 	sub{ open_page($notebook,$noteref,$table,'Simulator'); } ,	0,	undef ],
  
 
-  #[ "/_Preferences",                  undef, undef,         0, "<Branch>" ],
-  #[ "/_Preferences/_Color",           undef, undef,         0, "<Branch>" ],
-  #[ "/_Preferences/Color/_Red",       undef, \&menuitem_cb, 0, "<RadioItem>" ],
-  #[ "/_Preferences/Color/_Green",     undef, \&menuitem_cb, 0, "/Preferences/Color/Red" ],
-  #[ "/_Preferences/Color/_Blue",      undef, \&menuitem_cb, 0, "/Preferences/Color/Red" ],
-  #[ "/_Preferences/_Shape",           undef, undef,         0, "<Branch>" ],
-  #[ "/_Preferences/Shape/_Square",    undef, \&menuitem_cb, 0, "<RadioItem>" ],
-  #[ "/_Preferences/Shape/_Rectangle", undef, \&menuitem_cb, 0, "/Preferences/Shape/Square" ],
-  #[ "/_Preferences/Shape/_Oval",      undef, \&menuitem_cb, 0, "/Preferences/Shape/Rectangle" ],
 
+  [ "/_Help", 		undef,		undef,          0, 	"<Branch>" ],
+  [ "/_Help/_About",  	"F1", 		\&about ,	0,	undef ],
+  [ "/_Help/_ProNoC System Overview",  	"F2", 		\&overview ,	0,	undef ],  
+  [ "/_Help/_ProNoC User Manual",  "F3",		\&user_help, 	0,	undef ],
+ 
 );
 
 
@@ -144,45 +90,79 @@ $notebook->append_page ($emulator,Gtk2::Label->new_with_mnemonic (" _NoC emulato
 
 
    
-   #my $table = Gtk2::Table->new (1, 4, FALSE);
-     my $vbox = Gtk2::VBox->new( FALSE, 0 );  
-            
-      my $accel_group = Gtk2::AccelGroup->new;
-      $window->add_accel_group ($accel_group);
-      
-      my $item_factory = Gtk2::ItemFactory->new ("Gtk2::MenuBar", "<main>", 
-                                                 $accel_group);
-
-      # Set up item factory to go away with the window
-      $window->{'<main>'} = $item_factory;
-
-      # create menu items
-      $item_factory->create_items ($window, @menu_items);
-
-     
-
-
- $vbox->pack_start( $item_factory->get_widget ("<main>"), FALSE, FALSE, 0 );
- 	
-
 	
+    my $accel_group = Gtk2::AccelGroup->new;
+    $window->add_accel_group ($accel_group);
+      
+    my $item_factory = Gtk2::ItemFactory->new ("Gtk2::MenuBar", "<main>",$accel_group);
 
-  #  my $ui = Gtk2::UIManager->new;
-  #  $ui->insert_action_group( $actions, 0 );
-   # Add the actiongroup to the uimanager		
- #	$ui->insert_action_group($radio_actions,0);
+    # Set up item factory to go away with the window
+    $window->{'<main>'} = $item_factory;
 
-  #  $window->add_accel_group( $ui->get_accel_group );
-  #  $ui->add_ui_from_string($ui_info);
+    # create menu items
+    $item_factory->create_items ($window, @menu_items);
 
-    #my $actions_media = Gtk2::ActionGroup->new ("media_dvd");
+        
+
+	$table->attach ($item_factory->get_widget ("<main>"),0, 1, 0,1,,'fill','fill',0,0); #,'expand','shrink',2,2);
    
+    my $tt = Gtk2::Tooltips->new();
 
-   
-  # $vbox->pack_start( $ui->get_widget('/MenuBar'), FALSE, FALSE, 0 );
-    $vbox->pack_end( $scrolled_win, TRUE, TRUE,10 );
 
-$window->add($vbox);
+	#====================================
+	#The handle box helps in creating a detachable toolbar 
+	my $hb = Gtk2::HandleBox->new;
+	#create a toolbar, and do some initial settings
+	my $toolbar = Gtk2::Toolbar->new;
+	$toolbar->set_icon_size ('small-toolbar');
+	
+	$toolbar->set_show_arrow (FALSE);
+	
+		
+	
+	
+		
+	$rbtn_generator->set_label ('Generator');
+	$rbtn_generator->set_icon_widget (def_icon('icons/hardware.png'));
+	set_tip($rbtn_generator, "ProNoC System Generator");
+	$toolbar->insert($rbtn_generator,-1);
+	
+	
+	
+	#________
+	#radio btn "Simulator"
+	my $rbtn_simulator = Gtk2::RadioToolButton->new_from_widget($rbtn_generator);
+	$rbtn_simulator->set_label ('Simulator');
+	$rbtn_simulator->set_icon_widget (def_icon('icons/simulator.png')) ;
+	
+	set_tip($rbtn_simulator, "ProNoC Simulator");
+	$toolbar->insert($rbtn_simulator,-1);
+	
+	
+	
+	
+	
+	$hb->add($toolbar);
+	#====================================
+	
+	$rbtn_generator->signal_connect('toggled', sub{
+		open_page($notebook,$noteref,$table,'Generator');
+		
+		
+				
+	});
+	
+	$rbtn_simulator->signal_connect('toggled', sub{
+		open_page($notebook,$noteref,$table,'Simulator');
+		
+			
+	});
+ 
+   $table->attach ($hb,0, 1, 0,1,'fill','fill',0,0);
+   $table->attach_defaults( $notebook, 0, 2, 1,2);
+
+#$window->add($vbox);
+$window->add($table);
 
 
 
@@ -190,16 +170,17 @@ $window->add($vbox);
 		$window->set_resizable (1);
 		$window->show_all();
 		
-		
-	 
-	 
-
-
-
-
-
 }			
 
+
+sub open_page{
+	my ( $notebook,$noteref,$table,$page_name)=@_;
+	$notebook->destroy;
+	($notebook,$noteref) = generate_main_notebook($page_name);
+	$table->attach_defaults( $notebook, 0, 2, 1,2);	
+	$table->show_all;
+
+}
 
 
 sub about {
@@ -227,54 +208,100 @@ sub about {
     return;
 }
 
-sub intfc_help{
-    my $dir = Cwd::getcwd();
-    my $help="$dir/doc/ProNoC_intfc_gen.pdf";	
-    system qq (xdg-open $help);
-    return;
 
-}
 
-sub ip_help{ 
+sub user_help{ 
     my $dir = Cwd::getcwd();
-    my $help="$dir/doc/ProNoC_ip_gen.pdf";	
+    my $help="$dir/../../doc/ProNoC_User_manual.pdf";	
     system qq (xdg-open $help);
     return;
 }
 
-
-
-sub pt_help{ 
+sub overview{
     my $dir = Cwd::getcwd();
-    my $help="$dir/doc/ProNoC_pt_gen.pdf";	
-    system qq (xdg-open $help);
-    return;
-}
-
-
-sub sim_help{ 
-    my $dir = Cwd::getcwd();
-    my $help="$dir/doc/ProNoC_simulator.pdf";	
-    system qq (xdg-open $help);
-    return;
-}
-
-
-sub Tutorial_1{
-    my $dir = Cwd::getcwd();
-    my $help="$dir/doc/ProNoC_Tutorial1.pdf";	
+    my $help="$dir/../../doc/ProNoC_System_Overview.pdf";	
     system qq (xdg-open $help);
     return;
 
-}
 
-sub Tutorial_2{
-    my $dir = Cwd::getcwd();
-    my $help="$dir/doc/ProNoC_Tutorial2.pdf";	
-    system qq (xdg-open $help);
-    return;
 
 }
+
+
+
+sub generate_main_notebook {
+	my $mode =shift;
+	
+	my $notebook = Gtk2::Notebook->new;
+	$notebook->show_all;
+	if($mode eq 'Generator'){
+		my $intfc_gen=  intfc_main();
+		my $lable1=def_image_label("icons/intfc.png"," Interface generator ");
+		$notebook->append_page ($intfc_gen,$lable1);#Gtk2::Label->new_with_mnemonic ("  _Interface generator  "));
+		$lable1->show_all;
+
+		my $ipgen=ipgen_main();
+		my $lable2=def_image_label("icons/ip.png"," IP generator ");
+		$notebook->append_page ($ipgen,$lable2);#Gtk2::Label->new_with_mnemonic ("  _IP generator  "));
+		$lable2->show_all;
+
+		my $socgen=socgen_main();
+		my $lable3=def_image_label("icons/tile.png"," Processing tile generator ");			
+		$notebook->append_page ($socgen,$lable3 );#,Gtk2::Label->new_with_mnemonic ("  _Processing tile generator  "));
+		$lable3->show_all;		
+
+		my $mpsocgen =mpsocgen_main();
+		my $lable4=def_image_label("icons/noc.png"," NoC based MPSoC generator ");	
+		$notebook->append_page ($mpsocgen,$lable4);#Gtk2::Label->new_with_mnemonic ("  _NoC based MPSoC generator  "));	
+		$lable4->show_all;	
+		
+	
+	} else{
+		
+		
+		my $trace_gen= trace_gen_main();
+		my $lable1=def_image_label("icons/trace.png"," Trace generator ");
+		#my $lb=Gtk2::Label->new_with_mnemonic (" _Trace generator   ");
+		set_tip($lable1, "Generate trace file from application task graph");
+		
+		$notebook->append_page ($trace_gen,$lable1);		
+		$lable1->show_all;
+		$trace_gen->show_all;
+		
+		my $simulator =simulator_main();
+		my $lable2=def_image_label("icons/sim.png"," NoC simulator ");
+		
+		$notebook->append_page ($simulator,$lable2);#Gtk2::Label->new_with_mnemonic (" _NoC simulator   "));		
+		$lable2->show_all;
+		$simulator->show_all;		
+
+		my $emulator =emulator_main();
+		my $lable3=def_image_label("icons/emul.png"," NoC emulator ");
+		$notebook->append_page ($emulator,$lable3);#Gtk2::Label->new_with_mnemonic (" _NoC emulator"));				
+		$lable3->show_all;
+		$emulator->show_all;
+
+		
+
+	}		
+			
+		my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
+		$scrolled_win->set_policy( "automatic", "automatic" );
+		$scrolled_win->add_with_viewport($notebook);	
+		$scrolled_win->show_all;
+		
+
+		return ($scrolled_win,$notebook);
+	
+}
+
+
+
+
+
+
+
+
 
 
 

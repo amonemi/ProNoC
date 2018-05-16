@@ -1,0 +1,468 @@
+#######################################################################
+##	File: ethmac_100.IP
+##    
+##	Copyright (C) 2014-2016  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.7.0 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$ethtop = bless( {
+                   'version' => 1,
+                   'module_name' => 'ethtop',
+                   'unused' => {
+                                 'plug:wb_master[0]' => [
+                                                          'bte_o',
+                                                          'rty_i',
+                                                          'cti_o',
+                                                          'tag_o'
+                                                        ],
+                                 'plug:wb_slave[0]' => [
+                                                         'cti_i',
+                                                         'bte_i',
+                                                         'tag_i',
+                                                         'rty_o'
+                                                       ]
+                               },
+                   'plugs' => {
+                                'wb_master' => {
+                                                 'wb_master' => {},
+                                                 'value' => 1,
+                                                 'type' => 'num',
+                                                 '0' => {
+                                                          'name' => 'wb_master'
+                                                        }
+                                               },
+                                'wb_slave' => {
+                                                'value' => 1,
+                                                'wb_slave' => {},
+                                                'type' => 'num',
+                                                '0' => {
+                                                         'addr' => '0x9200_0000	0x92ff_ffff		Ethernet Controller',
+                                                         'width' => 11,
+                                                         'name' => 'wb_slave'
+                                                       }
+                                              },
+                                'clk' => {
+                                           'value' => 1,
+                                           'clk' => {},
+                                           'type' => 'num',
+                                           '0' => {
+                                                    'name' => 'clk'
+                                                  }
+                                         },
+                                'interrupt_peripheral' => {
+                                                            'value' => 1,
+                                                            'interrupt_peripheral' => {},
+                                                            '0' => {
+                                                                     'name' => 'interrupt_peripheral'
+                                                                   },
+                                                            'type' => 'num'
+                                                          },
+                                'reset' => {
+                                             'value' => 1,
+                                             '0' => {
+                                                      'name' => 'reset'
+                                                    },
+                                             'type' => 'num',
+                                             'reset' => {}
+                                           }
+                              },
+                   'custom_file_num' => 1,
+                   'ports' => {
+                                'wb_clk_i' => {
+                                                'range' => '',
+                                                'intfc_name' => 'plug:clk[0]',
+                                                'intfc_port' => 'clk_i',
+                                                'type' => 'input'
+                                              },
+                                'm_wb_adr_o' => {
+                                                  'intfc_port' => 'adr_o',
+                                                  'type' => 'output',
+                                                  'range' => '31:0',
+                                                  'intfc_name' => 'plug:wb_master[0]'
+                                                },
+                                'mtxd_pad_o' => {
+                                                  'intfc_port' => 'IO',
+                                                  'type' => 'output',
+                                                  'range' => '3:0',
+                                                  'intfc_name' => 'IO'
+                                                },
+                                'int_o' => {
+                                             'intfc_port' => 'int_o',
+                                             'type' => 'output',
+                                             'range' => '',
+                                             'intfc_name' => 'plug:interrupt_peripheral[0]'
+                                           },
+                                'mdc_pad_o' => {
+                                                 'intfc_port' => 'IO',
+                                                 'type' => 'output',
+                                                 'range' => '',
+                                                 'intfc_name' => 'IO'
+                                               },
+                                'wb_ack_o' => {
+                                                'intfc_port' => 'ack_o',
+                                                'type' => 'output',
+                                                'range' => '',
+                                                'intfc_name' => 'plug:wb_slave[0]'
+                                              },
+                                'mtxen_pad_o' => {
+                                                   'intfc_port' => 'IO',
+                                                   'type' => 'output',
+                                                   'range' => '',
+                                                   'intfc_name' => 'IO'
+                                                 },
+                                'wb_dat_i' => {
+                                                'intfc_port' => 'dat_i',
+                                                'type' => 'input',
+                                                'range' => '31:0',
+                                                'intfc_name' => 'plug:wb_slave[0]'
+                                              },
+                                'wb_stb_i' => {
+                                                'type' => 'input',
+                                                'intfc_port' => 'stb_i',
+                                                'intfc_name' => 'plug:wb_slave[0]',
+                                                'range' => ''
+                                              },
+                                'mcrs_pad_i' => {
+                                                  'intfc_name' => 'IO',
+                                                  'range' => '',
+                                                  'type' => 'input',
+                                                  'intfc_port' => 'IO'
+                                                },
+                                'wb_rst_i' => {
+                                                'type' => 'input',
+                                                'intfc_port' => 'reset_i',
+                                                'intfc_name' => 'plug:reset[0]',
+                                                'range' => ''
+                                              },
+                                'm_wb_dat_i' => {
+                                                  'range' => '31:0',
+                                                  'intfc_name' => 'plug:wb_master[0]',
+                                                  'intfc_port' => 'dat_i',
+                                                  'type' => 'input'
+                                                },
+                                'md_pad_o' => {
+                                                'range' => '',
+                                                'intfc_name' => 'IO',
+                                                'intfc_port' => 'IO',
+                                                'type' => 'output'
+                                              },
+                                'mcoll_pad_i' => {
+                                                   'range' => '',
+                                                   'intfc_name' => 'IO',
+                                                   'intfc_port' => 'IO',
+                                                   'type' => 'input'
+                                                 },
+                                'm_wb_stb_o' => {
+                                                  'range' => '',
+                                                  'intfc_name' => 'plug:wb_master[0]',
+                                                  'intfc_port' => 'stb_o',
+                                                  'type' => 'output'
+                                                },
+                                'm_wb_err_i' => {
+                                                  'type' => 'input',
+                                                  'intfc_port' => 'err_i',
+                                                  'intfc_name' => 'plug:wb_master[0]',
+                                                  'range' => ''
+                                                },
+                                'm_wb_cyc_o' => {
+                                                  'intfc_port' => 'cyc_o',
+                                                  'type' => 'output',
+                                                  'range' => '',
+                                                  'intfc_name' => 'plug:wb_master[0]'
+                                                },
+                                'mtx_clk_pad_i' => {
+                                                     'intfc_port' => 'IO',
+                                                     'type' => 'input',
+                                                     'range' => '',
+                                                     'intfc_name' => 'IO'
+                                                   },
+                                'wb_err_o' => {
+                                                'intfc_port' => 'err_o',
+                                                'type' => 'output',
+                                                'range' => '',
+                                                'intfc_name' => 'plug:wb_slave[0]'
+                                              },
+                                'wb_cyc_i' => {
+                                                'intfc_name' => 'plug:wb_slave[0]',
+                                                'range' => '',
+                                                'type' => 'input',
+                                                'intfc_port' => 'cyc_i'
+                                              },
+                                'm_wb_dat_o' => {
+                                                  'range' => '31:0',
+                                                  'intfc_name' => 'plug:wb_master[0]',
+                                                  'intfc_port' => 'dat_o',
+                                                  'type' => 'output'
+                                                },
+                                'mrxdv_pad_i' => {
+                                                   'intfc_port' => 'IO',
+                                                   'type' => 'input',
+                                                   'range' => '',
+                                                   'intfc_name' => 'IO'
+                                                 },
+                                'md_padoe_o' => {
+                                                  'intfc_name' => 'IO',
+                                                  'range' => '',
+                                                  'type' => 'output',
+                                                  'intfc_port' => 'IO'
+                                                },
+                                'wb_dat_o' => {
+                                                'range' => '31:0',
+                                                'intfc_name' => 'plug:wb_slave[0]',
+                                                'intfc_port' => 'dat_o',
+                                                'type' => 'output'
+                                              },
+                                'm_wb_ack_i' => {
+                                                  'range' => '',
+                                                  'intfc_name' => 'plug:wb_master[0]',
+                                                  'intfc_port' => 'ack_i',
+                                                  'type' => 'input'
+                                                },
+                                'm_wb_we_o' => {
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'range' => '',
+                                                 'type' => 'output',
+                                                 'intfc_port' => 'we_o'
+                                               },
+                                'mrx_clk_pad_i' => {
+                                                     'intfc_port' => 'IO',
+                                                     'type' => 'input',
+                                                     'range' => '',
+                                                     'intfc_name' => 'IO'
+                                                   },
+                                'wb_sel_i' => {
+                                                'intfc_name' => 'plug:wb_slave[0]',
+                                                'range' => '3:0',
+                                                'type' => 'input',
+                                                'intfc_port' => 'sel_i'
+                                              },
+                                'm_wb_sel_o' => {
+                                                  'type' => 'output',
+                                                  'intfc_port' => 'sel_o',
+                                                  'intfc_name' => 'plug:wb_master[0]',
+                                                  'range' => '3:0'
+                                                },
+                                'mtxerr_pad_o' => {
+                                                    'range' => '',
+                                                    'intfc_name' => 'IO',
+                                                    'intfc_port' => 'IO',
+                                                    'type' => 'output'
+                                                  },
+                                'wb_we_i' => {
+                                               'intfc_name' => 'plug:wb_slave[0]',
+                                               'range' => '',
+                                               'type' => 'input',
+                                               'intfc_port' => 'we_i'
+                                             },
+                                'mrxerr_pad_i' => {
+                                                    'intfc_name' => 'IO',
+                                                    'range' => '',
+                                                    'type' => 'input',
+                                                    'intfc_port' => 'IO'
+                                                  },
+                                'wb_adr_i' => {
+                                                'type' => 'input',
+                                                'intfc_port' => 'adr_i',
+                                                'intfc_name' => 'plug:wb_slave[0]',
+                                                'range' => '9:0'
+                                              },
+                                'mrxd_pad_i' => {
+                                                  'type' => 'input',
+                                                  'intfc_port' => 'IO',
+                                                  'intfc_name' => 'IO',
+                                                  'range' => '3:0'
+                                                },
+                                'md_pad_i' => {
+                                                'intfc_name' => 'IO',
+                                                'range' => '',
+                                                'type' => 'input',
+                                                'intfc_port' => 'IO'
+                                              }
+                              },
+                   'system_h' => '
+
+void ${IP}_init();
+void ${IP}_interrupt();
+void ${IP}_recv_ack(void);
+int ${IP}_send(int length);   //return (-1) or length (still processing previous) or asserted
+
+#define ${IP}_BASE_ADDR		$BASE
+#define ${IP}_MODER			(*((volatile unsigned int *) (${IP}_BASE_ADDR+0x00 )))
+#define ${IP}_INT_SOURCE		(*((volatile unsigned int *) (${IP}_BASE_ADDR+0x04 )))
+#define ${IP}_INT_MASK   		 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x08 )))
+#define ${IP}_IPGT   		 	 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x0C )))
+#define ${IP}_IPGR1   			 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x10 )))
+#define ${IP}_IPGR2			(*((volatile unsigned int *) (${IP}_BASE_ADDR+0x14 )))
+#define ${IP}_PACKETLEN   		 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x18 )))
+#define ${IP}_COLLCONF   		 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x1C )))
+#define ${IP}_TX_BD_NUM   		 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x20 )))
+#define ${IP}_CTRLMODER   		 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x24 )))
+#define ${IP}_MIIMODER   		 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x28 )))
+#define ${IP}_MIICOMMAND   		 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x2C )))
+#define ${IP}_MIIADDR	   		 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x30 )))
+#define ${IP}_MIITX_DATA   		 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x34 )))
+#define ${IP}_MIIRX_DATA   		 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x38 )))
+#define ${IP}_MIISTATUS   		 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x3C )))
+#define ${IP}_MAC_ADDR0   		 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x40 )))
+#define ${IP}_MAC_ADDR1   		 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x44 )))
+#define ${IP}_HASH0_ADR   		 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x48 )))
+#define ${IP}_HASH1_ADR   		 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x4C )))
+#define ${IP}_TXCTRL				 (*((volatile unsigned int *) (${IP}_BASE_ADDR+0x50 )))
+#define ${IP}_TXBD0H	        	(*((volatile unsigned int *) (${IP}_BASE_ADDR+0x404 )))
+#define ${IP}_TXBD0L	        		(*((volatile unsigned int *) (${IP}_BASE_ADDR+0x400 )))
+#define ${IP}_RXBD0H	        	(*((volatile unsigned int *) (${IP}_BASE_ADDR+0x604 )))	//this depends on TX_BD_NUM but this is the standard value
+#define ${IP}_RXBD0L	        	 	(*((volatile unsigned int *) (${IP}_BASE_ADDR+0x600 )))	//this depends on TX_BD_NUM but this is the standard value
+
+
+#include "${IP}.h"',
+                   'ip_name' => 'ethmac_100',
+                   'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/ethmac/ethtop.v',
+                   'ports_order' => [
+                                      'wb_clk_i',
+                                      'wb_rst_i',
+                                      'wb_dat_i',
+                                      'wb_dat_o',
+                                      'wb_adr_i',
+                                      'wb_sel_i',
+                                      'wb_we_i',
+                                      'wb_cyc_i',
+                                      'wb_stb_i',
+                                      'wb_ack_o',
+                                      'wb_err_o',
+                                      'm_wb_adr_o',
+                                      'm_wb_sel_o',
+                                      'm_wb_we_o',
+                                      'm_wb_dat_o',
+                                      'm_wb_dat_i',
+                                      'm_wb_cyc_o',
+                                      'm_wb_stb_o',
+                                      'm_wb_ack_i',
+                                      'm_wb_err_i',
+                                      'mtx_clk_pad_i',
+                                      'mtxd_pad_o',
+                                      'mtxen_pad_o',
+                                      'mtxerr_pad_o',
+                                      'mrx_clk_pad_i',
+                                      'mrxd_pad_i',
+                                      'mrxdv_pad_i',
+                                      'mrxerr_pad_i',
+                                      'mcoll_pad_i',
+                                      'mcrs_pad_i',
+                                      'mdc_pad_o',
+                                      'md_pad_i',
+                                      'md_pad_o',
+                                      'md_padoe_o',
+                                      'int_o'
+                                    ],
+                   'hdl_files' => [
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_clockgen.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_cop.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_crc.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_fifo.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/ethmac.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_maccontrol.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/ethmac_defines.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_macstatus.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_miim.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_outputcontrol.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_random.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_receivecontrol.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_register.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_registers.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_rxaddrcheck.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_rxcounters.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_rxethmac.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_rxstatem.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_shiftreg.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_spram_256x32.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_top.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_transmitcontrol.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_txcounters.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_txethmac.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_txstatem.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/eth_wishbone.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/timescale.v',
+                                    '/mpsoc/src_peripheral/ethmac/rtl/xilinx_dist_ram_16x32.v',
+                                    '/mpsoc/src_peripheral/ethmac/ethtop.v',
+                                    '/mpsoc/src_peripheral/ethmac/eth_generic_ram.v'
+                                  ],
+                   'parameters_order' => [
+                                           'TX_FIFO_DATA_WIDTH',
+                                           'TX_FIFO_DEPTH',
+                                           'TX_FIFO_CNT_WIDTH',
+                                           'RX_FIFO_DATA_WIDTH',
+                                           'RX_FIFO_DEPTH',
+                                           'RX_FIFO_CNT_WIDTH'
+                                         ],
+                   'description' => 'The Ethernet MAC 10/100 Mbps.
+For more information please check: https://opencores.org/project,ethmac',
+                   'gen_sw_files' => [
+                                       '/mpsoc/src_peripheral/ethmac/ethfrename_sep_t${IP}.h'
+                                     ],
+                   'parameters' => {
+                                     'RX_FIFO_DEPTH' => {
+                                                          'content' => '',
+                                                          'redefine_param' => 1,
+                                                          'default' => ' 16',
+                                                          'info' => undef,
+                                                          'type' => 'Fixed',
+                                                          'global_param' => 0
+                                                        },
+                                     'TX_FIFO_DEPTH' => {
+                                                          'content' => '',
+                                                          'redefine_param' => 1,
+                                                          'default' => ' 16',
+                                                          'info' => undef,
+                                                          'global_param' => 0,
+                                                          'type' => 'Fixed'
+                                                        },
+                                     'RX_FIFO_DATA_WIDTH' => {
+                                                               'type' => 'Fixed',
+                                                               'global_param' => 0,
+                                                               'content' => '',
+                                                               'redefine_param' => 1,
+                                                               'info' => undef,
+                                                               'default' => ' 32'
+                                                             },
+                                     'TX_FIFO_DATA_WIDTH' => {
+                                                               'redefine_param' => 1,
+                                                               'content' => '',
+                                                               'default' => ' 32',
+                                                               'info' => undef,
+                                                               'type' => 'Fixed',
+                                                               'global_param' => 0
+                                                             },
+                                     'RX_FIFO_CNT_WIDTH' => {
+                                                              'default' => ' 5',
+                                                              'redefine_param' => 1,
+                                                              'content' => '',
+                                                              'info' => undef,
+                                                              'global_param' => 0,
+                                                              'type' => 'Fixed'
+                                                            },
+                                     'TX_FIFO_CNT_WIDTH' => {
+                                                              'type' => 'Fixed',
+                                                              'global_param' => 0,
+                                                              'info' => undef,
+                                                              'redefine_param' => 1,
+                                                              'content' => '',
+                                                              'default' => ' 5'
+                                                            }
+                                   },
+                   'sw_files' => [],
+                   'gui_status' => {
+                                     'status' => 'ideal',
+                                     'timeout' => 0
+                                   },
+                   'custom_file' => {
+                                      '0' => {}
+                                    },
+                   'category' => 'Communication',
+                   'modules' => {
+                                  'ethtop' => {}
+                                }
+                 }, 'ip_gen' );

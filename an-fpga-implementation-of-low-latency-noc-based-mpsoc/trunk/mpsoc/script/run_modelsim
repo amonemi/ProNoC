@@ -1,6 +1,5 @@
 #!/bin/sh
-#/home/alireza/modelsim/modeltech/bin/vsim -c -do model.tcl
-#/home/alireza/modelsim/modeltech/bin/vsim  -do model.tcl
-#/home/alireza/altera/13.0sp1/modelsim_ase/bin/vsim  -do model.tcl
-/home/alireza/altera/modelsim_ase/bin/vsim  -do model.tcl
+
+/home/alireza/altera/13.0sp1/modelsim_ase/bin/vsim  -do model.tcl
+#/home/alireza/altera/modeltech/bin/vsim  -do model.tcl
 

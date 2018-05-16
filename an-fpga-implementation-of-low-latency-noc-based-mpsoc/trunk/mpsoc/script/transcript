@@ -4,185 +4,91 @@
 ###################################################################
 ###################################################################
 ##---- Specify variables
-# /home/alireza/Mywork/mpsoc/script/..
-# /home/alireza/Mywork/mpsoc/script/../src_noc
-# /home/alireza/Mywork/mpsoc/script/../src_modelsim
-# /home/alireza/Mywork/mpsoc/script/../../mpsoc_work/modelsim
-# /home/alireza/Mywork/mpsoc/script/../../mpsoc_work/modelsim/work
-# /home/alireza/Mywork/mpsoc/script/../src_noc/combined_vc_sw_alloc.v /home/alireza/Mywork/mpsoc/script/../src_noc/comb-spec1.v /home/alireza/Mywork/mpsoc/script/../src_noc/arbiter.v /home/alireza/Mywork/mpsoc/script/../src_noc/noc.v /home/alireza/Mywork/mpsoc/script/../src_noc/agent.v /home/alireza/Mywork/mpsoc/script/../src_noc/route_torus.v /home/alireza/Mywork/mpsoc/script/../src_noc/inout_ports.v /home/alireza/Mywork/mpsoc/script/../src_noc/router.v /home/alireza/Mywork/mpsoc/script/../src_noc/class_table.v /home/alireza/Mywork/mpsoc/script/../src_noc/vc_alloc_request_gen.v /home/alireza/Mywork/mpsoc/script/../src_noc/congestion_analyzer.v /home/alireza/Mywork/mpsoc/script/../src_noc/credit_count.v /home/alireza/Mywork/mpsoc/script/../src_noc/traffic_gen_old.v /home/alireza/Mywork/mpsoc/script/../src_noc/comb_spec2.v /home/alireza/Mywork/mpsoc/script/../src_noc/comb_nonspec.v /home/alireza/Mywork/mpsoc/script/../src_noc/routing.v /home/alireza/Mywork/mpsoc/script/../src_noc/crossbar.v /home/alireza/Mywork/mpsoc/script/../src_noc/main_comp.v /home/alireza/Mywork/mpsoc/script/../src_noc/traffic_gen.v /home/alireza/Mywork/mpsoc/script/../src_noc/baseline.v /home/alireza/Mywork/mpsoc/script/../src_noc/flit_buffer.v /home/alireza/Mywork/mpsoc/script/../src_noc/canonical_credit_count.v /home/alireza/Mywork/mpsoc/script/../src_noc/flit_buffer_vlsi.v /home/alireza/Mywork/mpsoc/script/../src_noc/input_ports.v /home/alireza/Mywork/mpsoc/script/../src_noc/route_mesh.v
-# /home/alireza/Mywork/mpsoc/script/../src_modelsim/traffic_pattern.v /home/alireza/Mywork/mpsoc/script/../src_modelsim/testbench_modelsim.v /home/alireza/Mywork/mpsoc/script/../src_modelsim/random_num.v /home/alireza/Mywork/mpsoc/script/../src_modelsim/testbench_router.v /home/alireza/Mywork/mpsoc/script/../src_modelsim/random.v
+# /home/alireza/mywork/mpsoc/script/..
+# /home/alireza/mywork/mpsoc/script/../src_noc
+# /home/alireza/mywork/mpsoc/script/../src_modelsim
+# /home/alireza/mywork/mpsoc/script/../../mpsoc_work/modelsim
+# /home/alireza/mywork/mpsoc/script/../../mpsoc_work/modelsim/work
+# /home/alireza/mywork/mpsoc/script/../src_noc/crossbar.v /home/alireza/mywork/mpsoc/script/../src_noc/route_mesh.v /home/alireza/mywork/mpsoc/script/../src_noc/canonical_credit_count.v /home/alireza/mywork/mpsoc/script/../src_noc/traffic_gen.v /home/alireza/mywork/mpsoc/script/../src_noc/inout_ports.v /home/alireza/mywork/mpsoc/script/../src_noc/router.v /home/alireza/mywork/mpsoc/script/../src_noc/wrra.v /home/alireza/mywork/mpsoc/script/../src_noc/main_comp.v /home/alireza/mywork/mpsoc/script/../src_noc/ss_allocator.v /home/alireza/mywork/mpsoc/script/../src_noc/flit_buffer.v /home/alireza/mywork/mpsoc/script/../src_noc/credit_count.v /home/alireza/mywork/mpsoc/script/../src_noc/input_ports.v /home/alireza/mywork/mpsoc/script/../src_noc/congestion_analyzer.v /home/alireza/mywork/mpsoc/script/../src_noc/route_torus.v /home/alireza/mywork/mpsoc/script/../src_noc/class_table.v /home/alireza/mywork/mpsoc/script/../src_noc/noc.v /home/alireza/mywork/mpsoc/script/../src_noc/baseline.v /home/alireza/mywork/mpsoc/script/../src_noc/comb_nonspec.v /home/alireza/mywork/mpsoc/script/../src_noc/arbiter.v /home/alireza/mywork/mpsoc/script/../src_noc/comb_spec2.v /home/alireza/mywork/mpsoc/script/../src_noc/combined_vc_sw_alloc.v /home/alireza/mywork/mpsoc/script/../src_noc/vc_alloc_request_gen.v /home/alireza/mywork/mpsoc/script/../src_noc/routing.v /home/alireza/mywork/mpsoc/script/../src_noc/comb-spec1.v
+# /home/alireza/mywork/mpsoc/script/../src_modelsim/traffic_pattern.v /home/alireza/mywork/mpsoc/script/../src_modelsim/random_num.v /home/alireza/mywork/mpsoc/script/../src_modelsim/testbench_router.v /home/alireza/mywork/mpsoc/script/../src_modelsim/testbench_modelsim.v /home/alireza/mywork/mpsoc/script/../src_modelsim/random.v
 # reading modelsim.ini
 # 1
 # 0
 ###################################################################
 ##---- 1. Creating working library
-# ** Warning: (vlib-34) Library already exists at "/home/alireza/Mywork/mpsoc/script/../../mpsoc_work/modelsim/work".
+# ** Warning: (vlib-34) Library already exists at "/home/alireza/mywork/mpsoc/script/../../mpsoc_work/modelsim/work".
 # Modifying modelsim.ini
 ###################################################################
 ##---- 3. Compile the Design
-# 1444651849
+# 1518690625
 # 0
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module combined_vc_sw_alloc
-# 
-# Top level modules:
-# 	combined_vc_sw_alloc
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module comb_spec1_allocator
-# -- Compiling module spec_sw_alloc
-# -- Compiling module sw_alloc_sub
-# 
-# Top level modules:
-# 	comb_spec1_allocator
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module arbiter
-# -- Compiling module arbiter_priority_en
-# -- Compiling module my_one_hot_arbiter_priority_en
-# -- Compiling module my_one_hot_arbiter
-# -- Compiling module arbiter_2_one_hot
-# -- Compiling module arbiter_3_one_hot
-# -- Compiling module arbiter_4_one_hot
-# -- Compiling module Dimitrakopoulos_arbiter_genvar
-# -- Compiling module Dimitrakopoulos_arbiter
-# -- Compiling module Dimitrakopoulos_arbiter_priority_en
-# -- Compiling module tree_arbiter
-# -- Compiling module Dimitrakopoulos_arbiter_ext_priority
-# -- Compiling module my_one_hot_arbiter_ext_priority
-# -- Compiling module arbiter_ext_priority
-# 
-# Top level modules:
-# 	arbiter_priority_en
-# 	Dimitrakopoulos_arbiter_genvar
-# 	tree_arbiter
-# 	my_one_hot_arbiter_ext_priority
-# 	arbiter_ext_priority
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module noc
-# 
-# Top level modules:
-# 	noc
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module agent
-# 
-# Top level modules:
-# 	agent
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module tranc_xy_routing
-# -- Compiling module tranc_west_first_routing
-# -- Compiling module tranc_north_last_routing
-# -- Compiling module tranc_negetive_first_routing
-# -- Compiling module tranc_duato_routing
-# -- Compiling module tranc_dir
-# 
-# Top level modules:
-# 	tranc_xy_routing
-# 	tranc_west_first_routing
-# 	tranc_north_last_routing
-# 	tranc_negetive_first_routing
-# 	tranc_duato_routing
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module inout_ports
-# 
-# Top level modules:
-# 	inout_ports
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module router
-# -- Compiling module router_test
-# 
-# Top level modules:
-# 	router_test
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module class_ovc_table
-# -- Compiling module vc_priority_based_dest_port
-# 
-# Top level modules:
-# 	class_ovc_table
-# 	vc_priority_based_dest_port
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module vc_alloc_request_gen_determinstic
-# -- Compiling module vc_alloc_request_gen_adaptive
-# -- Compiling module swap_port_presel_gen
-# -- Compiling module adaptive_avb_ovc_mux
-# -- Compiling module port_selector
-# -- Compiling module vc_alloc_request_gen_adaptive_classic
-# -- Compiling module portsel_classic
-# 
-# Top level modules:
-# 	vc_alloc_request_gen_determinstic
-# 	vc_alloc_request_gen_adaptive
-# 	vc_alloc_request_gen_adaptive_classic
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module port_presel_based_dst_ports_vc
-# -- Compiling module port_presel_based_dst_ports_credit
-# -- Compiling module port_presel_based_dst_routers_vc
-# -- Compiling module port_presel_based_dst_routers_ovc
-# -- Compiling module port_pre_sel_gen
-# -- Compiling module congestion_out_based_ivc_req
-# -- Compiling module congestion_out_based_ivc_notgrant
-# -- Compiling module congestion_out_based_3port_avb_ovc
-# -- Compiling module congestion_out_based_avb_ovc_w2
-# -- Compiling module congestion_out_based_avb_ovc_w3
-# -- Compiling module congestion_out_based_avb_ovc_w4
-# -- Compiling module congestion_out_based_avb_ovc_not_granted_ivc
-# -- Compiling module parallel_count_normalize
-# -- Compiling module normalizer
-# -- Compiling module congestion_out_gen
-# -- Compiling module deadlock_detector
-# 
-# Top level modules:
-# 	port_pre_sel_gen
-# 	congestion_out_gen
-# 	deadlock_detector
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module credit_counter
-# -- Compiling module inport_module
-# -- Compiling module sw_mask_gen
-# -- Compiling module check_ovc
-# 
-# Top level modules:
-# 	credit_counter
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module traffic_gen_old
-# -- Compiling module send_traffic
-# 
-# Top level modules:
-# 	traffic_gen_old
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module comb_spec2_allocator
-# -- Compiling module spec_sw_alloc2
-# -- Compiling module sw_alloc_sub2
-# -- Compiling module spec_sw_alloc_sub2
-# 
-# Top level modules:
-# 	comb_spec2_allocator
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module comb_nonspec_allocator
-# -- Compiling module comb_nonspec_v2_allocator
-# -- Compiling module nonspec_sw_alloc
-# 
-# Top level modules:
-# 	comb_nonspec_allocator
-# 	comb_nonspec_v2_allocator
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module look_ahead_routing
-# -- Compiling module deterministic_look_ahead_routing
-# -- Compiling module adaptive_look_ahead_routing
-# -- Compiling module next_router_addr_predictor
-# -- Compiling module next_router_inport_predictor
-# -- Compiling module remove_sw_loc_one_hot
-# -- Compiling module remove_receive_port_one_hot
-# -- Compiling module add_sw_loc_one_hot
-# -- Compiling module conventional_routing
-# -- Compiling module ni_conventional_routing
-# 
-# Top level modules:
-# 	look_ahead_routing
-# 	remove_sw_loc_one_hot
 # Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
 # -- Compiling module crossbar
 # 
 # Top level modules:
 # 	crossbar
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module xy_mesh_routing
+# -- Compiling module west_first_routing
+# -- Compiling module north_last_routing
+# -- Compiling module negetive_first_routing
+# -- Compiling module odd_even_routing
+# -- Compiling module duato_mesh_routing
+# -- Compiling module mesh_dir
+# 
+# Top level modules:
+# 	xy_mesh_routing
+# 	west_first_routing
+# 	north_last_routing
+# 	negetive_first_routing
+# 	odd_even_routing
+# 	duato_mesh_routing
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module canonical_credit_counter
+# -- Compiling module inport_module_can
+# -- Compiling module sw_mask_gen_can
+# 
+# Top level modules:
+# 	canonical_credit_counter
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module traffic_gen
+# -- Compiling module injection_ratio_ctrl
+# -- Compiling module packet_gen
+# -- Compiling module distance_gen
+# 
+# Top level modules:
+# 	traffic_gen
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module inout_ports
+# -- Compiling module output_vc_status
+# 
+# Top level modules:
+# 	inout_ports
+# 	output_vc_status
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module router
+# 
+# Top level modules:
+# 	router
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module wrra
+# -- Compiling module rra_priority_lock
+# -- Compiling module weight_counter
+# -- Compiling module classic_weight_counter
+# -- Compiling module weight_control
+# -- Compiling module wrra_contention_gen
+# -- Compiling module wrra_inputport_destports_sum
+# -- Compiling module weights_update
+# -- Compiling module weight_update_per_port
+# -- Compiling module output_weight_latch
+# -- Compiling module accumulator
+# 
+# Top level modules:
+# 	wrra
+# 	rra_priority_lock
+# 	weight_control
+# 	wrra_contention_gen
+# 	weights_update
 # Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
 # -- Compiling module one_hot_mux
 # -- Compiling module one_hot_demux
@@ -213,14 +119,92 @@
 # 	check_single_bit_assertation
 # 	fast_minimum_number
 # Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module traffic_gen
-# -- Compiling module injection_ratio_ctrl
-# -- Compiling module packet_gen
-# -- Compiling module distance_gen
-# -- Compiling module output_vc_status
+# -- Compiling module ss_allocator
+# -- Compiling module ssa_per_vc
+# -- Compiling module add_ss_port
 # 
 # Top level modules:
-# 	traffic_gen
+# 	ss_allocator
+# 	add_ss_port
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module flit_buffer
+# -- Compiling module fifo_ram
+# -- Compiling module fifo_ram_mem_size
+# -- Compiling module fwft_fifo
+# -- Compiling module fwft_fifo_with_output_clear
+# -- Compiling module fifo
+# 
+# Top level modules:
+# 	flit_buffer
+# 	fwft_fifo
+# 	fwft_fifo_with_output_clear
+# 	fifo
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module credit_counter
+# -- Compiling module inport_module
+# -- Compiling module sw_mask_gen
+# -- Compiling module check_ovc
+# 
+# Top level modules:
+# 	credit_counter
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module input_ports
+# -- Compiling module input_queue_per_port
+# -- Compiling module flit_update
+# -- Compiling module flit_update_dtrmn
+# -- Compiling module flit_update_adaptive
+# -- Compiling module extract_header_flit_info
+# 
+# Top level modules:
+# 	input_ports
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module port_presel_based_dst_ports_vc
+# -- Compiling module port_presel_based_dst_ports_credit
+# -- Compiling module port_presel_based_dst_routers_vc
+# -- Compiling module port_presel_based_dst_routers_ovc
+# -- Compiling module port_pre_sel_gen
+# -- Compiling module congestion_out_based_ivc_req
+# -- Compiling module congestion_out_based_ivc_notgrant
+# -- Compiling module congestion_out_based_3port_avb_ovc
+# -- Compiling module congestion_out_based_avb_ovc_w2
+# -- Compiling module congestion_out_based_avb_ovc_w3
+# -- Compiling module congestion_out_based_avb_ovc_w4
+# -- Compiling module congestion_out_based_avb_ovc_not_granted_ivc
+# -- Compiling module parallel_count_normalize
+# -- Compiling module normalizer
+# -- Compiling module congestion_out_gen
+# -- Compiling module deadlock_detector
+# 
+# Top level modules:
+# 	port_pre_sel_gen
+# 	congestion_out_gen
+# 	deadlock_detector
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module tranc_xy_routing
+# -- Compiling module tranc_west_first_routing
+# -- Compiling module tranc_north_last_routing
+# -- Compiling module tranc_negetive_first_routing
+# -- Compiling module tranc_duato_routing
+# -- Compiling module tranc_dir
+# 
+# Top level modules:
+# 	tranc_xy_routing
+# 	tranc_west_first_routing
+# 	tranc_north_last_routing
+# 	tranc_negetive_first_routing
+# 	tranc_duato_routing
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module class_ovc_table
+# -- Compiling module vc_priority_based_dest_port
+# 
+# Top level modules:
+# 	class_ovc_table
+# 	vc_priority_based_dest_port
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module noc
+# 
+# Top level modules:
+# 	noc
 # Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
 # -- Compiling module baseline_allocator
 # -- Compiling module canonical_vc_alloc
@@ -229,74 +213,107 @@
 # Top level modules:
 # 	baseline_allocator
 # Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module flit_buffer
-# -- Compiling module fifo_ram
-# -- Compiling module fifo_ram_mem_size
-# -- Compiling module fwft_fifo
-# -- Compiling module fifo
+# -- Compiling module comb_nonspec_allocator
+# -- Compiling module comb_nonspec_v2_allocator
+# -- Compiling module nonspec_sw_alloc
+# -- Compiling module swa_input_port_arbiter
+# -- Compiling module swa_output_port_arbiter
 # 
 # Top level modules:
-# 	flit_buffer
-# 	fwft_fifo
-# 	fifo
+# 	comb_nonspec_allocator
+# 	comb_nonspec_v2_allocator
 # Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module canonical_credit_counter
-# -- Compiling module inport_module_can
-# -- Compiling module sw_mask_gen_can
+# -- Compiling module arbiter
+# -- Compiling module arbiter_priority_en
+# -- Compiling module my_one_hot_arbiter
+# -- Compiling module arbiter_2_one_hot
+# -- Compiling module arbiter_3_one_hot
+# -- Compiling module arbiter_4_one_hot
+# -- Compiling module my_one_hot_arbiter_priority_en
+# -- Compiling module thermo_gen
+# -- Compiling module thermo_arbiter
+# -- Compiling module thermo_arbiter_priority_en
+# -- Compiling module thermo_arbiter_ext_priority
+# -- Compiling module tree_arbiter
+# -- Compiling module my_one_hot_arbiter_ext_priority
+# -- Compiling module arbiter_ext_priority
 # 
 # Top level modules:
-# 	canonical_credit_counter
+# 	arbiter_priority_en
+# 	tree_arbiter
+# 	my_one_hot_arbiter_ext_priority
+# 	arbiter_ext_priority
 # Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module flit_buffer_vlsi
-# -- Compiling module fifo_ram_diff_edge
-# -- Compiling module fifo_ram_mem_size_diff_edge
+# -- Compiling module comb_spec2_allocator
+# -- Compiling module spec_sw_alloc2
+# -- Compiling module sw_alloc_sub2
+# -- Compiling module spec_sw_alloc_sub2
 # 
 # Top level modules:
-# 	flit_buffer_vlsi
+# 	comb_spec2_allocator
 # Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module input_ports
-# -- Compiling module input_queue_per_port
-# -- Compiling module flit_update
-# -- Compiling module flit_update_dtrmn
-# -- Compiling module flit_update_adaptive
+# -- Compiling module combined_vc_sw_alloc
 # 
 # Top level modules:
-# 	input_ports
+# 	combined_vc_sw_alloc
 # Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module xy_mesh_routing
-# -- Compiling module west_first_routing
-# -- Compiling module north_last_routing
-# -- Compiling module negetive_first_routing
-# -- Compiling module odd_even_routing
-# -- Compiling module duato_mesh_routing
-# -- Compiling module mesh_dir
+# -- Compiling module vc_alloc_request_gen_determinstic
+# -- Compiling module vc_alloc_request_gen_adaptive
+# -- Compiling module swap_port_presel_gen
+# -- Compiling module adaptive_avb_ovc_mux
+# -- Compiling module port_selector
+# -- Compiling module vc_alloc_request_gen_adaptive_classic
+# -- Compiling module portsel_classic
 # 
 # Top level modules:
-# 	xy_mesh_routing
-# 	west_first_routing
-# 	north_last_routing
-# 	negetive_first_routing
-# 	odd_even_routing
-# 	duato_mesh_routing
+# 	vc_alloc_request_gen_determinstic
+# 	vc_alloc_request_gen_adaptive
+# 	vc_alloc_request_gen_adaptive_classic
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module look_ahead_routing
+# -- Compiling module deterministic_look_ahead_routing
+# -- Compiling module adaptive_look_ahead_routing
+# -- Compiling module next_router_addr_predictor
+# -- Compiling module next_router_inport_predictor
+# -- Compiling module remove_sw_loc_one_hot
+# -- Compiling module remove_receive_port_one_hot
+# -- Compiling module add_sw_loc_one_hot
+# -- Compiling module conventional_routing
+# -- Compiling module ni_conventional_routing
+# -- Compiling module tranc_ring_routing
+# -- Compiling module xy_line_routing
+# 
+# Top level modules:
+# 	look_ahead_routing
+# 	remove_sw_loc_one_hot
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module comb_spec1_allocator
+# -- Compiling module spec_sw_alloc
+# -- Compiling module sw_alloc_sub
+# 
+# Top level modules:
+# 	comb_spec1_allocator
 # Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
 # -- Compiling module pck_class_in_gen
 # -- Compiling module pck_dst_gen
+# -- Compiling module two_dimention_pck_dst_gen
+# -- Compiling module one_dimention_pck_dst_gen
 # 
 # Top level modules:
 # 	pck_class_in_gen
 # 	pck_dst_gen
-# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
-# -- Compiling module testbench_modelsim
-# -- Compiling module testbench_sub
-# 
-# Top level modules:
-# 	testbench_modelsim
 # Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
 # Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
 # -- Compiling module testbench_router
 # 
 # Top level modules:
 # 	testbench_router
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module testbench_modelsim
+# -- Compiling module testbench_sub
+# 
+# Top level modules:
+# 	testbench_modelsim
 # Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
 # -- Compiling module pseudo_hotspot_no_core
 # -- Compiling module pseudo_hotspot
@@ -309,7 +326,7 @@
 # 	pseudo_hotspot_no_core
 # 	pseudo_hotspot
 # 	pseudo_random_gen
-# 1444651849
+# 1518690625
 ###################################################################
 ##                       END OF COMPILATION
 ###################################################################
@@ -331,50 +348,52 @@
 # Loading work.ni_conventional_routing
 # Loading work.conventional_routing
 # Loading work.fifo
+# Loading work.extract_header_flit_info
 # Loading work.distance_gen
-# Loading work.one_hot_to_bin
 # Loading work.pck_class_in_gen
+# Loading work.pseudo_random
 # Loading work.pck_dst_gen
-# Loading work.congestion_out_based_avb_ovc_not_granted_ivc
 # Loading work.input_queue_per_port
 # Loading work.look_ahead_routing
 # Loading work.flit_update
 # Loading work.credit_counter
 # Loading work.port_pre_sel_gen
-# Loading work.vc_alloc_request_gen_adaptive
+# Loading work.vc_alloc_request_gen_determinstic
 # Loading work.comb_nonspec_allocator
 # Loading work.nonspec_sw_alloc
 # Loading work.one_hot_mux
 # Loading work.add_sw_loc_one_hot
 # Loading work.arbiter
-# Loading work.duato_mesh_routing
-# Loading work.mesh_dir
-# Loading work.pseudo_random
-# Loading work.pseudo_random_no_core
-# Loading work.parallel_counter
-# Loading work.normalizer
-# Loading work.adaptive_look_ahead_routing
+# Loading work.xy_mesh_routing
+# Loading work.one_hot_to_bin
+# Loading work.two_dimention_pck_dst_gen
+# Loading work.deterministic_look_ahead_routing
 # Loading work.next_router_addr_predictor
-# Loading work.flit_update_adaptive
+# Loading work.next_router_inport_predictor
+# Loading work.remove_receive_port_one_hot
+# Loading work.bin_to_one_hot
+# Loading work.flit_update_dtrmn
 # Loading work.class_ovc_table
 # Loading work.fwft_fifo
-# Loading work.flit_buffer_vlsi
-# Loading work.port_presel_based_dst_routers_vc
+# Loading work.flit_buffer
 # Loading work.inport_module
 # Loading work.one_hot_demux
 # Loading work.sw_mask_gen
+# Loading work.parallel_counter
 # Loading work.check_ovc
-# Loading work.adaptive_avb_ovc_mux
-# Loading work.port_selector
-# Loading work.remove_sw_loc_one_hot
-# Loading work.swap_port_presel_gen
+# Loading work.swa_input_port_arbiter
+# Loading work.swa_output_port_arbiter
 # Loading work.my_one_hot_arbiter
+# Loading work.fifo_ram
 # Loading work.PC_15_4
 # Loading work.CS_GEN
 # Loading work.PC_7_3
-# Loading work.fifo_ram_mem_size_diff_edge
-# Loading work.PC_31_5
+# Loading work.arbiter_priority_en
+# Loading work.arbiter_2_one_hot
+# Loading work.my_one_hot_arbiter_priority_en
 # Loading work.arbiter_4_one_hot
 # ** Warning: Design size of 61 instances exceeds ModelSim ALTERA recommended capacity.
 # This may because you are loading cell libraries which are not recommended with
 # the ModelSim Altera version. Expect performance to be adversely affected.
+# Break key hit 
+# Simulation stop requested.

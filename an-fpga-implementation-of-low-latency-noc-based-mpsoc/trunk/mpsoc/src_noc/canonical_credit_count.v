@@ -144,7 +144,9 @@ module canonical_credit_counter #(
     
     
     generate
+        /* verilator lint_off WIDTH */
         if(VC_REALLOCATION_TYPE=="ATOMIC") begin :atomic
+        /* verilator lint_on WIDTH */
             reg    [PV-1        :    0]    empty_all,empty_all_next;
             
             always @(posedge clk or posedge reset) begin
@@ -168,7 +170,9 @@ module canonical_credit_counter #(
             assign ovc_avalable_all                 = ~ovc_status & empty_all;
             
         end else begin :nonatomic //NONATOMIC
+            /* verilator lint_off WIDTH */
             if(ROUTE_TYPE  == "FULL_ADAPTIVE") begin :full_adpt
+            /* verilator lint_on WIDTH */
                
                reg [PV-1       :   0] full_adaptive_ovc_mask,full_adaptive_ovc_mask_next; 
                

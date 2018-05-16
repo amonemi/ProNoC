@@ -151,11 +151,13 @@ int main(int argc, char** argv) {
 					traffic[i]->current_y		= y;
 					traffic[i]->start=0;
 					traffic[i]->pck_size_in=PACKET_SIZE;
+					traffic[i]->avg_pck_size_in=PACKET_SIZE;
 					traffic[i]->ratio=ratio;
 					traffic[i]->pck_class_in=  pck_class_in_gen( i);
 					pck_dst_gen ( x,y,i, &dest_x, &dest_y);
 					traffic[i]->dest_x= dest_x;
 					traffic[i]->dest_y=dest_y;
+					traffic[i]->stop=0;
 
 	}
 	
@@ -483,16 +485,18 @@ void print_parameter (){
 	    printf ("\tAVC_ATOMIC_EN:%d \n", AVC_ATOMIC_EN);
 	    printf ("\tCongestion Index:%d \n",CONGESTION_INDEX);
 	    printf ("\tADD_PIPREG_AFTER_CROSSBAR:%d\n",ADD_PIPREG_AFTER_CROSSBAR);
-	    
+	    printf ("\tSSA_EN enabled:%s \n",SSA_EN);
+	    printf ("\tSwitch allocator arbitration type:%s \n",SWA_ARBITER_TYPE);
 
 
+
+
+	printf ("Simulation parameters\n");
 #if(DEBUG_EN)
 	    printf ("\tDebuging is enabled\n");
 #else
 	    printf ("\tDebuging is disabled\n");
 #endif
-
-	printf ("Simulation parameters\n");
 	if(strcmp (AVG_LATENCY_METRIC,"HEAD_2_TAIL")==0)printf ("\tOutput is the average latency on sending the packet head until receiving tail\n");
 	else printf ("\tOutput is the average latency on sending the packet head until receiving the head\n");
 	printf ("\tTraffic pattern:%s\n",TRAFFIC);
@@ -506,10 +510,11 @@ void print_parameter (){
 
 	}
 	    //printf ("\tTotal packets sent by one router: %u\n", TOTAL_PKT_PER_ROUTER);
-		printf ("\t Simulation timeout =%d\n", MAX_SIM_CLKs);
-		printf ("\t Simulation ends on total packet num of =%d\n", MAX_PCK_NUM);
+		printf ("\tSimulation timeout =%d\n", MAX_SIM_CLKs);
+		printf ("\tSimulation ends on total packet num of =%d\n", MAX_PCK_NUM);
 	    printf ("\tPacket size: %u flits\n",PACKET_SIZE);
-	    printf ("\t SSA_EN enabled:%s \n",SSA_EN);
+	    printf ("\tPacket injector FIFO width in flit:%u \n",TIMSTMP_FIFO_NUM);
+	   
 }
 
 
@@ -620,7 +625,10 @@ unsigned char  pck_class_in_gen(
 
 *********************************/
 
-void pck_dst_gen (
+
+
+
+void pck_dst_gen_2D (
     unsigned int current_x,
 	unsigned int current_y,
 	unsigned int core_num,
@@ -724,10 +732,131 @@ void pck_dst_gen (
 
 
 
+void pck_dst_gen_1D (
+    unsigned int current_x,
+	unsigned int core_num,
+	unsigned int *dest_x
+
+){
+
+
+	unsigned int rnd=0,nc=NX;
+	unsigned int rnd100=0;
+	int i;
+
+
+	if(strcmp (TRAFFIC,"RANDOM")==0){
+
+		do{
+			rnd=rand()%nc;
+		}while (rnd==core_num); // get a random IP core, make sure its not same as sender core
+
+	   (*dest_x) = (rnd % NX );
+
+
+	}
+	else if (strcmp(TRAFFIC,"HOTSPOT")==0) {
+
+		do{
+				rnd=rand()%nc;
+		}while (rnd==core_num); // get a random IP core, make sure its not same as sender core
+
+		rnd100=rand()%100;
+
+		if		(rnd100 < HOTSPOT_PERCENTAGE	&& core_num !=HOTSPOT_CORE_1 )	rnd = HOTSPOT_CORE_1;
+		else if((HOTSOPT_NUM > 1)	&& (rnd100 >= 20 )	&& (rnd100 < (20+HOTSPOT_PERCENTAGE)) && core_num!=HOTSPOT_CORE_2 )  rnd = HOTSPOT_CORE_2;
+		else if((HOTSOPT_NUM > 2)	&& (rnd100 >= 40)	&& (rnd100 < (40+HOTSPOT_PERCENTAGE)) && core_num!=HOTSPOT_CORE_3 )  rnd = HOTSPOT_CORE_3;
+		else if((HOTSOPT_NUM > 3)	&& (rnd100 >= 60)	&& (rnd100 < (60+HOTSPOT_PERCENTAGE)) && core_num!=HOTSPOT_CORE_4 )  rnd = HOTSPOT_CORE_4;
+		else if((HOTSOPT_NUM > 4)	&& (rnd100 >= 80)	&& (rnd100 < (80+HOTSPOT_PERCENTAGE)) && core_num!=HOTSPOT_CORE_5 )  rnd = HOTSPOT_CORE_5;
+
+
+
+		// (*dest_y) = (rnd / NX );
+		 (*dest_x) = (rnd % NX );
+
+
+	} else if( strcmp(TRAFFIC ,"TRANSPOSE1")==0){
+
+		 (*dest_x) = NX-current_x-1;
+		// (*dest_y) = NY-current_x-1;
+
+
+
+//	} else if( strcmp(TRAFFIC ,"TRANSPOSE2")==0){
+	//	(*dest_x)   = current_y;
+	//	(*dest_y)   = current_x;
+
+
+	} else if( strcmp(TRAFFIC ,"BIT_REVERSE")==0){
+
+		unsigned int reverse_addr=0;
+		unsigned int pos=0;
+		for(i=0; i<(Xw); i++){//reverse the address
+			 pos= (((Xw)-1)-i);
+			 reverse_addr|= ((current_x >> pos) & 0x01) << i;
+                   // reverse_addr[i]  = joint_addr [((Xw+Yw)-1)-i];
+		}
+		(*dest_x)   = reverse_addr;
+
+	} else if( strcmp(TRAFFIC ,"BIT_COMPLEMENT") ==0){
+
+		 (*dest_x)    = (~current_x) &(0xFF>> (8-Xw));
+		 //(*dest_y)    = (~current_y) &(0xFF>> (8-Yw));
+
+
+     }  else if( strcmp(TRAFFIC ,"TORNADO") == 0){
+		//[(x+(k/2-1)) mod k, (y+(k/2-1)) mod k],
+		 (*dest_x)    = ((current_x + ((NX/2)-1))%NX);
+		// (*dest_y)    = ((current_y + ((NY/2)-1))%NY);
+
+
+     }  else if( strcmp(TRAFFIC ,"CUSTOM") == 0){
+		//[(x+(k/2-1)) mod k, (y+(k/2-1)) mod k],
+		if(current_x ==0  ){
+		 (*dest_x)    =  NX-1;
+		// (*dest_y)    =  NY-1;
+		}else{// make it invalid
+		 (*dest_x)    =  current_x;
+		 //(*dest_y)    =  current_y;
+
+		}
+
+     }
+
+	 else printf ("traffic %s is an unsupported traffic pattern\n",TRAFFIC);
+
+}
 
 
 
 
+
+void pck_dst_gen (
+    unsigned int current_x,
+	unsigned int current_y,
+	unsigned int core_num,
+	unsigned int *dest_x,
+	unsigned int *dest_y
+){
+	if((strcmp (TOPOLOGY,"MESH")==0)||(strcmp (TOPOLOGY,"TORUS")==0)){
+		pck_dst_gen_2D (
+		    current_x,
+			current_y,
+			core_num,
+			dest_x,
+			dest_y
+		);
+	}
+	else {
+		dest_y=0;
+		pck_dst_gen_1D (
+				current_x,
+				core_num,
+				dest_x
+		);
+
+	}
+}
 
 
 
