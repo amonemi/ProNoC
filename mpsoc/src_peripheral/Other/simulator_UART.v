@@ -8,6 +8,11 @@
 *              The buffer  perevents the conflict between multiple simulation UART messages 
 *              Wait counter reset by each individual write on buffer
 ***************************************/
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
+
+
 module  simulator_UART #(
     parameter BUFFER_SIZE   =100,  
     parameter WAIT_COUNT    =1000,

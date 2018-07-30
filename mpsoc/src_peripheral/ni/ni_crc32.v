@@ -30,9 +30,12 @@
 
 
 
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
 
 
- `timescale  1ns/1ps
+
 module crc_32_multi_channel #(
     parameter CHANNEL=4
 

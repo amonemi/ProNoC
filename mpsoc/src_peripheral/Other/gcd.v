@@ -2,6 +2,11 @@
 *	GCD
 *************************/
 
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
+
+
 module gcd #(
 parameter GCDw=32
 

@@ -953,7 +953,7 @@ sub add_color_to_gd{
 
 sub append_text_to_file {
 	my  ($file_path,$text)=@_;
-	open(my $fd, ">>$file_path");
+	open(my $fd, ">>$file_path") or die "could not open $file_path: $!";
 	print $fd $text;
 	close $fd;
 }
@@ -1264,18 +1264,23 @@ sub get_directory_name {
 
 }
 
-sub remove_project_dir_from_addr{
-	my $file=shift;
+sub get_project_dir{ #mpsoc directory address
 	my $dir = Cwd::getcwd();
-	my $project_dir	  = abs_path("$dir/../../"); #mpsoc directory address
+	my $project_dir	  = abs_path("$dir/../../");
+	return $project_dir;
+}
+
+
+sub remove_project_dir_from_addr{
+	my $file=shift;	
+	my $project_dir	  = get_project_dir(); 
 	$file =~ s/$project_dir//; 
 	return $file;	
 }
 
 sub add_project_dir_to_addr{
 	my $file=shift;
-	my $dir = Cwd::getcwd();
-	my $project_dir	  = abs_path("$dir/../../"); #mpsoc directory address
+	my $project_dir	  = get_project_dir(); 
 	return $file if(-f $file ); 
 	return "$project_dir/$file";	
 	
@@ -1911,6 +1916,14 @@ sub capture_string_between {
 	my @q =split  (/$start/,$text);
 	my @d = split (/$end/,$q[1]);
 	return $d[0];
+}
+
+
+sub make_undef_as_string {
+	foreach my $p  (@_){
+		$$p= 'undef' if (! defined $$p);
+		
+	}	
 }
 
 

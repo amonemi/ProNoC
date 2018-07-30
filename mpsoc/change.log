@@ -1,36 +1,41 @@
 All notable changes to this project will be documented in this file.
 
+##[1.8.1] - 30-7-2018
+## Added
+-  GUI for setting Linux variables
+## changed
+-  Support NoC Simulation for packet payload width larger than 32-bits and core number larger than 64. 
+
+
 ##[1.8.0] - 16-5-2018
 ## Added
 -  Support hard-built QoS/EoS support in NoC using weighted Round-Robin arbiter
 -  Add real application task grah simulation support in NoC simulator 
 -  add new 
 -  Add two new (OpenRISC) softprocessors: Or1200 & Mor1kx 
--  Add documention for timer, ni-master, ni-slave, memory, and dma IP cores.
+-  Add documentation for timer, ni-master, ni-slave, memory, and dma IP cores.
 -  Add User manual file
--  Add USB blaster II suooprt in JTAG controller
+-  Add USB blaster II support in JTAG controller
 -  Add GUI for adding new Altera FPGA boards. 
--  The simulator/ emulator now can provide additional smulation results 
+-  The simulator/ emulator now can provide additional simulation results 
 	(a) Average latency per average desired flit injection ratio
 	(b) Average throughput per average desired flit injection ratio
 	(c) send/received packets number for each router at different injection ratios
 	(d) send/received worst-case delay for each router at different injection ratios
 	(e) Simulation execution clock cycles
 ## changed
--  Fixe the bug in NoC that halts the simulation when B is defined as 2.
+-  Fixed the bug in NoC that halts the simulation when B is defined as 2.
 -  Support Burst Type Extension for Incrementing and Decrementing bursts in RAM controller 
-
 
 
 ##[1.7.0] - 15-7-2017
 ## Added
 -  Software compilation text-editor
--  Processing tile Diagrame Viewer 
+-  Processing tile Diagram Viewer 
 -  Modelsim/Verilator/QuartusII GUI compilation assist
 -  Multi-channel DMA
 ## changed
 -  New multi-channel DMA-based NI
-
 
 
 ##[1.6.0] - 6-3-2017
@@ -40,12 +45,13 @@ All notable changes to this project will be documented in this file.
 
 ##[1.5.2] - 22-2-2017
 ## changed
-- fixed bug in wishbone bus 
+- Fixed bug in wishbone bus 
+
 
 ##[1.5.1] - 3-2-2017
 ## changed
 - src_c/jtag_main.c:  variable length memory support is added.
-- NoC emulator:  Jtag tabs are reduced to total of 3. A 64 core 2-VC NoC emulation is sucessfully tested on DE4 FPGA board.
+- NoC emulator:  Jtag tabs are reduced to total of 3. A 64 core 2-VC NoC emulation is successfully tested on DE4 FPGA board.
 - ssa: Now can work with fully adaptive routing.
 
 
@@ -56,12 +62,9 @@ All notable changes to this project will be documented in this file.
 - Altor processor.
 - Jtag_wb: allow access to the wishbone bus slave ports via Jtag. 
 - Jtag_main: A C code which allows host PC to have access to the jtag_wb.  
-
-
 ## changed
 - Memory IP cores are categorized into two IPs: Single and double port. 
 - The access via jtag_wb or Altera In-System Memory Content Editor is added as optional via parameter setting for single port memory.
-
 
 
 ##[1.0.0] - 27-1-2016

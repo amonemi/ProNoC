@@ -2,13 +2,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-
-
-
-
+#include <limits.h>
 #include <ctype.h>
 #include <stdint.h>
-
 #include <inttypes.h>
 
 
@@ -20,14 +16,17 @@
 
 
 
-#ifndef NC 
+#ifndef  NC 
 #define  NC		(NX*NY)
 #endif
+
 #define  RATIO_INIT		2
 
 #define SYNTHETIC 0
 #define CUSTOM 1 
 #define DISABLE -1
+
+#define MY_VL_SETBIT_W(data,bit) (data[VL_BITWORD_I(bit)] |= (VL_UL(1) << VL_BITBIT_I(bit)))
 
 #include "traffic_task_graph.h"
 
@@ -412,8 +411,11 @@ int main(int argc, char** argv) {
 		{
 
 			clk = 0;
+#if (NC<=64)				
 			noc->ni_flit_in_wr =0;
-			
+#else
+			for(j=0;j<(sizeof(noc->ni_flit_in_wr)/sizeof(noc->ni_flit_in_wr[0])); j++) noc->ni_flit_in_wr[j]=0;
+#endif			
 			for(x=0;x<NX;x++)for(y=0;y<NY;y++){
 				i=(y*NX)+x;
 
@@ -432,17 +434,29 @@ int main(int argc, char** argv) {
 				//noc->router_iport_weight_in_all[i]=	router[i]->iport_weight_out_all;
 
 				for(j=0;j<flit_out_all_size;j++) noc->router_flit_in_all[i][j]	= router[i]->flit_out_all[j] ;
-
+#if (Fpay<=32)
 				traffic[i]->flit_in  = noc->ni_flit_out [i];
+#else	
+	for(j=0;j<(sizeof(traffic[i]->flit_out)/sizeof(traffic[i]->flit_out[0])); j++) traffic[i]->flit_in[j]  = noc->ni_flit_out [i][j];				
+#endif					
 				traffic[i]->credit_in= noc->ni_credit_out[i];
 			
 
 				noc->ni_credit_in[i] = traffic[i]->credit_out;
+#if (Fpay<=32)				
 				noc->ni_flit_in [i]  = traffic[i]->flit_out;
+#else	
+	for(j=0;j<(sizeof(traffic[i]->flit_out)/sizeof(traffic[i]->flit_out[0])); j++) noc->ni_flit_in [i][j]  = traffic[i]->flit_out[j];
+#endif
 
+#if (NC<=64)			
 				if(traffic[i]->flit_out_wr) noc->ni_flit_in_wr = noc->ni_flit_in_wr | ((vluint64_t)1<<i);
-
 				traffic[i]->flit_in_wr= ((noc->ni_flit_out_wr >> i) & 0x01);
+#else
+				if(traffic[i]->flit_out_wr) MY_VL_SETBIT_W(noc->ni_flit_in_wr ,i);
+				traffic[i]->flit_in_wr=   (VL_BITISSET_W(noc->ni_flit_out_wr,i)>0); 				
+#endif
+				
 
 			
 			}//for
@@ -459,7 +473,11 @@ int main(int argc, char** argv) {
 
 		 
 		for(i=0;i<NC;i++)	{
+#if (NC<=64)			
 			traffic[i]->start=  ((noc->start_o >>i)&  0x01);
+#else
+			traffic[i]->start=   (VL_BITISSET_W(noc->start_o, i)>0);
+#endif			
 			traffic[i]->reset= reset;
 			traffic[i]->clk	= clk;
 			router[i]->reset= reset;

@@ -4,6 +4,10 @@
 *
 *****************/
 
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
+
 
 
 // Quartus II Verilog Template

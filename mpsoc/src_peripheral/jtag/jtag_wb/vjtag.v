@@ -33,9 +33,11 @@
 //applicable agreement for further details.
 
 
-// synopsys translate_off
-`timescale 1 ps / 1 ps
-// synopsys translate_on
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
+
+
 module vjtag #(
 	parameter  VJTAG_INDEX=126
 

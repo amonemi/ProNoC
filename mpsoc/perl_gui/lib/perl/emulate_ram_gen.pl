@@ -30,8 +30,8 @@ use constant RD_WR_STATUS	=> 0x4;
 use constant PROBE_ST 		=> 0x2;
 use constant SOURCE_ST		=> 0x1;
 use constant BYPAS_ST 		=> 0x0;
-use constant RAM_BIN_FILE	=> "$ENV{'PRONOC_WORK'}/emulate/emulate_ram.bin";
-use constant RAM_SIM_FILE	=> "$ENV{'PRONOC_WORK'}/emulate/ram";
+#use constant RAM_BIN_FILE	=> "$ENV{'PRONOC_WORK'}/emulate/emulate_ram.bin";
+#use constant RAM_SIM_FILE	=> "$ENV{'PRONOC_WORK'}/emulate/ram";
 			
 
 
@@ -230,7 +230,7 @@ sub generate_synthetic_traffic_ram{
 	my $ram;
 	if(SIM_RAM_GEN){
 		my $ext= sprintf("%02u.txt",$num);
-		open( $ram, '>', RAM_SIM_FILE.$ext) || die "Can not create: \">lib/emulate/emulate_ram.bin\" $!";
+		open( $ram, '>', "$ENV{'PRONOC_WORK'}/emulate/ram".$ext) || die "Can not create: \"$ENV{'PRONOC_WORK'}/emulate/ram.$ext\" $!";
 	}
 	for ($line_num= 0; $line_num<RAM_SIZE; $line_num++ ) {
 		my ($value_s,$value_l)=gen_synthetic_traffic_ram_line ($emulate,  $x, $y,  $sample, $ratio ,$line_num,$rnd);
@@ -287,8 +287,8 @@ sub generate_emulator_ram {
 	if ( $xn <2 || $xn >16 ){ add_info($info,"programe_pck_gens:invalid X value: ($xn). should be between 2 and 16 \n"); help(); return 0;}
 	if ( $yn <2 || $yn >16 ){ add_info($info,"programe_pck_gens:invalid Y value:($yn). should be between 2 and 16 \n"); help(); return 0;}
 	#open file pointer
-	#open(my $file, RAM_BIN_FILE) || die "Can not create: \">lib/emulate/emulate_ram.bin\" $!";
-	open(my $file, '>', RAM_BIN_FILE) || die "Can not create: \">lib/emulate/emulate_ram.bin\" $!";
+	#open(my $file, '>', RAM_BIN_FILE) || die "Can not create: \">lib/emulate/emulate_ram.bin\" $!";
+	open(my $file, '>', "$ENV{'PRONOC_WORK'}/emulate/emulate_ram.bin") || die "Can not create: \"$ENV{'PRONOC_WORK'}/emulate/emulate_ram.bin\" $!";
 	
 	#generate each node ram data
 	for (my $y=0; $y<$yn; $y=$y+1){
@@ -323,7 +323,7 @@ sub programe_pck_gens{
 	
 
 	#programe packet generators rams
-	my $cmd= "sh $jtag_intfc \"-n ".JTAG_RAM_INDEX."  -w 8 -i ".RAM_BIN_FILE." -c\" ";
+	my $cmd= "sh $jtag_intfc \"-n ".JTAG_RAM_INDEX."  -w 8 -i $ENV{'PRONOC_WORK'}/emulate/emulate_ram.bin -c\" ";
 	#my ($result,$exit) = run_cmd_in_back_ground_get_stdout($cmd);
 	
 	return 0 if(run_cmd_update_info ($cmd,$info));

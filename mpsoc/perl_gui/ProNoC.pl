@@ -26,19 +26,52 @@ require "trace_gen.pl";
 use File::Basename;
 
 
-our $VERSION = '1.8.0'; 
+our $VERSION = '1.8.1'; 
 
 sub main{
+	# check if envirement variables are defined
+	my $project_dir	  = get_project_dir(); #mpsoc dir addr
+	my $paths_file= "$project_dir/mpsoc/perl_gui/lib/Paths";
+
+	if (-f 	$paths_file){#} && defined $ENV{PRONOC_WORK} ) {
+		my $paths= do $paths_file;
+		main_window();
+		
+	}
+	else{
+		setting(1);
+	}
+	
+}
+
+sub set_path_env{
+	my $project_dir	  = get_project_dir(); #mpsoc dir addr
+	my $paths_file= "$project_dir/mpsoc/perl_gui/lib/Paths";
+	my $paths= do $paths_file;
+
+	my $pronoc_work = $paths->object_get_attribute("PATH","PRONOC_WORK");	
+	my $quartus = $paths->object_get_attribute("PATH","QUARTUS_BIN");
+	my $modelsim = $paths->object_get_attribute("PATH","MODELSIM_BIN");
+
+	$ENV{'PRONOC_WORK'}= $pronoc_work if( defined $pronoc_work);
+	$ENV{'QUARTUS_BIN'}= $quartus if( defined $quartus);
+	$ENV{'MODELSIM_BIN'}= $modelsim if( defined $modelsim);	
+}
+
+
+
+sub main_window{
+	
+	set_path_env();
+
+
+	my($width,$hight)=max_win_size();
+	set_defualt_font_size();
 
 
 
 
-my($width,$hight)=max_win_size();
-set_defualt_font_size();
-
-
-# check if envirement variables are defined
-if ( !defined $ENV{PRONOC_WORK} || !defined $ENV{QUARTUS_BIN}) {
+if ( !defined $ENV{PRONOC_WORK} ) {
 	my $message;
 	if ( !defined $ENV{PRONOC_WORK}) {
 		my $dir = Cwd::getcwd();
@@ -50,9 +83,9 @@ if ( !defined $ENV{PRONOC_WORK} || !defined $ENV{QUARTUS_BIN}) {
 
 
   	
-	$message= $message."Warning: QUARTUS_BIN environment variable has not been set. It is required only for working with NoC emulator." if(!defined $ENV{QUARTUS_BIN});
+	#$message= $message."Warning: QUARTUS_BIN environment variable has not been set. It is required only for working with NoC emulator." if(!defined $ENV{QUARTUS_BIN});
 	
-	$message= $message."\n\nPlease add aformentioned variables to ~\.bashrc file e.g: export PRONOC_WORK=[path_to]/mpsoc_work.";
+	#$message= $message."\n\nPlease add aformentioned variables to ~\.bashrc file e.g: export PRONOC_WORK=[path_to]/mpsoc_work.";
     	message_dialog("$message");
     
 }
@@ -71,6 +104,7 @@ my $table = Gtk2::Table->new (1, 3, FALSE);
 
  my @menu_items = (
   [ "/_File",            undef,        undef,          0, "<Branch>" ],
+  [ "/File/_Setting",       "<control>O", sub { setting(0); },  0,  undef ],
   [ "/File/_Quit",       "<control>Q", sub { Gtk2->main_quit },  0, "<StockItem>", 'gtk-quit' ],
   [ "/_View",                  undef, undef,         0, "<Branch>" ],
   [ "/_View/_ProNoC System Generator",  undef, 	sub{ open_page($notebook,$noteref,$table,'Generator'); } ,	0,	undef ],
@@ -227,7 +261,91 @@ sub overview{
 
 }
 
+sub setting{
+	my $reset=shift;
+	my $project_dir	  = get_project_dir(); #mpsoc dir addr
+	my $paths_file= "$project_dir/mpsoc/perl_gui/lib/Paths";
 
+	__PACKAGE__->mk_accessors(qw{
+	PRONOC_WORK
+	});
+	my $self;
+	if (-f 	$paths_file ){
+		$self= do $paths_file;
+	}else{
+		$self = __PACKAGE__->new();
+		
+	}
+	
+	
+	my $table=def_table(10,10,FALSE);	
+	my $set_win=def_popwin_size(40,80,"Configuration setting",'percent');
+	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
+	$scrolled_win->set_policy( "automatic", "automatic" );
+	$scrolled_win->add_with_viewport($table);
+	my $row=0; my $col=0;
+	
+	#title		
+	my $title=gen_label_in_center("setting");
+	$table->attach ($title , 0, 10,  $row, $row+1,'expand','shrink',2,2); $row++;
+	my $separator = Gtk2::HSeparator->new;	
+	$table->attach ($separator , 0, 10 , $row, $row+1,'fill','fill',2,2);	$row++;
+
+	my @paths = (
+	{ label=>"PRONOC_WORK", param_name=>"PRONOC_WORK", type=>"DIR_path", default_val=>"$project_dir/mpsoc_work", content=>undef, info=>"Define the working directory where the projects' files will be created", param_parent=>'PATH',ref_delay=>undef },
+	{ label=>"QUARTUS_BIN", param_name=>"QUARTUS_BIN", type=>"DIR_path", default_val=>undef, content=>undef, info=>"Define the path to QuartusII compiler bin directory.  Setting of this variable is optional and is needed if you are going to use Altera FPGAs for implementation or emulation", param_parent=>'PATH',ref_delay=>undef },
+	{ label=>"MODELSIM_BIN", param_name=>"MODELSIM_BIN", type=>"DIR_path", default_val=>undef, content=>undef, info=>"Define the path to Modelsim simulator bin directory.  Setting of this variable is optional and is needed if you have installed Modelsim simulator and you want ProNoC to auto-generate the
+simulation models using Modelsim software", param_parent=>'PATH',ref_delay=>undef },
+		);	
+
+
+	foreach my $d (@paths) {
+		#$mpsoc,$name,$param, $default,$type,$content,$info, $table,$row,$column,$show,$attribut1,$ref_delay,$new_status,$loc
+		($row,$col)=add_param_widget ($self, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,$col,1, $d->{param_parent}, $d->{ref_delay},undef,"vertical");
+	}
+
+
+	my $ok = def_image_button('icons/select.png','OK');
+	my $mtable = def_table(10, 1, TRUE);
+
+	$mtable->attach_defaults($scrolled_win,0,1,0,9);
+	$mtable-> attach ($ok , 0, 1,  9, 10,'expand','shrink',2,2); 
+	
+	$set_win->add ($mtable);
+	$set_win->show_all();
+	
+	my $old_pronoc_work = $self->object_get_attribute("PATH","PRONOC_WORK");
+	my $old_quartus = $self->object_get_attribute("PATH","QUARTUS_BIN");
+	my $old_modelsim = $self->object_get_attribute("PATH","MODELSIM_BIN");
+	
+	$ok->signal_connect("clicked"=> sub{
+		#save setting
+		open(FILE,  ">$paths_file") || die "Can not open: $!";
+		print FILE perl_file_header("Paths");
+		print FILE Data::Dumper->Dump([\%$self],['setting']);
+		close(FILE) || die "Error closing file: $!";
+		my $pronoc_work = $self->object_get_attribute("PATH","PRONOC_WORK");
+		my $quartus = $self->object_get_attribute("PATH","QUARTUS_BIN");
+		my $modelsim = $self->object_get_attribute("PATH","MODELSIM_BIN");
+		make_undef_as_string(\$old_pronoc_work,\$old_quartus,\$old_modelsim,\$pronoc_work,\$quartus,\$modelsim);
+			
+		append_text_to_file ("$ENV{HOME}/.bashrc", "\nexport PRONOC_WORK=$pronoc_work\n") if(($old_pronoc_work ne $pronoc_work) || !defined $ENV{PRONOC_WORK}) ;
+		append_text_to_file ("$ENV{HOME}/.bashrc", "export QUARTUS_BIN=$quartus\n") if($old_quartus ne $quartus) ;
+		append_text_to_file ("$ENV{HOME}/.bashrc", "export MODELSIM_BIN=$modelsim\n") if($old_modelsim ne $modelsim) ;
+		set_path_env();
+		if(($old_pronoc_work ne $pronoc_work) || $old_quartus ne $quartus ||$old_modelsim ne $modelsim){
+			
+			
+
+	}
+
+	my  ($file_path,$text)=@_;
+		$set_win->destroy;
+		main_window() if($reset);
+
+	});
+	
+}
 
 sub generate_main_notebook {
 	my $mode =shift;
