@@ -26,9 +26,10 @@
 **
 *******************************************************************/ 
 
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
 
-
-`timescale	 1ns/1ps
 
 module wb_bram_ctrl #(
     parameter Dw=32, //RAM data_width in bits

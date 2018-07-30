@@ -6,8 +6,10 @@
 // Read during write produces old data on ports A and B and old data on mixed ports
 // For device families that do not support this mode (e.g. Stratix V) the ram is not inferred
 
-
+// synthesis translate_off
 `timescale 1ns / 1ps
+// synthesis translate_on
+
 
 module byte_enabled_true_dual_port_ram	#(
 		parameter INIT_FILE= "sw/ram/ram0.txt",// ram initial file in v format

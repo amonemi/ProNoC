@@ -25,7 +25,11 @@
 **	A multi channel wishbone based DMA  and with support burst data transaction 
 **	(Dose not support byte enable yet). 
 ***************************************/
- `timescale  1ns/1ps
+
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
+
  
  
  

@@ -26,6 +26,11 @@
 **
 *******************************************************************/
 
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
+
+
 
 module  jtag_intfc #(
     parameter NI_BASE_ADDR     = 32'hx, //must be set by top level

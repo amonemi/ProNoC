@@ -28,7 +28,10 @@
 **
 *******************************************************************/
 
-`timescale  1ns/1ps
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
+
 
 module  ni_slave #(
     parameter MAX_TRANSACTION_WIDTH=10, // Maximum transaction size will be 2 power of MAX_DMA_TRANSACTION_WIDTH words 

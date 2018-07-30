@@ -28,7 +28,10 @@
 *******************************************************************/ 
 
 
+// synthesis translate_off
 `timescale 1ns / 1ps
+// synthesis translate_on
+
 
 module timer #(
 		parameter PRESCALER_WIDTH		=	8, // Prescaler counter width.

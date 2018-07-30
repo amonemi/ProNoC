@@ -1,3 +1,9 @@
+
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
+
+
 module vjtag_wb #(
 	parameter VJTAG_INDEX=126,
 	parameter DW=32,

@@ -1782,7 +1782,7 @@ sub software_edit_mpsoc {
 
 	$make -> signal_connect("clicked" => sub{
 		$app->do_save();
-		apend_to_textview($tview,' ');
+		append_to_textview($tview,' ');
 		run_make_file($sw,$tview);	
 
 	});

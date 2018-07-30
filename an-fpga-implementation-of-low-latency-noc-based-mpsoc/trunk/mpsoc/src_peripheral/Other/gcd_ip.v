@@ -1,3 +1,8 @@
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
+
+
 module gcd_ip#(
     parameter GCDw=32, 
     parameter Dw =GCDw, 

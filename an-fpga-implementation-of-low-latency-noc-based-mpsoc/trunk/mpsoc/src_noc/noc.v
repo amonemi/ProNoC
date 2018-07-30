@@ -1,4 +1,9 @@
 
+// synthesis translate_off
+`timescale 1ns / 1ps
+// synthesis translate_on
+
+
 /**********************************************************************
 **    File:  noc.v
 **    
@@ -27,7 +32,7 @@
 **************************************************************/
 
 
-`timescale     1ns/1ps
+
 
 `define START_LOC(port_num,width)       (width*(port_num+1)-1)
 `define END_LOC(port_num,width)            (width*port_num)
