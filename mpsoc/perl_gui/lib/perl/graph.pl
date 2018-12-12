@@ -331,12 +331,12 @@ my $active_page=gen_combobox_object ($self,$page_id,"active",$content,$selects[0
 		my $scale= $self->object_get_attribute("${graph_id}_graph_scale",undef);
 		$scale = 5 if(!defined $scale);
 		$minues -> signal_connect("clicked" => sub{ 
-			$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale+0.5);
+			$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale*1.05);
 			set_gui_status($self,"ref",1);	
 		});	
 
 		$plus  -> signal_connect("clicked" => sub{ 
-			$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale-0.5) if( $scale>0.5);
+			$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale*0.95) if( $scale>0.5);
 			set_gui_status($self,"ref",5);
 		});	
 
@@ -595,13 +595,13 @@ my @ginfo = (
 		
 
 		$minues -> signal_connect("clicked" => sub{ 
-			$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale+0.5);
+			$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale*1.05);
 			set_gui_status($self,"ref",1);	
 		});
 		set_tip($minues, "Zoom out");	
 
 		$plus  -> signal_connect("clicked" => sub{ 
-			$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale-0.5) if( $scale>0.5);
+			$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale*0.95) if( $scale>0.5);
 			set_gui_status($self,"ref",5);
 		});
 		set_tip($plus, "Zoom in");

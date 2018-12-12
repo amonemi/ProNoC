@@ -1,0 +1,49 @@
+#######################################################################
+##	File: snoop.ITC
+##    
+##	Copyright (C) 2014-2016  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.8.1 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$HashRef = bless( {
+                    'connection_num' => 'multi connection',
+                    'category' => 'wishbone',
+                    'file_name' => '/home/alireza/mywork/mpsoc/src_peripheral/bus/wishbone_bus.v',
+                    'gui_status' => {
+                                      'status' => 'ideal',
+                                      'timeout' => 0
+                                    },
+                    'type' => 'socket',
+                    'name' => 'snoop',
+                    'ports' => {
+                                 'snoop_adr_o' => {
+                                                    'connect_type' => 'input',
+                                                    'default_out' => 'Active low',
+                                                    'range' => 'Aw-1:0',
+                                                    'connect_range' => 'Aw-1:0',
+                                                    'outport_type' => 'concatenate',
+                                                    'type' => 'output',
+                                                    'connect_name' => 'snoop_adr_i',
+                                                    'name' => 'snoop_adr_o'
+                                                  },
+                                 'snoop_en_o' => {
+                                                   'connect_range' => '',
+                                                   'connect_type' => 'input',
+                                                   'range' => '',
+                                                   'default_out' => 'Active low',
+                                                   'type' => 'output',
+                                                   'connect_name' => 'snoop_en_i',
+                                                   'name' => 'snoop_en_o',
+                                                   'outport_type' => 'concatenate'
+                                                 }
+                               },
+                    'module_name' => 'wishbone_bus',
+                    'modules' => {
+                                   'wishbone_bus' => {},
+                                   'bus_arbiter' => {}
+                                 }
+                  }, 'intfc_gen' );

@@ -11,6 +11,7 @@
  Copyright (C) 2012 Stefan Kristiansson <stefan.kristiansson@saunalahti.fi>
 
  ******************************************************************************/
+`timescale	 1ns/1ps
 
 module mor1kx_simple_dpram_sclk
   #(

@@ -88,6 +88,11 @@ module wishbone_bus #(
 	//address compar
 	m_grant_addr,
     s_sel_one_hot,
+    
+    
+    //snoop_interface
+    snoop_adr_o,
+    snoop_en_o,
 	
 	
 	//system signals
@@ -167,6 +172,12 @@ module wishbone_bus #(
     //
      output [Aw-1       :   0]  m_grant_addr;
      input  [S-1        :   0]  s_sel_one_hot;
+     
+     
+     //snoop interface 
+    output   [Aw-1      :   0]   snoop_adr_o;
+    output                snoop_en_o;
+     
     //system signals
     
     input                           clk,     reset;
@@ -196,6 +207,8 @@ module wishbone_bus #(
     wire                        s_we_o;
     wire                        s_cyc_o;
     wire	[Dw-1       :	0]	m_dat_o;
+    
+    
 
 
     assign	s_adr_o_all	=	{S{s_adr_o}};
@@ -222,6 +235,12 @@ module wishbone_bus #(
     assign 	s_we_o      =	m_grant_we;
     assign 	s_cyc_o     =	m_grant_cyc;
     assign 	s_stb_o_all	=	s_sel_one_hot & {S{m_grant_stb & m_grant_cyc}};
+    
+    //snoop address comes directly from master bus 
+    assign snoop_adr_o = m_grant_addr;
+    
+    //snoop on ack and write.mask with strobe
+    assign snoop_en_o = any_s_ack & m_grant_stb & m_grant_we;  
 
 
 //wire	[ADDR_PERFIX-1		:	0]	m_perfix_addr;

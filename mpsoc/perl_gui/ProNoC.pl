@@ -26,7 +26,7 @@ require "trace_gen.pl";
 use File::Basename;
 
 
-our $VERSION = '1.8.1'; 
+our $VERSION = '1.8.2'; 
 
 sub main{
 	# check if envirement variables are defined

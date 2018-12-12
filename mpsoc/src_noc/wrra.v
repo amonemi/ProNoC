@@ -28,6 +28,16 @@
 **  weight sending packet to the same output ports.
 **  Swich allocator's output arbters' priority is lucked until the winner's 
 **  input weight is not consumed. A weight is consumed when a packet is sent.
+
+		PROPOGATE_EQUALL = (WRRA_CONFIG_INDEX==0 );
+                PROPOGATE_LIMITED = (WRRA_CONFIG_INDEX==1 );
+ 		PROPOGATE_NEQ1 = (WRRA_CONFIG_INDEX==2 );
+                PROPOGATE_NEQ2 = (WRRA_CONFIG_INDEX==3 );
+    
+    
+
+
+
 ******************************************************************/
 
 
@@ -338,11 +348,13 @@ module  weight_control #(
         WP = W * P,
         P_1 = P-1;
     
-    localparam 
-        [W-1 : 0] INIT_WEIGHT = 1;
+    localparam [W-1 : 0] INIT_WEIGHT = 1;
+    localparam [W-1 : 0] MAX_WEIGHT = {W{1'b1}}-1'b1;
         
-    localparam PROPOGATE_EQUALL = (WRRA_CONFIG_INDEX==0 ),
-               PROPOGATE_LIMITED = (WRRA_CONFIG_INDEX==1 );
+    localparam  PROPOGATE_EQUALL = (WRRA_CONFIG_INDEX==0 ),
+                PROPOGATE_LIMITED = (WRRA_CONFIG_INDEX==1 ),
+ 		PROPOGATE_NEQ1 = (WRRA_CONFIG_INDEX==2 ),
+                PROPOGATE_NEQ2 = (WRRA_CONFIG_INDEX==3 );
     
     
 
@@ -390,7 +402,7 @@ module  weight_control #(
             end
          end //for
            
-    end else begin :neq
+    end else if (PROPOGATE_NEQ1) begin :neq1
         
         always @(*)begin 
                oport_weight_counter[0]= {W{1'b0}};// the output port weight of local port is useless. hence fix it as zero.
@@ -432,9 +444,74 @@ module  weight_control #(
         end //for
     
     
-    end  
+    end else begin : neq2 //if (PROPOGATE_NEQ1) :neq1 
+    	
+    
+         
+	for (i=0;i<P;i=i+1)begin : port
+		if(i==0) begin : local_p
+			always @ (posedge clk)begin				
+               			oport_weight_counter[i]<= {W{1'b0}};// the output port weight of local port is useless. hence fix it as zero.
+               			oport_weight[i]<= {W{1'b0}};
+			end//always
+		end//local_p
+
+             else if(i==SW_LOC) begin : if1
+                
+               always @ (posedge clk)begin 
+                    oport_weight_counter[i]<= {W{1'b0}};// The loopback injection is forbiden hence it will be always as zero.
+                    oport_weight[i]<= {W{1'b0}};
+                end
+                assign oports_weight [(i+1)*W-1 : i*W] = {W{1'b0}};
+             end else begin :else1
+        
+                always @ (posedge clk or posedge reset) begin 
+                    if(reset) begin 
+                        oport_weight_counter[i]<= INIT_WEIGHT;
+                    end else begin 
+                        if (weight_dcrease_en && counter_is_reset) oport_weight_counter[i]<= INIT_WEIGHT;
+                        else if (weight_dcrease_en && dest_port[i] && oport_weight_counter[i] <MAX_WEIGHT )oport_weight_counter[i]<= oport_weight_counter[i] +1'b1;
+                    end
+                end //always
+                
+                always @ (posedge clk or posedge reset) begin 
+                    if(reset) begin 
+                        oport_weight[i]<={W{1'b0}};
+                    end else begin 
+			if(oport_weight[i]>iport_weight) oport_weight[i]<=iport_weight;// weight counter should always be smaller than iport weight
+                        else if (weight_dcrease_en)begin 
+				if( counter_is_reset ) begin 
+					 	oport_weight[i]<= (oport_weight_counter[i]>0)? oport_weight_counter[i]: 1;		
+				end//counter_reset
+				else begin 
+					if (oport_weight_counter[i]>0 && oport_weight[i] < oport_weight_counter[i]) oport_weight[i]<= oport_weight_counter[i]; 
+					
+
+				end
+			end//weight_dcr  
+			             
+                    end//else reset
+                end //always
+                assign oports_weight [(i+1)*W-1 : i*W] = oport_weight[i];
+             end  //else 
+        
+           
+           
+        end //for
     
     
+    end
+
+
+
+
+
+
+
+
+
+
+
     /* verilator lint_off WIDTH */
     if(ARBITER_TYPE == "WRRA_CLASSIC") begin : wrra_classic 
     /* verilator lint_on WIDTH */

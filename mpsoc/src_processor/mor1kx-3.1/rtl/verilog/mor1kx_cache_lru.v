@@ -82,6 +82,7 @@
 //       .lru_pre  (lru_pre[NUMWAYS-1:0]),
 //       .lru_post (lru_post[NUMWAYS-1:0]));
 
+`timescale	 1ns/1ps
 
 module mor1kx_cache_lru(/*AUTOARG*/
    // Outputs

@@ -3,368 +3,390 @@
 ##    
 ##	Copyright (C) 2014-2016  Alireza Monemi
 ##    
-##	This file is part of ProNoC 1.6.0 
+##	This file is part of ProNoC 1.8.1 
 ##
 ## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
 ##	MAY CAUSE UNEXPECTED BEHAIVOR.
 ################################################################################
 
-$wishbone_bus = bless( {
-                         'description' => 'wishbone bus',
-                         'parameters_order' => [
-                                                 'M',
-                                                 'S',
-                                                 'Dw',
-                                                 'Aw',
-                                                 'SELw',
-                                                 'TAGw',
-                                                 'CTIw',
-                                                 'BTEw'
-                                               ],
-                         'ports_order' => [
-                                            's_adr_o_all',
-                                            's_dat_o_all',
-                                            's_sel_o_all',
-                                            's_tag_o_all',
-                                            's_we_o_all',
-                                            's_cyc_o_all',
-                                            's_stb_o_all',
-                                            's_cti_o_all',
-                                            's_bte_o_all',
-                                            's_dat_i_all',
-                                            's_ack_i_all',
-                                            's_err_i_all',
-                                            's_rty_i_all',
-                                            'm_dat_o_all',
-                                            'm_ack_o_all',
-                                            'm_err_o_all',
-                                            'm_rty_o_all',
-                                            'm_adr_i_all',
-                                            'm_dat_i_all',
-                                            'm_sel_i_all',
-                                            'm_tag_i_all',
-                                            'm_we_i_all',
-                                            'm_stb_i_all',
-                                            'm_cyc_i_all',
-                                            'm_cti_i_all',
-                                            'm_bte_i_all',
-                                            'm_grant_addr',
-                                            's_sel_one_hot',
-                                            'clk',
-                                            'reset'
-                                          ],
-                         'plugs' => {
-                                      'clk' => {
-                                                 'clk' => {},
-                                                 '0' => {
-                                                          'name' => 'clk'
-                                                        },
-                                                 'type' => 'num',
-                                                 'value' => 1
-                                               },
-                                      'reset' => {
-                                                   'value' => 1,
-                                                   '0' => {
-                                                            'name' => 'reset'
-                                                          },
-                                                   'reset' => {},
-                                                   'type' => 'num'
-                                                 }
-                                    },
-                         'unused' => undef,
-                         'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/bus/wishbone_bus.v',
-                         'modules' => {
-                                        'bus_arbiter' => {},
-                                        'wishbone_bus' => {}
-                                      },
-                         'ip_name' => 'wishbone_bus',
-                         'category' => 'Bus',
-                         'version' => 0,
-                         'module_name' => 'wishbone_bus',
-                         'sockets' => {
-                                        'wb_addr_map' => {
-                                                           'connection_num' => 'single connection',
-                                                           'value' => 1,
-                                                           'type' => 'num',
-                                                           'wb_addr_map' => {},
-                                                           '0' => {
-                                                                    'name' => 'wb_addr_map'
-                                                                  }
-                                                         },
-                                        'wb_slave' => {
-                                                        'connection_num' => 'single connection',
-                                                        'value' => 'S',
-                                                        'type' => 'param',
-                                                        'wb_slave' => {},
-                                                        '0' => {
-                                                                 'name' => 'wb_slave'
-                                                               }
-                                                      },
-                                        'wb_master' => {
-                                                         'connection_num' => 'single connection',
-                                                         'value' => 'M',
-                                                         'wb_master' => {},
-                                                         'type' => 'param',
-                                                         '0' => {
-                                                                  'name' => 'wb_master'
-                                                                }
-                                                       }
-                                      },
-                         'parameters' => {
-                                           'Aw' => {
-                                                     'global_param' => 'Localparam',
-                                                     'redefine_param' => 1,
-                                                     'content' => '4,128,1',
-                                                     'info' => 'The wishbone Bus address width',
-                                                     'type' => 'Spin-button',
-                                                     'default' => '32'
+$ipgen = bless( {
+                  'unused' => undef,
+                  'plugs' => {
+                               'reset' => {
+                                            '0' => {
+                                                     'name' => 'reset'
                                                    },
-                                           'M' => {
-                                                    'global_param' => 'Localparam',
-                                                    'content' => '1,256,1',
-                                                    'redefine_param' => 1,
-                                                    'type' => 'Spin-button',
-                                                    'info' => 'Number of wishbone master interface',
-                                                    'default' => ' 4'
-                                                  },
-                                           'TAGw' => {
-                                                       'default' => '3',
-                                                       'type' => 'Fixed',
-                                                       'info' => undef,
-                                                       'redefine_param' => 1,
-                                                       'content' => '',
-                                                       'global_param' => 'Localparam'
-                                                     },
-                                           'BTEw' => {
-                                                       'global_param' => 'Localparam',
-                                                       'content' => '',
-                                                       'redefine_param' => 1,
-                                                       'type' => 'Fixed',
-                                                       'info' => undef,
-                                                       'default' => '2 '
-                                                     },
-                                           'S' => {
-                                                    'content' => '1,256,1',
-                                                    'redefine_param' => 1,
-                                                    'global_param' => 'Localparam',
-                                                    'default' => '4',
-                                                    'info' => 'Number of wishbone slave interface',
-                                                    'type' => 'Spin-button'
-                                                  },
-                                           'Dw' => {
-                                                     'content' => '8,512,8',
-                                                     'redefine_param' => 1,
-                                                     'global_param' => 'Localparam',
-                                                     'default' => '32',
-                                                     'type' => 'Spin-button',
-                                                     'info' => 'The wishbone Bus data width in bits.'
-                                                   },
-                                           'CTIw' => {
-                                                       'type' => 'Fixed',
-                                                       'info' => undef,
-                                                       'default' => '3',
-                                                       'global_param' => 'Localparam',
-                                                       'content' => '',
-                                                       'redefine_param' => 1
-                                                     },
-                                           'SELw' => {
-                                                       'global_param' => 'Localparam',
-                                                       'redefine_param' => 1,
-                                                       'content' => '',
-                                                       'type' => 'Fixed',
-                                                       'info' => undef,
-                                                       'default' => 'Dw/8'
-                                                     }
-                                         },
-                         'hdl_files' => [
-                                          '/mpsoc/src_peripheral/bus/wishbone_bus.v',
-                                          '/mpsoc/src_noc/main_comp.v',
-                                          '/mpsoc/src_noc/arbiter.v'
-                                        ],
-                         'gui_status' => {
-                                           'timeout' => 0,
-                                           'status' => 'ideal'
-                                         },
-                         'ports' => {
-                                      's_sel_one_hot' => {
-                                                           'type' => 'input',
-                                                           'range' => 'S-1        :   0',
-                                                           'intfc_name' => 'socket:wb_addr_map[0]',
-                                                           'intfc_port' => 'sel_one_hot'
-                                                         },
-                                      'reset' => {
-                                                   'type' => 'input',
-                                                   'range' => '',
-                                                   'intfc_name' => 'plug:reset[0]',
-                                                   'intfc_port' => 'reset_i'
+                                            'reset' => {},
+                                            'value' => 1,
+                                            'type' => 'num'
+                                          },
+                               'clk' => {
+                                          '0' => {
+                                                   'name' => 'clk'
                                                  },
-                                      'm_cti_i_all' => {
-                                                         'type' => 'input',
-                                                         'range' => 'CTIw*M-1    :   0',
-                                                         'intfc_name' => 'socket:wb_master[array]',
-                                                         'intfc_port' => 'cti_i'
-                                                       },
-                                      's_dat_i_all' => {
-                                                         'intfc_name' => 'socket:wb_slave[array]',
-                                                         'intfc_port' => 'dat_i',
-                                                         'type' => 'input',
-                                                         'range' => 'Dw*S-1      :   0'
-                                                       },
-                                      'm_ack_o_all' => {
-                                                         'intfc_port' => 'ack_o',
-                                                         'intfc_name' => 'socket:wb_master[array]',
-                                                         'range' => 'M-1        :   0',
-                                                         'type' => 'output'
-                                                       },
-                                      's_ack_i_all' => {
-                                                         'range' => 'S-1        :   0',
-                                                         'type' => 'input',
-                                                         'intfc_port' => 'ack_i',
-                                                         'intfc_name' => 'socket:wb_slave[array]'
-                                                       },
-                                      'clk' => {
+                                          'value' => 1,
+                                          'clk' => {},
+                                          'type' => 'num'
+                                        }
+                             },
+                  'ip_name' => 'wishbone_bus',
+                  'ports' => {
+                               'm_rty_o_all' => {
+                                                  'intfc_port' => 'rty_o',
+                                                  'type' => 'output',
+                                                  'intfc_name' => 'socket:wb_master[array]',
+                                                  'range' => 'M-1        :   0'
+                                                },
+                               's_dat_o_all' => {
+                                                  'range' => 'Dw*S-1      :   0',
+                                                  'intfc_name' => 'socket:wb_slave[array]',
+                                                  'type' => 'output',
+                                                  'intfc_port' => 'dat_o'
+                                                },
+                               's_sel_one_hot' => {
+                                                    'intfc_name' => 'socket:wb_addr_map[0]',
+                                                    'range' => 'S-1        :   0',
+                                                    'type' => 'input',
+                                                    'intfc_port' => 'sel_one_hot'
+                                                  },
+                               's_rty_i_all' => {
+                                                  'intfc_port' => 'rty_i',
+                                                  'type' => 'input',
+                                                  'range' => 'S-1        :   0',
+                                                  'intfc_name' => 'socket:wb_slave[array]'
+                                                },
+                               's_bte_o_all' => {
+                                                  'intfc_port' => 'bte_o',
+                                                  'type' => 'output',
+                                                  'range' => 'BTEw*S-1    :   0',
+                                                  'intfc_name' => 'socket:wb_slave[array]'
+                                                },
+                               's_err_i_all' => {
+                                                  'range' => 'S-1        :   0',
+                                                  'intfc_name' => 'socket:wb_slave[array]',
+                                                  'type' => 'input',
+                                                  'intfc_port' => 'err_i'
+                                                },
+                               'm_err_o_all' => {
+                                                  'intfc_name' => 'socket:wb_master[array]',
+                                                  'range' => 'M-1        :   0',
+                                                  'intfc_port' => 'err_o',
+                                                  'type' => 'output'
+                                                },
+                               's_tag_o_all' => {
+                                                  'intfc_port' => 'tag_o',
+                                                  'type' => 'output',
+                                                  'range' => 'TAGw*S-1    :   0',
+                                                  'intfc_name' => 'socket:wb_slave[array]'
+                                                },
+                               's_sel_o_all' => {
+                                                  'type' => 'output',
+                                                  'intfc_port' => 'sel_o',
+                                                  'range' => 'SELw*S-1    :   0',
+                                                  'intfc_name' => 'socket:wb_slave[array]'
+                                                },
+                               's_ack_i_all' => {
+                                                  'intfc_port' => 'ack_i',
+                                                  'type' => 'input',
+                                                  'range' => 'S-1        :   0',
+                                                  'intfc_name' => 'socket:wb_slave[array]'
+                                                },
+                               'm_bte_i_all' => {
+                                                  'intfc_name' => 'socket:wb_master[array]',
+                                                  'range' => 'BTEw*M-1    :   0',
+                                                  'intfc_port' => 'bte_i',
+                                                  'type' => 'input'
+                                                },
+                               'm_dat_i_all' => {
+                                                  'type' => 'input',
+                                                  'intfc_port' => 'dat_i',
+                                                  'range' => 'Dw*M-1      :   0',
+                                                  'intfc_name' => 'socket:wb_master[array]'
+                                                },
+                               'm_grant_addr' => {
+                                                   'intfc_name' => 'socket:wb_addr_map[0]',
+                                                   'range' => 'Aw-1       :   0',
+                                                   'type' => 'output',
+                                                   'intfc_port' => 'grant_addr'
+                                                 },
+                               'm_adr_i_all' => {
+                                                  'range' => 'Aw*M-1      :   0',
+                                                  'intfc_name' => 'socket:wb_master[array]',
+                                                  'type' => 'input',
+                                                  'intfc_port' => 'adr_i'
+                                                },
+                               's_stb_o_all' => {
+                                                  'range' => 'S-1        :   0',
+                                                  'intfc_name' => 'socket:wb_slave[array]',
+                                                  'intfc_port' => 'stb_o',
+                                                  'type' => 'output'
+                                                },
+                               'm_stb_i_all' => {
+                                                  'intfc_port' => 'stb_i',
+                                                  'type' => 'input',
+                                                  'range' => 'M-1        :   0',
+                                                  'intfc_name' => 'socket:wb_master[array]'
+                                                },
+                               'm_dat_o_all' => {
+                                                  'type' => 'output',
+                                                  'intfc_port' => 'dat_o',
+                                                  'range' => 'Dw*M-1      :   0',
+                                                  'intfc_name' => 'socket:wb_master[array]'
+                                                },
+                               'm_tag_i_all' => {
+                                                  'intfc_name' => 'socket:wb_master[array]',
+                                                  'range' => 'TAGw*M-1    :   0',
+                                                  'intfc_port' => 'tag_i',
+                                                  'type' => 'input'
+                                                },
+                               'reset' => {
+                                            'type' => 'input',
+                                            'intfc_port' => 'reset_i',
+                                            'range' => '',
+                                            'intfc_name' => 'plug:reset[0]'
+                                          },
+                               'm_sel_i_all' => {
+                                                  'intfc_name' => 'socket:wb_master[array]',
+                                                  'range' => 'SELw*M-1    :   0',
+                                                  'type' => 'input',
+                                                  'intfc_port' => 'sel_i'
+                                                },
+                               'm_cyc_i_all' => {
+                                                  'intfc_port' => 'cyc_i',
+                                                  'type' => 'input',
+                                                  'intfc_name' => 'socket:wb_master[array]',
+                                                  'range' => 'M-1        :   0'
+                                                },
+                               'clk' => {
+                                          'intfc_name' => 'plug:clk[0]',
+                                          'range' => '',
+                                          'type' => 'input',
+                                          'intfc_port' => 'clk_i'
+                                        },
+                               'm_ack_o_all' => {
+                                                  'intfc_port' => 'ack_o',
+                                                  'type' => 'output',
+                                                  'intfc_name' => 'socket:wb_master[array]',
+                                                  'range' => 'M-1        :   0'
+                                                },
+                               'm_we_i_all' => {
+                                                 'intfc_port' => 'we_i',
                                                  'type' => 'input',
-                                                 'range' => '',
-                                                 'intfc_name' => 'plug:clk[0]',
-                                                 'intfc_port' => 'clk_i'
+                                                 'intfc_name' => 'socket:wb_master[array]',
+                                                 'range' => 'M-1        :   0'
                                                },
-                                      's_cyc_o_all' => {
-                                                         'intfc_port' => 'cyc_o',
-                                                         'intfc_name' => 'socket:wb_slave[array]',
-                                                         'range' => 'S-1        :   0',
-                                                         'type' => 'output'
-                                                       },
-                                      'm_stb_i_all' => {
-                                                         'type' => 'input',
-                                                         'range' => 'M-1        :   0',
-                                                         'intfc_name' => 'socket:wb_master[array]',
-                                                         'intfc_port' => 'stb_i'
-                                                       },
-                                      'm_dat_i_all' => {
-                                                         'range' => 'Dw*M-1      :   0',
-                                                         'type' => 'input',
-                                                         'intfc_port' => 'dat_i',
-                                                         'intfc_name' => 'socket:wb_master[array]'
-                                                       },
-                                      's_sel_o_all' => {
-                                                         'range' => 'SELw*S-1    :   0',
-                                                         'type' => 'output',
-                                                         'intfc_port' => 'sel_o',
-                                                         'intfc_name' => 'socket:wb_slave[array]'
-                                                       },
-                                      's_adr_o_all' => {
-                                                         'intfc_name' => 'socket:wb_slave[array]',
-                                                         'intfc_port' => 'adr_o',
-                                                         'type' => 'output',
-                                                         'range' => 'Aw*S-1      :   0'
-                                                       },
-                                      'm_sel_i_all' => {
-                                                         'range' => 'SELw*M-1    :   0',
-                                                         'type' => 'input',
-                                                         'intfc_port' => 'sel_i',
-                                                         'intfc_name' => 'socket:wb_master[array]'
-                                                       },
-                                      'm_adr_i_all' => {
-                                                         'type' => 'input',
-                                                         'range' => 'Aw*M-1      :   0',
-                                                         'intfc_name' => 'socket:wb_master[array]',
-                                                         'intfc_port' => 'adr_i'
-                                                       },
-                                      's_tag_o_all' => {
-                                                         'range' => 'TAGw*S-1    :   0',
-                                                         'type' => 'output',
-                                                         'intfc_port' => 'tag_o',
-                                                         'intfc_name' => 'socket:wb_slave[array]'
-                                                       },
-                                      's_cti_o_all' => {
-                                                         'type' => 'output',
-                                                         'range' => 'CTIw*S-1    :   0',
-                                                         'intfc_name' => 'socket:wb_slave[array]',
-                                                         'intfc_port' => 'cti_o'
-                                                       },
-                                      'm_bte_i_all' => {
-                                                         'intfc_port' => 'bte_i',
-                                                         'intfc_name' => 'socket:wb_master[array]',
-                                                         'range' => 'BTEw*M-1    :   0',
-                                                         'type' => 'input'
-                                                       },
-                                      'm_dat_o_all' => {
-                                                         'intfc_name' => 'socket:wb_master[array]',
-                                                         'intfc_port' => 'dat_o',
-                                                         'type' => 'output',
-                                                         'range' => 'Dw*M-1      :   0'
-                                                       },
-                                      's_err_i_all' => {
-                                                         'type' => 'input',
-                                                         'range' => 'S-1        :   0',
-                                                         'intfc_name' => 'socket:wb_slave[array]',
-                                                         'intfc_port' => 'err_i'
-                                                       },
-                                      's_we_o_all' => {
-                                                        'range' => 'S-1        :   0',
-                                                        'type' => 'output',
-                                                        'intfc_port' => 'we_o',
-                                                        'intfc_name' => 'socket:wb_slave[array]'
-                                                      },
-                                      'm_tag_i_all' => {
-                                                         'intfc_name' => 'socket:wb_master[array]',
-                                                         'intfc_port' => 'tag_i',
-                                                         'type' => 'input',
-                                                         'range' => 'TAGw*M-1    :   0'
-                                                       },
-                                      'm_rty_o_all' => {
-                                                         'intfc_port' => 'rty_o',
-                                                         'intfc_name' => 'socket:wb_master[array]',
-                                                         'range' => 'M-1        :   0',
-                                                         'type' => 'output'
-                                                       },
-                                      'm_cyc_i_all' => {
-                                                         'intfc_port' => 'cyc_i',
-                                                         'intfc_name' => 'socket:wb_master[array]',
-                                                         'range' => 'M-1        :   0',
-                                                         'type' => 'input'
-                                                       },
-                                      'm_grant_addr' => {
-                                                          'type' => 'output',
-                                                          'range' => 'Aw-1       :   0',
-                                                          'intfc_name' => 'socket:wb_addr_map[0]',
-                                                          'intfc_port' => 'grant_addr'
-                                                        },
-                                      's_stb_o_all' => {
-                                                         'type' => 'output',
-                                                         'range' => 'S-1        :   0',
-                                                         'intfc_name' => 'socket:wb_slave[array]',
-                                                         'intfc_port' => 'stb_o'
-                                                       },
-                                      's_rty_i_all' => {
-                                                         'type' => 'input',
-                                                         'range' => 'S-1        :   0',
-                                                         'intfc_name' => 'socket:wb_slave[array]',
-                                                         'intfc_port' => 'rty_i'
-                                                       },
-                                      'm_we_i_all' => {
-                                                        'intfc_name' => 'socket:wb_master[array]',
-                                                        'intfc_port' => 'we_i',
-                                                        'type' => 'input',
-                                                        'range' => 'M-1        :   0'
-                                                      },
-                                      'm_err_o_all' => {
-                                                         'intfc_name' => 'socket:wb_master[array]',
-                                                         'intfc_port' => 'err_o',
-                                                         'type' => 'output',
-                                                         'range' => 'M-1        :   0'
-                                                       },
-                                      's_bte_o_all' => {
-                                                         'intfc_name' => 'socket:wb_slave[array]',
-                                                         'intfc_port' => 'bte_o',
-                                                         'type' => 'output',
-                                                         'range' => 'BTEw*S-1    :   0'
-                                                       },
-                                      's_dat_o_all' => {
-                                                         'range' => 'Dw*S-1      :   0',
-                                                         'type' => 'output',
-                                                         'intfc_port' => 'dat_o',
-                                                         'intfc_name' => 'socket:wb_slave[array]'
-                                                       }
-                                    }
-                       }, 'ip_gen' );
+                               'snoop_en_o' => {
+                                                 'type' => 'output',
+                                                 'intfc_port' => 'snoop_en_o',
+                                                 'intfc_name' => 'socket:snoop[0]',
+                                                 'range' => ''
+                                               },
+                               'm_cti_i_all' => {
+                                                  'intfc_port' => 'cti_i',
+                                                  'type' => 'input',
+                                                  'intfc_name' => 'socket:wb_master[array]',
+                                                  'range' => 'CTIw*M-1    :   0'
+                                                },
+                               's_we_o_all' => {
+                                                 'type' => 'output',
+                                                 'intfc_port' => 'we_o',
+                                                 'intfc_name' => 'socket:wb_slave[array]',
+                                                 'range' => 'S-1        :   0'
+                                               },
+                               's_cyc_o_all' => {
+                                                  'intfc_name' => 'socket:wb_slave[array]',
+                                                  'range' => 'S-1        :   0',
+                                                  'intfc_port' => 'cyc_o',
+                                                  'type' => 'output'
+                                                },
+                               's_cti_o_all' => {
+                                                  'intfc_name' => 'socket:wb_slave[array]',
+                                                  'range' => 'CTIw*S-1    :   0',
+                                                  'type' => 'output',
+                                                  'intfc_port' => 'cti_o'
+                                                },
+                               's_dat_i_all' => {
+                                                  'type' => 'input',
+                                                  'intfc_port' => 'dat_i',
+                                                  'intfc_name' => 'socket:wb_slave[array]',
+                                                  'range' => 'Dw*S-1      :   0'
+                                                },
+                               'snoop_adr_o' => {
+                                                  'intfc_name' => 'socket:snoop[0]',
+                                                  'range' => 'Aw-1    :   0',
+                                                  'intfc_port' => 'snoop_adr_o',
+                                                  'type' => 'output'
+                                                },
+                               's_adr_o_all' => {
+                                                  'type' => 'output',
+                                                  'intfc_port' => 'adr_o',
+                                                  'range' => 'Aw*S-1      :   0',
+                                                  'intfc_name' => 'socket:wb_slave[array]'
+                                                }
+                             },
+                  'gui_status' => {
+                                    'status' => 'ideal',
+                                    'timeout' => 0
+                                  },
+                  'modules' => {
+                                 'wishbone_bus' => {},
+                                 'bus_arbiter' => {}
+                               },
+                  'module_name' => 'wishbone_bus',
+                  'version' => 1,
+                  'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/bus/wishbone_bus.v',
+                  'parameters' => {
+                                    'Aw' => {
+                                              'redefine_param' => 1,
+                                              'content' => '4,128,1',
+                                              'global_param' => 'Localparam',
+                                              'type' => 'Spin-button',
+                                              'info' => 'The wishbone Bus address width',
+                                              'default' => '32'
+                                            },
+                                    'CTIw' => {
+                                                'type' => 'Fixed',
+                                                'global_param' => 'Localparam',
+                                                'redefine_param' => 1,
+                                                'content' => '',
+                                                'info' => undef,
+                                                'default' => '3'
+                                              },
+                                    'TAGw' => {
+                                                'info' => undef,
+                                                'content' => '',
+                                                'redefine_param' => 1,
+                                                'type' => 'Fixed',
+                                                'global_param' => 'Localparam',
+                                                'default' => '3'
+                                              },
+                                    'Dw' => {
+                                              'default' => '32',
+                                              'type' => 'Spin-button',
+                                              'global_param' => 'Localparam',
+                                              'content' => '8,512,8',
+                                              'redefine_param' => 1,
+                                              'info' => 'The wishbone Bus data width in bits.'
+                                            },
+                                    'BTEw' => {
+                                                'redefine_param' => 1,
+                                                'content' => '',
+                                                'type' => 'Fixed',
+                                                'global_param' => 'Localparam',
+                                                'info' => undef,
+                                                'default' => '2 '
+                                              },
+                                    'S' => {
+                                             'info' => 'Number of wishbone slave interface',
+                                             'redefine_param' => 1,
+                                             'content' => '1,256,1',
+                                             'global_param' => 'Localparam',
+                                             'type' => 'Spin-button',
+                                             'default' => '4'
+                                           },
+                                    'SELw' => {
+                                                'default' => 'Dw/8',
+                                                'type' => 'Fixed',
+                                                'global_param' => 'Localparam',
+                                                'redefine_param' => 1,
+                                                'content' => '',
+                                                'info' => undef
+                                              },
+                                    'M' => {
+                                             'info' => 'Number of wishbone master interface',
+                                             'global_param' => 'Localparam',
+                                             'type' => 'Spin-button',
+                                             'content' => '1,256,1',
+                                             'redefine_param' => 1,
+                                             'default' => ' 4'
+                                           }
+                                  },
+                  'description' => 'wishbone bus',
+                  'sockets' => {
+                                 'wb_addr_map' => {
+                                                    '0' => {
+                                                             'name' => 'wb_addr_map'
+                                                           },
+                                                    'value' => 1,
+                                                    'connection_num' => 'single connection',
+                                                    'wb_addr_map' => {},
+                                                    'type' => 'num'
+                                                  },
+                                 'snoop' => {
+                                            '0' => {
+                                                     'name' => 'snoop'
+                                                   },
+                                            'value' => 1,
+                                            'connection_num' => 'single connection',
+                                            'type' => 'num'
+                                          },
+                                 'wb_master' => {
+                                                  'type' => 'param',
+                                                  'connection_num' => 'single connection',
+                                                  'value' => 'M',
+                                                  '0' => {
+                                                           'name' => 'wb_master'
+                                                         },
+                                                  'wb_master' => {}
+                                                },
+                                 'wb_slave' => {
+                                                 'type' => 'param',
+                                                 'connection_num' => 'single connection',
+                                                 'wb_slave' => {},
+                                                 'value' => 'S',
+                                                 '0' => {
+                                                          'name' => 'wb_slave'
+                                                        }
+                                               }
+                               },
+                  'category' => 'Bus',
+                  'hdl_files' => [
+                                   '/mpsoc/src_peripheral/bus/wishbone_bus.v',
+                                   '/mpsoc/src_noc/main_comp.v',
+                                   '/mpsoc/src_noc/arbiter.v'
+                                 ],
+                  'parameters_order' => [
+                                          'M',
+                                          'S',
+                                          'Dw',
+                                          'Aw',
+                                          'SELw',
+                                          'TAGw',
+                                          'CTIw',
+                                          'BTEw'
+                                        ],
+                  'ports_order' => [
+                                     's_adr_o_all',
+                                     's_dat_o_all',
+                                     's_sel_o_all',
+                                     's_tag_o_all',
+                                     's_we_o_all',
+                                     's_cyc_o_all',
+                                     's_stb_o_all',
+                                     's_cti_o_all',
+                                     's_bte_o_all',
+                                     's_dat_i_all',
+                                     's_ack_i_all',
+                                     's_err_i_all',
+                                     's_rty_i_all',
+                                     'm_dat_o_all',
+                                     'm_ack_o_all',
+                                     'm_err_o_all',
+                                     'm_rty_o_all',
+                                     'm_adr_i_all',
+                                     'm_dat_i_all',
+                                     'm_sel_i_all',
+                                     'm_tag_i_all',
+                                     'm_we_i_all',
+                                     'm_stb_i_all',
+                                     'm_cyc_i_all',
+                                     'm_cti_i_all',
+                                     'm_bte_i_all',
+                                     'm_grant_addr',
+                                     's_sel_one_hot',
+                                     'snoop_adr_o',
+                                     'snoop_en_o',
+                                     'clk',
+                                     'reset'
+                                   ]
+                }, 'ip_gen' );

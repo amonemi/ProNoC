@@ -764,9 +764,25 @@ sub  get_pin_assignment{
 
 	
 	my $board_name=$self->object_get_attribute('compile','board');
+	
 	#copy board jtag_intfc.sh file 
 	my ($fname,$fpath,$fsuffix) = fileparse("$top",qr"\..[^.]*$");
-	copy("../boards/$board_name/jtag_intfc.sh","${fpath}../sw/jtag_intfc.sh");
+	copy("../boards/$board_name/jtag_intfc.sh","${fpath}../sw/jtag_intfc.sh");	
+	my $n= $self->object_get_attribute('soc_name',undef);
+	if(!defined $n){	# we are compiling a complete NoC-based mpsoc						
+		my $nx= $self->object_get_attribute('noc_param',"NX");
+		my $ny= $self->object_get_attribute('noc_param',"NY");
+		for (my $y=0;$y<$ny;$y++){for (my $x=0; $x<$nx;$x++){
+			my $tile_num= $y*$nx+$x;
+			#print "$tile_num\n";
+			my ($soc_name,$num)= $self->mpsoc_get_tile_soc_name($tile_num);
+			next if(!defined $soc_name);
+			copy("../boards/$board_name/jtag_intfc.sh","${fpath}../sw/tile$tile_num/jtag_intfc.sh");
+		}}
+		
+	}
+	
+	
 
 	#copy board program_device.sh file 
 	copy("../boards/$board_name/program_device.sh","${fpath}../program_device.sh");
@@ -818,11 +834,13 @@ sub  get_pin_assignment{
 		if  (length($portrange)!=0){	
 			#replace parameter with their values		
 			my @a= split (/\b/,$portrange);
+			
 			foreach my $l (@a){
 				my $value=$param{$l};
 				if(defined $value){
 					chomp $value;
 					($portrange=$portrange)=~ s/\b$l\b/$value/g      if(defined $param{$l});
+				#	print"($portrange=$portrange)=~ s/\b$l\b/$value/g      if(defined $param{$l})\n";
 				}
 			}
 			$portrange = "[ $portrange ]" ;
@@ -1149,6 +1167,7 @@ sub modelsim_compilation{
 	add_info(\$tview,"creat Modelsim dir in $target_dir\n");
 	my $model="$target_dir/Modelsim";
 	rmtree("$model");
+	rmtree("$target_dir/rtl_work");
 	mkpath("$model/rtl_work",1,01777);
 	
 	#create modelsim.tcl file
@@ -1193,6 +1212,7 @@ run -all
 		$app->do_save();
 		my $modelsim_bin= $self->object_get_attribute('compile','modelsim_bin');		
 		my $cmd="cd $target_dir; $modelsim_bin/vsim -do $model/run.tcl";
+		
 		add_info(\$tview,"$cmd\n");
 		my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($cmd);
 		if(length $stderr>1){	
@@ -1228,14 +1248,14 @@ sub verilator_compilation {
 	add_info(\$outtext,"Copy all verilog files in rtl_work folder\n");
 	my @files = File::Find::Rule->file()
         	->name( '*.v','*.V','*.sv','*.vh')
-                ->in( "$target_dir/src_verilog" );
+                ->in( "$target_dir/src_verilog","$target_dir/src_verilator" );
 	foreach my $file (@files) {
 		copy($file,"$verilator/rtl_work/");
 	}
 	
 	@files = File::Find::Rule->file()
         	->name( '*.sv','*.vh' )
-            ->in( "$target_dir/src_verilog" );
+            ->in( "$target_dir/src_verilog","$target_dir/src_verilator" );
 	foreach my $file (@files) {
 		copy($file,"$verilator/processed_rtl");
 	}
@@ -1253,12 +1273,13 @@ sub verilator_compilation {
    	$split->write_files();
    	$split->read_and_split(glob("$verilator/rtl_work/*.sv"));
    	$split->write_files();
-	
+   	
    	
 	#run verilator
 	#my $cmd= "cd \"$verilator/processed_rtl\" \n xterm -e sh -c ' verilator  --cc $name.v --profile-cfuncs --prefix \"Vtop\" -O3  -CFLAGS -O3'";
 	foreach my $top (sort keys %tops) {
-		my $cmd= "cd \"$verilator/processed_rtl\" \n  verilator  --cc $tops{$top} --profile-cfuncs --prefix \"$top\" -O3  -CFLAGS -O3";
+		add_colored_info(\$outtext,"Generate $top Verilator model from $tops{$top} file\n",'green');
+		my $cmd= "cd \"$verilator/processed_rtl\" \n  verilator  --cc $tops{$top}  --prefix \"$top\" -O3  -CFLAGS -O3";
 		add_info(\$outtext,"$cmd\n");	
 		my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($cmd);
 		if(length $stderr>1){			
@@ -1272,13 +1293,14 @@ sub verilator_compilation {
 	#check if verilator model has been generated 
 	foreach my $top (sort keys %tops) {
 		if (-f "$verilator/processed_rtl/obj_dir/$top.cpp"){#succsess
-			#generate makefile
-			gen_verilator_makefile($top_ref,"$verilator/processed_rtl/obj_dir/Makefile");
+			
 			
 		}else {
 			return 0;
 		}	
 	}
+	#generate makefile
+	gen_verilator_makefile($top_ref,"$verilator/processed_rtl/obj_dir/Makefile");
 	return 1;
 }
 
@@ -1290,11 +1312,15 @@ sub gen_verilator_makefile{
 	my $q='';
 	my $h='';
 	my $l;
+	my $lib_num=0;
+	my $all_lib="";
 	foreach my $top (sort keys %tops) {
 		$p = "$p ${top}__ALL.a ";
-		$q = "$q\t\$(MAKE) -f ${top}.mk\n"; 
+		$q = $q."lib$lib_num:\n\t\$(MAKE) -f ${top}.mk\n"; 
 		$h = "$h ${top}.h "; 
 		$l = $top;
+		$all_lib=$all_lib." lib$lib_num";
+		$lib_num++;
 	}
 	
 	
@@ -1306,7 +1332,8 @@ default: sim
 
 include $l.mk
 
-lib: 
+lib: $all_lib
+
 $q
 
 
@@ -1329,7 +1356,7 @@ sim:	testbench.o \$(VK_GLOBAL_OBJS) $p
 testbench.o: testbench.cpp $h
 
 clean:
-	rm *.o *.a main	
+	rm *.o *.a testbench	
 ";
 
 
@@ -1371,9 +1398,27 @@ sub verilator_compilation_win {
 		verilator_testbench($self,$name,$top,$target_dir);
 		
 	});
-	my %tops;
-	$tops{"Vtop"}= "$name.v";
-	my $result = verilator_compilation (\%tops,$target_dir,$outtext);
+
+	$window->add ($mtable);
+	$window->show_all();
+
+	
+	my $result;
+	
+	my $n= $self->object_get_attribute('soc_name',undef);
+	if(defined $n){	#we are compiling a single tile as SoC
+		my %tops;
+		$tops{"Vtop"}= "$name.v";
+		$result = verilator_compilation (\%tops,$target_dir,$outtext);	
+		$self->object_add_attribute('verilator','libs',\%tops);	
+	}
+	else { # we are compiling a complete NoC-based mpsoc
+		$result = gen_mpsoc_verilator_model ($self,$name,$top,$target_dir,$outtext);		
+		
+		
+	}
+
+	
 	#check if verilator model has been generated 
 	if ($result){
 		add_colored_info(\$outtext,"Veriator model has been generated successfully!",'blue');
@@ -1385,8 +1430,7 @@ sub verilator_compilation_win {
 
 	
 
-	$window->add ($mtable);
-	$window->show_all();
+	
 
 
 
@@ -1394,11 +1438,126 @@ sub verilator_compilation_win {
 
 
 
+
+
+sub  gen_mpsoc_verilator_model{
+	my ($self,$name,$top,$target_dir,$outtext)=@_;	
+	my $dir = Cwd::getcwd();
+	my $project_dir	  = abs_path("$dir/..");
+	my $src_verilator_dir="$project_dir/src_verilator";
+	my $sw_dir 	= "$target_dir/sw";
+	
+	
+	#copy src_verilator files
+	add_info(\$outtext,"Copy verilator files\n"); 
+	my @files=(
+		"$src_verilator_dir/noc_connection.sv",
+		"$src_verilator_dir/router_verilator.v"
+	);
+	if (-d "$target_dir/src_verilator/"==0){
+		mkpath("$target_dir/src_verilator/",1,01777);
+	}
+	copy_file_and_folders (\@files,$project_dir,"$target_dir/src_verilator");
+	
+	#create each tile top module 
+	my $nx= $self->object_get_attribute('noc_param',"NX");
+    my $ny= $self->object_get_attribute('noc_param',"NY");
+    my $processors_en=0;
+    my $mpsoc=$self;
+    
+    my $lisence= get_license_header("verilator_tiles"); 
+	my $warning=autogen_warning();    
+    my $verilator=$lisence.$warning;
+    
+    
+    # generate NoC parameter file
+	my ($noc_param,$pass_param)=gen_noc_param_v($self);
+	
+	my $noc_param_v= " \`ifdef     INCLUDE_PARAM \n \n 
+	$noc_param  
+	/* verilator lint_off WIDTH */ 
+	localparam  P=(TOPOLOGY==\"RING\" || TOPOLOGY==\"LINE\")? 3 : 5;
+ 	localparam  ROUTE_TYPE = (ROUTE_NAME == \"XY\" || ROUTE_NAME == \"TRANC_XY\" )?    \"DETERMINISTIC\" : 
+                        (ROUTE_NAME == \"DUATO\" || ROUTE_NAME == \"TRANC_DUATO\" )?   \"FULL_ADAPTIVE\": \"PAR_ADAPTIVE\"; 
+	/* verilator lint_on WIDTH */
+	//simulation parameter	
+	
+\n \n \`endif" ; 
+	save_file("$target_dir/src_verilator/parameter.v",$noc_param_v);
+	
+    
+    
+   my %tops = (
+        "Vrouter" => "router_verilator.v", 
+        "Vnoc" => "noc_connection.sv" 		
+    );
+	
+    for (my $y=0;$y<$ny;$y++){
+		for (my $x=0; $x<$nx;$x++){
+		
+		my $tile_num= $y*$nx+$x;
+		#print "$tile_num\n";
+		my ($soc_name,$num)= $mpsoc->mpsoc_get_tile_soc_name($tile_num);
+		if(!defined $soc_name){
+			#this tile is not connected to any ip. the noc input ports will be connected to ground
+				my $soc_v="\n\n // Tile:$tile_num (x=$x,y=$y)   is not assigned to any ip\n";
+				$soc_v="$soc_v
+	
+	assign ni_credit_out[$tile_num]={V{1'b0}}; 
+	assign ni_flit_out[$tile_num]={Fw{1'b0}}; 
+	assign ni_flit_out_wr[$tile_num]=1'b0; 
+	";
+		next;	
+			
+		}
+		my $soc=eval_soc($mpsoc,$soc_name,$outtext);
+		
+		
+		my $top=$mpsoc->mpsoc_get_soc($soc_name);
+		my $soc_num= $y*$nx+$x;
+		
+		
+		
+		
+		#update core id
+		$soc->object_add_attribute('global_param','CORE_ID',$tile_num);
+		#update NoC param
+		#my %nocparam = %{$mpsoc->object_get_attribute('noc_param',undef)};
+		my $nocparam =$mpsoc->object_get_attribute('noc_param',undef);
+		my @nis=get_NI_instance_list($top);
+		$soc->soc_add_instance_param($nis[0] ,$nocparam );
+		my $tile=($nx*$y)+ $x;
+		
+		my $setting=$mpsoc->mpsoc_get_tile_param_setting($tile);
+		my %params;
+		if ($setting eq 'Custom'){
+			 %params= $top->top_get_custom_soc_param($tile);
+		}else{
+			 %params=$top->top_get_default_soc_param();
+		}
+				
+				
+		my $sw_path 	= "$sw_dir/tile$tile_num";
+		$verilator = $verilator.soc_generate_verilatore ($soc,$sw_path,"tile_$tile",\%params);	
+		$tops{"Vtile$tile_num"}= "tile_$tile.v";
+				
+	
+	}}
+	
+	save_file ("$target_dir/src_verilator/verilator_tiles.v",$verilator);
+	my $result = verilator_compilation (\%tops,$target_dir,$outtext);
+	$self->object_add_attribute('verilator','libs',\%tops);		
+	return $result;
+
+}
+
+
 sub gen_verilator_soc_testbench {
 	my ($self,$name,$top,$target_dir)=@_;
 	my $verilator="$target_dir/verilator";
 	my $dir="$verilator/";
 	my $soc_top= $self->soc_get_top ();
+	
 	my @intfcs=$soc_top->top_get_intfc_list();
 	my %PP;
 	my $top_port_info="IO type\t  port_size\t  port_name\n";
@@ -1487,6 +1646,382 @@ double sc_time_stamp () {       // Called by \$time in Verilog
 
 }
 
+sub eval_soc{
+	my ($mpsoc,$soc_name,$outtext)=@_;
+	my $path=$mpsoc->object_get_attribute('setting','soc_path');	
+	$path=~ s/ /\\ /g;
+  	my $p = "$path/$soc_name.SOC";
+	my  $soc = eval { do $p };
+	if ($@ || !defined $soc){		
+		show_info(\$outtext,"**Error reading  $p file: $@\n");
+	       next; 
+	} 
+	return $soc;	
+}
+
+
+sub gen_verilator_mpsoc_testbench {
+	my ($mpsoc,$name,$top,$target_dir,$tview)=@_;
+	my $verilator="$target_dir/verilator";
+	my $dir="$verilator/";
+	#my $soc_top= $self->soc_get_top ();
+	
+	my $nx= $mpsoc->object_get_attribute('noc_param',"NX");
+    my $ny= $mpsoc->object_get_attribute('noc_param',"NY");
+    
+	my $libh="";
+	my $inst= "";
+	my $newinst="";
+	
+	my $tile_x="";
+	my $tile_y="";	
+	my $tile_flit_in="";
+	my $tile_flit_in_l="";
+	my $tile_credit="";
+	my $noc_credit="";
+	my $noc_flit_in="";
+	my $noc_flit_in_l="";	
+	my $noc_flit_in_wr="";
+	my $noc_flit_in_wr_l="";
+	my $tile_flit_in_wr="";	
+	my $tile_flit_in_wr_l="";
+	my $tile_eval="";
+	my $tile_final=""; 	
+	my $tile_reset="";	
+	my $tile_clk="";	
+	my $tile_en="";		
+	my $top_port_info="IO type\t  port_size\t  port_name\n";	
+	my $no_connected='';
+	
+	for (my $y=0;$y<$ny;$y++){for (my $x=0; $x<$nx;$x++){		
+		my $t= $y*$nx+$x;
+		my ($soc_name,$num)= $mpsoc->mpsoc_get_tile_soc_name($t);		
+		if(defined $soc_name) {#we have a conncted tile
+		
+			#get ni instance name
+			my $ni_name;
+			my $soc=eval_soc($mpsoc,$soc_name,$tview);
+			my $soc_top=$soc->object_get_attribute('top_ip',undef);
+			my @intfcs=$soc_top->top_get_intfc_list();
+			my @instances=$soc->soc_get_all_instances();
+			foreach my $id (@instances){
+					my $category = $soc->soc_get_category($id);
+					if ($category eq 'NoC') {
+						 $ni_name=  $soc->soc_get_instance_name($id);
+					}
+			}
+		
+						
+				$libh=$libh."#include \"Vtile${t}.h\"\n";
+				$inst=$inst."Vtile${t}\t*tile${t};\t  // Instantiation of tile${t}\n";
+				$newinst = $newinst."\ttile${t}\t=\tnew Vtile${t};\n"; 
+				$tile_flit_in = $tile_flit_in . "\ttile${t}->${ni_name}_flit_in  = noc->ni_flit_out [${t}];\n";	
+				$tile_flit_in_l = $tile_flit_in_l . "\t\ttile${t}->${ni_name}_flit_in[j]  = noc->ni_flit_out [${t}][j];\n";
+				$tile_credit= $tile_credit."\ttile${t}->${ni_name}_credit_in= noc->ni_credit_out[${t}];\n";
+				$noc_credit= $noc_credit."\tnoc->ni_credit_in[${t}] = tile${t}->${ni_name}_credit_out;\n";	
+				$noc_flit_in=$noc_flit_in."\tnoc->ni_flit_in [${t}]  = tile${t}->${ni_name}_flit_out;\n";
+				$noc_flit_in_l=$noc_flit_in_l."\t\t\tnoc->ni_flit_in [${t}][j]  = tile${t}->${ni_name}_flit_out[j];\n";
+				$noc_flit_in_wr= $noc_flit_in_wr."\tif(tile${t}->${ni_name}_flit_out_wr) noc->ni_flit_in_wr = noc->ni_flit_in_wr | ((vluint64_t)1<<${t});\n";
+				$tile_flit_in_wr=$tile_flit_in_wr."\ttile${t}->${ni_name}_flit_in_wr= ((noc->ni_flit_out_wr >> ${t}) & 0x01);\n";
+				$noc_flit_in_wr_l= $noc_flit_in_wr_l."\tif(tile${t}->${ni_name}_flit_out_wr) MY_VL_SETBIT_W(noc->ni_flit_in_wr ,${t});\n";
+				$tile_flit_in_wr_l=$tile_flit_in_wr_l."\ttile${t}->${ni_name}_flit_in_wr=   (VL_BITISSET_W(noc->ni_flit_out_wr,${t})>0);\n";
+				$tile_eval=$tile_eval."\ttile${t}->eval();\n";
+				$tile_final=$tile_final."\ttile${t}->final();\n"; 
+				
+				
+			
+				
+				
+				
+				foreach my $intfc (@intfcs){
+					my $key=($intfc eq 'plug:clk[0]')? 'clk' : 
+			 				 ($intfc eq 'plug:reset[0]')? 'reset':
+			 				 ($intfc eq 'plug:enable[0]')? 'en' : 
+			 				 'other';
+			 			 
+			 		my @ports=$soc_top->top_get_intfc_ports_list($intfc);
+					foreach my $p (@ports){
+						my($inst,$range,$type,$intfc_name,$intfc_port)= $soc_top->top_get_port($p);
+						$tile_reset=$tile_reset."\t\ttile${t}->$p=reset;\n" if $key eq 'reset';	
+						$tile_clk=$tile_clk."\t\ttile${t}->$p=clk;\n" if $key eq 'clk';		
+						$tile_en=$tile_en."\t\ttile${t}->$p=enable;\n" if $key eq 'en';	;		
+						$top_port_info="$top_port_info $type  $range  tile${t}->$p \n";
+					}#ports
+			 				
+				}#interface
+		
+				$tile_x= $tile_x."\ttile${t}->${ni_name}_current_x=$x;\n";
+				$tile_y= $tile_y."\ttile${t}->${ni_name}_current_y=$y;\n";					
+			}else{
+				#this tile is not connected to any ip. the noc input ports will be connected to ground
+				$no_connected=$no_connected."\n // Tile:$t (x=$x,y=$y)   is not assigned to any ip\n";
+				$no_connected=$no_connected."\t\tnoc->ni_credit_in[${t}]=0; \n";		
+				
+			}
+		
+	
+	}}
+	my $main_c=get_license_header("testbench.cpp");
+$main_c="$main_c
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <verilated.h>          // Defines common routines
+
+#include \"Vnoc.h\"
+#include \"Vrouter.h\"
+$libh
+
+
+/*
+$top_port_info
+*/
+
+
+#ifndef  NX 
+	#define  NX	$nx
+#endif
+
+#ifndef  NY 
+	#define  NY	$ny
+#endif
+
+#ifndef  NC 
+	#define  NC		($nx*$ny)
+#endif
+
+
+Vrouter			*router[NC];                     // Instantiation of router
+Vnoc		 	*noc;
+$inst
+	
+
+
+int reset,clk,enable;
+unsigned int main_time = 0; // Current simulation time
+
+void update_all_instances_inputs(void);
+
+
+int main(int argc, char** argv) {
+	int i,j,x,y;
+	
+	Verilated::commandArgs(argc, argv);   // Remember args
+	
+	for(i=0;i<NC;i++)	router[i] 	= new Vrouter;             // Create instance
+	noc								= new Vnoc;
+$newinst
+	
+	/********************
+	*	initialize input
+	*********************/
+
+	
+	reset=1;
+	enable=1;
+	$no_connected
+	for(x=0;x<NX;x++)for(y=0;y<NY;y++){
+					i=(y*NX)+x;					
+					router[i]->current_x		= x;
+					router[i]->current_y		= y;
+	}
+$tile_x
+$tile_y	
+
+	main_time=0;
+	printf(\"Start Simulation\\n\");
+	while (!Verilated::gotFinish()) {
+	   
+		if (main_time >= 10 ) { 
+			reset=0;
+		}	
+
+
+		if ((main_time % 5) == 0) {
+			clk = 1;       // Toggle clock
+			// you can change the inputs and read the outputs here in case they are captured at posedge of clock 
+		
+		}
+		else{
+			clk = 0;       // Toggle clock			
+			update_all_instances_inputs();
+			
+			
+		
+		}
+
+
+		//clk,reset,enable
+		noc-> clk = clk; 
+		noc-> reset = reset;
+$tile_reset
+$tile_clk		
+$tile_en
+		for(i=0;i<NC;i++){
+			router[i]->reset= reset;
+			router[i]->clk= clk;
+		}
+
+		//eval instances
+		noc->eval();
+		for(i=0;i<NC;i++) {
+				router[i]->eval();
+		}
+$tile_eval
+		
+
+		main_time++;  
+		
+
+		
+	}//while
+	
+	// Simulation is dne
+	for(i=0;i<NC;i++) {
+		router[i]->final();		
+	}               
+	noc->final(); 	
+$tile_final 
+}
+
+double sc_time_stamp () {       // Called by \$time in Verilog
+	return main_time;
+}
+
+
+void update_all_instances_inputs(void){
+	
+	int x,y,i,j;
+	int flit_out_all_size = sizeof(router[0]->flit_out_all)/sizeof(router[0]->flit_out_all[0]);
+
+#if (NC<=64)				
+	noc->ni_flit_in_wr =0;
+#else
+	for(j=0;j<(sizeof(noc->ni_flit_in_wr)/sizeof(noc->ni_flit_in_wr[0])); j++) noc->ni_flit_in_wr[j]=0;
+#endif			
+	for(x=0;x<NX;x++)for(y=0;y<NY;y++){
+		i=(y*NX)+x;
+		router[i]->flit_in_we_all = noc->router_flit_out_we_all[i];
+		router[i]->credit_in_all = noc->router_credit_out_all[i];
+		router[i]->congestion_in_all = noc->router_congestion_out_all[i];
+		for(j=0;j<flit_out_all_size;j++) router[i]->flit_in_all[j] 	= noc->router_flit_out_all[i][j];
+		noc->router_flit_in_we_all[i] = router[i]->flit_out_we_all ;
+		noc->router_credit_in_all[i]	=	router[i]->credit_out_all;
+		noc->router_congestion_in_all[i]=	router[i]->congestion_out_all;
+		for(j=0;j<flit_out_all_size;j++) noc->router_flit_in_all[i][j]	= router[i]->flit_out_all[j] ;
+	}	//for
+		
+
+	
+		
+#if (Fpay<=32)
+	//tile[i]->flit_in  = noc->ni_flit_out [i];
+$tile_flit_in
+#else	
+	for(j=0;j<(sizeof(traffic[i]->flit_out)/sizeof(traffic[i]->flit_out[0])); j++){
+		//traffic[i]->flit_in[j]  = noc->ni_flit_out [i][j];
+$tile_flit_in_l	
+	}			
+#endif			
+		
+	//traffic[i]->credit_in= noc->ni_credit_out[i];
+$tile_credit
+	
+	//noc->ni_credit_in[i] = traffic[i]->credit_out;
+$noc_credit
+				
+#if (Fpay<=32)				
+	//noc->ni_flit_in [i]  = traffic[i]->flit_out;
+$noc_flit_in
+	
+#else	
+	for(j=0;j<(sizeof(traffic[i]->flit_out)/sizeof(traffic[i]->flit_out[0])); j++){
+		 //noc->ni_flit_in [i][j]  = traffic[i]->flit_out[j];
+$noc_flit_in_l
+	}
+#endif
+
+
+#if (NC<=64)			
+		//if(traffic[i]->flit_out_wr) noc->ni_flit_in_wr = noc->ni_flit_in_wr | ((vluint64_t)1<<i);
+$noc_flit_in_wr
+		
+		//traffic[i]->flit_in_wr= ((noc->ni_flit_out_wr >> i) & 0x01);
+$tile_flit_in_wr
+#else
+		//if(traffic[i]->flit_out_wr) MY_VL_SETBIT_W(noc->ni_flit_in_wr ,i);
+$noc_flit_in_wr_l
+		
+		//traffic[i]->flit_in_wr=   (VL_BITISSET_W(noc->ni_flit_out_wr,i)>0);
+$tile_flit_in_wr_l		
+		 				
+#endif
+		
+					
+			
+}
+";
+
+	save_file("$dir/testbench.cpp",$main_c);	
+
+}
+
+
+
+sub soc_get_all_parameters {
+	my $soc=shift;	
+	my @instances=$soc->soc_get_all_instances();
+	
+	my %all_param; 
+	foreach my $id (@instances){
+		
+		my $module 	=$soc->soc_get_module($id);
+		my $category 	=$soc->soc_get_category($id);	
+		my $inst   	= $soc->soc_get_instance_name($id);
+		my %params	= $soc->soc_get_module_param($id);
+		my $ip = ip->lib_new ();		
+		my @param_order=$soc->soc_get_instance_param_order($id);
+			
+		foreach my $p (sort keys %params){
+			my $inst_param= "$inst\_$p";
+			#add instance name to parameter value
+			$params{$p}=add_instantc_name_to_parameters(\%params,$inst,$params{$p});
+			my ($default,$type,$content,$info,$vfile_param_type,$redefine_param)= $ip->ip_get_parameter($category,$module,$p);
+			$vfile_param_type= "Don't include" if (!defined $vfile_param_type );
+			$vfile_param_type= "Parameter"  if ($vfile_param_type eq 1);
+			$vfile_param_type= "Localparam" if ($vfile_param_type eq 0);		
+			$all_param{ $inst_param} = 	$params{ $p} if($vfile_param_type eq "Parameter" || $vfile_param_type eq "Localparam"  );	
+			print"$all_param{ $inst_param} = 	$params{ $p} if($vfile_param_type eq \"Parameter\" || $vfile_param_type eq \"Localparam\"  );	\n";	
+		}
+	}
+	return %all_param;
+}
+
+sub soc_get_all_parameters_order {
+	my $soc=shift;	
+	my @instances=$soc->soc_get_all_instances();
+	my $ip = ip->lib_new ();		
+	my @all_order; 
+	foreach my $id (@instances){
+		my $module 	=$soc->soc_get_module($id);
+		my $category 	=$soc->soc_get_category($id);	
+		my $inst   	= $soc->soc_get_instance_name($id);
+		my @order	= $soc->soc_get_instance_param_order($id);
+		
+		foreach my $p ( @order){
+			my $inst_param= "$inst\_$p";
+			my ($default,$type,$content,$info,$vfile_param_type,$redefine_param)= $ip->ip_get_parameter($category,$module,$p);
+			$vfile_param_type= "Don't include" if (!defined $vfile_param_type );
+			$vfile_param_type= "Parameter"  if ($vfile_param_type eq 1);
+			$vfile_param_type= "Localparam" if ($vfile_param_type eq 0);		
+			push(@all_order, $inst_param) if($vfile_param_type eq "Parameter" || $vfile_param_type eq "Localparam"  );				
+		}
+	}
+	return @all_order;
+}
+
+
 
 sub gen_modelsim_soc_testbench {
 	my ($self,$name,$top,$target_dir)=@_;
@@ -1498,14 +2033,38 @@ sub gen_modelsim_soc_testbench {
 	my $pin_assign;
 	my $rst_inputs='';
 
-	#read port list 
-	my $vdb=read_verilog_file($top);
-	my %param = $vdb->get_modules_parameters("${name}_top");
 	
 	
-
-
-
+	
+	#add functions
+	my $d = Cwd::getcwd();
+	open my $file1, "<", "$d/lib/verilog/functions.v" or die;
+	my $functions_all='';
+	while (my $f1 = readline ($file1)) {	
+		 $functions_all="$functions_all $f1 ";
+	}
+	close($file1);
+	
+	#get parameters
+	my $params_v="";
+	my $n= $self->object_get_attribute('soc_name',undef);
+	
+	if(defined $n){	#we are compiling a single tile as SoC
+		my $core_id= $self->object_get_attribute('global_param','CORE_ID');
+		my $sw_loc = $self->object_get_attribute('global_param','SW_LOC');	
+	
+			$params_v="\tlocalparam\tCORE_ID=$core_id;
+\tlocalparam\tSW_LOC=\"$sw_loc\";\n";
+		my %params=soc_get_all_parameters($self);
+		my @order= soc_get_all_parameters_order($self);		
+		foreach my $p (@order){
+			add_text_to_string(\$params_v,"\tlocalparam  $p = $params{$p};\n") if(defined $params{$p} );			
+		}
+	}else{ # we are simulating a mpsoc
+		$params_v= gen_socs_param($self);
+		
+		
+	}
 
 	foreach my $intfc (@intfcs){
 		my $key= ( $intfc eq 'plug:clk[0]')? 'clk' : 
@@ -1524,17 +2083,21 @@ sub gen_modelsim_soc_testbench {
 
 
 			if  (length($range)!=0){	
-				#replace parameter with their values		
-				my @a= split (/\b/,$range);
-				foreach my $l (@a){
-					my $value=$param{$l};
-					if(defined $value){
-						chomp $value;
-						($range=$range)=~ s/\b$l\b/$value/g      if(defined $param{$l});
-					}
-				}
+#				#replace parameter with their values		#
+#				my @a= split (/\b/,$range);
+#				print "a=@a\n";
+#				foreach my $l (@a){
+#					my $value=$params{$l};
+#					if(defined $value){
+#						chomp $value;
+#						($range=$range)=~ s/\b$l\b/$value/g      if(defined $params{$l});
+#						print "($range=$range)=~ s/\b$l\b/$value/g      if(defined $params{$l}); \n";
+#					}
+#				}
 				$range = "[ $range ]" ;
 			}	
+
+
 
 
 
@@ -1557,6 +2120,10 @@ $test_v	="$test_v
 `timescale	 1ns/1ps
 
 module testbench;
+
+$functions_all
+
+$params_v
 
 $top_port_def
 
@@ -1603,12 +2170,23 @@ sub verilator_testbench{
 	my ($self,$name,$top,$target_dir)=@_;
 	my $verilator="$target_dir/verilator";
 	my $dir="$verilator";
-	gen_verilator_soc_testbench (@_) if((-f "$dir/testbench.cpp")==0); 
+	
+	my ($app,$table,$tview,$window) = software_main($dir,'testbench.cpp');
+	
+	my $n= $self->object_get_attribute('soc_name',undef);
+	if(defined $n){	#we are compiling a single tile as SoC
+		gen_verilator_soc_testbench (@_) if((-f "$dir/testbench.cpp")==0); 		
+	}
+	else { # we are compiling a complete NoC-based mpsoc
+		gen_verilator_mpsoc_testbench (@_,$tview) if((-f "$dir/testbench.cpp")==0); 		
+	
+	}
+	
 	#copy makefile
 	#copy("../script/verilator_soc_make", "$verilator/processed_rtl/obj_dir/Makefile"); 
 	
 
-	my ($app,$table,$tview,$window) = software_main($dir,'testbench.cpp');
+	
 
 
 	my $make = def_image_button('icons/gen.png','Compile');
@@ -1636,7 +2214,15 @@ sub verilator_testbench{
                                       "Are you sure you want to regenaret the testbench.cpp file? Note that any changes you have made will be lost");
   		my $response = $dialog->run;
   		if ($response eq 'yes') {
-      			gen_verilator_soc_testbench ($self,$name,$top,$target_dir);
+  			my $n= $self->object_get_attribute('soc_name',undef);
+			if(defined $n){	#we are compiling a single tile as SoC
+				gen_verilator_soc_testbench ($self,$name,$top,$target_dir); 		
+			}
+			else { # we are compiling a complete NoC-based mpsoc
+				gen_verilator_mpsoc_testbench ($self,$name,$top,$target_dir,$tview); 		
+	
+			}
+  			      			
 			$app->load_source("$dir/testbench.cpp");	
   		}
   		$dialog->destroy;
@@ -1647,7 +2233,16 @@ sub verilator_testbench{
 	$make -> signal_connect("clicked" => sub{
 		$app->do_save();
 		copy("$dir/testbench.cpp", "$verilator/processed_rtl/obj_dir/testbench.cpp"); 
-		run_make_file("$verilator/processed_rtl/obj_dir/",$tview);	
+		
+		my $tops_ref=$self->object_get_attribute('verilator','libs');
+		my %tops=%{$tops_ref};
+		my $lib_num=0;
+		
+		foreach my $top (sort keys %tops) { 
+				run_make_file("$verilator/processed_rtl/obj_dir/",$tview,"lib$lib_num");	
+				$lib_num++;
+		}
+		run_make_file("$verilator/processed_rtl/obj_dir/",$tview,"sim");	
 
 	});
 

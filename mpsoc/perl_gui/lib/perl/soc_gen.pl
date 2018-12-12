@@ -941,6 +941,30 @@ sub get_all_files_list {
 	return \@files,$warnings;
 }
 
+
+sub add_to_project_file_list{
+		my ($files_ref,$files_path,$list_path )=@_;
+			my @new_file_ref;
+			foreach my $f(@{$files_ref}){
+				my ($name,$path,$suffix) = fileparse("$f",qr"\..[^.]*$");
+				push(@new_file_ref,"$files_path/$name$suffix");
+			}
+			my $old_file_ref= eval { do "$list_path/file_list" };
+			if (defined $old_file_ref){
+				foreach my $f(@{$old_file_ref}){
+					unless ( grep( /^$f$/, @new_file_ref ) ){
+						push(@new_file_ref,$f);
+					}
+
+				}
+			}			
+			open(FILE,  ">$list_path/file_list") || die "Can not open: $!";
+			print FILE Data::Dumper->Dump([\@new_file_ref],['files']);
+			close(FILE) || die "Error closing file: $!"; 
+}
+
+
+
 ################
 #	generate_soc
 #################
@@ -984,7 +1008,7 @@ sub generate_soc{
 		close(FILE) || die "Error closing file: $!";
 
 		#generate prog_mem
-    		open(FILE,  ">lib/verilog/program.sh") || die "Can not open: $!";
+		open(FILE,  ">lib/verilog/program.sh") || die "Can not open: $!";
 		print FILE soc_mem_prog();
 		close(FILE) || die "Error closing file: $!";
 
@@ -998,18 +1022,26 @@ sub generate_soc{
 			my $hw_lib="$hw_path/lib";
 			mkpath("$hw_lib/",1,01777);
 			mkpath("$sw_path/",1,01777);
-   		
-			#copy hdl codes in src_verilog   
 			
-			my ($file_ref,$warnings)= get_all_files_list($soc,"hdl_files");
-		
+			#remove old rtl files that were copied by ProNoC
+			my $old_file_ref= eval { do "$hw_path/file_list" };
+			if (defined $old_file_ref){		
+				remove_file_and_folders($old_file_ref,$target_dir);
+			}				
+   		
+			#copy hdl codes in src_verilog			
+			my ($file_ref,$warnings)= get_all_files_list($soc,"hdl_files");		
 			copy_file_and_folders($file_ref,$project_dir,$hw_lib);
-			show_info(\$info,$warnings)     		if(defined $warnings);  
+			show_info(\$info,$warnings)     		if(defined $warnings);			
+			add_to_project_file_list($file_ref,$hw_lib,$hw_path);
+			    
     		
     		
 			#copy jtag control files 
 			my @jtags=(("/mpsoc/src_peripheral/jtag/jtag_wb"),("jtag"));
-			copy_file_and_folders(\@jtags,$project_dir,$hw_lib);    		
+			copy_file_and_folders(\@jtags,$project_dir,$hw_lib); 
+			add_to_project_file_list(\@jtags,$hw_lib,$hw_path);  
+			 		
 			move ("$dir/lib/verilog/$name.v","$hw_path/"); 
 			move ("$dir/lib/verilog/${name}_top.v","$hw_path/"); 		
 			move ("$dir/lib/verilog/README" ,"$sw_path/");
@@ -1017,10 +1049,29 @@ sub generate_soc{
 			move ("$dir/lib/verilog/program.sh" ,"$sw_path/");
 		}
 		
+		#remove old software files that were copied by ProNoC
+		my $old_file_ref= eval { do "$sw_path/file_list" };
+		if (defined $old_file_ref){		
+			remove_file_and_folders($old_file_ref,$project_dir);
+		}
+		
 		# Copy Software files
 		my ($file_ref,$warnings)= get_all_files_list($soc,"sw_files");
 		copy_file_and_folders($file_ref,$project_dir,$sw_path);
-    		
+		
+		
+		my @new_file_ref;
+		foreach my $f(@{$file_ref}){
+			my ($name,$path,$suffix) = fileparse("$f",qr"\..[^.]*$");
+			push(@new_file_ref,"$sw_path/$name$suffix");
+		}
+		
+		push(@new_file_ref,"$sw_path/$name.h");
+    	open(FILE,  ">$sw_path/file_list") || die "Can not open: $!";
+		print FILE Data::Dumper->Dump([\@new_file_ref],['files']);
+		close(FILE) || die "Error closing file: $!";
+		
+			
 		# Write system.h and Software gen files
 		generate_header_file($soc,$project_dir,$sw_path,$hw_path,$dir);
 			 
@@ -1121,7 +1172,75 @@ sub get_wb_address	{
 
 
 
+#############
+#  set_unset_infc
+#############
 
+sub set_unset_infc{
+	my $soc =shift;
+	my $window = def_popwin_size(40,60,"Unconnected Socket Interfaces",'percent');
+	my $table = def_table(10,4, FALSE);	
+	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
+	$scrolled_win->set_policy( "automatic", "automatic" );
+	$scrolled_win->add_with_viewport($table);
+	my $row=0;
+	my $column=0;
+	
+	my $ip = ip->lib_new ();
+	my @instances=$soc->soc_get_all_instances();
+	foreach my $id (@instances){
+		my $module 	=$soc->soc_get_module($id);
+		my $module_name	=$soc->soc_get_module_name($id);
+		my $category 	=$soc->soc_get_category($id);
+		my $inst   	= $soc->soc_get_instance_name($id);
+		my @ports=$ip->ip_list_ports($category,$module);
+		foreach my $port (@ports){
+			my ($type,$range,$intfc_name,$i_port)=$ip->ip_get_port($category,$module,$port);
+			my($i_type,$i_name,$i_num) =split("[:\[ \\]]", $intfc_name);
+			if($i_type eq 'socket' && $i_name ne'wb_addr_map' ){ 				
+				my ($ref1,$ref2)= $soc->soc_get_modules_plug_connected_to_socket($id,$i_name,$i_num);
+				my %connected_plugs=%$ref1;
+				my %connected_plug_nums=%$ref2;
+				if(!%connected_plugs ){ 
+					my  ($s_type,$s_value,$s_connection_num)=$soc->soc_get_socket_of_instance($id,$i_name);
+					my $v=$soc->soc_get_module_param_value($id,$s_value);
+					if ( length( $v || '' ) || $category eq 'NoC' ){ }
+					else {
+						($row,$column)=add_param_widget ($soc,"$inst->$port","$inst-$port", 'IO','Combo-box',"IO,NC",undef, $table,$row,$column,1,"Unset-intfc",undef,undef,"vertical");
+						if($column == 0){
+							$column = 4;
+														
+							$row= $row-1;
+						}else{
+							$column =  0;
+							
+							
+							
+						}
+						
+					}
+					
+				}
+			}
+		}
+	}
+	
+	my $box1=def_hbox(FALSE, 1);
+	$box1->pack_start( Gtk2::VSeparator->new, FALSE, FALSE, 3);	
+	$table->attach($box1,3,4,0,$row+1,'expand','fill',2,2);
+	my $ok = def_image_button('icons/select.png','OK');
+	$ok->signal_connect	( 'clicked'=> sub {
+		$window->destroy;
+	});
+	
+	my $mtable = def_table(10, 1, FALSE);
+	$mtable->attach_defaults($scrolled_win,0,1,0,9);
+	$mtable->attach($ok,0,1,9,10,'expand','fill',2,2);
+	$window->add ($mtable);
+	$window->show_all;
+	
+	
+}
 
 
 
@@ -1291,21 +1410,21 @@ sub wb_address_setting {
 			
 			$window->destroy;
 		}else{
-			message_dialog("Invalid address !");
+			message_dialog("Invalid address!");
 			
 		}	
 		
 		
 		});
 		
-		
 	
-	
-	$table->attach ($refbox,2,3,$row,$row+1,'expand','shrink',2,2);
-	$table->attach ($ok,3,4,$row,$row+1,'expand','shrink',2,2);
-	
-	$window->add($scrolled_win);
+	my $mtable = def_table(10, 2, FALSE);
+	$mtable->attach_defaults($scrolled_win,0,2,0,9);
+	$mtable->attach ($refbox,0,1,9,10,'expand','shrink',2,2);
+	$mtable->attach($ok,1,2,9,10,'expand','fill',2,2);
+	$window->add ($mtable);
 	$window->show_all;
+		
 	
 	
 	
@@ -1605,11 +1724,17 @@ sub software_edit_soc {
 	$prog-> signal_connect("clicked" => sub{ 
 		my $error = 0;
 		my $bash_file="$target_dir/sw/program.sh";
+		my $jtag_intfc="$sw/jtag_intfc.sh";
 
 		add_info(\$tview,"Programe the board using quartus_pgm and $bash_file file\n");
 		#check if the programming file exists
 		unless (-f $bash_file) {
 			add_colored_info(\$tview,"\tThe $bash_file does not exists! \n", 'red');
+			$error=1;
+		}
+		#check if the jtag_intfc.sh file exists
+		unless (-f $jtag_intfc) {
+			add_colored_info(\$tview,"\tThe $jtag_intfc does not exists!. Press the compile button and select your FPGA board first to generate $jtag_intfc file\n", 'red');
 			$error=1;
 		}
 		
@@ -1719,6 +1844,8 @@ sub socgen_main{
 	my $compile  = def_image_button('icons/gate.png','Compile RTL');
 	my $software = def_image_button('icons/binary.png','Software');
 	my $diagram  = def_image_button('icons/diagram.png','Diagram');
+	my $unset    = def_image_button('icons/intfc.png','Unset Intfc.');
+	
 	my $ram      = def_image_button('icons/RAM.png','Memory');
 	
 
@@ -1726,7 +1853,7 @@ sub socgen_main{
 
 
 	
-	my $wb = def_image_button('icons/setting.png','Wishbone-bus addr');
+	my $wb = def_image_button('icons/setting.png','WB addr');
 	
 	
 	
@@ -1755,8 +1882,10 @@ sub socgen_main{
 
 
 	
-	$main_table->attach ($open,0, 2, 19,20,'expand','shrink',2,2);
-	$main_table->attach_defaults ($entrybox,2, 4, 19,20);
+	$main_table->attach ($open,0, 1, 19,20,'expand','shrink',2,2);
+	$main_table->attach_defaults ($entrybox,1, 3, 19,20);
+	$main_table->attach ($unset, 3,4, 19,20,'expand','shrink',2,2);
+	
 	$main_table->attach ($wb, 4,6, 19,20,'expand','shrink',2,2);
 	$main_table->attach ($diagram, 6, 7, 19,20,'expand','shrink',2,2);
 	$main_table->attach ($generate, 7, 8, 19,20,'expand','shrink',2,2);
@@ -1795,6 +1924,9 @@ sub socgen_main{
 		my $sw_path 	= "$target_dir/sw";
     		
 		$soc->object_add_attribute('global_param','CORE_ID',0);	
+		$soc->object_add_attribute('global_param','SW_LOC',$sw_path);	
+		
+		unlink  "$hw_dir/file_list";
 		generate_soc($soc,$info,$target_dir,$hw_dir,$sw_path,1,1);
 		#message_dialog("SoC \"$name\" has been created successfully at $target_dir/ " );
 		my $has_ni= check_for_ni($soc);
@@ -1823,6 +1955,10 @@ sub socgen_main{
 		software_edit_soc($soc);
 
 	});
+	
+	$unset-> signal_connect("clicked" => sub{
+		set_unset_infc($soc);
+	});
 
 	$ram-> signal_connect("clicked" => sub{
 		get_ram_init($soc);
@@ -1842,6 +1978,7 @@ sub socgen_main{
 		my $sw_path 	= "$target_dir/sw";
 		my $top 	= "$target_dir/src_verilog/${name}_top.v";
 		if (-f $top){
+			unlink  "$hw_dir/file_list";
 			generate_soc($soc,$info,$target_dir,$hw_dir,$sw_path,1,1);	
 			select_compiler($soc,$name,$top,$target_dir);
 		} else {

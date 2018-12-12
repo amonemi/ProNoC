@@ -35,8 +35,8 @@
 
 module  ni_slave #(
     parameter MAX_TRANSACTION_WIDTH=10, // Maximum transaction size will be 2 power of MAX_DMA_TRANSACTION_WIDTH words 
-    parameter INPUT_MEM_Aw = 10, // input mmeory address width 
-    parameter OUTPUT_MEM_Aw = 10, // input mmeory address width 
+    parameter INPUT_MEM_Aw = 10, // input memory address width 
+    parameter OUTPUT_MEM_Aw = 10, // input memory address width 
     parameter MAX_BURST_SIZE =256, // in words
     parameter DEBUG_EN = 1, 
     //NoC parameters

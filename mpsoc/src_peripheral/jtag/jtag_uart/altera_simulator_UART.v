@@ -99,6 +99,16 @@ module  altera_simulator_UART #(
     
     reg [CNTw-1 :   0]counter,counter_next;
     reg [7  : 0 ] buffer [ BUFFER_SIZE-1    :   0];
+    wire [BUFFER_SIZE*8-1:0] string_wire;
+    
+    genvar k;
+    generate 
+    for(k=0;k<BUFFER_SIZE;k=k+1)begin 
+        assign string_wire[(BUFFER_SIZE-k)*8-1   : (BUFFER_SIZE-k-1)*8] = buffer[k];
+    end
+    endgenerate
+
+
     reg [Bw-1   :   0] ptr,ptr_next;
    
     always @(posedge clk)begin 
@@ -166,12 +176,24 @@ module  altera_simulator_UART #(
     if(reset) begin 
         counter<=0;
         ptr<=0;
+        for(i=0;i<BUFFER_SIZE;i=i+1) buffer[i]=0; 
     end else begin
        counter<=counter_next;
        ptr <= ptr_next;
-       if( buff_en )  buffer[ptr]<=s_dat_i[7:0];
-       if (print_en)  for(i=0;i<  ptr;i=i+1) $write("%c",buffer[i]);       
+       if( buff_en )begin 
+	  buffer[ptr]=s_dat_i[7:0];
+          if(ptr<BUFFER_SIZE-1) buffer[ptr+1]=0;
+         
+	end
+     if (print_en)  for(i=0;i<  ptr;i=i+1) $write("%c",buffer[i]); 
+ /*    
+  if (print_en)begin 
+	$write("%s",string_wire);  
+        for(i=0;i< BUFFER_SIZE ;i=i+1) buffer[i]=0; 
+      end    
+*/
     end
+
   end
 
 
