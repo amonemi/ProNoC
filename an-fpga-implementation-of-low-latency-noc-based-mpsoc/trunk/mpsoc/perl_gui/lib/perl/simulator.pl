@@ -757,6 +757,7 @@ sub run_synthetic_simulation {
 			#@q =split  (/\n/,$d);
 			#my $avg=$q[0];
 			my $avg_latency =capture_number_after("average latency =",$stdout);
+			my $sd_latency =capture_number_after("standard_dev =",$stdout);
 			my $avg_thput =capture_number_after("Avg throughput is:",$stdout);
 			my $total_time =capture_number_after("simulation clock cycles:",$stdout);
 			
@@ -769,6 +770,7 @@ sub run_synthetic_simulation {
 		    	
 	    	next if (!defined $avg_latency);
 			update_result($simulate,$sample,"latency_result",$ratio_in,$avg_latency);
+			update_result($simulate,$sample,"sd_latency_result",$ratio_in,$sd_latency);
 			update_result($simulate,$sample,"throughput_result",$ratio_in,$avg_thput);
 			update_result($simulate,$sample,"exe_time_result",$ratio_in,$total_time);
 			foreach my $p (sort keys %packet_rsvd_per_core){
@@ -825,6 +827,7 @@ sub run_custom_simulation{
 			#@q =split  (/\n/,$d);
 			#my $avg=$q[0];
 			my $avg_latency =capture_number_after("average latency =",$stdout);
+			my $sd_latency =capture_number_after("standard_dev =",$stdout);
 			my $avg_thput =capture_number_after("Avg throughput is:",$stdout);
 			my %packet_rsvd_per_core = capture_cores_data("total number of received packets:",$stdout);
 			my %worst_rsvd_delay_per_core = capture_cores_data('worst-case-delay of received pckets \(clks\):',$stdout);
@@ -836,6 +839,7 @@ sub run_custom_simulation{
 		    	
 	    	next if (!defined $avg_latency);
 			update_result($simulate,$sample,"latency_result",$i,$avg_latency);
+			update_result($simulate,$sample,"sd_latency_result",$i,$sd_latency);
 			update_result($simulate,$sample,"throughput_result",$i,$avg_thput);
 			update_result($simulate,$sample,"exe_time_result",$i,$total_time);
 			foreach my $p (sort keys %packet_rsvd_per_core){
@@ -926,8 +930,9 @@ my @pages =(
 
 
 my @charts = (
-	{ type=>"2D_line", page_num=>0, graph_name=> "Latency", result_name => "latency_result", X_Title=> 'Desired Avg. Injected Load Per Router (flits/clock (%))', Y_Title=>'Latency (clock)', Z_Title=>undef, Y_Max=>100},
-  	{ type=>"2D_line", page_num=>0, graph_name=> "Throughput", result_name => "throughput_result", X_Title=> 'Desired Avg. Injected Load Per Router (flits/clock (%))', Y_Title=>'Avg. Throughput (flits/clock (%))', Z_Title=>undef},
+	{ type=>"2D_line", page_num=>0, graph_name=> "Throughput", result_name => "throughput_result", X_Title=> 'Desired Avg. Injected Load Per Router (flits/clock (%))', Y_Title=>'Avg. Throughput (flits/clock (%))', Z_Title=>undef},
+	{ type=>"2D_line", page_num=>0, graph_name=> "Avg. Latency", result_name => "latency_result", X_Title=> 'Desired Avg. Injected Load Per Router (flits/clock (%))', Y_Title=>'Avg. Latency (clock)', Z_Title=>undef, Y_Max=>100},
+  	{ type=>"2D_line", page_num=>0, graph_name=> "SD latency", result_name => "sd_latency_result", X_Title=> 'Desired Avg. Injected Load Per Router (flits/clock (%))', Y_Title=>'Latency Standard Deviation (clock)', Z_Title=>undef},
 	{ type=>"3D_bar",  page_num=>1, graph_name=> "Received", result_name => "packet_rsvd_result", X_Title=>'Core ID' , Y_Title=>'Received Packets Per Router', Z_Title=>undef},
 	{ type=>"3D_bar",  page_num=>1, graph_name=> "Sent", result_name => "packet_sent_result", X_Title=>'Core ID' , Y_Title=>'Sent Packets Per Router', Z_Title=>undef},
 	{ type=>"3D_bar",  page_num=>2, graph_name=> "Received", result_name => "worst_delay_rsvd_result",X_Title=>'Core ID' , Y_Title=>'Worst-Case Delay (clk)', Z_Title=>undef},

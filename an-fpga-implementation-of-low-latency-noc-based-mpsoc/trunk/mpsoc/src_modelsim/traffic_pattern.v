@@ -580,15 +580,15 @@ module one_dimention_pck_dst_gen #(
         
         always @(*) begin 
             valid_dst_reg=1'b0;       
-            if( current_x>=0 && current_x<=6   ) begin 
+            if( current_x>=0 && current_x<=6  ) begin 
                 dest_x_reg=  8;   valid_dst_reg=1'b1;
             end
  
-            if((current_x==7)  ) begin 
-                dest_x_reg=  10;   valid_dst_reg=1'b1;
-            end
+           // if((current_x==7)  ) begin 
+          //      dest_x_reg=  10;   valid_dst_reg=1'b1;
+          //  end
  
-           if((current_x>=8 && current_x<=14 )  ) begin 
+           if((current_x>=7 && current_x<=14 )  ) begin 
                 dest_x_reg= 14;   valid_dst_reg=1'b1;
             end
 	end

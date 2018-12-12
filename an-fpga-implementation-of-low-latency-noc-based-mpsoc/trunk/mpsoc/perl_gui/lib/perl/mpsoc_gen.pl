@@ -482,24 +482,6 @@ sub get_soc_parameter_setting{
 	
 	
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	my $ok = def_image_button('icons/select.png','OK');
 	my $okbox=def_hbox(TRUE,0);
 	$okbox->pack_start($ok, FALSE, FALSE,0);
@@ -825,7 +807,7 @@ sub noc_config{
     $row= noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$show_noc,'noc_param',undef);
 	
 	#packet payload width
-	$label='payload width';
+	$label='Payload width';
 	$param='Fpay';
 	$default='32';   	
 	$content='32,256,32';
@@ -1003,10 +985,21 @@ sub noc_config{
 	$default="1\'b0";
 	$info="If enabeled it adds a pipline register at the output port of the router.";
 	$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');
+	
+	
+	#MAX_SBP_NUM = 4 // 
+	$label="Number of multiple router bypassing ";	
+	$param="MAX_SBP_NUM ";
+	$type='Spin-button';
+	$content='0,1,1';
+	$default=0;
+	$info="maximum number of routers which a packet can by pass during one clock cycle. Define it as zero will disable bypassing.";
+	#$row=noc_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');
+	
 	 
 	#FIRST_ARBITER_EXT_P_EN
 	$label='Swich allocator first level 
-arbiters extenal priority enable';
+arbiters external priority enable';
 	$param='FIRST_ARBITER_EXT_P_EN';
 	$default= 1;
 	$info='If set as 1 then the switch allocator\'s input (first) arbiters\' priority registers are enabled only when a request get both input and output arbiters\' grants'; 
@@ -1016,7 +1009,7 @@ arbiters extenal priority enable';
 	  	
 	
 	#Arbiter type
-	$label='SW allocator arbiteration type'; 
+	$label='SW allocator arbitration type'; 
 	$param='SWA_ARBITER_TYPE';
 	$default='"RRA"';
 	$content='"RRA","WRRA"'; #,"WRRA_CLASSIC"';
@@ -1202,9 +1195,13 @@ sub gen_all_tiles{
 	
 	
 	
-	
-	
+	#remove old rtl files that were copied by ProNoC
+	my $old_file_ref= eval { do "$hw_dir/file_list" };
+	if (defined $old_file_ref){		
+		remove_file_and_folders($old_file_ref,$target_dir);
+	}	
 	my @generated_tiles;
+	unlink "$hw_dir/file_list";
 	
 	#print "nx=$nx,ny=$ny\n";
 	for (my $y=0;$y<$ny;$y++){for (my $x=0; $x<$nx;$x++){
@@ -1212,6 +1209,9 @@ sub gen_all_tiles{
 		my $tile_num= $y*$nx+$x;
 		#print "$tile_num\n";
 		my ($soc_name,$num)= $mpsoc->mpsoc_get_tile_soc_name($tile_num);
+		next if(!defined $soc_name);
+		
+		
 		my $path=$mpsoc->object_get_attribute('setting','soc_path');	
 		$path=~ s/ /\\ /g;
   		my $p = "$path/$soc_name.SOC";
@@ -1240,7 +1240,9 @@ sub gen_all_tiles{
 			generate_soc($soc,$info,$target_dir,$hw_dir,$sw_path,0,0);
 		}else{
 			generate_soc($soc,$info,$target_dir,$hw_dir,$sw_path,0,1);
-			move ("$hw_dir/$soc_name.v","$hw_dir/tiles/"); 	
+			move ("$hw_dir/$soc_name.v","$hw_dir/tiles/");
+			my @tmp= ("$hw_dir/tiles/$soc_name.v");
+			add_to_project_file_list(\@tmp,"$hw_dir/tiles",$hw_dir);   	
 			
 		}	
 	
@@ -1302,8 +1304,17 @@ sub generate_soc_files{
     			
     		
     }
-			show_info(\$info,$warnings)     		if(defined $warnings);  
-    		
+    show_info(\$info,$warnings)     		if(defined $warnings);  
+    
+    #save project hdl file/folder list
+    my @new_file_ref;
+		foreach my $f(@{$hdl_ref}){
+			my ($name,$path,$suffix) = fileparse("$f",qr"\..[^.]*$");
+			push(@new_file_ref,"$target_dir/src_verilog/lib/$name$suffix");
+	}
+    open(FILE,  ">$target_dir/src_verilog/file_list") || die "Can not open: $!";
+	print FILE Data::Dumper->Dump([\@new_file_ref],['files']);
+	close(FILE) || die "Error closing file: $!";    		
     		
     		#my @pathes=("$dir/../src_peripheral","$dir/../src_noc","$dir/../src_processor");
     		#foreach my $p(@pathes){
@@ -1359,7 +1370,7 @@ sub generate_mpsoc_lib_file {
 #################
 
 sub generate_mpsoc{
-	my ($mpsoc,$info)=@_;
+	my ($mpsoc,$info,$show_sucess_msg)=@_;
 	my $name=$mpsoc->object_get_attribute('mpsoc_name');
 	my $error = check_verilog_identifier_syntax($name);
 	if ( defined $error ){
@@ -1430,7 +1441,7 @@ sub generate_mpsoc{
     
    
     	 	
-    message_dialog("SoC \"$name\" has been created successfully at $target_dir/ " );
+    message_dialog("MPSoC \"$name\" has been created successfully at $target_dir/ " ) if($show_sucess_msg);
 		
 		
 		
@@ -1482,6 +1493,7 @@ $JTAG_INTFC -n 127  -d  "I:1,D:2:3,D:2:2,I:0"
 
 #programe the memory
 for i in $(ls -d */); do 
+	echo "Enter ${i%%/}"
 	cd ${i%%/}
 	sh write_memory.sh 
 	cd ..
@@ -1635,7 +1647,7 @@ sub get_tile{
 		my @list=(' ',@socs);
 		my $pos=(defined $soc_name)? get_scolar_pos($soc_name,@list): 0;
 		my $combo=gen_combo(\@list, $pos);
-		my $lable=gen_label_in_left("  SoC name:");
+		my $lable=gen_label_in_left("  Processing tile name:");
 		$table->attach_defaults($lable,0,3,$row,$row+1);
 		$table->attach_defaults($combo,3,7,$row,$row+1);$row++;
 		my $separator1 = Gtk2::HSeparator->new;
@@ -1767,17 +1779,20 @@ sub software_edit_mpsoc {
 		message_dialog("Please define the MPSoC name!");
 		return ;
 	}
-	my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$name/sw";
-	my $sw 	= "$target_dir";
+	my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$name";
+	my $sw 	= "$target_dir/sw";
 	my ($app,$table,$tview) = software_main($sw);
 
 	
-
+	
 
 	my $make = def_image_button('icons/gen.png','Compile');
+	my $prog= def_image_button('icons/write.png','Program the memories');
 	
 		
-	$table->attach ($make,9, 10, 1,2,'shrink','shrink',0,0);
+	
+	$table->attach ($make,5, 6, 1,2,'shrink','shrink',0,0);
+	$table->attach ($prog,9, 10, 1,2,'shrink','shrink',0,0); 
 	
 
 	$make -> signal_connect("clicked" => sub{
@@ -1785,6 +1800,45 @@ sub software_edit_mpsoc {
 		append_to_textview($tview,' ');
 		run_make_file($sw,$tview);	
 
+	});
+	
+	#Programe the board 
+	$prog-> signal_connect("clicked" => sub{ 
+		my $error = 0;
+		my $bash_file="$sw/program.sh";
+		my $jtag_intfc="$sw/jtag_intfc.sh";
+		
+		add_info(\$tview,"Programe the board using quartus_pgm and $bash_file file\n");
+		#check if the programming file exists
+		unless (-f $bash_file) {
+			add_colored_info(\$tview,"\tThe $bash_file does not exists! \n", 'red');
+			$error=1;
+		}
+		#check if the jtag_intfc.sh file exists
+		unless (-f $jtag_intfc) {
+			add_colored_info(\$tview,"\tThe $jtag_intfc does not exists!. Press the compile button and select your FPGA board first to generate $jtag_intfc file\n", 'red');
+			$error=1;
+		}
+		
+		return if($error);
+		my $command = "cd $sw; sh program.sh";
+		add_info(\$tview,"$command\n");
+		my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($command);
+		if(length $stderr>1){			
+			add_colored_info(\$tview,"$stderr\n",'red');
+			add_colored_info(\$tview,"Memory was not programed successfully!\n",'red');
+		}else {
+
+			if($exit){
+				add_colored_info(\$tview,"$stdout\n",'red');
+				add_colored_info(\$tview,"Memory was not programed successfully!\n",'red');
+			}else{
+				add_info(\$tview,"$stdout\n");
+				add_colored_info(\$tview,"Memory is programed successfully!\n",'blue');
+
+			}
+			
+		}		
 	});
 
 }
@@ -1946,7 +2000,7 @@ sub mpsocgen_main{
 		
 		
 	$generate-> signal_connect("clicked" => sub{ 
-		generate_mpsoc($mpsoc,$info);
+		generate_mpsoc($mpsoc,$info,1);
 		set_gui_status($mpsoc,"refresh_soc",1);
 
 	});
@@ -1969,6 +2023,7 @@ sub mpsocgen_main{
 		my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$name";
 		my $top_file 	= "$target_dir/src_verilog/${name}_top.v";
 		if (-f $top_file){	
+			generate_mpsoc($mpsoc,$info,0);
 			select_compiler($mpsoc,$name,$top_file,$target_dir);
 		} else {
 			message_dialog("Cannot find $top_file file. Please run RTL Generator first!");

@@ -46,7 +46,7 @@ sub mpsoc_generate_verilog{
 	#functions
 	my $functions=get_functions();
 	
-	my $mpsoc_v = (defined $param_as_in_v )? "module $mpsoc_name #(\n $param_as_in_v\n)(\n$io_v\n);\n": "module $mpsoc_name (\n$io_v\n);\n";
+	my $mpsoc_v = (defined $param_as_in_v )? "`timescale	 1ns/1ps\nmodule $mpsoc_name #(\n $param_as_in_v\n)(\n$io_v\n);\n": "`timescale	 1ns/1ps\nmodule $mpsoc_name (\n$io_v\n);\n";
 	add_text_to_string (\$mpsoc_v,$noc_param);
 	add_text_to_string (\$mpsoc_v,$functions);
 	add_text_to_string (\$mpsoc_v,$socs_param);
@@ -56,7 +56,8 @@ sub mpsoc_generate_verilog{
 	add_text_to_string (\$mpsoc_v,$socs_v);
 	add_text_to_string (\$mpsoc_v,"\nendmodule\n");
 	
-	my $top_v = (defined $param_as_in_v )? "module ${mpsoc_name}_top #(\n $param_as_in_v\n)(\n$io_v\n);\n": "module ${mpsoc_name}_top (\n $io_v\n);\n";
+	
+	my $top_v = (defined $param_as_in_v )? "`timescale	 1ns/1ps\nmodule ${mpsoc_name}_top #(\n $param_as_in_v\n)(\n$io_v\n);\n": "`timescale	 1ns/1ps\nmodule ${mpsoc_name}_top (\n $io_v\n);\n";
 	add_text_to_string (\$top_v,$socs_param);
 	add_text_to_string (\$top_v,$io_def_v);
 	add_text_to_string(\$top_v,"
@@ -579,6 +580,7 @@ sub   gen_soc_v{
 			
 			
 		}
+		#enable
 		elsif( $intfc eq 'plug:enable[0]'){
 			my @ports=$top->top_get_intfc_ports_list($intfc);
 			foreach my $p (@ports){
@@ -592,6 +594,18 @@ sub   gen_soc_v{
 		
 		
 		}
+		#RxD_sim
+		elsif( $intfc eq 'socket:RxD_sim[0]'){
+			#This interface is for simulation only donot include it in top module
+			my @ports=$top->top_get_intfc_ports_list($intfc);
+			foreach my $p (@ports){
+				add_text_to_string(\$soc_v,',') if ($i);	
+				add_text_to_string(\$soc_v,"\n\t\t.$p( )");
+				$i=1;
+			}		
+		
+		}
+		
 		else {
 		#other interface
 			my @ports=$top->top_get_intfc_ports_list($intfc);

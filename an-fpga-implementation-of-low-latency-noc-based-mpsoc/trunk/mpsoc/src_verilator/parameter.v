@@ -20,22 +20,22 @@
  	localparam C=0;
  	localparam DEBUG_EN=0;
  	localparam ADD_PIPREG_AFTER_CROSSBAR=1'b0;
- 	localparam SWA_ARBITER_TYPE="RRA";
  	localparam FIRST_ARBITER_EXT_P_EN=1;
+ 	localparam SWA_ARBITER_TYPE="RRA";
+ 	localparam WEIGHTw=4;
  	localparam AVC_ATOMIC_EN=0;
  	localparam ROUTE_SUBFUNC="XY";
+ 	localparam MAX_SBP_NUM =0;
  	localparam CLASS_SETTING={V{1'b1}};
   	localparam  CVw=(C==0)? V : C * V;
-   
+  
+	/* verilator lint_off WIDTH */ 
 	localparam  P=(TOPOLOGY=="RING" || TOPOLOGY=="LINE")? 3 : 5;
  	localparam  ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
                         (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE"; 
-	
+	/* verilator lint_on WIDTH */
 	//simulation parameter	
-	localparam MAX_PCK_NUM = 100000000;
-	localparam MAX_PCK_SIZ = 16383; 
-	localparam MAX_SIM_CLKs=  100000000;
-	localparam TIMSTMP_FIFO_NUM = 16;
+	
 
  
  `endif

@@ -89,16 +89,16 @@ endmodule
 
 module testbench_sub #(
     parameter V=2,
-    parameter B=2,
-    parameter NX=8,
-    parameter NY=8,
+    parameter B=4,
+    parameter NX=15,
+    parameter NY=1,
     parameter C=1,
     parameter Fpay=32,
     parameter MUX_TYPE="ONE_HOT",
     parameter VC_REALLOCATION_TYPE="NONATOMIC",
     parameter COMBINATION_TYPE="COMB_NONSPEC",
     parameter FIRST_ARBITER_EXT_P_EN=1,
-    parameter TOPOLOGY="MESH",
+    parameter TOPOLOGY="LINE",
     parameter ROUTE_NAME="XY",
     parameter CONGESTION_INDEX=7,
     parameter ROUTE_SUBFUNC= "XY",
@@ -108,17 +108,17 @@ module testbench_sub #(
     parameter [CVw-1:   0] CLASS_SETTING = 4'b1111, // shows how each class can use VCs   
     parameter [V-1  :   0] ESCAP_VC_MASK = 2'b10,  // mask scape vc, valid only for full adaptive 
     parameter SSA_EN=  "NO",//"YES", // "YES" , "NO"    
-    parameter SWA_ARBITER_TYPE = "RRA",//"RRA","WRRA". SWA: Switch Allocator.  RRA: Round Robin Arbiter. WRRA Weighted Round Robin Arbiter          
-    parameter WEIGHTw=6, // WRRA weights' max width
+    parameter SWA_ARBITER_TYPE = "WRRA",//"RRA","WRRA". SWA: Switch Allocator.  RRA: Round Robin Arbiter. WRRA Weighted Round Robin Arbiter          
+    parameter WEIGHTw=7, // WRRA weights' max width
   
     parameter C0_p=100,
     parameter C1_p=0,
     parameter C2_p=0,
     parameter C3_p=0,
    // parameter TRAFFIC="HOTSPOT",
-   parameter TRAFFIC="TRANSPOSE1",
+  // parameter TRAFFIC="TRANSPOSE1",
    //parameter TRAFFIC="RANDOM", 
-   // parameter TRAFFIC="CUSTOM",
+    parameter TRAFFIC="CUSTOM",
     parameter HOTSPOT_PERCENTAGE=100,
     parameter HOTSPOT_NUM=1,
     parameter HOTSPOT_CORE_1=0,

@@ -20,7 +20,7 @@
 # Modifying modelsim.ini
 ###################################################################
 ##---- 3. Compile the Design
-# 1518690625
+# 1542618941
 # 0
 # Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
 # -- Compiling module crossbar
@@ -326,7 +326,7 @@
 # 	pseudo_hotspot_no_core
 # 	pseudo_hotspot
 # 	pseudo_random_gen
-# 1518690625
+# 1542618941
 ###################################################################
 ##                       END OF COMPILATION
 ###################################################################
@@ -363,10 +363,12 @@
 # Loading work.nonspec_sw_alloc
 # Loading work.one_hot_mux
 # Loading work.add_sw_loc_one_hot
+# Loading work.wrra_contention_gen
+# Loading work.weights_update
 # Loading work.arbiter
-# Loading work.xy_mesh_routing
+# Loading work.xy_line_routing
 # Loading work.one_hot_to_bin
-# Loading work.two_dimention_pck_dst_gen
+# Loading work.one_dimention_pck_dst_gen
 # Loading work.deterministic_look_ahead_routing
 # Loading work.next_router_addr_predictor
 # Loading work.next_router_inport_predictor
@@ -375,6 +377,7 @@
 # Loading work.flit_update_dtrmn
 # Loading work.class_ovc_table
 # Loading work.fwft_fifo
+# Loading work.weight_control
 # Loading work.flit_buffer
 # Loading work.inport_module
 # Loading work.one_hot_demux
@@ -383,17 +386,28 @@
 # Loading work.check_ovc
 # Loading work.swa_input_port_arbiter
 # Loading work.swa_output_port_arbiter
+# Loading work.wrra_inputport_destports_sum
+# Loading work.accumulator
+# Loading work.weight_update_per_port
 # Loading work.my_one_hot_arbiter
+# Loading work.weight_counter
 # Loading work.fifo_ram
-# Loading work.PC_15_4
-# Loading work.CS_GEN
 # Loading work.PC_7_3
+# Loading work.CS_GEN
 # Loading work.arbiter_priority_en
 # Loading work.arbiter_2_one_hot
 # Loading work.my_one_hot_arbiter_priority_en
-# Loading work.arbiter_4_one_hot
-# ** Warning: Design size of 61 instances exceeds ModelSim ALTERA recommended capacity.
+# ** Warning: Design size of 66 instances exceeds ModelSim ALTERA recommended capacity.
 # This may because you are loading cell libraries which are not recommended with
 # the ModelSim Altera version. Expect performance to be adversely affected.
+# file18
+do /home/alireza/mywork/mpsoc_work/modelsim/wave.do
+run
+restart
+# ** Warning: Design size of 0 instances exceeds ModelSim ALTERA recommended capacity.
+# This may because you are loading cell libraries which are not recommended with
+# the ModelSim Altera version. Expect performance to be adversely affected.
+run
 # Break key hit 
 # Simulation stop requested.
+run

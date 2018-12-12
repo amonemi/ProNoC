@@ -72,6 +72,9 @@ module router # (
 
 );
 
+localparam WRRA_CONFIG_INDEX = 0;
+
+
     function integer log2;
       input integer number; begin   
          log2=(number <=1) ? 1: 0;    
@@ -188,7 +191,7 @@ module router # (
         .SSA_EN(SSA_EN),
         .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE),
         .WEIGHTw(WEIGHTw),
-        .WRRA_CONFIG_INDEX(0) 
+        .WRRA_CONFIG_INDEX(WRRA_CONFIG_INDEX) 
         
     )
     the_inout_ports
@@ -305,7 +308,7 @@ module router # (
    
         wrra_contention_gen #(
             .WEIGHTw(WEIGHTw),
-            .WRRA_CONFIG_INDEX(0),
+            .WRRA_CONFIG_INDEX(WRRA_CONFIG_INDEX),
             .V(V),
             .P(P)
         )
@@ -327,7 +330,7 @@ module router # (
         	.P(P),
         	.Fpay(Fpay),
         	.WEIGHTw(WEIGHTw),
-        	.WRRA_CONFIG_INDEX(0),
+        	.WRRA_CONFIG_INDEX(WRRA_CONFIG_INDEX),
         	.C(C),
         	.ADD_PIPREG_AFTER_CROSSBAR(ADD_PIPREG_AFTER_CROSSBAR),
         	.CLASS_HDR_WIDTH(CLASS_HDR_WIDTH),

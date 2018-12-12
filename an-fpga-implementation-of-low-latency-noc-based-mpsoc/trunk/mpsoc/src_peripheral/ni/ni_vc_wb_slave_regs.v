@@ -36,6 +36,7 @@ module ni_vc_wb_slave_regs #(
     parameter MAX_TRANSACTION_WIDTH =10,
     
     //NoC parameter
+    parameter DEBUG_EN=1,
     parameter DST_ADR_HDR_WIDTH  =8,
     parameter NX = 4,   // number of node in x axis
     parameter NY = 4,   // number of node in y axis
@@ -56,7 +57,9 @@ module ni_vc_wb_slave_regs #(
     receive_done,
     receive_vc_got_packet,
     receive_packet_is_saved,
-    
+    all_save_done_reg_rst,
+   
+
     send_start_addr, 
     receive_start_addr,
     send_data_size,
@@ -72,9 +75,18 @@ module ni_vc_wb_slave_regs #(
     s_stb_i,
     s_cyc_i,
     s_we_i,
+
+//synthesis translate_off
+//synopsys  translate_off    
+    current_x,
+    current_y,
+//synthesis translate_on
+//synopsys  translate_on   
     
     reset,
-    clk    
+    clk 
+
+
  
  
  );
@@ -124,6 +136,7 @@ module ni_vc_wb_slave_regs #(
     output  reg [Dw-1   :   0] send_start_addr; 
     output  reg [Dw-1   :   0] receive_start_addr;
     output  reg receive_packet_is_saved;
+    input   all_save_done_reg_rst;
     
     output  reg [MAX_TRANSACTION_WIDTH-1    :   0] send_data_size;
     output  reg [MAX_TRANSACTION_WIDTH-1    :   0] max_receive_buff_siz;
@@ -131,6 +144,13 @@ module ni_vc_wb_slave_regs #(
     output  reg [Yw-1   :   0]  dest_y;
     output  reg [Cw-1   :   0]  pck_class;
     output  reg send_start, receive_start;
+
+//synthesis translate_off
+//synopsys  translate_off    
+    input   [Xw-1   :   0]  current_x;
+    input   [Yw-1   :   0]  current_y;
+//synthesis translate_on
+//synopsys  translate_on   
    
  
         
@@ -179,7 +199,9 @@ module ni_vc_wb_slave_regs #(
         receive_en_next = receive_en;
         receive_packet_is_saved_next = receive_packet_is_saved;
         max_receive_buff_siz_next = max_receive_buff_siz;
-        if (receive_fsm_is_ideal & receive_vc_got_packet & receive_en ) begin 
+	if(all_save_done_reg_rst) receive_packet_is_saved_next=1'b0;
+
+        if (receive_vc_got_packet & receive_en ) begin 
             receive_en_next = 1'b0;
         end
         if(receive_done) begin 
@@ -191,12 +213,21 @@ module ni_vc_wb_slave_regs #(
                          if (send_fsm_is_ideal) send_start_addr_next={{OFFSET_w{1'b0}},s_dat_i [Dw-1    : OFFSET_w]};
                     end //SEND_STRT_WB_ADDR
                     SEND_DATA_SIZE_WB_ADDR: begin 
-                        if (send_fsm_is_ideal) send_data_size_next=s_dat_i [MAX_TRANSACTION_WIDTH+OFFSET_w-1 :   OFFSET_w]; 
+                        if (send_fsm_is_ideal) send_data_size_next=s_dat_i [MAX_TRANSACTION_WIDTH-1 :   0]; 
                     end //DATA_SIZE_WB_ADDR
                     SEND_DEST_WB_ADDR: begin 
                         if (send_fsm_is_ideal) begin 
                             dest_x_next = s_dat_i[Xw-1     : 0];   
-                            dest_y_next = s_dat_i [(DST_ADR_HDR_WIDTH/2)+Yw-1     : DST_ADR_HDR_WIDTH/2];                                         
+                            dest_y_next = s_dat_i [(DST_ADR_HDR_WIDTH/2)+Yw-1     : DST_ADR_HDR_WIDTH/2]; 
+//synthesis translate_off
+//synopsys  translate_off
+			if(DEBUG_EN)begin
+				if((s_dat_i[Xw-1     : 0] == current_x) && (s_dat_i [(DST_ADR_HDR_WIDTH/2)+Yw-1     : DST_ADR_HDR_WIDTH/2] == current_y))begin
+					$display("%t: ERROR: source destination address are identical in: %m",$time);
+				end
+			end
+//synthesis translate_on
+//synopsys  translate_on                                        
                             pck_class_next= s_dat_i[Cw+DST_ADR_HDR_WIDTH-1    :   DST_ADR_HDR_WIDTH];
                             send_start_next = 1'b1;
                            end

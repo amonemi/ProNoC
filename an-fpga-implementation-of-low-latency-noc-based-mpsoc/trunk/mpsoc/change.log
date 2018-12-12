@@ -1,5 +1,15 @@
 All notable changes to this project will be documented in this file.
 
+##[1.8.2] -13-12-2018
+## Added
+- add latency standard deviation to simulation results graphs
+- add Simple message passing demo on 4×4 MPSoC
+- add some error flags to NI
+## changed
+- fix some bugs in NI
+- Enable Verilator simulation on MPSoC
+
+
 ##[1.8.1] - 30-7-2018
 ## Added
 -  GUI for setting Linux variables

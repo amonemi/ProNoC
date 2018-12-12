@@ -88,51 +88,16 @@ sub build_gui {
 	$vpaned-> pack2 ($scwin_info, TRUE, TRUE);
 
 
+my ($tree_view,$tree_store) =$self->build_tree_view($sw);
 
 
-# Directory name, full path
-my $tree_store = Gtk2::TreeStore->new('Glib::String', 'Glib::String');
-my $tree_view = Gtk2::TreeView->new($tree_store);
-my $column = Gtk2::TreeViewColumn->new_with_attributes('', Gtk2::CellRendererText->new(), text => "0");
-$tree_view->append_column($column);
-$tree_view->set_headers_visible(FALSE);
-$tree_view->signal_connect (button_release_event => sub{
-	my $tree_model = $tree_view->get_model();
- 	my $selection = $tree_view->get_selection();
- 	my $iter = $selection->get_selected();
- 	if(defined $iter){
-		my $path = $tree_model->get($iter, 1) ;
-		$path= substr $path, 0, -1;
-		
-		 $self->load_source($path) if(-f $path);
-	}
-	 return;
-});
-
-
-$tree_view->signal_connect ('row-expanded' => sub {
-	my ($tree_view, $iter, $tree_path) = @_;
- 	my $tree_model = $tree_view->get_model();
-	my ($dir, $path) = $tree_model->get($iter);
-
-	# for each of $iter's children add any subdirectories
-	my $child = $tree_model->iter_children ($iter);
-	while ($child) {
-  		my ($dir, $path) = $tree_model->get($child, 0, 1);
-  		add_to_tree($tree_view,$tree_store, $child, $dir, $path);
-  		$child = $tree_model->iter_next ($child);
- 	}
-	 return;
-});
 
 
 $scwin_dirs -> add($tree_view);
 
 
 
-my $child = $tree_store->append(undef);
-$tree_store->set($child, 0, $sw, 1, '/');
-add_to_tree($tree_view,$tree_store, $child, '/', "$sw/");
+
 #print "$sw/\n";
 
 	#my $window = Gtk2::Window->new();
@@ -143,7 +108,7 @@ add_to_tree($tree_view,$tree_store, $child, '/', "$sw/");
 	my $vbox = Gtk2::VBox->new(FALSE, 0);
 	$scwin_text->add_with_viewport($vbox);
 
-	$vbox->pack_start($self->build_menu, FALSE, FALSE, 0);
+	$vbox->pack_start($self->build_menu("$sw/",$window,$tree_view,$tree_store,$scwin_dirs), FALSE, FALSE, 0);
 	$vbox->pack_start($self->build_search_box, FALSE, FALSE, 0);
 
 	my $scroll = Gtk2::ScrolledWindow->new();
@@ -211,6 +176,56 @@ add_to_tree($tree_view,$tree_store, $child, '/', "$sw/");
 	$window->show_all();
 	return ($table,$tview,$window);
 }
+
+
+
+
+sub build_tree_view{
+	my ($self,$sw)=@_;
+
+	# Directory name, full path
+my $tree_store = Gtk2::TreeStore->new('Glib::String', 'Glib::String');
+my $tree_view = Gtk2::TreeView->new($tree_store);
+my $column = Gtk2::TreeViewColumn->new_with_attributes('', Gtk2::CellRendererText->new(), text => "0");
+$tree_view->append_column($column);
+$tree_view->set_headers_visible(FALSE);
+$tree_view->signal_connect (button_release_event => sub{
+	my $tree_model = $tree_view->get_model();
+ 	my $selection = $tree_view->get_selection();
+ 	my $iter = $selection->get_selected();
+ 	if(defined $iter){
+		my $path = $tree_model->get($iter, 1) ;
+		$path= substr $path, 0, -1;
+		$self->do_save();
+		#print "open $path\n";
+		 $self->load_source($path) if(-f $path);
+	}
+	 return;
+});
+
+
+$tree_view->signal_connect ('row-expanded' => sub {
+	my ($tree_view, $iter, $tree_path) = @_;
+ 	my $tree_model = $tree_view->get_model();
+	my ($dir, $path) = $tree_model->get($iter);
+
+	# for each of $iter's children add any subdirectories
+	my $child = $tree_model->iter_children ($iter);
+	while ($child) {
+  		my ($dir, $path) = $tree_model->get($child, 0, 1);
+  		add_to_tree($tree_view,$tree_store, $child, $dir, $path);
+  		$child = $tree_model->iter_next ($child);
+ 	}
+	 return;
+});
+
+my $child = $tree_store->append(undef);
+$tree_store->set($child, 0, $sw, 1, '/');
+add_to_tree($tree_view,$tree_store, $child, '/', "$sw/");
+return ($tree_view,$tree_store);
+
+}
+
 
 
 sub build_search_box {
@@ -434,8 +449,9 @@ sub show_highlighted {
 
 
 sub do_file_new {
-	my $self = shift;
+	my ($self,$sw,$window,$tree_view,$tree_store,$scwin_dirs) = @_;
 	my $buffer = $self->buffer;
+	
 
 	# Set no language
 	$buffer->set_language(undef);
@@ -450,6 +466,7 @@ sub do_file_new {
 
 	$self->filename('');
 	$self->window->set_title("Untitled - $NAME");
+	$self->do_save_as($sw,$window,$tree_view,$tree_store,$scwin_dirs);
 }
 
 
@@ -534,13 +551,13 @@ sub do_ask_goto_line {
 
 
 sub do_quit {
-	my $self = shift;
-	Gtk2->main_quit();
+	my ($self,$window) = @_;
+	$window->destroy;
 }
 
 
 sub do_save_as {
-	my $self = shift;
+	my ($self,$sw,$window,$tree_view,$tree_store,$scwin_dirs) = @_;
 
 	# If no file is associated with the editor then ask the user for a file where
 	# to save the contents of the buffer.
@@ -549,13 +566,28 @@ sub do_save_as {
 		'gtk-cancel' => 'cancel',
 		'gtk-save'   => 'ok',
 	);
+	if(defined  $sw){
+		$dialog->set_current_folder ($sw); 
+		#print "open_in:$sw\n";
+		 
+	}
 
 	my $response = $dialog->run();
 	if ($response eq 'ok') {
-		$self->filename($dialog->get_filename);
+		my $file=$dialog->get_filename;
+		$self->filename($file);
 		$self->do_save();
+		$tree_view->destroy;
+		($tree_view,$tree_store) =$self->build_tree_view($sw);
+		$scwin_dirs->add($tree_view);
+		$scwin_dirs->show_all;
+		$self->load_source($file);
+		
+	
 	}
 	$dialog->destroy();
+	
+
 }
 
 
@@ -566,7 +598,7 @@ sub do_save {
 
 	# If there's no file then do a save as...
 	if (! $filename) {
-		$self->do_save_as();
+		#$self->do_save_as();
 		return;
 	}
 
@@ -581,8 +613,11 @@ sub do_save {
 }
 
 
+
+
+
 sub build_menu {
-	my $self = shift;
+	my ($self,$sw,$window,$tree_view,$tree_store,$scwin_dirs) = @_;
 
 	my $entries = [
 		# name, stock id, label
@@ -597,7 +632,7 @@ sub build_menu {
 			"_New",
 			"<control>N",
 			"Create a new file",
-			sub { $self->do_file_new(@_) }
+			sub { $self->do_file_new($sw,$window,$tree_view,$tree_store,$scwin_dirs) }
 		],
 		[
 			"Open",
@@ -621,7 +656,7 @@ sub build_menu {
 			"Save _As...",
 			"<control><shift>S",
 			"Save to a file",
-			sub { $self->do_save_as(@_) }
+			sub { $self->do_save_as($sw,$window,$tree_view,$tree_store,$scwin_dirs) }
 		],
 		[
 			"Quit",
@@ -629,7 +664,7 @@ sub build_menu {
 			"_Quit",
 			"<control>Q",
 			"Quit",
-			sub { $self->do_quit() }
+			sub { $self->do_quit($window) }
 		],
 		[
 			"About",

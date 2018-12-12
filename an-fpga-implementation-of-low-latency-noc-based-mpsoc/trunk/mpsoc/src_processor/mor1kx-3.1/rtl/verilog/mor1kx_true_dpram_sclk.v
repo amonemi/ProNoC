@@ -9,7 +9,7 @@
  Copyright (C) 2013 Stefan Kristiansson <stefan.kristiansson@saunalahti.fi>
 
  ******************************************************************************/
-
+`timescale	 1ns/1ps
 module mor1kx_true_dpram_sclk
   #(
     parameter ADDR_WIDTH = 32,

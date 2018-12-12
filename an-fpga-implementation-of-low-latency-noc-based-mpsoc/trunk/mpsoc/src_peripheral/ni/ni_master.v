@@ -119,9 +119,11 @@ module  ni_master #(
     irq    
 
 );
+/* verilator lint_off WIDTH */ 
      localparam P=  (TOPOLOGY=="RING" || TOPOLOGY=="LINE")? 3 : 5;   
      localparam ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
                            (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE";    
+/* verilator lint_on WIDTH */ 
 
     function integer log2;
       input integer number; begin   
@@ -196,28 +198,28 @@ module  ni_master #(
     
     localparam 
         CHw=log2(V),
-        BURST_SIZE_w= log2(MAX_BURST_SIZE);
+        BURST_SIZE_w= log2(MAX_BURST_SIZE+1);
     
-     /*   wishbone slave adderess :
+/*   wishbone slave adderess :
     
     [3:0]  
-            0   :   STATUS1_WB_ADDR           // status1:  {send_enable_binary,receive_enable_binary,send_vc_is_busy,receive_vc_is_busy,receive_vc_got_packet}
-            1   :   STATUS2_WB_ADDR           // status2:   
-            2   :   BURST_SIZE_WB_ADDR       // The busrt size in words 
+        0   :   STATUS1_WB_ADDR           // status1:  {send_vc_is_busy,receive_vc_is_busy,receive_vc_packet_is_saved,receive_vc_got_packet};
+        1   :   STATUS2_WB_ADDR           // status2:  {send_enable_binary,receive_enable_binary,vc_got_error,any_error_isr,got_pck_isr, save_done_isr,send_done_isr,any_error_int_en,got_pck_int_en, save_done_int_en,send_done_int_en};
+        2   :   BURST_SIZE_WB_ADDR       // The busrt size in words 
             
-            3   :   SEND_DATA_SIZE_WB_ADDR,  // The size of data to be sent in byte  
-            4   :   SEND_STRT_WB_ADDR,       // The address of data to be sent   in byte       
-            5   :   SEND_DEST_WB_ADDR        // The destination router address
-            6   :   SEND_CTRL_WB_ADDR
+        3   :   SEND_DATA_SIZE_WB_ADDR,  // The size of data to be sent in byte  
+        4   :   SEND_STRT_WB_ADDR,       // The address of data to be sent   in byte       
+        5   :   SEND_DEST_WB_ADDR        // The destination router address
+        6   :   SEND_CTRL_WB_ADDR
             
-            7   :   RECEIVE_DATA_SIZE_WB_ADDR // The size of recieved data in byte  
-            8   :   RECEIVE_STRT_WB_ADDR      // The address pointer of reciever memory in byte
-            9   :   RECEIVE_SRC_WB_ADDR       // The source router (the router which is sent this packet). 
-            10  :   RECEIVE_CTRL_WB_ADDR      // The NI reciever control register 
-            11  :   RECEIVE_MAX_BUFF_SIZ      // The reciver allocated buffer size in words. If the packet size is bigger tha the buffer size the rest of will be discarred
-            
-            
-                     
+        7   :   RECEIVE_DATA_SIZE_WB_ADDR // The size of recieved data in byte  
+        8   :   RECEIVE_STRT_WB_ADDR      // The address pointer of reciever memory in byte
+        9   :   RECEIVE_SRC_WB_ADDR       // The source router (the router which is sent this packet). 
+        10  :   RECEIVE_CTRL_WB_ADDR      // The NI reciever control register 
+        11  :   RECEIVE_MAX_BUFF_SIZ      // The reciver allocated buffer size in words. If the packet size is bigger than the buffer size the rest of ot will be discarred
+        12  :   ERROR_FLAGS	// errors:  {burst_size_error,send_data_size_error,crc_miss_match,rcive_buff_ovrflw_err}; 
+         
+		                    
                       
     [4+Vw:4]
                 : Virtual channel num       
@@ -236,10 +238,24 @@ module  ni_master #(
         STATUS2_WB_ADDR  =   1,          // status 
         BURST_SIZE_WB_ADDR = 2,         // The busrt size in words 
         RECEIVE_DATA_SIZE_WB_ADDR = 7,  // The size of recieved data in byte  
-        RECEIVE_SRC_WB_ADDR =9;         // The source router (the router which is sent this packet). 
+        RECEIVE_SRC_WB_ADDR =9,         // The source router (the router which is sent this packet). 
+        ERRORS_FLAGS_WB_ADDR=12;
         
-        
-        
+    localparam
+        STATUS1w= 4 * V,
+        STATUS2w= 2 * CHw + V + 8,
+        ERRw= 5;  
+    
+    
+    localparam 
+        SEND_DONE_INT_EN_LOC=0,
+        SAVE_DONE_INT_EN_LOC=1,
+        GOT_PCK_INT_EN_LOC=2, 
+        ERRORS_INT_EN_LOC=3,            
+        SEND_DONE_ISR_LOC=4,
+        SAVE_DONE_ISR_LOC=5,
+        GOT_PCK_ISR_LOC=6,
+        ERRORS_ISR_LOC=7;            
         
        
  
@@ -282,6 +298,7 @@ module  ni_master #(
     wire [MAX_TRANSACTION_WIDTH-1    :   0] receive_vc_max_buff_siz [V-1   :  0];
     wire [V-1   :  0]   send_vc_start, receive_vc_start; 
     wire  received_flit_is_tail,received_flit_is_hdr;
+  
     
     wire [Xw-1   :   0]  vc_dest_x [V-1   :  0];
     wire [Yw-1   :   0]  vc_dest_y [V-1   :  0];
@@ -316,34 +333,32 @@ module  ni_master #(
     reg [Xw-1   :   0] x_src_in [V-1    :   0];
     reg [Yw-1   :   0] y_src_in [V-1    :   0];
     reg [V-1    :   0] crc_miss_match;
+    
+    reg reset_errors, reset_errors_next;
+    wire [V-1    :   0] burst_size_error,send_data_size_error,rcive_buff_ovrflw_err, illegal_send_req;           
+    wire [V-1    :   0] vc_got_error;
+    wire any_vc_got_error = | vc_got_error; 
+  
    
-    reg     got_pck_isr, save_done_isr, send_done_isr,got_pck_int_en, save_done_int_en,send_done_int_en;
-    reg     got_pck_isr_next, save_done_isr_next,send_done_isr_next,got_pck_int_en_next, save_done_int_en_next,send_done_int_en_next;
+    reg any_error_isr, got_pck_isr, save_done_isr, send_done_isr;
+    reg any_error_isr_next,got_pck_isr_next, save_done_isr_next,send_done_isr_next;
+    
+    reg any_error_int_en, got_pck_int_en, save_done_int_en,send_done_int_en;
+    reg any_error_int_en_next, got_pck_int_en_next, save_done_int_en_next,send_done_int_en_next;
     
     
-    localparam
-        STATUS1w= 4 * V,
-        STATUS2w= 2 * CHw + V + 6; 
-    
-    
-    localparam 
-        SEND_DONE_INT_EN_LOC=0,
-        SAVE_DONE_INT_EN_LOC=1,
-        GOT_PCK_INT_EN_LOC=2,              
-        SAVE_DONE_ISR_LOC=3,
-        SEND_DONE_ISR_LOC=4,
-        GOT_PCK_ISR_LOC=5;         
+  
     
     
     wire  [STATUS1w-1  :0] status1;
-    wire  [STATUS2w-1  :0] status2;  
+    wire  [STATUS2w-1  :0] status2; 
+    wire  [ERRw-1     : 0] errors [V-1 : 0];  
   
     assign status1= {send_vc_is_busy,receive_vc_is_busy,receive_vc_packet_is_saved,receive_vc_got_packet};
-    assign status2= {send_enable_binary,receive_enable_binary,crc_miss_match,got_pck_isr, save_done_isr,send_done_isr,got_pck_int_en, save_done_int_en,send_done_int_en};
+    assign status2= {send_enable_binary,receive_enable_binary,vc_got_error,any_error_isr,got_pck_isr, save_done_isr,send_done_isr,any_error_int_en,got_pck_int_en, save_done_int_en,send_done_int_en};
+      
     
-        
-    
-    assign  irq = (got_pck_isr & got_pck_int_en) | (save_done_isr & save_done_int_en) | (send_done_isr & send_done_int_en);
+    assign  irq =(any_error_isr & any_error_int_en) | (got_pck_isr & got_pck_int_en) | (save_done_isr & save_done_int_en) | (send_done_isr & send_done_int_en);
     
                    
                    
@@ -361,10 +376,13 @@ module  ni_master #(
             s_dat_o   [MAX_TRANSACTION_WIDTH-1    :   0] = receive_counter[vc_addr];
         end  
         RECEIVE_SRC_WB_ADDR: begin            
-            s_dat_o[Xw-1     : 0] = x_src_in[vc_addr];   
-            s_dat_o[(DST_ADR_HDR_WIDTH/2)+Yw-1: DST_ADR_HDR_WIDTH/2] = y_src_in[vc_addr];                                            
-            s_dat_o[Cw+DST_ADR_HDR_WIDTH-1    :   DST_ADR_HDR_WIDTH]  =   class_in[vc_addr];             
-        end        
+            s_dat_o[Xw-1: 0] = x_src_in[vc_addr];   // first byte
+            s_dat_o[Yw+7: 8] = y_src_in[vc_addr];   // second byte                                          
+            s_dat_o[Cw+15: 16]  =   class_in[vc_addr];  //third byte           
+        end 
+        ERRORS_FLAGS_WB_ADDR: begin 
+             s_dat_o[ERRw-1     : 0] = errors[vc_addr];           
+        end       
         default: begin 
              s_dat_o = {{(Dw-STATUS1w){1'b0}}, status1};        
         end       
@@ -372,12 +390,13 @@ module  ni_master #(
     end      
      
    
-   
+   reg all_save_done_reg_rst;
     
     //write wb registers
     always @ (*)begin 
         burst_counter_next=burst_counter;
         burst_size_next= burst_size;
+        reset_errors_next = 1'b0;
         if(burst_counter_ld)    burst_counter_next = burst_size;
         if(burst_counter_dec)   burst_counter_next= burst_counter- 1'b1;
         
@@ -385,13 +404,14 @@ module  ni_master #(
         got_pck_int_en_next  = got_pck_int_en;
         save_done_int_en_next= save_done_int_en;
         send_done_int_en_next= send_done_int_en;
+        any_error_int_en_next= any_error_int_en; 
         got_pck_isr_next  = got_pck_isr;          
         save_done_isr_next= save_done_isr;
         send_done_isr_next= send_done_isr;
-        
-        if(any_vc_got_pck)      got_pck_isr_next  = 1'b1;
-        if(any_vc_save_done)    save_done_isr_next  = 1'b1;
-        if(any_vc_send_done)    send_done_isr_next  = 1'b1;
+        any_error_isr_next= any_error_isr; 
+	all_save_done_reg_rst=1'b0;
+       // all_got_pck_reg_rst=1'b0;
+      //  all_send_done_reg_rst=1'b0;
         
         if(s_stb_i  &    s_we_i)   begin 
             case(vc_s_addr_i)
@@ -402,16 +422,35 @@ module  ni_master #(
                         got_pck_int_en_next = s_dat_i[GOT_PCK_INT_EN_LOC];
                         save_done_int_en_next = s_dat_i[SAVE_DONE_INT_EN_LOC];
                         send_done_int_en_next = s_dat_i[SEND_DONE_INT_EN_LOC];
+                        any_error_int_en_next = s_dat_i[ERRORS_INT_EN_LOC];
                         // reset isr register by writting one on them
-                        if (s_dat_i[GOT_PCK_ISR_LOC]) got_pck_isr_next = 1'b0;
-                        if (s_dat_i[SAVE_DONE_ISR_LOC]) save_done_isr_next = 1'b0;
-                        if (s_dat_i[SEND_DONE_ISR_LOC]) send_done_isr_next = 1'b0;                   
+                        if (s_dat_i[GOT_PCK_ISR_LOC]) begin 
+				got_pck_isr_next = 1'b0;
+				//all_got_pck_reg_rst=1'b1;
+			end
+                        if (s_dat_i[SAVE_DONE_ISR_LOC]) begin 
+				save_done_isr_next = 1'b0;
+				all_save_done_reg_rst=1'b1;
+			end
+                        if (s_dat_i[SEND_DONE_ISR_LOC]) begin 
+				send_done_isr_next = 1'b0; 
+				//all_send_done_reg_rst=1'b1; 
+			end
+                        if (s_dat_i[ERRORS_ISR_LOC]) begin 
+                            any_error_isr_next = 1'b0;                        
+                            reset_errors_next = 1'b1;
+                        end                 
                     end //STATUS2_WB_ADDR 
 		    default begin
 
 		    end                   
             endcase
-        end        
+        end  else begin 
+            if(any_vc_got_pck)      got_pck_isr_next  = 1'b1;
+            if(any_vc_save_done)    save_done_isr_next  = 1'b1;
+            if(any_vc_send_done)    send_done_isr_next  = 1'b1;
+            if(any_vc_got_error)    any_error_isr_next = 1'b1;
+        end      
            
     end 
     
@@ -424,9 +463,13 @@ module  ni_master #(
             got_pck_int_en <= 1'b0;
             save_done_int_en <= 1'b0;
             send_done_int_en <= 1'b0;
+            any_error_int_en <= 1'b0;
             got_pck_isr <= 1'b0;
             save_done_isr <= 1'b0;
             send_done_isr <= 1'b0; 
+            any_error_isr <= 1'b0;
+            reset_errors<= 1'b0;
+	   
         end else begin 
             burst_counter<= burst_counter_next; 
             burst_size <= burst_size_next; 
@@ -434,9 +477,13 @@ module  ni_master #(
             got_pck_int_en <= got_pck_int_en_next;
             save_done_int_en <= save_done_int_en_next;
             send_done_int_en <= send_done_int_en_next;
+            any_error_int_en <= any_error_int_en_next;
             got_pck_isr <= got_pck_isr_next;            
             save_done_isr <= save_done_isr_next;
-            send_done_isr <= send_done_isr_next;         
+            send_done_isr <= send_done_isr_next; 
+            any_error_isr <= any_error_isr_next;  
+            reset_errors <= reset_errors_next;  
+	    
         end 
     end 
     
@@ -458,10 +505,12 @@ module  ni_master #(
     generate
     for (i=0;i<V; i=i+1) begin : vc_
     
-    
+        assign errors[i] =  {crc_miss_match[i],illegal_send_req[i],burst_size_error[i],send_data_size_error[i],rcive_buff_ovrflw_err[i]};       
+        assign vc_got_error[i] = | errors[i];
         ni_vc_wb_slave_regs #(
             .MAX_TRANSACTION_WIDTH(MAX_TRANSACTION_WIDTH),
             .DST_ADR_HDR_WIDTH(DST_ADR_HDR_WIDTH),
+            .DEBUG_EN(DEBUG_EN),
             .NX(NX),
             .NY(NY),
             .C(C),
@@ -471,6 +520,12 @@ module  ni_master #(
         )
         wb_slave_registers
         (
+//synthesis translate_off
+//synopsys  translate_off    
+            .current_x(current_x),
+            .current_y(current_y),
+//synthesis translate_on
+//synopsys  translate_on   
             .clk(clk),
             .reset(reset),
             .state_reg_enable(vc_state_reg_enable[i]),
@@ -489,7 +544,11 @@ module  ni_master #(
             .send_start(send_vc_start[i]),
             .receive_start(receive_vc_start[i]),
             .receive_vc_got_packet(receive_vc_got_packet[i]),
-            .s_dat_i(s_dat_i),
+	    .all_save_done_reg_rst(all_save_done_reg_rst),	    
+	    //.all_got_pck_reg_rst(all_got_pck_reg_rst),
+           // .all_send_done_reg_rst(all_send_done_reg_rst),
+            
+	    .s_dat_i(s_dat_i),
             .s_addr_i(s_addr_i[CHANNEL_REGw-1:0]),
             .s_stb_i(s_stb_i),
             .s_cyc_i(s_cyc_i),
@@ -550,7 +609,12 @@ module  ni_master #(
             .receive_fifo_empty(vc_fifo_empty[i]),
             .receive_fifo_rd(vc_fifo_rd[i]), 
          
-                        
+            //errors
+            .reset_errors(reset_errors),
+            .burst_size_error(burst_size_error[i]),
+            .send_data_size_error(send_data_size_error[i]),
+            .rcive_buff_ovrflw_err(rcive_buff_ovrflw_err[i]),
+            .illegal_send_req(illegal_send_req[i]),           
                         
             //
             .m_send_sel_o(vc_m_send_sel_o[i]),
@@ -586,10 +650,12 @@ module  ni_master #(
             end
         end//always
    
-    end  // for loop for channel
+    end  // for loop vc_
     
+/* verilator lint_off WIDTH */ 
     if(  CRC_EN == "YES") begin :crc_blk
-  
+/* verilator lint_on WIDTH */
+   
       reg fifo_rd_delayed;
       always @(posedge clk or posedge reset)begin 
         if(reset) fifo_rd_delayed <=1'b0;
@@ -646,7 +712,8 @@ module  ni_master #(
         assign tail_flit_out[31 : 0]  =  send_crc_out;
     end   else begin : no_crc 
         assign tail_flit_out   =  m_send_dat_i [Fpay-1 : 0];
-        always @ ( *) crc_miss_match = {V{1'b0}};
+        //always @(*) crc_miss_match = {V{1'b0}};
+	always @(posedge clk) crc_miss_match <= {V{1'b0}};
     end
    
     
@@ -842,12 +909,13 @@ module  ni_master #(
         .weight_o()
     );  
   
-  
+ 
   assign m_receive_dat_o = fifo_dout[Dw-1   :   0];
   assign received_flit_is_tail = fifo_dout[Fw-2];
   assign received_flit_is_hdr  = fifo_dout[Fw-1];
+ 
   
-  assign any_vc_got_pck = received_flit_is_hdr & flit_in_wr;
+  assign any_vc_got_pck = |receive_vc_got_packet;
   
     localparam [1:0] 
         HDR_FLAG           =   2'b10,
@@ -931,6 +999,7 @@ message_class_data     routing_info     destination_address    source_address
       end   
     endfunction // log2 
    
+/* verilator lint_off WIDTH */ 
     localparam      ADDR_DIMENTION =   (TOPOLOGY ==    "MESH" || TOPOLOGY ==  "TORUS") ? 2 : 1,  // "RING" and FULLY_CONNECT 
                     ALL_DATA_HDR_WIDTH  = CLASS_HDR_WIDTH+ROUTING_HDR_WIDTH+DST_ADR_HDR_WIDTH+SRC_ADR_HDR_WIDTH,
                     P_1         =   P-1 ,
@@ -939,7 +1008,7 @@ message_class_data     routing_info     destination_address    source_address
                     Yw          =   log2(NY),
                     Cw          =  (C>1)? log2(C): 1,
                     HDR_FLAG            =   2'b10;
-                    
+/* verilator lint_on WIDTH */                     
      
     
     output   [Fw-1       :   0] flit_out;

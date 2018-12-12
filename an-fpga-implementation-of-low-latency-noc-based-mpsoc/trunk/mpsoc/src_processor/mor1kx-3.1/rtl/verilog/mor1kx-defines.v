@@ -1,3 +1,4 @@
+ `timescale     1ns/1ps
 /* ****************************************************************************
   This Source Code Form is subject to the terms of the
   Open Hardware Description License, v. 1.0. If a copy

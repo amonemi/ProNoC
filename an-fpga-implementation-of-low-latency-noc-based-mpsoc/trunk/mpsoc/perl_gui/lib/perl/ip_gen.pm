@@ -529,6 +529,17 @@ sub top_add_parameter{
 	$self->{instance_ids}{$inst}{parameters}{$parameter}{redefine_param}=$redefine;						
 }	
 
+sub top_add_localparam{
+	my ($self,$inst,$parameter,$default,$type,$content,$info,$global_param,$redefine)=@_;
+	$self->{instance_ids}{$inst}{localparam}{$parameter}{"default"}=$default;	
+	$self->{instance_ids}{$inst}{localparam}{$parameter}{type}=$type;
+	$self->{instance_ids}{$inst}{localparam}{$parameter}{content}=$content;
+	$self->{instance_ids}{$inst}{localparam}{$parameter}{info}=$info;
+	$self->{instance_ids}{$inst}{localparam}{$parameter}{global_param}=$global_param;
+	$self->{instance_ids}{$inst}{localparam}{$parameter}{redefine_param}=$redefine;						
+}	
+
+
 sub top_get_parameter{
 	my ($self,$inst,$parameter)=@_;
 	my ($default,$type,$content,$info,$global_param,$redefine);
@@ -549,6 +560,9 @@ sub top_get_parameter_list{
 	}
 	return @l;
 }
+
+
+
 
 sub top_add_default_soc_param{
 	my ($self,$param_ref)=@_;
@@ -586,6 +600,8 @@ sub top_get_intfc_list{
 	
 	return 	@intfcs;
 }
+
+
 
 
 sub top_get_intfc_ports_list{

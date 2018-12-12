@@ -1,5 +1,11 @@
+`timescale	 1ns/1ps
 
 module mor1k #(
+    parameter OPTION_DCACHE_SNOOP = "ENABLED",// "NONE","ENABLED" 
+    parameter FEATURE_INSTRUCTIONCACHE ="ENABLED",// "NONE","ENABLED" 
+    parameter FEATURE_DATACACHE ="ENABLED",// "NONE","ENABLED" 
+    parameter FEATURE_IMMU ="ENABLED",// "NONE","ENABLED" 
+    parameter FEATURE_DMMU="ENABLED",// "NONE","ENABLED" 
     parameter OPTION_OPERAND_WIDTH=32,
     parameter IRQ_NUM=32
 
@@ -8,6 +14,11 @@ module mor1k #(
     clk,
     rst,
     cpu_en,
+    
+    //snoop_interface
+    snoop_adr_i,
+    snoop_en_i,
+    
 
     // Wishbone interface
     iwbm_adr_o,
@@ -44,6 +55,10 @@ module mor1k #(
 
     input                clk;
     input                rst;
+    
+    
+    input [31:0]          snoop_adr_i;
+    input                 snoop_en_i;
 
     // Wishbone interface
     output [31:0]         iwbm_adr_o;
@@ -88,28 +103,34 @@ module mor1k #(
    // wire                du_stall_o,
   
   wire [31:0] dadr_o,iadr_o;
+  wire [31:0] snoop_adr_i_byte;
    assign iwbm_adr_o= {2'b00,iadr_o[31:2]};
    assign dwbm_adr_o= {2'b00,dadr_o[31:2]};
+   assign snoop_adr_i_byte= {snoop_adr_i[29:0],2'b00}; 
+
+
    
 
 
 
 mor1kx #(
+    .OPTION_DCACHE_SNOOP(OPTION_DCACHE_SNOOP),
 	.FEATURE_DEBUGUNIT("ENABLED"),
 	.FEATURE_CMOV("ENABLED"),
-	.FEATURE_INSTRUCTIONCACHE("ENABLED"),
+	.FEATURE_INSTRUCTIONCACHE(FEATURE_INSTRUCTIONCACHE),
 	.OPTION_ICACHE_BLOCK_WIDTH(5),
 	.OPTION_ICACHE_SET_WIDTH(8),
 	.OPTION_ICACHE_WAYS(2),
 	.OPTION_ICACHE_LIMIT_WIDTH(32),
-	.FEATURE_IMMU("ENABLED"),
-	.FEATURE_DATACACHE("ENABLED"),
+	.FEATURE_IMMU(FEATURE_IMMU),
+	.FEATURE_DATACACHE(FEATURE_DATACACHE),
 	.OPTION_DCACHE_BLOCK_WIDTH(5),
 	.OPTION_DCACHE_SET_WIDTH(8),
 	.OPTION_DCACHE_WAYS(2),
 	.OPTION_DCACHE_LIMIT_WIDTH(31),
-	.FEATURE_DMMU("ENABLED"),
+	.FEATURE_DMMU(FEATURE_DMMU),
 	.OPTION_PIC_TRIGGER("LATCHED_LEVEL"),
+	
 
 	.IBUS_WB_TYPE("B3_REGISTERED_FEEDBACK"),
 	.DBUS_WB_TYPE("B3_REGISTERED_FEEDBACK"),
@@ -180,8 +201,8 @@ mor1kx0
 	.multicore_coreid_i   (32'd0),
 	.multicore_numcores_i (32'd0),
 
-	.snoop_adr_i (32'd0),
-	.snoop_en_i  (1'b0),
+	.snoop_adr_i (snoop_adr_i_byte),
+	.snoop_en_i  (snoop_en_i),
 
 	.du_addr_i(du_addr_i),
     .du_stb_i(du_stb_i),

@@ -95,7 +95,12 @@ module ni_vc_dma #(
     burst_counter_dec,
     burst_size_is_set,
     
-
+    //errors
+    reset_errors,
+    burst_size_error,
+    send_data_size_error,
+    rcive_buff_ovrflw_err, 
+    illegal_send_req,
    
     //wishbone master rd interface signals
     m_send_sel_o,
@@ -162,7 +167,7 @@ module ni_vc_dma #(
 
 
     input reset,clk,send_enable,receive_enable;
-    output reg send_is_busy, receive_is_busy;
+    output  send_is_busy, receive_is_busy;
     output reg burst_counter_ld,    burst_counter_dec;
     input burst_size_is_set;
     input last_burst;
@@ -187,11 +192,13 @@ module ni_vc_dma #(
     output reg  send_fifo_wr, receive_fifo_rd;
     input       send_fifo_full, send_fifo_nearly_full,send_fifo_rd, receive_fifo_empty;
     
-    
+   //errors 
+    input reset_errors;
+    output reg burst_size_error;
+    output reg send_data_size_error;
+    output reg rcive_buff_ovrflw_err; 
+    output reg illegal_send_req;
   
-
-  
-    
     
     //wishbone read master interface signals
     output  [SELw-1          :   0] m_send_sel_o;
@@ -217,31 +224,37 @@ module ni_vc_dma #(
     reg [MAX_TRANSACTION_WIDTH-1    :   0] send_counter, send_counter_next;
     reg [MAX_TRANSACTION_WIDTH-1    :   0] receive_counter_next;
   
+    reg burst_size_error_next, send_data_size_error_next;
+    reg rcive_buff_ovrflw_err_next,  illegal_send_req_next;
        
         
     
     wire last_data = (send_counter == send_data_size-1'b1);
    
-    wire receive_overflow= (send_counter == max_receive_buff_siz);    
+    wire receive_overflow= (receive_counter == max_receive_buff_siz);    
     
     reg [SEND_ST_NUM-1    :0] send_ps,send_ns; // read  peresent state, read next sate 
     reg [RECEIVE_ST_NUM-1    :0] receive_ps,receive_ns; // read  peresent state, read next sate
     
-    reg receive_is_busy_next, send_is_busy_next;
+    //reg receive_is_busy_next, send_is_busy_next;
    
    
     assign status= {receive_ps,send_ps};
    // assign s_dat_o={{(Dw-STATUSw){1'b0}}, status};
    
     reg  send_crc; 
+    
+    /* verilator lint_off WIDTH */ 
     assign send_tail =  ( CRC_EN == "NO") ?  last_data : send_crc; 
-     
+    /* verilator lint_on WIDTH */  
     
     
     assign send_fsm_is_ideal = (send_ps== SEND_IDEAL);
     assign receive_fsm_is_ideal = (receive_ps== RECEIVE_IDEAL);
-    assign m_send_addr_o =  send_start_addr + send_counter;
-    assign m_receive_addr_o =  receive_start_addr + receive_counter;
+    /* verilator lint_off WIDTH */ 
+    assign m_send_addr_o =  send_start_addr  + send_counter;
+    assign m_receive_addr_o =  receive_start_addr  + receive_counter;
+     /* verilator lint_on WIDTH */  
     assign m_send_stb_o =  m_send_cyc_o;
     assign m_receive_stb_o =  m_receive_cyc_o;
     assign m_receive_we_o = 1'b1;
@@ -266,6 +279,17 @@ module ni_vc_dma #(
         send_hdr = 1'b0;
         send_crc = 1'b0; 
         active_st_next = active_st;
+        burst_size_error_next=burst_size_error;
+        send_data_size_error_next=send_data_size_error;
+        illegal_send_req_next = illegal_send_req;
+        // the send req must be asserted only when the Ni_send_DMA(v) is in ideal status  
+        if( (send_ps != SEND_IDEAL && send_ps != SEND_HDR) & send_start) illegal_send_req_next=1'b1; 
+        
+        if(reset_errors) begin 
+            burst_size_error_next=1'b0;
+            send_data_size_error_next=1'b0;
+            illegal_send_req_next=1'b0;        
+        end
         case(send_ps)
             SEND_IDEAL: begin 
                 if(send_start) begin 
@@ -274,6 +298,8 @@ module ni_vc_dma #(
                         burst_counter_ld=1'b1;
                         send_ns = SEND_HDR;
                     end else begin // set error reg
+                        if(!burst_size_is_set) burst_size_error_next=1'b1;
+                        else send_data_size_error_next=1'b1; 
                     end
                 end
             end // SEND_IDEAL
@@ -286,8 +312,7 @@ module ni_vc_dma #(
                             send_ns =  SEND_WAIT; 
                         end else begin 
                             send_fifo_wr=1'b1;
-                            send_ns =  SEND_BODY;
-                                                     
+                            send_ns =  SEND_BODY;                                                     
                         end
                     end
                          
@@ -382,7 +407,8 @@ module ni_vc_dma #(
         receive_is_active =1'b0;
         hdr_flit_is_received_next=hdr_flit_is_received;
         save_hdr_info=1'b0;
-       
+        rcive_buff_ovrflw_err_next =  rcive_buff_ovrflw_err;
+        if(reset_errors) rcive_buff_ovrflw_err_next=1'b0;
             case(receive_ps)
                 RECEIVE_IDEAL: begin 
                     
@@ -404,17 +430,20 @@ module ni_vc_dma #(
                 
                 RECEIVE_ACTIVE: begin 
                      receive_is_active =1'b1; // this signal sends request to the receive_arbiter, the granted signal is receive_enable
-                     if(receive_enable) begin 
-                            if(CRC_EN == "YES")begin 
-                                if(received_flit_is_tail)begin 
-                                    m_receive_cyc_o = 1'b0;// make sre do not save crc on data memory
-                                    receive_ns = RECEIVE_IDEAL;
-                                    m_receive_cti_o= END_OF_BURST;
-                                    receive_done=1'b1;  
-                                end else begin 
-                                    m_receive_cyc_o=1'b1; 
-                                end
-                            end else  m_receive_cyc_o=1'b1; //CRC_EN == "NO"
+                     if(receive_enable) begin                      
+                     /* verilator lint_off WIDTH */ 
+  //                          if(CRC_EN == "YES")begin 
+                    /* verilator lint_on WIDTH */                             
+  //                              if(received_flit_is_tail)begin 
+  //                                  m_receive_cyc_o = 1'b0;// make sure do not save crc on data memory
+  //                                  receive_ns = RECEIVE_IDEAL;
+  //                                  m_receive_cti_o= END_OF_BURST;
+  //                                  receive_done=1'b1;  
+  //                              end else begin 
+  //                                  m_receive_cyc_o=1'b1; 
+   //                             end
+  //                          end else  
+                            m_receive_cyc_o=1'b1; //CRC_EN == "NO"
                             if (receive_fifo_empty) begin 
                                 m_receive_cti_o= END_OF_BURST;                             
                             end
@@ -422,6 +451,7 @@ module ni_vc_dma #(
                                 hdr_flit_is_received_next=1'b1;
                                 if(! hdr_flit_is_received) save_hdr_info=1'b1;
                                 if(! receive_overflow && hdr_flit_is_received) receive_counter_next=receive_counter +1'b1; //Donot save hedaer flit in memory
+                                if( receive_overflow)  rcive_buff_ovrflw_err_next = 1'b1;//set error  
                                 if (received_flit_is_tail) begin 
                                     receive_ns = RECEIVE_IDEAL;
                                     m_receive_cti_o= END_OF_BURST; 
@@ -449,20 +479,23 @@ module ni_vc_dma #(
        
     end//alays
     
-          
+ /*         
     always @(*)begin 
         send_is_busy_next= send_is_busy;
         if(send_start) send_is_busy_next =1'b1;
         else if(send_done) send_is_busy_next=1'b0;
     end
+ */   
+    assign send_is_busy = (send_ps != SEND_IDEAL);
+    assign receive_is_busy =  (receive_ps != RECEIVE_IDEAL);
     
-    
+   /*
      always @(*)begin 
         receive_is_busy_next= receive_is_busy;
         if(receive_done) receive_is_busy_next =1'b0;
         else if(receive_start) receive_is_busy_next=1'b1;
     end
-    
+   */
    
     
     
@@ -474,10 +507,14 @@ module ni_vc_dma #(
             receive_ps <= RECEIVE_IDEAL;
             send_counter <=  {MAX_TRANSACTION_WIDTH{1'b0}};
             receive_counter <=   {MAX_TRANSACTION_WIDTH{1'b0}}; 
-            send_is_busy<= 1'b0;
-            receive_is_busy<= 1'b0;
+         //   send_is_busy<= 1'b0;
+         //   receive_is_busy<= 1'b0;
             hdr_flit_is_received<=1'b0;
             active_st <= 2'd0;
+            burst_size_error<=1'b0;
+            send_data_size_error<=1'b0;
+            rcive_buff_ovrflw_err <=1'b0;
+            illegal_send_req <=1'b0;
            
           
         end else begin 
@@ -485,10 +522,14 @@ module ni_vc_dma #(
             receive_ps <= receive_ns;
             send_counter <=  send_counter_next;
             receive_counter <=  receive_counter_next; 
-            send_is_busy <=send_is_busy_next;
-            receive_is_busy <=receive_is_busy_next;
+          //  send_is_busy <=send_is_busy_next;
+          //  receive_is_busy <=receive_is_busy_next;
             hdr_flit_is_received<=hdr_flit_is_received_next;
             active_st <= active_st_next;
+            burst_size_error<=burst_size_error_next;
+            send_data_size_error<=send_data_size_error_next;
+            rcive_buff_ovrflw_err <=  rcive_buff_ovrflw_err_next;
+            illegal_send_req <=  illegal_send_req_next;
            
         end 
     end 

@@ -30,7 +30,7 @@
 
 #include "traffic_task_graph.h"
 
-
+#define STND_DEV_EN 1
 
 
 //Vrouter *router;
@@ -81,9 +81,17 @@ int pow2( int );
 
 
 #if (STND_DEV_EN)
-	#include <math.h>
+	//#include <math.h>
+	double sqroot (double s){
+		int i;	
+		double root = s/3;
+		if (s<=0) return 0;
+		for(i=0;i<32;i++) root = (root +s/root)/2;
+		return root;
+	}
+	
 	double 	     sum_clk_pow2=0;
-	double 	     sum_clk_pow2_per_class[C]={0};
+	double 	     sum_clk_pow2_per_class[C];
 	double standard_dev( double , unsigned int, double);
 #endif
 
@@ -615,6 +623,8 @@ void print_statistic (char * out_file_name){
 	                if(ratio==RATIO_INIT) first_avg_latency_flit=avg_latency_flit;
 #if (STND_DEV_EN)
 	                std_dev= standard_dev( sum_clk_pow2,total_pck_num, avg_latency_flit);
+	                printf(" standard_dev = %f\n",std_dev);
+	                
 	               // sprintf(file_name,"%s_std.txt",out_file_name);
 	                //update_file( file_name,avg_throughput,std_dev);
 
@@ -776,14 +786,29 @@ void reset_all_register (void){
  * ******************/
 
 #if (STND_DEV_EN)
-
+/************************
+ * std_dev = sqrt[(B-A^2/N)/N]  = sqrt [(B/N)- (A/N)^2] = sqrt [B/N - mean^2]
+ * A = sum of the values
+ * B = sum of the squarded values 
+ * *************/
 
 double standard_dev( double sum_pow2, unsigned int  total_num, double average){
 	double std_dev;
+	
+	/*
+	double  A, B, N;
+	N= total_num;
+	A= average * N;
+	B= sum_pow2;
 
-	std_dev = sum_pow2/(double)total_num;
-	std_dev -= (average*average);
+	A=(A*A)/N;
+	std_dev = (B-A)/N;
 	std_dev = sqrt(std_dev);
+*/	
+
+	std_dev = sum_pow2/(double)total_num; //B/N
+	std_dev -= (average*average);// (B/N) - mean^2
+	std_dev = sqroot(std_dev);// sqrt [B/N - mean^2]
 
 	return std_dev;
 

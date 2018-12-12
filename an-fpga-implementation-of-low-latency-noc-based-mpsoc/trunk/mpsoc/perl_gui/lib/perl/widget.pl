@@ -1018,6 +1018,26 @@ sub copy_file_and_folders{
 
 }
 
+
+sub remove_file_and_folders{
+	my ($file_ref,$project_dir)=@_;
+
+	foreach my $f(@{$file_ref}){
+		my $name= basename($f);				
+		my $n="$project_dir$f";
+		if (-f "$n") { #copy file
+			unlink ("$n");
+		}elsif(-f "$f" ){
+			unlink ("$f");     			 	
+		}elsif (-d "$n") {#copy folder
+			rmtree ("$n");
+		}elsif(-d "$f" ){
+			rmtree ("$f");    			 	
+		}
+	}
+
+}
+
 sub read_file_cntent {
 	my ($f,$project_dir)=@_;
 	my $n="$project_dir$f";

@@ -171,7 +171,13 @@ sub gen_module_inst {
 			if(!%connected_plugs ){ 
 				my  ($s_type,$s_value,$s_connection_num)=$soc->soc_get_socket_of_instance($id,$i_name);
 				my $v=$soc->soc_get_module_param_value($id,$s_value);
-				if ( length( $v || '' )){ $IO='no';} else {$IO='yes';}
+				if ( length( $v || '' )){ $IO='no';} else {
+					my $con= $soc->object_get_attribute("Unset-intfc" ,"$inst-$port");
+					if(!defined $con){ $IO='yes';}
+					else{
+						$IO='yes' if $con eq 'IO'; 
+					}
+				}
 			}
 		}
 		
@@ -363,6 +369,7 @@ sort keys%params;
 		
 		if($vfile_param_type eq "Localparam"){
 			$local_param_v="$local_param_v\tlocalparam\t$inst_param=$params{$param};\n"; 
+			$top_ip->top_add_localparam($id,$inst_param,$params{$param},$type,$content,$info,$vfile_param_type,$redefine_param);
 		}
 		elsif($vfile_param_type eq "Parameter"){
 			$param_v="$param_v\tparameter\t$inst_param=$params{$param};\n"; 
@@ -657,6 +664,55 @@ foreach my $intfc (@intfcs){
 
 
 
+sub gen_soc_instance_v_no_modfy{
+	my ($soc,$soc_name,$param_pass_v)=@_;
+	my $soc_v;
+	my $processor_en=0;
+	
+
+	my $mm="$soc_name #(\n $param_pass_v \n\t)the_${soc_name}(\n";
+
+	my $top=$soc->soc_get_top();
+	my @intfcs=$top->top_get_intfc_list();
+	
+	my $i=0;
+
+	
+	
+	
+	my $ss="";
+	my $ww="";
+	
+foreach my $intfc (@intfcs){
+	
+	
+		
+	
+		
+			my @ports=$top->top_get_intfc_ports_list($intfc);
+			foreach my $p (@ports){
+			my($inst,$range,$type,$intfc_name,$intfc_port)= $top->top_get_port($p);			
+			$mm="$mm," if ($i);		
+			$mm="$mm\n\t\t.$p($p)";	
+			$i=1;	
+				
+			
+		}	
+		
+		
+	}
+	$mm="$mm\n\t);";
+	add_text_to_string(\$soc_v,"$ww\n");
+	add_text_to_string(\$soc_v,"$mm\n");
+	add_text_to_string(\$soc_v,"$ss\n");
+	add_text_to_string(\$soc_v,"\n endmodule\n");	
+	
+	
+	
+	return $soc_v;
+
+}
+
 
 
 
@@ -759,7 +815,7 @@ source ./jtag_intfc.sh
 				
 			}elsif ($jtag_connect eq 'ALTERA_IMCE'){
 				#TODO add later
-				
+				$prog= "$prog echo \"ALTERA_IMCE runtime programming is not supported yet for programming  $instance_id\"\n";	
 				
 			} else{
 				#disabled check if its connected to jtag_wb via the bus
@@ -775,7 +831,13 @@ source ./jtag_intfc.sh
 							$prog= "$prog \$JTAG_INTFC -n $JTAG_INDEX -s \"$OFSSET\" -e \"$BOUNDRY\" -i  \"$BINFILE\" -c";
 							#print "prog= $prog\n";
 							
-						}
+						}else{
+					$prog= "$prog echo \"JTAG runtime programming is not enabled in  $instance_id\"\n";	
+					
+				}
+					
+				}else{
+					$prog= "$prog echo \"JTAG runtime programming is not enabled in  $instance_id\"\n";	
 					
 				}
 			}
@@ -845,7 +907,105 @@ $jtag
 
 
 
+######################
+#   soc_generate_verilog
+#####################
 
+sub soc_generate_verilatore{ 
+	my ($soc,$sw_path,$name,$params_ref)= @_;
+	my $soc_name=$soc->object_get_attribute('soc_name');
+	my $top_ip=ip_gen->top_gen_new();
+	if(!defined $soc_name){$soc_name='soc'};
+	
+	my @instances=$soc->soc_get_all_instances();
+	my $io_sim_v;
+	my $io_top_sim_v;
+	my $core_id= $soc->object_get_attribute('global_param','CORE_ID');
+	$core_id= 0 if(!defined $core_id);
+	my $param_as_in_v="\tparameter\tCORE_ID=$core_id,
+\tparameter\tSW_LOC=\"$sw_path\"\n,";
+
+	my $param_pass_v="\t.CORE_ID(CORE_ID),\n\t.SW_LOC(SW_LOC)";
+	my $body_v;
+	
+	my ($param_v_all, $local_param_v_all, $wire_def_v_all, $inst_v_all, $plugs_assign_v_all, $sockets_assign_v_all,$io_full_v_all,$io_top_full_v_all);
+	my $wires=soc->new_wires();
+	my $intfc=interface->interface_new();
+	
+	
+	foreach my $id (@instances){
+		my ($param_v, $local_param_v, $wire_def_v, $inst_v, $plugs_assign_v, $sockets_assign_v,$io_full_v,$io_top_full_v)=gen_module_inst($id,$soc,\$io_sim_v,\$io_top_sim_v,\$param_as_in_v,$top_ip,$intfc,$wires,\$param_pass_v);
+		
+		my $inst   	= $soc->soc_get_instance_name($id);
+		add_text_to_string(\$body_v,"/*******************\n*\n*\t$inst\n*\n*\n*********************/\n");
+		
+		add_text_to_string(\$local_param_v_all,"$local_param_v\n")   	if(defined($local_param_v)); 
+		add_text_to_string(\$wire_def_v_all,"$wire_def_v\n")		 	if(defined($wire_def_v));
+		add_text_to_string(\$inst_v_all,$inst_v)					 	if(defined($inst_v));
+		add_text_to_string(\$plugs_assign_v_all,"$plugs_assign_v\n") 	if(defined($plugs_assign_v));
+		add_text_to_string(\$sockets_assign_v_all,"$sockets_assign_v\n")if(defined($sockets_assign_v));
+		add_text_to_string(\$io_full_v_all,"$io_full_v\n")				if(defined($io_full_v));
+		add_text_to_string(\$io_top_full_v_all,"$io_top_full_v\n")			if(defined($io_top_full_v));
+				
+		#print  "$param_v $local_param_v $wire_def_v $inst_v $plugs_assign_v $sockets_assign_v $io_full_v";
+			
+	}	
+	my ($addr_map,$addr_localparam,$module_addr_localparam)= generate_address_cmp($soc,$wires);
+
+	#add functions
+	my $dir = Cwd::getcwd();
+	open my $file1, "<", "$dir/lib/verilog/functions.v" or die;
+	my $functions_all='';
+	while (my $f1 = readline ($file1)) {	
+		 $functions_all="$functions_all $f1 ";
+	}
+	close($file1);
+	my $unused_wiers_v=assign_unconnected_wires($wires,$intfc);
+	
+
+	
+	
+	
+	$soc->object_add_attribute('top_ip',undef,$top_ip);
+	#print @assigned_wires;
+
+	#generate topmodule
+	my $params_v="
+\tparameter\tCORE_ID=$core_id;
+\tparameter\tSW_LOC=\"$sw_path\";\n";
+	
+	
+	my %all_param=soc_get_all_parameters($soc);
+	my @order= soc_get_all_parameters_order($soc);		
+	
+	
+	
+	#replace global parameters
+	my @list=sort keys%{$params_ref};
+	foreach my $p (@list){
+		 my %hash=%{$params_ref}; 
+		 $all_param{$p}= $hash{$p};
+	}
+	
+	foreach my $p (@order){
+		add_text_to_string(\$params_v,"\tlocalparam  $p = $all_param{$p};\n") if(defined $all_param{$p} );			
+	}
+	
+	my $verilator_v =  "
+/*********************
+		${name}
+*********************/
+	
+module ${name} (\n $io_top_sim_v\n);\n";
+	my $ins= gen_soc_instance_v_no_modfy($soc,$soc_name,$param_pass_v);
+	add_text_to_string(\$verilator_v,$functions_all);	
+	add_text_to_string(\$verilator_v,$params_v."\n".$io_top_full_v_all);
+	add_text_to_string(\$verilator_v,$ins);
+	my ($readme,$prog)=gen_system_info($soc,$param_as_in_v); 
+	return ($verilator_v);
+
+
+}	
 
 
 
