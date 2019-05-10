@@ -3,9 +3,6 @@
 
 
 module testbench_modelsim;
-parameter MAX_PCK_SIZ =10 ,
-          PCK_SIZw    = log2(MAX_PCK_SIZ+1);
-
 
     function integer log2;
       input integer number; begin   
@@ -16,26 +13,24 @@ parameter MAX_PCK_SIZ =10 ,
       end   
     endfunction // log2 
 
-localparam RATIOw=log2(100);
+    localparam RATIOw=log2(100);
+
+    reg     reset ,clk;
+    reg     start;
+    wire    done;
+    reg [RATIOw-1:0] ratio;
 
 
-reg     reset ,clk;
-reg     start;
-wire    done;
-reg [RATIOw-1:0] ratio;
-reg [PCK_SIZw-1 :   0]pck_size_in;
 
 
-
-testbench_sub 
-uut (
-    .reset  (reset) ,
-    .clk        (clk),
-    .start  (start),
-    .ratio   (ratio), 
-    .pck_size_in(pck_size_in),
-    .all_done (done)
-);
+    testbench_sub 
+    uut (
+        .reset  (reset) ,
+        .clk        (clk),
+        .start  (start),
+        .ratio   (ratio), 
+        .all_done (done)
+    );
 
 
 initial begin 
@@ -48,8 +43,8 @@ integer i;
 initial begin 
     reset = 1'b1;
     start = 1'b0;
-    pck_size_in=4;
-    ratio =50;
+  
+    ratio =90;
     i=0;
     #40
     repeat(8) begin 
@@ -78,47 +73,51 @@ initial begin
     #40
     @(posedge clk) reset = 1'b0;
     
-end
-    
-    
+end    
 endmodule
 
 
-
-
-
 module testbench_sub #(
-    parameter V=2,
-    parameter B=2,
-    parameter NX=8,
-    parameter NY=8,
+    parameter V=1,
+    parameter B=4,
+    parameter T1=3,
+    parameter T2=3,
+    parameter T3=2,
     parameter C=1,
     parameter Fpay=32,
     parameter MUX_TYPE="ONE_HOT",
     parameter VC_REALLOCATION_TYPE="NONATOMIC",
     parameter COMBINATION_TYPE="COMB_NONSPEC",
     parameter FIRST_ARBITER_EXT_P_EN=1,
-    parameter TOPOLOGY="MESH",
-    parameter ROUTE_NAME="XY",
+   // parameter TOPOLOGY="LINE",
+  //  parameter TOPOLOGY="FATTREE",
+ parameter TOPOLOGY="TREE",
+    // parameter TOPOLOGY="MESH",
+   //  parameter ROUTE_NAME="XY",
+// parameter ROUTE_NAME="DUATO",
+    // parameter  ROUTE_NAME= "NCA_RND_UP",
+    parameter  ROUTE_NAME= "NCA_STRAIGHT_UP",
     parameter CONGESTION_INDEX=7,
-    parameter ROUTE_SUBFUNC= "XY",
+    
     parameter AVC_ATOMIC_EN= 0,
     parameter ADD_PIPREG_AFTER_CROSSBAR=0,
     parameter CVw=(C==0)? V : C * V,
     parameter [CVw-1:   0] CLASS_SETTING = 4'b1111, // shows how each class can use VCs   
     parameter [V-1  :   0] ESCAP_VC_MASK = 2'b10,  // mask scape vc, valid only for full adaptive 
     parameter SSA_EN=  "NO",//"YES", // "YES" , "NO"    
-    parameter SWA_ARBITER_TYPE = "RRA",//"RRA","WRRA". SWA: Switch Allocator.  RRA: Round Robin Arbiter. WRRA Weighted Round Robin Arbiter          
-    parameter WEIGHTw=6, // WRRA weights' max width
+    parameter SWA_ARBITER_TYPE = "WRRA",//"RRA","WRRA". SWA: Switch Allocator.  RRA: Round Robin Arbiter. WRRA Weighted Round Robin Arbiter          
+    parameter WEIGHTw=7, // WRRA weights' max width
+    //hardware minimum packet size support
+    parameter MIN_PCK_SIZE=2,  
   
     parameter C0_p=100,
     parameter C1_p=0,
     parameter C2_p=0,
     parameter C3_p=0,
-   // parameter TRAFFIC="HOTSPOT",
-   //parameter TRAFFIC="TRANSPOSE1",
+   // parameter TRAFFIC="HOTSPOT",   
+ // parameter TRAFFIC="TRANSPOSE1",
    parameter TRAFFIC="RANDOM", 
-   // parameter TRAFFIC="CUSTOM",
+ //  parameter TRAFFIC="CUSTOM",
     parameter HOTSPOT_PERCENTAGE=100,
     parameter HOTSPOT_NUM=1,
     parameter HOTSPOT_CORE_1=0,
@@ -129,112 +128,87 @@ module testbench_sub #(
     parameter HOTSPOT_SEND_EN=0,
     parameter MAX_PCK_NUM=256000,
     parameter MAX_SIM_CLKs=1000000,
-    parameter MAX_PCK_SIZ=10,
+   
     parameter TIMSTMP_FIFO_NUM=16,
-    parameter ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY"   )?    "DETERMINISTIC" : 
-                        (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE", 
-    parameter DEBUG_EN=1,
-    parameter AVG_LATENCY_METRIC= "HEAD_2_TAIL"
   
-    
-
-    
+    parameter DEBUG_EN=1,
+    parameter AVG_LATENCY_METRIC= "HEAD_2_TAIL",
+    //simulation min and max packet size. The injeced packet take a size randomly selected between min and max
+    parameter MIN_PACKET_SIZE=3,
+    parameter MAX_PACKET_SIZE=3
   
     )
     (
         reset ,
         clk,
         start,
-        ratio,
-        pck_size_in, 
+        ratio,        
         all_done
         
     );
-       localparam CONGw= (CONGESTION_INDEX==3)?  3:
-                      (CONGESTION_INDEX==5)?  3:
-                      (CONGESTION_INDEX==7)?  3:
-                      (CONGESTION_INDEX==9)?  3:
-                      (CONGESTION_INDEX==10)? 4:
-                      (CONGESTION_INDEX==12)? 3:2;
-     
+           
     
-   
-   
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end 	   
-      end   
-    endfunction // log2 
-    
-    function integer CORE_NUM;
-        input integer x,y;
-        begin
-            CORE_NUM = ((y * NX) +  x);
-        end
-    endfunction
-    
-        
+    `define INCLUDE_TOPOLOGY_LOCALPARAM
+   `include "../src_noc/topology_localparam.v"
+  
 
+   
     localparam      Fw      =   2+V+Fpay,
-                    NC     =	(TOPOLOGY=="RING" || TOPOLOGY=="LINE")? NX    :   NX*NY, //number of cores
-                    Xw      =   log2(NX),
-                    Yw      =   log2(NY) , 
+                     /* verilator lint_off WIDTH */
+                    
+                    NEw=log2(NE),
+                    DISTw = (TOPOLOGY=="FATTREE" || TOPOLOGY == "TREE") ? log2(2*L+1): log2(NR+1),
+                    /* verilator lint_on WIDTH */
+                    
                     Cw      =   (C>1)? log2(C): 1,
-                    NCw     =   log2(NC),
+                   // NEw     =   log2(NE),
                     RATIOw  =   log2(100),
-                    NCV     =   NC  * V,
-                    NCFw    =   NC  * Fw,
+                    NEV     =   NE  * V,
+                    NEFw    =   NE  * Fw,
                     PCK_CNTw=   log2(MAX_PCK_NUM+1),
                     CLK_CNTw=   log2(MAX_SIM_CLKs+1),
-                    PCK_SIZw=   log2(MAX_PCK_SIZ+1),
-                    DSTw = log2(NC+1);
+                    PCK_SIZw=   log2(MAX_PACKET_SIZE+1),
+                    AVG_PCK_SIZ = (MAX_PACKET_SIZE + MIN_PACKET_SIZE)/2 ;
+                   
                     
-
-
-
-
+  
     input                   reset ,clk,  start;
-    input   [PCK_SIZw-1:0]  pck_size_in;
     input   [RATIOw-1  :0]  ratio; 
     output                  all_done;
     
     
-    wire [Fw-1      :   0]  ni_flit_out                 [NC-1           :0];   
-    wire [NC-1      :   0]  ni_flit_out_wr; 
-    wire [V-1       :   0]  ni_credit_in                [NC-1           :0];
-    wire [Fw-1      :   0]  ni_flit_in                  [NC-1           :0];   
-    wire [NC-1      :   0]  ni_flit_in_wr;  
-    wire [V-1       :   0]  ni_credit_out               [NC-1           :0];    
-    wire [NCFw-1    :   0]  flit_out_all;
-    wire [NC-1      :   0]  flit_out_wr_all;
-    wire [NCV-1     :   0]  credit_in_all;
-    wire [NCFw-1    :   0]  flit_in_all;
-    wire [NC-1      :   0]  flit_in_wr_all;  
-    wire [NCV-1     :   0]  credit_out_all;
-    wire [NC-1      :   0]  hdr_flit_sent;
-    wire [Xw-1      :   0]  dest_x                  [NC-1           :0];   
-    wire [Yw-1      :   0]  dest_y                  [NC-1           :0];    
-    wire [Cw-1      :   0]  pck_class_in            [NC-1           :0]; 
-    wire [NC-1      :   0]  deafult_class_num;
+    wire [Fw-1      :   0]  ni_flit_out                 [NE-1           :0];   
+    wire [NE-1      :   0]  ni_flit_out_wr; 
+    wire [V-1       :   0]  ni_credit_in                [NE-1           :0];
+    wire [Fw-1      :   0]  ni_flit_in                  [NE-1           :0];   
+    wire [NE-1      :   0]  ni_flit_in_wr;  
+    wire [V-1       :   0]  ni_credit_out               [NE-1           :0];    
+    wire [NEFw-1    :   0]  flit_out_all;
+    wire [NE-1      :   0]  flit_out_wr_all;
+    wire [NEV-1     :   0]  credit_in_all;
+    wire [NEFw-1    :   0]  flit_in_all;
+    wire [NE-1      :   0]  flit_in_wr_all;  
+    wire [NEV-1     :   0]  credit_out_all;
+    wire [NE-1      :   0]  hdr_flit_sent;
+    wire [EAw-1     :   0]  dest_e_addr                  [NE-1           :0];   
+    wire [Cw-1      :   0]  pck_class_in            [NE-1           :0]; 
+  
     
-   
+    wire   [PCK_SIZw-1:0]  pck_size_in [NE-1           :0]; 
        
     
     
- //   wire    [NC-1           :0] report;
+ //   wire    [NE-1           :0] report;
     reg     [CLK_CNTw-1             :0] clk_counter;
     
     
   
-    wire    [PCK_CNTw-1     :0] pck_counter     [NC-1        :0];
-    wire    [NC-1           :0] noc_report;
-    wire    [NC-1           :0] update;
-    wire    [CLK_CNTw-1     :0] time_stamp      [NC-1           :0];
-    wire    [DSTw-1         :0] distance        [NC-1           :0];    
-    wire    [Cw-1           :0] msg_class       [NC-1           :0];    
+    wire    [PCK_CNTw-1     :0] pck_counter     [NE-1        :0];
+    wire    [NE-1           :0] noc_report;
+    wire    [NE-1           :0] update;
+    wire    [CLK_CNTw-1     :0] time_stamp      [NE-1           :0];
+    wire    [DISTw-1         :0] distance        [NE-1           :0];    
+    wire    [Cw-1           :0] msg_class       [NE-1           :0];    
     
     reg                         count_en;
   
@@ -250,13 +224,13 @@ module testbench_sub #(
         end 
     end//always
     
-
-        
+       
        noc #(
         .V(V),
         .B(B), 
-        .NX(NX),
-        .NY(NY),
+        .T1(T1),
+        .T2(T2),
+	.T3(T3),
         .C(C),    
         .Fpay(Fpay), 
         .MUX_TYPE(MUX_TYPE),
@@ -267,7 +241,6 @@ module testbench_sub #(
         .ROUTE_NAME(ROUTE_NAME),
         .CONGESTION_INDEX(CONGESTION_INDEX),
         .DEBUG_EN (DEBUG_EN),
-        .ROUTE_SUBFUNC(ROUTE_SUBFUNC),
         .AVC_ATOMIC_EN(AVC_ATOMIC_EN),
         .ADD_PIPREG_AFTER_CROSSBAR(ADD_PIPREG_AFTER_CROSSBAR),
         .CVw(CVw),
@@ -275,7 +248,8 @@ module testbench_sub #(
         .ESCAP_VC_MASK(ESCAP_VC_MASK), //
         .SSA_EN(SSA_EN),
         .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
-        .WEIGHTw(WEIGHTw) 
+        .WEIGHTw(WEIGHTw),
+        .MIN_PCK_SIZE(MIN_PCK_SIZE)
                
 
     )
@@ -290,9 +264,7 @@ module testbench_sub #(
         .reset(reset),
         .clk(clk)
     );
-     
-    
-        
+      
         
       
     
@@ -306,165 +278,198 @@ end
     
     
     
-    genvar i,x,y;
+     function integer addrencode;
+        input integer pos,k,n,kw;
+        integer pow,i,tmp;begin
+        addrencode=0;
+        pow=1;
+        for (i = 0; i <n; i=i+1 ) begin 
+            tmp=(pos/pow);
+            tmp=tmp%k;
+            tmp=tmp<<i*kw;
+            addrencode=addrencode | tmp;
+            pow=pow * k;
+        end
+        end   
+    endfunction // log2 
+    
+    
+    genvar i;
     
     
     generate 
-    for (x=0;   x<NX; x=x+1) begin :x_loop1
-        for (y=0;   y<NY;   y=y+1) begin: y_loop1
-                localparam IP_NUM   =   CORE_NUM(x,y);  
+    for(i=0; i< NE; i=i+1) begin : endpoints
+        //connected router encoded address
+        localparam CURRENTR=  i/T3;
+        localparam CURRENTX= (TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE")?  addrencode(i/K,K,L,Kw) : CURRENTR%T1;
+        localparam CURRENTY= (TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE")?  0 : CURRENTR/T1;
+        localparam [RAw-1 : 0] CURRENT_ADDR =  (CURRENTY<<NXw) + CURRENTX; 
+        //Endpoint encoded address
+        localparam ENDPL= (TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE")? 0 :(T3>1)? i%T3: 0;
+        localparam ENDPX= (TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE")?  addrencode(i,K,L,Kw) : CURRENTX;
+        localparam ENDPY= (TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE")? 0 : CURRENTY;    
+        localparam [EAw-1 : 0] ENDP_ADRR = (ENDPL<<(NXw+NYw)) + (ENDPY<<NXw) + ENDPX;
+       
             
-            traffic_gen #(
-                .V(V),
-                .B(B),
-                .NX(NX),
-                .NY(NY),
-                .Fpay(Fpay),
-                .C(C),
-                .VC_REALLOCATION_TYPE(VC_REALLOCATION_TYPE),
-                .TOPOLOGY(TOPOLOGY),
-                .ROUTE_NAME(ROUTE_NAME),
-                .MAX_PCK_NUM(MAX_PCK_NUM),
-                .MAX_SIM_CLKs(MAX_SIM_CLKs),
-                .MAX_PCK_SIZ(MAX_PCK_SIZ),
-                .MAX_RATIO(100),
-                .TIMSTMP_FIFO_NUM(TIMSTMP_FIFO_NUM),
-                .WEIGHTw(WEIGHTw)
-            )
-            the_traffic_gen
-            (
-  //input          
-                .ratio (ratio),
-                .avg_pck_size_in(pck_size_in),  
-                .pck_size_in(pck_size_in),
-                .current_x(x[Xw-1  :   0]),
-                .current_y(y[Yw-1  :   0]),
-                .dest_x(dest_x[IP_NUM]),
-                .dest_y(dest_y[IP_NUM]), 
-                .pck_class_in(pck_class_in[IP_NUM]),  
-                .init_weight({{(WEIGHTw-1){1'b0}},1'b1}),
-   
-   //output
-                .hdr_flit_sent(hdr_flit_sent[IP_NUM]),
-              	.pck_number(pck_counter[IP_NUM]),
-            	.reset(reset),
-            	.clk(clk),
-            	.start(start),
-            	.sent_done(),
-            	.update(update[IP_NUM]),
-            	.time_stamp_h2h(time_stamp[IP_NUM]),
-            	.time_stamp_h2t(),
-            	.distance(distance[IP_NUM]),
-                .src_x(),
-                .src_y(),
-            	.pck_class_out(msg_class[IP_NUM]),
-   //noc         	
-            	.flit_out  (ni_flit_out [IP_NUM]),  
-                .flit_out_wr (ni_flit_out_wr [IP_NUM]),  
-                .credit_in  (ni_credit_in [IP_NUM]), 
-                .flit_in (ni_flit_in [IP_NUM]),  
-                .flit_in_wr (ni_flit_in_wr   [IP_NUM]),  
-                .credit_out  (ni_credit_out [IP_NUM]),
-            	.report (1'b0)
-            );
+        traffic_gen #(
+            .V(V),
+            .B(B),
+            .T1(T1),
+            .T2(T2),
+            .T3(T3),
+            .Fpay(Fpay),
+            .C(C),
+            .VC_REALLOCATION_TYPE(VC_REALLOCATION_TYPE),
+            .TOPOLOGY(TOPOLOGY),
+            .ROUTE_NAME(ROUTE_NAME),
+            .MAX_PCK_NUM(MAX_PCK_NUM),
+            .MAX_SIM_CLKs(MAX_SIM_CLKs),
+            .MAX_PCK_SIZ(MAX_PACKET_SIZE),
+            .MAX_RATIO(100),
+            .TIMSTMP_FIFO_NUM(TIMSTMP_FIFO_NUM),
+            .WEIGHTw(WEIGHTw),
+            .MIN_PCK_SIZE(MIN_PCK_SIZE)
+        )
+        the_traffic_gen
+        (
+       
+            .ratio (ratio),
+            .avg_pck_size_in(AVG_PCK_SIZ[PCK_SIZw-1  :0] ),  
+            .pck_size_in(pck_size_in[i]),
+            .current_r_addr(CURRENT_ADDR),
+            .current_e_addr(ENDP_ADRR),
+            .dest_e_addr(dest_e_addr[i]),
+            .pck_class_in(pck_class_in[i]),  
+            .init_weight({{(WEIGHTw-1){1'b0}},1'b1}),
+            .hdr_flit_sent(hdr_flit_sent[i]),
+            .pck_number(pck_counter[i]),
+            .reset(reset),
+            .clk(clk),
+            .start(start),
+            .stop(1'b0),
+            .sent_done(),
+            .update(update[i]),
+            .time_stamp_h2h(time_stamp[i]),
+            .time_stamp_h2t(),
+            .distance(distance[i]),
+            .src_e_addr( ),
+            .pck_class_out(msg_class[i]),
+            .flit_out  (ni_flit_out [i]),  
+            .flit_out_wr (ni_flit_out_wr [i]),  
+            .credit_in  (ni_credit_in [i]), 
+            .flit_in (ni_flit_in [i]),  
+            .flit_in_wr (ni_flit_in_wr   [i]),  
+            .credit_out  (ni_credit_out [i]),
+            .report (1'b0)
+    );
             
                 
                 
            
-            assign  ni_flit_in      [IP_NUM] =   flit_out_all    [(IP_NUM+1)*Fw-1    : IP_NUM*Fw];   
-            assign  ni_flit_in_wr   [IP_NUM] =   flit_out_wr_all [IP_NUM]; 
-            assign  credit_in_all   [(IP_NUM+1)*V-1 : IP_NUM*V]     =   ni_credit_out   [IP_NUM];  
-            assign  flit_in_all     [(IP_NUM+1)*Fw-1    : IP_NUM*Fw]    =   ni_flit_out     [IP_NUM];
-            assign  flit_in_wr_all  [IP_NUM] =   ni_flit_out_wr  [IP_NUM];
-            assign  ni_credit_in    [IP_NUM] =   credit_out_all  [(IP_NUM+1)*V-1 : IP_NUM*V];
-    
-            assign  deafult_class_num[IP_NUM]= x[0] ^ y[0];
-    
+        assign  ni_flit_in      [i] =   flit_out_all    [(i+1)*Fw-1    : i*Fw];   
+        assign  ni_flit_in_wr   [i] =   flit_out_wr_all [i]; 
+        assign  credit_in_all   [(i+1)*V-1 : i*V]     =   ni_credit_out   [i];  
+        assign  flit_in_all     [(i+1)*Fw-1    : i*Fw]    =   ni_flit_out     [i];
+        assign  flit_in_wr_all  [i] =   ni_flit_out_wr  [i];
+        assign  ni_credit_in    [i] =   credit_out_all  [(i+1)*V-1 : i*V];    
+        
   
 
- pck_class_in_gen #(
-    .NX(NX),
-    .NY(NY),
-    .TOPOLOGY(TOPOLOGY),
-    .C(C),
-    .C0_p(C0_p),
-    .C1_p(C1_p),
-    .C2_p(C2_p),
-    .C3_p(C3_p),
-    .MAX_PCK_NUM(MAX_PCK_NUM)
-   )
-   the_pck_class_in_gen
-   (
-    .en(hdr_flit_sent[IP_NUM]),
-    .pck_class_in(pck_class_in[IP_NUM]),
-    .core_num(IP_NUM[NCw-1  :   0] ),
-    .pck_number(pck_counter[IP_NUM]),
-    .reset(reset),
-    .deafult_class_num(deafult_class_num[IP_NUM]),
-    .clk(clk)
-   );
+         pck_class_in_gen #(
+            .NE(NE),
+            .C(C),
+            .C0_p(C0_p),
+            .C1_p(C1_p),
+            .C2_p(C2_p),
+            .C3_p(C3_p),
+            .MAX_PCK_NUM(MAX_PCK_NUM)
+           )
+           the_pck_class_in_gen
+           (
+            .en(hdr_flit_sent[i]),
+            .pck_class_in(pck_class_in[i]),
+            .core_num(i[NEw-1  :   0] ),
+            .pck_number(pck_counter[i]),
+            .reset(reset),
+            .clk(clk)
+           );
    
    
    
   
-   pck_dst_gen #(
-    .NX(NX),
-    .NY(NY),
-    .TOPOLOGY(TOPOLOGY),
-    .TRAFFIC(TRAFFIC),
-    .MAX_PCK_NUM(MAX_PCK_NUM),
-    .HOTSPOT_PERCENTAGE(HOTSPOT_PERCENTAGE),
-    .HOTSPOT_NUM(HOTSPOT_NUM),
-    .HOTSPOT_CORE_1(HOTSPOT_CORE_1),
-    .HOTSPOT_CORE_2(HOTSPOT_CORE_2),
-    .HOTSPOT_CORE_3(HOTSPOT_CORE_3),
-    .HOTSPOT_CORE_4(HOTSPOT_CORE_4),
-    .HOTSPOT_CORE_5(HOTSPOT_CORE_5),
-    .HOTSPOT_SEND_EN(HOTSPOT_SEND_EN)
-   )
-   the_pck_dst_gen
-   (
-    .reset(reset),
-    .clk(clk),
-    .en(hdr_flit_sent[IP_NUM]),
-    .core_num(IP_NUM[NCw-1  :   0]),
-    .pck_number(pck_counter[IP_NUM]),
-    .current_x(x[Xw-1  :   0]),
-    .current_y(y[Yw-1  :   0]),
-    .dest_x(dest_x[IP_NUM]),
-    .dest_y(dest_y[IP_NUM]),
-    .valid_dst()
-   );
+       pck_dst_gen #(
+        .T1(T1),
+        .T2(T2),
+        .T3(T3),
+        .EAw(EAw),
+        .NE(NE),
+        .TOPOLOGY(TOPOLOGY),
+        .TRAFFIC(TRAFFIC),
+        .MAX_PCK_NUM(MAX_PCK_NUM),
+        .HOTSPOT_PERCENTAGE(HOTSPOT_PERCENTAGE),
+        .HOTSPOT_NUM(HOTSPOT_NUM),
+        .HOTSPOT_CORE_1(HOTSPOT_CORE_1),
+        .HOTSPOT_CORE_2(HOTSPOT_CORE_2),
+        .HOTSPOT_CORE_3(HOTSPOT_CORE_3),
+        .HOTSPOT_CORE_4(HOTSPOT_CORE_4),
+        .HOTSPOT_CORE_5(HOTSPOT_CORE_5),
+        .HOTSPOT_SEND_EN(HOTSPOT_SEND_EN)
+       )
+       the_pck_dst_gen
+       (
+        .reset(reset),
+        .clk(clk),
+        .en(hdr_flit_sent[i]),
+        .core_num(i[NEw-1  :   0]),
+        .pck_number(pck_counter[i]),
+        .current_e_addr(ENDP_ADRR),
+        .dest_e_addr(dest_e_addr[i]),
+        .valid_dst()
+       );
+       
+       pck_size_gen #(
+         .MIN(MIN_PACKET_SIZE),
+         .MAX(MAX_PACKET_SIZE)
+       )
+       the_pck_siz_gen
+       (
+        .reset(reset),
+        .clk(clk),
+        .en(hdr_flit_sent[i]),
+        .pck_size( pck_size_in[i]) 
+       );
   
     
-    
-    
-            //assign class_hdr  [IP_NUM]    =   8'HFF;  
+            //assign class_hdr  [i]    =   8'HFF;  
             
             always @(posedge clk or posedge reset)begin 
-                noc_analyze(    update      [IP_NUM],
-                                    noc_report  [IP_NUM],
-                                    time_stamp  [IP_NUM],
-                                    {{(32-DSTw){1'b0}},distance        [IP_NUM]},
-                                    msg_class   [IP_NUM]
+                            
+                noc_analyze(    update      [i],
+                                    noc_report  [i],
+                                    time_stamp  [i],
+                                    {{(32-DISTw){1'b0}},distance        [i]},
+                                    msg_class   [i],
+                                    ni_flit_in_wr   [i]
+                                    
                                     );
             end//always
             
             
                         
         end
-    end
+   
+   
 endgenerate
 
        
-    reg[NC-1    :0] ratio_report;
+    reg[NE-1    :0] ratio_report;
   
    
     
     assign noc_report[0]= all_done;
-    assign noc_report [NC-1  :   1]=0;
+    assign noc_report [NE-1  :   1]=0;
     generate 
-    for(i=0; i< NC; i=i+1) begin : l2
+    for(i=0; i< NE; i=i+1) begin : l2
         //for(i=3; i< 4; i=i+1) begin : ll
         always @(posedge clk or posedge reset ) begin
         
@@ -496,7 +501,7 @@ endgenerate
         fp = $fopen("Result.txt","w");
         `endif  
         $fwrite(fp,"TRAFFIC is   =%s\n",TRAFFIC);
-        $fwrite(fp,"Packet size in flit=%d\n ",pck_size_in);
+       
         //$fwrite(fp,"ROUTE_ALGRMT  =%s",ROUTE_ALGRMT);
         $fwrite(fp,"VC_REALLOCATION_TYPE = %s\n",VC_REALLOCATION_TYPE);
         $fwrite(fp,"COMBINATION_TYPE    = %s\n",COMBINATION_TYPE);
@@ -510,7 +515,7 @@ endgenerate
     integer total_clk;
     real total_pck;
     integer total_router;
-    real      ratio_avg;
+   
         
 task injection_ratio ;
         input       inject_done;
@@ -531,16 +536,17 @@ task injection_ratio ;
                     total_clk   =   total_clk   +   clk_count;
                     total_pck   =   total_pck   +   packet_num;
                     total_router    = total_router +1'b1;
-                    ratio_avg <= (total_clk>0)? (total_pck* pck_size_in*100)/total_clk:0;
+                    
                 end
             end
             if(inject_report_in) begin 
                     
     		    $display("simulation clk number=%d",clk_counter);
-                    $display("Injection ratio is =%f",ratio_avg);
-                    $display("total_pck      =%f",total_pck);            
+                    
+                    $display("total_pck injected      =%f",total_pck);            
                     $display("TRAFFIC is   =%s",TRAFFIC);
-                    $display("Packet size in flit=%d ",pck_size_in);
+                    $display("Min Packet size in flit=%d ",MIN_PACKET_SIZE);
+                    $display("Max Packet size in flit=%d ",MAX_PACKET_SIZE);
                     $display("total_latency_accum=%d ",total_clk);
                     $display("ROUTE_NAME    =%s",ROUTE_NAME);
                     $display("ROUTE_TYPE =%s",ROUTE_TYPE);                  
@@ -549,7 +555,7 @@ task injection_ratio ;
                     $display("VC_NUM_PER_PORT = %d",V);
                     $display("BUFFER_NUM_PER_VC = %d",B);
                     
-                    $fwrite(fp,"\n%f,",ratio_avg);
+                    
                             
             end
         end//else
@@ -562,7 +568,7 @@ task injection_ratio ;
 /* 
 always @(posedge clk or posedge reset) begin 
     if (reset)  noc_report <=0;
-    else            noc_report <={ {(NC-1){1'b0}},report[0]}; // print just one report
+    else            noc_report <={ {(NE-1){1'b0}},report[0]}; // print just one report
 end
 */
 
@@ -570,7 +576,7 @@ end
 
 
 
-    integer             total_pck_num;
+    integer             total_pck_num,total_flit_num;
     real                avg_latency_per_hop,sum,sum2,tmp1,tmp2,avg_latency;
     real                max_latency_per_hop;
     integer             total_pck_num_per_class         [C-1    :   0];
@@ -579,7 +585,7 @@ end
     real                max_latency_per_hop_per_class [C-1  :   0];
     real                sum_per_class [C-1  :   0];
     real                sum2_per_class[C-1  :   0];
-    
+    real                throughput_avg;
     
     integer cc;
     task noc_analyze; 
@@ -588,10 +594,12 @@ end
         input integer   clk_num;
         input integer   offset;
         input integer  class_num;
+        input ni_flit_in_wr;
     
         begin
     //@(posedge clk)  
         if (reset) begin 
+            total_flit_num=0;
             total_pck_num       =0;
             sum                     =0;
             sum2                    =0;
@@ -605,7 +613,10 @@ end
             end//for
         end else begin 
             //measure the distance 
+            if(ni_flit_in_wr) total_flit_num = total_flit_num+1;
+            
             if(update_i)    begin 
+              //  $display("offset=%u",offset);
                 tmp1                = (offset)? clk_num:0;
                 tmp2                = (offset)? tmp1/offset: 0;
                 total_pck_num   =total_pck_num+1;
@@ -616,6 +627,7 @@ end
                 max_latency_per_hop = (tmp2> max_latency_per_hop)? tmp2 : max_latency_per_hop;
                 total_pck_num_per_class[class_num]= total_pck_num_per_class[class_num]+1'b1;
                 max_latency_per_hop_per_class[class_num]=(tmp2> max_latency_per_hop_per_class[class_num])? tmp2 : max_latency_per_hop_per_class[class_num];
+                throughput_avg = (clk_counter)? (total_flit_num*100)/clk_counter:0;
             //  $fwrite(fp,"%f  \t : offset=%d  clk_num=%d\n", tmp2,offset,clk_num);
                 if(total_pck_num>0 && sum) begin 
                     avg_latency_per_hop <= sum/total_pck_num;
@@ -628,7 +640,9 @@ end
             end
             if(Report) begin 
             //  $display("%d :TOPOLOGY =%s\n ROUTE_ALGRMT =%s\n NEW_VC_ALOC_MTD =%s\n VC_NUM_PER_PORT =%d\n BUFFER_NUM_PER_VC =%d\n CONGESTION_ANLZ_LEVEL=%d\n",$time,TOPOLOGY,ROUTE_ALGRMT,NEW_VC_ALOC_MTD,VC_NUM_PER_PORT,BUFFER_NUM_PER_VC,CONGESTION_ANLZ_LEVEL);   
-                $display(" Total number of packet = %d \n avrage latency per hop=%f \n avg_latency=%f\n",total_pck_num,avg_latency_per_hop,avg_latency);
+               
+                $display(" Total number of recived flits  = %d \n average throughput=%f \n" ,total_flit_num,throughput_avg);
+                $display(" Total number of recived packets  = %d \n avrage latency per hop=%f \n avg_latency=%f\n",total_pck_num,avg_latency_per_hop,avg_latency);
                 $display(" max_latency_per_hop= %d ",max_latency_per_hop); 
                 $fwrite(fp,"%d,%f,%f,%f,",total_pck_num,avg_latency_per_hop,avg_latency,max_latency_per_hop);
                 for(cc=0;cc<C;cc=cc+1'b1)begin 

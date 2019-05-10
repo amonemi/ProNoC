@@ -33,46 +33,37 @@
 `timescale 1ns / 1ps
 // synthesis translate_on
 
-
 module  ni_master #(    
     parameter MAX_TRANSACTION_WIDTH=10, // Maximum transaction size will be 2 power of MAX_DMA_TRANSACTION_WIDTH words 
     parameter MAX_BURST_SIZE =256, // in words
     parameter DEBUG_EN = 1, 
     //NoC parameters
-    parameter CLASS_HDR_WIDTH     =8,
-    parameter ROUTING_HDR_WIDTH   =8,
-    parameter DST_ADR_HDR_WIDTH  =8,
-    parameter SRC_ADR_HDR_WIDTH   =8,
     parameter TOPOLOGY =    "MESH",//"MESH","TORUS","RING" 
     parameter ROUTE_NAME    =   "XY",
-    parameter NX = 4,   // number of node in x axis
-    parameter NY = 4,   // number of node in y axis
+    parameter T1 = 4,   // number of node in x axis
+    parameter T2 = 4,   // number of node in y axis
+    parameter T3 = 1,
     parameter C = 4,    //  number of flit class 
     parameter V=4,
     parameter B = 4,
     parameter Fpay = 32,
     parameter CRC_EN= "NO",// "YES","NO" if CRC is enable then the CRC32 of all packet data is calculated and sent via tail flit. 
     parameter SWA_ARBITER_TYPE = "RRA", // RRA WRRA
-    parameter WEIGHTw          = 4, // weight width of WRRA
-   
+    parameter WEIGHTw          = 4, // weight width of WRRA   
     //wishbone port parameters
     parameter Dw            =   32,
     parameter S_Aw          =   7,
     parameter M_Aw          =   32,
     parameter TAGw          =   3,
     parameter SELw          =   4
-
-
 )
 (
-     // 
+    //general 
     reset,
-    clk,
-    
-
-      //noc interface  
-    current_x,
-    current_y,   
+    clk,    
+    //noc interface  
+    current_r_addr,
+    current_e_addr,
     flit_out,     
     flit_out_wr,   
     credit_in,
@@ -80,7 +71,7 @@ module  ni_master #(
     flit_in_wr,   
     credit_out,     
      
-     //wishbone slave interface signals
+    //wishbone slave interface signals
     s_dat_i,
     s_sel_i,
     s_addr_i,  
@@ -90,9 +81,7 @@ module  ni_master #(
     s_we_i,    
     s_dat_o,
     s_ack_o,
-    
-
-   
+       
     //wishbone master rd interface signals
     m_send_sel_o,
     m_send_addr_o,
@@ -104,8 +93,7 @@ module  ni_master #(
     m_send_ack_i,    
 
 
-     //wishbone master wr interface signals
-     
+    //wishbone master wr interface signals
     m_receive_sel_o,
     m_receive_dat_o,
     m_receive_addr_o,
@@ -119,33 +107,20 @@ module  ni_master #(
     irq    
 
 );
-/* verilator lint_off WIDTH */ 
-     localparam P=  (TOPOLOGY=="RING" || TOPOLOGY=="LINE")? 3 : 5;   
-     localparam ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
-                           (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE";    
-/* verilator lint_on WIDTH */ 
 
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end       
-      end   
-    endfunction // log2 
+    `define INCLUDE_TOPOLOGY_LOCALPARAM
+    `include "topology_localparam.v" 
 
-     localparam Fw     =    2+V+Fpay, //flit width
-                Xw =   log2(NX),
-                Yw =   log2(NY),
-                Cw =   log2(C);
-
+    localparam 
+        Fw = 2+V+Fpay, //flit width
+        Cw = log2(C);
  
-    input reset,clk;
-   
+    input reset,clk;   
 
      // NOC interfaces
-    input   [Xw-1   :   0]  current_x;
-    input   [Yw-1   :   0]  current_y;
+    input   [RAw-1   :   0]  current_r_addr;
+    input   [EAw-1   :   0]  current_e_addr;
+
     output  [Fw-1   :   0]  flit_out;     
     output                  flit_out_wr;   
     input   [V-1    :   0]  credit_in;
@@ -164,9 +139,7 @@ module  ni_master #(
     input                           s_we_i;
     
     output  reg    [Dw-1       :   0]  s_dat_o;
-    output  reg                     s_ack_o;
-  
-    
+    output  reg                     s_ack_o;   
     
     //wishbone read master interface signals
     output  [SELw-1          :   0] m_send_sel_o;
@@ -189,12 +162,9 @@ module  ni_master #(
     input                           m_receive_ack_i;   
     
       //Interrupt  interface
-    output                          irq;
+    output                          irq;  
   
-  
-    wire                            s_ack_o_next;
-    
-     
+    wire                            s_ack_o_next;    
     
     localparam 
         CHw=log2(V),
@@ -219,9 +189,7 @@ module  ni_master #(
         11  :   RECEIVE_MAX_BUFF_SIZ      // The reciver allocated buffer size in words. If the packet size is bigger than the buffer size the rest of ot will be discarred
         12  :   ERROR_FLAGS	// errors:  {burst_size_error,send_data_size_error,crc_miss_match,rcive_buff_ovrflw_err}; 
          
-		                    
-                      
-    [4+Vw:4]
+      [4+Vw:4]
                 : Virtual channel num       
       
     */
@@ -231,9 +199,7 @@ module  ni_master #(
     wire [CHw-1 :   0] vc_addr = s_addr_i [CHANNEL_REGw+CHw-1	:	CHANNEL_REGw];
     wire [CHANNEL_ADDRw-1     :   0] vc_s_addr_i = s_addr_i [CHANNEL_ADDRw-1: 0];
     
-  
-    
-     localparam [CHANNEL_ADDRw-1  :   0]
+    localparam [CHANNEL_ADDRw-1  :   0]
         STATUS1_WB_ADDR  =   0,          // status 
         STATUS2_WB_ADDR  =   1,          // status 
         BURST_SIZE_WB_ADDR = 2,         // The busrt size in words 
@@ -244,8 +210,7 @@ module  ni_master #(
     localparam
         STATUS1w= 4 * V,
         STATUS2w= 2 * CHw + V + 8,
-        ERRw= 5;  
-    
+        ERRw= 5;     
     
     localparam 
         SEND_DONE_INT_EN_LOC=0,
@@ -255,65 +220,48 @@ module  ni_master #(
         SEND_DONE_ISR_LOC=4,
         SAVE_DONE_ISR_LOC=5,
         GOT_PCK_ISR_LOC=6,
-        ERRORS_ISR_LOC=7;            
-        
-       
+        ERRORS_ISR_LOC=7;        
  
-    reg [BURST_SIZE_w-1  :   0] burst_size, burst_size_next,burst_counter,burst_counter_next;
-  
-    
+    reg [BURST_SIZE_w-1  :   0] burst_size, burst_size_next,burst_counter,burst_counter_next;      
     wire [V-1 :   0] receive_vc_is_busy, send_vc_is_busy;
     wire [V-1 :   0] receive_vc_enable,send_vc_enable,vc_state_reg_enable;
     wire [V-1 :   0] vc_burst_counter_ld, vc_burst_counter_dec;
     wire [V-1 :   0] vc_fifo_wr, vc_fifo_rd;
     wire [V-1 :   0] vc_fifo_full, vc_fifo_nearly_full, vc_fifo_empty;
     wire [V-1 :   0] send_vc_is_active,receive_vc_is_active;
-    wire [CHw-1:  0] send_enable_binary,receive_enable_binary;
-     
-     
-     
+    wire [CHw-1:  0] send_enable_binary,receive_enable_binary;          
     wire  [SELw-1    :   0] vc_m_send_sel_o  [V-1 :   0];
     wire  [M_Aw-1    :   0] vc_m_send_addr_o [V-1 :   0];
     wire  [TAGw-1    :   0] vc_m_send_cti_o  [V-1 :   0];
     wire  [V-1 :   0] vc_m_send_stb_o; 
     wire  [V-1 :   0] vc_m_send_cyc_o; 
     wire  [V-1 :   0] vc_m_send_we_o; 
-    wire  [V-1 :   0] save_hdr_info;    
-            
+    wire  [V-1 :   0] save_hdr_info;              
     wire  [SELw-1    :   0] vc_m_receive_sel_o  [V-1 :   0];
     wire  [M_Aw-1    :   0] vc_m_receive_addr_o [V-1 :   0];
     wire  [TAGw-1    :   0] vc_m_receive_cti_o  [V-1 :   0];
     wire  [V-1 :   0] vc_m_receive_stb_o; 
     wire  [V-1 :   0] vc_m_receive_cyc_o; 
     wire  [V-1 :   0] vc_m_receive_we_o; 
-
     wire  [MAX_TRANSACTION_WIDTH-1    :   0] receive_counter [V-1 :   0];            
- 
     wire  [V-1    :   0] send_vc_fsm_is_ideal,receive_vc_fsm_is_ideal;
     wire  [Dw-1   :   0] send_vc_start_addr [V-1   :  0]; 
     wire  [Dw-1   :   0] receive_vc_start_addr [V-1   :  0];
-    wire  [V-1    :   0] receive_vc_got_packet;
-    
+    wire  [V-1    :   0] receive_vc_got_packet;    
     wire [MAX_TRANSACTION_WIDTH-1    :   0] send_vc_data_size [V-1   :  0];
     wire [MAX_TRANSACTION_WIDTH-1    :   0] receive_vc_max_buff_siz [V-1   :  0];
     wire [V-1   :  0]   send_vc_start, receive_vc_start; 
-    wire  received_flit_is_tail,received_flit_is_hdr;
-  
-    
-    wire [Xw-1   :   0]  vc_dest_x [V-1   :  0];
-    wire [Yw-1   :   0]  vc_dest_y [V-1   :  0];
-    wire [Cw-1   :   0]  vc_pck_class [V-1   :  0];   
+    wire  received_flit_is_tail,received_flit_is_hdr;    
+    wire [EAw-1  :   0]  vc_dest_e_addr [V-1   :  0];
+    wire [Cw-1   :   0]  vc_pck_class [V-1   :  0]; 
+    wire [WEIGHTw-1 : 0] vc_weight [V-1:0];    
     wire [V-1    :   0]  send_vc_send_hdr,send_vc_send_tail;
     wire [V-1    :   0]  send_vc_done,receive_vc_done;    
     wire [V-1	 :   0]  receive_vc_packet_is_saved;
-
-    wire [Xw-1   :   0]  dest_x;
-    wire [Yw-1   :   0]  dest_y;
+    wire [EAw-1   :   0]  dest_e_addr;
     wire [Cw-1   :   0]  pck_class;  
     wire send_hdr, send_tail;
-    wire [Fw-1   :   0] hdr_flit_out; 
-     
-    
+    wire [Fw-1   :   0] hdr_flit_out;         
     wire burst_counter_ld = | vc_burst_counter_ld; 
     wire burst_counter_dec= | vc_burst_counter_dec;
     wire fifo_wr = | vc_fifo_wr; 
@@ -322,18 +270,13 @@ module  ni_master #(
     wire any_vc_send_done = | send_vc_done;     
     wire any_vc_save_done = | receive_vc_done;        
     wire last_burst = (burst_counter == 1);
-    wire burst_is_set =  (burst_size>0);
-    
+    wire burst_is_set =  (burst_size>0);    
     wire [Cw-1   :   0] class_in_next;
-    wire [Xw-1   :   0] x_src_in_next;
-    wire [Yw-1   :   0] y_src_in_next;
-    wire [Fpay-1    :   0] tail_flit_out;
-   
+    wire [EAw-1   :   0] src_e_addr_next;
+    wire [Fpay-1    :   0] tail_flit_out;   
     reg [Cw-1   :   0] class_in [V-1    :   0];
-    reg [Xw-1   :   0] x_src_in [V-1    :   0];
-    reg [Yw-1   :   0] y_src_in [V-1    :   0];
-    reg [V-1    :   0] crc_miss_match;
-    
+    reg [EAw-1   :   0] src_e_addr [V-1    :   0];
+    reg [V-1    :   0] crc_miss_match;    
     reg reset_errors, reset_errors_next;
     wire [V-1    :   0] burst_size_error,send_data_size_error,rcive_buff_ovrflw_err, illegal_send_req;           
     wire [V-1    :   0] vc_got_error;
@@ -346,21 +289,19 @@ module  ni_master #(
     reg any_error_int_en, got_pck_int_en, save_done_int_en,send_done_int_en;
     reg any_error_int_en_next, got_pck_int_en_next, save_done_int_en_next,send_done_int_en_next;
     
-    
-  
-    
-    
+            
     wire  [STATUS1w-1  :0] status1;
     wire  [STATUS2w-1  :0] status2; 
-    wire  [ERRw-1     : 0] errors [V-1 : 0];  
+    wire  [ERRw-1     : 0] errors [V-1 : 0];    
+    wire [DSTPw-1 : 0] destport;
+    wire [WEIGHTw-1 : 0] weight;  
   
     assign status1= {send_vc_is_busy,receive_vc_is_busy,receive_vc_packet_is_saved,receive_vc_got_packet};
     assign status2= {send_enable_binary,receive_enable_binary,vc_got_error,any_error_isr,got_pck_isr, save_done_isr,send_done_isr,any_error_int_en,got_pck_int_en, save_done_int_en,send_done_int_en};
       
     
     assign  irq =(any_error_isr & any_error_int_en) | (got_pck_isr & got_pck_int_en) | (save_done_isr & save_done_int_en) | (send_done_isr & send_done_int_en);
-    
-                   
+                     
                    
     //read wb registers                
     always @(*)begin 
@@ -376,8 +317,8 @@ module  ni_master #(
             s_dat_o   [MAX_TRANSACTION_WIDTH-1    :   0] = receive_counter[vc_addr];
         end  
         RECEIVE_SRC_WB_ADDR: begin            
-            s_dat_o[Xw-1: 0] = x_src_in[vc_addr];   // first byte
-            s_dat_o[Yw+7: 8] = y_src_in[vc_addr];   // second byte                                          
+            s_dat_o[EAw-1: 0] = src_e_addr[vc_addr];   // first&second byte
+          //  s_dat_o[EYw+7: 8] = y_src_in[vc_addr];   // second byte                                          
             s_dat_o[Cw+15: 16]  =   class_in[vc_addr];  //third byte           
         end 
         ERRORS_FLAGS_WB_ADDR: begin 
@@ -409,7 +350,7 @@ module  ni_master #(
         save_done_isr_next= save_done_isr;
         send_done_isr_next= send_done_isr;
         any_error_isr_next= any_error_isr; 
-	all_save_done_reg_rst=1'b0;
+        all_save_done_reg_rst=1'b0;
        // all_got_pck_reg_rst=1'b0;
       //  all_send_done_reg_rst=1'b0;
         
@@ -507,23 +448,21 @@ module  ni_master #(
     
         assign errors[i] =  {crc_miss_match[i],illegal_send_req[i],burst_size_error[i],send_data_size_error[i],rcive_buff_ovrflw_err[i]};       
         assign vc_got_error[i] = | errors[i];
+       
         ni_vc_wb_slave_regs #(
             .MAX_TRANSACTION_WIDTH(MAX_TRANSACTION_WIDTH),
-            .DST_ADR_HDR_WIDTH(DST_ADR_HDR_WIDTH),
             .DEBUG_EN(DEBUG_EN),
-            .NX(NX),
-            .NY(NY),
+            .EAw(EAw),
             .C(C),
             .Dw(Dw),
-            .S_Aw(CHANNEL_REGw)
-           
+            .S_Aw(CHANNEL_REGw),
+            .WEIGHTw(WEIGHTw)           
         )
         wb_slave_registers
         (
 //synthesis translate_off
 //synopsys  translate_off    
-            .current_x(current_x),
-            .current_y(current_y),
+            .current_e_addr(current_e_addr),
 //synthesis translate_on
 //synopsys  translate_on   
             .clk(clk),
@@ -534,30 +473,22 @@ module  ni_master #(
             .send_start_addr(send_vc_start_addr[i]),
             .receive_start_addr(receive_vc_start_addr[i]),
             .receive_done(receive_vc_done[i]),
-            .receive_packet_is_saved(receive_vc_packet_is_saved[i]),
-    
+            .receive_packet_is_saved(receive_vc_packet_is_saved[i]),    
             .send_data_size(send_vc_data_size[i]),
             .max_receive_buff_siz(receive_vc_max_buff_siz[i]),
-            .dest_x(vc_dest_x[i]),
-            .dest_y(vc_dest_y[i]),
+            .dest_e_addr(vc_dest_e_addr[i]),
             .pck_class(vc_pck_class[i]),
+            .weight(vc_weight[i]), 
             .send_start(send_vc_start[i]),
             .receive_start(receive_vc_start[i]),
             .receive_vc_got_packet(receive_vc_got_packet[i]),
-	    .all_save_done_reg_rst(all_save_done_reg_rst),	    
-	    //.all_got_pck_reg_rst(all_got_pck_reg_rst),
-           // .all_send_done_reg_rst(all_send_done_reg_rst),
-            
-	    .s_dat_i(s_dat_i),
+            .all_save_done_reg_rst(all_save_done_reg_rst),	    
+	        .s_dat_i(s_dat_i),
             .s_addr_i(s_addr_i[CHANNEL_REGw-1:0]),
             .s_stb_i(s_stb_i),
             .s_cyc_i(s_cyc_i),
             .s_we_i(s_we_i)
-        );
-   
-    
-    
-    
+        );   
     
         ni_vc_dma #(
             .CRC_EN(CRC_EN),
@@ -571,8 +502,7 @@ module  ni_master #(
         (
             .reset(reset),
             .clk(clk),
-            .status(),
-            
+            .status(),            
             //active-enable signals
             .send_enable(send_vc_enable[i]),
             .receive_enable(receive_vc_enable[i]),
@@ -589,8 +519,7 @@ module  ni_master #(
             .receive_counter(receive_counter[i]),
             .save_hdr_info(save_hdr_info[i]),
             .send_done(send_vc_done[i]),
-            .receive_done(receive_vc_done[i]),    
-                      
+            .receive_done(receive_vc_done[i]),                       
             .send_fsm_is_ideal(send_vc_fsm_is_ideal[i]),
             .receive_fsm_is_ideal(receive_vc_fsm_is_ideal[i]),
             .send_start_addr(send_vc_start_addr[i]),
@@ -600,22 +529,19 @@ module  ni_master #(
             .send_start(send_vc_start[i]),
             .receive_start(receive_vc_start[i]),
             .received_flit_is_tail(received_flit_is_tail),
-            
             //fifo
             .send_fifo_wr(vc_fifo_wr[i]), 
             .send_fifo_full(vc_fifo_full[i]),
             .send_fifo_nearly_full(vc_fifo_nearly_full[i]),
             .send_fifo_rd(credit_in[i]),
             .receive_fifo_empty(vc_fifo_empty[i]),
-            .receive_fifo_rd(vc_fifo_rd[i]), 
-         
+            .receive_fifo_rd(vc_fifo_rd[i]),          
             //errors
             .reset_errors(reset_errors),
             .burst_size_error(burst_size_error[i]),
             .send_data_size_error(send_data_size_error[i]),
             .rcive_buff_ovrflw_err(rcive_buff_ovrflw_err[i]),
-            .illegal_send_req(illegal_send_req[i]),           
-                        
+            .illegal_send_req(illegal_send_req[i]),                         
             //
             .m_send_sel_o(vc_m_send_sel_o[i]),
             .m_send_addr_o(vc_m_send_addr_o[i]),
@@ -624,8 +550,7 @@ module  ni_master #(
             .m_send_cyc_o(vc_m_send_cyc_o[i]),
             .m_send_we_o(vc_m_send_we_o[i]),
         //  .m_send_dat_i(m_send_dat_i),
-            .m_send_ack_i(m_send_ack_i),
-            
+            .m_send_ack_i(m_send_ack_i),           
             
             .m_receive_sel_o(vc_m_receive_sel_o[i]),
         //  .m_receive_dat_o(vc_m_receive_dat_o[i]),
@@ -641,12 +566,10 @@ module  ni_master #(
         always @ (posedge clk or posedge reset)begin 
             if(reset) begin 
                 class_in[i]<= {Cw{1'b0}};
-                x_src_in[i]<= {Xw{1'b0}};
-                y_src_in[i]<= {Yw{1'b0}};
+                src_e_addr[i]<= {EAw{1'b0}};
             end else if(save_hdr_info[i])begin 
                 class_in[i]<= class_in_next;
-                x_src_in[i]<= x_src_in_next;
-                y_src_in[i]<= y_src_in_next;
+                src_e_addr[i]<= src_e_addr_next;
             end
         end//always
    
@@ -678,9 +601,7 @@ module  ni_master #(
             .channel_in(send_enable_binary),
             .data_in(m_send_dat_i [Fpay-1 : 0]),
             .crc_out(send_crc_out)
-        );
-        
-        
+        );        
         
         crc_32_multi_channel #(
         	.CHANNEL(V)
@@ -715,10 +636,7 @@ module  ni_master #(
         //always @(*) crc_miss_match = {V{1'b0}};
 	always @(posedge clk) crc_miss_match <= {V{1'b0}};
     end
-   
-    
-   
-    
+      
   
     if(V> 1) begin : multi_channel
     
@@ -775,38 +693,53 @@ module  ni_master #(
         assign receive_enable_binary = 1'b0;
     end
     endgenerate  
-    
-     header_flit_generator #(
-        .CLASS_HDR_WIDTH(CLASS_HDR_WIDTH),
-        .ROUTING_HDR_WIDTH(ROUTING_HDR_WIDTH),
-        .DST_ADR_HDR_WIDTH(DST_ADR_HDR_WIDTH),
-        .SRC_ADR_HDR_WIDTH(SRC_ADR_HDR_WIDTH),
+      
+  
+    ni_conventional_routing #(
         .TOPOLOGY(TOPOLOGY),
-        .ROUTE_TYPE(ROUTE_TYPE),
         .ROUTE_NAME(ROUTE_NAME),
-        .V(V),
-        .P(P),
-        .NX(NX),
-        .NY(NY),
-        .C(C),
-        .Fpay(Fpay)
+        .ROUTE_TYPE(ROUTE_TYPE),  
+        .T1(T1),
+        .T2(T2),
+        .T3(T3),
+        .RAw(RAw),
+        .EAw(EAw),
+        .DSTPw(DSTPw)
     )
-    the_header_flit_generator
+    route_compute
+    (
+        .reset(reset),
+        .clk(clk),
+        .current_r_addr(current_r_addr),
+        .dest_e_addr(dest_e_addr),
+        .destport(destport)
+    );
+  
+        
+    header_flit_generator #(
+        .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
+        .Fpay(Fpay),
+        .V(V),
+        .EAw(EAw),
+        .DSTPw(DSTPw),
+        .C(C),
+        .WEIGHTw(WEIGHTw),
+        .DATA_w(0)
+    )
+    hdr_flit_gen
     (
         .flit_out(hdr_flit_out),
         .class_in(pck_class),
-        .x_dst_in(dest_x),
-        .y_dst_in(dest_y),
-        .x_src_in(current_x),
-        .y_src_in(current_y),
-        .vc_num_in(send_vc_enable)
+        .dest_e_addr_in(dest_e_addr),
+        .src_e_addr_in(current_e_addr),
+        .destport_in(destport),
+        .vc_num_in(send_vc_enable),
+        .weight_in(weight),
+        .data_in( )
     );
     
-  
-   
   wire [V-1    :   0] wr_vc_send =  (fifo_wr) ? send_vc_enable : {V{1'b0}};  
- 
-    
+     
   ovc_status #(
     .V(V),
     .B(B)
@@ -820,13 +753,12 @@ module  ni_master #(
     .empty_vc( ),
     .clk(clk),
     .reset(reset)
-  );
-    
+  );   
     
     // header info mux    
-    assign dest_x = vc_dest_x[send_enable_binary];
-    assign dest_y = vc_dest_y[send_enable_binary];
+    assign dest_e_addr = vc_dest_e_addr[send_enable_binary];
     assign pck_class  = vc_pck_class[send_enable_binary];
+    assign weight =   vc_weight[send_enable_binary];  
     assign send_hdr = send_vc_send_hdr[send_enable_binary]; 
     assign send_tail = send_vc_send_tail[send_enable_binary]; 
     
@@ -836,17 +768,14 @@ module  ni_master #(
     assign m_send_cti_o  = vc_m_send_cti_o[send_enable_binary];
     assign m_send_stb_o  = vc_m_send_stb_o[send_enable_binary];
     assign m_send_cyc_o  = vc_m_send_cyc_o[send_enable_binary];
-    assign m_send_we_o   = vc_m_send_we_o[send_enable_binary];
-       
+    assign m_send_we_o   = vc_m_send_we_o[send_enable_binary];       
                         
     assign m_receive_sel_o = vc_m_receive_sel_o[receive_enable_binary];
     assign m_receive_addr_o= vc_m_receive_addr_o[receive_enable_binary];
     assign m_receive_cti_o = vc_m_receive_cti_o[receive_enable_binary];
     assign m_receive_stb_o = vc_m_receive_stb_o[receive_enable_binary];
     assign m_receive_cyc_o = vc_m_receive_cyc_o[receive_enable_binary];
-    assign m_receive_we_o  = vc_m_receive_we_o[receive_enable_binary];
-    
-    
+    assign m_receive_we_o  = vc_m_receive_we_o[receive_enable_binary];    
           
     wire [V-1    :   0]  flit_in_vc_num = flit_in [Fpay+V-1    :   Fpay]; 
     wire [V-1    :   0]  ififo_vc_not_empty; 
@@ -876,45 +805,36 @@ module  ni_master #(
         .ssa_rd({V{1'b0}})   
     ); 
     
-    
    extract_header_flit_info #(
-        .CLASS_HDR_WIDTH(8),
-        .ROUTING_HDR_WIDTH(8),
-        .DST_ADR_HDR_WIDTH(8),
-        .SRC_ADR_HDR_WIDTH(8),
-        .TOPOLOGY(TOPOLOGY),
+        .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
+        .WEIGHTw(WEIGHTw),
         .V(V),
-        .P(P),
-        .NX(NX),
-        .NY(NY),
+        .EAw(EAw),
+        .DSTPw(DSTPw),
         .C(C),
         .Fpay(Fpay),
-        .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
-        .WEIGHTw(WEIGHTw)
-        
+        .DATA_w (0)
     )
-    extract_header_info
+    extractor
     (
         .flit_in(fifo_dout),
         .flit_in_we(),
         .class_o(class_in_next),
         .destport_o(),
-        .x_dst_o(),
-        .y_dst_o(),
-        .x_src_o(x_src_in_next),
-        .y_src_o(y_src_in_next),
+        .dest_e_addr_o(),
+        .src_e_addr_o(src_e_addr_next),
         .vc_num_o(),
         .hdr_flit_wr_o( ),
-        .flg_hdr_o( ),
-        .weight_o()
+        .hdr_flg_o( ),
+        .tail_flg_o( ),
+        .weight_o(),
+        .data_o()
     );  
   
  
   assign m_receive_dat_o = fifo_dout[Dw-1   :   0];
   assign received_flit_is_tail = fifo_dout[Fw-2];
-  assign received_flit_is_hdr  = fifo_dout[Fw-1];
- 
-  
+  assign received_flit_is_hdr  = fifo_dout[Fw-1];  
   assign any_vc_got_pck = |receive_vc_got_packet;
   
     localparam [1:0] 
@@ -923,159 +843,16 @@ module  ni_master #(
         TAIL_FLAG          =   2'b01;
  
   assign credit_out = vc_fifo_rd;
-  assign flit_out_wr= fifo_wr; 
-  
-  assign flit_out [Fpay+V-1 : Fpay] = send_vc_enable;
-    
+  assign flit_out_wr= fifo_wr;  
+  assign flit_out [Fpay+V-1 : Fpay] = send_vc_enable;    
   assign flit_out [Fpay-1   : 0   ] = (send_hdr)?  hdr_flit_out [Fpay-1 : 0] :
                                       (send_tail)? tail_flit_out :  m_send_dat_i [Fpay-1 : 0];
-
   assign flit_out [Fw-1 : Fw-2] =   (send_hdr)?  HDR_FLAG : 
-                                    (send_tail)?  TAIL_FLAG    : BDY_FLAG;
-                                       
-    
-    
- endmodule
- 
+                                    (send_tail)?  TAIL_FLAG    : BDY_FLAG;                                       
+endmodule
  
  
   
-
- 
- 
- 
- 
- 
- 
-
-
-
-
-
-
-/***************
-*   header_flit_generator
-***************/
-
-
-module header_flit_generator  #(
-    parameter CLASS_HDR_WIDTH     =8,
-    parameter ROUTING_HDR_WIDTH   =8,
-    parameter DST_ADR_HDR_WIDTH  =8,
-    parameter SRC_ADR_HDR_WIDTH   =8,
-    parameter TOPOLOGY =    "MESH",//"MESH","TORUS","RING" 
-    parameter ROUTE_TYPE   =   "DETERMINISTIC",// "DETERMINISTIC", "FULL_ADAPTIVE", "PAR_ADAPTIVE"
-    parameter ROUTE_NAME    =   "XY",
-    parameter V = 4,    // vc_num_per_port
-    parameter P = 5,    // router port num
-    parameter NX = 4,   // number of node in x axis
-    parameter NY = 4,   // number of node in y axis
-    parameter C = 4,    //  number of flit class 
-    parameter Fpay = 32     //payload width
-)(
-    
-    flit_out,
-   
-    x_src_in,
-    y_src_in,
-    class_in,
-    x_dst_in,
-    y_dst_in,
-    vc_num_in
-    
-);
-// for   flit size >= 32 bits
-/* header flit format
-31--------------24     23--------16     15--------8            7-----0
-message_class_data     routing_info     destination_address    source_address
-*/
-    
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end       
-      end   
-    endfunction // log2 
-   
-/* verilator lint_off WIDTH */ 
-    localparam      ADDR_DIMENTION =   (TOPOLOGY ==    "MESH" || TOPOLOGY ==  "TORUS") ? 2 : 1,  // "RING" and FULLY_CONNECT 
-                    ALL_DATA_HDR_WIDTH  = CLASS_HDR_WIDTH+ROUTING_HDR_WIDTH+DST_ADR_HDR_WIDTH+SRC_ADR_HDR_WIDTH,
-                    P_1         =   P-1 ,
-                    Fw          =   2+V+Fpay,//flit width
-                    Xw          =   log2(NX),
-                    Yw          =   log2(NY),
-                    Cw          =  (C>1)? log2(C): 1,
-                    HDR_FLAG            =   2'b10;
-/* verilator lint_on WIDTH */                     
-     
-    
-    output   [Fw-1       :   0] flit_out;
- 
-    input    [Cw-1       :   0] class_in;    
-    input    [Xw-1       :   0] x_dst_in;
-    input    [Yw-1       :   0] y_dst_in;
-    input    [Xw-1       :   0] x_src_in;
-    input    [Yw-1       :   0] y_src_in;
-    input    [V-1        :   0] vc_num_in;
- 
-   
-    
-    
-    wire    [P_1-1      :   0] destport;
-                    
-    wire    [CLASS_HDR_WIDTH-1      :   0]  class_hdr;
-    wire    [ROUTING_HDR_WIDTH-1    :   0]  routing_hdr;
-    wire    [DST_ADR_HDR_WIDTH-1    :   0]  dst_adr_hdr; 
-    wire    [SRC_ADR_HDR_WIDTH-1    :   0]  src_adr_hdr;
-                  
-     
-     ni_conventional_routing #(        
-        .P(P),
-        .NX(NX),
-        .NY(NY),
-        .ROUTE_TYPE(ROUTE_TYPE),
-        .TOPOLOGY(TOPOLOGY),
-        .ROUTE_NAME(ROUTE_NAME),
-        .LOCATED_IN_NI(1)
-    )
-    conv_routing
-    (
-        .current_x (x_src_in),
-        .current_y (y_src_in),
-        .dest_x    (x_dst_in),
-        .dest_y    (y_dst_in),
-        .destport  (destport)
-    );                      
-                    
-   
-     //x_dst_hdr, y_dst_hdr, x_src_hdr, y_src_hdr       
-    generate
-        if (ADDR_DIMENTION==1) begin :one_dimen
-            assign  dst_adr_hdr       [Xw-1     : 0] = x_dst_in;
-            assign  src_adr_hdr       [Xw-1     : 0] = x_src_in;
-        end else begin :two_dimen
-            assign dst_adr_hdr       [Yw-1     : 0] = y_dst_in;
-            assign src_adr_hdr       [Yw-1     : 0] = y_src_in;
-            assign dst_adr_hdr       [(DST_ADR_HDR_WIDTH/2)+Xw-1     : DST_ADR_HDR_WIDTH/2] = x_dst_in;
-            assign src_adr_hdr       [(SRC_ADR_HDR_WIDTH/2)+Xw-1     : SRC_ADR_HDR_WIDTH/2] = x_src_in;          
-        end
-    endgenerate
-
-    
-     
-    assign flit_out [Fpay+V-1    :    Fpay] = vc_num_in;
-    assign flit_out [Fw-1        :    Fw-2] = HDR_FLAG;
-    assign class_hdr         [Cw-1     :    0] = class_in;
-    assign routing_hdr     [P_1-1    :    0] = destport;
-    assign flit_out [ALL_DATA_HDR_WIDTH-1      :0] =  {class_hdr,routing_hdr,dst_adr_hdr,src_adr_hdr};  
-
-endmodule
-
-
-
-
 /******************
 *   ovc_status
 *******************/
@@ -1130,4 +907,5 @@ endmodule
         end//for
     endgenerate
 endmodule
+ 
  

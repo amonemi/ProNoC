@@ -378,8 +378,8 @@ sub trace_map_ctrl{
 	
 	
 	my @info = (
-  	{ label=>'Routers per Row', param_name=>'NX', type=>"Spin-button", default_val=>2, content=>"2,64,1", info=>undef, param_parent=>'noc_param', ref_delay=>1,placement=>'vertical'},
-	{ label=>"Routers per Column", param_name=>"NY", type=>"Spin-button", default_val=>2, content=>"1,64,1", info=>undef, param_parent=>'noc_param',ref_delay=>1, placement=>'vertical'},
+  	{ label=>'Routers per Row', param_name=>'T1', type=>"Spin-button", default_val=>2, content=>"2,64,1", info=>undef, param_parent=>'noc_param', ref_delay=>1,placement=>'vertical'},
+	{ label=>"Routers per Column", param_name=>"T2", type=>"Spin-button", default_val=>2, content=>"1,64,1", info=>undef, param_parent=>'noc_param',ref_delay=>1, placement=>'vertical'},
 	{ label=>"Mapping Algorithm", param_name=>"Map_Algrm", type=>"Combo-box", default_val=>'Random', content=>"Nmap,Random,Reverse-NMAP,Direct", info=>undef, param_parent=>'map_param',ref_delay=>undef,placement=>'horizental'},
 	
 	);
@@ -415,8 +415,8 @@ sub trace_map_ctrl{
 		my $task_num= scalar @tasks;
 		return if($task_num ==0);
 		my ($nx,$ny) =network_dim_cal($task_num);
-		$self->object_add_attribute('noc_param','NX',$nx);
-		$self->object_add_attribute('noc_param','NY',$ny);	
+		$self->object_add_attribute('noc_param','T1',$nx);
+		$self->object_add_attribute('noc_param','T2',$ny);	
 		set_gui_status($self,"ref",1);	
 	});
 	
@@ -610,10 +610,10 @@ sub trace_map {
 	$col=0;
 	$row++;	
 	
-	 # 	{ label=>'Routers per Row', param_name=>'NX', type=>"Spin-button", default_val=>2, content=>"2,64,1", info=>undef, param_parent=>'noc_param', ref_delay=>undef},
+	 # 	{ label=>'Routers per Row', param_name=>'T1', type=>"Spin-button", default_val=>2, content=>"2,64,1", info=>undef, param_parent=>'noc_param', ref_delay=>undef},
 
-	my $nx=$self->object_get_attribute('noc_param','NX');
-	my $ny=$self->object_get_attribute('noc_param','NY');
+	my $nx=$self->object_get_attribute('noc_param','T1');
+	my $ny=$self->object_get_attribute('noc_param','T2');
 	
 	
 	
@@ -871,10 +871,10 @@ sub load_workspace {
 	if ( "ok" eq $dialog->run ) {
 		$file = $dialog->get_filename;
 		my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
-		if($suffix eq '.TRC'){
-			my $pp= eval { do $file };
-			if ($@ || !defined $pp){		
-				message_dialog("**Error reading  $file file: $@\n");
+		if($suffix eq '.TRC'){			
+			my ($pp,$r,$err) = regen_object($file);
+			if ($r){		
+				message_dialog("**Error reading  $file file: $err\n");
 				 $dialog->destroy;
 				return;
 			} 
@@ -951,7 +951,7 @@ sub get_cfg_content{
 
 sub get_tile_id{
 	my ($self,$task)=@_;
-	my $nx=$self->object_get_attribute('noc_param','NX');
+	my $nx=$self->object_get_attribute('noc_param','T1');
 	my $tile=$self->object_get_attribute("MAP_TILE",$task);
 	my ($x, $y) =  $tile =~ /(\d+)/g;  
 	$y=0 if(!defined $y);
@@ -1149,8 +1149,8 @@ sub random_map{
 		
 	
 	
-	my $nx=$self->object_get_attribute('noc_param','NX');
-	my $ny=$self->object_get_attribute('noc_param','NY');
+	my $nx=$self->object_get_attribute('noc_param','T1');
+	my $ny=$self->object_get_attribute('noc_param','T2');
 	my $nc= $nx * $ny;
 	
 	
@@ -1182,8 +1182,8 @@ sub random_map{
 sub direct_map {
 	my $self=shift;
 	
-	my $nx=$self->object_get_attribute('noc_param','NX');
-	my $ny=$self->object_get_attribute('noc_param','NY');
+	my $nx=$self->object_get_attribute('noc_param','T1');
+	my $ny=$self->object_get_attribute('noc_param','T2');
 	my $nc= $nx * $ny;	
 	my @tasks=get_nlock_tasks($self);	
 	my @tiles=get_nlock_tiles($self);	
@@ -1249,8 +1249,8 @@ sub network_dim_cal{
 sub get_tiles_name{
 	my $self=shift;
 	my @tiles;
-	my $nx=$self->object_get_attribute('noc_param','NX');
-	my $ny=$self->object_get_attribute('noc_param','NY');
+	my $nx=$self->object_get_attribute('noc_param','T1');
+	my $ny=$self->object_get_attribute('noc_param','T2');
 	if(defined $ny){
 		if($ny == 1){
 			for(my $x=0; $x<$nx; $x++){
@@ -1259,8 +1259,8 @@ sub get_tiles_name{
 			
 		}
 		else{
-			for(my $y=0; $y<$ny; $y++){my $nx=$self->object_get_attribute('noc_param','NX');
-	my $ny=$self->object_get_attribute('noc_param','NY');
+			for(my $y=0; $y<$ny; $y++){my $nx=$self->object_get_attribute('noc_param','T1');
+	my $ny=$self->object_get_attribute('noc_param','T2');
 				for(my $x=0; $x<$nx; $x++){
 					push(@tiles,"tile(${x}_$y)");
 				}
@@ -1274,8 +1274,8 @@ sub get_tiles_name{
 sub get_tile_name{
 	my ($self,$x,$y)=@_;
 
-	my $nx=$self->object_get_attribute('noc_param','NX');
-	my $ny=$self->object_get_attribute('noc_param','NY');
+	my $nx=$self->object_get_attribute('noc_param','T1');
+	my $ny=$self->object_get_attribute('noc_param','T2');
 	if(defined $ny){
 		return "tile($x)" if($ny == 1);
 	}
@@ -1341,8 +1341,8 @@ sub get_communication_task{
 
 sub find_max_neighbor_tile{
 	my $self=shift;
-	my $nx=$self->object_get_attribute('noc_param','NX');
-	my $ny=$self->object_get_attribute('noc_param','NY');
+	my $nx=$self->object_get_attribute('noc_param','T1');
+	my $ny=$self->object_get_attribute('noc_param','T2');
 	my $x_mid = floor($nx/2);
 	my $y_mid = floor($ny/2);
 	#my $centered_tile= get_tile_name($self,$x_mid ,$y_mid);
@@ -1367,8 +1367,8 @@ sub find_max_neighbor_tile{
 	
 sub find_min_neighbor_tile	{
 	my $self=shift;
-	my $nx=$self->object_get_attribute('noc_param','NX');
-	my $ny=$self->object_get_attribute('noc_param','NY');
+	my $nx=$self->object_get_attribute('noc_param','T1');
+	my $ny=$self->object_get_attribute('noc_param','T2');
 	my $x_mid = 0;
 	my $y_mid = 0;
 	#my $centered_tile= get_tile_name($self,$x_mid ,$y_mid);
@@ -1397,8 +1397,8 @@ sub nmap_algorithm{
 	my $self=shift;
 	
 	
-	my $nx=$self->object_get_attribute('noc_param','NX');
-	my $ny=$self->object_get_attribute('noc_param','NY');
+	my $nx=$self->object_get_attribute('noc_param','T1');
+	my $ny=$self->object_get_attribute('noc_param','T2');
 	my $nc= $nx * $ny;
 	
 	my @tasks=get_all_tasks($self);
@@ -1568,8 +1568,8 @@ sub worst_map_algorithm{
 	my $self=shift;
 	
 	
-	my $nx=$self->object_get_attribute('noc_param','NX');
-	my $ny=$self->object_get_attribute('noc_param','NY');
+	my $nx=$self->object_get_attribute('noc_param','T1');
+	my $ny=$self->object_get_attribute('noc_param','T2');
 	my $nc= $nx * $ny;
 	
 	my @tasks=get_all_tasks($self);

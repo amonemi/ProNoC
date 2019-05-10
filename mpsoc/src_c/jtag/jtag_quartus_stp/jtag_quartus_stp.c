@@ -23,11 +23,12 @@ int main(int argc, char **argv) {
 		
 	processArgs (argc, argv );	
 	printf("index num=%u\n",index_num);
-	printf("Initial Vjtag for %s & %s\n",hardware_name,dev_num);
+	printf("Initial Vjtag for %s & %s.\n",hardware_name,dev_num);
 	if (jtag_init(hardware_name,dev_num)){
 		fprintf (stderr, "Error openning jtag IP with %d index num\n",index_num);
 		return -1;
 	}
+	printf("Vjtag is initilized\n");
 	if (enable_binary_send) {
 		if( send_binary_file() == -1) return -1;
 	}
@@ -362,9 +363,9 @@ int send_binary_file(){
 				if(out!=buffer[i-2]) printf ("Error: missmatched at location %d. Expected %x but read %x\n",i-2,buffer[i-2], out);
 			}
 			jtag_vdr(BIT_NUM, 0, &out);
-			if(out!=buffer[i-2]) printf ("Error: missmatched at location %d. Expected %x but read %x\n",i-2,buffer[i-2], out);i++;
-			jtag_vdr(BIT_NUM, 1, &out);
 			if(out!=buffer[i-2]) printf ("Error: missmatched at location %d. Expected %x but read %x\n",i-2,buffer[i-2], out);
+			jtag_vdr(BIT_NUM, 1, &out);
+			if(out!=buffer[i-1]) printf ("Error: missmatched at location %d. Expected %x but read %x\n",i-1,buffer[i-1], out);
 
 		}
 		else{

@@ -2,6 +2,10 @@
 
 use strict;
 use warnings;
+
+use FindBin;
+use lib $FindBin::Bin;
+
 use mpsoc;
 use soc;
 use ip;
@@ -38,7 +42,7 @@ sub mpsoc_generate_verilog{
 	my ($noc_param,$pass_param)=gen_noc_param_v($mpsoc);
 	
 	#generate the noc
-	my $noc_v=gen_noc_v($pass_param);
+	my $noc_v=gen_noc_v($mpsoc,$pass_param);
 	
 	#generate socs
 	my $socs_v=gen_socs_v($mpsoc,\$io_v,\$io_def_v,\$top_io,$top_ip,$sw_dir);
@@ -106,23 +110,10 @@ sub get_functions{
 	end   
 	endfunction // log2 
     
-	function integer CORE_NUM;
-		input integer x,y;
-		begin
-			CORE_NUM = ((y * NX) +  x);
-		end
-	endfunction
-    
-        
+	 
 
-	localparam	Fw      =   2+V+Fpay,
-				NC     =	(TOPOLOGY=="RING" || TOPOLOGY=="LINE" )? NX    :   NX*NY,	//number of cores
-				Xw      =   log2(NX),
-				Yw      =   log2(NY) , 
-				Cw      =   (C>1)? log2(C): 1,
-				NCw     =   log2(NC),
-				NCV     =   NC  * V,
-				NCFw    =   NC  * Fw;
+	
+				
 	';
 	
 	return $p;
@@ -136,21 +127,17 @@ sub  gen_socs_param{
 	my $mpsoc=shift;
 	my $socs_param="
 //SOC parameters\n";
-	my $nx= $mpsoc->object_get_attribute('noc_param',"NX");
-    my $ny= $mpsoc->object_get_attribute('noc_param',"NY");
-    my $processors_en=0;
-    for (my $y=0;$y<$ny;$y++){
-		for (my $x=0; $x<$nx;$x++){
-			my $tile=($nx*$y)+ $x;
+	my ($NE, $NR, $RAw,  $EAw, $Fw) = get_topology_info($mpsoc);
+	my $processors_en=0;
+    for (my $tile=0;$tile<$NE;$tile++){
 			my ($soc_name,$n,$soc_num)=$mpsoc->mpsoc_get_tile_soc_name($tile);
 			if(defined $soc_name) {
 				my $param=	gen_soc_param($mpsoc,$soc_name,$soc_num,$tile);
 				add_text_to_string(\$socs_param,$param);
 			}	
-	}}#x&y
+	}#$tile
 	$socs_param="$socs_param \n";
-	return $socs_param;
-	
+	return $socs_param;	
 }
 
 
@@ -271,30 +258,44 @@ sub gen_noc_param_h{
 
 
 sub gen_noc_v{
-	my $pass_param = shift;
-	
+	my ($mpsoc,$pass_param) = @_;
+	my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info($mpsoc);
 	my $noc =  read_verilog_file("../src_noc/noc.v");
 	my @noc_param=$noc->get_modules_parameters_not_local_order('noc');
 	
 	
-	my $noc_v='
+	my $noc_v="
 	
-//NoC ports                
-	wire [Fw-1      :   0]  ni_flit_out                 [NC-1           :0];   
-	wire [NC-1      :   0]  ni_flit_out_wr; 
-	wire [V-1       :   0]  ni_credit_in                [NC-1           :0];
-	wire [Fw-1      :   0]  ni_flit_in                  [NC-1           :0];   
-	wire [NC-1      :   0]  ni_flit_in_wr;  
-	wire [V-1       :   0]  ni_credit_out               [NC-1           :0];    
-	wire [NCFw-1    :   0]  flit_out_all;
-	wire [NC-1      :   0]  flit_out_wr_all;
-	wire [NCV-1     :   0]  credit_in_all;
-	wire [NCFw-1    :   0]  flit_in_all;
-	wire [NC-1      :   0]  flit_in_wr_all;  
-	wire [NCV-1     :   0]  credit_out_all;
-	wire 					noc_clk,noc_reset;
-    
-    ';
+
+	localparam
+		NE = $NE,
+		NR = $NR,
+		RAw = $RAw,
+		EAw = $EAw,
+		Fw = $Fw,
+		NEFw = NE * Fw,
+		NEV = NE * V;
+
+//NoC ports 
+    // connection to NI modules               
+	wire [Fw-1      :   0]  ni_flit_out                 [NE-1           :0];   
+	wire [NE-1      :   0]  ni_flit_out_wr; 
+	wire [V-1       :   0]  ni_credit_in                [NE-1           :0];
+	wire [Fw-1      :   0]  ni_flit_in                  [NE-1           :0];   
+	wire [NE-1      :   0]  ni_flit_in_wr;  
+	wire [V-1       :   0]  ni_credit_out               [NE-1           :0];    
+	
+	//connection wire to NoC
+	wire [NEFw-1    :   0]  flit_out_all;
+	wire [NE-1      :   0]  flit_out_wr_all;
+	wire [NEV-1     :   0]  credit_in_all;
+	wire [NEFw-1    :   0]  flit_in_all;
+	wire [NE-1      :   0]  flit_in_wr_all;  
+	wire [NEV-1     :   0]  credit_out_all;
+	
+	wire 					noc_clk,noc_reset;    
+    ";
+	
 	
 	
 	
@@ -339,50 +340,22 @@ add_text_to_string(\$noc_v,'
 add_text_to_string(\$noc_v,'	
 
 //NoC port assignment
-  genvar x,y;
+  genvar IP_NUM;
   generate 
-    for (x=0;   x<NX; x=x+1) begin :x_loop1
-        for (y=0;   y<NY;   y=y+1) begin: y_loop1
-                localparam IP_NUM   =   ((y * NX) +  x);           
-             
-           
+    for (IP_NUM=0;   IP_NUM<NE; IP_NUM=IP_NUM+1) begin :endp
+          
             assign  ni_flit_in      [IP_NUM] =   flit_out_all    [(IP_NUM+1)*Fw-1    : IP_NUM*Fw];   
             assign  ni_flit_in_wr   [IP_NUM] =   flit_out_wr_all [IP_NUM]; 
             assign  credit_in_all   [(IP_NUM+1)*V-1 : IP_NUM*V]     =   ni_credit_out   [IP_NUM];  
             assign  flit_in_all     [(IP_NUM+1)*Fw-1    : IP_NUM*Fw]    =   ni_flit_out     [IP_NUM];
             assign  flit_in_wr_all  [IP_NUM] =   ni_flit_out_wr  [IP_NUM];
             assign  ni_credit_in    [IP_NUM] =   credit_out_all  [(IP_NUM+1)*V-1 : IP_NUM*V];
-  
-    
-           
             
-                        
-        end
     end
 endgenerate
 
 '
 );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	return $noc_v;
 	
 }
@@ -393,82 +366,35 @@ endgenerate
 sub gen_socs_v{
 	my ($mpsoc,$io_v_ref,$io_def_v,$top_io_ref,$top_ip,$sw_dir)=@_;
 	
-	#generate loop
-	
-#	my $socs_v='
-#	genvar x,y;    
-#    
-#    generate 
-#    for (x=0;   x<NX; x=x+1) begin :x_loop1
-#        for (y=0;   y<NY;   y=y+1) begin: y_loop1
-#                localparam IP_NUM   =   CORE_NUM(x,y);'  ;	
-                
+	  
+   
+	my $socs_v; 
+	my ($NE, $NR, $RAw, $EAw, $EYw)= get_topology_info ($mpsoc); 
         
-                
-# 	my @socs= $mpsoc->mpsoc_get_soc_list();
-# 	foreach my $soc (@socs){
-   	
-#  	#tile num condition
-#		my @tiles= $mpsoc->mpsoc_get_soc_tiles_num($soc);
-#	if(scalar @tiles>0){
-#  		my $condition="\n\t\tif(";
-# 		my $s=compress_nums( @tiles);
-#		my @sep=split(',',$s);
-#	   		my $i=0;
-#	   		foreach my $p (@sep){
-#	   			my @range=split(':',$p);
-#	   			my $tt;
-#	   			if($i==0){
-#	   				$tt= (scalar @range>1)? "(IP_NUM>=$range[0] && IP_NUM<=$range[1])":"(IP_NUM==$range[0])" ;
-#	   			}else{
-#	   			}
-#	   			add_text_to_string(\$condition,$tt);
-#	   			$i=1;
-#	   		}
-#	   		add_text_to_string(\$condition,") begin :${soc}_if\n ");	
-#	  		#soc instance
-#	  		my $soc_v= gen_soc_v($mpsoc,$soc);
-#	  
-#	  		add_text_to_string(\$socs_v,$condition );
-#	  		add_text_to_string(\$socs_v,$soc_v);
-#	  		add_text_to_string(\$socs_v,"\t\tend // ${soc}_if \n");
-#  		}#scalar @tile  
-# }	#froeach soc
-   
-   
-   
- my $socs_v;  
-        
-   my $nx= $mpsoc->object_get_attribute('noc_param',"NX");
-   my $ny= $mpsoc->object_get_attribute('noc_param',"NY");
-   my $processors_en=0;
-   for (my $y=0;$y<$ny;$y++){
-		for (my $x=0; $x<$nx;$x++){
-			my $tile_num=($nx*$y)+ $x;
-			my ($soc_name,$n,$soc_num)=$mpsoc->mpsoc_get_tile_soc_name($tile_num);
-		
-			if(defined $soc_name) {
-				
-				
-	
-				my ($soc_v,$en)= gen_soc_v($mpsoc,$soc_name,$tile_num,$x,$y,$soc_num,$io_v_ref,$io_def_v,$top_io_ref,$top_ip,$sw_dir);
+ 
+	my $processors_en=0;
+	for (my $id=0;$id<$NE;$id++){
+			my ($soc_name,$n,$soc_num)=$mpsoc->mpsoc_get_tile_soc_name($id);
+			
+			if(defined $soc_name) {				
+				my ($soc_v,$en)= gen_soc_v($mpsoc,$soc_name,$id,$soc_num,$io_v_ref,$io_def_v,$top_io_ref,$top_ip,$sw_dir);
 				add_text_to_string(\$socs_v,$soc_v);	
 				$processors_en|=$en;
 			
 			}else{
 				#this tile is not connected to any ip. the noc input ports will be connected to ground
-				my $soc_v="\n\n // Tile:$tile_num (x=$x,y=$y)   is not assigned to any ip\n";
+				my $soc_v="\n\n // Tile:$id    is not assigned to any ip\n";
 				$soc_v="$soc_v
 	
-	assign ni_credit_out[$tile_num]={V{1'b0}}; 
-	assign ni_flit_out[$tile_num]={Fw{1'b0}}; 
-	assign ni_flit_out_wr[$tile_num]=1'b0; 
+	assign ni_credit_out[$id]={V{1'b0}}; 
+	assign ni_flit_out[$id]={Fw{1'b0}}; 
+	assign ni_flit_out_wr[$id]=1'b0; 
 	";
 		add_text_to_string(\$socs_v,$soc_v);			
 				
 			}
 	
-	}}
+	}
                 
     if($processors_en){
     	add_text_to_string($io_v_ref,",\n\tprocessors_en");
@@ -490,16 +416,22 @@ sub gen_socs_v{
 
 
 sub   gen_soc_v{
-	my ($mpsoc,$soc_name,$tile_num,$x,$y,$soc_num,$io_v_ref,$io_def_v,$top_io_ref,$top_ip,$sw_path)=@_;
+	my ($mpsoc,$soc_name,$tile_num,$soc_num,$io_v_ref,$io_def_v,$top_io_ref,$top_ip,$sw_path)=@_;
 	my $soc_v;
 	my $processor_en=0;
-	my $xw= log2($mpsoc->object_get_attribute('noc_param',"NX"));
-	my $yw= log2($mpsoc->object_get_attribute('noc_param',"NY"));
-	$soc_v="\n\n // Tile:$tile_num (x=$x,y=$y)\n   \t$soc_name #(\n";
+	my ($NE, $NR, $RAw, $EAw, $Fw)= get_topology_info ($mpsoc); 
+	my $e_addr=endp_addr_encoder($mpsoc,$tile_num);
+	my $router_num = get_connected_router_id_to_endp($mpsoc,$tile_num);
+	my $r_addr=router_addr_encoder($mpsoc,$router_num);
+	
+		
+	
+	$soc_v="\n\n // Tile:$tile_num ($e_addr)\n   \t$soc_name #(\n";
 	
 	# Global parameter
 	add_text_to_string(\$soc_v,"\t\t.CORE_ID($tile_num),\n\t\t.SW_LOC(\"$sw_path/tile$tile_num\")");
 	
+		
 	# ni parameter
 	my $top=$mpsoc->mpsoc_get_soc($soc_name);
 	my @nis=get_NI_instance_list($top);
@@ -508,6 +440,8 @@ sub   gen_soc_v{
 	
 	#other parameters
 	my %params=$top->top_get_default_soc_param();
+	
+	
 	
 	foreach my $p (@noc_param){
 		my $parm_next = $p;
@@ -546,8 +480,9 @@ sub   gen_soc_v{
 		
 			foreach my $p (@ports){
 				my($inst,$range,$type,$intfc_name,$intfc_port)= $top->top_get_port($p);
-				my $q=($intfc_port eq "current_x")? "$xw\'d$x" : 
-								  ($intfc_port eq "current_y")?	"$yw\'d$y" :"ni_$intfc_port\[$tile_num\]";
+				my $q=	($intfc_port eq "current_e_addr")? "$EAw\'d$e_addr" : 
+						($intfc_port eq "current_r_addr")? "$RAw\'d$r_addr" :						
+						"ni_$intfc_port\[$tile_num\]";
 				add_text_to_string(\$soc_v,',') if ($i);	
 				add_text_to_string(\$soc_v,"\n\t\t.$p($q)");
 				$i=1;

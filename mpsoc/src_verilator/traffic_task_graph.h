@@ -1,7 +1,6 @@
-
-
 #ifndef TRAFFIC_TASK_GRAPH_H
 #define TRAFFIC_TASK_GRAPH_H
+
 
 
 #define SET_AUTO -1
@@ -52,8 +51,8 @@ typedef struct node {
 
 unsigned int total_active_routers=0;
 unsigned int task_graph_total_pck_num=0;
-node_t * task_graph_data[NC];
-index_t task_graph_abstract[NC];
+node_t * task_graph_data[NE];
+index_t task_graph_abstract[NE];
 
 
 
@@ -191,15 +190,15 @@ int extract_traffic_data ( char * str,  task_t*  st)
    return 1;
 }
 
-int calcualte_traffic_parameters(node_t * head[NC],index_t (* info)){
+int calcualte_traffic_parameters(node_t * head[NE],index_t (* info)){
 	int i,j;
 	 task_t  task;
 	
-	unsigned int max_bytes=0,accum[NC];
-	unsigned int min_total[NC];
+	unsigned int max_bytes=0,accum[NE];
+	unsigned int min_total[NE];
 	
 	//find the maximum bytes that an IP sends
-	for(i=0;i<NC;i++){
+	for(i=0;i<NE;i++){
 
 		info[i].active_index=-1;
 		j=0;
@@ -220,7 +219,7 @@ int calcualte_traffic_parameters(node_t * head[NC],index_t (* info)){
 	}
 	
 	
-	for(i=0;i<NC;i++){
+	for(i=0;i<NE;i++){
 
 		j=0;
 		if(head[i]!=NULL){
@@ -240,7 +239,7 @@ int calcualte_traffic_parameters(node_t * head[NC],index_t (* info)){
 
 
 
-void load_traffic_file(char * file, node_t * head[NC], index_t (* info)){
+void load_traffic_file(char * file, node_t * head[NE], index_t (* info)){
 	FILE * in;
 	char * line = NULL;
    
@@ -254,7 +253,7 @@ void load_traffic_file(char * file, node_t * head[NC], index_t (* info)){
 	    exit(1);
 	}
 
-    for(i=0;i<NC;i++){
+    for(i=0;i<NE;i++){
     			head[i]=NULL;
     }
 
@@ -263,13 +262,13 @@ void load_traffic_file(char * file, node_t * head[NC], index_t (* info)){
 		line = removewhiteSpacses(l);
         if(line[0] != '%' && line[0] != 0 ) {
 			n=extract_traffic_data(line, &st);
-			if(n==0 || st.dst >=NC) continue;// the  destination address must be smaller than NC
+			if(n==0 || st.dst >=NE) continue;// the  destination address must be smaller than NC
 		    push(&head[st.src],st);
 		}	   
 	}
 	fclose(in);
 	calcualte_traffic_parameters(head,info);
-	for(i=0;i<NC;i++){
+	for(i=0;i<NE;i++){
 		if(info[i].total_index !=0) total_active_routers++;
 	}
 }

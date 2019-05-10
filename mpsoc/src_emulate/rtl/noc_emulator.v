@@ -9,29 +9,31 @@
 
 module  noc_emulator #(
     //NoC parameters
-    parameter V    = 1,     // V
-    parameter B    = 4,     // buffer space :flit per VC 
-    parameter NX   = 4, // number of node in x axis
-    parameter NY   = 4, // number of node in y axis
-    parameter C    = 4, //  number of flit class 
+    parameter V    = 1,    
+    parameter B    = 4,     
+    parameter T1   = 4, 
+    parameter T2   = 4, 
+    parameter T3   = 1,
+    parameter TOPOLOGY = "MESH",
+    parameter ROUTE_NAME  =   "XY",
+    parameter C    = 4,  
     parameter Fpay = 32,
-    parameter MUX_TYPE  =   "BINARY",   //"ONE_HOT" or "BINARY"
-    parameter VC_REALLOCATION_TYPE  =   "NONATOMIC",// "ATOMIC" , "NONATOMIC"
-    parameter COMBINATION_TYPE= "COMB_NONSPEC",// "BASELINE", "COMB_SPEC1", "COMB_SPEC2", "COMB_NONSPEC"
-    parameter FIRST_ARBITER_EXT_P_EN   =    1,  
-    parameter TOPOLOGY =    "MESH",//"MESH","TORUS"
-    parameter ROUTE_NAME    =   "XY",
-    parameter CONGESTION_INDEX =   2,
-    parameter DEBUG_EN =   0,
-    parameter ROUTE_SUBFUNC ="XY",
-    parameter AVC_ATOMIC_EN=1,
-    parameter ADD_PIPREG_AFTER_CROSSBAR=0,
+    parameter MUX_TYPE  = "BINARY", 
+    parameter VC_REALLOCATION_TYPE  =  "NONATOMIC",
+    parameter COMBINATION_TYPE= "COMB_NONSPEC",
+    parameter FIRST_ARBITER_EXT_P_EN = 1,  
+    parameter CONGESTION_INDEX = 2,
+    parameter DEBUG_EN = 0,
+    parameter AVC_ATOMIC_EN = 1,
+    parameter ADD_PIPREG_AFTER_CROSSBAR = 0,
     parameter CVw=(C==0)? V : C * V,
-    parameter [CVw-1:   0] CLASS_SETTING = {CVw{1'b1}}, // shows how each class can use VCs   
-    parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000,  // mask scape vc, valid only for full adaptive
-    parameter SSA_EN="NO", // "YES" , "NO"       
-    parameter SWA_ARBITER_TYPE = "RRA",//"RRA","WRRA". RRA: Round Robin Arbiter WRRA weighted Round Robin Arbiter 
-    parameter WEIGHTw = 4, // WRRA width
+    parameter [CVw-1:   0] CLASS_SETTING = {CVw{1'b1}},    
+    parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000,  
+    parameter SSA_EN = "NO",        
+    parameter SWA_ARBITER_TYPE = "RRA", 
+    parameter WEIGHTw = 4, 
+    parameter MIN_PCK_SIZE = 2,  
+    
     
     // simulation
     parameter PATTERN_VJTAG_INDEX=125,
@@ -40,9 +42,8 @@ module  noc_emulator #(
     parameter RAM_Aw=7,
     parameter STATISTIC_NUM=8,  
     parameter TIMSTMP_FIFO_NUM=16
-           
-
-
+   
+    
 )(
     jtag_ctrl_reset,
     start_o,
@@ -54,24 +55,22 @@ module  noc_emulator #(
     input reset,jtag_ctrl_reset,clk;
     output done;
     output start_o;
-
-    
-    
-  
+ 
         
-    localparam
-        Fw      =   2+V+Fpay,
-        NC      =   (TOPOLOGY=="RING" || TOPOLOGY == "LINE")? NX    :   NX*NY,
-        NCV     =   NC  * V,
-        NCFw    =   NC  * Fw;
-                   
+    `define INCLUDE_TOPOLOGY_LOCALPARAM
+    `include "../src_noc/topology_localparam.v"
+
+    localparam 
+        Fw = 2+V+Fpay, //flit width;    
+        NEFw = NE * Fw,
+        NEV = NE * V;
+      
 
     localparam
         PCK_CNTw =30,  // 1 G packets
         PCK_SIZw =14,   // 16 K flit
-        MAXXw    =4,   // 16 nodes in x dimention
-        MAXYw    =4,   // 16 nodes in y dimention : max emulator size is 16X16
-        MAXCw    =4;   // 16 message classes  
+        MAX_EAw =8,  
+        MAX_Cw    =4;   // 16 message classes  
                
                
    localparam  MAX_SIM_CLKs  = 1_000_000_000;
@@ -83,21 +82,24 @@ module  noc_emulator #(
     reg [10:0] cnt;
     
    assign start_o=start_i;
+   
+   
     
+    wire [NEFw-1    :   0]  noc_flit_out_all;
+    wire [NE-1      :   0]  noc_flit_out_wr_all;
+    wire [NEV-1     :   0]  noc_credit_in_all;
+    wire [NEFw-1    :   0]  noc_flit_in_all;
+    wire [NE-1      :   0]  noc_flit_in_wr_all;  
+    wire [NEV-1     :   0]  noc_credit_out_all;
     
-    wire [NCFw-1    :   0]  noc_flit_out_all;
-    wire [NC-1      :   0]  noc_flit_out_wr_all;
-    wire [NCV-1     :   0]  noc_credit_in_all;
-    wire [NCFw-1    :   0]  noc_flit_in_all;
-    wire [NC-1      :   0]  noc_flit_in_wr_all;  
-    wire [NCV-1     :   0]  noc_credit_out_all;
     
 
  noc #(
         .V(V),
         .B(B), 
-        .NX(NX),
-        .NY(NY),
+        .T1(T1),
+        .T2(T2),
+        .T3(T3),
         .C(C),    
         .Fpay(Fpay), 
         .MUX_TYPE(MUX_TYPE),
@@ -107,8 +109,7 @@ module  noc_emulator #(
         .TOPOLOGY(TOPOLOGY),
         .ROUTE_NAME(ROUTE_NAME),
         .CONGESTION_INDEX(CONGESTION_INDEX),
-        .DEBUG_EN (DEBUG_EN),
-        .ROUTE_SUBFUNC(ROUTE_SUBFUNC),
+        .DEBUG_EN (DEBUG_EN),       
         .AVC_ATOMIC_EN(AVC_ATOMIC_EN),
         .ADD_PIPREG_AFTER_CROSSBAR(ADD_PIPREG_AFTER_CROSSBAR),
         .CVw(CVw),
@@ -116,8 +117,8 @@ module  noc_emulator #(
         .ESCAP_VC_MASK(ESCAP_VC_MASK),  //
         .SSA_EN(SSA_EN),
     	.SWA_ARBITER_TYPE(SWA_ARBITER_TYPE), 
-    	.WEIGHTw(WEIGHTw)   
-
+    	.WEIGHTw(WEIGHTw),
+    	.MIN_PCK_SIZE(MIN_PCK_SIZE)
     )
     the_noc
     (
@@ -138,13 +139,15 @@ module  noc_emulator #(
         .STATISTIC_VJTAG_INDEX(STATISTIC_VJTAG_INDEX),
         .V(V),
         .B(B),
-        .NX(NX),
-        .NY(NY),
+        .T1(T1),
+        .T2(T2),
+        .T3(T3),
         .Fpay(Fpay),
         .VC_REALLOCATION_TYPE(VC_REALLOCATION_TYPE),
         .TOPOLOGY(TOPOLOGY),
         .ROUTE_NAME(ROUTE_NAME),
         .C(C),
+        .MIN_PCK_SIZE(MIN_PCK_SIZE),
         .RAM_Aw(RAM_Aw),
         .STATISTIC_NUM(STATISTIC_NUM),  // the last 8 rows of RAM is reserved for collecting statistic values;
         .MAX_SIM_CLKs(MAX_SIM_CLKs),
@@ -154,9 +157,8 @@ module  noc_emulator #(
         .TIMSTMP_FIFO_NUM(TIMSTMP_FIFO_NUM),
         .PCK_CNTw(PCK_CNTw),  // 1 G packets
         .PCK_SIZw(PCK_SIZw),   // 16 K flit
-        .MAXXw(MAXXw),   // 16 nodes in x dimention
-        .MAXYw(MAXYw),   // 16 nodes in y dimention : max emulator size is 16X16
-        .MAXCw(MAXCw)   // 16 message class            
+        .MAX_EAw(MAX_EAw),   // 16 nodes in x dimention
+        .MAX_Cw(MAX_Cw)   // 16 message class            
     )
     the_traffic_gen
     (
@@ -172,8 +174,7 @@ module  noc_emulator #(
         .credit_in_all(noc_credit_out_all), 
         .flit_in_all(noc_flit_out_all),  
         .flit_in_wr_all(noc_flit_out_wr_all),  
-        .credit_out_all(noc_credit_in_all)
-              
+        .credit_out_all(noc_credit_in_all)              
     );
  
   
@@ -187,9 +188,7 @@ module  noc_emulator #(
                     start_i<=1'b1;
              end else if(cnt== 1010)begin 
                     start_i<=1'b0;
-             end 
-                      
-        
+             end        
         end    
     end
 endmodule
@@ -198,22 +197,24 @@ endmodule
 
 /***************
     Jtag_traffic_gen:
-    A traffic generator which can be programed using JTAG port
-    
+    A traffic generator which can be programed using JTAG port    
 
 ****************/
+
 module  Jtag_traffic_gen #(
     parameter PATTERN_VJTAG_INDEX=125,
     parameter STATISTIC_VJTAG_INDEX=124, 
     parameter V = 4,    // VC num per port
     parameter B = 4,    // buffer space :flit per VC 
-    parameter NX= 4,    // number of node in x axis
-    parameter NY= 4,    // number of node in y axis   
+    parameter T1= 4,    
+    parameter T2= 4,   
+    parameter T3= 1,   
     parameter Fpay = 32,
     parameter VC_REALLOCATION_TYPE  = "NONATOMIC",// "ATOMIC" , "NONATOMIC"
     parameter TOPOLOGY  = "MESH",
     parameter ROUTE_NAME    = "XY",
     parameter C = 4 ,   //  number of flit class
+    parameter MIN_PCK_SIZE = 2,
     parameter RAM_Aw=7,
     parameter STATISTIC_NUM=8, 
     parameter MAX_RATIO = 100,
@@ -221,21 +222,16 @@ module  Jtag_traffic_gen #(
     parameter MAX_SIM_CLKs=1_000_000_000,   
     parameter PCK_CNTw =30,  // 1 G packets
     parameter PCK_SIZw =14,   // 16 K flit
-    parameter MAXXw    =4,   // 16 nodes in x dimention
-    parameter MAXYw    =4,   // 16 nodes in y dimention : max emulator size is 16X16
-    parameter MAXCw    =4,   // 16 message class
+    parameter MAX_EAw    =8,   
+    parameter MAX_Cw    =4,   // 16 message class
     parameter SWA_ARBITER_TYPE = "RRA",
     parameter WEIGHTw  =4
 )
 (
-    
-    //output
-    done,   
-    
-    //input  
-    start_i,
-   
-   //noc port
+
+    done,       
+    start_i,   
+
     flit_out_all,     
     flit_out_wr_all,   
     credit_in_all,
@@ -249,58 +245,43 @@ module  Jtag_traffic_gen #(
 );
 
 
-    function integer log2;
-      input integer number; begin   
-         log2=0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end    
-      end   
-    endfunction // log2  
-
-
-    
+    `define INCLUDE_TOPOLOGY_LOCALPARAM
+    `include "../src_noc/topology_localparam.v"
+          
     localparam
         Fw      =   2+V+Fpay,
-        NC      =   (TOPOLOGY=="RING" || TOPOLOGY == "LINE")? NX    :   NX*NY,
-        NCw     =   log2(NC),
-        NCV     =   NC  * V,
-        NCFw    =   NC  * Fw;
+        NEw     =   log2(NE),
+        NEV     =   NE  * V,
+        NEFw    =   NE  * Fw;     
     
-    
-
-       
-    
-    
-    input                               reset,jtag_ctrl_reset, clk;   
-    input                               start_i;
-   
-    output   done;
+    input  reset,jtag_ctrl_reset, clk;   
+    input  start_i;
+    output done;
    
     // NOC interfaces
-    output [NCFw-1    :   0]  flit_out_all;
-    output [NC-1      :   0]  flit_out_wr_all;
-    input  [NCV-1     :   0]  credit_in_all;
-    input  [NCFw-1    :   0]  flit_in_all;
-    input  [NC-1      :   0]  flit_in_wr_all;  
-    output [NCV-1     :   0]  credit_out_all; 
+    output [NEFw-1    :   0]  flit_out_all;
+    output [NE-1      :   0]  flit_out_wr_all;
+    input  [NEV-1     :   0]  credit_in_all;
+    input  [NEFw-1    :   0]  flit_in_all;
+    input  [NE-1      :   0]  flit_in_wr_all;  
+    output [NEV-1     :   0]  credit_out_all; 
    
    
    
-    wire [Fw-1      :   0]  flit_out                 [NC-1           :0];   
-    wire [NC-1      :   0]  flit_out_wr; 
-    wire [V-1       :   0]  credit_in                [NC-1           :0];
-    wire [Fw-1      :   0]  flit_in                  [NC-1           :0];   
-    wire [NC-1      :   0]  flit_in_wr;  
-    wire [V-1       :   0]  credit_out               [NC-1           :0];       
+    wire [Fw-1      :   0]  flit_out                 [NE-1           :0];   
+    wire [NE-1      :   0]  flit_out_wr; 
+    wire [V-1       :   0]  credit_in                [NE-1           :0];
+    wire [Fw-1      :   0]  flit_in                  [NE-1           :0];   
+    wire [NE-1      :   0]  flit_in_wr;  
+    wire [V-1       :   0]  credit_out               [NE-1           :0];       
      
  
-    wire [NC-1 :   0]  start;
-    wire [NC-1      :   0]  done_sep; 
+    wire [NE-1 :   0]  start;
+    wire [NE-1      :   0]  done_sep; 
     assign done = &done_sep; 
    
     start_delay_gen #(
-        .NC(NC) //number of cores
+        .NC(NE) //number of cores
 
     )
     st_gen
@@ -310,46 +291,37 @@ module  Jtag_traffic_gen #(
         .start_i(start_i),
         .start_o(start)
     );
-    
-    
+        
     //jtag pattern controller  
-
 
     localparam   Dw=64,  
                  Aw =RAM_Aw;   
-              
-
 
     wire [Dw-1 :   0] jtag_data ; 
     wire [Aw-1 :   0] jtag_addr ; 
     wire              jtag_we; 
     wire [Dw-1 :   0] jtag_q ;
-    wire [NCw-1:   0] jtag_RAM_select;
-    wire [NC-1 :   0] jtag_we_sep;
-    wire [Dw-1 :   0] jtag_q_sep   [NC-1  :   0];
+    wire [NEw-1:   0] jtag_RAM_select;
+    wire [NE-1 :   0] jtag_we_sep;
+    wire [Dw-1 :   0] jtag_q_sep   [NE-1  :   0];
 
     assign jtag_q = jtag_q_sep[jtag_RAM_select];
    
 
-  
-  
-
-  jtag_emulator_controller #(
+    jtag_emulator_controller #(
         .VJTAG_INDEX(PATTERN_VJTAG_INDEX),
         .Dw(Dw),
-        .Aw(Aw+NCw)
-        
-   )
-   pttern_jtag_controller
-   (
+        .Aw(Aw+NEw)        
+    )
+    pttern_jtag_controller
+    (
         .dat_o(jtag_data),
         .addr_o({jtag_RAM_select,jtag_addr}),
         .we_o(jtag_we),
         .q_i(jtag_q),
         .clk(clk),
-        .reset(jtag_ctrl_reset)
-       
-   );
+        .reset(jtag_ctrl_reset)       
+    );
     
     
     
@@ -362,15 +334,15 @@ module  Jtag_traffic_gen #(
     
     wire [STATISw-1 :   0] statis_jtag_addr ; 
     wire [Dw-1 :   0] statis_jtag_data_i;
-    wire [NCw-1:   0] statis_jtag_select;
-    wire [Dw-1 :   0] statis_jtag_q_sep   [NC-1  :   0];
+    wire [NEw-1:   0] statis_jtag_select;
+    wire [Dw-1 :   0] statis_jtag_q_sep   [NE-1  :   0];
     
     assign statis_jtag_data_i = statis_jtag_q_sep[statis_jtag_select];
          
    jtag_emulator_controller #(
         .VJTAG_INDEX(STATISTIC_VJTAG_INDEX),
         .Dw(Dw),
-        .Aw(STATISw+NCw)
+        .Aw(STATISw+NEw)
         
    )
    jtag_statistic_reader
@@ -382,99 +354,100 @@ module  Jtag_traffic_gen #(
         .clk(clk),
         .reset(jtag_ctrl_reset)       
    );
+  
+   function integer addrencode;
+        input integer pos,k,n,kw;
+        integer pow,i,tmp;begin
+        addrencode=0;
+        pow=1;
+        for (i = 0; i <n; i=i+1 ) begin 
+            tmp=(pos/pow);
+            tmp=tmp%k;
+            tmp=tmp<<i*kw;
+            addrencode=addrencode | tmp;
+            pow=pow * k;
+        end
+        end   
+    endfunction 
+  
     
-    
-        
-    
-    
-    
-    
-    
-    
-    
-    
-   
-    
-    genvar x,y;
+    genvar i;
     generate 
-    for (y=0;   y<NY;   y=y+1) begin: y_loop1
-    	for (x=0;   x<NX; x=x+1) begin :x_loop1
-       
-                localparam IP_NUM   =   ((y * NX) +  x);  
+    for (i=0;   i<NE;   i=i+1) begin: endp
+    	     
+     //connected router encoded address
+        localparam CURRENTR=  i/T3;
+        localparam CURRENTX= (TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE")?  addrencode(i/K,K,L,Kw) : CURRENTR%T1;
+        localparam CURRENTY= (TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE")?  0 : CURRENTR/T1;
+        localparam [RAw-1 : 0] CURRENT_ADDR =  (CURRENTY<<NXw) + CURRENTX; 
+        //Endpoint encoded address
+        localparam ENDPL= (TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE")? 0 :(T3>1)? i%T3: 0;
+        localparam ENDPX= (TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE")?  addrencode(i,K,L,Kw) : CURRENTX;
+        localparam ENDPY= (TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE")? 0 : CURRENTY;    
+        localparam [EAw-1 : 0] ENDP_ADRR = (ENDPL<<(NXw+NYw)) + (ENDPY<<NXw) + ENDPX;   
                 
-            // seperate interfaces per router    
-           
-            assign  flit_in      [IP_NUM] =   flit_in_all    [(IP_NUM+1)*Fw-1    : IP_NUM*Fw];   
-            assign  flit_in_wr   [IP_NUM] =   flit_in_wr_all [IP_NUM]; 
-            assign  credit_out_all   [(IP_NUM+1)*V-1 : IP_NUM*V]     =   credit_out   [IP_NUM];  
-            assign  flit_out_all     [(IP_NUM+1)*Fw-1    : IP_NUM*Fw]    =  flit_out     [IP_NUM];
-            assign  flit_out_wr_all  [IP_NUM] =   flit_out_wr  [IP_NUM];
-            assign  credit_in    [IP_NUM] =   credit_in_all  [(IP_NUM+1)*V-1 : IP_NUM*V];
-            assign jtag_we_sep[IP_NUM] = (jtag_RAM_select == IP_NUM) ? jtag_we :1'b0;
+        // seperate interfaces per router             
+        assign  flit_in      [i] =   flit_in_all    [(i+1)*Fw-1    : i*Fw];   
+        assign  flit_in_wr   [i] =   flit_in_wr_all [i]; 
+        assign  credit_out_all   [(i+1)*V-1 : i*V]     =   credit_out   [i];  
+        assign  flit_out_all     [(i+1)*Fw-1    : i*Fw]    =  flit_out     [i];
+        assign  flit_out_wr_all  [i] =   flit_out_wr  [i];
+        assign  credit_in    [i] =   credit_in_all  [(i+1)*V-1 : i*V];
+        assign jtag_we_sep[i] = (jtag_RAM_select == i) ? jtag_we :1'b0;
             
-          traffic_gen_ram #(
+        traffic_gen_ram #(
           	.V(V),
           	.B(B),
-          	.NX(NX),
-          	.NY(NY),
-          	.Fpay(Fpay),
+          	.T1(T1),
+          	.T2(T2),
+          	.T3(T3),
+           	.Fpay(Fpay),
           	.VC_REALLOCATION_TYPE(VC_REALLOCATION_TYPE),
           	.TOPOLOGY(TOPOLOGY),
           	.ROUTE_NAME(ROUTE_NAME),
           	.C(C),
-          	.RAM_Aw(RAM_Aw),
+           	.RAM_Aw(RAM_Aw),
             .STATISTIC_NUM(STATISTIC_NUM), 
           	.TIMSTMP_FIFO_NUM(TIMSTMP_FIFO_NUM),
           	.MAX_SIM_CLKs(MAX_SIM_CLKs),
             .MAX_RATIO(MAX_RATIO),
           	.PCK_CNTw(PCK_CNTw),  // 1 G packets
             .PCK_SIZw(PCK_SIZw),   // 16 K flit
-            .MAXXw(MAXXw),   // 16 nodes in x dimention
-            .MAXYw(MAXYw),   // 16 nodes in y dimention : max emulator size is 16X16
-            .MAXCw(MAXCw),   // 16 message cla
+            .MAX_EAw(MAX_EAw),  
+            .MAX_Cw(MAX_Cw),   // 16 message cla
             .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
-            .WEIGHTw(WEIGHTw)
-          	
+            .WEIGHTw(WEIGHTw),
+            .MIN_PCK_SIZE(MIN_PCK_SIZE),
+            .RAw(RAw),
+            .EAw(EAw)          	
           )
           traffic_gen_ram_inst
           (
           	.reset(reset),
           	.clk(clk),
-          	.current_x(x),
-          	.current_y(y),
-          	.start(start[IP_NUM]),
-          	.done(done_sep[IP_NUM]),
+          	.current_r_addr(CURRENT_ADDR),
+            .current_e_addr(ENDP_ADRR),
+          	.start(start[i]),
+          	.done(done_sep[i]),
           	//pattern updater
           	.jtag_data_b(jtag_data),
           	.jtag_addr_b(jtag_addr),
-          	.jtag_we_b( jtag_we_sep[IP_NUM]     ),
-          	.jtag_q_b(  jtag_q_sep[IP_NUM]  ),          	
+          	.jtag_we_b( jtag_we_sep[i]),
+          	.jtag_q_b(  jtag_q_sep[i]),          	
           	//statistic reader
           	.statistic_jtag_addr_b(statis_jtag_addr),
-            .statistic_jtag_q_b( statis_jtag_q_sep[IP_NUM]),         
+            .statistic_jtag_q_b( statis_jtag_q_sep[i]),       
           	
-          	.flit_out(flit_out[IP_NUM]),
-          	.flit_out_wr(flit_out_wr[IP_NUM]),
-          	.credit_in(credit_in[IP_NUM]),
-          	.flit_in(flit_in[IP_NUM]),
-          	.flit_in_wr(flit_in_wr[IP_NUM]),
-          	.credit_out(credit_out[IP_NUM])
-          );
-            
-   
-            
-            
-    
-        end
+          	.flit_out(flit_out[i]),
+          	.flit_out_wr(flit_out_wr[i]),
+          	.credit_in(credit_in[i]),
+          	.flit_in(flit_in[i]),
+          	.flit_in_wr(flit_in_wr[i]),
+          	.credit_out(credit_out[i])
+          );        
     end
     endgenerate
-    
-    
-    
-   
-    
-    
- 
+     
 endmodule
 
 
@@ -488,13 +461,14 @@ endmodule
 module  traffic_gen_ram #(
     parameter V = 4,    // VC num per port
     parameter B = 4,    // buffer space :flit per VC 
-    parameter NX= 4,    // number of node in x axis
-    parameter NY= 4,    // number of node in y axis   
+    parameter T1= 4,    
+    parameter T2= 4,    
+    parameter T3=1,
     parameter Fpay = 32,
     parameter VC_REALLOCATION_TYPE  = "NONATOMIC",// "ATOMIC" , "NONATOMIC"
     parameter TOPOLOGY  = "MESH",
     parameter ROUTE_NAME    = "XY",
-    parameter C = 4,    //  number of flit class 
+    parameter C = 4,    //  number of flit class
     parameter RAM_Aw=7,
     parameter STATISTIC_NUM=8,  // the last 8 rows of RAM is reserved for collecting statistic values;   
     parameter TIMSTMP_FIFO_NUM=16,
@@ -502,20 +476,20 @@ module  traffic_gen_ram #(
     parameter MAX_RATIO=100,
     parameter PCK_CNTw =30,  // 1 G packets
     parameter PCK_SIZw =14,   // 16 K flit
-    parameter MAXXw    =4,   // 16 nodes in x dimention
-    parameter MAXYw    =4,   // 16 nodes in y dimention : max emulator size is 16X16
-    parameter MAXCw    =4,  // 16 message class
+    parameter MAX_EAw    =8,   
+    parameter MAX_Cw    =4,  // 16 message class
     parameter SWA_ARBITER_TYPE ="RRA",
-    parameter WEIGHTw  =4
+    parameter WEIGHTw  =4,
+    parameter MIN_PCK_SIZE=2,
+    parameter RAw = 4,
+    parameter EAw=4    
 )
 (
     
-    //output
+   
     done,    
-    
-    //input
-    current_x,
-    current_y,  
+    current_r_addr,
+    current_e_addr,
     start,
    
    //noc port
@@ -524,8 +498,7 @@ module  traffic_gen_ram #(
     credit_in,
     flit_in,   
     flit_in_wr,   
-    credit_out, 
-    
+    credit_out,     
     
     //Pattern RAM to jtag interface   
     jtag_data_b, 
@@ -555,34 +528,31 @@ module  traffic_gen_ram #(
   //  localparam   MAX_PATTERN =  (2**RAM_Aw)-1;   // support up to MAX_PATTERN different injections pattern
     
     localparam
-        Xw = log2(NX),   // number of node in x axis
-        Yw = log2(NY),    // number of node in y axis
         Cw = (C > 1)? log2(C): 1,
         Fw = 2+V+Fpay;
                  
      
       //define maximum width for each parameter of packet injector
 
-    localparam    RATIOw   =7;   // log2(100)
-              
+    localparam    RATIOw   =7;   // log2(100)  
 
-    
-
-    localparam  Dw=PCK_CNTw+ RATIOw + PCK_SIZw + MAXXw + MAXYw + MAXCw  +1;//=64  
+    localparam  Dw=PCK_CNTw+ RATIOw + PCK_SIZw + MAX_EAw + MAX_Cw  +1;//=64  
     localparam  Aw=RAM_Aw;
     localparam  STATISw=log2(STATISTIC_NUM);      
    
     localparam 
-        STATE_NUM=3,
+        STATE_NUM=5,
         IDEAL =1,
-        SEND_PCK=2,
+        WAIT1 = 2,
+        WAIT2 = 4,
+        SEND_PCK=8,
         /*
         SAVE_SENT_PCK_NUM=4,
         SAVE_RSVD_PCK_NUM=8,
         SAVE_TOTAL_LATENCY_NUM=16,
         SAVE_WORST_LATENCY_NUM=32,
         */
-        ASSET_DONE=4;
+        ASSET_DONE=16;
 
     localparam
         CLK_CNTw = log2(MAX_SIM_CLKs+1),
@@ -600,8 +570,13 @@ module  traffic_gen_ram #(
         
 
     input                               reset, clk;   
-    input  [Xw-1                    :0] current_x;
-    input  [Yw-1                    :0] current_y;
+    // the connected router address
+    input  [RAw-1                   :0] current_r_addr;
+    // the current endpoint address
+    input  [EAw-1                   :0] current_e_addr;
+
+   
+   
     input                               start;
    
     output  reg done;
@@ -630,23 +605,19 @@ module  traffic_gen_ram #(
     wire [Dw-1  :   0] q_a;
     reg  [Aw-1  :   0] addr_a,addr_a_next;
     reg                we_a;
-    reg  [Dw-1  :   0] data_a;
-  
-    
+    reg  [Dw-1  :   0] data_a; 
   
   
-    wire  [PCK_CNTw-1              :0] pck_num_to_send_in;
-    wire  [RATIOw-1                :0] ratio,ratio_in;   
-    wire  [PCK_SIZw-1              :0] pck_size_in;
-    wire  [MAXXw-1                 :0] dest_x_in;
-    wire  [MAXYw-1                 :0] dest_y_in;
-    wire  [MAXCw-1                 :0] pck_class_in;
+    wire  [PCK_CNTw-1 :0] pck_num_to_send_in;
+    wire  [RATIOw-1 :0] ratio,ratio_in;   
+    wire  [PCK_SIZw-1 :0] pck_size_in;
+    wire  [MAX_EAw-1  :0] dest_e_in;
+    wire  [MAX_Cw-1   :0] pck_class_in;
     wire  last_adr_in;
            
-    assign {pck_num_to_send_in,ratio_in, pck_size_in,dest_x_in, dest_y_in,pck_class_in, last_adr_in}= q_a;
+    assign {pck_num_to_send_in,ratio_in, pck_size_in,dest_e_in, pck_class_in, last_adr_in}= q_a;
     
-    wire  [Xw-1                    :0] dest_x = dest_x_in [Xw-1                    :0];
-    wire  [Yw-1                    :0] dest_y = dest_y_in [Yw-1                    :0];
+    wire  [EAw-1                    :0] dest_e_addr = dest_e_in [EAw-1                    :0];
     wire  [Cw-1                    :0] pck_class= pck_class_in[Cw-1                :0];
    
 
@@ -660,15 +631,11 @@ module  traffic_gen_ram #(
     reg  [CLK_CNTw-1 : 0] worst_latency,worst_latency_next;
       
     reg nvalid_dest,reset_pck_number_sent_old;
-    wire nvalid_dest_next= (current_x==dest_x && current_y==dest_y);         
+    wire nvalid_dest_next= (current_e_addr==dest_e_addr && ps!=IDEAL && ps!=WAIT1);         
     wire reset_pck_number_sent= ((pck_number_sent==pck_num_to_send_in) | nvalid_dest) & ~reset_pck_number_sent_old;  
     reg stop;
 	assign ratio=(ps==SEND_PCK)?  ratio_in : {RATIOw{1'b0}};
   
-  
-  
-   
-
     dual_port_ram #( 
         .Dw (Dw),
         .Aw (Aw)
@@ -686,8 +653,7 @@ module  traffic_gen_ram #(
         .data_b     (jtag_data_b),
         .addr_b     (jtag_addr_b),
         .we_b       (jtag_we_b),
-        .q_b        (jtag_q_b)
-        
+        .q_b        (jtag_q_b)        
     );
  
  wire start_traffic;    
@@ -695,18 +661,21 @@ module  traffic_gen_ram #(
  
  always @(posedge clk or posedge reset) begin 
     if(reset)  counter <=4'd0;
-    else if(counter<=4'b1111) counter <=counter+1'b1; 
+    else begin 
+        if(start)  counter <=4'd1;
+        else if(counter> 4'd0 &&  counter<=4'b1111) counter <=counter+1'b1; 
+    end
  end
             
  assign start_traffic = counter == 4'b1100; // delaied for 12 clock cycles
     
-              
-   
-    traffic_gen #(
+       
+  traffic_gen #(
         .V(V),
         .B(B),
-        .NX(NX),
-        .NY(NY),
+        .T1(T1),
+        .T2(T2),
+        .T3(T3),
         .Fpay(Fpay),
         .C(C),
         .VC_REALLOCATION_TYPE(VC_REALLOCATION_TYPE),
@@ -717,36 +686,34 @@ module  traffic_gen_ram #(
         .MAX_PCK_SIZ(MAX_PCK_SIZ),
         .TIMSTMP_FIFO_NUM(TIMSTMP_FIFO_NUM),
         .MAX_RATIO(MAX_RATIO),
-    	.CLASS_HDR_WIDTH(8),
-    	.ROUTING_HDR_WIDTH(8),
-    	.DST_ADR_HDR_WIDTH(8),
-    	.SRC_ADR_HDR_WIDTH(8),
     	.SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
-        .WEIGHTw(WEIGHTw)
+        .WEIGHTw(WEIGHTw),
+        .MIN_PCK_SIZE(MIN_PCK_SIZE)
     )
     the_traffic_gen
     (
+    
+        .reset(reset),
+        .clk(clk),
         //input 
         .ratio (ratio),
-        .avg_pck_size_in(pck_size_in),
-        .pck_size_in(pck_size_in), 
-        .current_x(current_x),
-        .current_y(current_y),
-        .dest_x(dest_x),
-        .dest_y(dest_y), 
-        .pck_class_in(pck_class),        
         .start(start_traffic),
         .stop(stop),
+        .avg_pck_size_in(pck_size_in),
+        .pck_size_in(pck_size_in), 
+        .current_r_addr(current_r_addr),
+        .current_e_addr(current_e_addr),
+        .dest_e_addr(dest_e_addr),        
+        .pck_class_in(pck_class),         
         .init_weight({WEIGHTw{1'b0}}),
         .report ( ),
         
         //output
-        .src_x( ),
-        .src_y( ),
+        .update(update), // update the noc_analayzer
+        .src_e_addr( ),      
         .pck_number( ),
         .sent_done(sent_done), // tail flit has been sent
         .hdr_flit_sent( ),
-        .update(update), // update the noc_analayzer
         .distance( ),
         .pck_class_out( ),   
         .time_stamp_h2h( ),
@@ -758,16 +725,10 @@ module  traffic_gen_ram #(
         .credit_in(credit_in), 
         .flit_in(flit_in),  
         .flit_in_wr(flit_in_wr),  
-        .credit_out(credit_out),      
-                     
-        .reset(reset),
-        .clk(clk)
+        .credit_out(credit_out)     
                
     );
-   
-   
-   
-   
+      
     always @ (*)begin 
         case (statistic_jtag_addr_b)
             SENT_PCK_ADDR: statistic_jtag_q_b=  total_pck_sent;
@@ -777,10 +738,9 @@ module  traffic_gen_ram #(
             default: statistic_jtag_q_b= worst_latency; 
          endcase
     end
-                
-          
+        
            
-       
+          
               
      always @ (*)begin
          ns=ps;
@@ -815,10 +775,18 @@ module  traffic_gen_ram #(
               ram_counter_next = q_a[31:0];  // first ram data shows how many times the RAM is needed to ne read
               if( start) begin 
                     addr_a_next=PATTERN_START_ADDR;
-                    ns= SEND_PCK;              
+                    ns= WAIT1;              
               end
          
          end//IDEAL
+         WAIT1 : begin 
+            ns= WAIT2;            
+         
+         end 
+         WAIT2 : begin 
+            ns= SEND_PCK;            
+         
+         end        
          SEND_PCK: begin 
             if (reset_pck_number_sent) begin 
                  pck_number_sent_next={PCK_CNTw{1'b0}};
@@ -1009,10 +977,7 @@ localparam VJ_DW= (Dw > Aw)? Dw : Aw;
             if(wb_cap_rd) wb_rd_data <= q_i;
         end
     end
-    
-    
-   
-    
+       
     
     always @(*)begin 
         wb_addr_next= wb_addr;
@@ -1109,17 +1074,3 @@ module start_delay_gen #(
 	assign start_o=(cnt_increase | start)? start_o_reg : {NC{1'b0}};
 
 endmodule
-
-
-
-
-
-
-
-
-
-
-
-
-
-

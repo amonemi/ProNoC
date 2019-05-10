@@ -34,7 +34,7 @@ void usage (){
 int main (int argc, char *argv[])
 {
  printf("argc=%d\n",argc);
-if(argc!= 6) {usage();  return;}
+if(argc!= 6) {usage();  return 1;}
  char * in_file_name =argv[1];
  char * out_file_name=argv[2];
  char * x_lable	     =argv[3];
@@ -65,7 +65,7 @@ FILE * pipe = popen ("gnuplot -persistent", "w");
  
  
  index_num=count_index_num (in_file_name);
- if(index==0)return 1;
+ //if(index==0)return 1;
  if(get_index_names(label,in_file_name)) return 1;
  
  

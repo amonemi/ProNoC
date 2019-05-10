@@ -1,2 +1,2 @@
 all:
-	gcc plot.c -o plot
+	gcc -Wall plot.c -o plot

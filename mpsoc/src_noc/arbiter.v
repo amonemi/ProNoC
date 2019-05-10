@@ -838,7 +838,7 @@ endmodule
 
     
 
- /*
+ 
  module fixed_priority_arbiter #(
      parameter   ARBITER_WIDTH   =8,
      parameter   HIGH_PRORITY_BIT = "HSB"
@@ -870,7 +870,7 @@ endmodule
     end//always
 endmodule
     
-*/
+
 
  
  

@@ -32,7 +32,8 @@ module combined_vc_sw_alloc #(
     parameter COMBINATION_TYPE = "BASELINE",// "BASELINE", "COMB_SPEC1", "COMB_SPEC2", "COMB_NONSPEC"
     parameter FIRST_ARBITER_EXT_P_EN = 1,
     parameter DEBUG_EN = 1,
-    parameter SWA_ARBITER_TYPE = "RRA"//"RRA","WRRA". RRA: Round Robin Arbiter WRRA weighted Round Robin Arbiter 
+    parameter SWA_ARBITER_TYPE = "RRA",//"RRA","WRRA". RRA: Round Robin Arbiter WRRA weighted Round Robin Arbiter 
+    parameter MIN_PCK_SIZE=2 //minimum packet size in flits. The minimum value is 1. 
 )
 (
 
@@ -53,9 +54,10 @@ module combined_vc_sw_alloc #(
     any_ivc_sw_request_granted_all,
     any_ovc_granted_in_outport_all,
     spec_ovc_num_all,
-    lk_destination_all,
     vc_weight_is_consumed_all, 
     iport_weight_is_consumed_all, 
+    pck_is_single_flit_all,
+    granted_dst_is_from_a_single_flit_pck,
     clk,
     reset
 
@@ -86,9 +88,11 @@ module combined_vc_sw_alloc #(
     output [PP_1-1 : 0] nonspec_granted_dest_port_all;
     output [PP_1-1 : 0] spec_granted_dest_port_all; 
     output [PVV-1 : 0] spec_ovc_num_all;
-    input  [PVP_1-1 :  0] lk_destination_all;
+  //  input  [PVP_1-1 :  0] lk_destination_all;
     input  [PV-1 :  0] vc_weight_is_consumed_all;
     input  [P-1 :  0] iport_weight_is_consumed_all;
+    input  [PV-1 : 0] pck_is_single_flit_all;
+    output [P-1 : 0] granted_dst_is_from_a_single_flit_pck;
     
     input clk,reset;
 
@@ -134,7 +138,9 @@ module combined_vc_sw_alloc #(
             .V(V),    
             .P(P),
             .DEBUG_EN(DEBUG_EN),
-            .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE)
+            .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE),
+            .MIN_PCK_SIZE(MIN_PCK_SIZE)
+            
         )
         the_comb_spec1
         (
@@ -154,6 +160,8 @@ module combined_vc_sw_alloc #(
             .any_ivc_sw_request_granted_all(any_ivc_sw_request_granted_all),
             .vc_weight_is_consumed_all(vc_weight_is_consumed_all),
             .iport_weight_is_consumed_all(iport_weight_is_consumed_all),
+            .pck_is_single_flit_all(pck_is_single_flit_all),
+            .granted_dst_is_from_a_single_flit_pck(granted_dst_is_from_a_single_flit_pck),  
             .clk(clk), 
             .reset(reset)
         );        
@@ -167,7 +175,8 @@ module combined_vc_sw_alloc #(
                 .V(V),    
                 .P(P),
                 .DEBUG_EN(DEBUG_EN),
-                .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE)
+                .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE),
+                .MIN_PCK_SIZE(MIN_PCK_SIZE)
             )
             the_comb_spec2
             (
@@ -187,6 +196,8 @@ module combined_vc_sw_alloc #(
                 .any_ivc_sw_request_granted_all(any_ivc_sw_request_granted_all),
                 .vc_weight_is_consumed_all(vc_weight_is_consumed_all),
                 .iport_weight_is_consumed_all(iport_weight_is_consumed_all),
+                .pck_is_single_flit_all(pck_is_single_flit_all),
+                .granted_dst_is_from_a_single_flit_pck(granted_dst_is_from_a_single_flit_pck),  
                 .clk(clk), 
                 .reset(reset)
             );
@@ -202,7 +213,8 @@ module combined_vc_sw_alloc #(
                 .V(V),    
                 .P(P),
                 .FIRST_ARBITER_EXT_P_EN(FIRST_ARBITER_EXT_P_EN),
-                .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE)
+                .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE),
+                .MIN_PCK_SIZE(MIN_PCK_SIZE)
             )
             nonspec_comb
             (
@@ -210,7 +222,7 @@ module combined_vc_sw_alloc #(
                 .masked_ovc_request_all(masked_ovc_request_all),
                 .ovc_is_assigned_all(ovc_is_assigned_all),
                 .ivc_request_all(ivc_request_all), 
-                .assigned_ovc_not_full_all(assigned_ovc_not_full_all),     
+                .assigned_ovc_not_full_all(assigned_ovc_not_full_all),
                 .ovc_allocated_all(ovc_allocated_all), 
                 .granted_ovc_num_all(granted_ovc_num_all), 
                 .ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant), 
@@ -221,17 +233,20 @@ module combined_vc_sw_alloc #(
                 .any_ovc_granted_in_outport_all(any_ovc_granted_in_outport_all),
                 .vc_weight_is_consumed_all(vc_weight_is_consumed_all),
                 .iport_weight_is_consumed_all(iport_weight_is_consumed_all),
+                .pck_is_single_flit_all(pck_is_single_flit_all),
+                .granted_dst_is_from_a_single_flit_pck(granted_dst_is_from_a_single_flit_pck),  
                 .clk(clk), 
                 .reset(reset)
             );
             
         end else begin :cmb_v1
         
-             comb_nonspec_allocator #(
+            comb_nonspec_allocator #(
                 .V(V),    
                 .P(P),
                 .FIRST_ARBITER_EXT_P_EN(FIRST_ARBITER_EXT_P_EN),
-                .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE)
+                .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE),
+                .MIN_PCK_SIZE(MIN_PCK_SIZE)
             )
             nonspec_comb
             (
@@ -239,7 +254,7 @@ module combined_vc_sw_alloc #(
                 .masked_ovc_request_all(masked_ovc_request_all),
                 .ovc_is_assigned_all(ovc_is_assigned_all),
                 .ivc_request_all(ivc_request_all), 
-                .assigned_ovc_not_full_all(assigned_ovc_not_full_all),     
+                .assigned_ovc_not_full_all(assigned_ovc_not_full_all),  
                 .ovc_allocated_all(ovc_allocated_all), 
                 .granted_ovc_num_all(granted_ovc_num_all), 
                 .ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant), 
@@ -248,9 +263,10 @@ module combined_vc_sw_alloc #(
                 .granted_dest_port_all(granted_dest_port_all), 
                 .any_ivc_sw_request_granted_all(any_ivc_sw_request_granted_all),
                 .any_ovc_granted_in_outport_all(any_ovc_granted_in_outport_all),
-                .lk_destination_all(lk_destination_all),
                 .vc_weight_is_consumed_all(vc_weight_is_consumed_all),
                 .iport_weight_is_consumed_all(iport_weight_is_consumed_all),
+                .pck_is_single_flit_all(pck_is_single_flit_all),
+                .granted_dst_is_from_a_single_flit_pck(granted_dst_is_from_a_single_flit_pck),  
                 .clk(clk), 
                 .reset(reset)
             );

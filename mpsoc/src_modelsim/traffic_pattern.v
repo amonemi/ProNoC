@@ -17,22 +17,19 @@
 ***********************************/ 
  
 module pck_class_in_gen #(
-    parameter NX = 4,
-    parameter NY = 4,
-    parameter TOPOLOGY="MESH",
     parameter C = 4,    //  number of packet class 
     parameter C0_p = 25,    //  the percentage of injected packets with class 0 
     parameter C1_p = 25,
     parameter C2_p = 25,
     parameter C3_p = 25,
-    parameter MAX_PCK_NUM = 10000
+    parameter MAX_PCK_NUM = 10000,
+    parameter NE=4
     
 )(
     en,
     pck_class_in,
     pck_number,
     core_num,
-    deafult_class_num,
     reset,
     clk
 
@@ -47,27 +44,29 @@ module pck_class_in_gen #(
          end 	   
       end   
     endfunction // log2 
+     
    
-    localparam Cw = (C>1)? log2(C) : 1,
-               NC =	(TOPOLOGY=="RING" || TOPOLOGY == "LINE")?  NX    :   NX*NY,	//number of cores
-               NCw= log2(NC),
-               PCK_CNTw = log2(MAX_PCK_NUM+1),
-               RNDw = log2(100);
+    localparam 
+    NEw=log2(NE),
+    Cw = (C>1)? log2(C) : 1,
+    PCK_CNTw = log2(MAX_PCK_NUM+1),
+    RNDw = log2(100);
                
     output reg [Cw-1    :   0]  pck_class_in;
-    input      [NCw-1   :   0]  core_num;
+    input      [NEw-1   :   0]  core_num;
     input      [PCK_CNTw-1 :0]  pck_number;  
     input                       reset,clk,en;
     wire       [RNDw-1  :   0]  rnd;
-    input                       deafult_class_num;
+   
  
    
  // generate a random num between 0 to 99
     pseudo_random #(
         .MAX_RND    (99),
-        .MAX_CORE   (NC-1),
+        .MAX_CORE   (NE-1),
         .MAX_NUM    (MAX_PCK_NUM)
-    )rnd_gen
+    )
+    rnd_gen
     (
         .core       (core_num),
         .num        (pck_number),
@@ -95,8 +94,11 @@ endmodule
  
  
 module  pck_dst_gen  #(
-    parameter NX = 4,
-    parameter NY = 4,
+    parameter T1 = 4,
+    parameter T2 = 4,
+    parameter T3 = 4,
+    parameter EAw=2,
+    parameter NE=4,
     parameter TOPOLOGY="MESH",
     parameter TRAFFIC =   "RANDOM",
     parameter MAX_PCK_NUM = 10000,
@@ -111,12 +113,10 @@ module  pck_dst_gen  #(
 
 )(
     en,
-    current_x,
-    current_y,
+    current_e_addr,
     core_num,
     pck_number,
-    dest_x, 
-    dest_y,  
+    dest_e_addr, 
     clk,
     reset,
     valid_dst 
@@ -136,19 +136,14 @@ module  pck_dst_gen  #(
     endfunction // log2 
      
      
-    localparam  NC =    (TOPOLOGY=="RING" || TOPOLOGY == "LINE")?  NX    :   NX*NY,    //number of cores
-                Xw = log2(NX),
-                Yw = log2(NY), 
-                NCw= log2(NC),
+    localparam  NEw= log2(NE),
                 PCK_CNTw = log2(MAX_PCK_NUM+1);
     
     input                       reset,clk,en;
-    input   [NCw-1      :   0]  core_num;
+    input   [NEw-1      :   0]  core_num;
     input   [PCK_CNTw-1 :   0]  pck_number; 
-    input   [Xw-1       :   0]  current_x; 
-    input   [Yw-1       :   0]  current_y;    
-    output  [Xw-1       :   0]  dest_x; 
-    output  [Yw-1       :   0]  dest_y;
+    input   [EAw-1      :   0]  current_e_addr; 
+    output  [EAw-1      :   0]  dest_e_addr; 
     output                      valid_dst;      
  
  
@@ -156,8 +151,11 @@ module  pck_dst_gen  #(
      if ( ADDR_DIMENTION == 2) begin :two_dim
      
         two_dimention_pck_dst_gen #(
-        	.NX(NX),
-        	.NY(NY),
+        	.T1(T1),
+        	.T2(T2),
+        	.T3(T3),
+        	.EAw(EAw),
+        	.NE(NE),
         	.TOPOLOGY(TOPOLOGY),
         	.TRAFFIC(TRAFFIC),
         	.MAX_PCK_NUM(MAX_PCK_NUM),
@@ -177,17 +175,19 @@ module  pck_dst_gen  #(
         	.en(en),
         	.core_num(core_num),
         	.pck_number(pck_number),
-        	.current_x(current_x),
-        	.current_y(current_y),
-        	.dest_x(dest_x),
-        	.dest_y(dest_y),
+        	.current_e_addr(current_e_addr),
+            .dest_e_addr(dest_e_addr),
         	.valid_dst(valid_dst)
         );
         
      end else begin : one_dim
-     
-         one_dimention_pck_dst_gen #(
-        	.NX(NX),
+      
+        one_dimention_pck_dst_gen #(
+            .T1(T1),
+            .T2(T2),
+            .T3(T3),
+            .EAw(EAw),
+            .NE(NE),
             .TOPOLOGY(TOPOLOGY),
             .TRAFFIC(TRAFFIC),
             .MAX_PCK_NUM(MAX_PCK_NUM),
@@ -202,29 +202,29 @@ module  pck_dst_gen  #(
         )
         the_one_dimention_pck_dst_gen
         (
-        	.reset(reset),
-        	.clk(clk),
-        	.en(en),
-        	.pck_number(pck_number),
-        	.current_x(current_x),
-        	.dest_x(dest_x),
-        	.valid_dst(valid_dst)
-        );
-        assign dest_y = 1'b0;
+            .reset(reset),
+            .clk(clk),
+            .en(en),
+            .core_num(core_num),
+            .pck_number(pck_number),
+            .current_e_addr(current_e_addr),
+            .dest_e_addr(dest_e_addr),
+            .valid_dst(valid_dst)
+        );       
+       
      end     
      endgenerate 
- 
- 
- 
  endmodule
  
  
  
  
- 
 module two_dimention_pck_dst_gen  #(
-    parameter NX = 4,
-    parameter NY = 4,
+    parameter T1 = 4,
+    parameter T2 = 4,
+    parameter T3 = 4,
+    parameter EAw=4,
+    parameter NE=16,
     parameter TOPOLOGY="MESH",
     parameter TRAFFIC =   "RANDOM",
     parameter MAX_PCK_NUM = 10000,
@@ -239,17 +239,14 @@ module two_dimention_pck_dst_gen  #(
 
 )(
     en,
-    current_x,
-    current_y,
+    current_e_addr,
+    dest_e_addr,
     core_num,
     pck_number,
-    dest_x, 
-    dest_y,  
     clk,
     reset,
     valid_dst 
-); 
-    
+);    
     
    
     function integer log2;
@@ -262,31 +259,57 @@ module two_dimention_pck_dst_gen  #(
     endfunction // log2 
      
      
-     localparam NC =	(TOPOLOGY=="RING" || TOPOLOGY == "LINE")?  NX    :   NX*NY,	//number of cores
-                Xw = log2(NX),
-                Yw = log2(NY), 
-                NCw= log2(NC),
+    localparam NEw= log2(NE),
                 PCK_CNTw = log2(MAX_PCK_NUM+1);
     
     input                       reset,clk,en;
-    input   [NCw-1      :   0]  core_num;
+    input   [NEw-1      :   0]  core_num;
     input   [PCK_CNTw-1 :   0]  pck_number; 
-    input   [Xw-1       :   0]  current_x; 
-    input   [Yw-1       :   0]  current_y;    
-    output  [Xw-1       :   0]  dest_x; 
-    output  [Yw-1       :   0]  dest_y;
-    output                      valid_dst;      
+    input   [EAw-1 : 0] current_e_addr;
+    output  [EAw-1 : 0]  dest_e_addr;
+    output                      valid_dst;  
+    
+    localparam 
+        NX = T1,
+        NY = T2,    
+        NL = T3,
+        NXw = log2(NX),
+        NYw= log2(NY),
+        NLw= log2(NL);
+    
+    wire [NXw-1 : 0] current_x; 
+    wire [NYw-1 : 0] current_y;  
+    wire [NLw-1  : 0] current_l;    
+    wire [NXw-1 : 0] dest_x; 
+    wire [NYw-1 : 0] dest_y;
+    wire [NLw-1  : 0] dest_l;   
+        
+    mesh_tori_endp_addr_decode #(
+    	.TOPOLOGY(TOPOLOGY),
+    	.T1(T1),
+    	.T2(T2),
+    	.T3(T3),
+    	.EAw(EAw)
+    )
+    src_addr_decode
+    (
+    	.e_addr(current_e_addr),
+    	.ex(current_x),
+    	.ey(current_y),
+    	.el(current_l),
+    	.valid( )
+    );    
     
     
-    wire    [NCw-1  :   0]  dest_ip_num;
+    wire    [NEw-1  :   0]  dest_ip_num;
     genvar i;
             
     generate     
     if (TRAFFIC == "RANDOM") begin 
         
         pseudo_random_no_core #(
-            .MAX_RND    (NC-1),
-            .MAX_CORE   (NC-1),
+            .MAX_RND    (NE-1),
+            .MAX_CORE   (NE-1),
             .MAX_NUM    (MAX_PCK_NUM)
         )
         rnd_dest_gen
@@ -300,97 +323,140 @@ module two_dimention_pck_dst_gen  #(
 
         );
        
-       assign dest_y = (dest_ip_num / NX ); 
-       assign dest_x = dest_ip_num -  (dest_y * NX ); //dest_x = (dest_ip_num %NX ); 
-         
-        
+       endp_addr_encoder #(
+       	.T1(T1),
+       	.T2(T2),
+       	.T3(T3),
+       	.NE(NE),
+       	.EAw(EAw),
+       	.TOPOLOGY(TOPOLOGY)
+       )
+       addr_encoder
+       (
+       	.id(dest_ip_num),
+       	.code(dest_e_addr)
+       );
+               
      end else if (TRAFFIC == "HOTSPOT") begin 
                       
-                pseudo_hotspot_no_core #(
-                    .MAX_RND            (NC-1   ),
-                    .MAX_CORE           (NC-1   ),
-                    .MAX_NUM            (MAX_PCK_NUM),
-                    .HOTSPOT_PERCENTAGE (HOTSPOT_PERCENTAGE),   //maximum 25%
-                    .HOTSPOT_NUM        (HOTSPOT_NUM), //maximum 4
-                    .HOTSPOT_CORE_1     (HOTSPOT_CORE_1),
-                    .HOTSPOT_CORE_2     (HOTSPOT_CORE_2),
-                    .HOTSPOT_CORE_3     (HOTSPOT_CORE_3),
-                    .HOTSPOT_CORE_4     (HOTSPOT_CORE_4),
-                    .HOTSPOT_CORE_5     (HOTSPOT_CORE_5),
-                    .HOTSPOT_SEND_EN    (HOTSPOT_SEND_EN)
-                    
-                )
-                rnd_dest_gen
-                (
-    
-                    .core  (core_num),
-                    .num   (pck_number),
-                    .rnd   (dest_ip_num),
-                    .rnd_en(en),
-                    .reset (reset),
-                    .clk   (clk)
-
-                );
+        pseudo_hotspot_no_core #(
+            .MAX_RND            (NE-1),
+            .MAX_CORE           (NE-1),
+            .MAX_NUM            (MAX_PCK_NUM),
+            .HOTSPOT_PERCENTAGE (HOTSPOT_PERCENTAGE),   //maximum 25%
+            .HOTSPOT_NUM        (HOTSPOT_NUM), //maximum 4
+            .HOTSPOT_CORE_1     (HOTSPOT_CORE_1),
+            .HOTSPOT_CORE_2     (HOTSPOT_CORE_2),
+            .HOTSPOT_CORE_3     (HOTSPOT_CORE_3),
+            .HOTSPOT_CORE_4     (HOTSPOT_CORE_4),
+            .HOTSPOT_CORE_5     (HOTSPOT_CORE_5),
+            .HOTSPOT_SEND_EN    (HOTSPOT_SEND_EN)
+        )
+        rnd_dest_gen
+        (   
+            .core  (core_num),
+            .num   (pck_number),
+            .rnd   (dest_ip_num),
+            .rnd_en(en),
+            .reset (reset),
+            .clk   (clk)
+        );
        
-       assign dest_y = (dest_ip_num / NX ); 
-       assign dest_x = dest_ip_num -  (dest_y * NX ); //dest_x = (dest_ip_num %NX ); 
+        endp_addr_encoder #(
+            .T1(T1),
+            .T2(T2),
+            .T3(T3),
+            .NE(NE),
+            .EAw(EAw),
+            .TOPOLOGY(TOPOLOGY)
+        )
+        addr_encoder
+        (
+            .id(dest_ip_num),
+            .code(dest_e_addr)
+        );
    
        
     end else if( TRAFFIC == "TRANSPOSE1") begin 
        
-                    assign dest_x   = NX-current_y-1;
-                    assign dest_y   = NY-current_x-1;
-            
+        assign dest_x   = NX-current_y-1;
+        assign dest_y   = NY-current_x-1;
+        assign dest_l   = NL-current_l-1; 
+        assign dest_e_addr = (T3==1)? {dest_y,dest_x} : {dest_l,dest_y,dest_x};
         
     end else if( TRAFFIC == "TRANSPOSE2") begin :transpose2
         
-                    assign dest_x   = current_y;
-                    assign dest_y   = current_x;
-                    
-        
+        assign dest_x   = current_y;
+        assign dest_y   = current_x;
+        assign dest_l   = current_l;
+        assign dest_e_addr = (T3==1)? {dest_y,dest_x} : {dest_l,dest_y,dest_x};
+         
     end  else if( TRAFFIC == "BIT_REVERSE") begin :bitreverse
-   
-                    wire [(Xw+Yw)-1 :   0] joint_addr, reverse_addr;
-                    assign joint_addr  = {current_x,current_y};
-                    
-                    for(i=0; i<(Xw+Yw); i=i+1'b1) begin :lp//reverse the address
-                        assign reverse_addr[i]  = joint_addr [((Xw+Yw)-1)-i];
-                    end
-                    assign {dest_x,dest_y } = reverse_addr;
+        
+        for(i=0; i<(EAw); i=i+1'b1) begin :lp//reverse the address
+            assign dest_ip_num[i]  = current_e_addr [((EAw)-1)-i];
+        end
+                   
+        endp_addr_encoder #(
+            .T1(T1),
+            .T2(T2),
+            .T3(T3),
+            .NE(NE),
+            .EAw(EAw),
+            .TOPOLOGY(TOPOLOGY)
+        )
+        addr_encoder(
+            .id(dest_ip_num),
+            .code(dest_e_addr)
+        ); 
+                   
    
     end  else if( TRAFFIC == "BIT_COMPLEMENT") begin :bitcomp
-                              
-                    assign dest_x   = ~current_x;
-                    assign dest_y   = ~current_y;              
+
+        assign dest_x   = ~current_x;
+        assign dest_y   = ~current_y;  
+        assign dest_l   = ~dest_l;
+        assign dest_e_addr = (T3==1)? {dest_y,dest_x} : {dest_l,dest_y,dest_x};
+                    
     end else if( TRAFFIC == "TORNADO" ) begin :tornado
         //[(x+(k/2-1)) mod k, (y+(k/2-1)) mod k],
-          assign dest_x  = (current_x> ((NX+1)/2))? current_x- ((NX+1)/2) -1   :  (NX/2)+current_x-1;  //  = ((current_x + ((NX/2)-1))%NX); 
-          assign dest_y  = (current_y> ((NY+1)/2))? current_y- ((NY+1)/2) -1   :  (NY/2)+current_y-1;  //  = ((current_y + ((NY/2)-1))%NY);
-      
+        assign dest_x  = (current_x> ((NX+1)/2))? current_x- ((NX+1)/2) -1   :  (NX/2)+current_x-1;  //  = ((current_x + ((NX/2)-1))%NX); 
+        assign dest_y  = (current_y> ((NY+1)/2))? current_y- ((NY+1)/2) -1   :  (NY/2)+current_y-1;  //  = ((current_y + ((NY/2)-1))%NY);
+        assign dest_l   = current_l;
+        assign dest_e_addr = (T3==1)? {dest_y,dest_x} : {dest_l,dest_y,dest_x};
+    
     end else if(TRAFFIC == "CUSTOM" )begin 
         /*
         assign send_en = (current_x==0 && current_y==0);// core (0,0) sends packets to (7,7)
         assign dest_x = 7;
         assign dest_y = 7;
    */
-        reg [Xw-1   :   0]dest_x_reg;
-        reg [Yw-1   :   0]dest_y_reg;
+        reg [NXw-1   :   0]dest_x_reg;
+        reg [NYw-1   :   0]dest_y_reg;
+        reg [NLw-1   :   0]dest_l_reg;
         reg               valid_dst_reg;
         
         always @(*) begin 
-            valid_dst_reg=1'b0;       
-            if((current_x==0) &&  (current_y== 0)) begin 
-                dest_x_reg=  NX-1; dest_y_reg=  NY-1; valid_dst_reg=1'b1;
+        valid_dst_reg=1'b0;  
+	    dest_x_reg = current_x;
+        dest_y_reg= current_y;
+	    dest_l_reg=current_l;
+         //   if((current_x==0) &&  (current_y== 0) && (current_l==0)) begin 
+            //    dest_x_reg=  NX-1; dest_y_reg=  NY-1; valid_dst_reg=1'b1;
+            //    dest_l_reg= NL-1;
+          //  end
+          
+           if((current_x==0) &&  (current_y== 0) && (current_l==0)) begin 
+                dest_x_reg=  T1-1; dest_y_reg=  T2-1;   dest_l_reg= T3-1;  valid_dst_reg=1'b1;
             end
-
-            if((current_x==1) &&  (current_y== 0)) begin 
+          
+/*
+            if((current_x==1) &&  (current_y== 0) && (current_l==0) ) begin 
                 dest_x_reg=  NX-1; dest_y_reg=  NY-2; valid_dst_reg=1'b1;
+                dest_l_reg= NL-1;
             end
  
-          if((current_x==2) &&  (current_y== 0)) begin 
-                dest_x_reg= NX-1; dest_y_reg=   NY-1; valid_dst_reg=1'b1;
-            end
-/*  
+         
            if((current_x==1) &&  (current_y== 1)) begin 
                 dest_x_reg=  1; dest_y_reg=  6; valid_dst_reg=1'b1;
             end
@@ -413,20 +479,19 @@ module two_dimention_pck_dst_gen  #(
         assign valid_dst = valid_dst_reg;
         assign dest_y =  dest_y_reg;
         assign dest_x = dest_x_reg;
+        assign dest_l = dest_l_reg;
+        assign dest_e_addr = (T3==1)? {dest_y,dest_x} : {dest_l,dest_y,dest_x};
               
-    end
-   
+    end  
     
      //check if destination address is valid
      if(TRAFFIC != "CUSTOM" )begin 
-         assign valid_dst  = ({dest_x,dest_y}  !=  {current_x,current_y} ) &  (dest_x  <= (NX-1)) & (dest_y  <= (NY-1));
+         assign valid_dst  = (dest_e_addr  !=  current_e_addr ) &  (dest_x  <= (NX-1)) & (dest_y  <= (NY-1) & (dest_l <= NL-1));
      end
    
     endgenerate
      
 endmodule
-
-
 
 
 
@@ -436,7 +501,11 @@ endmodule
 
 
 module one_dimention_pck_dst_gen #(
-    parameter NX = 4,
+    parameter T1 = 4,
+    parameter T2 = 4,
+    parameter T3 = 4,
+    parameter EAw= 4,
+    parameter NE = 16,
     parameter TOPOLOGY="RING",//"FULLY_CONNECT"
     parameter TRAFFIC =   "RANDOM",
     parameter MAX_PCK_NUM = 10000,
@@ -451,16 +520,15 @@ module one_dimention_pck_dst_gen #(
 
 )(
     en,
-    current_x,
+    core_num,
     pck_number,
-    dest_x, 
+    current_e_addr,
+    dest_e_addr, 
     clk,
     reset,
     valid_dst   
 ); 
-    
-    
-  
+      
     function integer log2;
       input integer number; begin   
          log2=(number <=1) ? 1: 0;    
@@ -471,126 +539,108 @@ module one_dimention_pck_dst_gen #(
     endfunction // log2 
      
      
-     localparam Xw = log2(NX),
-                PCK_CNTw = log2(MAX_PCK_NUM+1);
+     localparam 
+        NEw= log2(NE),
+        PCK_CNTw = log2(MAX_PCK_NUM+1);
     
-    input                       reset,clk,en;
-  
-    input   [PCK_CNTw-1 :   0]  pck_number; 
-    input   [Xw-1       :   0]  current_x; 
-     
-    output  [Xw-1       :   0]  dest_x; 
-  
-    output                      valid_dst;      
+    input   reset,clk,en;
+    input   [NEw-1 : 0] core_num;  
+    input   [PCK_CNTw-1  :   0]  pck_number; 
+    input   [EAw-1       :   0]  current_e_addr;     
+    output  [EAw-1       :   0]  dest_e_addr;   
+    output  valid_dst;  
+        
+    wire [NEw-1 : 0] dest_ip_num;
     
-    
-  
-    genvar i;
-            
+    genvar i;            
     generate     
     if (TRAFFIC == "RANDOM") begin 
         
         pseudo_random_no_core #(
-            .MAX_RND    (NX-1),
-            .MAX_CORE   (NX-1),
+            .MAX_RND    (NE-1),
+            .MAX_CORE   (NE-1),
             .MAX_NUM    (MAX_PCK_NUM)
         )
         rnd_dest_gen
         (
-            .core   (current_x),
+            .core   (core_num),
             .num    (pck_number),
-            .rnd    (dest_x),
+            .rnd    (dest_ip_num),
             .rnd_en (en),
             .reset  (reset),
             .clk    (clk)
 
-        );
-       
-      
+        );  
          
         
      end else if (TRAFFIC == "HOTSPOT") begin 
                       
-                pseudo_hotspot_no_core #(
-                    .MAX_RND            (NX-1   ),
-                    .MAX_CORE           (NX-1   ),
-                    .MAX_NUM            (MAX_PCK_NUM),
-                    .HOTSPOT_PERCENTAGE (HOTSPOT_PERCENTAGE),   //maximum 25%
-                    .HOTSPOT_NUM        (HOTSPOT_NUM), //maximum 4
-                    .HOTSPOT_CORE_1     (HOTSPOT_CORE_1),
-                    .HOTSPOT_CORE_2     (HOTSPOT_CORE_2),
-                    .HOTSPOT_CORE_3     (HOTSPOT_CORE_3),
-                    .HOTSPOT_CORE_4     (HOTSPOT_CORE_4),
-                    .HOTSPOT_CORE_5     (HOTSPOT_CORE_5),
-                    .HOTSPOT_SEND_EN    (HOTSPOT_SEND_EN)
-                    
-                )rnd_dest_gen
-                (
-    
-                    .core  (current_x),
-                    .num   (pck_number),
-                    .rnd   (dest_x),
-                    .rnd_en(en),
-                    .reset (reset),
-                    .clk   (clk)
-
-                );
-       
-       
-   
+        pseudo_hotspot_no_core #(
+            .MAX_RND            (NE-1   ),
+            .MAX_CORE           (NE-1   ),
+            .MAX_NUM            (MAX_PCK_NUM),
+            .HOTSPOT_PERCENTAGE (HOTSPOT_PERCENTAGE),   //maximum 25%
+            .HOTSPOT_NUM        (HOTSPOT_NUM), //maximum 4
+            .HOTSPOT_CORE_1     (HOTSPOT_CORE_1),
+            .HOTSPOT_CORE_2     (HOTSPOT_CORE_2),
+            .HOTSPOT_CORE_3     (HOTSPOT_CORE_3),
+            .HOTSPOT_CORE_4     (HOTSPOT_CORE_4),
+            .HOTSPOT_CORE_5     (HOTSPOT_CORE_5),
+            .HOTSPOT_SEND_EN    (HOTSPOT_SEND_EN)
+         )
+         rnd_dest_gen
+         (    
+            .core  (core_num),
+            .num   (pck_number),
+            .rnd   (dest_ip_num),
+            .rnd_en(en),
+            .reset (reset),
+            .clk   (clk)
+         );  
        
     end else if( TRAFFIC == "TRANSPOSE1") begin :tran1
-        assign dest_x=  NX-current_x-1;    
-       // assign dest_x= (current_x<NX/2)? NX-current_x-1: current_x;            
-        
-   //end else if( TRAFFIC == "TRANSPOSE2") begin :transpose2
-        
-              
-                   // assign dest_x   = current_y;
-                   // assign dest_y   = current_x;
-                    
+    
+        assign dest_ip_num   = NE-core_num-1;                  
         
     end  else if( TRAFFIC == "BIT_REVERSE") begin :bitreverse
-   
-                    wire [ Xw -1 :   0]  reverse_addr;
-                  
-                    
-                    for(i=0; i<Xw; i=i+1'b1) begin :lp//reverse the address
-                        assign reverse_addr[i]  = current_x [Xw-1-i];
-                    end
-                    assign  dest_x  = reverse_addr;
-   
+    
+        for(i=0; i<NEw; i=i+1'b1) begin :lp//reverse the address
+            assign dest_ip_num[i]  = core_num [NEw-1-i];
+        end
+        
     end  else if( TRAFFIC == "BIT_COMPLEMENT") begin :bitcomp
                               
-                    assign dest_x   = ~current_x;
+            assign dest_ip_num   = ~core_num;
+    
     end else if( TRAFFIC == "TORNADO" ) begin :tornado
         //[(x+(k/2-1)) mod k, (y+(k/2-1)) mod k],
-          assign dest_x  = (current_x > ((NX+1)/2))? current_x- ((NX+1)/2) -1   :  (NX/2)+current_x-1;  //  = ((current_x + ((NX/2)-1))%NX);
-                      
-         
+          assign dest_ip_num  = (core_num > ((NE+1)/2))? core_num- ((NE+1)/2) -1   :  (NE/2)+core_num-1;  //  = ((current_x + ((NX/2)-1))%NX);
+           
     end else if(TRAFFIC == "CUSTOM" )begin 
         /*
         assign send_en = (current_x==0 && current_y==0);// core (0,0) sends packets to (7,7)
         assign dest_x = 7;
         assign dest_y = 7;
    */
-        reg [Xw-1   :   0]dest_x_reg;
+        reg [NEw-1   :   0]dest_x_reg;
          
         reg               valid_dst_reg;
         
         always @(*) begin 
-            valid_dst_reg=1'b0;       
-            if( current_x>=0 && current_x<=6  ) begin 
-                dest_x_reg=  8;   valid_dst_reg=1'b1;
-            end
- 
-           // if((current_x==7)  ) begin 
-          //      dest_x_reg=  10;   valid_dst_reg=1'b1;
+            valid_dst_reg=1'b0;   
+	    dest_x_reg = core_num;
+     	     
+          //  if( current_x>=0 && current_x<=6  ) begin 
+           //     dest_x_reg=  8;   valid_dst_reg=1'b1;
           //  end
  
-           if((current_x>=7 && current_x<=14 )  ) begin 
-                dest_x_reg= 14;   valid_dst_reg=1'b1;
+           if((core_num==3)  ) begin 
+                dest_x_reg=  25;   valid_dst_reg=1'b1;
             end
+ 
+      //     if((current_x>=7 && current_x<=14 )  ) begin 
+      //          dest_x_reg= 14;   valid_dst_reg=1'b1;
+      //      end
 	end
  /*
            if((current_x==1) &&  (current_y== 1)) begin 
@@ -612,25 +662,140 @@ module one_dimention_pck_dst_gen #(
         1  2   1  5
         1  3   1  4
         */
-        assign valid_dst = valid_dst_reg;
-       
-        assign dest_x = dest_x_reg;
+        assign valid_dst = valid_dst_reg;       
+        assign dest_ip_num = dest_x_reg;          
               
-    end
+    end   
    
-    
+    endp_addr_encoder #(
+        .T1(T1),
+        .T2(T2),
+        .T3(T3),
+        .NE(NE),
+        .EAw(EAw),
+        .TOPOLOGY(TOPOLOGY)
+    )
+    addr_encoder
+    (
+        .id(dest_ip_num),
+        .code(dest_e_addr)
+    );
+       
      //check if destination address is valid
      if(TRAFFIC != "CUSTOM" )begin 
-         assign valid_dst  =  (dest_x   !=   current_x)  &  (dest_x  <= (NX-1));
+         assign valid_dst  =  (dest_e_addr   !=   current_e_addr)  &  (dest_ip_num  <= (NE-1));
      end
    
     endgenerate
      
 endmodule
  
+/***************************
+ *  pck_size_gen
+ * *************************/
 
- 
+module pck_size_gen #(
+        parameter MIN = 2,
+        parameter MAX = 5
+)
+(
+    reset,
+    clk,
+    en,
+    pck_size 
+);
+
+    function integer log2;
+      input integer number; begin   
+         log2=(number <=1) ? 1: 0;    
+         while(2**log2<number) begin    
+            log2=log2+1;    
+         end       
+      end   
+    endfunction // log2 
+
+    localparam
+        PCK_w= log2(MAX+1);
+     
+
+    input reset, clk, en;
+    output [PCK_w-1 : 0] pck_size;
+
+    
+    generate
+    if (MIN == MAX) begin :eq 
+        assign pck_size = MIN;
+    end
+    else begin :noteq
+        reg [PCK_w-1 : 0] rnd;
+        always @(posedge clk) begin 
+            if(reset) rnd = MIN;
+            else if(en) rnd = $urandom_range(MAX,MIN);
+        end
+        assign pck_size = rnd;
+    end
+    endgenerate
+endmodule 
 
 
 
+module  endp_addr_encoder #(
+    parameter TOPOLOGY ="MESH",
+    parameter T1=4,
+    parameter T2=4,
+    parameter T3=4,
+    parameter EAw=4,
+    parameter NE=16
+)
+(
+    id,
+    code
+ );    
 
+    function integer log2;
+      input integer number; begin   
+         log2=(number <=1) ? 1: 0;    
+         while(2**log2<number) begin    
+            log2=log2+1;    
+         end        
+      end   
+    endfunction // log2 
+    
+    localparam NEw= log2(NE);
+    
+     input [NEw-1 :0] id;
+     output [EAw-1 : 0] code;
+     
+     generate 
+     if(TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE" ) begin : tree
+     
+       fattree_addr_encoder #(
+       	.K(T1),
+       	.L(T2)
+       )
+       addr_encoder
+       (
+       	.id(id),
+       	.code(code)
+       );
+     
+     
+     end else begin 
+     
+        mesh_tori_addr_encoder #(
+        	.NX(T1),
+        	.NY(T2),
+        	.NL(T3),
+        	.NE(NE),
+        	.EAw(EAw),
+        	.TOPOLOGY(TOPOLOGY)
+        )
+        mesh_tori_addr_encoder(
+        	.id(id),
+        	.code(code)
+        );
+     
+     
+     end
+     endgenerate
+endmodule

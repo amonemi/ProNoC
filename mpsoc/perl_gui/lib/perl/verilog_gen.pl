@@ -5,6 +5,11 @@ use lib 'lib/perl';
 
 use strict;
 use warnings;
+
+
+use FindBin;
+use lib $FindBin::Bin;
+
 use soc;
 use ip;
 use ip_gen;
@@ -35,7 +40,7 @@ sub soc_generate_verilog{
 
 
 
-
+    my $system_v="";
 	my $param_pass_v="\t.CORE_ID(CORE_ID),\n\t.SW_LOC(SW_LOC)";
 	my $body_v;
 	
@@ -44,7 +49,7 @@ sub soc_generate_verilog{
 	my $intfc=interface->interface_new();
 	 
 	foreach my $id (@instances){
-		my ($param_v, $local_param_v, $wire_def_v, $inst_v, $plugs_assign_v, $sockets_assign_v,$io_full_v,$io_top_full_v)=gen_module_inst($id,$soc,\$io_sim_v,\$io_top_sim_v,\$param_as_in_v,$top_ip,$intfc,$wires,\$param_pass_v);
+		my ($param_v, $local_param_v, $wire_def_v, $inst_v, $plugs_assign_v, $sockets_assign_v,$io_full_v,$io_top_full_v)=gen_module_inst($id,$soc,\$io_sim_v,\$io_top_sim_v,\$param_as_in_v,$top_ip,$intfc,$wires,\$param_pass_v,\$system_v);
 		my $inst   	= $soc->soc_get_instance_name($id);
 		add_text_to_string(\$body_v,"/*******************\n*\n*\t$inst\n*\n*\n*********************/\n");
 		
@@ -55,6 +60,8 @@ sub soc_generate_verilog{
 		add_text_to_string(\$sockets_assign_v_all,"$sockets_assign_v\n")if(defined($sockets_assign_v));
 		add_text_to_string(\$io_full_v_all,"$io_full_v\n")				if(defined($io_full_v));
 		add_text_to_string(\$io_top_full_v_all,"$io_top_full_v\n")			if(defined($io_top_full_v));
+		
+		
 		
 		#print  "$param_v $local_param_v $wire_def_v $inst_v $plugs_assign_v $sockets_assign_v $io_full_v";
 			
@@ -71,9 +78,11 @@ sub soc_generate_verilog{
 	close($file1);
 	my $unused_wiers_v=assign_unconnected_wires($wires,$intfc);
 	
+	
 
 	my $soc_v = (defined $param_as_in_v )? "module $soc_name #(\n $param_as_in_v\n)(\n$io_sim_v\n);\n": "module $soc_name (\n$io_sim_v\n);\n";
 	add_text_to_string(\$soc_v,$functions_all);	
+	add_text_to_string(\$soc_v,$system_v);
 	add_text_to_string(\$soc_v,$local_param_v_all);
 	add_text_to_string(\$soc_v,$addr_localparam);
 	add_text_to_string(\$soc_v,$module_addr_localparam);	
@@ -108,7 +117,7 @@ sub soc_generate_verilog{
 ###############
 
 sub gen_module_inst {
-	my ($id,$soc,$io_sim_v,$io_top_sim_v,$param_as_in_v,$top_ip, $intfc,$wires,$param_pass_v)=@_;
+	my ($id,$soc,$io_sim_v,$io_top_sim_v,$param_as_in_v,$top_ip, $intfc,$wires,$param_pass_v,$system_v)=@_;
 	my $module 	=$soc->soc_get_module($id);
 	my $module_name	=$soc->soc_get_module_name($id);
 	my $category 	=$soc->soc_get_category($id);
@@ -135,21 +144,15 @@ sub gen_module_inst {
 	$top_ip->top_add_def_to_instance($id,'category',$category);
 	$top_ip->top_add_def_to_instance($id,'instance',$inst);
 	
-	
-	
-	
+	#
 	
 	
 	#module name	
 	$inst_v=( defined $instance_param_v )? "$module_name #(\n": $module_name ; 
-	
-	
-
 	#module parameters
 	$inst_v=( defined $instance_param_v)? "$inst_v $instance_param_v\n\t)": $inst_v;
 	#module instance name 
-	$inst_v="$inst_v  $inst \t(\n";
-	
+	$inst_v="$inst_v  $inst \t(\n";	
 	#module ports
 	$counter=0;
 	foreach my $port (@ports){
@@ -304,7 +307,11 @@ sub gen_module_inst {
 	}	
 	$inst_v="$inst_v\t);\n";
 	
-	
+	my $hdr =$ip->ip_get($category,$module,'system_v');
+	if(defined $hdr){
+			$hdr=replace_golb_var($hdr,\%params);
+	    	$$system_v= "$$system_v $hdr\n";
+	}
 	
 	
 	return ($param_v, $local_param_v, $wire_def_v, $inst_v, $plugs_assign_v, $sockets_assign_v,$io_full_v,$io_top_full_v,$param_pass_v);
@@ -928,13 +935,13 @@ sub soc_generate_verilatore{
 	my $param_pass_v="\t.CORE_ID(CORE_ID),\n\t.SW_LOC(SW_LOC)";
 	my $body_v;
 	
-	my ($param_v_all, $local_param_v_all, $wire_def_v_all, $inst_v_all, $plugs_assign_v_all, $sockets_assign_v_all,$io_full_v_all,$io_top_full_v_all);
+	my ($param_v_all, $local_param_v_all, $wire_def_v_all, $inst_v_all, $plugs_assign_v_all, $sockets_assign_v_all,$io_full_v_all,$io_top_full_v_all,$system_v);
 	my $wires=soc->new_wires();
 	my $intfc=interface->interface_new();
 	
 	
 	foreach my $id (@instances){
-		my ($param_v, $local_param_v, $wire_def_v, $inst_v, $plugs_assign_v, $sockets_assign_v,$io_full_v,$io_top_full_v)=gen_module_inst($id,$soc,\$io_sim_v,\$io_top_sim_v,\$param_as_in_v,$top_ip,$intfc,$wires,\$param_pass_v);
+		my ($param_v, $local_param_v, $wire_def_v, $inst_v, $plugs_assign_v, $sockets_assign_v,$io_full_v,$io_top_full_v,$system_v)=gen_module_inst($id,$soc,\$io_sim_v,\$io_top_sim_v,\$param_as_in_v,$top_ip,$intfc,$wires,\$param_pass_v,\$system_v);
 		
 		my $inst   	= $soc->soc_get_instance_name($id);
 		add_text_to_string(\$body_v,"/*******************\n*\n*\t$inst\n*\n*\n*********************/\n");

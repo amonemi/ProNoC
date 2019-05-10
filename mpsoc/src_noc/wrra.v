@@ -1,53 +1,43 @@
 /**********************************************************************
-**	File:  wrra.v
-**	Date:2017-07-11   
+**  File:  wrra.v
+**  Date:2017-07-11   
 **    
-**	Copyright (C) 2014-2017  Alireza Monemi
+**  Copyright (C) 2014-2017  Alireza Monemi
 **    
-**	This file is part of ProNoC 
+**  This file is part of ProNoC 
 **
-**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
-**	you can redistribute it and/or modify it under the terms of the GNU
-**	Lesser General Public License as published by the Free Software Foundation,
-**	either version 2 of the License, or (at your option) any later version.
+**  ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**  you can redistribute it and/or modify it under the terms of the GNU
+**  Lesser General Public License as published by the Free Software Foundation,
+**  either version 2 of the License, or (at your option) any later version.
 **
-** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
-** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
-** 	Public License for more details.
+**  ProNoC is distributed in the hope that it will be useful, but WITHOUT
+**  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+**  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+**  Public License for more details.
 **
-** 	You should have received a copy of the GNU Lesser General Public
-** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**  You should have received a copy of the GNU Lesser General Public
+**  License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
 **
 **
-**	Description: 
-**	Weighted round robin arbiter support for QoS support in NoC:	
+**  Description: 
+**  Weighted round robin arbiter support for QoS support in NoC:    
 **  Packets are injected with initial weights. The defualt value is 1. 
 **  Weights are assigned to each input ports according to contention degree. 
 **  The contention degree is calculated based on the accumulation of input ports 
 **  weight sending packet to the same output ports.
 **  Swich allocator's output arbters' priority is lucked until the winner's 
 **  input weight is not consumed. A weight is consumed when a packet is sent.
-
-		PROPOGATE_EQUALL = (WRRA_CONFIG_INDEX==0 );
-                PROPOGATE_LIMITED = (WRRA_CONFIG_INDEX==1 );
- 		PROPOGATE_NEQ1 = (WRRA_CONFIG_INDEX==2 );
-                PROPOGATE_NEQ2 = (WRRA_CONFIG_INDEX==3 );
-    
-    
-
-
-
-******************************************************************/
+**
+**      PROPOGATE_EQUALL = (WRRA_CONFIG_INDEX==0 );
+**      PROPOGATE_LIMITED = (WRRA_CONFIG_INDEX==1 );
+**      PROPOGATE_NEQ1 = (WRRA_CONFIG_INDEX==2 );
+**      PROPOGATE_NEQ2 = (WRRA_CONFIG_INDEX==3 );    
+*****************************************************************/
 
 
 
  `timescale  1ns/1ps
-
-
-
-
-
 
 module  wrra #(
     parameter ARBITER_WIDTH = 8,
@@ -104,8 +94,7 @@ module  wrra #(
     end
     endgenerate
     
-   
-    
+      
     
     // one hot mux
     
@@ -353,12 +342,9 @@ module  weight_control #(
         
     localparam  PROPOGATE_EQUALL = (WRRA_CONFIG_INDEX==0 ),
                 PROPOGATE_LIMITED = (WRRA_CONFIG_INDEX==1 ),
- 		PROPOGATE_NEQ1 = (WRRA_CONFIG_INDEX==2 ),
+                PROPOGATE_NEQ1 = (WRRA_CONFIG_INDEX==2 ),
                 PROPOGATE_NEQ2 = (WRRA_CONFIG_INDEX==3 );
-    
-    
-
-
+                
     input  sw_is_granted , flit_is_tail;
     input  [WEIGHTw-1 : 0] iport_weight;
     input  clk,reset;                  
@@ -376,13 +362,13 @@ module  weight_control #(
     
     
     add_sw_loc_one_hot #(
-    	.P(P),
-    	.SW_LOC(SW_LOC)
+        .P(P),
+        .SW_LOC(SW_LOC)
     )
     add_sw_loc
     (
-    	.destport_in(granted_dest_port),
-    	.destport_out(dest_port)
+        .destport_in(granted_dest_port),
+        .destport_out(dest_port)
     );
     
     
@@ -445,16 +431,16 @@ module  weight_control #(
     
     
     end else begin : neq2 //if (PROPOGATE_NEQ1) :neq1 
-    	
+        
     
          
-	for (i=0;i<P;i=i+1)begin : port
-		if(i==0) begin : local_p
-			always @ (posedge clk)begin				
-               			oport_weight_counter[i]<= {W{1'b0}};// the output port weight of local port is useless. hence fix it as zero.
-               			oport_weight[i]<= {W{1'b0}};
-			end//always
-		end//local_p
+    for (i=0;i<P;i=i+1)begin : port
+        if(i==0) begin : local_p
+            always @ (posedge clk)begin             
+                        oport_weight_counter[i]<= {W{1'b0}};// the output port weight of local port is useless. hence fix it as zero.
+                        oport_weight[i]<= {W{1'b0}};
+            end//always
+        end//local_p
 
              else if(i==SW_LOC) begin : if1
                 
@@ -478,18 +464,18 @@ module  weight_control #(
                     if(reset) begin 
                         oport_weight[i]<={W{1'b0}};
                     end else begin 
-			if(oport_weight[i]>iport_weight) oport_weight[i]<=iport_weight;// weight counter should always be smaller than iport weight
+            if(oport_weight[i]>iport_weight) oport_weight[i]<=iport_weight;// weight counter should always be smaller than iport weight
                         else if (weight_dcrease_en)begin 
-				if( counter_is_reset ) begin 
-					 	oport_weight[i]<= (oport_weight_counter[i]>0)? oport_weight_counter[i]: 1;		
-				end//counter_reset
-				else begin 
-					if (oport_weight_counter[i]>0 && oport_weight[i] < oport_weight_counter[i]) oport_weight[i]<= oport_weight_counter[i]; 
-					
+                if( counter_is_reset ) begin 
+                        oport_weight[i]<= (oport_weight_counter[i]>0)? oport_weight_counter[i]: 1;      
+                end//counter_reset
+                else begin 
+                    if (oport_weight_counter[i]>0 && oport_weight[i] < oport_weight_counter[i]) oport_weight[i]<= oport_weight_counter[i]; 
+                    
 
-				end
-			end//weight_dcr  
-			             
+                end
+            end//weight_dcr  
+                         
                     end//else reset
                 end //always
                 assign oports_weight [(i+1)*W-1 : i*W] = oport_weight[i];
@@ -501,13 +487,6 @@ module  weight_control #(
     
     
     end
-
-
-
-
-
-
-
 
 
 
@@ -641,15 +620,15 @@ module  wrra_contention_gen #(
        
          //get the lis of all destination ports requested by each port
          wrra_inputport_destports_sum #(
-         	.V(V),
-         	.P(P),
-         	.SW_LOC(i)
+            .V(V),
+            .P(P),
+            .SW_LOC(i)
          )
          destports_sum
          (
-         	.weight_is_valid(weight_is_valid[(i+1)*V-1  : i*V]),
-         	.dest_ports(dest_port_all [(i+1)*VP_1-1  : i*VP_1]),
-         	.destports_sum(destport_sum[i])
+            .weight_is_valid(weight_is_valid[(i+1)*V-1  : i*V]),
+            .dest_ports(dest_port_all [(i+1)*VP_1-1  : i*VP_1]),
+            .destports_sum(destport_sum[i])
          );
          
         
@@ -740,12 +719,12 @@ module  wrra_inputport_destports_sum #(
     endgenerate
     
     custom_or #(
-    	.IN_NUM(V),
-    	.OUT_WIDTH(P_1)
+        .IN_NUM(V),
+        .OUT_WIDTH(P_1)
     )
     custom_or(
-    	.or_in(dest_ports_masked),
-    	.or_out(sum)
+        .or_in(dest_ports_masked),
+        .or_out(sum)
     );
     
     
@@ -776,11 +755,11 @@ module weights_update # (
     parameter WEIGHTw=4,
     parameter C = 4,
     parameter WRRA_CONFIG_INDEX=0,
-    parameter ADD_PIPREG_AFTER_CROSSBAR=0,
-    parameter CLASS_HDR_WIDTH =8,
-    parameter ROUTING_HDR_WIDTH =8,
-    parameter DST_ADR_HDR_WIDTH =8,
-    parameter SRC_ADR_HDR_WIDTH =8   
+    parameter TOPOLOGY =    "MESH",//"MESH","TORUS","RING" 
+    parameter EAw = 3,
+    parameter DSTPw=P-1,
+    parameter ADD_PIPREG_AFTER_CROSSBAR=0
+   
 
 )(
     limited_oports_weight,
@@ -832,34 +811,29 @@ module weights_update # (
     for (i=1; i<P; i=i+1) begin : non_local_port
     
         weight_update_per_port #(
-        	.V(V),
-        	.C(C),
-        	.Fpay(Fpay),
-        	.WEIGHTw(WEIGHTw),
-        	.CLASS_HDR_WIDTH(CLASS_HDR_WIDTH),
-        	.WRRA_CONFIG_INDEX(WRRA_CONFIG_INDEX),
-        	.ROUTING_HDR_WIDTH(ROUTING_HDR_WIDTH),
-        	.ADD_PIPREG_AFTER_CROSSBAR(ADD_PIPREG_AFTER_CROSSBAR),
-        	.DST_ADR_HDR_WIDTH(DST_ADR_HDR_WIDTH),
-        	.SRC_ADR_HDR_WIDTH(SRC_ADR_HDR_WIDTH)
+            .V(V),
+            .C(C),
+            .P(P),
+            .Fpay(Fpay),
+            .EAw(EAw),
+            .DSTPw(DSTPw),
+            .TOPOLOGY(TOPOLOGY),
+            .WEIGHTw(WEIGHTw),
+            .WRRA_CONFIG_INDEX(WRRA_CONFIG_INDEX),
+            .ADD_PIPREG_AFTER_CROSSBAR(ADD_PIPREG_AFTER_CROSSBAR)
         )
         update_per_port
         (
-        	.contention_in(contention_all[(i+1)*W-1  :   i*W]),
-        	.flit_in(flit_in_all[ (i+1)*Fw-1 : i*Fw]),
-        	.flit_out(flit_out_all[(i+1)*Fw-1 : i*Fw]),
-        	.flit_out_we(flit_out_we_all[i]),
-           	.clk(clk),
-        	.reset(reset)
-        );
-       
-        
+            .contention_in(contention_all[(i+1)*W-1  :   i*W]),
+            .flit_in(flit_in_all[ (i+1)*Fw-1 : i*Fw]),
+            .flit_out(flit_out_all[(i+1)*Fw-1 : i*Fw]),
+            .flit_out_we(flit_out_we_all[i]),
+            .clk(clk),
+            .reset(reset)
+        );       
     
     end
-    
-   
        
-    
     
     if(PROPOGATE_LIMITED) begin : limited
        
@@ -987,19 +961,10 @@ module weights_update # (
             .out(refresh_w_counter)
          );
     
-    end
-  
-   
-   
-   
-   
-    
+    end  
     
     endgenerate
     
-    
-        
- 
     
        
     
@@ -1015,15 +980,15 @@ endmodule
 module weight_update_per_port # (
     parameter V=4,
     parameter C=2,
+    parameter P=5,
     parameter Fpay =32,
     parameter WEIGHTw=4,
+    parameter EAw=3,
+    parameter DSTPw=P-1,
+    parameter TOPOLOGY =    "MESH",//"MESH","TORUS","RING"   
     parameter WRRA_CONFIG_INDEX=0,
-    parameter ADD_PIPREG_AFTER_CROSSBAR=0,
-    parameter CLASS_HDR_WIDTH =8,
-    parameter ROUTING_HDR_WIDTH =8,
-    parameter DST_ADR_HDR_WIDTH =8,
-    parameter SRC_ADR_HDR_WIDTH =8   
-
+    parameter ADD_PIPREG_AFTER_CROSSBAR=0
+   
 )(
     contention_in, 
     flit_in,
@@ -1033,21 +998,14 @@ module weight_update_per_port # (
     reset
 ); 
 
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end       
-    end   
-    endfunction // log2  
-
+                  
+/* verilator lint_off WIDTH */ 
     localparam 
-        Fw = 2+V+Fpay,    //flit width;  
-        Cw = log2(C),
-        W=WEIGHTw;
-        
-    localparam WEIGHT_LOC_LSB = DST_ADR_HDR_WIDTH+SRC_ADR_HDR_WIDTH+ROUTING_HDR_WIDTH+ Cw;   
+        W=WEIGHTw,
+        Fw  =   2+V+Fpay;
+/* verilator lint_on WIDTH */          
+    
+   
     localparam WEIGHT_LATCHED = 0;  //(WRRA_CONFIG_INDEX==0 || WRRA_CONFIG_INDEX==1 || WRRA_CONFIG_INDEX==2 || WRRA_CONFIG_INDEX==3 ); //1: no latched  0: latched
            
     
@@ -1055,9 +1013,7 @@ module weight_update_per_port # (
     input [Fw-1 :  0]  flit_in;
     output[Fw-1 :  0]  flit_out;
     input flit_out_we;
-    input clk,reset;
- 
-   
+    input clk,reset;  
    
     
     wire flit_is_hdr = flit_in[Fw-1];
@@ -1095,14 +1051,29 @@ module weight_update_per_port # (
         always @ (*) begin 
            contention= contention_in;
         end
-     end  
+    end  
+    endgenerate 
      
-       
-     endgenerate 
-     
-   
+    wire [Fw-1 : 0] hdr_flit_new; 
     
-    assign flit_out = (flit_is_hdr) ? {flit_in[Fw-1 : WEIGHT_LOC_LSB+WEIGHTw ] ,contention, flit_in[WEIGHT_LOC_LSB-1 : 0] }   : flit_in;
+    hdr_flit_weight_update #(
+        .V(V),
+        .Fpay(Fpay),
+        .EAw(EAw),
+        .DSTPw(DSTPw),
+        .WEIGHTw(WEIGHTw),
+        .C(C)
+    ) 
+    updater
+    (
+        .new_weight(contention),
+        .flit_in(flit_in),
+        .flit_out(hdr_flit_new)    
+    );
+        
+        
+   // assign flit_out = (flit_is_hdr) ? {flit_in[Fw-1 : WEIGHT_LSB+WEIGHTw ] ,contention, flit_in[WEIGHT_LSB-1 : 0] }   : flit_in;
+    assign flit_out = (flit_is_hdr) ? hdr_flit_new  : flit_in;
         
 
 endmodule
@@ -1166,75 +1137,3 @@ endmodule
 
 
 
-module  accumulator #(
-    parameter INw= 20,
-    parameter OUTw=4,
-    parameter NUM =5
-)
-(
-    in_all,
-    out         
-);
-
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end       
-      end   
-    endfunction // log2 
-    
-    localparam N= INw/NUM,
-               SUMw= log2(NUM)+N; 
-    input [INw-1  :   0] in_all;
-    output[OUTw-1 :   0] out;
-    
-    wire [N-1   :   0] in [NUM-1    :   0];
-    reg [SUMw-1 :   0] sum;
-  
-  
-    genvar i;
-    generate 
-    for (i=0; i<NUM; i=i+1)begin : lp
-        assign in[i] = in_all[(i+1)*N-1 : i*N];    
-    end
-    
-    if(  SUMw ==  OUTw) begin :  equal
-        assign out = sum;
-    end else begin : not_eq
-        assign out = (sum[SUMw-1 : OUTw] > 0 ) ? {OUTw{1'b1}} : sum[OUTw-1  :   0] ;
-    end
-    
-  
-    
-    endgenerate
-  
-  // This is supposed to be synyhesized as "sum=in[0]+in[1]+...in[Num-1]"; 
-  // It works with Quartus, Verilator and Modelsim compilers  
-    integer k; 
-    always @(*)begin 
-        sum=0;
-        for (k=0;k<NUM;k=k+1)begin 
-             sum= sum + {{(SUMw-N){1'b0}},in[k]};        
-        end   
-    end
-    //In case your compiler could not synthesize or wrongly synthesizes it try this
-    //assumming the maximum NUM as parameter can be 20:
-    /*
-    generate 
-     wire [N-1   :   0] tmp [19    :   0];
-     for (i=0; i<NUM; i=i+1)begin : lp
-        assign tmp[i] = in_all[(i+1)*N-1 : i*N];    
-     end
-     for (i=NUM; i<20; i=i+1)begin : lp2
-        assign tmp[i] = {N{1'b0}};    
-     end
-    
-    always @(*)begin 
-              sum= tmp[0] + tmp[1]+ tmp[2] + ...+ tmp[19];        
-    end
-    endgenerate     
-    */
-
-endmodule

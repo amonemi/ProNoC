@@ -2,6 +2,9 @@
 use Glib qw/TRUE FALSE/;
 use strict;
 use warnings;
+use FindBin;
+use lib $FindBin::Bin;
+
 use Gtk2;
 use Gtk2::Ex::Graph::GD;
 use GD::Graph::Data;
@@ -23,17 +26,22 @@ require "mpsoc_verilog_gen.pl";
 require "readme_gen.pl";
 require "graph.pl";
 
+
 use List::MoreUtils qw(uniq);
 
 
 
 
-sub generate_sim_bin_file() {
+sub generate_sim_bin_file {
 	my ($simulate,$info_text) =@_;
 	
 	$simulate->object_add_attribute('status',undef,'run');
 	set_gui_status($simulate,"ref",1);
 	
+	my ($nr,$ne,$router_p,$ref_tops,$includ_h)= get_noc_verilator_top_modules_info($simulate);
+	my %tops = %{$ref_tops};
+	
+	$tops{Vtraffic} = "traffic_gen_verilator.v";	
 	my $target_dir= "$ENV{PRONOC_WORK}/simulate";
 	
 	my $dir = Cwd::getcwd();
@@ -43,54 +51,45 @@ sub generate_sim_bin_file() {
 	my $script_dir="$project_dir/script";
 	my $testbench_file= "$src_verilator_dir/simulator.cpp";
 	
-	my $src_verilog_dr ="$target_dir/src_verilog";
+	my $target_verilog_dr ="$target_dir/src_verilog";
 	my $obj_dir ="$target_dir/verilator/processed_rtl/obj_dir/";
 	
-	rmtree("$src_verilog_dr");
-	mkpath("$src_verilog_dr/",1,01777);
+	rmtree("$target_dir/verilator");
+	rmtree("$target_verilog_dr");
+	mkpath("$target_verilog_dr/",1,01777);
 	
 	#copy src_verilator files
-	my @files=(
-		$src_noc_dir,
-		"$src_verilator_dir/noc_connection.sv",
-		"$src_verilator_dir/router_verilator.v",
-		"$src_verilator_dir/traffic_gen_verilator.v"		
-	);
+	my @files_list = File::Find::Rule->file()
+                            ->name( '*.v','*.V','*.sv' )
+                            ->in( "$src_verilator_dir" );
+
+	#make sure source files have key word 'module' 
+	my @files;
+	foreach my $p (@files_list){
+		push (@files,$p)	if(check_file_has_string($p,'module')); 
+	}
+	push (@files,$src_noc_dir);
 	
-	copy_file_and_folders (\@files,$project_dir,$src_verilog_dr);
 	
+	#my @files=(
+	#	$src_noc_dir,
+	#	"$src_verilator_dir/noc_connection.sv",
+	#	"$src_verilator_dir/mesh_torus_noc_connection.sv",			
+	#	"$src_verilator_dir/router_verilator.v",
+	#	"$src_verilator_dir/traffic_gen_verilator.v"		
+	#);
+	
+	copy_file_and_folders (\@files,$project_dir,$target_verilog_dr);	
 	
 	
 	# generate NoC parameter file
 	my ($noc_param,$pass_param)=gen_noc_param_v($simulate);
-	open(FILE,  ">$src_verilog_dr/parameter.v") || die "Can not open: $!";
+	open(FILE,  ">$target_verilog_dr/parameter.v") || die "Can not open: $!";
 	my $fifow=$simulate->object_get_attribute('fpga_param','TIMSTMP_FIFO_NUM');
+	gen_vrouter_param_v($simulate,$target_verilog_dr);
 
-
-
-	print FILE  " \`ifdef     INCLUDE_PARAM \n \n 
-	$noc_param  
-	/* verilator lint_off WIDTH */ 
-	localparam  P=(TOPOLOGY==\"RING\" || TOPOLOGY==\"LINE\")? 3 : 5;
- 	localparam  ROUTE_TYPE = (ROUTE_NAME == \"XY\" || ROUTE_NAME == \"TRANC_XY\" )?    \"DETERMINISTIC\" : 
-                        (ROUTE_NAME == \"DUATO\" || ROUTE_NAME == \"TRANC_DUATO\" )?   \"FULL_ADAPTIVE\": \"PAR_ADAPTIVE\"; 
-	/* verilator lint_on WIDTH */
-	//simulation parameter	
-	localparam MAX_RATIO = ".MAX_RATIO.";
-	localparam MAX_PCK_NUM = ".MAX_SIM_CLKs.";
-	localparam MAX_PCK_SIZ = ".MAX_PCK_SIZ."; 
-	localparam MAX_SIM_CLKs=  ".MAX_SIM_CLKs.";
-	localparam TIMSTMP_FIFO_NUM = $fifow;
-\n \n \`endif" ; 
-	close FILE;
+	#generate routers with different port num		
 	
-		
-	
-	my %tops = (
-        "Vrouter" => "router_verilator.v", 
-        "Vnoc" => "noc_connection.sv",
- 		"Vtraffic"=> "traffic_gen_verilator.v"
-    );
 	my $result = verilator_compilation (\%tops,$target_dir,$$info_text);
 	
 	if ($result){
@@ -99,40 +98,26 @@ sub generate_sim_bin_file() {
 		add_colored_info($info_text,"Verilator compilation failed!\n","red"); 
 		$simulate->object_add_attribute('status',undef,'programer_failed');
 		set_gui_status($simulate,"ref",1);
+		print "gen-ended!\n";
 		return;
-	}		
+	}
 	
-		
-
-
+	#copy simulation c header files
+	@files = File::Find::Rule->file()
+                            ->name( '*.h')
+                            ->in( "$src_verilator_dir" );
 	
-	@files=(
-			
-		"$src_verilator_dir/traffic_task_graph.h",
-			
-	);
-
 	copy_file_and_folders (\@files,$project_dir,$obj_dir);
 	copy($testbench_file,"$obj_dir/testbench.cpp"); 
-	
+		
 	#compile the testbench
 	my $param_h=gen_noc_param_h($simulate);
+	my $text = gen_sim_parameter_h($param_h,$includ_h,$ne,$nr,$router_p,$fifow);	
+	
 	$param_h =~ s/\d\'b/ /g;
 	open(FILE,  ">$obj_dir/parameter.h") || die "Can not open: $!";
-	print FILE  "
-#ifndef     INCLUDE_PARAM
-	#define   INCLUDE_PARAM \n \n 
-
-	$param_h 
+	print FILE  "$text";
 	
-	int   P=(strcmp (TOPOLOGY,\"RING\")==0 || strcmp (TOPOLOGY,\"LINE\")==0 )    ?   3 : 5;
- 	
-	
-	//simulation parameter	
-	#define MAX_RATIO   ".MAX_RATIO."
-	#define AVG_LATENCY_METRIC \"HEAD_2_TAIL\"
-	#define TIMSTMP_FIFO_NUM   $fifow
-\n \n \#endif" ; 
 	close FILE;
 	
 	
@@ -142,6 +127,7 @@ sub generate_sim_bin_file() {
 	if ($result ==0){
 		$simulate->object_add_attribute('status',undef,'programer_failed');
 		set_gui_status($simulate,"ref",1);
+		print "gen-ended!\n";
 		return;
 	}		
 	
@@ -149,6 +135,7 @@ sub generate_sim_bin_file() {
 	if ($result ==0){
 		$simulate->object_add_attribute('status',undef,'programer_failed');
 		set_gui_status($simulate,"ref",1);
+		print "gen-ended!\n";
 		return;
 	}		
 	
@@ -166,7 +153,7 @@ sub generate_sim_bin_file() {
 	
 	#create project directory if it does not exist
 	my	($stdout,$exit)=run_cmd_in_back_ground_get_stdout("mkdir -p $path" );
-	if($exit != 0 ){ 	print "$stdout\n"; 	message_dialog($stdout,'error'); return;}
+	if($exit != 0 ){ 	print "$stdout\n";  print "gen-ended!\n";	message_dialog($stdout,'error'); return;}
 	
 
 	
@@ -176,13 +163,14 @@ sub generate_sim_bin_file() {
     	add_colored_info($info_text,"Verilator compilation failed!\n","red"); 
     	$simulate->object_add_attribute('status',undef,'programer_failed');
 		set_gui_status($simulate,"ref",1);
+		print "gen-ended!\n";
 		return;
 	}
 	
 	
 	#copy ($bin,"$path/$name") or  die "Can not copy: $!";
 	($stdout,$exit)=run_cmd_in_back_ground_get_stdout("cp -f $bin $path/$name");
-	if($exit != 0 ){ 	print "$stdout\n"; 	message_dialog($stdout,'error'); return;}
+	if($exit != 0 ){ 	print "$stdout\n";  print "gen-ended!\n";	message_dialog($stdout,'error'); return;}
 		
 	#save noc info
 	open(FILE,  ">$path/$name.inf") || die "Can not open: $!";
@@ -192,22 +180,19 @@ sub generate_sim_bin_file() {
 	$pp{'sim_param'}= $simulate->{'sim_param'};
 	print FILE Data::Dumper->Dump([\%pp],["emulate_info"]);
 	close(FILE) || die "Error closing file: $!";		
-
+	
+	print "gen-ended successfully!\n";
 	message_dialog("The simulation binary file has been successfully generated in $path!"); 
 
 	$simulate->object_add_attribute('status',undef,'ideal');
 	set_gui_status($simulate,"ref",1);
+	
 	#make project dir
 	#my $dir= $simulate->object_get_attribute ("sim_param","BIN_DIR");
 	#my $name=$simulate->object_get_attribute ("sim_param","SAVE_NAME");	
 	#my $path= "$dir/$name";
 	#add_info($info_text, "$src_verilator_dir!\n");
 	#mkpath("$path",1,01777);
-
-	
-
-
-
 }
 
 
@@ -258,9 +243,9 @@ sub load_simulation {
 		$file = $dialog->get_filename;
 		my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
 		if($suffix eq '.SIM'){
-			my $pp= eval { do $file };
-			if ($@ || !defined $pp){		
-				add_info($info,"**Error reading  $file file: $@\n");
+			my ($pp,$r,$err) = regen_object($file);
+			if ($r){		
+				add_info($info,"**Error reading  $file file: $err\n");
 				 $dialog->destroy;
 				return;
 			} 
@@ -465,20 +450,16 @@ sub get_simulator_noc_configuration{
 		
 	attach_widget_to_table ($table,$row,gen_label_in_left(" Verilated Model:"),gen_button_message ("Select the verilator simulation file. Different NoC simulators can be generated using Generate NoC configuration tab.","icons/help.png"), 
 	gen_combobox_object ($self,$sample, "sof_file", $exe_files, undef, undef, undef)); $row++;
-
-    $row=noc_param_widget ($self, "Traffic Type", "TRAFFIC_TYPE", "Synthetic", 'Combo-box', "Synthetic,Task-graph", undef, $table,$row,1, $sample, 1,'ref_set_win');
-
+    my $coltmp=0;
+    ($row,$coltmp)=add_param_widget  ($self, "Traffic Type", "TRAFFIC_TYPE", "Synthetic", 'Combo-box', "Synthetic,Task-graph", undef, $table,$row,undef,1, $sample, 1,'ref_set_win');
+    
     my $traffictype=$self->object_get_attribute($sample,"TRAFFIC_TYPE");
+    my $MIN_PCK_SIZE=$self->object_get_attribute($sample,"MIN_PCK_SIZE");
+    
    
-   
-
-
-	
-	
-
-	
-	
-	
+    
+   my $max_pck_num = get_MAX_PCK_NUM();
+   my $max_sim_clk = get_MAX_SIM_CLKs();
 	
 	if($traffictype eq "Synthetic"){
 		
@@ -487,7 +468,10 @@ sub get_simulator_noc_configuration{
 		$min=$max=5 if(!defined $min);
 		my $avg=floor(($min+$max)/2);	
 		
-			my $traffics="tornado,transposed 1,transposed 2,bit reverse,bit complement,random,hot spot"; 	
+		my $max_pck_size =	 get_MAX_PCK_SIZ();
+		
+		
+			my $traffics="tornado,transposed 1,transposed 2,bit reverse,bit complement,random,hot spot,shuffle,bit rotation,neighbor"; 	
 		my @synthinfo = (
 		
 		
@@ -497,28 +481,25 @@ sub get_simulator_noc_configuration{
 	
 	  	{ label=>"Traffic name", param_name=>'traffic', type=>'Combo-box', default_val=>'random', content=>$traffics, info=>"Select traffic pattern", param_parent=>$sample, ref_delay=>1, new_status=>'ref_set_win'},
 	
-		{ label=>"Min pck size :", param_name=>'MIN_PCK_SIZE', type=>'Spin-button', default_val=>5, content=>"2,$max,1", info=>"Minimum packet size in flit. The injected packet size is randomly selected between minimum and maximum packet size", param_parent=>$sample, ref_delay=>10, new_status=>'ref_set_win'},
-		{ label=>"Max pck size :", param_name=>'MAX_PCK_SIZE', type=>'Spin-button', default_val=>5, content=>"$min,".MAX_PCK_SIZ.",1", info=>"Maximum packet size in flit. The injected packet size is randomly selected between minimum and maximum packet size", param_parent=>$sample, ref_delay=>10, new_status=>'ref_set_win'},
+		{ label=>"Min pck size :", param_name=>'MIN_PCK_SIZE', type=>'Spin-button', default_val=>5, content=>"1,$max,1", info=>"Minimum packet size in flit. The injected packet size is randomly selected between minimum and maximum packet size", param_parent=>$sample, ref_delay=>10, new_status=>'ref_set_win'},
+		{ label=>"Max pck size :", param_name=>'MAX_PCK_SIZE', type=>'Spin-button', default_val=>5, content=>"$min,$max_pck_size,1", info=>"Maximum packet size in flit. The injected packet size is randomly selected between minimum and maximum packet size", param_parent=>$sample, ref_delay=>10, new_status=>'ref_set_win'},
 		
 		
 		
 		{ label=>"Avg. Packet size:", param_name=>'PCK_SIZE', type=>'Combo-box', default_val=>$avg, content=>"$avg", info=>undef, param_parent=>$sample, ref_delay=>undef},
 	
-		{ label=>"Total packet number limit:", param_name=>'PCK_NUM_LIMIT', type=>'Spin-button', default_val=>200000, content=>"2,".MAX_PCK_NUM.",1", info=>"Simulation will stop when total numbr of sent packets by all nodes reaches packet number limit  or total simulation clock reach its limit", param_parent=>$sample, ref_delay=>undef, new_status=>undef},
+		{ label=>"Total packet number limit:", param_name=>'PCK_NUM_LIMIT', type=>'Spin-button', default_val=>200000, content=>"2,$max_pck_num,1", info=>"Simulation will stop when total numbr of sent packets by all nodes reaches packet number limit  or total simulation clock reach its limit", param_parent=>$sample, ref_delay=>undef, new_status=>undef},
 	
-		{ label=>"Simulator clocks limit:", param_name=>'SIM_CLOCK_LIMIT', type=>'Spin-button', default_val=>100000, content=>"2,".MAX_SIM_CLKs.",1", info=>"Each node stops sending packets when it reaches packet number limit  or simulation clock number limit", param_parent=>$sample, ref_delay=>undef,  new_status=>undef},
+		{ label=>"Simulator clocks limit:", param_name=>'SIM_CLOCK_LIMIT', type=>'Spin-button', default_val=>100000, content=>"2,$max_sim_clk,1", info=>"Each node stops sending packets when it reaches packet number limit  or simulation clock number limit", param_parent=>$sample, ref_delay=>undef,  new_status=>undef},
 		
 		
 		
 		);
-		
+		my $coltmp=0;
 		foreach my $d (@synthinfo) {
-			$row=noc_param_widget ($self, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,1, $d->{param_parent}, $d->{ref_delay}, $d->{new_status});
+			($row,$coltmp)=add_param_widget ($self, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,undef,1, $d->{param_parent}, $d->{ref_delay}, $d->{new_status});
 		}
-		
-		
-
-		
+			
 	
 		my $traffic=$self->object_get_attribute($sample,"traffic");
 
@@ -526,7 +507,7 @@ sub get_simulator_noc_configuration{
 			my $htable=def_table(10,2,FALSE);
 			
 			my $d= { label=>'number of Hot Spot nodes:', param_name=>'HOTSPOT_NUM', type=>'Spin-button', default_val=>1,  content=>"1,256,1", info=>"Number of hot spot nodes in the network",			  param_parent=>$sample, ref_delay=> 1, new_status=>'ref_set_win'};
-			$row=noc_param_widget ($self, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,1, $d->{param_parent}, $d->{ref_delay}, $d->{new_status});
+			($row,$coltmp)=add_param_widget ($self, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,undef,1, $d->{param_parent}, $d->{ref_delay}, $d->{new_status});
 				
 				my $l1=gen_label_help("Defne the tile number which is  hotspt. All other nodes will send [Hot Spot traffic percentage] of their traffic to this node","  Hot Spot tile number \%");
 				my $l2=gen_label_help("If it is set as \"n\" then each node sends n % of its traffic to each hotspot node","  Hot Spot traffic \%");
@@ -594,7 +575,6 @@ sub get_simulator_noc_configuration{
 	}	
 	
 	
-		
 	if($traffictype eq "Task-graph"){
 		
 		my @custominfo = (
@@ -604,14 +584,13 @@ sub get_simulator_noc_configuration{
 	
 	  	{ label=>"Number of Files", param_name=>"TRAFFIC_FILE_NUM", type=>'Spin-button', default_val=>1, content=>"1,100,1", info=>"Select number of input files", param_parent=>$sample, ref_delay=>1, new_status=>'ref_set_win'},
 		
-		{ label=>"Simulator clocks limit:", param_name=>'SIM_CLOCK_LIMIT', type=>'Spin-button', default_val=>100000, content=>"2,".MAX_SIM_CLKs.",1", info=>"Each node stops sending packets when it reaches packet number limit  or simulation clock number limit", param_parent=>$sample, ref_delay=>undef,  new_status=>undef},
+		{ label=>"Simulator clocks limit:", param_name=>'SIM_CLOCK_LIMIT', type=>'Spin-button', default_val=>100000, content=>"2,$max_sim_clk,1", info=>"Each node stops sending packets when it reaches packet number limit  or simulation clock number limit", param_parent=>$sample, ref_delay=>undef,  new_status=>undef},
 		);
 		
 		foreach my $d (@custominfo) {
-			$row=noc_param_widget ($self, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,1, $d->{param_parent}, $d->{ref_delay}, $d->{new_status});
-		}
-		
-		
+			($row,$coltmp)=add_param_widget ($self, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,undef,1, $d->{param_parent}, $d->{ref_delay}, $d->{new_status});
+			
+		}	
 		
 	
 		my $open_in  = "$ENV{'PRONOC_WORK'}/traffic_pattern";
@@ -686,6 +665,7 @@ sub run_simulator {
 	}
 	
 	add_info($info, "Simulation is done!\n");
+	printf "Simulation is done!\n";
 	$simulate->object_add_attribute('status',undef,'ideal');
 	set_gui_status($simulate,"ref",1);
 }	
@@ -697,9 +677,7 @@ sub run_synthetic_simulation {
 	my $r= $simulate->object_get_attribute($sample,"ratios");
 	my @ratios=@{check_inserted_ratios($r)};
 	#$emulate->object_add_attribute ("sample$i","status","run");
-	my $bin_path=$simulate->object_get_attribute ($sample,"sof_path");	
-	my $bin_file=$simulate->object_get_attribute ($sample,"sof_file");			
-	my $bin="$bin_path/$bin_file";
+	my $bin=get_sim_bin_path($simulate,$sample,$info);
 	
 	#load traffic configuration
 	my $patern=$simulate->object_get_attribute ($sample,'traffic');
@@ -796,9 +774,9 @@ sub run_custom_simulation{
 	my ($simulate,$info,$sample,$name)=@_;
 	my $log= (defined $name)? "$ENV{PRONOC_WORK}/simulate/$name.log": "$ENV{PRONOC_WORK}/simulate/sim.log";
 	my $SIM_CLOCK_LIMIT=$simulate->object_get_attribute ($sample,"SIM_CLOCK_LIMIT");
-	my $bin_path=$simulate->object_get_attribute ($sample,"sof_path");	
-	my $bin_file=$simulate->object_get_attribute ($sample,"sof_file");			
-	my $bin="$bin_path/$bin_file";
+	
+	my $bin=get_sim_bin_path($simulate,$sample,$info);
+	
 	my $dir = Cwd::getcwd();
 	my $project_dir	  = abs_path("$dir/../.."); #mpsoc directory address
 	$bin= "$project_dir/$bin"   if(!(-f $bin));
@@ -864,17 +842,29 @@ sub run_custom_simulation{
 # check_sample
 ##########
 
+sub get_sim_bin_path {
+	my ($self,$sample,$info)=@_;
+	my $bin_path=$self->object_get_attribute ($sample,"sof_path");	
+	unless (-d $bin_path){
+		my $path= $self->object_get_attribute ("sim_param","BIN_DIR");
+		if(-d $path){
+			add_colored_info($info, "Warning: The given path ($bin_path) for searcing $sample bin file does not exist. The system search in default $path instead.\n",'green');
+			$bin_path=$path;
+		}
+	}	
+	my $bin_file=$self->object_get_attribute ($sample,"sof_file");			
+	my $sof="$bin_path/$bin_file";
+	return $sof;
+}
+
 sub check_sim_sample{
 	my ($self,$sample,$info)=@_;
 	my $status=1;
-	my $bin_path=$self->object_get_attribute ($sample,"sof_path");	
-	my $bin_file=$self->object_get_attribute ($sample,"sof_file");			
-	my $sof="$bin_path/$bin_file";
-	
-		
+	my $sof=get_sim_bin_path($self,$sample,$info);
+			
 	# ckeck if sample have sof file
 	if(!defined $sof){
-		add_info($info, "Error: bin file has not set for $sample!\n");
+		add_colored_info($info, "Error: bin file has not set for $sample!\n",'red');
 		$self->object_add_attribute ($sample,"status","failed");	
 		$status=0;
 	} else {
@@ -882,7 +872,7 @@ sub check_sim_sample{
 		my ($name,$path,$suffix) = fileparse("$sof",qr"\..[^.]*$");
 		my $sof_info= "$path$name.inf";
 		if(!(-f $sof_info)){
-			add_info($info, "Could not find $name.inf file in $path. An information file is required for each sof file containig the device name and  NoC configuration. Press F4 for more help.\n");
+			add_info($info, "Could not find $name.inf file in $path. An information file is required for each sof file containig the device name and  NoC configuration. Press F3 for more help.\n");
 			$self->object_add_attribute ($sample,"status","failed");	
 			$status=0;
 		}else { #add info
@@ -899,9 +889,24 @@ sub check_sim_sample{
 			}			
 		}		
 	}
-				
+	#check if sample min packet size matches in simulation 
+	
+	my $p= $self->object_get_attribute ($sample,"noc_info");    
+    my $HW_MIN_PCK_SIZE=$p->{"MIN_PCK_SIZE"};
+    my $SIM_MIN_PCK_SIZE=$self->object_get_attribute ($sample,"MIN_PCK_SIZE");
+   if(!defined $HW_MIN_PCK_SIZE){
+    	$HW_MIN_PCK_SIZE= 2;   
+    	#print "undef\n"; 	
+    }
+	if($HW_MIN_PCK_SIZE>$SIM_MIN_PCK_SIZE){
+		add_colored_info($info, "Error: The minimum simulation packet size of $SIM_MIN_PCK_SIZE flit(s) is smaller than $HW_MIN_PCK_SIZE which is defined in generating verilog model of NoC!\n",'red');
+		$self->object_add_attribute ($sample,"status","failed");	
+		$status=0;
+	}	
+	#print "$HW_MIN_PCK_SIZE>$SIM_MIN_PCK_SIZE\n"; 			
 	return $status;
 }
+
 
 
 
@@ -917,7 +922,7 @@ sub simulator_main{
 
 	my $main_table = Gtk2::Table->new (25, 12, FALSE);
 	my ($infobox,$info)= create_text();	
-	add_colors_to_textview($info);	
+	
 	
 
 my @pages =(
@@ -953,18 +958,16 @@ my @charts = (
 	#my  $device_win=show_active_dev($soc,$soc,$infc,$soc_state,\$refresh,$info);
 	
 	
-	my $generate = def_image_button('icons/forward.png','Run all');
-	my $open = def_image_button('icons/browse.png','Load');
-	
+	my $generate = def_image_button('icons/forward.png','R_un all',FALSE,1);
+	my $open = def_image_button('icons/browse.png',"_Load",FALSE,1);
+	my $save = def_image_button('icons/save.png','Sav_e',FALSE,1);
+	my $save_all_results = def_image_button('icons/copy.png',"E_xtract all results",FALSE,1);
 	
 	
 	
 	my ($entrybox,$entry) = def_h_labeled_entry('Save as:',undef);
-	$entry->signal_connect( 'changed'=> sub{
-		my $name=$entry->get_text();
-		$simulate->object_add_attribute ("simulate_name",undef,$name);	
-	});	
-	my $save = def_image_button('icons/save.png','Save');
+	
+	
 	$entrybox->pack_end($save,   FALSE, FALSE,0);
 	
 
@@ -981,10 +984,16 @@ my @charts = (
 	
 	
 	$main_table->attach_defaults ($h1  , 0, 12, 0,24);
-	$main_table->attach ($open,0, 3, 24,25,'expand','shrink',2,2);
-	$main_table->attach ($entrybox,3, 6, 24,25,'expand','shrink',2,2);
-	$main_table->attach ($generate, 6, 9, 24,25,'expand','shrink',2,2);
+	$main_table->attach ($open,0, 2, 24,25,'expand','shrink',2,2);
+	#$main_table->attach ($diagram, 2, 4, 24,25,'expand','shrink',2,2);
+	$main_table->attach ($entrybox,4, 7, 24,25,'expand','shrink',2,2);
+	$main_table->attach ($save_all_results, 7, 8, 24,25,'shrink','shrink',2,2);
+	$main_table->attach ($generate, 8, 9, 24,25,'expand','shrink',2,2);
 	
+	$entry->signal_connect( 'changed'=> sub{
+		my $name=$entry->get_text();
+		$simulate->object_add_attribute ("simulate_name",undef,$name);	
+	});	
 
 
 	#check soc status every 0.5 second. referesh device table if there is any changes 
@@ -1033,6 +1042,8 @@ my @charts = (
 	} );
 		
 		
+	
+		
 	$generate-> signal_connect("clicked" => sub{ 
 		my @samples =$simulate->object_get_attribute_order("samples");	
 		foreach my $sample (@samples){
@@ -1061,6 +1072,14 @@ my @charts = (
 		set_gui_status($simulate,"ref",5);
 		
 	
+	});	
+	
+	$save_all_results-> signal_connect("clicked" => sub{ 
+		#Get the path where to save all the simulation results
+		my $open_in = $simulate->object_get_attribute ('sim_param','BIN_DIR');
+     	get_dir_name($simulate,"Select the target directory","sim_param","ALL_RESULT_DIR",$open_in,'ref',1);
+		$simulate->object_add_attribute ("graph_save","save_all_result",1);
+		
 	});	
 
 	my $sc_win = new Gtk2::ScrolledWindow (undef, undef);
