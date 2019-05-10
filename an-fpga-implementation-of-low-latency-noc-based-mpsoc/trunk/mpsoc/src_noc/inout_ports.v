@@ -27,39 +27,41 @@
 **************************************************************/
 
 module inout_ports #(
-    parameter V = 4,     // vc_num_per_port
-    parameter P = 5,     // router port num
-    parameter B = 4,     // buffer space :flit per VC 
-    parameter NX = 4,    // number of node in x axis
-    parameter NY = 4,    // number of node in y axis
-    parameter C = 4,    //    number of flit class 
-    parameter Fpay = 32,    //payload width
+    parameter V = 4,   
+    parameter P = 5,   
+    parameter B = 4,   
+    parameter T1= 8,
+    parameter T2= 8,
+    parameter T3= 8,
+    parameter T4= 8,
+    parameter RAw = 3,  
+    parameter EAw = 3,  
+    parameter C = 4,   
+    parameter Fpay = 32,   
     parameter VC_REALLOCATION_TYPE=  "NONATOMIC",
-    parameter COMBINATION_TYPE= "BASELINE",// "BASELINE", "COMB_SPEC1", "COMB_SPEC2", "COMB_NONSPEC"
-    parameter TOPOLOGY=    "MESH",//"MESH","TORUS"
-    parameter ROUTE_NAME="XY",// "XY", "TRANC_XY"
+    parameter COMBINATION_TYPE= "COMB_NONSPEC",
+    parameter TOPOLOGY=    "MESH",
+    parameter ROUTE_NAME="XY",
     parameter ROUTE_TYPE="DETERMINISTIC",// "DETERMINISTIC", "FULL_ADAPTIVE", "PAR_ADAPTIVE"
     parameter CONGESTION_INDEX =   2,//"CREDIT","VC"
     parameter DEBUG_EN = 1,
     parameter AVC_ATOMIC_EN = 1,
-    parameter ROUTE_SUBFUNC = "XY",
     parameter CONGw = 2,
     parameter CVw=(C==0)? V : C * V,
     parameter [CVw-1: 0] CLASS_SETTING = {CVw{1'b1}}, // shows how each class can use VCs   
-    parameter [V-1 : 0] ESCAP_VC_MASK = 4'b1000,  // mask scape vc, valid only for full adaptive
-    parameter CLASS_HDR_WIDTH =8,
-    parameter ROUTING_HDR_WIDTH =8,
-    parameter DST_ADR_HDR_WIDTH =8,
-    parameter SRC_ADR_HDR_WIDTH =8,   
-    parameter SSA_EN="YES", // "YES" , "NO"
+    parameter [V-1 : 0] ESCAP_VC_MASK = 4'b1000,  
+    parameter DSTPw=P-1,
+    parameter SSA_EN="YES", 
     parameter SWA_ARBITER_TYPE="RRA",
     parameter WEIGHTw=4,
-    parameter WRRA_CONFIG_INDEX=0   
+    parameter WRRA_CONFIG_INDEX=0,
+    parameter PPSw=4,
+    parameter MIN_PCK_SIZE=2 //minimum packet size in flits. The minimum value is 1. 
 )
 (
-    current_x,
-    current_y,
-    
+    current_r_addr,
+    neighbors_r_addr,
+       
     // to/from neighboring router
     flit_in_all,
     flit_in_we_all,
@@ -81,6 +83,7 @@ module inout_ports #(
     granted_dest_port_all,
     any_ivc_sw_request_granted_all,
     any_ovc_granted_in_outport_all,
+    granted_dst_is_from_a_single_flit_pck,
     
     // to vc/sw allocator
     dest_port_all,
@@ -88,7 +91,7 @@ module inout_ports #(
     ivc_request_all,
     assigned_ovc_not_full_all,
     masked_ovc_request_all,
-    lk_destination_all,
+    pck_is_single_flit_all,
     vc_weight_is_consumed_all, 
     iport_weight_is_consumed_all,    
         
@@ -102,17 +105,7 @@ module inout_ports #(
     
 );
 
- 
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end 	   
-      end   
-    endfunction // log2 
-
-
+   
     localparam
         PV = V * P,
         PVV = PV * V,    
@@ -121,15 +114,20 @@ module inout_ports #(
         PVP_1 = PV * P_1,
         Fw = 2+V+Fpay,//flit width
         PFw = P * Fw,
-        Xw = log2(NX),
-        Yw = log2(NY),
         CONG_ALw = CONGw*P,    //  congestion width per router 
         W = WEIGHTw,
         WP = W * P,
-        WPP = WP * P;
-        
-    input [Xw-1 : 0] current_x;
-    input [Yw-1 : 0] current_y;                    
+        WPP = WP * P,
+        PVDSTPw= PV * DSTPw,
+        PRAw= P * RAw;
+       
+   
+   
+
+
+    input   [RAw-1 : 0] current_r_addr;
+    input   [PRAw-1:  0]  neighbors_r_addr;
+           
                     
     input [PFw-1 : 0] flit_in_all;
     input [P-1 : 0] flit_in_we_all;
@@ -147,15 +145,18 @@ module inout_ports #(
     input [PP_1-1 : 0] granted_dest_port_all;
     input [P-1 : 0] any_ivc_sw_request_granted_all;
     input [P-1 : 0] any_ovc_granted_in_outport_all;   
-    output[PVP_1-1 : 0] lk_destination_all;
+   
     input [CONG_ALw-1 : 0] congestion_in_all;
     output[CONG_ALw-1 : 0] congestion_out_all;
     output[PV-1 : 0] vc_weight_is_consumed_all;
-    output[P-1 : 0] iport_weight_is_consumed_all;    
+    output[P-1 : 0] iport_weight_is_consumed_all;  
+    input [P-1 : 0] granted_dst_is_from_a_single_flit_pck;  
+    
     
     // to vc/sw allocator
     output [PVP_1-1 : 0] dest_port_all;
     output [PV-1 : 0] ovc_is_assigned_all;
+    output [PV-1 : 0] pck_is_single_flit_all;   
     output [PV-1 : 0] ivc_request_all;
     output [PV-1 : 0] assigned_ovc_not_full_all;
     output [PVV-1 : 0] masked_ovc_request_all;
@@ -171,20 +172,22 @@ module inout_ports #(
 
   
     wire [PVV-1 : 0] candidate_ovc_all;
-    wire [PVP_1-1 : 0] dest_port_coded_all;
+    wire [PVDSTPw-1 : 0] dest_port_encoded_all;
+  //  wire [PVDSTPw-1 : 0] lk_destination_encoded_all;
 
-    wire [P_1-1 : 0] port_pre_sel;
+    wire [PPSw-1 : 0] port_pre_sel;
+    wire [PV-1 :  0]  swap_port_presel;
     wire [PV-1 : 0] reset_ivc_all;    
     wire [PV-1 : 0] flit_is_tail_all;
     reg  [PV-1 : 0] ovc_is_assigned_all,ovc_is_assigned_all_next;
   //  wire [PV-1 : 0] port_pre_sel_ld_all;
     reg  [PVV-1 : 0] assigned_ovc_num_all,assigned_ovc_num_all_next;
-    wire [PV-1 : 0] x_diff_is_one_all;
+    
     wire [PV-1 : 0] sel; 
     wire [PV-1 : 0] ovc_avalable_all; 
     
-    wire [2*PV-1 : 0] destport_ab_clear_all;    
-
+    wire [PVDSTPw-1 : 0] destport_clear_all;// clear unprefrable ports in adaptive routing     
+  
     // ssa
     wire [PV-1 : 0] ssa_ovc_allocated_all;
     wire [PV-1 : 0] ssa_ovc_released_all; 
@@ -195,13 +198,26 @@ module inout_ports #(
     wire [PV-1 : 0] ssa_decreased_credit_in_ss_ovc_all;  
     
     
+
 generate
+if(MIN_PCK_SIZE == 1) begin :single_flit_supported 
+    assign pck_is_single_flit_all = flit_is_tail_all & ~ovc_is_assigned_all; 
+end else begin : single_flit_notsupported
+    assign pck_is_single_flit_all = {PV{1'b0}}; 
+end
+
 /* verilator lint_off WIDTH */
  if( SSA_EN =="YES" ) begin : predict 
 /* verilator lint_on WIDTH */
        ss_allocator #(
+            .TOPOLOGY(TOPOLOGY),
             .V(V),
             .P(P),
+            .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
+            .WEIGHTw(WEIGHTw),
+            .EAw(EAw),
+            .DSTPw(DSTPw),
+            .C(C),                
             .Fpay(Fpay), //payload width
             .ROUTE_TYPE(ROUTE_TYPE),                   
             .DEBUG_EN(DEBUG_EN),
@@ -216,7 +232,7 @@ generate
             .ovc_avalable_all(ovc_avalable_all),
             .ivc_request_all(ivc_request_all),
             .assigned_ovc_not_full_all(assigned_ovc_not_full_all),
-            .dest_port_all(dest_port_coded_all),
+            .dest_port_encoded_all(dest_port_encoded_all),
             .assigned_ovc_num_all(assigned_ovc_num_all),
             .ovc_is_assigned_all(ovc_is_assigned_all),
             .clk(clk),
@@ -248,9 +264,7 @@ generate
     endgenerate
 
     wire [PVV-1 : 0] granted_ovc_num_all_or_ssa;
-    wire [PV-1 : 0] ivc_num_getting_sw_grant_all_or_ssa;
-    
-  
+    wire [PV-1 : 0] ivc_num_getting_sw_grant_all_or_ssa; 
     
     assign granted_ovc_num_all_or_ssa = granted_ovc_num_all | ssa_granted_ovc_num_all;
     assign ivc_num_getting_sw_grant_all_or_ssa = ivc_num_getting_sw_grant | ssa_ivc_num_getting_sw_grant_all;
@@ -283,7 +297,6 @@ endgenerate
 
 
 
-
 genvar k;
 generate
     for(k=0; k< PV; k=k+1 ) begin: PV_loop
@@ -297,8 +310,11 @@ generate
             end
             else if(ivc_num_getting_ovc_grant[k] | ssa_ivc_num_getting_ovc_grant_all[k]) begin 
                 ovc_is_assigned_all_next[k] = 1'b1;
-                assigned_ovc_num_all_next[(k+1)*V-1 : k*V] = granted_ovc_num_all_or_ssa[(k+1)*V-1 : k*V];
+                
             end
+	    if((ivc_num_getting_ovc_grant[k] | ssa_ivc_num_getting_ovc_grant_all[k]) ) begin 
+		assigned_ovc_num_all_next[(k+1)*V-1 : k*V] = granted_ovc_num_all_or_ssa[(k+1)*V-1 : k*V];
+	    end
         end//always
         //synthesis translate_off
         //synopsys  translate_off
@@ -331,18 +347,15 @@ always @ (posedge clk or posedge reset) begin
     end
 end
 
- 	localparam LOCAL    =       0,  
-                    EAST     =       1, 
-                    WEST     =       3;
-
+ 	
 
 generate 
     //synthesis translate_off 
     //synopsys  translate_off
-    if(DEBUG_EN)begin :dbg
+    if(DEBUG_EN && MIN_PCK_SIZE >1 )begin :dbg
         integer kk;
         always @(posedge clk ) begin
-            for(kk=0; kk< PV; kk=kk+1'b1 ) if(reset_ivc_all[kk] && (ivc_num_getting_ovc_grant[kk] | ssa_ivc_num_getting_ovc_grant_all[kk]))   $display("%t: ERROR: the ovc %d released and allocat signal is asserted in the same clock cycle : %m",$time,kk);
+            for(kk=0; kk< PV; kk=kk+1'b1 ) if(reset_ivc_all[kk] & (ivc_num_getting_ovc_grant[kk] | ssa_ivc_num_getting_ovc_grant_all[kk]))   $display("%t: ERROR: the ovc %d released and allocat signal is asserted in the same clock cycle : %m",$time,kk);
         end
     end
     //synopsys  translate_on
@@ -360,6 +373,7 @@ generate
             .ESCAP_VC_MASK          (ESCAP_VC_MASK),
             .CONGw                  (CONGw),
             .AVC_ATOMIC_EN          (AVC_ATOMIC_EN),
+            .PPSw(PPSw),
             .DEBUG_EN               (DEBUG_EN)
                         
         )
@@ -394,13 +408,15 @@ generate
                 .V                        (V),
                 .P                        (P),
                 .B                      (B),
+                .PPSw(PPSw),
                 .VC_REALLOCATION_TYPE   (VC_REALLOCATION_TYPE),
                 .ROUTE_TYPE             (ROUTE_TYPE),
                 .CONGESTION_INDEX       (CONGESTION_INDEX),
                 .ESCAP_VC_MASK          (ESCAP_VC_MASK),
                 .AVC_ATOMIC_EN          (AVC_ATOMIC_EN),
                 .CONGw                  (CONGw),
-                .DEBUG_EN               (DEBUG_EN)  
+                .DEBUG_EN               (DEBUG_EN),
+                .MIN_PCK_SIZE           (MIN_PCK_SIZE)  
             )
             the_credit_counter
             (
@@ -409,9 +425,9 @@ generate
                 .assigned_ovc_num_all                       (assigned_ovc_num_all),
                 .ovc_is_assigned_all                        (ovc_is_assigned_all),
                 .dest_port_all                              (dest_port_all),
-                .nonspec_granted_dest_port_all                (nonspec_granted_dest_port_all),
+                .nonspec_granted_dest_port_all              (nonspec_granted_dest_port_all),
                 .credit_in_all                              (credit_in_all),
-                .nonspec_first_arbiter_granted_ivc_all        (nonspec_first_arbiter_granted_ivc_all),
+                .nonspec_first_arbiter_granted_ivc_all      (nonspec_first_arbiter_granted_ivc_all),
                 .ivc_num_getting_sw_grant                   (ivc_num_getting_sw_grant_all_or_ssa ),
                 .ovc_avalable_all                           (ovc_avalable_all),
                 .assigned_ovc_not_full_all                  (assigned_ovc_not_full_all),
@@ -420,99 +436,48 @@ generate
                 .ssa_ovc_released_all                       (ssa_ovc_released_all),
                 .ssa_ovc_allocated_all                      (ssa_ovc_allocated_all),
                 .ssa_decreased_credit_in_ss_ovc_all         (ssa_decreased_credit_in_ss_ovc_all),
+                .granted_dst_is_from_a_single_flit_pck      (granted_dst_is_from_a_single_flit_pck),
                 .reset                                      (reset),
                 .clk                                        (clk)
             );
     
         end//noncanonical
         
-        // masking unavailable candidate OVC
-    /* verilator lint_off WIDTH */    
-    if(ROUTE_TYPE           ==   "DETERMINISTIC") begin: deterministic_req 
-    /* verilator lint_on WIDTH */
-        vc_alloc_request_gen_determinstic #(
-         .P  (P),
-         .V  (V) 
-        )req_gen
-        (
-            .ovc_avalable_all                   (ovc_avalable_all),
-            .dest_port_in_all                   (dest_port_coded_all),
-            .ivc_request_all                    (ivc_request_all),
-            .ovc_is_assigned_all                (ovc_is_assigned_all),
-            .dest_port_out_all                  (dest_port_all),
-            .masked_ovc_request_all             (masked_ovc_request_all),
-            .candidate_ovc_all                  (candidate_ovc_all)
-        ); 
-          assign sel={PV{1'bx}};
-          assign destport_ab_clear_all={2*PV{1'b0}};
-          
-    end else begin: adaptive 
-        
-        
-        vc_alloc_request_gen_adaptive #(
-            .V(V),
-            .ROUTE_TYPE(ROUTE_TYPE),  
-            .ESCAP_VC_MASK(ESCAP_VC_MASK),
-            .ROUTE_SUBFUNC(ROUTE_SUBFUNC)
-        )
-        the_vc_alloc_request_gen_adaptive
-        (
-            .ovc_avalable_all(ovc_avalable_all),
-            .dest_port_in_all(dest_port_coded_all),
-            .ivc_request_all(ivc_request_all),
-            .ovc_is_assigned_all(ovc_is_assigned_all),
-            .dest_port_out_all(dest_port_all),
-            .masked_ovc_request_all(masked_ovc_request_all),
-            .candidate_ovc_all(candidate_ovc_all),
-            .port_pre_sel(port_pre_sel),
-            .sel(sel),
-            //.port_pre_sel_ld_all(port_pre_sel_ld_all),
-            .current_x_0(current_x[0]),
-            .x_diff_is_one_all(x_diff_is_one_all),
-            .reset(reset),
-            .clk(clk)
-        );
-        
-        // generate clear signal for destination fifo
-          /************************
-                
-        destination-port_in 
-            x:  1 EAST, 0 WEST  
-            y:  1 NORTH, 0 SOUTH
-            ab: 00 : LOCAL, 10: xdir, 01: ydir, 11 x&y dir 
-        sel:
-             0: xdir
-             1: ydir
-       
-        if sel is 0 and ivc is going to be allocated b must be clear in next clock cycle
-        if sel is 1 and ivc is going to be allocated a must be clear in next clock cycle
-        ************************/
-        
-        for(k=0; k< PV; k=k+1'b1 ) begin: PV2_loop 
-            /* verilator lint_off WIDTH */    
-            if ( SSA_EN=="YES" ) begin :predict_if    
-            /* verilator lint_on WIDTH */   
-                if (k/V == LOCAL ) begin :local_if
-                    assign destport_ab_clear_all[((k+1)*2)-1  : k*2]= (ivc_num_getting_ovc_grant[k])? {sel[k],~sel[k]} :2'b00;                   
-                end else if (k/V == EAST || k/V == WEST ) begin :xdir_if
-                    assign destport_ab_clear_all[((k+1)*2)-1  : k*2]= (ivc_num_getting_ovc_grant[k])? {sel[k],~sel[k]} :
-                                                                         (ssa_ivc_num_getting_ovc_grant_all[k])? 2'b01: //clear b
-                                                                         2'b00;                  
-                end else begin : ydir_if
-                    assign destport_ab_clear_all[((k+1)*2)-1  : k*2]= (ivc_num_getting_ovc_grant[k])? {sel[k],~sel[k]} :
-                                                                         (ssa_ivc_num_getting_ovc_grant_all[k])? 2'b10: //clear a
-                                                                         2'b00;              
-                end
-            end else begin :nopredict_if 
-        
-                assign destport_ab_clear_all[((k+1)*2)-1  : k*2]= (ivc_num_getting_ovc_grant[k])? {sel[k],~sel[k]} :2'b00; 
-            end//   nopredict_if     
-        
-        end// for k  
-        
-    end //adaptive   
-    
-endgenerate        
+endgenerate
+
+  
+
+    vc_alloc_request_gen #(
+        .TOPOLOGY(TOPOLOGY),
+        .ROUTE_NAME(ROUTE_NAME),
+    	.ROUTE_TYPE(ROUTE_TYPE),
+    	.P(P),
+    	.DSTPw(DSTPw),
+    	.PPSw(PPSw),
+      	.V(V),
+    	.ESCAP_VC_MASK(ESCAP_VC_MASK),
+    	.SSA_EN(SSA_EN)
+    )
+    vc_alloc_req_gen
+    (
+    	.ovc_avalable_all(ovc_avalable_all),
+    	.dest_port_encoded_all(dest_port_encoded_all),
+    	.ivc_request_all(ivc_request_all),
+    	.ovc_is_assigned_all(ovc_is_assigned_all),
+    	.dest_port_decoded_all(dest_port_all),
+    	.masked_ovc_request_all(masked_ovc_request_all),
+    	.candidate_ovc_all(candidate_ovc_all),
+    	.port_pre_sel(port_pre_sel),
+    	.swap_port_presel(swap_port_presel),
+    	.sel(sel),
+    	.reset(reset),
+    	.clk(clk),
+    	.destport_clear_all(destport_clear_all),
+    	.ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant),
+    	.ssa_ivc_num_getting_ovc_grant_all(ssa_ivc_num_getting_ovc_grant_all)
+    );
+
+   
 
 
     congestion_out_gen #(
@@ -533,17 +498,18 @@ endgenerate
    );       
 
 
-
-
-
-
      input_ports
      #(
         .V(V),
         .P(P),
         .B(B), 
-        .NX(NX),
-        .NY(NY),
+        .T1(T1),
+        .T2(T2),
+        .T3(T3),
+        .T4(T4),
+        .RAw(RAw),  
+        .EAw(EAw), 
+        .DSTPw(DSTPw), 
         .C(C),    
         .Fpay(Fpay),    
         .VC_REALLOCATION_TYPE(VC_REALLOCATION_TYPE),
@@ -553,24 +519,21 @@ endgenerate
         .DEBUG_EN(DEBUG_EN),
         .AVC_ATOMIC_EN(AVC_ATOMIC_EN),
         .COMBINATION_TYPE(COMBINATION_TYPE),
-        .ROUTE_SUBFUNC(ROUTE_SUBFUNC),
         .CVw(CVw),
         .CLASS_SETTING(CLASS_SETTING),   
         .ESCAP_VC_MASK(ESCAP_VC_MASK),
-        .CLASS_HDR_WIDTH(CLASS_HDR_WIDTH),
-        .ROUTING_HDR_WIDTH(ROUTING_HDR_WIDTH),
-        .DST_ADR_HDR_WIDTH(DST_ADR_HDR_WIDTH),
-        .SRC_ADR_HDR_WIDTH(SRC_ADR_HDR_WIDTH),
         .SSA_EN(SSA_EN),
         .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
         .WEIGHTw(WEIGHTw),
-        .WRRA_CONFIG_INDEX(WRRA_CONFIG_INDEX)  
+        .WRRA_CONFIG_INDEX(WRRA_CONFIG_INDEX),
+        .PPSw(PPSw),
+        .MIN_PCK_SIZE(MIN_PCK_SIZE)  
         
     )
         the_input_port
     (
-        .current_x (current_x),    
-        .current_y (current_y),    
+        .current_r_addr (current_r_addr),    
+        .neighbors_r_addr(neighbors_r_addr),
         .ivc_num_getting_sw_grant (ivc_num_getting_sw_grant_all_or_ssa ),
         .any_ivc_sw_request_granted_all (any_ivc_sw_request_granted_all),    
         .flit_in_all (flit_in_all),
@@ -578,16 +541,18 @@ endgenerate
         .reset_ivc_all (reset_ivc_all),
         .flit_is_tail_all (flit_is_tail_all),
         .ivc_request_all (ivc_request_all),    
-        .dest_port_all (dest_port_coded_all),
+        .dest_port_encoded_all (dest_port_encoded_all),
+        .dest_port_all(dest_port_all),
         .candidate_ovcs_all (candidate_ovc_all),
         .flit_out_all (flit_out_all),
         .assigned_ovc_num_all (assigned_ovc_num_all),
         .sel (sel),
-        .lk_destination_all (lk_destination_all),
-        .x_diff_is_one_all (x_diff_is_one_all),
+        .port_pre_sel(port_pre_sel),
+        .swap_port_presel(swap_port_presel),
+       // .lk_destination_encoded_all (lk_destination_encoded_all),
         .nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all),
         .ssa_ivc_num_getting_sw_grant_all (ssa_ivc_num_getting_sw_grant_all),
-        .destport_ab_clear_all (destport_ab_clear_all),
+        .destport_clear_all (destport_clear_all),
         .vc_weight_is_consumed_all (vc_weight_is_consumed_all),
         .iport_weight_is_consumed_all (iport_weight_is_consumed_all),
         .iport_weight_all(iport_weight_all),
@@ -596,13 +561,7 @@ endgenerate
         .refresh_w_counter(refresh_w_counter),
         .reset (reset),
         .clk (clk)
-    );
-
-
-
-
- 
-                    
+    );               
 
 endmodule
 
@@ -722,4 +681,244 @@ endmodule
 
 
 endmodule
+
+
+/*************************
+    vc_alloc_request_gen
+
+************************/
+
+
+module  vc_alloc_request_gen #(
+    parameter TOPOLOGY="MESH",
+    parameter ROUTE_NAME        =   "XY",
+    parameter ROUTE_TYPE = "DETERMINISTIC",
+    parameter P = 5,
+    parameter DSTPw=4,  
+    parameter PPSw=4,
+    parameter V = 4,
+    parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000,   // mask scape vc, valid only for full adaptive       
+    parameter SSA_EN="YES"
+)(
+    ovc_avalable_all,
+    dest_port_encoded_all,
+    candidate_ovc_all,
+    ivc_request_all,
+    ovc_is_assigned_all,
+    dest_port_decoded_all,
+    masked_ovc_request_all,    
+    port_pre_sel,
+    swap_port_presel,
+    sel,
+    reset,
+    clk,    
+    destport_clear_all,
+    ivc_num_getting_ovc_grant, 
+    ssa_ivc_num_getting_ovc_grant_all      
+);
+
+    localparam  P_1     =   P-1,
+                PV      =   V       *   P,
+                PVV     =   PV      *  V,
+                PVP_1   =   PV      *   P_1,
+                PVDSTPw= PV * DSTPw;
+
+
+    input   [PV-1       :   0]  ovc_avalable_all;
+    input   [PVDSTPw-1  :   0]  dest_port_encoded_all;
+    input   [PV-1       :   0]  ivc_request_all;
+    input   [PV-1       :   0]  ovc_is_assigned_all;
+    input   [PVP_1-1    :   0]  dest_port_decoded_all;
+    output  [PVV-1      :   0]  masked_ovc_request_all;
+    input   [PVV-1      :   0]  candidate_ovc_all;
+    
+    input  [PPSw-1 : 0] port_pre_sel;
+    output [PV-1  : 0] sel;
+    output    [PV-1       :   0]  swap_port_presel;
+    input  reset,clk;
+    output [PVDSTPw-1 : 0] destport_clear_all;
+    input [PV-1 : 0] ivc_num_getting_ovc_grant; 
+    input [PV-1 : 0] ssa_ivc_num_getting_ovc_grant_all;       
+    
+        
+    generate   
+    
+    /* verilator lint_off WIDTH */
+    if(ROUTE_TYPE == "DETERMINISTIC") begin : dtrmn
+    /* verilator lint_on WIDTH */          
+                          
+        vc_alloc_request_gen_determinstic #(
+        	.P(P),
+        	.V(V)
+        )
+        vc_request_gen
+        (
+        	.ovc_avalable_all(ovc_avalable_all),
+        	.ivc_request_all(ivc_request_all),
+        	.ovc_is_assigned_all(ovc_is_assigned_all),
+        	.dest_port_in_all(dest_port_decoded_all),
+        	.masked_ovc_request_all(masked_ovc_request_all),
+        	.candidate_ovc_all(candidate_ovc_all)
+        );
+        
+        assign swap_port_presel = {PV{1'bx}};
+        assign destport_clear_all={PVDSTPw{1'bx}};
+        assign sel = {PV{1'bx}};
+    
+    end else begin: adptv     
+      
+      if(P==5)begin:sl_mesh // combine portsel and available VC mux as proposed in ProNoC paper
+      
+      mesh_torus_vc_alloc_request_gen_adaptive #(
+       	.ROUTE_TYPE(ROUTE_TYPE),
+      	.V(V),
+      	.DSTPw(DSTPw),
+      	.SSA_EN(SSA_EN),
+      	.ESCAP_VC_MASK(ESCAP_VC_MASK),
+      	.PPSw(PPSw)
+      )
+      vc_alloc_request_gen
+      (
+      	.ovc_avalable_all(ovc_avalable_all),
+      	.dest_port_coded_all(dest_port_encoded_all),
+      	.ivc_request_all(ivc_request_all),
+      	.ovc_is_assigned_all(ovc_is_assigned_all),
+      	.masked_ovc_request_all(masked_ovc_request_all),
+      	.candidate_ovc_all(candidate_ovc_all),
+      	.port_pre_sel(port_pre_sel),
+      	.swap_port_presel(swap_port_presel),
+      	.sel(sel),
+      	.destport_clear_all(destport_clear_all),
+      	.ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant),
+      	.ssa_ivc_num_getting_ovc_grant_all(ssa_ivc_num_getting_ovc_grant_all),
+      	.reset(reset),
+      	.clk(clk)
+      ); 
+      
+      end else begin :ml_mesh // there are several local ports connected to one router. 
+      //select the port first then select the available vc
+        
+                
+        
+         mesh_torus_dynamic_portsel_control #(
+         	.P(P),
+         	.ROUTE_TYPE(ROUTE_TYPE),
+         	.V(V),
+         	.DSTPw(DSTPw),
+         	.SSA_EN(SSA_EN),
+         	.PPSw(PPSw),
+         	.ESCAP_VC_MASK(ESCAP_VC_MASK)
+         )
+         dynamic_portsel_control
+         (
+         	.dest_port_coded_all(dest_port_encoded_all),
+         	.ivc_request_all(ivc_request_all),
+         	.ovc_is_assigned_all(ovc_is_assigned_all),
+         	.port_pre_sel(port_pre_sel),
+         	.swap_port_presel(swap_port_presel),
+         	.masked_ovc_request_all(masked_ovc_request_all),
+         	.sel(sel),
+         	.destport_clear_all(destport_clear_all),
+         	.ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant),
+         	.ssa_ivc_num_getting_ovc_grant_all(ssa_ivc_num_getting_ovc_grant_all),
+         	.reset(reset),
+         	.clk(clk)
+         );
+         
+        vc_alloc_request_gen_determinstic #(
+            .P(P),
+            .V(V)
+        )
+        vc_request_gen
+        (
+            .ovc_avalable_all(ovc_avalable_all),
+            .ivc_request_all(ivc_request_all),
+            .ovc_is_assigned_all(ovc_is_assigned_all),
+            .dest_port_in_all(dest_port_decoded_all),
+            .masked_ovc_request_all(masked_ovc_request_all),
+            .candidate_ovc_all(candidate_ovc_all)
+        );
+                 
+      
+      end      
+    
+    end
+    endgenerate
+
+endmodule
+
+
+module  vc_alloc_request_gen_determinstic #(    
+    parameter P = 5,
+    parameter V = 4
+)(
+    ovc_avalable_all,
+    candidate_ovc_all,
+    ivc_request_all,
+    ovc_is_assigned_all,
+    dest_port_in_all,
+    masked_ovc_request_all
+);
+
+    localparam  P_1     =   P-1,
+                PV      =   V       *   P,
+                PVV     =   PV      *  V,
+                PVP_1   =   PV      *   P_1,
+                VP_1    =   V       *   P_1;             
+
+    input   [PV-1       :   0]  ovc_avalable_all;
+    input   [PV-1       :   0]  ivc_request_all;
+    input   [PV-1       :   0]  ovc_is_assigned_all;
+    input   [PVP_1-1    :   0]  dest_port_in_all;
+    output  [PVV-1      :   0]  masked_ovc_request_all;
+    input   [PVV-1      :   0]  candidate_ovc_all;
+    
+    wire    [PV-1       :   0]  non_assigned_ovc_request_all; 
+    wire    [VP_1-1     :   0]  ovc_avalable_perport        [P-1    :   0];
+    wire    [VP_1-1     :   0]  ovc_avalable_ivc            [PV-1   :   0];
+    wire    [P_1-1      :   0]  dest_port_ivc               [PV-1   :   0];
+    wire    [V-1        :   0]  ovc_avb_muxed               [PV-1   :   0];  
+    wire    [V-1        :   0]  ovc_request_ivc             [PV-1   :   0];
+ 
+    assign non_assigned_ovc_request_all =   ivc_request_all & ~ovc_is_assigned_all;
+   
+    
+  genvar i;
+
+generate
+    //remove avalable ovc of reciver port 
+    for(i=0;i< P;i=i+1) begin :port_loop
+        if(i==0) begin : first assign ovc_avalable_perport[i]=ovc_avalable_all [PV-1              :   V]; end
+        else if(i==(P-1)) begin : last assign ovc_avalable_perport[i]=ovc_avalable_all [PV-V-1               :   0]; end
+        else  begin : midle  assign ovc_avalable_perport[i]={ovc_avalable_all [PV-1  :   (i+1)*V],ovc_avalable_all [(i*V)-1  :   0]}; end
+    end
+        
+    // IVC loop
+    for(i=0;i< PV;i=i+1) begin :total_vc_loop
+        //seprate input/output
+        assign ovc_avalable_ivc[i]  =   ovc_avalable_perport[(i/V)];
+        assign dest_port_ivc   [i]  =   dest_port_in_all [(i+1)*P_1-1  :   i*P_1   ];
+        assign ovc_request_ivc [i]  = (non_assigned_ovc_request_all[i])? candidate_ovc_all  [(i+1)*V-1  :   i*V ]: {V{1'b0}};          
+       
+        //available ovc multiplexer
+        one_hot_mux #(
+            .IN_WIDTH       (VP_1   ),
+            .SEL_WIDTH      (P_1)
+        )
+        multiplexer
+        (
+            .mux_in     (ovc_avalable_ivc   [i]),
+            .mux_out    (ovc_avb_muxed      [i]),
+            .sel        (dest_port_ivc      [i])
+
+        );  
+        
+        // mask unavailable ovc from requests
+        assign masked_ovc_request_all  [(i+1)*V-1   :   i*V ]     =   ovc_avb_muxed[i] & ovc_request_ivc [i];
+        
+    end
+   endgenerate
+endmodule
+
+
  

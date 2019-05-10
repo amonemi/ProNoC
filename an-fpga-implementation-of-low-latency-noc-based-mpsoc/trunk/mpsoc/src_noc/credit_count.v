@@ -36,7 +36,9 @@ module credit_counter #(
     parameter [V-1  :   0] ESCAP_VC_MASK = 4'b0001,  // mask scape vc, valid only for full adaptive
     parameter DEBUG_EN =   1,
     parameter AVC_ATOMIC_EN=0,
-    parameter CONGw   =   2 //congestion width per port 
+    parameter CONGw   =   2, //congestion width per port
+    parameter PPSw=4,
+    parameter MIN_PCK_SIZE=2 //minimum packet size in flits. The minimum value is 1.  
     
 )(
     non_ss_ovc_allocated_all,
@@ -55,6 +57,7 @@ module credit_counter #(
     ssa_ovc_released_all,
     ssa_ovc_allocated_all, 
     ssa_decreased_credit_in_ss_ovc_all,
+    granted_dst_is_from_a_single_flit_pck,
     reset,clk
 );
 
@@ -80,8 +83,8 @@ module credit_counter #(
 
     localparam      [Bw-1    :    0] Bint    =    B[Bw-1    :    0];
 
-    localparam  NORTH  =       3'd2,  
-                SOUTH  =       3'd4; 
+    localparam  NORTH  =       2,  
+                SOUTH  =       4; 
     localparam [V-1     :   0] ADAPTIVE_VC_MASK = ~ ESCAP_VC_MASK;   
     localparam  CONG_ALw=   CONGw * P;   //  congestion width per router;             
                     
@@ -97,13 +100,13 @@ module credit_counter #(
     output [PV-1       :    0]    ovc_avalable_all;
     output [PV-1       :    0]    assigned_ovc_not_full_all;
     input                           reset,clk;
-    output [P_1-1      :    0] port_pre_sel;
+    output [PPSw-1      :    0] port_pre_sel;
     input  [CONG_ALw-1 :    0] congestion_in_all; 
     //ssa
     input  [PV-1       :    0] ssa_ovc_released_all; 
     input  [PV-1       :    0] ssa_ovc_allocated_all; 
     input  [PV-1       :    0] ssa_decreased_credit_in_ss_ovc_all;
-    
+    input [P-1:0] granted_dst_is_from_a_single_flit_pck;
     
     reg    [PV-1    :    0]    ovc_status;
     reg    [Bw-1    :    0]    credit_counter            [PV-1    :    0];
@@ -302,7 +305,7 @@ module credit_counter #(
                 full_all[i]            <=    full_all_next[i];
                 nearly_full_all[i]<=    nearly_full_all_next[i];
                 if(ovc_released_all[i])        ovc_status[i]<=1'b0;
-                if(ovc_allocated_all[i])    ovc_status[i]<=1'b1;
+                if(ovc_allocated_all[i] & ~granted_dst_is_from_a_single_flit_pck[i/V])    ovc_status[i]<=1'b1; // donot change VC status for single flit packet
             end
         end
     end//for    
@@ -313,6 +316,7 @@ module credit_counter #(
     
 
     port_pre_sel_gen #(
+        .PPSw(PPSw),
         .P(P),
         .V(V),
         .B(B),
@@ -401,7 +405,7 @@ if(DEBUG_EN) begin: debug
     );
     
     always @(posedge clk) begin
-        if(num1    != num2 ) $display("%t: ERROR: number of assigned IVC mismatch the number of occupied OVC: %m",$time);
+        if(num1    != num2 ) $display("%t: ERROR: number of assigned IVC %d mismatch the number of occupied OVC %d: %m",$time,num1,num2);
     end
     
     

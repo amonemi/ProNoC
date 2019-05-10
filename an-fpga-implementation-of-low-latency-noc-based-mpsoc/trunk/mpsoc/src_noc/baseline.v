@@ -24,7 +24,8 @@
 **	Description: 
 **	baseline allocators:
 **	Canonical VC allocator and speculative switch allocator  
-**  Not recommended to use
+**  It is just developed for comparsion with combined allocators. It is not recommended to be used.
+**  Does not support single-flit sized packets
 *************************************/
 
     
@@ -417,6 +418,8 @@ module spec_sw_alloc_can #(
         .any_ivc_grant (spec_any_ivc_grant),
         .vc_weight_is_consumed_all (vc_weight_is_consumed_all),
         .iport_weight_is_consumed_all(iport_weight_is_consumed_all),
+        .pck_is_single_flit_all( ),
+        .granted_dst_is_from_a_single_flit_pck( ),
         .clk (clk),
         .reset (reset) 
     );
@@ -443,6 +446,8 @@ module spec_sw_alloc_can #(
         .any_ivc_grant(nonspec_any_ivc_grant),
         .vc_weight_is_consumed_all (vc_weight_is_consumed_all),
         .iport_weight_is_consumed_all(iport_weight_is_consumed_all),
+        .pck_is_single_flit_all( ),
+        .granted_dst_is_from_a_single_flit_pck( ),
         .clk (clk),
         .reset(reset)
     

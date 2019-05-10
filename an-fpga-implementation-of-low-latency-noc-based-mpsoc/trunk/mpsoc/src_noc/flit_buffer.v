@@ -232,7 +232,7 @@ generate
         always @(posedge clk) begin
             if(~reset)begin
                 if (wr[i] && (depth[i] == B) && !rd[i])
-                    $display("%t: ERROR: Attempt to write to full FIFO: %m",$time);
+                    $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,B);
                 /* verilator lint_off WIDTH */
                 if (rd[i] && (depth[i] == {DEPTHw{1'b0}} &&  SSA_EN !="YES"  ))
                     $display("%t: ERROR: Attempt to read an empty FIFO: %m",$time);
@@ -316,7 +316,7 @@ generate
         always @(posedge clk) begin
             if(~reset)begin
                 if (wr[i] && (depth[i] == B) && !rd[i])
-                    $display("%t: ERROR: Attempt to write to full FIFO: %m",$time);
+                   $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,B);
                 /* verilator lint_off WIDTH */
                 if (rd[i] && (depth[i] == {DEPTHw{1'b0}}  &&  SSA_EN !="YES"  ))
                     $display("%t: ERROR: Attempt to read an empty FIFO: %m",$time);
@@ -748,7 +748,7 @@ always @(posedge clk or posedge reset) begin
         begin
             if(~reset)begin
                 if (wr_en && ~rd_en && full) begin
-                    $display("%t ERROR: Attempt to write to full FIFO: %m", $time);
+                    $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,MAX_DEPTH);
                 end
                 /* verilator lint_off WIDTH */
                 if (rd_en && !recieve_more_than_0 && IGNORE_SAME_LOC_RD_WR_WARNING == "NO") begin
@@ -820,11 +820,7 @@ module fwft_fifo_with_output_clear #(
     output         recieve_more_than_1;
     input          reset;
     input          clk;
-    input    [DATA_WIDTH-1:0]  clear;
-    
-    
-    
-    
+    input    [DATA_WIDTH-1:0]  clear;    
   
     function integer log2;
       input integer number; begin   
@@ -835,18 +831,15 @@ module fwft_fifo_with_output_clear #(
       end   
     endfunction // log2 
     
-
-    
     localparam DEPTH_DATA_WIDTH = log2(MAX_DEPTH +1);
     localparam MUX_SEL_WIDTH     = log2(MAX_DEPTH);
     
-    wire                                        out_ld ;
-    wire    [DATA_WIDTH-1                   :   0] dout_next;
-    reg [DEPTH_DATA_WIDTH-1         :   0]  depth;
+    wire out_ld;
+    wire [DATA_WIDTH-1 : 0] dout_next;
+    reg [DEPTH_DATA_WIDTH-1 : 0]  depth;
     
     genvar i;
-    generate 
-    
+    generate     
     if(MAX_DEPTH>2) begin :mwb2
         wire    [MUX_SEL_WIDTH-1    :   0] mux_sel;
         wire    [DEPTH_DATA_WIDTH-1 :   0] depth_2;
@@ -869,8 +862,7 @@ module fwft_fifo_with_output_clear #(
                 assign mux_in[i]    = shiftreg[i];
                 assign mux_out[i]   = mux_in[i][mux_sel];
                 assign dout_next[i] = (out_sel) ? mux_out[i] : din[i];  
-            end //for
-       
+            end //for       
        
         end else begin :w1
             wire    [MAX_DEPTH-2        :   0] mux_in;
@@ -880,59 +872,47 @@ module fwft_fifo_with_output_clear #(
             always @(posedge clk ) begin 
                 if(wr_en) shiftreg <= {shiftreg[MAX_DEPTH-3   :   0]  ,din};
             end
-               
+            
             assign mux_in    = shiftreg;
             assign mux_out   = mux_in[mux_sel];
             assign dout_next = (out_sel) ? mux_out : din;  
-        
-       
-       
-       
+ 
         end
-        
-            
-        assign full                         = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1            :   0];
-        assign nearly_full              = depth >= MAX_DEPTH [DEPTH_DATA_WIDTH-1            :   0] -1'b1;
-        assign empty     = depth == {DEPTH_DATA_WIDTH{1'b0}};
+       
+        assign full = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1            :   0];
+        assign nearly_full = depth >= MAX_DEPTH [DEPTH_DATA_WIDTH-1            :   0] -1'b1;
+        assign empty  = depth == {DEPTH_DATA_WIDTH{1'b0}};
         assign recieve_more_than_0  = ~ empty;
         assign recieve_more_than_1  = ~( depth == {DEPTH_DATA_WIDTH{1'b0}} ||  depth== 1 );
-        assign out_sel                  = (recieve_more_than_1)  ? 1'b1 : 1'b0;
-        assign out_ld                       = (depth !=0 )?  rd_en : wr_en;
-        assign depth_2                      = depth-2'd2;       
-        assign mux_sel                  = depth_2[MUX_SEL_WIDTH-1   :   0]  ;   
+        assign out_sel  = (recieve_more_than_1)  ? 1'b1 : 1'b0;
+        assign out_ld = (depth !=0 )?  rd_en : wr_en;
+        assign depth_2 = depth-2'd2;       
+        assign mux_sel = depth_2[MUX_SEL_WIDTH-1   :   0]  ;   
    
-   end else if  ( MAX_DEPTH == 2) begin :mw2   
+    end else if  ( MAX_DEPTH == 2) begin :mw2   
         
-        reg     [DATA_WIDTH-1       :   0] register;
-            
+        reg     [DATA_WIDTH-1       :   0] register;            
         
         always @(posedge clk ) begin 
                if(wr_en) register <= din;
         end //always
         
-        assign full             = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1            :   0];
-        assign nearly_full      = depth >= MAX_DEPTH [DEPTH_DATA_WIDTH-1            :   0] -1'b1;
-        assign out_ld           = (depth !=0 )?  rd_en : wr_en;
+        assign full = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1            :   0];
+        assign nearly_full = depth >= MAX_DEPTH [DEPTH_DATA_WIDTH-1            :   0] -1'b1;
+        assign out_ld = (depth !=0 )?  rd_en : wr_en;
         assign recieve_more_than_0  =  (depth != {DEPTH_DATA_WIDTH{1'b0}});
         assign recieve_more_than_1  = ~( depth == 0 ||  depth== 1 );
-        assign dout_next        = (recieve_more_than_1) ? register  : din;  
-   
+        assign dout_next = (recieve_more_than_1) ? register  : din;     
    
     end else begin :mw1 // MAX_DEPTH == 1 
         assign out_ld       = wr_en;
         assign dout_next    =   din;
-        assign full         = depth == MAX_DEPTH;
+        assign full         = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1            :   0];
         assign nearly_full= 1'b1;
         assign recieve_more_than_0 = full;
         assign recieve_more_than_1 = 1'b0;
-    end
-
-
-    
+    end    
 endgenerate
-
-
-
 
         always @(posedge clk or posedge reset) begin
             if (reset) begin
@@ -969,9 +949,7 @@ endgenerate
         end//always
     end
     endgenerate
-    
-    
-        
+       
 //synthesis translate_off
 //synopsys  translate_off
         always @(posedge clk)
@@ -979,7 +957,7 @@ endgenerate
         begin
             if(~reset)begin
                 if (wr_en && ~rd_en && full) begin
-                    $display("%t ERROR: Attempt to write to full FIFO: %m", $time);
+                    $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,MAX_DEPTH);
                 end
                 /* verilator lint_off WIDTH */
                 if (rd_en && !recieve_more_than_0 && IGNORE_SAME_LOC_RD_WR_WARNING == "NO") begin
@@ -994,15 +972,7 @@ endgenerate
    
 //synopsys  translate_on
 //synthesis translate_on  
-
-
-
 endmodule   
-
-
-
-
-
 
 
 /**********************************

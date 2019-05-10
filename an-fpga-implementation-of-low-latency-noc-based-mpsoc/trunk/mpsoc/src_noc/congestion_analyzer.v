@@ -46,6 +46,7 @@
 
 //congestion analyzer based on number of occupied VCs
 module   port_presel_based_dst_ports_vc #(
+    parameter PPSw=4,
     parameter P   =   5,
     parameter V   =   4
     )
@@ -69,7 +70,7 @@ module   port_presel_based_dst_ports_vc #(
                 CNTw    =       log2(V+1);
      
     input   [P_1V-1     :   0]  ovc_status; 
-    output  [P_1-1      :   0]  port_pre_sel;
+    output  [PPSw-1      :   0]  port_pre_sel;
     wire    [P_1-1      :   0]  conjestion_cmp;
     //VC counter on all ports exept the local    
     wire    [V-1        :   0]  ovc_status_per_port [P-1-1  :   0];
@@ -82,6 +83,19 @@ module   port_presel_based_dst_ports_vc #(
                
                 assign ovc_status_per_port[i]   = ovc_status[(i+1)*V-1       :   i*V];
                 //count number of busy OVCs
+                accumulator #(
+                	.INw(V),
+                	.OUTw(CNTw),
+                	.NUM(V)
+                )
+                counter
+                (
+                	.in_all(ovc_status_per_port[i]),
+                	.out(vc_counter[i])
+                );
+                
+                
+                /*
                 parallel_counter #(
                     .IN_WIDTH(V)
                 )counter
@@ -89,7 +103,7 @@ module   port_presel_based_dst_ports_vc #(
                     .in    (ovc_status_per_port[i]),
                     .out   (vc_counter[i])
                 );
-                
+                */
                
                 
        end//for
@@ -148,6 +162,7 @@ pre_sel
 
 //congestion analyzer based on number of total available credit of a port
 module  port_presel_based_dst_ports_credit #(
+    parameter PPSw=4,
     parameter P =   5,
     parameter V =   4,
     parameter B =   4
@@ -182,7 +197,7 @@ module  port_presel_based_dst_ports_credit #(
    input    [P_1V-1 :   0]  credit_decreased_all;  
    input    [P_1V-1 :   0]  credit_increased_all; 
    input                    reset,clk;
-   output   [P_1-1  :   0]  port_pre_sel;
+   output   [PPSw-1  :   0]  port_pre_sel;
    
    
    
@@ -275,7 +290,8 @@ port_presel_based_dst_routers_ovc
 ********************************/ 
  
  
-module port_presel_based_dst_routers_vc #(
+module mesh_torus_port_presel_based_dst_routers_vc #(
+    parameter PPSw=4,
     parameter P=5,
     parameter CONGw=2 //congestion width per port
 )
@@ -285,8 +301,7 @@ module port_presel_based_dst_routers_vc #(
 );
   
          
-    localparam  P_1     =       P-1,
-                CONG_ALw=       CONGw* P;   //  congestion width per router;
+    localparam  CONG_ALw=       CONGw* P;   //  congestion width per router;
                 
     localparam XDIR =1'b0;
     localparam YDIR =1'b1;
@@ -300,13 +315,13 @@ module port_presel_based_dst_routers_vc #(
      
     
     input   [CONG_ALw-1 :   0]  congestion_in_all;
-    output  [P_1-1      :   0]  port_pre_sel;
+    output  [PPSw-1      :   0]  port_pre_sel;
     
     wire    [CONGw-1    :   0]  congestion_x_plus,congestion_y_plus,congestion_x_min,congestion_y_min;
-    wire    [P_1-1      :   0]  conjestion_cmp;
+    wire    [PPSw-1      :   0]  conjestion_cmp;
    
     
-    assign {congestion_y_min,congestion_x_min,congestion_y_plus,congestion_x_plus} = congestion_in_all[CONG_ALw-1   : CONGw];
+    assign {congestion_y_min,congestion_x_min,congestion_y_plus,congestion_x_plus} = congestion_in_all[(CONGw*5)-1   : CONGw];
     
 /****************
     congestion:  
@@ -339,6 +354,7 @@ port_presel_based_dst_routers_ovc
  
  
 module port_presel_based_dst_routers_ovc #(
+    parameter PPSw=4,
     parameter P=5,
     parameter V=4,
     parameter CONGw=2 //congestion width per port
@@ -354,7 +370,7 @@ module port_presel_based_dst_routers_ovc #(
        
     
     input   [CONG_ALw-1 :   0]  congestion_in_all;
-    output  [P_1-1      :   0]  port_pre_sel;    
+    output  [PPSw-1      :   0]  port_pre_sel;    
        
      
     
@@ -435,6 +451,7 @@ endmodule
 
 
 module port_pre_sel_gen #(
+    parameter PPSw=4,
     parameter P=5,
     parameter V=4,
     parameter B=4,
@@ -459,7 +476,7 @@ module port_pre_sel_gen #(
                PV       =   P   *   V,
                CONG_ALw =   CONGw * P;
 
-    output [P_1-1       :   0]  port_pre_sel;
+    output [PPSw-1      :   0]  port_pre_sel;
     input  [PV-1        :   0]  ovc_status;
     input  [PV-1        :   0]  ovc_avalable_all;
     input  [PV-1        :   0]  credit_decreased_all;
@@ -472,12 +489,13 @@ generate
     /* verilator lint_off WIDTH */
     if(ROUTE_TYPE    ==   "DETERMINISTIC") begin : detrministic
     /* verilator lint_on WIDTH */
-       assign port_pre_sel = {P_1{1'bx}};
+       assign port_pre_sel = {PPSw{1'bx}};
     
     end else begin : adaptive
         if(CONGESTION_INDEX==0) begin:indx0
              
                 port_presel_based_dst_ports_vc #(
+                    .PPSw(PPSw),
                     .P(P),
                     .V(V)
                 
@@ -493,6 +511,7 @@ generate
         end else if(CONGESTION_INDEX==1) begin :indx1
                       
                 port_presel_based_dst_ports_credit #(
+                    .PPSw(PPSw),
                     .P(P),
                     .V(V),
                     .B(B)
@@ -511,7 +530,8 @@ generate
                         (CONGESTION_INDEX==9) ||
                         (CONGESTION_INDEX==11)|| (CONGESTION_INDEX==12))      begin :dst_vc
               
-                port_presel_based_dst_routers_vc #(
+                mesh_torus_port_presel_based_dst_routers_vc #(
+                    .PPSw(PPSw),
                     .P(P),
                     .CONGw(CONGw)
                 )
@@ -523,6 +543,7 @@ generate
           end else if((CONGESTION_INDEX==8) || (CONGESTION_INDEX==10) )begin :dst_ovc
             
             port_presel_based_dst_routers_ovc #(
+                .PPSw(PPSw),
                 .P(P),
                 .V(V),
                 .CONGw(CONGw)
@@ -657,8 +678,18 @@ endmodule
     end //always
     
     
-  
+    accumulator #(
+      	.INw(PV),
+      	.OUTw(IVC_CNTw),
+      	.NUM(PV)
+    )
+    ivc_req_counter
+    (
+      	.in_all(ivc_request_not_granted),
+      	.out(ivc_req_num)
+    );
     
+    /*
     parallel_counter #(
         .IN_WIDTH(PV)
     )
@@ -667,6 +698,9 @@ endmodule
         .in(ivc_request_not_granted),
         .out(ivc_req_num)
     );
+    */
+    
+    
     generate 
     if(CONGw==2)begin :w2
         always @(*)begin
@@ -1156,6 +1190,7 @@ endmodule
     generate 
     for (i=0;i<4;i=i+1) begin :lp
    
+   /*
         parallel_counter #(
             .IN_WIDTH(CNT_Iw)
         )
@@ -1164,7 +1199,22 @@ endmodule
             .in(counter_in[i]),
             .out(counter_o[i])
         );
+   */
    
+       accumulator #(
+       	.INw(CNT_Iw),
+       	.OUTw(CNT_Ow),
+       	.NUM(CNT_Iw)
+       )
+       ovc_counter
+       (
+       	.in_all(counter_in[i]),
+       	.out(counter_o[i])
+       );
+   
+   
+   
+     /*
         parallel_counter #(
             .IN_WIDTH(V)
             
@@ -1174,6 +1224,21 @@ endmodule
             .in(ivc_not_grnt[i]),
             .out(ivc_not_grnt_num[i])
         );
+  */      
+   
+   
+       accumulator #(
+       	.INw(V),
+       	.OUTw(CNT_Vw),
+       	.NUM(V)
+       )
+        ivc_counter
+        (
+       	.in_all(ivc_not_grnt[i]),
+       	.out(ivc_not_grnt_num[i])
+       );
+       
+           
        wire [CNG_w-1 :   0] congestion_num  [P_1-1  :   0];
 
 
@@ -1232,7 +1297,7 @@ module parallel_count_normalize #(
 
     localparam CNTw = log2(INw+1);
     wire    [CNTw-1     :    0] counter;
-
+/*
     parallel_counter #(
         .IN_WIDTH(INw)
     )
@@ -1241,7 +1306,19 @@ module parallel_count_normalize #(
         .in(in),
         .out(counter)
     );  
-    
+  */
+  
+      accumulator #(
+      	.INw(INw),
+      	.OUTw(CNTw),
+      	.NUM(INw)
+      )
+      ovc_avb_cnt
+      (
+      	.in_all(in),
+      	.out(counter)
+      );
+  
        
     normalizer #(
         .MAX_IN(INw),

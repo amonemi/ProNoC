@@ -1,0 +1,222 @@
+#######################################################################
+##	File: gcd.IP
+##    
+##	Copyright (C) 2014-2016  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.8.0 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$ipgen = bless( {
+                  'parameters' => {
+                                    'SELw' => {
+                                                'type' => 'Fixed',
+                                                'default' => '4',
+                                                'content' => '',
+                                                'global_param' => 'Localparam',
+                                                'info' => 'Parameter',
+                                                'redefine_param' => 1
+                                              },
+                                    'GCDw' => {
+                                                'global_param' => 'Parameter',
+                                                'default' => '32',
+                                                'type' => 'Combo-box',
+                                                'content' => '8,16,32',
+                                                'info' => 'GCD\'s Input/output width in bits',
+                                                'redefine_param' => 1
+                                              },
+                                    'TAGw' => {
+                                                'info' => 'Parameter',
+                                                'redefine_param' => 1,
+                                                'global_param' => 'Localparam',
+                                                'content' => '',
+                                                'type' => 'Fixed',
+                                                'default' => '3'
+                                              },
+                                    'Dw' => {
+                                              'default' => 'GCDw',
+                                              'type' => 'Fixed',
+                                              'content' => '',
+                                              'global_param' => 'Localparam',
+                                              'redefine_param' => 1,
+                                              'info' => 'Parameter'
+                                            },
+                                    'Aw' => {
+                                              'redefine_param' => 1,
+                                              'info' => 'Parameter',
+                                              'default' => '5',
+                                              'type' => 'Fixed',
+                                              'content' => '',
+                                              'global_param' => 'Localparam'
+                                            }
+                                  },
+                  'ports' => {
+                               's_tag_i' => {
+                                              'intfc_port' => 'tag_i',
+                                              'type' => 'input',
+                                              'range' => 'TAGw-1     :   0',
+                                              'intfc_name' => 'plug:wb_slave[0]'
+                                            },
+                               's_stb_i' => {
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'range' => '',
+                                              'type' => 'input',
+                                              'intfc_port' => 'stb_i'
+                                            },
+                               's_dat_i' => {
+                                              'intfc_port' => 'dat_i',
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'type' => 'input',
+                                              'range' => 'Dw-1       :   0'
+                                            },
+                               's_cyc_i' => {
+                                              'intfc_port' => 'cyc_i',
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'type' => 'input',
+                                              'range' => ''
+                                            },
+                               's_sel_i' => {
+                                              'intfc_port' => 'sel_i',
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'range' => 'SELw-1     :   0',
+                                              'type' => 'input'
+                                            },
+                               's_rty_o' => {
+                                              'intfc_port' => 'rty_o',
+                                              'range' => '',
+                                              'type' => 'output',
+                                              'intfc_name' => 'plug:wb_slave[0]'
+                                            },
+                               'reset' => {
+                                            'type' => 'input',
+                                            'range' => '',
+                                            'intfc_name' => 'plug:reset[0]',
+                                            'intfc_port' => 'reset_i'
+                                          },
+                               's_addr_i' => {
+                                               'intfc_port' => 'adr_i',
+                                               'intfc_name' => 'plug:wb_slave[0]',
+                                               'type' => 'input',
+                                               'range' => 'Aw-1       :   0'
+                                             },
+                               's_err_o' => {
+                                              'range' => '',
+                                              'type' => 'output',
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'intfc_port' => 'err_o'
+                                            },
+                               's_ack_o' => {
+                                              'intfc_port' => 'ack_o',
+                                              'type' => 'output',
+                                              'range' => '',
+                                              'intfc_name' => 'plug:wb_slave[0]'
+                                            },
+                               's_we_i' => {
+                                             'type' => 'input',
+                                             'range' => '',
+                                             'intfc_name' => 'plug:wb_slave[0]',
+                                             'intfc_port' => 'we_i'
+                                           },
+                               'clk' => {
+                                          'intfc_port' => 'clk_i',
+                                          'intfc_name' => 'plug:clk[0]',
+                                          'range' => '',
+                                          'type' => 'input'
+                                        },
+                               's_dat_o' => {
+                                              'intfc_port' => 'dat_o',
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'type' => 'output',
+                                              'range' => 'Dw-1       :   0'
+                                            }
+                             },
+                  'ip_name' => 'gcd',
+                  'modules' => {
+                                 'gcd_ip' => {}
+                               },
+                  'file_name' => '/home/alireza/mywork/workshop/files/gcd_ip.v',
+                  'category' => 'Other',
+                  'version' => 3,
+                  'parameters_order' => [
+                                          'GCDw',
+                                          'Dw',
+                                          'Aw',
+                                          'TAGw',
+                                          'SELw'
+                                        ],
+                  'plugs' => {
+                               'clk' => {
+                                          'type' => 'num',
+                                          '0' => {
+                                                   'name' => 'clk'
+                                                 },
+                                          'value' => 1
+                                        },
+                               'wb_slave' => {
+                                               'type' => 'num',
+                                               'value' => 1,
+                                               '0' => {
+                                                        'width' => 5,
+                                                        'addr' => '0xb800_0000	0xbfff_ffff		custom devices',
+                                                        'name' => 'wb_slave'
+                                                      }
+                                             },
+                               'reset' => {
+                                            'type' => 'num',
+                                            'value' => 1,
+                                            '0' => {
+                                                     'name' => 'reset'
+                                                   }
+                                          }
+                             },
+                  'system_h' => '#define ${IP}_DONE_ADDR (*((volatile unsigned int *) ($BASE)))
+#define ${IP}_IN_1_ADDR (*((volatile unsigned int *) ($BASE+4)))
+#define ${IP}_IN_2_ADDR (*((volatile unsigned int *) ($BASE+8)))
+#define ${IP}_GCD_ADDR (*((volatile unsigned int *) ($BASE+12)))
+
+
+#define ${IP}_IN1_WRITE(value) ${IP}_IN_1_ADDR=value
+#define ${IP}_IN2_WRITE(value) ${IP}_IN_2_ADDR=value
+#define ${IP}_DONE_READ() ${IP}_DONE_ADDR
+#define ${IP}_READ() ${IP}_GCD_ADDR
+
+unsigned int gcd_hardware ( unsigned int p, unsigned int q ){
+	${IP}_IN1_WRITE(p);
+	${IP}_IN2_WRITE(q);
+	while (${IP}_DONE_READ()!=1);
+	return ${IP}_READ();
+}',
+                  'gui_status' => {
+                                    'status' => 'ideal',
+                                    'timeout' => 0
+                                  },
+                  'description' => 'gcd module',
+                  'module_name' => 'gcd_ip',
+                  'ports_order' => [
+                                     'clk',
+                                     'reset',
+                                     's_dat_i',
+                                     's_sel_i',
+                                     's_addr_i',
+                                     's_tag_i',
+                                     's_stb_i',
+                                     's_cyc_i',
+                                     's_we_i',
+                                     's_dat_o',
+                                     's_ack_o',
+                                     's_err_o',
+                                     's_rty_o'
+                                   ],
+                  'hdl_files' => [
+                                   '/workshop/files/gcd.v',
+                                   '/workshop/files/gcd_ip.v'
+                                 ],
+                  'unused' => {
+                                'plug:wb_slave[0]' => [
+                                                        'bte_i',
+                                                        'cti_i'
+                                                      ]
+                              }
+                }, 'ip_gen' );

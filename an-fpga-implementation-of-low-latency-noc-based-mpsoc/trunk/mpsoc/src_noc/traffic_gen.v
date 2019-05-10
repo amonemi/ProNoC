@@ -1,40 +1,41 @@
 `timescale  1ns/1ps
 
-`define CHECK_PCKS_CONTENT       // if defined check flit ordering, 
-
-
+//`define CHECK_PCKS_CONTENT       // if defined check flit ordering, 
+//`define RSV_NOTIFICATION
+//`define MONITORE_PATH
 /**********************************************************************
-**	File:  traffic_gen.v
-**	Date:2015-03-05  
+**  File:  traffic_gen.v
+**  Date:2015-03-05  
 **    
-**	Copyright (C) 2014-2018  Alireza Monemi
+**  Copyright (C) 2014-2018  Alireza Monemi
 **    
-**	This file is part of ProNoC 
+**  This file is part of ProNoC 
 **
-**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
-**	you can redistribute it and/or modify it under the terms of the GNU
-**	Lesser General Public License as published by the Free Software Foundation,
-**	either version 2 of the License, or (at your option) any later version.
+**  ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**  you can redistribute it and/or modify it under the terms of the GNU
+**  Lesser General Public License as published by the Free Software Foundation,
+**  either version 2 of the License, or (at your option) any later version.
 **
-** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
-** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
-** 	Public License for more details.
+**  ProNoC is distributed in the hope that it will be useful, but WITHOUT
+**  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+**  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+**  Public License for more details.
 **
-** 	You should have received a copy of the GNU Lesser General Public
-** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**  You should have received a copy of the GNU Lesser General Public
+**  License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
 **
 **
-**	Description: 
-**	Inject/sink different syntetic traffic patterns to/from NoC	
+**  Description: 
+**  Inject/sink different syntetic traffic patterns to/from NoC 
 **
 ***************************************/
 
 module  traffic_gen #(
     parameter V = 4,    // VC num per port
     parameter B = 4,    // buffer space :flit per VC 
-    parameter NX= 4,    // number of node in x axis
-    parameter NY= 4,    // number of node in y axis   
+    parameter T1= 4,    // Topology related parameter #1
+    parameter T2= 4,    // Topology related parameter #2
+    parameter T3= 4,    // Topology related parameter #3
     parameter Fpay = 32,
     parameter VC_REALLOCATION_TYPE  = "NONATOMIC",// "ATOMIC" , "NONATOMIC"
     parameter TOPOLOGY  = "MESH",
@@ -46,37 +47,31 @@ module  traffic_gen #(
     parameter TIMSTMP_FIFO_NUM=16,  
     parameter MAX_RATIO= 1000, //   
     //header flit filds' width 
-    parameter CLASS_HDR_WIDTH     =8,
-    parameter ROUTING_HDR_WIDTH   =8,
-    parameter DST_ADR_HDR_WIDTH  =8,
-    parameter SRC_ADR_HDR_WIDTH   =8,
     parameter SWA_ARBITER_TYPE = "RRA", // RRA WRRA
-    parameter WEIGHTw          = 4 // weight width of WRRA
+    parameter WEIGHTw = 4, // weight width of WRRA
+    parameter MIN_PCK_SIZE=2
 )
 (
     //input 
     ratio,// real injection ratio  = (MAX_RATIO/100)*ratio
     avg_pck_size_in, 
     pck_size_in,   
-    current_x,
-    current_y,
-    dest_x,
-    dest_y, 
+    current_r_addr,
+    current_e_addr,
+    dest_e_addr,
     pck_class_in,        
     start, 
     stop,  
     report,
     init_weight,
-   
-   
+      
    //output
     pck_number,
     sent_done, // tail flit has been sent
     hdr_flit_sent,
     update, // update the noc_analayzer
-    src_x,
-    src_y,
-
+    src_e_addr,
+   
     distance,
     pck_class_out,   
     time_stamp_h2h,
@@ -93,58 +88,48 @@ module  traffic_gen #(
     reset,
     clk
 );
-
-  
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end 	   
-      end   
-    endfunction // log2 
-    /* verilator lint_off WIDTH */ 
-    localparam P=  (TOPOLOGY=="RING" || TOPOLOGY=="LINE")? 3 : 5;  
-    localparam ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
-                           (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE";
-    /* verilator lint_on WIDTH */ 
+       
+    
+       
+       
+    `define INCLUDE_TOPOLOGY_LOCALPARAM
+    `include "topology_localparam.v"
+   
     localparam
         RATIOw= log2(MAX_RATIO),
         Vw =  (V==1)? 1 : log2(V);
-               
+                 
    
    
     reg [2:0]   ps,ns;
     localparam IDEAL =3'b001, SENT =3'b010, WAIT=3'b100;
    
+   
     localparam
-        P_1 = P-1, 
-        Xw = log2(NX),   // number of node in x axis
-        Yw = log2(NY),    // number of node in y axis
         Cw = (C>1)? log2(C) : 1,
         Fw = 2+V+Fpay,
         PCK_CNTw = log2(MAX_PCK_NUM+1),
         CLK_CNTw = log2(MAX_SIM_CLKs+1),
         PCK_SIZw = log2(MAX_PCK_SIZ+1),
         /* verilator lint_off WIDTH */
-        NC = (TOPOLOGY=="RING" || TOPOLOGY=="LINE")? NX : NX*NY,    //number of cores
+        DISTw = (TOPOLOGY=="FATTREE" || TOPOLOGY=="TREE" ) ? log2(2*L+1): log2(NR+1), 
         /* verilator lint_on WIDTH */
-        DSTw = log2(NC+1),     
-        W = WEIGHTw;
-
-    
+        W = WEIGHTw;      
 
     input reset, clk;
     input  [RATIOw-1                :0] ratio;
     input                               start,stop;
     output                              update;
     output [CLK_CNTw-1              :0] time_stamp_h2h,time_stamp_h2t;
-    output [DSTw-1                  :0] distance;
+    output [DISTw-1                  :0] distance;
     output [Cw-1                    :0] pck_class_out;
-    input  [Xw-1                    :0] current_x;
-    input  [Yw-1                    :0] current_y;
-    input  [Xw-1                    :0] dest_x;
-    input  [Yw-1                    :0] dest_y;
+   // the connected router address
+    input  [RAw-1                   :0] current_r_addr;    
+    // the current endpoint address
+    input  [EAw-1                   :0] current_e_addr;    
+    // the destination endpoint adress
+    input  [EAw-1                   :0] dest_e_addr;  
+    
     output [PCK_CNTw-1              :0] pck_number;
     input  [PCK_SIZw-1              :0] avg_pck_size_in;
     input  [PCK_SIZw-1              :0] pck_size_in;
@@ -161,30 +146,58 @@ module  traffic_gen #(
     input   [Fw-1                   :0] flit_in;   
     input                               flit_in_wr;   
     output reg  [V-1                :0] credit_out;     
-    
     input                               report;
-    output [Xw-1        :   0]    src_x;
-    output [Yw-1        :   0]    src_y;
-
-    
+    // the recieved packet source endpoint address
+    output [EAw-1        :   0]    src_e_addr;
+ 
     reg                                 inject_en,cand_wr_vc_en,pck_rd;
-    reg     [PCK_SIZw-1              :0] pck_size, pck_size_next;
+    reg    [PCK_SIZw-1              :0] pck_size, pck_size_next;    
+    reg    [EAw-1                    :0] dest_e_addr_reg;
+   
+   
+      // synopsys  translate_off
+    // synthesis translate_off
+                                      
+     `ifdef MONITORE_PATH
+     
+   
+    reg tt;
+    always @(posedge clk) begin
+        if(reset)begin 
+             tt<=1'b0;               
+        end else begin 
+            if(flit_out_wr && tt==1'b0 )begin
+                $display( "%t: Injector: current_r_addr=%x,current_e_addr=%x,dest_e_addr=%x\n",$time, current_r_addr, current_e_addr, dest_e_addr);
+                tt<=1'b1;
+            end
+        end
+    end
+    `endif
     
-    reg    [Xw-1                    :0] dest_x_reg;
-    reg    [Yw-1                    :0] dest_y_reg;
+    // synthesis translate_on
+    // synopsys  translate_on  
    
    
+   
+   
+   
+   
+    localparam
+        HDR_DATA_w =  (MIN_PCK_SIZE==1)? CLK_CNTw : 0,
+        HDR_Dw =  (MIN_PCK_SIZE==1)? CLK_CNTw : 1;
+   
+    wire [HDR_Dw-1 : 0] hdr_data_in,rd_hdr_data_out;
+   
+    
     always @ (posedge clk or posedge reset) begin 
         if(reset) begin 
-            dest_x_reg<={Xw{1'b0}};
-            dest_y_reg<={Yw{1'b0}};
+            dest_e_addr_reg<={EAw{1'b0}};           
         end else begin 
-            dest_x_reg<=dest_x;
-            dest_y_reg<=dest_y;
+            dest_e_addr_reg<=dest_e_addr;       
         end
     end
    
-    wire    [P_1-1                  :   0] destport;   
+    wire    [DSTPw-1                :   0] destport;   
     wire    [V-1                    :   0] ovc_wr_in;
     wire    [V-1                    :   0] full_vc,empty_vc;
     reg     [V-1                    :   0] wr_vc,wr_vc_next;
@@ -195,11 +208,10 @@ module  traffic_gen #(
     wire                                   hdr_flit,tail_flit;
     reg     [PCK_SIZw-1             :   0] flit_counter;
     reg                                    flit_cnt_rst,flit_cnt_inc;
-    wire    [1                      :   0] rd_hdr_flg;
+    wire                                   rd_hdr_flg,rd_tail_flg;
     wire    [Cw-1   :   0] rd_class_hdr;
   //  wire    [P_1-1      :   0] rd_destport_hdr;
-    wire    [Xw-1		:	0] rd_des_x_addr, rd_src_x_addr;  
-    wire    [Yw-1		:	0] rd_des_y_addr, rd_src_y_addr;
+    wire    [EAw-1      :   0] rd_des_e_addr, rd_src_e_addr;  
     reg     [CLK_CNTw-1             :   0] rsv_counter;
     reg     [CLK_CNTw-1             :   0] clk_counter;
     wire    [Vw-1                   :   0] rd_vc_bin;//,wr_vc_bin;
@@ -207,16 +219,28 @@ module  traffic_gen #(
     wire    [V-1                    :   0] rd_vc; 
     wire                                   wr_vc_is_full,wr_vc_avb,wr_vc_is_empty;
     reg     [V-1                    :   0] credit_out_next;
-    reg     [Xw-1     :   0] rsv_pck_src_x        [V-1:0];
-    reg     [Yw-1     :   0] rsv_pck_src_y        [V-1:0];
+    reg     [EAw-1     :   0] rsv_pck_src_e_addr        [V-1:0];
     reg     [Cw-1                   :   0] rsv_pck_class_in     [V-1:0];  
       
+    wire [CLK_CNTw-1             :   0] hdr_flit_timestamp;    
+    wire pck_wr,buffer_full,pck_ready,valid_dst;    
+    wire [CLK_CNTw-1 : 0] rd_timestamp;
+   
+   
+   check_destination_addr #(
+   	.TOPOLOGY(TOPOLOGY),
+   	.T1(T1),
+   	.T2(T2),
+   	.T3(T3),   
+   	.EAw(EAw)
+   )
+   check_destination_addr(
+   	.dest_e_addr(dest_e_addr),
+   	.current_e_addr(current_e_addr),
+   	.dest_is_valid(valid_dst)
+   );
+   
     
-    
-    wire pck_wr,buffer_full,pck_ready,valid_dst;
-     /* verilator lint_off WIDTH */  
-    assign valid_dst  = ({dest_x,dest_y}  !=  {current_x,current_y} ) &  (dest_x  <= (NX-1)) & (dest_y  <= (NY-1));
-     /* verilator lint_on WIDTH */ 
     assign hdr_flit_sent=pck_rd;
     
     
@@ -255,172 +279,172 @@ module  traffic_gen #(
     .reset                      (reset)
     );
     
-   
-    
-    
+       
     
     packet_gen #(
-    	.P(P),
-    	.NX(NX),
-    	.NY(NY),
-    	.TOPOLOGY(TOPOLOGY),
-    	.ROUTE_NAME(ROUTE_NAME),
-    	.ROUTE_TYPE(ROUTE_TYPE),
-    	.MAX_PCK_NUM(MAX_PCK_NUM),
-    	.MAX_SIM_CLKs(MAX_SIM_CLKs),
-    	.TIMSTMP_FIFO_NUM(TIMSTMP_FIFO_NUM)
+        .P(MAX_P),
+        .T1(T1),
+        .T2(T2),
+        .T3(T3),
+        .RAw(RAw),  
+        .EAw(EAw),  
+        .TOPOLOGY(TOPOLOGY),
+        .DSTPw(DSTPw),
+        .ROUTE_NAME(ROUTE_NAME),
+        .ROUTE_TYPE(ROUTE_TYPE),
+        .MAX_PCK_NUM(MAX_PCK_NUM),
+        .MAX_SIM_CLKs(MAX_SIM_CLKs),
+        .TIMSTMP_FIFO_NUM(TIMSTMP_FIFO_NUM),
+        .MIN_PCK_SIZE(MIN_PCK_SIZE)
     )
     packet_buffer
     (
-    	.reset(reset),
-    	.clk(clk),
-    	.pck_wr(pck_wr),
-    	.pck_rd(pck_rd),
-    	.current_x(current_x),
-    	.current_y(current_y),
-    	.clk_counter(clk_counter),
-    	.pck_number(pck_number),
-    	.dest_x(dest_x_reg),
-    	.dest_y(dest_y_reg),
-    	.pck_timestamp(pck_timestamp),
-    	.buffer_full(buffer_full),
-    	.pck_ready(pck_ready),
-    	.valid_dst(valid_dst),
-    	.destport(destport)
+        .reset(reset),
+        .clk(clk),
+        .pck_wr(pck_wr),
+        .pck_rd(pck_rd),
+        .current_r_addr(current_r_addr),
+        .clk_counter(clk_counter),
+        .pck_number(pck_number),
+        .dest_e_addr(dest_e_addr_reg),
+        .pck_timestamp(pck_timestamp),
+        .buffer_full(buffer_full),
+        .pck_ready(pck_ready),
+        .valid_dst(valid_dst),
+        .destport(destport)
     );
 
-// for   flit size >= 32 bits
-/* header flit format
-31--------------24     23--------16     15--------8            7-----0
-message_class_data     routing_info     destination_address    source_address
-*/
-    /* verilator lint_off WIDTH */ 
-    localparam      ADDR_DIMENTION =   (TOPOLOGY ==    "MESH" || TOPOLOGY ==  "TORUS") ? 2 : /* ("RING" and FULLY_CONNECT)?*/ 1; 
-    /* verilator lint_on WIDTH */ 
-    reg    [CLASS_HDR_WIDTH-1      :   0]  wr_class_hdr;
-    reg    [ROUTING_HDR_WIDTH-1    :   0]  wr_routing_hdr;
-    reg    [DST_ADR_HDR_WIDTH-1    :   0]  wr_dst_adr_hdr; 
-    reg    [SRC_ADR_HDR_WIDTH-1    :   0]  wr_src_adr_hdr;
-    
     
     assign wr_timestamp    =pck_timestamp; 
-
-    always @(*) begin  
-        wr_class_hdr= {CLASS_HDR_WIDTH{1'b0}};
-        wr_class_hdr[Cw-1     :   0] = pck_class_in;
-        wr_class_hdr[Cw+W-1   :  Cw] = init_weight;
-        wr_routing_hdr ={ROUTING_HDR_WIDTH{1'b0}};
-        wr_routing_hdr[P_1-1  :   0] = destport;
-    end
-
-    generate
-        if (ADDR_DIMENTION==1) begin :one_dimen
-        
-            always @(*) begin 
-                 wr_src_adr_hdr=   {SRC_ADR_HDR_WIDTH{1'b0}}; 
-                 wr_dst_adr_hdr=   {DST_ADR_HDR_WIDTH{1'b0}};
-                 wr_src_adr_hdr  [Xw-1  :0]=   current_x; 
-                 wr_dst_adr_hdr  [Xw-1  :0]=   dest_x_reg;       
-            end           
-	                 
-        end else begin :two_dimen
-	        
-	        always @(*) begin
-                 wr_src_adr_hdr=   {SRC_ADR_HDR_WIDTH{1'b0}}; 
-                 wr_dst_adr_hdr=   {DST_ADR_HDR_WIDTH{1'b0}};
-                 
-                 wr_src_adr_hdr[Yw-1 : 0] =  current_y;
-                 wr_src_adr_hdr[(SRC_ADR_HDR_WIDTH/2)+Xw-1 : (SRC_ADR_HDR_WIDTH/2)] =  current_x;
-                 
-                 wr_dst_adr_hdr[Yw-1 : 0]=  dest_y_reg;  
-                 wr_dst_adr_hdr[(SRC_ADR_HDR_WIDTH/2)+Xw-1 : (SRC_ADR_HDR_WIDTH/2)]= dest_x_reg;
-             end
-	                         
-        end
-    endgenerate
-
-   
     
     assign  update      = flit_in_wr & flit_in[Fw-2];
     assign  hdr_flit    = (flit_counter == 0);
     assign  tail_flit   = (flit_counter ==  pck_size-1'b1);
-    assign  time_stamp_h2h  = rsv_time_stamp[rd_vc_bin] - flit_in[CLK_CNTw-1             :   0];
-    assign  time_stamp_h2t  = clk_counter - flit_in[CLK_CNTw-1             :   0];
+    
+   
+    
+    assign  time_stamp_h2h  = hdr_flit_timestamp - rd_timestamp;
+    assign  time_stamp_h2t  = clk_counter - rd_timestamp;
 
-    wire [Fpay-1    :	0] flit_out_pyload;
-    wire [1         :	0] flit_out_hdr;
-	
-	 /* verilator lint_off WIDTH */ 
-    assign flit_out_pyload = (hdr_flit)  ?    {wr_class_hdr,wr_routing_hdr,wr_dst_adr_hdr,wr_src_adr_hdr}:
-                            
-                             (tail_flit) ?     wr_timestamp:
-                                              {pck_number,flit_counter};
-     /* verilator lint_on WIDTH */
+    wire [Fpay-1    :   0] flit_out_pyload;
+    wire [1         :   0] flit_out_hdr;
+    
 
-    assign flit_out_hdr = (hdr_flit)  ? 2'b10:
-                          (tail_flit) ? 2'b01:
-                                        2'b00;
-	 
-    assign flit_out = {flit_out_hdr, wr_vc, flit_out_pyload };   
-	
+   wire [Fpay-1    :   0] flit_out_header_pyload;
+   wire [Fw-1      :   0] hdr_flit_out;
+   
+   
+   
+   
+   
+   assign hdr_data_in = (MIN_PCK_SIZE==1)? wr_timestamp[HDR_Dw-1 : 0]  : {HDR_Dw{1'b0}};
+    
+    header_flit_generator #(
+        .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
+        .Fpay(Fpay),
+        .V(V),
+        .EAw(EAw),
+        .DSTPw(DSTPw),
+        .C(C),
+        .WEIGHTw(WEIGHTw),
+        .DATA_w(HDR_DATA_w)
+    )
+    the_header_flit_generator
+    (
+        .flit_out(hdr_flit_out),
+        .vc_num_in(wr_vc),
+        .class_in(pck_class_in),
+        .dest_e_addr_in(dest_e_addr_reg),
+        .src_e_addr_in(current_e_addr),
+        .weight_in(init_weight),
+        .destport_in(destport),
+        .data_in(hdr_data_in)
+    );
+    
+    
+   
+        assign flit_out_hdr = {hdr_flit,tail_flit};
+    
+        assign flit_out_header_pyload = hdr_flit_out[Fpay-1 : 0];
+        
+        
+         /* verilator lint_off WIDTH */ 
+        assign flit_out_pyload = (hdr_flit)  ?    flit_out_header_pyload :
+                                
+                                 (tail_flit) ?     wr_timestamp:
+                                                  {pck_number,flit_counter};
+         /* verilator lint_on WIDTH */
+    
+       
+         
+        assign flit_out = {flit_out_hdr, wr_vc, flit_out_pyload };   
+
 
 //extract header flit info
     
-    
+   
 
      extract_header_flit_info #(
-     	.CLASS_HDR_WIDTH(CLASS_HDR_WIDTH),
-     	.ROUTING_HDR_WIDTH(ROUTING_HDR_WIDTH),
-     	.DST_ADR_HDR_WIDTH(DST_ADR_HDR_WIDTH),
-     	.SRC_ADR_HDR_WIDTH(SRC_ADR_HDR_WIDTH),
-     	.TOPOLOGY(TOPOLOGY),
-     	.SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
-     	.WEIGHTw(WEIGHTw),
-     	.V(V),
-     	.P(P),
-     	.NX(NX),
-     	.NY(NY),
-     	.C(C),
-     	.Fpay(Fpay)
+        .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
+        .WEIGHTw(WEIGHTw),
+        .V(V),
+        .EAw(EAw),
+        .DSTPw(DSTPw),
+        .C(C),
+        .Fpay(Fpay),
+        .DATA_w(HDR_DATA_w)
      )
      header_extractor
      (
-     	.flit_in(flit_in),
-     	.flit_in_we(flit_in_wr),
-     	.class_o(rd_class_hdr),
-     	.destport_o(),//(rd_destport_hdr),
-     	.x_dst_o(rd_des_x_addr),
-     	.y_dst_o(rd_des_y_addr),
-     	.x_src_o(rd_src_x_addr),
-     	.y_src_o(rd_src_y_addr),
-     	.vc_num_o(rd_vc),
-     	.hdr_flit_wr_o( ),
-     	.flg_hdr_o(rd_hdr_flg),
-     	.weight_o( )
-     );
-
-   
-    assign src_x            = rsv_pck_src_x[rd_vc_bin];
-    assign src_y            = rsv_pck_src_y[rd_vc_bin];
-    assign pck_class_out    = rsv_pck_class_in[rd_vc_bin];
-   
+        .flit_in(flit_in),
+        .flit_in_we(flit_in_wr),
+        .class_o(rd_class_hdr),
+        .destport_o(),
+        .dest_e_addr_o(rd_des_e_addr),
+        .src_e_addr_o(rd_src_e_addr),
+        .vc_num_o(rd_vc),
+        .hdr_flit_wr_o( ),
+        .hdr_flg_o(rd_hdr_flg),
+        .tail_flg_o(rd_tail_flg),
+        .weight_o( ),
+        .data_o(rd_hdr_data_out)
+     );   
    
     
     distance_gen #(
-    	.NX(NX),
-    	.NY(NY),
-    	.TOPOLOGY(TOPOLOGY)
+        .TOPOLOGY(TOPOLOGY),
+        .T1(T1),
+        .T2(T2),
+        .T3(T3),
+        .EAw(EAw),
+        .DISTw(DISTw)
     )
     the_distance_gen
     (
-    	.src_x(src_x),
-    	.src_y(src_y),
-    	.dest_x(current_x),    	
-    	.dest_y(current_y),
-    	.distance(distance)
+        .src_e_addr(src_e_addr),
+        .dest_e_addr(current_e_addr),
+        .distance(distance)
     );
- 
+    
+    
  generate 
+    if(MIN_PCK_SIZE == 1) begin : sf_pck
+    
+        assign src_e_addr            = (rd_hdr_flg & rd_tail_flg)? rd_src_e_addr : rsv_pck_src_e_addr[rd_vc_bin];
+        assign pck_class_out     = (rd_hdr_flg & rd_tail_flg)? rd_class_hdr : rsv_pck_class_in[rd_vc_bin];
+        assign hdr_flit_timestamp = (rd_hdr_flg & rd_tail_flg)?  clk_counter : rsv_time_stamp[rd_vc_bin];
+        assign rd_timestamp =(rd_hdr_flg & rd_tail_flg)? rd_hdr_data_out : flit_in[CLK_CNTw-1             :   0];
+
+    end else begin : no_sf_pck
+    
+        assign src_e_addr            = rsv_pck_src_e_addr[rd_vc_bin];
+        assign pck_class_out    = rsv_pck_class_in[rd_vc_bin];
+        assign hdr_flit_timestamp = rsv_time_stamp[rd_vc_bin];
+        assign rd_timestamp=flit_in[CLK_CNTw-1 :   0];
+        
+    end
+
+
  if(V==1) begin : v1
     assign rd_vc_bin=1'b0;
    // assign wr_vc_bin=1'b0;
@@ -454,12 +478,12 @@ message_class_data     routing_info     destination_address    source_address
         /* verilator lint_on WIDTH */  
             assign wr_vc_avb    =  ~wr_vc_is_full; 
         end else begin : atomic_b 
-	    assign wr_vc_is_empty	=  | ( empty_vc & wr_vc);
-            assign wr_vc_avb		=  wr_vc_is_empty;      
+        assign wr_vc_is_empty   =  | ( empty_vc & wr_vc);
+            assign wr_vc_avb        =  wr_vc_is_empty;      
         end
     endgenerate
 
-
+reg not_yet_sent_aflit_next,not_yet_sent_aflit;
 
 always @(*)begin
             wr_vc_next          = wr_vc; 
@@ -472,31 +496,40 @@ always @(*)begin
             pck_rd              = 1'b0;
             ns                  = ps;
             pck_rd              =1'b0;
-            pck_size_next	= pck_size;
-           
+         
+            
+            not_yet_sent_aflit_next =not_yet_sent_aflit;            
             case (ps) 
-                IDEAL: begin 
-                pck_size_next  = pck_size_in;
-                  if(pck_ready ) begin 
+                IDEAL: begin                 
+                    if(pck_ready ) begin 
                         if(wr_vc_avb && valid_dst)begin
                             pck_rd=1'b1; 
-                            flit_out_wr     = 1'b1;
-                            flit_cnt_inc = 1'b1;
-                            ns              = SENT;
-                            
-                            
-                        end//wr_vc
-                    end //injection_en
+                            flit_out_wr     = 1'b1;//sending header flit
+                            not_yet_sent_aflit_next = 1'b0;
+                            flit_cnt_inc = 1'b1;                            
+                            if (MIN_PCK_SIZE>1 || flit_out_hdr!=2'b11) begin 
+                                ns              = SENT;
+                            end else begin
+                                flit_cnt_rst   = 1'b1;
+                                sent_done       =1'b1;
+                                cand_wr_vc_en   =1'b1;
+                                if(cand_vc>0) begin 
+                                    wr_vc_next  = cand_vc;                                  
+                                end  else ns = WAIT;                
+                            end  //else                         
+                        end//wr_vc                        
+                end 
+                
                 end //IDEAL
-                SENT: begin 
-                     
+                SENT: begin  
+                  
                     if(!wr_vc_is_full )begin 
+                        
                         flit_out_wr     = 1'b1;
                         if(flit_counter  < pck_size-1) begin 
                             flit_cnt_inc = 1'b1;
                         end else begin 
                             flit_cnt_rst   = 1'b1;
-			    pck_size_next  = pck_size_in;
                             sent_done       =1'b1;
                             cand_wr_vc_en   =1'b1;
                             if(cand_vc>0) begin 
@@ -525,8 +558,12 @@ always @(*)begin
                     credit_out_next = rd_vc;
             end else credit_out_next = {V{1'd0}};
         end
+ 
+    always @ (*)begin 
+           pck_size_next    = pck_size;
+           if((tail_flit & flit_out_wr ) || not_yet_sent_aflit) pck_size_next  = pck_size_in;
+    end
     
-
 always @(posedge clk or posedge reset )begin 
         if(reset) begin 
             inject_en       <= 1'b0;
@@ -536,12 +573,12 @@ always @(posedge clk or posedge reset )begin
             credit_out      <= {V{1'd0}};
             rsv_counter     <= 0;
             clk_counter     <=  0;
-	    pck_size	    <= 0;
-           
+            pck_size        <= 0;
+            not_yet_sent_aflit<=1'b1;          
         
-        end
-        else begin 
+        end else begin 
             //injection
+            not_yet_sent_aflit<=not_yet_sent_aflit_next;
             inject_en <=  (start |inject_en) & ~stop;  
             ps             <= ns;
             clk_counter     <= clk_counter+1'b1;
@@ -554,25 +591,26 @@ always @(posedge clk or posedge reset )begin
             //sink
             if(flit_in_wr) begin 
                     if (flit_in[Fw-1])begin 
-                        rsv_pck_src_x[rd_vc_bin]    <=  rd_src_x_addr;
-                        rsv_pck_src_y[rd_vc_bin]    <=  rd_src_y_addr;
+                        rsv_pck_src_e_addr[rd_vc_bin]    <=  rd_src_e_addr;
                         rsv_pck_class_in[rd_vc_bin]    <= rd_class_hdr;
                         rsv_time_stamp[rd_vc_bin]   <= clk_counter;  
                         rsv_counter                 <= rsv_counter+1'b1;
                                             
                         // distance        <= {{(32-8){1'b0}},flit_in[7:0]};
-                        // synopsys  translate_off
-                        // synthesis translate_off
-                        // last_pck_time<=$time;
-                        // $display ("%d,\t toptal of %d pcks have been recived in core (%d,%d)", last_pck_time,rsv_counter,X,Y);
-                        // synthesis translate_on
-                        // synopsys  translate_on
+                        `ifdef RSV_NOTIFICATION
+                            // synopsys  translate_off
+                            // synthesis translate_off
+                            // last_pck_time<=$time;
+                             $display ("total of %d pcks have been recived in core (%d)", rsv_counter,current_e_addr);
+                            // synthesis translate_on
+                            // synopsys  translate_on
+                        `endif
                     end
             end
         // synopsys  translate_off
         // synthesis translate_off
             if(report) begin 
-                 $display ("%t,\t toptal of %d pcks have been recived in core (%d,%d)",$time ,rsv_counter,current_x,current_y);
+                 $display ("%t,\t total of %d pcks have been recived in core (%d)",$time ,rsv_counter,current_e_addr);
             end
         // synthesis translate_on
         // synopsys  translate_on
@@ -586,8 +624,8 @@ always @(posedge clk or posedge reset )begin
     // synopsys  translate_off
     // synthesis translate_off
     always @(posedge clk) begin     
-        if(flit_out_wr && hdr_flit && dest_x_reg  == current_x &&  dest_y_reg == current_y) $display("%t: Error: The source and destination address of injected packet is the same in router(%d,%d) ",$time, dest_x ,dest_y);                                                             
-        if(flit_in_wr && rd_hdr_flg[1] && (rd_des_x_addr    != current_x || rd_des_y_addr   != current_y )) $display("%t: Error: packet with des(%d,%d) has been recieved in wrong router (%d,%d).  ",$time,rd_des_x_addr, rd_des_y_addr, current_x , current_y);        
+        if(flit_out_wr && hdr_flit && dest_e_addr_reg  == current_e_addr) $display("%t: Error: The source and destination address of injected packet is the same in endpoint (%h): %m",$time, dest_e_addr );                                                             
+        if(flit_in_wr && rd_hdr_flg && (rd_des_e_addr    != current_e_addr )) $display("%t: Error: packet with des(%h) which is sent by source (%h) has been recieved in wrong router (%h).  %m",$time,rd_des_e_addr, rd_src_e_addr, current_e_addr);        
     end
     // synthesis translate_on
     // synopsys  translate_on
@@ -604,10 +642,12 @@ always @(posedge clk or posedge reset )begin
     
     wire [PCK_CNTw+PCK_SIZw-1 : 0] statistics;
     generate 
-    if(PCK_CNTw+PCK_SIZw > Fw) assign statistics = {{(PCK_CNTw+PCK_SIZw-Fw){1'b0}},flit_in};
-    else  assign statistics = flit_in[PCK_CNTw+PCK_SIZw-1   :   0];
+        if(PCK_CNTw+PCK_SIZw > Fw) assign statistics = {{(PCK_CNTw+PCK_SIZw-Fw){1'b0}},flit_in};
+        else  assign statistics = flit_in[PCK_CNTw+PCK_SIZw-1   :   0];
+        assign {rsv_pck_number,rsv_flit_counter}=statistics;
+               
     endgenerate   
-    assign {rsv_pck_number,rsv_flit_counter}=statistics;
+    
     
     
     integer ii;
@@ -635,7 +675,7 @@ always @(posedge clk or posedge reset )begin
     always @(posedge clk) begin     
         if(flit_in_wr && (flit_in[Fw-1:Fw-2]==2'b00) && (~reset))begin 
             if( old_flit_counter[rd_vc_bin]!=rsv_flit_counter-1) $display("%t: Error: missmatch flit counter in %m. Expected %d but recieved %d",$time,old_flit_counter[rd_vc_bin]+1,rsv_flit_counter);
-            if( old_pck_number[rd_vc_bin]!=rsv_pck_number && old_pck_number[rd_vc_bin]!=0)       $display("%t: Error: missmatch pck number in %m. expected %d but recieved %d",$time,old_pck_number[rd_vc_bin],rsv_pck_number);
+            if( old_pck_number[rd_vc_bin]!=rsv_pck_number && old_pck_number[rd_vc_bin]!=0)   $display("%t: Error: missmatch pck number in %m. expected %d but recieved %d",$time,old_pck_number[rd_vc_bin],rsv_pck_number);
                        
         end
    
@@ -645,6 +685,12 @@ always @(posedge clk or posedge reset )begin
     
     `endif
     
+    
+    
+   
+  
+    
+
 
 endmodule
 
@@ -681,7 +727,7 @@ module injection_ratio_ctrl #
          log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end 	   
+         end       
       end   
     endfunction // log2 
    
@@ -718,39 +764,35 @@ module injection_ratio_ctrl #
  
  
     always @(*) begin 
-      next_state		=state;
-      next_flit_counter	=flit_counter;
-      next_sent			=sent;
+      next_state        =state;
+      next_flit_counter =flit_counter;
+      next_sent         =sent;
       if(en && ~freez ) begin
-			case(sent)
-				1'b1: begin 
-				    /* verilator lint_off WIDTH */
-					next_state 			= state +  off_clks; 
-					/* verilator lint_on WIDTH */
-					next_flit_counter = (flit_counter >= pck_size-1'b1) ? {PCK_SIZw{1'b0}} : flit_counter +1'b1;
-					next_inject			= (flit_counter=={PCK_SIZw{1'b0}});
-					if (next_flit_counter >= pck_size-1'b1) begin 
-						 if( next_state  >= STATE_INIT ) next_sent =1'b0;
-					end
-				end
-				1'b0:begin 
-					if( next_state  <  STATE_INIT ) next_sent  = 1'b1;
-					next_inject= 1'b0;
-					/* verilator lint_off WIDTH */
-					next_state = state - on_clks;
-					/* verilator lint_on WIDTH */
-				end
-			endcase		
-		end else begin 
-			 next_inject= 1'b0;
-		end
-	end		
-		
-
-		
-
-		
-			 
+            case(sent)
+                1'b1: begin 
+                    /* verilator lint_off WIDTH */
+                    next_state          = state +  off_clks; 
+                    /* verilator lint_on WIDTH */
+                    next_flit_counter = (flit_counter >= pck_size-1'b1) ? {PCK_SIZw{1'b0}} : flit_counter +1'b1;
+                    next_inject         = (flit_counter=={PCK_SIZw{1'b0}});
+                    if (next_flit_counter >= pck_size-1'b1) begin 
+                         if( next_state  >= STATE_INIT ) next_sent =1'b0;
+                    end
+                end
+                1'b0:begin 
+                    if( next_state  <  STATE_INIT ) next_sent  = 1'b1;
+                    next_inject= 1'b0;
+                    /* verilator lint_off WIDTH */
+                    next_state = state - on_clks;
+                    /* verilator lint_on WIDTH */
+                end
+            endcase     
+        end else begin 
+             next_inject= 1'b0;
+        end
+    end     
+        
+         
  
  
     always @(posedge clk or posedge reset) begin 
@@ -768,12 +810,12 @@ module injection_ratio_ctrl #
             end
         
         
-			state       <=  next_state;
+            state       <=  next_state;
            if(ratio!={CNTw{1'b0}}) inject      <=  next_inject; 
             sent        <=  next_sent; 
             flit_counter<=  next_flit_counter;
-			  
-		  end
+              
+          end
     end     
 
 
@@ -791,32 +833,34 @@ endmodule
  
  module packet_gen #(   
     parameter P = 5,    
-    parameter NX= 4,    
-    parameter NY= 4,    
+    parameter T1= 4,    
+    parameter T2= 4,
+    parameter T3= 4,
+    parameter RAw = 3,  
+    parameter EAw = 3, 
     parameter TOPOLOGY  = "MESH",
+    parameter DSTPw = 4,
     parameter ROUTE_NAME = "XY",
     parameter ROUTE_TYPE = "DETERMINISTIC",
     parameter MAX_PCK_NUM   = 10000,
     parameter MAX_SIM_CLKs  = 100000,
-    parameter TIMSTMP_FIFO_NUM=16 
+    parameter TIMSTMP_FIFO_NUM=16,
+    parameter MIN_PCK_SIZE=2
  
  )(
     clk_counter,
     pck_wr,
     pck_rd,
-    current_x,
-    current_y,
+    current_r_addr,
     pck_number,
-    dest_x,
-    dest_y,
+    dest_e_addr,
     pck_timestamp,
     destport,
     buffer_full,
     pck_ready,
     valid_dst,
     clk,
-    reset
- 
+    reset 
  );
  
  
@@ -825,79 +869,94 @@ endmodule
          log2=(number <=1) ? 1: 0;    
          while(2**log2<number) begin    
             log2=log2+1;    
-         end 	   
+         end       
       end   
     endfunction // log2 
+     
+    localparam 
+        PCK_CNTw    =   log2(MAX_PCK_NUM+1),
+        CLK_CNTw    =   log2(MAX_SIM_CLKs+1);     
  
+    input  reset,clk, pck_wr, pck_rd;
+    input  [RAw-1  :0] current_r_addr;
+    input  [CLK_CNTw-1 :0] clk_counter;
+     
+    output [PCK_CNTw-1 :0] pck_number;
+    input  [EAw-1  :0] dest_e_addr;
+    output [CLK_CNTw-1 :0] pck_timestamp;   
+    output buffer_full,pck_ready;
+    input  valid_dst; 
+    output [DSTPw-1    :0] destport; 
+    reg    [PCK_CNTw-1 :0] packet_counter;  
+    wire   buffer_empty; 
+ 
+    assign pck_ready = ~buffer_empty & valid_dst;
     
-    localparam      P_1         =   P-1,
-                    Xw          =   log2(NX),   // number of node in x axis
-                    Yw          =   log2(NY),    // number of node in y axis
-                    PCK_CNTw    =   log2(MAX_PCK_NUM+1),
-                    CLK_CNTw    =   log2(MAX_SIM_CLKs+1); 
-    
-    
- 
- input                               reset,clk, pck_wr, pck_rd;
- input  [Xw-1                    :0] current_x;
- input  [Yw-1                    :0] current_y;
- input  [CLK_CNTw-1              :0] clk_counter;
- 
- output [PCK_CNTw-1              :0] pck_number;
- input  [Xw-1                    :0] dest_x;
- input  [Yw-1                    :0] dest_y;
- output [CLK_CNTw-1              :0] pck_timestamp;   
- output                              buffer_full,pck_ready;
- input                               valid_dst; 
- output [P_1-1                   :0] destport; 
- 
- 
- reg    [PCK_CNTw-1              :0] packet_counter;  
- wire                                buffer_empty;
- 
-
- 
- 
- 
- 
- assign pck_ready = ~buffer_empty & valid_dst;
-
-   
-   
-   ni_conventional_routing #(        
-        .P(P),
-        .NX(NX),
-        .NY(NY),
-        .ROUTE_TYPE(ROUTE_TYPE),
+  
+    ni_conventional_routing #(
         .TOPOLOGY(TOPOLOGY),
         .ROUTE_NAME(ROUTE_NAME),
-        .LOCATED_IN_NI(1)
+        .ROUTE_TYPE(ROUTE_TYPE),
+        .T1(T1),
+        .T2(T2),
+        .T3(T3),
+        .RAw(RAw),
+        .EAw(EAw),
+        .DSTPw(DSTPw)
     )
-    conv_routing(
-        .current_x (current_x),
-        .current_y (current_y),
-        .dest_x    (dest_x),
-        .dest_y    (dest_y),
-        .destport  (destport)
+    the_ni_conventional_routing
+    (
+        .reset(reset),
+        .clk(clk),
+        .current_r_addr(current_r_addr),
+        .dest_e_addr(dest_e_addr),
+        .destport(destport)
     );
-    
-   
-    fifo #(
-    	.Dw(CLK_CNTw),
-    	.B(TIMSTMP_FIFO_NUM)
+
+    wire timestamp_fifo_nearly_full , timestamp_fifo_full;
+    assign buffer_full = (MIN_PCK_SIZE==1) ? timestamp_fifo_nearly_full : timestamp_fifo_full;
+
+
+    wire recieve_more_than_0;
+    fwft_fifo #(
+        .DATA_WIDTH(CLK_CNTw),
+        .MAX_DEPTH(TIMSTMP_FIFO_NUM)        
     )
     timestamp_fifo
     (
-    	.din(clk_counter),
-    	.wr_en(pck_wr),
-    	.rd_en(pck_rd),
-    	.dout(pck_timestamp),
-    	.full(buffer_full),
-    	.nearly_full(),
-    	.empty(buffer_empty),
-    	.reset(reset),
-    	.clk(clk)
+        .din(clk_counter),
+        .wr_en(pck_wr),
+        .rd_en(pck_rd),
+        .dout(pck_timestamp),
+        .full(timestamp_fifo_full),
+        .nearly_full(timestamp_fifo_nearly_full),       
+        .recieve_more_than_0(recieve_more_than_0),
+        .recieve_more_than_1(),
+        .reset(reset),
+        .clk(clk)
     );
+    
+    assign buffer_empty = ~recieve_more_than_0;
+    
+    /*
+
+    fifo #(
+        .Dw(CLK_CNTw),
+        .B(TIMSTMP_FIFO_NUM)
+    )
+    timestamp_fifo
+    (
+        .din(clk_counter),
+        .wr_en(pck_wr),
+        .rd_en(pck_rd),
+        .dout(pck_timestamp),
+        .full(timestamp_fifo_full),
+        .nearly_full(timestamp_fifo_nearly_full),
+        .empty(buffer_empty),
+        .reset(reset),
+        .clk(clk)
+    );
+    */ 
     
     always @ (posedge clk or posedge reset) begin 
         if(reset) begin 
@@ -925,120 +984,56 @@ endmodule
 ********************/
 
 module distance_gen #(
-    parameter NX= 4,    // number of node in x axis
-    parameter NY= 4,    // number of node in y axis
-    parameter TOPOLOGY  = "MESH"
+    parameter TOPOLOGY  = "MESH",
+    parameter T1=4,
+    parameter T2=4,
+    parameter T3=4,
+    parameter EAw=2,
+    parameter DISTw=4
 
 )(
-    src_x,
-    src_y,
-    dest_x,
-    dest_y,
+    src_e_addr,
+    dest_e_addr,
     distance
-
 );
- 
 
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end 	   
-      end   
-    endfunction // log2 
- 
- 
-    localparam
-        Xw  =   log2(NX),   // number of node in x axis
-        Yw  =   log2(NY),    // number of node in y axis 
-        /* verilator lint_off WIDTH */
-        NC = (TOPOLOGY=="RING" || TOPOLOGY=="LINE")? NX : NX*NY,    //number of cores
-        /* verilator lint_on WIDTH */
-        DSTw = log2(NC+1);             
-                   
+ input [EAw-1 : 0] src_e_addr;
+ input [EAw-1 : 0] dest_e_addr;
+ output [DISTw-1 : 0]   distance;
 
+generate 
+/* verilator lint_off WIDTH */ 
+if (TOPOLOGY ==    "MESH" || TOPOLOGY ==  "TORUS" || TOPOLOGY == "RING" || TOPOLOGY == "LINE")begin : tori_noc 
+/* verilator lint_on WIDTH */ 
 
-    input [Xw-1 :   0]src_x,dest_x;
-    input [Yw-1 :   0]src_y,dest_y;
-    output[DSTw-1:   0]distance;
-       
-    reg [Xw-1  :   0] x_offset;
-    reg [Yw-1  :   0] y_offset;
-    
-    generate 
-    /* verilator lint_off WIDTH */ 
-    if( TOPOLOGY == "MESH" || TOPOLOGY == "LINE") begin : oneD
-    /* verilator lint_on WIDTH */ 
-        
-        always @(*) begin 
-            x_offset     = (src_x> dest_x)? src_x - dest_x : dest_x - src_x;
-            y_offset     = (src_y> dest_y)? src_y - dest_y : dest_y - src_y;
-         end
-        
-    
-    
-    end else begin : twoD //torus ring
-    
-        wire tranc_x_plus,tranc_x_min,tranc_y_plus,tranc_y_min,same_x,same_y;
-                
-        always @ (*) begin 
-            
-            //x_offset
-            if(same_x) x_offset= {Xw{1'b0}};
-            else if(tranc_x_plus) begin 
-                if(dest_x   > src_x)    x_offset= dest_x-src_x; 
-                else                    x_offset= (NX-src_x)+dest_x;
-            end
-            else if(tranc_x_min)  begin 
-                if(dest_x   <  src_x)    x_offset= src_x-dest_x; 
-                else                     x_offset= src_x+(NX-dest_x);
-            
-            end
-        
-             //y_offset
-            if(same_y) y_offset= {Yw{1'b0}};
-            else if(tranc_y_plus) begin 
-                if(dest_y   > src_y)    y_offset= dest_y-src_y; 
-                else                    y_offset= (NY-src_y)+dest_y;
-            end
-            else if(tranc_y_min)  begin 
-                if(dest_y   <  src_y)    y_offset= src_y-dest_y; 
-                else                     y_offset= src_y+(NY-dest_y);
-            
-            end
-        
-        
-        end
-        
-        
-            
-        tranc_dir #(
-        	.NX(NX),
-        	.NY(NY)
-        )
-        tranc_dir
-        (
-        	.tranc_x_plus(tranc_x_plus),
-        	.tranc_x_min(tranc_x_min),
-        	.tranc_y_plus(tranc_y_plus),
-        	.tranc_y_min(tranc_y_min),
-        	.same_x(same_x),
-        	.same_y(same_y),
-        	.current_x(src_x),
-        	.current_y(src_y),
-        	.dest_x(dest_x),
-        	.dest_y(dest_y)
-        );
-    
-    
-    end    
+    mesh_torus_distance_gen #(
+        .T1(T1),
+        .T2(T2),
+        .T3(T3),
+        .TOPOLOGY(TOPOLOGY),
+        .DISTw(DISTw),
+        .EAw(EAw)
+    )
+    distance_gen
+    (
+        .src_e_addr(src_e_addr),
+        .dest_e_addr(dest_e_addr),
+        .distance(distance)
+    );
+/* verilator lint_off WIDTH */ 
+   end else if (TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE") begin : fat 
+/* verilator lint_on WIDTH */    
+    fattree_distance_gen #(
+        .K(T1),
+        .L(T2)
+    )
+    distance_gen
+    (
+        .src_addr_encoded(src_e_addr),
+        .dest_addr_encoded(dest_e_addr),
+        .distance(distance)
+    );
+    end
     endgenerate
-    /* verilator lint_off WIDTH */ 
-    assign distance     =   x_offset+y_offset+1'b1;
-    /* verilator lint_on WIDTH */ 
-endmodule
- 
- 
 
-
+  endmodule

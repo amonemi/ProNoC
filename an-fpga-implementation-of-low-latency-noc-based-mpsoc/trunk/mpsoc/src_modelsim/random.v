@@ -302,7 +302,7 @@ module pseudo_random #(
     `else 
     reg [MAX_RND_WIDTH-1    :    0]    rnd_reg;
     always @(posedge clk ) begin 
-            rnd_reg =     $urandom_range(0,MAX_RND);
+            rnd_reg =     $urandom_range(MAX_RND,0);
             //rnd_reg =     $random % (MAX_RND+1);
     end
 

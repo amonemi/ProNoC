@@ -16,8 +16,21 @@ sub gen_multiple_charts{
 	$notebook->set_scrollable(TRUE);
 	$notebook->can_focus(FALSE);
 
-
-
+	#check if we ned to save all graph results
+	my $save_all_status = $self->object_get_attribute ("graph_save","save_all_result");
+	$save_all_status=0 if (!defined $save_all_status);
+	$self->object_add_attribute ("graph_save","save_all_result",0);
+	if ($save_all_status ==1){
+		my $save_path = $self->object_get_attribute ('sim_param','ALL_RESULT_DIR');
+		if (-d $save_path){
+			my $results_path = "$save_path/all_results";
+			rmtree("$results_path");
+			mkpath("$results_path",1,01777);
+			save_all_results($self,$pageref,$charts_ref,$results_path);
+			
+		}
+	}
+	
 	foreach my $page (@pages){	
 		my @selects;
 		my $page_id= "P$page->{page_num}";
@@ -69,6 +82,67 @@ sub gen_multiple_charts{
 
 }
 
+
+sub save_all_results{
+	my ($self,$pageref,$charts_ref,$results_path)=@_;
+	my @pages=@{$pageref};
+	my @charts=@{$charts_ref};
+	foreach my $chart (@charts){
+			my $result_name= "$chart->{result_name}";
+			my $charttype=  "$chart->{type}";	
+			
+			if($charttype eq '2D_line'){
+				my $file_name = "$results_path/${result_name}.txt"; 
+				write_graph_results_in_file($self,$file_name,$result_name,undef,$charttype);
+				next;
+			};#3d
+					
+			my @ratios;			
+			my @x;
+			
+			
+			my @samples =$self->object_get_attribute_order("samples");	
+			foreach my $sample (@samples){
+				
+				my $ref=$self->object_get_attribute ($sample,$result_name);
+				if(defined $ref){
+					@ratios=get_uniq_keys($ref,@ratios);
+					
+				}
+				
+				foreach my $ratio (@ratios){
+					
+					my @results;
+					foreach my $sample2 (@samples){
+						my $ref=$self->object_get_attribute ($sample2,"$result_name");
+						@x=get_uniq_keys($ref->{$ratio},@x) if(defined $ref);	
+											
+					}
+				
+					my $i=1;
+					foreach my $sample (@samples){
+						my @y;
+						my $ref=$self->object_get_attribute ($sample,"$result_name");
+						if(defined $ref){
+							foreach my $v (@x){
+								my $w=$ref->{$ratio}->{$v};
+								push(@y,$w);							
+							}#for v
+							$results[$i]=\@y if(scalar @x);
+							$i++;
+						}#if
+					}#sample
+					$results[0]=\@x if(scalar @x);
+					my $file_name = "$results_path/${result_name}_r$ratio.txt"; 
+					write_graph_results_in_file($self,$file_name,$result_name,\@results,$charttype);
+					
+				}#ratio
+			}#sample				
+	}#chart	
+	#done saving clear the saving status
+	
+	
+}	
 
 
 sub get_uniq_keys {
@@ -365,6 +439,7 @@ my $active_page=gen_combobox_object ($self,$page_id,"active",$content,$selects[0
 		#$table->attach ($minues, 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
 		$table->attach ($setting, 9, 10, $row,  $row+1,'shrink','shrink',2,2); $row++;
 		$table->attach ($save, 9, 10, $row,  $row+1,'shrink','shrink',2,2); $row++;
+		
 		while ($row<10){
 			
 			my $tmp=gen_label_in_left('');
@@ -775,8 +850,10 @@ sub get_graph_setting {
 
 
 my @data=@$ref;
+my $coltmp;
 foreach my $d (@data) {
-	$row=noc_param_widget ($self, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,1, $d->{param_parent}, $d->{ref_delay});
+	#$row=noc_param_widget ($self, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,      1, $d->{param_parent}, $d->{ref_delay});
+    ($row,$coltmp)=add_param_widget ($self, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,undef,1, $d->{param_parent}, $d->{ref_delay} ,undef,undef);
 }
 	
 	
@@ -807,8 +884,7 @@ foreach my $d (@data) {
 
 sub write_image {
 	my ($self,$graph_name,$image)=@_;
-	my $save=$self->object_get_attribute("graph_save","save");
-	
+	my $save=$self->object_get_attribute("graph_save","save");	
 	
 	my $active_graph=$self->object_get_attribute("graph_save","graph_name");
 	$save=0 if (!defined $save);
@@ -842,49 +918,53 @@ sub write_image_result {
 	my $save=$self->object_get_attribute("graph_save","save_result");
 	my $active_graph=$self->object_get_attribute("graph_save","graph_name");
 	$save=0 if (!defined $save);
-	$active_graph = 0 if(!defined $active_graph);
-	
-	
+	$active_graph = 0 if(!defined $active_graph);	
 		
 	if ($save ==1 && $active_graph eq $graph_name){
 		my $file=$self->object_get_attribute("graph_save","name");
-		my $ext=$self->object_get_attribute("graph_save","extension");
 		$self->object_add_attribute("graph_save","save_result",0);
-		
-		open( my $out, '>', "$file.txt");
-		if (tell $out )
-		{
-			warn "Cannot open $file.txt to write: $!";  
-		}
-		else
-		{	
-			if($charttype eq '2D_line'){			
-			
-				my @samples =$self->object_get_attribute_order("samples");
-				foreach my $sample (@samples){
-						my $l_name= $self->object_get_attribute($sample,"line_name");
-						my $ref=$self->object_get_attribute ($sample,$result_name);
-						my @x;
-						if(defined $ref) {
-							
-							print $out "$l_name\n";
-							foreach my $x (sort {$a<=>$b} keys %{$ref}) {
-								my $y=$ref->{$x};
-								print $out "\t$x , $y\n";
-							}
-							print $out "\n\n";
-						}				
-					}#for
-				} else{
-					write_3d_graph_results($self,$out,$result_ref);	
-					
-					
-				}		 
-		
-			close $out;
-		}
+		write_graph_results_in_file($self,"$file.txt",$result_name,$result_ref,$charttype);	
 	}
 }
+
+sub write_graph_results_in_file{
+	my ($self,$file_name,$result_name,$result_ref,$charttype)=@_;	
+	
+	open( my $out, '>', $file_name);
+	if (tell $out )
+	{
+		warn "Cannot open $file_name to write: $!";  
+		return;
+	}
+	else
+	{	
+		if($charttype eq '2D_line'){			
+			write_2d_graph_results($self,$out,$result_name);	
+		} else{
+			write_3d_graph_results($self,$out,$result_ref);	
+		}
+		close $out;
+	}		 
+}	
+
+
+sub write_2d_graph_results{
+	my ($self,$out,$result_name)=@_;	
+	my @samples =$self->object_get_attribute_order("samples");
+	foreach my $sample (@samples){
+		my $l_name= $self->object_get_attribute($sample,"line_name");
+		my $ref=$self->object_get_attribute ($sample,$result_name);
+		my @x;
+		if(defined $ref) {
+			print $out "$l_name\n";
+			foreach my $x (sort {$a<=>$b} keys %{$ref}) {
+				my $y=$ref->{$x};
+				print $out "\t$x , $y\n";
+			}
+			print $out "\n\n";
+		}				
+	}#for
+}	
 
 
 sub write_3d_graph_results{

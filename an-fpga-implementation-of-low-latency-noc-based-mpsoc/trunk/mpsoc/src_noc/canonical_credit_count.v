@@ -25,11 +25,7 @@
 **	credit counter for baseline router
 *************************************/
 
-
-
-
 module canonical_credit_counter #(
-
     parameter V = 4, // vc_num_per_port
     parameter P    = 5, // router port num
     parameter B = 4, // buffer space :flit per VC 
@@ -39,8 +35,8 @@ module canonical_credit_counter #(
     parameter [V-1  :   0] ESCAP_VC_MASK = 4'b0001,  // mask scape vc, valid only for full adaptive
     parameter DEBUG_EN =   1,
     parameter AVC_ATOMIC_EN=0,
-    parameter CONGw   =   2 //congestion width per port 
-    
+    parameter PPSw=4,
+    parameter CONGw   =   2 //congestion width per port     
 )(
     non_ss_ovc_allocated_all,
     flit_is_tail_all,
@@ -103,7 +99,7 @@ module canonical_credit_counter #(
     input    [PV-1        :    0]    ivc_num_getting_sw_grant;
     output  [PV-1        :    0]    ovc_avalable_all;
     output  [PV-1        :    0]    assigned_ovc_not_full_all;
-    output  [P_1-1      :   0]  port_pre_sel;
+    output  [PPSw-1      :   0]  port_pre_sel;
     input   [CONG_ALw-1 :   0]  congestion_in_all;
 
     input                        reset,clk;
@@ -325,6 +321,7 @@ module canonical_credit_counter #(
         .P(P),
         .V(V),
         .B(B),
+        .PPSw(PPSw),
         .CONGESTION_INDEX(CONGESTION_INDEX),
         .CONGw(CONGw),
         .ROUTE_TYPE(ROUTE_TYPE),

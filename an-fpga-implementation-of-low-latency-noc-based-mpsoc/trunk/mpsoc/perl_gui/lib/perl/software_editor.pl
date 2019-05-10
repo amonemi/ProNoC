@@ -82,7 +82,7 @@ sub build_gui {
 	
 
 	my ($scwin_info,$tview)= create_text();
-	add_colors_to_textview($tview);
+	
 	$vpaned-> pack1 ($hpaned, TRUE, TRUE);
 	$vpaned ->set_position ($hight*.5);
 	$vpaned-> pack2 ($scwin_info, TRUE, TRUE);

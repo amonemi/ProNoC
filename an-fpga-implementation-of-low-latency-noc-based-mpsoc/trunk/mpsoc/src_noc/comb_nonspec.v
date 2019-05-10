@@ -33,8 +33,9 @@ module comb_nonspec_allocator #(
     parameter  V = 4,
     parameter  P = 5,
     parameter  FIRST_ARBITER_EXT_P_EN = 1,
-    parameter  VC_ARBITER_TYPE = "RRA", // "RRA", "FIX_PR"
-    parameter  SWA_ARBITER_TYPE = "WRRA"// "RRA", "WRRA"
+   // parameter  VC_ARBITER_TYPE = "RRA", // "RRA", "FIX_PR"
+    parameter  SWA_ARBITER_TYPE = "WRRA",// "RRA", "WRRA"
+    parameter MIN_PCK_SIZE=2 //minimum packet size in flits. The minimum value is 1. 
 
 )(
     //VC allocator
@@ -42,7 +43,7 @@ module comb_nonspec_allocator #(
     dest_port_all,         // from input port
     ovc_is_assigned_all,    // 
     masked_ovc_request_all,
-    lk_destination_all,
+    pck_is_single_flit_all,
     
     
     //output 
@@ -62,6 +63,7 @@ module comb_nonspec_allocator #(
     nonspec_first_arbiter_granted_ivc_all,
     any_ivc_sw_request_granted_all,
     any_ovc_granted_in_outport_all,
+    granted_dst_is_from_a_single_flit_pck,
     
     // global
     clk,
@@ -82,6 +84,7 @@ module comb_nonspec_allocator #(
     input  [PVV-1 : 0] masked_ovc_request_all;
     input  [PVP_1-1 : 0] dest_port_all;
     input  [PV-1 : 0] ovc_is_assigned_all;
+    input  [PV-1 : 0] pck_is_single_flit_all;
     output [PV-1 : 0] ovc_allocated_all;
     output [PVV-1 : 0] granted_ovc_num_all;
     output [PV-1 : 0] ivc_num_getting_ovc_grant;
@@ -92,17 +95,19 @@ module comb_nonspec_allocator #(
     output [P-1 : 0] any_ivc_sw_request_granted_all;
     output [P-1 : 0] any_ovc_granted_in_outport_all;
     output [PV-1 : 0] nonspec_first_arbiter_granted_ivc_all;
-    input  [PVP_1-1 : 0] lk_destination_all;
+  //  input  [PVP_1-1 : 0] lk_destination_all;
     input  clk,reset;
     input  [PV-1 : 0] vc_weight_is_consumed_all;
     input  [P-1 : 0] iport_weight_is_consumed_all;
+    output   [P-1 : 0] granted_dst_is_from_a_single_flit_pck;
+        
 
 
     //internal wires switch allocator
     wire   [PV-1 : 0] first_arbiter_granted_ivc_all;
     wire   [PV-1 : 0] ivc_request_masked_all;
     wire   [P-1 : 0] any_cand_ovc_exsit;
-        
+    
     assign nonspec_first_arbiter_granted_ivc_all = first_arbiter_granted_ivc_all;
     
     
@@ -111,13 +116,16 @@ module comb_nonspec_allocator #(
         .V(V),
         .P(P),
         .FIRST_ARBITER_EXT_P_EN(FIRST_ARBITER_EXT_P_EN),
-        .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE)
+        .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE),
+        .MIN_PCK_SIZE(MIN_PCK_SIZE)
     )
     nonspeculative_sw_allocator
     (
 
         .ivc_granted_all (ivc_num_getting_sw_grant),
         .ivc_request_masked_all (ivc_request_masked_all),
+        .pck_is_single_flit_all(pck_is_single_flit_all),
+        .granted_dst_is_from_a_single_flit_pck(granted_dst_is_from_a_single_flit_pck),
         .dest_port_all (dest_port_all),
         .granted_dest_port_all (granted_dest_port_all),
         .first_arbiter_granted_ivc_all (first_arbiter_granted_ivc_all),
@@ -167,7 +175,7 @@ module comb_nonspec_allocator #(
         
     
         //first level arbiter to candidate only one OVC 
-        if(VC_ARBITER_TYPE=="RRA")begin :round_robin
+      //  if(VC_ARBITER_TYPE=="RRA")begin :round_robin
         
             arbiter #(
                 .ARBITER_WIDTH(V)
@@ -180,7 +188,7 @@ module comb_nonspec_allocator #(
                 .grant        (first_arbiter_ovc_granted[i]),
                 .any_grant    ()
               );
-              
+       /*       
         end  else begin :fixarb
         
             vc_priority_based_dest_port#(
@@ -207,7 +215,7 @@ module comb_nonspec_allocator #(
               ); 
          
          end
-        
+       */ 
     
     end//for
     
@@ -295,16 +303,16 @@ module  comb_nonspec_v2_allocator #(
     parameter V = 4,
     parameter P = 5,
     parameter FIRST_ARBITER_EXT_P_EN = 1,
-    parameter SWA_ARBITER_TYPE = "WRRA"
-                
+    parameter SWA_ARBITER_TYPE = "WRRA",
+    parameter MIN_PCK_SIZE=2 //minimum packet size in flits. The minimum value is 1.             
 
 )(
     //VC allocator
-    //input 
-   
+    //input    
     dest_port_all,      // from input port
     ovc_is_assigned_all,    // 
     masked_ovc_request_all,
+    pck_is_single_flit_all,
     
     //output 
     ovc_allocated_all,//to the output port
@@ -323,6 +331,7 @@ module  comb_nonspec_v2_allocator #(
     nonspec_first_arbiter_granted_ivc_all,
     any_ivc_sw_request_granted_all,
     any_ovc_granted_in_outport_all,
+    granted_dst_is_from_a_single_flit_pck,
     
     // global
     clk,
@@ -346,6 +355,7 @@ module  comb_nonspec_v2_allocator #(
     input   [PVV-1 : 0] masked_ovc_request_all;
     input   [PVP_1-1 : 0] dest_port_all;
     input   [PV-1 : 0] ovc_is_assigned_all;
+    input  [PV-1 : 0] pck_is_single_flit_all;
     output  [PV-1 : 0] ovc_allocated_all;
     output  [PVV-1 : 0] granted_ovc_num_all;
     output  [PV-1 : 0] ivc_num_getting_ovc_grant;
@@ -364,6 +374,7 @@ module  comb_nonspec_v2_allocator #(
     wire    [PV-1 : 0] first_arbiter_granted_ivc_all;
     wire    [PV-1 : 0] ivc_request_masked_all;
     wire    [P-1 : 0] any_cand_ovc_exsit;
+    output  [P-1 : 0] granted_dst_is_from_a_single_flit_pck;
      
     assign nonspec_first_arbiter_granted_ivc_all = first_arbiter_granted_ivc_all;
      
@@ -372,13 +383,16 @@ module  comb_nonspec_v2_allocator #(
         .V(V),
         .P(P),
         .FIRST_ARBITER_EXT_P_EN(FIRST_ARBITER_EXT_P_EN),
-        .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE)
+        .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
+        .MIN_PCK_SIZE(MIN_PCK_SIZE) 
     )
     nonspeculative_sw_allocator
     (
 
         .ivc_granted_all (ivc_num_getting_sw_grant),
         .ivc_request_masked_all (ivc_request_masked_all),
+        .pck_is_single_flit_all(pck_is_single_flit_all),
+        .granted_dst_is_from_a_single_flit_pck(granted_dst_is_from_a_single_flit_pck),
         .dest_port_all  (dest_port_all),
         .granted_dest_port_all (granted_dest_port_all),
         .first_arbiter_granted_ivc_all (first_arbiter_granted_ivc_all),
@@ -518,12 +532,15 @@ module nonspec_sw_alloc #(
     parameter V = 4,
     parameter P = 5,
     parameter FIRST_ARBITER_EXT_P_EN = 1, 
-    parameter SWA_ARBITER_TYPE = "WRRA"
+    parameter SWA_ARBITER_TYPE = "WRRA",
+    parameter MIN_PCK_SIZE=2 //minimum packet size in flits. The minimum value is 1. 
 
 )(
 
     ivc_granted_all,
     ivc_request_masked_all,
+    pck_is_single_flit_all,
+    granted_dst_is_from_a_single_flit_pck,
     dest_port_all,
     granted_dest_port_all,
     first_arbiter_granted_ivc_all,
@@ -542,11 +559,14 @@ module nonspec_sw_alloc #(
         PV = V * P,
         VP_1 = V * P_1,                
         PP_1 = P_1 * P,
-        PVP_1 = PV * P_1;  
+        PVP_1 = PV * P_1,
+        PP = P*P;  
                     
 
     output [PV-1 : 0] ivc_granted_all;
+    output [P-1 : 0] granted_dst_is_from_a_single_flit_pck;
     input  [PV-1 : 0] ivc_request_masked_all;
+    input  [PV-1 : 0] pck_is_single_flit_all;
     input  [PVP_1-1 : 0] dest_port_all;
     output [PP_1-1 : 0] granted_dest_port_all;
     output [PV-1 : 0] first_arbiter_granted_ivc_all;
@@ -558,13 +578,17 @@ module nonspec_sw_alloc #(
     input [P-1: 0] iport_weight_is_consumed_all;
     
     //separte input per port
-    wire    [V-1 : 0] ivc_granted        [P-1 : 0];
-    wire    [VP_1-1 : 0] dest_port_ivc       [P-1 : 0];
-    wire    [P_1-1 : 0] granted_dest_port  [P-1 : 0];
+    wire [V-1 : 0] ivc_granted        [P-1 : 0];
+    wire [V-1 : 0] pck_is_single_flit [P-1 : 0];  
+    wire [VP_1-1 : 0] dest_port_ivc       [P-1 : 0];
+    wire [P_1-1 : 0] granted_dest_port  [P-1 : 0];
+    wire [P_1-1 : 0] single_flit_granted_dst [P-1 : 0];
+    wire [PP-1 : 0] single_flit_granted_dst_all;
     
     // internal wires
     wire    [V-1 : 0] ivc_masked     [P-1 : 0];//output of mask and             
-    wire    [V-1 : 0] first_arbiter_grant     [P-1 : 0];//output of first arbiter            
+    wire    [V-1 : 0] first_arbiter_grant     [P-1 : 0];//output of first arbiter 
+    wire    [P-1 : 0] single_flit_pck_local_grant;           
     wire    [P_1-1 : 0] dest_port      [P-1 : 0];//output of multiplexer
     wire    [P_1-1 : 0] second_arbiter_request  [P-1 : 0]; 
     wire    [P_1-1 : 0] second_arbiter_grant    [P-1 : 0]; 
@@ -583,6 +607,7 @@ module nonspec_sw_alloc #(
         assign first_arbiter_granted_ivc_all[(i+1)*V-1 : i*V]=           first_arbiter_grant[i];
         //input 
         assign ivc_masked[i]  = ivc_request_masked_all [(i+1)*V-1 : i*V];
+       
         assign dest_port_ivc[i]  = dest_port_all [(i+1)*VP_1-1 : i*VP_1];
         assign vc_weight_is_consumed[i]  =  vc_weight_is_consumed_all [(i+1)*V-1 : i*V];
         
@@ -614,11 +639,42 @@ module nonspec_sw_alloc #(
         multiplexer
         (
             .mux_in (dest_port_ivc  [i]),
-            .mux_out    (dest_port      [i]),
-            .sel        (first_arbiter_grant[i])
+            .mux_out (dest_port      [i]),
+            .sel(first_arbiter_grant[i])
     
         );
+        if(MIN_PCK_SIZE == 1) begin :single_flit_supported             
+            //single_flit req multiplexer
+            assign pck_is_single_flit[i] = pck_is_single_flit_all [(i+1)*V-1 : i*V];
+            one_hot_mux #(
+                .IN_WIDTH       (V),
+                .SEL_WIDTH      (V)
+            )
+            multiplexer2
+            (
+                .mux_in (pck_is_single_flit  [i]),
+                .mux_out (single_flit_pck_local_grant[i]),
+                .sel (first_arbiter_grant[i])
+        
+            );   
+            
+            assign  single_flit_granted_dst[i] = (single_flit_pck_local_grant[i])?  granted_dest_port[i] : {P_1{1'b0}};
     
+            add_sw_loc_one_hot #(
+                .P(P),
+                .SW_LOC(i)
+            )
+            add_sw_loc
+            (
+                .destport_in(single_flit_granted_dst[i]),
+                .destport_out(single_flit_granted_dst_all[(i+1)*P-1 : i*P])
+            );
+            
+        end else begin : single_flit_notsupported 
+            assign single_flit_pck_local_grant[i] = 1'bx;
+            assign single_flit_granted_dst[i] = {P_1{1'bx}};
+            assign single_flit_granted_dst_all[(i+1)*P-1 : i*P]={P{1'b0}};
+        end
     //second arbiter input/output generate
 
 
@@ -635,7 +691,7 @@ module nonspec_sw_alloc #(
                 assign second_arbiter_weight_consumed[i][j]  =iport_weight_is_consumed_all[j];
                 assign granted_dest_port[j][i-1] = second_arbiter_grant  [i][j] ;
             end
-            //if(i==j) wires are left disconnected          
+            //if(i==j) wires are left disconnected        
     end
     
         
@@ -663,6 +719,17 @@ module nonspec_sw_alloc #(
     end//for
     endgenerate 
         
+
+	  custom_or #(
+            .IN_NUM(P),
+            .OUT_WIDTH(P)
+         )
+         or_dst
+         (
+            .or_in(single_flit_granted_dst_all),
+            .or_out(granted_dst_is_from_a_single_flit_pck)
+        );
+
 endmodule
 
 

@@ -1,5 +1,7 @@
 `timescale     1ns/1ps
 
+//`define MONITORE_PATH
+
 /***********************************************************************
 **	File: router.v
 **    
@@ -30,21 +32,28 @@
 module router # (
     parameter V = 4,     // vc_num_per_port
     parameter P = 5,     // router port num
-    parameter B = 4,     // buffer space :flit per VC 
-    parameter NX = 8,    // number of node in x axis
-    parameter NY = 8,    // number of node in y axis
+    parameter B = 4,     // buffer space :flit per VC    
+    
+    /*TOPOLOGY RELATED PARAMETER*/
+    // a topology can be defined using at most four parameter 
+    //    e.g: in mesh:
+    //    T1: NX, number of node in x dimention T2: NY: number of node in y dimention, T3: NL number of local ports for each router, T4 is not used. 
+    //     e.g: in fattree:
+    //    T1: K, umber of last level individual router`s endpoints. T2: L layer number, T3,T4 are not used    
+    parameter T1= 8,
+    parameter T2= 8,
+    parameter T3= 8,
+    parameter T4= 8,
     parameter C = 2,    //    number of flit class 
     parameter Fpay = 32,
     parameter TOPOLOGY= "MESH", 
     parameter MUX_TYPE= "ONE_HOT",    //"ONE_HOT" or "BINARY"
     parameter VC_REALLOCATION_TYPE = "NONATOMIC",// "ATOMIC" , "NONATOMIC"
     parameter COMBINATION_TYPE= "COMB_SPEC1",// "BASELINE", "COMB_SPEC1", "COMB_SPEC2", "COMB_NONSPEC"
-    parameter FIRST_ARBITER_EXT_P_EN = 0,
-    parameter ROUTE_TYPE = "FULL_ADAPTIVE",// "DETERMINISTIC", "FULL_ADAPTIVE", "PAR_ADAPTIVE"
+    parameter FIRST_ARBITER_EXT_P_EN = 0,  
     parameter ROUTE_NAME = "DUATO",
     parameter CONGESTION_INDEX = 7,
     parameter DEBUG_EN=0,
-    parameter ROUTE_SUBFUNC= "XY",
     parameter AVC_ATOMIC_EN= 0,
     parameter CONGw = 3, //congestion width per port
     parameter ADD_PIPREG_AFTER_CROSSBAR=0,
@@ -53,11 +62,12 @@ module router # (
     parameter [V-1 :  0] ESCAP_VC_MASK = 4'b1000,  // mask scape vc, valid only for full adaptive
     parameter SSA_EN="YES", // "YES" , "NO"
     parameter SWA_ARBITER_TYPE = "RRA",//"RRA","WRRA". RRA: Round Robin Arbiter WRRA weighted Round Robin Arbiter 
-    parameter WEIGHTw = 4 // WRRA width
-    
+    parameter WEIGHTw = 4, // WRRA width
+    parameter MIN_PCK_SIZE=2 //minimum packet size in flits. The minimum value is 1. 
 )(
-    current_x,
-    current_y,
+    current_r_addr,
+    neighbors_r_addr,
+   
     flit_in_all,
     flit_in_we_all,
     credit_out_all,
@@ -72,17 +82,13 @@ module router # (
 
 );
 
-localparam WRRA_CONFIG_INDEX = 0;
-
-
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end        
-      end   
-    endfunction // log2    
+   
+    `define INCLUDE_TOPOLOGY_LOCALPARAM
+    `include "topology_localparam.v"
+    
+    
+    localparam WRRA_CONFIG_INDEX = 0;
+          
 
     localparam
         PV = V * P,
@@ -92,24 +98,20 @@ localparam WRRA_CONFIG_INDEX = 0;
         PVP_1 = PV * P_1,
         Fw = 2+V+Fpay,    //flit width;    
         PFw = P*Fw,
-        Xw = log2(NX),
-        Yw = log2(NY),
         CONG_ALw = CONGw* P,    //  congestion width per router
         W = WEIGHTw,
         WP = W * P, 
-        WPP=  WP * P;  
-        
-    localparam 
-        CLASS_HDR_WIDTH =8,
-        ROUTING_HDR_WIDTH =8,
-        DST_ADR_HDR_WIDTH =8,
-        SRC_ADR_HDR_WIDTH =8;               
+        WPP=  WP * P,
+        PRAw= P * RAw;     
                    
 
+    // The current/neighbor routers addresses/port. These valuse are fixed in each router and they are supposed to be given as parameter. 
+    // However, inorder to give an identical RTL code to each router, they are given as input ports. The identical RTL code reduces the
+    // compilation time. Note thet they wont be implimented as  input ports in the final synthesized code. 
+    input [RAw-1 :  0]  current_r_addr;
+    input [PRAw-1:  0]  neighbors_r_addr;
     
-    input  [Xw-1 :  0]  current_x;
-    input  [Yw-1 :  0]  current_y;
-    
+
     input  [PFw-1 :  0]  flit_in_all;
     input  [P-1 :  0]  flit_in_we_all;
     output [PV-1 :  0]  credit_out_all;
@@ -136,19 +138,16 @@ localparam WRRA_CONFIG_INDEX = 0;
     wire  [PP_1-1 : 0] granted_dest_port_all;
     wire  [P-1 : 0] any_ivc_sw_request_granted_all;
     wire  [P-1 :  0] any_ovc_granted_in_outport_all;    
-    
+    wire  [P-1 : 0] granted_dst_is_from_a_single_flit_pck;
     // to vc/sw allocator
     wire  [PVP_1-1 :  0] dest_port_all;
     wire  [PV-1 :  0] ovc_is_assigned_all;
     wire  [PV-1 :  0] ivc_request_all;
     wire  [PV-1 :  0] assigned_ovc_not_full_all;
     wire  [PVV-1 :  0] masked_ovc_request_all;
-    wire  [PVP_1-1 :  0] lk_destination_all;  
+    wire  [PV-1 : 0] pck_is_single_flit_all; 
     wire  [PV-1 :  0] vc_weight_is_consumed_all;
-    wire  [P-1 :  0]iport_weight_is_consumed_all;    
-
-
-    
+    wire  [P-1 :  0]iport_weight_is_consumed_all;       
         
     // to the crossbar
     wire  [PFw-1 : 0] iport_flit_out_all;
@@ -161,14 +160,18 @@ localparam WRRA_CONFIG_INDEX = 0;
     wire [WP-1 : 0] iport_weight_all;
     wire [WPP-1: 0] oports_weight_all;
     wire refresh_w_counter;
-    
+            
     inout_ports
     #(
         .V(V),
         .P(P),
         .B(B), 
-        .NX(NX),
-        .NY(NY),
+        .T1(T1),
+        .T2(T2),
+        .T3(T3),
+        .T4(T4),
+        .RAw(RAw),  
+        .EAw(EAw), 
         .C(C),    
         .Fpay(Fpay),    
         .VC_REALLOCATION_TYPE(VC_REALLOCATION_TYPE),
@@ -178,31 +181,31 @@ localparam WRRA_CONFIG_INDEX = 0;
         .ROUTE_NAME(ROUTE_NAME),
         .CONGESTION_INDEX(CONGESTION_INDEX),
         .DEBUG_EN(DEBUG_EN),
-        .ROUTE_SUBFUNC(ROUTE_SUBFUNC),
         .AVC_ATOMIC_EN(AVC_ATOMIC_EN),
         .CONGw(CONGw),
         .CVw(CVw),
         .CLASS_SETTING(CLASS_SETTING),   
         .ESCAP_VC_MASK(ESCAP_VC_MASK),
-        .CLASS_HDR_WIDTH(CLASS_HDR_WIDTH),
-        .ROUTING_HDR_WIDTH(ROUTING_HDR_WIDTH),
-        .DST_ADR_HDR_WIDTH(DST_ADR_HDR_WIDTH),
-        .SRC_ADR_HDR_WIDTH(SRC_ADR_HDR_WIDTH),
+        .DSTPw(DSTPw),
         .SSA_EN(SSA_EN),
         .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE),
         .WEIGHTw(WEIGHTw),
-        .WRRA_CONFIG_INDEX(WRRA_CONFIG_INDEX) 
+        .WRRA_CONFIG_INDEX(WRRA_CONFIG_INDEX),
+        .PPSw(PPSw),
+        .MIN_PCK_SIZE(MIN_PCK_SIZE)
         
     )
     the_inout_ports
     (
-        .current_x(current_x),
-        .current_y(current_y),
+        .current_r_addr(current_r_addr),
+        .neighbors_r_addr(neighbors_r_addr),
         .flit_in_all(flit_in_all),
         .flit_in_we_all(flit_in_we_all),
         .credit_out_all(credit_out_all),
         .credit_in_all(credit_in_all),
         .masked_ovc_request_all(masked_ovc_request_all),
+        .pck_is_single_flit_all(pck_is_single_flit_all),
+        .granted_dst_is_from_a_single_flit_pck(granted_dst_is_from_a_single_flit_pck),
         .ovc_allocated_all(ovc_allocated_all), 
         .granted_ovc_num_all(granted_ovc_num_all), 
         .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant), 
@@ -222,7 +225,7 @@ localparam WRRA_CONFIG_INDEX = 0;
         .flit_out_all(iport_flit_out_all),
         .congestion_in_all(congestion_in_all),
         .congestion_out_all(congestion_out_all),
-        .lk_destination_all(lk_destination_all),
+      //  .lk_destination_all(lk_destination_all),
         .ssa_flit_wr_all(ssa_flit_wr_all),
         .iport_weight_all(iport_weight_all),
         .oports_weight_all(oports_weight_all),
@@ -240,7 +243,8 @@ localparam WRRA_CONFIG_INDEX = 0;
         .COMBINATION_TYPE(COMBINATION_TYPE),
         .FIRST_ARBITER_EXT_P_EN (FIRST_ARBITER_EXT_P_EN),
         .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE ), 
-        .DEBUG_EN(DEBUG_EN)
+        .DEBUG_EN(DEBUG_EN),
+        .MIN_PCK_SIZE(MIN_PCK_SIZE)
     )
     the_combined_vc_sw_alloc
     (
@@ -249,6 +253,8 @@ localparam WRRA_CONFIG_INDEX = 0;
         .ovc_is_assigned_all(ovc_is_assigned_all), 
         .ivc_request_all(ivc_request_all), 
         .assigned_ovc_not_full_all(assigned_ovc_not_full_all), 
+        .pck_is_single_flit_all(pck_is_single_flit_all),
+        .granted_dst_is_from_a_single_flit_pck(granted_dst_is_from_a_single_flit_pck),
         .ovc_allocated_all(ovc_allocated_all), 
         .granted_ovc_num_all(granted_ovc_num_all), 
         .ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant), 
@@ -260,8 +266,8 @@ localparam WRRA_CONFIG_INDEX = 0;
         .granted_dest_port_all(granted_dest_port_all), 
         .any_ivc_sw_request_granted_all(any_ivc_sw_request_granted_all), 
         .any_ovc_granted_in_outport_all(any_ovc_granted_in_outport_all),
-        .spec_ovc_num_all(spec_ovc_num_all), 
-        .lk_destination_all(lk_destination_all),  
+        .spec_ovc_num_all(spec_ovc_num_all),       
+       // .lk_destination_all(lk_destination_all),  
         .vc_weight_is_consumed_all(vc_weight_is_consumed_all),  
         .iport_weight_is_consumed_all(iport_weight_is_consumed_all),  
         .clk(clk), 
@@ -278,6 +284,7 @@ localparam WRRA_CONFIG_INDEX = 0;
     end//always
     
    crossbar #(
+        .TOPOLOGY(TOPOLOGY),
         .V (V),     // vc_num_per_port
         .P (P),     // router port num
         .Fpay (Fpay),
@@ -332,11 +339,11 @@ localparam WRRA_CONFIG_INDEX = 0;
         	.WEIGHTw(WEIGHTw),
         	.WRRA_CONFIG_INDEX(WRRA_CONFIG_INDEX),
         	.C(C),
-        	.ADD_PIPREG_AFTER_CROSSBAR(ADD_PIPREG_AFTER_CROSSBAR),
-        	.CLASS_HDR_WIDTH(CLASS_HDR_WIDTH),
-        	.ROUTING_HDR_WIDTH(ROUTING_HDR_WIDTH),
-        	.DST_ADR_HDR_WIDTH(DST_ADR_HDR_WIDTH),
-        	.SRC_ADR_HDR_WIDTH(SRC_ADR_HDR_WIDTH)
+        	.TOPOLOGY(TOPOLOGY),
+        	.EAw(EAw),
+        	.DSTPw(DSTPw),
+        	.ADD_PIPREG_AFTER_CROSSBAR(ADD_PIPREG_AFTER_CROSSBAR)
+        	
         )
         updater
         (
@@ -359,47 +366,74 @@ localparam WRRA_CONFIG_INDEX = 0;
     end
     endgenerate 
      
-    
+       
     //synthesis translate_off 
     //synopsys  translate_off
-    localparam     EAST = 1,
-                NORTH = 2,
-                WEST = 3,
-                SOUTH = 4;
-
     generate 
-    if(DEBUG_EN)begin :dbg
-        /* verilator lint_off WIDTH */ 
-        if(TOPOLOGY == "MESH")begin
-        /* verilator lint_on WIDTH */ 
-            always @(posedge clk) begin 
-           
-                if(current_x == {Xw{1'b0}}         && flit_out_we_all[WEST]) $display ( "%t\t   Error: a packet is going to the WEST in a router located in first column in mesh topology %m",$time ); 
-                if(current_x == NX-1     && flit_out_we_all[EAST]) $display ( "%t\t   Error: a packet is going to the EAST in a router located in last column in mesh topology %m",$time ); 
-                if(current_y == {Yw{1'b0}}         && flit_out_we_all[NORTH])$display ( "%t\t  Error: a packet is going to the NORTH in a router located in first row in mesh topology %m",$time ); 
-                if(current_y == NY-1    && flit_out_we_all[SOUTH])$display ( "%t\t  Error: a packet is going to the SOUTH in a router located in last row in mesh topology %b  %m",$time,flit_out_all[(SOUTH+1)*Fw-1 : SOUTH*Fw] ); 
-            
-            
-            end//always
-        end////MESH 
+     /* verilator lint_off WIDTH */ 
+    if(DEBUG_EN && TOPOLOGY == "MESH")begin :dbg
+     /* verilator lint_on WIDTH */ 
+        debug_mesh_edges #(
+        	.T1(T1),
+        	.T2(T2),
+        	.T3(T3),
+        	.T4(T4),
+        	.RAw(RAw),
+        	.P(P)
+        )
+        debug_edges
+        (
+        	.clk(clk),
+        	.current_r_addr(current_r_addr),
+        	.flit_out_we_all(flit_out_we_all)
+        );
     end// DEBUG
-    endgenerate
+    endgenerate   
+    // synthesis translate_on
+    // synopsys  translate_on  
+    
+    
+// for testing the route path
+    
+
+    // synopsys  translate_off
+    // synthesis translate_off
+                                      
+     `ifdef MONITORE_PATH
+     
+    genvar i;
+    reg[P-1 :0] t1,t2;
+    generate
+    for (i=0;i<P;i=i+1)begin : lp                     
     
    
-    
-    /*
-    // for testing the route path
-    reg tt;
     always @(posedge clk) begin
-        if(reset) tt<=0;
-        else begin 
-            if(flit_in_we_all>0 && tt==0)begin 
-                $display("%t : x=%d,Y=%d",$time,current_x,current_y);
-                tt<=1;
+        if(reset)begin 
+             t1[i]<=1'b0;
+             t2[i]<=1'b0;             
+        end else begin 
+            if(flit_in_we_all[i]>0 && t1[i]==0)begin 
+                $display("%t : router (addr=%h, port=%d)",$time,current_r_addr,i);
+                $display("%t : Flit_in=%b, current_r_addr=%x, Port=%x, neighbors_r_addr=%x, ",$time,flit_in_all[(i+1)*Fw-1 : i*Fw],current_r_addr, i, neighbors_r_addr);
+                t1[i]<=1;
             end
+            if(flit_out_we_all[i]>0 && t2[i]==0)begin 
+                $display("%t port=%d: Flit_out=%b",$time,i,flit_out_all[(i+1)*Fw-1 : i*Fw]);
+                t2[i]<=1;
+            end
+            
+            
         end
     end
-    */
+    end
+    endgenerate
+    `endif
+    
+    // synthesis translate_on
+    // synopsys  translate_on  
+
+   
+   
     /*
     reg [10 :  0]  counter;
     reg [31 :  0]  flit_counter;
@@ -415,7 +449,7 @@ localparam WRRA_CONFIG_INDEX = 0;
                           
             end else begin 
                 counter <= counter+1'b1;
-                if( counter == 512 ) $display("%t : total flits received in (x=%d,Y=%d) is %d ",$time,current_x,current_y,flit_counter);
+                if( counter == 512 ) $display("%t : total flits received in (x=%d,Y=%d) is %d ",$time,current_r_addr,current_y,flit_counter);
             end
         end
     end

@@ -26,6 +26,7 @@
 **************************************************************/
 
 module crossbar #(
+    parameter TOPOLOGY = "MESH",
     parameter V    = 4,     // vc_num_per_port
     parameter P    = 5,     // router port num
     parameter Fpay     = 32,
@@ -108,6 +109,7 @@ module crossbar #(
         if (SSA_EN =="YES")begin :predict //If no output is granted replace the output port with SS port
         /* verilator lint_on WIDTH */
             add_ss_port #(
+                .TOPOLOGY(TOPOLOGY),
                 .SW_LOC(i),
     		    .P(P)
             )

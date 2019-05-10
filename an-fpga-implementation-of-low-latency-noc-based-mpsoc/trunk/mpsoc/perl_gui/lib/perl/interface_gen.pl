@@ -767,10 +767,12 @@ Glib::Timeout->add (100, sub{
 		}
 		elsif($state eq "load_file"){
 			my $file=$intfc_gen->intfc_get_interface_file();
-			my $pp= eval { do $file };
-			clone_obj($intfc_gen,$pp);
-						
-			
+			my ($pp,$r,$err) = regen_object($file);
+			if ($r){		
+				add_info(\$info,"**Error reading  $file file: $err\n");
+				return;
+			} 			
+			clone_obj($intfc_gen,$pp);			
 			set_gui_status($intfc_gen,"ref",1);
 			
 			

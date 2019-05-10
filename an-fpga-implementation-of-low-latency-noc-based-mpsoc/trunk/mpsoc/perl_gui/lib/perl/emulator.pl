@@ -2,6 +2,10 @@
 use Glib qw/TRUE FALSE/;
 use strict;
 use warnings;
+
+use FindBin;
+use lib $FindBin::Bin;
+
 use Gtk2;
 use Gtk2::Ex::Graph::GD;
 use GD::Graph::Data;
@@ -22,6 +26,7 @@ require "mpsoc_gen.pl";
 require "mpsoc_verilog_gen.pl"; 
 require "readme_gen.pl";
 require "graph.pl";
+require "topology.pl";
 
 use List::MoreUtils qw(uniq);
 
@@ -29,8 +34,7 @@ use List::MoreUtils qw(uniq);
 # hardware parameters taken from noc_emulator.v
 use constant PCK_CNTw =>30;  # packet counter width in bits (results in maximum of 2^30 = 1  G packets)
 use constant PCK_SIZw =>14;  # packet size width in bits (results in maximum packet size of 2^14 = 16 K flit)
-use constant MAXXw    =>4;   # maximum nodes in x dimention is 2^MAXXw equal to 16 nodes in x dimention
-use constant MAXYw    =>4;   # 16 nodes in y dimention : hence max emulator size is 16X16
+use constant MAX_EAw    =>8;   # maximum  destination address width
 use constant MAXCw    =>4;   # 16 message classes  
 use constant RATIOw   =>7;   # log2(100)
 use constant RAM_Aw   =>7;
@@ -50,6 +54,9 @@ use constant EMULATION_RTLS => "/mpsoc/src_emulate/rtl/ , /mpsoc/src_peripheral/
 use constant EMULATION_TOP => "/mpsoc/src_emulate/emulator_top.v";
 
 
+sub get_MAX_PCK_NUM(){MAX_PCK_NUM}
+sub get_MAX_SIM_CLKs(){MAX_SIM_CLKs}
+sub get_MAX_PCK_SIZ(){MAX_PCK_SIZ}
 
 sub check_inserted_ratios {
 		my $str=shift;
@@ -134,7 +141,7 @@ sub get_emulator_noc_configuration{
 	my $table=def_table(10,2,FALSE);
 	my $row=0;
 		
-	my $traffics="tornado,transposed 1,transposed 2,bit reverse,bit complement,random"; #TODO hot spot for emulator
+	my $traffics="tornado,transposed 1,transposed 2,bit reverse,bit complement,random,shuffle,bit rotation,neighbor"; #TODO hot spot for emulator
 	
 	#search path	
 	my $dir = Cwd::getcwd();
@@ -227,21 +234,21 @@ my @hotspot_info=(
 		
 	my @info= ($mode eq "simulate")? @siminfo : @emulateinfo; 
 	
-		
+	my $coltmp=0;	
 	foreach my $d ( @info) {
-	$row=noc_param_widget ($emulate, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,1, $d->{param_parent}, $d->{ref_delay}, $d->{new_status});
+		($row,$coltmp)=add_param_widget ($emulate, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,undef,1, $d->{param_parent}, $d->{ref_delay}, $d->{new_status});
 	}
 	my $traffic=$emulate->object_get_attribute($sample,"traffic");
 
 	if ($traffic eq 'hot spot'){
 		foreach my $d ( @hotspot_info) {
-			$row=noc_param_widget ($emulate, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,1, $d->{param_parent}, $d->{ref_delay}, $d->{new_status});
+			($row,$coltmp)=add_param_widget  ($emulate, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,1, $d->{param_parent}, $d->{ref_delay}, $d->{new_status});
 		}
 		my $num=$emulate->object_get_attribute($sample,"HOTSPOT_NUM");
 		for (my $i=0;$i<$num;$i++){
 			my $m=$i+1;
-			$row=noc_param_widget ($emulate, "Hotspot $m tile num:", "HOTSPOT_CORE_$m", 0, 'Spin-button', "0,256,1",
-			 "Defne the tile number which is  hotspt. All other nodes will send [Hot Spot traffic percentage] of their traffic to this node ", $table,$row,1,$sample );
+			($row,$coltmp)=add_param_widget  ($emulate, "Hotspot $m tile num:", "HOTSPOT_CORE_$m", 0, 'Spin-button', "0,256,1",
+			 "Defne the tile number which is  hotspt. All other nodes will send [Hot Spot traffic percentage] of their traffic to this node ", $table,$row,undef,1,$sample);
 					
 		}
 	
@@ -353,6 +360,18 @@ sub gen_emulation_column {
 		my $r=$emulate->object_get_attribute($sample,"ratios");
 		if(defined $s  && defined $name){
 			 $l=gen_label_in_center($name); 
+			 $l=def_image_button('icons/diagram.png',$name);
+			 $l-> signal_connect("clicked" => sub{ 
+			 	my $st = ($mode eq "simulate" )?  check_sim_sample($emulate,$sample,$info)   : check_sample($emulate,$sample,$info); 
+			 	return if $st==0;
+			 	my ($topology, $T1, $T2, $T3, $V, $Fpay) = get_sample_emulation_param($emulate,$sample);		
+			 	$emulate->object_add_attribute('noc_param','T1',$T1);
+			 	$emulate->object_add_attribute('noc_param','T2',$T2);
+			 	$emulate->object_add_attribute('noc_param','T3',$T3);
+			 	$emulate->object_add_attribute('noc_param','TOPOLOGY',$topology);
+        		show_topology_diagram ($emulate);
+    		 });
+			 
 		} else {
 			$l=gen_label_in_left("Define NoC configuration");
 			$l->set_markup("<span  foreground= 'red' ><b>Define NoC configuration</b></span>");			 
@@ -484,7 +503,7 @@ sub check_sample{
 	#	print "\n $sof \t $sof_info\n";
 		
 		if(!(-f $sof_info)){
-			add_colored_info($info, "Error: Could not find $name.inf file in $path. An information file is required for each sof file containig the device name and  NoC configuration. Press F4 for more help.\n",'red');
+			add_colored_info($info, "Error: Could not find $name.inf file in $path. An information file is required for each sof file containig the device name and  NoC configuration. Press F3 for more help.\n",'red');
 			$emulate->object_add_attribute ($sample,"status","failed");	
 			$status=0;
 		}else { #add info
@@ -607,7 +626,7 @@ sub gen_noc_status_image {
 	my $vbox = Gtk2::HBox->new (TRUE,1);
 	$image = Gtk2::Image->new_from_file ("icons/load.gif") if($status eq "run");
 	$image = def_icon("icons/button_ok.png") if($status eq "done");
-	$image = def_icon("icons/warnning.png") if($status eq "failed");
+	$image = def_icon("icons/warning.png") if($status eq "failed");
 	#$image_file = "icons/load.gif" if($status eq "run");
 	
 	if (defined $image) {
@@ -807,16 +826,22 @@ sub get_noc_setting_gui {
 		);	
 	}
 	
-	foreach my $d (@fpgainfo) {
-		$row=noc_param_widget ($emulate, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,1, $d->{param_parent}, $d->{ref_delay});
+	my $coltmp=0;
+	foreach my $d (@fpgainfo) {		
+		($row,$coltmp)=add_param_widget  ($emulate, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,undef,1, $d->{param_parent}, $d->{ref_delay});
 	}   
 	   
-	my $generate = def_image_button('icons/gen.png','Generate');
-	$table->attach ($generate, 0,3, $row, $row+1,'expand','shrink',2,2);
-    
+	my $generate = def_image_button('icons/gen.png','Gener_ate',FALSE,1);
+	my $diagram  = def_image_button('icons/diagram.png','Diagram');
+	$table->attach ($generate, 0,2, $row, $row+1,'expand','shrink',2,2);
+	$table->attach ($diagram, 2,4, $row, $row+1,'expand','shrink',2,2);
+    $diagram-> signal_connect("clicked" => sub{ 
+        show_topology_diagram ($emulate);
+    });			
     $generate->signal_connect ('clicked'=> sub{
 		generate_sof_file($emulate,$info_text) if($mode eq "emulate");
 		generate_sim_bin_file($emulate,$info_text) if($mode eq "simulate");
+		
 	});
 		    
 	return $scrolled_win;	
@@ -828,12 +853,10 @@ sub get_noc_setting_gui {
 
 
 sub generate_sof_file {
-	my ($self,$info)=@_;	
-
+	my ($self,$info)=@_;
 	my $name=$self->object_get_attribute ('fpga_param',"SAVE_NAME"); 
 	my $target_dir  = "$ENV{'PRONOC_WORK'}/emulate/$name";
 	my $top 	= "$target_dir/src_verilog/${name}_top.v";
-
 	
 	if (!defined $name){
 		message_dialog("Please define the Save as filed!");
@@ -1097,9 +1120,10 @@ sub load_emulation {
 		$file = $dialog->get_filename;
 		my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
 		if($suffix eq '.EML'){
-			my $pp= eval { do $file };
-			if ($@ || !defined $pp){		
-				add_colored_info($info,"**Error reading  $file file: $@\n",'red');
+			
+			my ($pp,$r,$err) = regen_object($file);
+			if ($r ){		
+				add_colored_info($info,"**Error reading  $file file: $err\n",'red');
 				 $dialog->destroy;
 				return;
 			} 
@@ -1141,8 +1165,51 @@ sub capture_cores_data {
 	return %result; 
 }
 
+sub gen_sim_parameter_h {
+	my ($param_h,$includ_h,$ne,$nr,$router_p,$fifow)=@_;
+	
+	$param_h =~ s/\d\'b/ /g;
+	my $text=  "
+#ifndef     INCLUDE_PARAM
+	#define   INCLUDE_PARAM \n \n 
+
+	$param_h 
+	 	
+ 	#define NE  $ne
+ 	#define NR  $nr
+ 	#define ROUTER_P_NUM $router_p
+	
+	//simulation parameter	
+	#define MAX_RATIO   ".MAX_RATIO."
+	#define AVG_LATENCY_METRIC \"HEAD_2_TAIL\"
+	#define TIMSTMP_FIFO_NUM   $fifow
+	
+	$includ_h
+\n \n \#endif" ; 
+	return $text;	
+}	
+
+sub gen_vrouter_param_v {
+	my ($simulate,$src_verilog_dr)=@_;
+	# generate NoC parameter file
+	my ($noc_param,$pass_param)=gen_noc_param_v($simulate);
+	open(FILE,  ">$src_verilog_dr/parameter.v") || die "Can not open: $!";
+	my $fifow=$simulate->object_get_attribute('fpga_param','TIMSTMP_FIFO_NUM');
 
 
+
+	print FILE  " \`ifdef     INCLUDE_PARAM \n \n 
+	$noc_param  
+	
+	//simulation parameter	
+	localparam MAX_RATIO = ".MAX_RATIO.";
+	localparam MAX_PCK_NUM = ".MAX_SIM_CLKs.";
+	localparam MAX_PCK_SIZ = ".MAX_PCK_SIZ."; 
+	localparam MAX_SIM_CLKs=  ".MAX_SIM_CLKs.";
+	localparam TIMSTMP_FIFO_NUM = $fifow;	
+\n \n \`endif" ; 
+	close FILE;	
+}
 
 
 ############
@@ -1158,7 +1225,7 @@ sub emulator_main{
 	my $right_table = Gtk2::Table->new (25, 6, FALSE);
 	my $main_table = Gtk2::Table->new (25, 12, FALSE);
 	my ($infobox,$info)= create_text();
-	add_colors_to_textview($info);	
+	
 		
 	my @pages =(
 		{page_name=>" Avg. throughput/latency", page_num=>0},
@@ -1184,6 +1251,7 @@ sub emulator_main{
 		
 	my $generate = def_image_button('icons/forward.png','Run all');
 	my $open = def_image_button('icons/browse.png','Load');
+	my $diagram  = def_image_button('icons/diagram.png','Diagram');
 		
 	my ($entrybox,$entry) = def_h_labeled_entry('Save as:',undef);
 	
@@ -1201,9 +1269,10 @@ sub emulator_main{
 	
 	#$table->attach_defaults ($event_box, $col, $col+1, $row, $row+1);
 	$main_table->attach_defaults ($h1  , 0, 12, 0,24);
-	$main_table->attach ($open,0, 3, 24,25,'expand','shrink',2,2);
-	$main_table->attach ($entrybox,3, 6, 24,25,'expand','shrink',2,2);
-	$main_table->attach ($generate, 6, 9, 24,25,'expand','shrink',2,2);
+	$main_table->attach ($open,0, 2, 24,25,'expand','shrink',2,2);
+#	$main_table->attach ($diagram, 2, 4, 24,25,'expand','shrink',2,2);
+	$main_table->attach ($entrybox,4, 7, 24,25,'expand','shrink',2,2);
+	$main_table->attach ($generate, 7, 9, 24,25,'expand','shrink',2,2);
 		
 	#check soc status every 0.5 second. referesh device table if there is any changes 
 	Glib::Timeout->add (100, sub{ 	 
@@ -1244,7 +1313,10 @@ sub emulator_main{
 		return TRUE;
 		
 	} );
-		
+	
+	 $diagram-> signal_connect("clicked" => sub{ 
+        show_topology_diagram ($emulate);
+    });	
 		
 	$generate-> signal_connect("clicked" => sub{ 
 		my @samples =$emulate->object_get_attribute_order("samples");

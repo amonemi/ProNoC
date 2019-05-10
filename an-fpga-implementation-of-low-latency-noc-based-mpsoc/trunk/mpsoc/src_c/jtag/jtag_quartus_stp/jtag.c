@@ -116,7 +116,19 @@ void hextostring( char * hexstring, unsigned * val, int words,unsigned sz){
 }
 
 
+//char end_tcl [10] = { 0x1b, 0x5b,[2]=30,[3]=6d,[4]=a,
 
+char* remove_color_code_from_string ( char *buf, int z){
+	int i=0;
+	char * ptr=buf;	
+	if( *ptr != 0x1b ) return ptr;
+        do{
+		ptr ++;
+		i++;		
+	} while ((*ptr != 'm') && (*ptr != 0x0) && i<z-1);
+	ptr ++;
+	return ptr;
+} 
 
 int jtag_init(char *hrdname, char *dvicname ) {
 
@@ -124,6 +136,7 @@ int jtag_init(char *hrdname, char *dvicname ) {
 
    int  f_to_stp, f_from_stp;
    char buf[1024];
+   char * ptr;
    char *command[] = {"quartus_stp", "-s", 0};
 
    if(from_stp != (FILE *) NULL) {
@@ -148,7 +161,12 @@ int jtag_init(char *hrdname, char *dvicname ) {
   
 
    while(1) {
-      fgets(buf, sizeof(buf), from_stp);
+      fgets(buf, sizeof(buf), from_stp);    
+      ptr=remove_color_code_from_string(buf,sizeof(buf));
+     
+	
+
+	
 	if(strstr(buf, "ERROR") != NULL) {
     		printf("\tERROR\n");
 		printf("'%s'\n", buf);
@@ -157,8 +175,9 @@ int jtag_init(char *hrdname, char *dvicname ) {
 
 
        
-      if(!strcmp(buf, "\n"))
-         break;
+      if(!strcmp(buf, "\n")) break;
+      if(!strcmp(ptr, "\n")) break;
+     
       if(feof(from_stp)) {
          fprintf(stderr, "saw eof from quartus_stp\n");
          exit(1);
@@ -189,15 +208,15 @@ int jtag_init(char *hrdname, char *dvicname ) {
 
    while(1) {
       fgets(buf, sizeof(buf), from_stp);
-     
+      ptr=remove_color_code_from_string(buf,sizeof(buf));
 	if(strstr(buf, "ERROR") != NULL) {
     		printf("\tERROR\n");
 		printf("'%s'\n", buf);
 		exit(1);
 	}
 
-      if(!strcmp(buf, "\n"))
-         break;
+      if(!strcmp(buf, "\n")) break;
+      if(!strcmp(ptr, "\n")) break;
       if(feof(from_stp)) {
          fprintf(stderr, "saw eof from quartus_stp\n");
          exit(1);
@@ -229,9 +248,11 @@ void strreplace(char s[], char chr, char repl_chr)
 char * read_stp (){
 	char buf[1024];
 	char * result=NULL;
+	char * ptr;
 	fflush(to_stp);
 	while(1) {
-		fgets(buf, sizeof(buf), from_stp);	     
+		fgets(buf, sizeof(buf), from_stp);
+		ptr=remove_color_code_from_string(buf,sizeof(buf));	     
 		if(strstr(buf, "ERROR") != NULL) {
 	    		printf("\tERROR\n");
 			printf("'%s'\n", buf);
@@ -244,7 +265,9 @@ char * read_stp (){
 			
 		}
 
-		if(!strcmp(buf, "\n")) 	 break;
+		if(!strcmp(buf, "\n")) break;
+		if(!strcmp(ptr, "\n")) break;
+
 		if(feof(from_stp)) {
 			fprintf(stderr, "saw eof from quartus_stp\n");
 			exit(1);

@@ -343,6 +343,84 @@ module binary_mux #(
 endmodule
 
 
+
+module  accumulator #(
+    parameter INw= 20,
+    parameter OUTw=4,
+    parameter NUM =5
+)
+(
+    in_all,
+    out         
+);
+
+    function integer log2;
+      input integer number; begin   
+         log2=(number <=1) ? 1: 0;    
+         while(2**log2<number) begin    
+            log2=log2+1;    
+         end       
+      end   
+    endfunction // log2 
+    
+    localparam N= INw/NUM,
+               SUMw= log2(NUM)+N; 
+    input [INw-1  :   0] in_all;
+    output[OUTw-1 :   0] out;
+    
+    wire [N-1   :   0] in [NUM-1    :   0];
+    reg [SUMw-1 :   0] sum;
+  
+  
+    genvar i;
+    generate 
+    for (i=0; i<NUM; i=i+1)begin : lp
+        assign in[i] = in_all[(i+1)*N-1 : i*N];    
+    end
+    
+    if(  SUMw ==  OUTw) begin :  equal
+        assign out = sum;
+    end else if(SUMw >  OUTw) begin : bigger
+        assign out = (sum[SUMw-1 : OUTw] > 0 ) ? {OUTw{1'b1}} : sum[OUTw-1  :   0] ;
+    end else begin : less
+          assign out = {{(OUTw-SUMw){1'b0}},  sum} ;
+    end
+    
+  
+    
+    endgenerate
+  
+  // This is supposed to be synyhesized as "sum=in[0]+in[1]+...in[Num-1]"; 
+  // It works with Quartus, Verilator and Modelsim compilers  
+    integer k; 
+    always @(*)begin 
+        sum=0;
+        for (k=0;k<NUM;k=k+1)begin 
+             sum= sum + {{(SUMw-N){1'b0}},in[k]};        
+        end   
+    end
+    //In case your compiler could not synthesize or wrongly synthesizes it try this
+    //assumming the maximum NUM as parameter can be 20:
+    /*
+    generate 
+     wire [N-1   :   0] tmp [19    :   0];
+     for (i=0; i<NUM; i=i+1)begin : lp
+        assign tmp[i] = in_all[(i+1)*N-1 : i*N];    
+     end
+     for (i=NUM; i<20; i=i+1)begin : lp2
+        assign tmp[i] = {N{1'b0}};    
+     end
+    
+    always @(*)begin 
+              sum= tmp[0] + tmp[1]+ tmp[2] + ...+ tmp[19];        
+    end
+    endgenerate     
+    */
+
+endmodule
+
+
+
 /******************************
 
     set_bits_counter 
@@ -478,6 +556,9 @@ module fast_minimum_number#(
     endgenerate
     
 endmodule
+
+
+
 
 
 /********************************************

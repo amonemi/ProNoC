@@ -1,5 +1,17 @@
 All notable changes to this project will be documented in this file.
 
+
+##[1.9.0] -30-04-2019
+## Added
+- add single flit sized packet support  
+- add new topologies: Fattree, tree, concentrated mesh (Cmesh) 
+- Topology Diagram Viewer
+
+## changed
+- The endpoint and router addresses format has been changed to support different topologies. 
+
+
+
 ##[1.8.2] -13-12-2018
 ## Added
 - add latency standard deviation to simulation results graphs
@@ -8,6 +20,12 @@ All notable changes to this project will be documented in this file.
 ## changed
 - fix some bugs in NI
 - Enable Verilator simulation on MPSoC
+
+##[1.8.1] - 30-7-2018
+## Added
+-  GUI for setting Linux variables
+## changed
+-  Support NoC Simulation for packet payload width larger than 32-bits and core number larger than 64. 
 
 
 ##[1.8.1] - 30-7-2018

@@ -3,6 +3,10 @@
 package ProNOC;
 
 
+#add home dir in perl 5.6
+use FindBin;
+use lib $FindBin::Bin;
+
 
 use Glib qw/TRUE FALSE/;
 
@@ -11,6 +15,7 @@ use Gtk2;
 use strict;
 use warnings;
 
+use Getopt::Long;
 
 
 use lib 'lib/perl';
@@ -22,11 +27,14 @@ require "mpsoc_gen.pl";
 require "emulator.pl";
 require "simulator.pl";
 require "trace_gen.pl";
+#require "network_maker.pl";
 
 use File::Basename;
 
 
-our $VERSION = '1.8.2'; 
+our $VERSION = '1.9.0'; 
+
+
 
 sub main{
 	# check if envirement variables are defined
@@ -56,6 +64,22 @@ sub set_path_env{
 	$ENV{'PRONOC_WORK'}= $pronoc_work if( defined $pronoc_work);
 	$ENV{'QUARTUS_BIN'}= $quartus if( defined $quartus);
 	$ENV{'MODELSIM_BIN'}= $modelsim if( defined $modelsim);	
+	
+	if( defined $pronoc_work){if(-d $pronoc_work ){
+			mkpath("$pronoc_work/emulate",1,01777) unless -d "$pronoc_work/emulate";
+			mkpath("$pronoc_work/simulate",1,01777) unless -d "$pronoc_work/simulate";	
+			mkpath("$pronoc_work/tmp",1,01777) unless -d "$pronoc_work/tmp";			
+	}}
+	
+	
+	
+	#add quartus_bin to PATH linux envirement if it does not exist in PATH
+	if( defined $quartus){
+		my @q =split  (/:/,$ENV{'PATH'});
+		my $p=get_scolar_pos ($quartus,@q);
+		$ENV{'PATH'}= $ENV{'PATH'}.":$quartus" unless ( defined $p); 
+		print "$quartus has been added to linux PATH envirement.\n";
+	}
 }
 
 
@@ -64,14 +88,10 @@ sub main_window{
 	
 	set_path_env();
 
-
 	my($width,$hight)=max_win_size();
 	set_defualt_font_size();
-
-
-
-
-if ( !defined $ENV{PRONOC_WORK} ) {
+	
+	if ( !defined $ENV{PRONOC_WORK} ) {
 	my $message;
 	if ( !defined $ENV{PRONOC_WORK}) {
 		my $dir = Cwd::getcwd();
@@ -89,8 +109,9 @@ if ( !defined $ENV{PRONOC_WORK} ) {
     	message_dialog("$message");
     
 }
-my $table = Gtk2::Table->new (1, 3, FALSE);
 
+	my $table = def_table(1,3,FALSE);
+	
 			
 	#________
 	#radio btn "Generator"	
@@ -107,8 +128,8 @@ my $table = Gtk2::Table->new (1, 3, FALSE);
   [ "/File/_Setting",       "<control>O", sub { setting(0); },  0,  undef ],
   [ "/File/_Quit",       "<control>Q", sub { Gtk2->main_quit },  0, "<StockItem>", 'gtk-quit' ],
   [ "/_View",                  undef, undef,         0, "<Branch>" ],
-  [ "/_View/_ProNoC System Generator",  undef, 	sub{ open_page($notebook,$noteref,$table,'Generator'); } ,	0,	undef ],
-  [ "/_View/_ProNoC Simulator",  undef, 	sub{ open_page($notebook,$noteref,$table,'Simulator'); } ,	0,	undef ],
+  [ "/_View/_ProNoC System Generator",  "<control>1", 	sub{ open_page($notebook,$noteref,$table,'Generator'); } ,	0,	undef ],
+  [ "/_View/_ProNoC Simulator",  "<control>2", 	sub{ open_page($notebook,$noteref,$table,'Simulator'); } ,	0,	undef ],
  
 
 
@@ -118,16 +139,9 @@ my $table = Gtk2::Table->new (1, 3, FALSE);
   [ "/_Help/_ProNoC User Manual",  "F3",		\&user_help, 	0,	undef ],
  
 );
-
-
-
-
-
-   
 	
     my $accel_group = Gtk2::AccelGroup->new;
-    $window->add_accel_group ($accel_group);
-      
+    $window->add_accel_group ($accel_group);      
     my $item_factory = Gtk2::ItemFactory->new ("Gtk2::MenuBar", "<main>",$accel_group);
 
     # Set up item factory to go away with the window
@@ -135,11 +149,7 @@ my $table = Gtk2::Table->new (1, 3, FALSE);
 
     # create menu items
     $item_factory->create_items ($window, @menu_items);
-
-        
-
 	$table->attach ($item_factory->get_widget ("<main>"),0, 1, 0,1,,'fill','fill',0,0); #,'expand','shrink',2,2);
-   
     my $tt = Gtk2::Tooltips->new();
 
 
@@ -148,62 +158,46 @@ my $table = Gtk2::Table->new (1, 3, FALSE);
 	my $hb = Gtk2::HandleBox->new;
 	#create a toolbar, and do some initial settings
 	my $toolbar = Gtk2::Toolbar->new;
-	$toolbar->set_icon_size ('small-toolbar');
-	
-	$toolbar->set_show_arrow (FALSE);
-	
-		
-	
-	
-		
+	$toolbar->set_icon_size ('small-toolbar');	
+	$toolbar->set_show_arrow (FALSE);		
 	$rbtn_generator->set_label ('Generator');
 	$rbtn_generator->set_icon_widget (def_icon('icons/hardware.png'));
 	set_tip($rbtn_generator, "ProNoC System Generator");
-	$toolbar->insert($rbtn_generator,-1);
-	
-	
-	
+	$toolbar->insert($rbtn_generator,-1);	
 	#________
 	#radio btn "Simulator"
 	my $rbtn_simulator = Gtk2::RadioToolButton->new_from_widget($rbtn_generator);
 	$rbtn_simulator->set_label ('Simulator');
-	$rbtn_simulator->set_icon_widget (def_icon('icons/simulator.png')) ;
-	
+	$rbtn_simulator->set_icon_widget (def_icon('icons/simulator.png')) ;	
 	set_tip($rbtn_simulator, "ProNoC Simulator");
-	$toolbar->insert($rbtn_simulator,-1);
-	
-	
-	
-	
-	
-	$hb->add($toolbar);
+	$toolbar->insert($rbtn_simulator,-1);	
+	#________
+	#radio btn "Networkgen"
+	#my $rbtn_networkgen = Gtk2::RadioToolButton->new_from_widget($rbtn_generator);
+	#$rbtn_networkgen->set_label ('Network Generator');
+	#$rbtn_networkgen->set_icon_widget (def_icon('icons/trace.png')) ;	
+	#set_tip($rbtn_networkgen, "ProNoC Network Generator");
+	#$toolbar->insert($rbtn_networkgen,-1);			
 	#====================================
-	
+	$hb->add($toolbar);
 	$rbtn_generator->signal_connect('toggled', sub{
-		open_page($notebook,$noteref,$table,'Generator');
-		
-		
-				
+		open_page($notebook,$noteref,$table,'Generator');				
 	});
 	
 	$rbtn_simulator->signal_connect('toggled', sub{
-		open_page($notebook,$noteref,$table,'Simulator');
-		
-			
+		open_page($notebook,$noteref,$table,'Simulator');		
 	});
+	
+	#$rbtn_networkgen->signal_connect('toggled', sub{
+	#	open_page($notebook,$noteref,$table,'Networkgen');		
+	#});	
  
-   $table->attach ($hb,0, 1, 0,1,'fill','fill',0,0);
+   $table->attach ($hb,1, 2, 0,1,'fill','fill',0,0);
    $table->attach_defaults( $notebook, 0, 2, 1,2);
 
-#$window->add($vbox);
-$window->add($table);
-
-
-
-
-		$window->set_resizable (1);
-		$window->show_all();
-		
+	$window->add($table);
+	$window->set_resizable (1);
+	$window->show_all();		
 }			
 
 
@@ -256,9 +250,6 @@ sub overview{
     my $help="$dir/../../doc/ProNoC_System_Overview.pdf";	
     system qq (xdg-open $help);
     return;
-
-
-
 }
 
 sub setting{
@@ -305,6 +296,22 @@ simulation models using Modelsim software", param_parent=>'PATH',ref_delay=>unde
 	}
 
 
+
+	#title		
+	my $title2=gen_label_in_center("Toolchain");
+	$table->attach ($title2 , 0, 10,  $row, $row+1,'expand','shrink',2,2); $row++;
+	my $separator2 = Gtk2::HSeparator->new;	
+	$table->attach ($separator2 , 0, 10 , $row, $row+1,'fill','fill',2,2);	$row++;
+
+	#check which toolchain is available in the system
+	$table->attach (check_toolchains($self) , 0, 10 , $row, $row+1,'fill','fill',2,2);	$row++;
+	
+	
+	
+	
+
+
+
 	my $ok = def_image_button('icons/select.png','OK');
 	my $mtable = def_table(10, 1, TRUE);
 
@@ -329,7 +336,13 @@ simulation models using Modelsim software", param_parent=>'PATH',ref_delay=>unde
 		my $modelsim = $self->object_get_attribute("PATH","MODELSIM_BIN");
 		make_undef_as_string(\$old_pronoc_work,\$old_quartus,\$old_modelsim,\$pronoc_work,\$quartus,\$modelsim);
 			
-		append_text_to_file ("$ENV{HOME}/.bashrc", "\nexport PRONOC_WORK=$pronoc_work\n") if(($old_pronoc_work ne $pronoc_work) || !defined $ENV{PRONOC_WORK}) ;
+		if(($old_pronoc_work ne $pronoc_work) || !defined $ENV{PRONOC_WORK}){
+			append_text_to_file ("$ENV{HOME}/.bashrc", "\nexport PRONOC_WORK=$pronoc_work\n"); 
+			mkpath("$pronoc_work/emulate",1,01777) unless -d "$pronoc_work/emulate";
+			mkpath("$pronoc_work/simulate",1,01777) unless -d "$pronoc_work/simulate";	
+			mkpath("$pronoc_work/tmp",1,01777) unless -d "$pronoc_work/tmp";			
+		}
+		
 		append_text_to_file ("$ENV{HOME}/.bashrc", "export QUARTUS_BIN=$quartus\n") if($old_quartus ne $quartus) ;
 		append_text_to_file ("$ENV{HOME}/.bashrc", "export MODELSIM_BIN=$modelsim\n") if($old_modelsim ne $modelsim) ;
 		set_path_env();
@@ -346,6 +359,56 @@ simulation models using Modelsim software", param_parent=>'PATH',ref_delay=>unde
 	});
 	
 }
+
+sub check_toolchains{
+	my $self=shift;
+	my $table = def_table(10, 1, TRUE);
+	
+	my @f1=("/bin/mb-g++","/bin/mb-objcopy");
+	my @f2=("/bin/lm32-elf-gcc","/bin/lm32-elf-ld","/bin/lm32-elf-objcopy","/bin/lm32-elf-objdump","/lm32-elf/lib","/lib/gcc/lm32-elf/4.5.3");
+	my @f3=("/bin/or1k-elf-gcc","/bin/or1k-elf-ld","/bin/or1k-elf-objcopy","/bin/or1k-elf-objdump","/lib/gcc/or1k-elf/5.2.0");
+	
+	my @tool = (
+	{ label=>"aeMB", tooldir=>"aemb", files=>\@f1 },
+	{ label=>"lm32", tooldir=>"lm32", files=>\@f2 },
+	{ label=>"or1k-elf", tooldir=>"or1k-elf", files=>\@f3 },
+	);
+	
+	my $row =0;
+	foreach my $d (@tool) {
+		
+		my $exist=1;
+		my $miss="";
+		my $pronoc_work = $self->object_get_attribute("PATH","PRONOC_WORK");
+		my $tooldir=$d->{tooldir};
+		my @files=@{$d->{files}};
+		my $tool_path="$pronoc_work/toolchain/$tooldir";
+		unless (-d $tool_path){
+			$exist=0;
+			$miss=$miss." $tool_path is missing\n";
+		}else{
+			foreach my $f (@files){
+				
+				my $file_path= "$tool_path/$f";
+				unless ( -f $file_path || -d $file_path){
+					$exist=0;
+					$miss=$miss." $file_path file is missing\n";
+				}
+			}
+		}
+		if ($exist==0){
+			my $w=def_image_button("icons/warning.png",$d->{label});
+			$w->signal_connect("clicked" => sub {message_dialog($miss);});	
+			$table->attach ($w , 0, 1,  $row, $row+1,'shrink','shrink',2,2); $row++;
+		}else{
+			my $w=def_image_label("icons/button_ok.png",$d->{label});
+			$table->attach ($w , 0, 1,  $row, $row+1,'shrink','shrink',2,2); $row++;			
+		}
+			
+	}			
+	return $table;	
+}
+
 
 sub generate_main_notebook {
 	my $mode =shift;
@@ -373,12 +436,22 @@ sub generate_main_notebook {
 		$notebook->append_page ($mpsocgen,$lable4);#Gtk2::Label->new_with_mnemonic ("  _NoC based MPSoC generator  "));	
 		$lable4->show_all;	
 		
+		
 	
-	} else{
+	} elsif($mode eq 'Networkgen'){
+	
+		my $networkgen = network_maker_main();
+		my $lable5=def_image_label("icons/trace.png"," Network Maker ");	
+		$notebook->append_page ($networkgen,$lable5);#Gtk2::Label->new_with_mnemonic ("  _NoC based MPSoC generator  "));	
+		$lable5->show_all;	
+	
+	
+	}else{
+		
 		
 		
 		my $trace_gen= trace_gen_main();
-		my $lable1=def_image_label("icons/trace.png"," Trace generator ");
+		my $lable1=def_image_label("icons/trace.png"," _Trace generator ",1);
 		#my $lb=Gtk2::Label->new_with_mnemonic (" _Trace generator   ");
 		set_tip($lable1, "Generate trace file from application task graph");
 		
@@ -387,14 +460,15 @@ sub generate_main_notebook {
 		$trace_gen->show_all;
 		
 		my $simulator =simulator_main();
-		my $lable2=def_image_label("icons/sim.png"," NoC simulator ");
+		my $lable2=def_image_label("icons/sim.png"," _NoC simulator ",1);
+		
 		
 		$notebook->append_page ($simulator,$lable2);#Gtk2::Label->new_with_mnemonic (" _NoC simulator   "));		
 		$lable2->show_all;
 		$simulator->show_all;		
 
 		my $emulator =emulator_main();
-		my $lable3=def_image_label("icons/emul.png"," NoC emulator ");
+		my $lable3=def_image_label("icons/emul.png"," _NoC emulator ",1);
 		$notebook->append_page ($emulator,$lable3);#Gtk2::Label->new_with_mnemonic (" _NoC emulator"));				
 		$lable3->show_all;
 		$emulator->show_all;
@@ -406,17 +480,10 @@ sub generate_main_notebook {
 		my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
 		$scrolled_win->set_policy( "automatic", "automatic" );
 		$scrolled_win->add_with_viewport($notebook);	
-		$scrolled_win->show_all;
-		
+		$scrolled_win->show_all;	
 
-		return ($scrolled_win,$notebook);
-	
+		return ($scrolled_win,$notebook);	
 }
-
-
-
-
-
 
 
 
