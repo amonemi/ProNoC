@@ -187,6 +187,7 @@ sub endp_addr_decoder {
 	}
 	else{
 		my ($x, $y, $l) = mesh_tori_addr_sep($code,$T1, $T2,$T3);
+		#print "my ($x, $y, $l) = mesh_tori_addr_sep($code,$T1, $T2,$T3);\n";
 		return (($y*$T1)+$x)*$T3+$l;
 	}
 }
@@ -214,6 +215,7 @@ sub mesh_tori_addr_sep {
 	$y = $code &   mask_gen($NY);
 	$code>>=$NYw;
 	$l = $code;
+	return ($x, $y, $l);
 }
 
 sub mesh_tori_addrencode{
