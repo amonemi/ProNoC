@@ -369,16 +369,22 @@ sub def_image_button{
 		$label = Gtk2::Label->new("  $label_text") unless (defined $mnemonic);
 		$label = Gtk2::Label->new_with_mnemonic (" $label_text") if (defined $mnemonic);
 		$box->pack_start($label, FALSE, FALSE, 0);
-	}
-	
+	}	
 	
 	my $button = Gtk2::Button->new();
 	$button->add($box);
 	$button->set_border_width(0);
 	$button->show_all;
 	return $button;
-
 }
+
+sub def_button{
+	my ($label_text)=@_;
+	my $label = Gtk2::Label->new("$label_text");
+	my $button= Gtk2::Button->new();
+	$button->add($label);
+	return $button;
+}	
 
 
 sub def_image_label{
@@ -742,6 +748,9 @@ sub create_text {
  add_colors_to_textview($tview);	
   return ($scrolled_window,$tview);
 }
+
+
+
 
 
 #################

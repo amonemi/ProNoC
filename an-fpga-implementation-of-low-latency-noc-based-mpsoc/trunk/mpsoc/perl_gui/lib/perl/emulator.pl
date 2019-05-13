@@ -325,12 +325,11 @@ sub gen_emulation_column {
 	$table->attach ($separator , 0, 10 , $row, $row+1,'fill','fill',2,2);	$row++;
 	
 
-	my @positions=(0,1,2,3,4,5,6);
+	my @positions=(0,1,2,3,4,5,6,7);
 	my $col=0;
 	
-	my @title=("Name", " Add/Remove "," Setting ", "Line\'s color", "Clear","Run");
-	foreach my $t (@title){
-		
+	my @title=("Name","Traffic", " Add/Remove "," Setting ", "Line\'s color", "Clear","Run");
+	foreach my $t (@title){		
 		$table->attach (gen_label_in_center($title[$col]), $positions[$col], $positions[$col+1], $row, $row+1,'expand','shrink',2,2);$col++;
 	}
 	
@@ -338,7 +337,7 @@ sub gen_emulation_column {
 
 	$col=0;
 	$row++;
-	@positions=(0,1,2,3,4,5,6,7);
+	@positions=(0,2,3,4,5,6,7,8);
 
 	
 	#my $i=0;
@@ -359,7 +358,7 @@ sub gen_emulation_column {
 		#check if injection ratios are valid
 		my $r=$emulate->object_get_attribute($sample,"ratios");
 		if(defined $s  && defined $name){
-			 $l=gen_label_in_center($name); 
+			
 			 $l=def_image_button('icons/diagram.png',$name);
 			 $l-> signal_connect("clicked" => sub{ 
 			 	my $st = ($mode eq "simulate" )?  check_sim_sample($emulate,$sample,$info)   : check_sample($emulate,$sample,$info); 
@@ -371,13 +370,37 @@ sub gen_emulation_column {
 			 	$emulate->object_add_attribute('noc_param','TOPOLOGY',$topology);
         		show_topology_diagram ($emulate);
     		 });
+    		 
+    		 my $traffic = def_button("Pattern");
+    		 $traffic-> signal_connect("clicked" => sub{ 
+    		 	my $st = ($mode eq "simulate" )?  check_sim_sample($emulate,$sample,$info)   : check_sample($emulate,$sample,$info); 
+			 	return if $st==0;
+			 	my ($topology, $T1, $T2, $T3, $V, $Fpay) = get_sample_emulation_param($emulate,$sample);		
+			 	$emulate->object_add_attribute('noc_param','T1',$T1);
+			 	$emulate->object_add_attribute('noc_param','T2',$T2);
+			 	$emulate->object_add_attribute('noc_param','T3',$T3);
+			 	$emulate->object_add_attribute('noc_param','TOPOLOGY',$topology);
+			 	my $pattern=get_synthetic_traffic_pattern($emulate, $sample);
+			 	my $window = def_popwin_size(40,40,"Traffic pattern",'percent');
+			 	my ($outbox,$tview)= create_text();
+			 	show_info(\$tview,"$pattern");
+			 	$window->add ($outbox);
+				$window->show_all();	 
+			 	
+    		 });
+    		 
+    		 
+    		 $table->attach ($l, $positions[$col], $positions[$col]+1, $row, $row+1,'expand','shrink',2,2);
+    		 $table->attach ($traffic, $positions[$col]+1, $positions[$col+1], $row, $row+1,'expand','shrink',2,2);    
+    		 $col++;
 			 
 		} else {
 			$l=gen_label_in_left("Define NoC configuration");
-			$l->set_markup("<span  foreground= 'red' ><b>Define NoC configuration</b></span>");			 
+			$l->set_markup("<span  foreground= 'red' ><b>Define NoC configuration</b></span>");	
+			$table->attach ($l, $positions[$col], $positions[$col+1], $row, $row+1,'expand','shrink',2,2);$col++;		 
 		}
 		#my $box=def_pack_hbox(FALSE,0,(gen_label_in_left("$i- "),$l,$set));
-		$table->attach ($l, $positions[$col], $positions[$col+1], $row, $row+1,'expand','shrink',2,2);$col++;
+		
 
 		#remove 
 		my $remove=def_image_button("icons/cancel.png");
