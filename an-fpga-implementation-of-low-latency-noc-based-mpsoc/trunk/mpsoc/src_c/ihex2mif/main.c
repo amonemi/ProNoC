@@ -5,12 +5,13 @@
 #include <stdlib.h>
 
 #define DEFAULT_OUT_FILE_NAME		"out.mif"
-#define DEAFULT_END_SIZE		"1FFF"
+
 
 int	memory[MAX_MEMORY_SIZE+1];		/* the memory is global */
 unsigned int 	end_addr_int;
 FILE * in, * out;
 char *file_name, *end_addr, *out_file_name ;
+void update_out_file(void);
 
 void usage (void)
 {
@@ -56,19 +57,22 @@ void processArgs (int argc, char **argv )
       }
 }
 
-void update_out_file(void);
+
 int main ( int argc, char **argv ){
-	
+	int maxaddr;
 	processArgs (argc,argv );
 	if (file_name == NULL) {usage();exit(1);} 	
-	if (end_addr  == NULL) end_addr = DEAFULT_END_SIZE;
 	if (out_file_name == NULL) out_file_name = DEFAULT_OUT_FILE_NAME;	
-	//printf("filename=%s & size=%s\n",file_name, end_addr);
-	sscanf(end_addr, "%x", &end_addr_int);
-   	//printf("%u\n", end_addr_int);
+	
+	
+   	
 	out=fopen(out_file_name,"wb");
 	if(out==NULL){printf("Output file cannot be created"); exit(1);}
-	load_file(file_name);
+	maxaddr=load_file(file_name);
+	if (end_addr  != NULL) sscanf(end_addr, "%x", &end_addr_int);
+	else end_addr_int = maxaddr;
+
+
 	update_out_file();
 	
 

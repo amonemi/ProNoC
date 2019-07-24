@@ -678,7 +678,7 @@ sub add_new_fpga_board_files{
 		$jtag="JTAG_INTFC=\"\$PRONOC_WORK/toolchain/bin/jtag_quartus_stp -a \$HARDWARE_NAME -b \$DEVICE_NAME\"";
 		
 	}
-	print $file "#!/bin/sh
+	print $file "#!/bin/bash
 
 PRODUCT_ID=\"0x$pid\" 
 HARDWARE_NAME=\'$hw *\'
@@ -694,10 +694,10 @@ $jtag
 	open $file, ">", "$path/program_device.sh" or return "Error: Could not create $path/program_device.sh file in write mode!";
 	
 	
-print $file "#!/bin/sh
+print $file "#!/bin/bash
 
 #usage: 
-#	sh program_device.sh  programming_file.sof
+#	bash program_device.sh  programming_file.sof
 
 #programming file 
 #given as an argument:  \$1
@@ -1014,10 +1014,10 @@ sub quartus_compilation{
 		my $Quartus_bin= $self->object_get_attribute('compile','quartus_bin');;
 		add_info(\$tview, "Start Quartus compilation.....\n");
 		my @compilation_command =(
-			"cd \"$target_dir/\" \n xterm -e sh -c '$Quartus_bin/quartus_map --64bit $name --read_settings_files=on; echo \$? > status' ",
-			"cd \"$target_dir/\" \n xterm -e sh -c '$Quartus_bin/quartus_fit --64bit $name --read_settings_files=on; echo \$? > status' ",
-			"cd \"$target_dir/\" \n xterm -e sh -c '$Quartus_bin/quartus_asm --64bit $name --read_settings_files=on; echo \$? > status' ",
-			"cd \"$target_dir/\" \n xterm -e sh -c '$Quartus_bin/quartus_sta --64bit $name;echo \$? > status' ");
+			"cd \"$target_dir/\" \n xterm -e bash -c '$Quartus_bin/quartus_map --64bit $name --read_settings_files=on; echo \$? > status' ",
+			"cd \"$target_dir/\" \n xterm -e bash -c '$Quartus_bin/quartus_fit --64bit $name --read_settings_files=on; echo \$? > status' ",
+			"cd \"$target_dir/\" \n xterm -e bash -c '$Quartus_bin/quartus_asm --64bit $name --read_settings_files=on; echo \$? > status' ",
+			"cd \"$target_dir/\" \n xterm -e bash -c '$Quartus_bin/quartus_sta --64bit $name;echo \$? > status' ");
 		
 		foreach my $cmd (@compilation_command){
 			add_info(\$tview,"$cmd\n");
@@ -1065,7 +1065,7 @@ sub quartus_compilation{
 			$error=1;
 		}
 		return if($error);
-		my $command = "sh $bash_file $sof_file";
+		my $command = "bash $bash_file $sof_file";
 		add_info(\$tview,"$command\n");
 		my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($command);
 		if(length $stderr>1){			
@@ -1252,7 +1252,7 @@ sub verilator_compilation {
    	
    	
 	#run verilator
-	#my $cmd= "cd \"$verilator/processed_rtl\" \n xterm -e sh -c ' verilator  --cc $name.v --profile-cfuncs --prefix \"Vtop\" -O3  -CFLAGS -O3'";
+	#my $cmd= "cd \"$verilator/processed_rtl\" \n xterm -e bash -c ' verilator  --cc $name.v --profile-cfuncs --prefix \"Vtop\" -O3  -CFLAGS -O3'";
 	foreach my $top (sort keys %tops) {
 		add_colored_info(\$outtext,"Generate $top Verilator model from $tops{$top} file\n",'green');
 		my $cmd= "cd \"$verilator/processed_rtl\" \n  verilator  --cc $tops{$top}  --prefix \"$top\" -O3  -CFLAGS -O3";
@@ -2191,7 +2191,7 @@ sub verilator_testbench{
 	$run -> signal_connect("clicked" => sub{
 		my $bin="$verilator/processed_rtl/obj_dir/testbench";
 		if (-f $bin){
-			my $cmd= "cd \"$verilator/processed_rtl/obj_dir/\" \n xterm -e sh -c $bin";
+			my $cmd= "cd \"$verilator/processed_rtl/obj_dir/\" \n xterm -e bash -c $bin";
 			add_info(\$tview,"$cmd\n");	
 			my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($cmd);
 			if(length $stderr>1){			

@@ -20,7 +20,7 @@
 /* some ansi prototypes.. maybe ought to make a .h file */
 
 /* this loads an intel hex file into the memory[] array */
-void load_file(char *filename);
+int load_file(char *filename);
 
 /* this writes a part of memory[] to an intel hex file */
 void save_file(char *command);
@@ -77,7 +77,7 @@ int *addr, *num, *code, bytes[];
 /* loads an intel hex file into the global memory[] array */
 /* filename is a string of the file to be opened */
 
-void load_file(filename)
+int load_file(filename)
 char *filename;
 {
 	char line[1000];
@@ -89,7 +89,7 @@ char *filename;
 	if (strlen(filename) == 0) {
 		printf("   Can't load a file without the filename.");
 		printf("  '?' for help\n");
-		return;
+		return 0;
 	}
 	fin = fopen(filename, "r");
 	if (fin == NULL) {
@@ -116,7 +116,8 @@ char *filename;
 				fclose(fin);
 				printf("   Loaded %d bytes between:", total);
 				printf(" %04X to %04X\n", minaddr, maxaddr);
-				return;
+								
+				return maxaddr;
 			}
 			if (status == 2) ;  /* begin of file */
 		} else {
@@ -124,6 +125,7 @@ char *filename;
 		}
 		lineno++;
 	}
+	return maxaddr;//it should not reach here
 }
 
 

@@ -786,7 +786,7 @@ my %jtagwb; my %ram;
 	}#foreach my $instance_id
 
 	#Generate memory programming command
-my $prog='#!/bin/sh
+my $prog='#!/bin/bash
 
 #JTAG_INTFC="$PRONOC_WORK/toolchain/bin/JTAG_INTFC"
 source ./jtag_intfc.sh
@@ -872,7 +872,7 @@ $lisence
 
 If the memory core and jtag_wb are connected to the same wishbone bus, you can program the memory using 
 
-	sh program.sh  
+	bash program.sh  
 
 
 

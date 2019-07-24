@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 /home/alireza/intelFPGA_lite/17.1/modelsim_ase/bin/vsim  -do model.tcl
 #/home/alireza/altera/13.0sp1/modelsim_ase/bin/vsim  -do model.tcl
 #/home/alireza/altera/modeltech/bin/vsim  -do model.tcl

@@ -1,16 +1,15 @@
 #! /usr/bin/perl -w
 
-use Time::Piece;
+
 
 sub get_license_header {
 	my $file_name=shift;
-my $t = Time::Piece->new();
-my $year=$t->year;
+
 	my $head="
 /**********************************************************************
 **	File: $file_name
 **    
-**	Copyright (C) 2014-$year  Alireza Monemi
+**	Copyright (C) 2014-$ProNOC::END_YEAR  Alireza Monemi
 **    
 **	This file is part of ProNoC $ProNOC::VERSION 
 **
@@ -54,7 +53,7 @@ sub perl_file_header {
 my $head="#######################################################################
 ##	File: $file_name
 ##    
-##	Copyright (C) 2014-2016  Alireza Monemi
+##	Copyright (C) 2014-$ProNOC::END_YEAR  Alireza Monemi
 ##    
 ##	This file is part of ProNoC $ProNOC::VERSION 
 ##

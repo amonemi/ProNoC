@@ -5,7 +5,7 @@ BIN2HEX =$(PRONOC_WORK)/toolchain/bin/bin2str
 
 #SREC2VRAM ?= ../../../toolchain/lm32/srec2vram/srec2vram
 
-RAMSIZE=3FFF
+#RAMSIZE=3FFF
 #CPU_FLAGS=-mbarrel-shift-enabled -mmultiply-enabled -msign-extend-enabled -mdivide-enabled
 CPU_FLAGS=-mbarrel-shift-enabled -mmultiply-enabled 
 
@@ -54,7 +54,8 @@ $(VRAMFILE): image.srec
 #$(SREC2VRAM) image.srec 0x40000000 0x1000 > $(VRAMFILE)
 	rm -Rf ./RAM
 	mkdir -p ./RAM
-	$(IHEX2MIF) -f image.ihex  -e $(RAMSIZE) -o RAM/ram0.mif
+	#$(IHEX2MIF) -f image.ihex  -e $(RAMSIZE) -o RAM/ram0.mif
+	$(IHEX2MIF) -f image.ihex  -o RAM/ram0.mif
 	$(IHEX2BIN) -i image.ihex  -o RAM/ram0.bin
 	$(BIN2HEX) -f RAM/ram0.bin -h 
 

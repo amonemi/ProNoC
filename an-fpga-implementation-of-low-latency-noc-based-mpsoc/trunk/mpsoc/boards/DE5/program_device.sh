@@ -10,7 +10,10 @@
 PROG_MODE=jtag
 
 #cable name. Connect the board to ur PC and then run jtagconfig in terminal to find the cable name
-NAME="USB-Blaster"
+NAME="DE5 Standard"
+
+#device name
+#DEVICE=@2
 
 
 #programming command
@@ -19,8 +22,3 @@ if [ -n "${QUARTUS_BIN+set}" ]; then
 else
   quartus_pgm -m $PROG_MODE -c "$NAME" -o "p;${1}"
 fi
-
-
-
-
-

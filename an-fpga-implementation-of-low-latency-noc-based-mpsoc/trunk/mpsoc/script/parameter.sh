@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 CORE_NUM(){
   # local variable x and y with passed args    

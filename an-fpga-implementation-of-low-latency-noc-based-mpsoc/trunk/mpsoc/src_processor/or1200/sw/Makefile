@@ -23,7 +23,7 @@ CFLAGS ?= -g -nostdlib -O2 $(MARCH_FLAGS)
 
 LDFLAGS ?=    -Tlink.ld  -e 256 
 
-RAMSIZE=3FFF
+#RAMSIZE=3FFF
 
 # Sources to go into the liborpsoc.a support library
 COMPILE_SRCS=$(HDR_SOURCE_DIR)/exceptions.c $(HDR_SOURCE_DIR)/int.c  $(HDR_SOURCE_DIR)/mmu.S  $(HDR_SOURCE_DIR)/$(HDR_SOURCE_DIR)-utils.c $(HDR_SOURCE_DIR)/cache.S
@@ -57,7 +57,8 @@ image.ihex: image image.lst
 	mkdir -p ./RAM	
 	$(OR32_OBJCOPY) -O ihex image image.ihex 
 # Generate a MIF & BIN files from the IHEX file
-	$(IHEX2MIF) -f image.ihex -e $(RAMSIZE) -o RAM/ram0.mif
+#	$(IHEX2MIF) -f image.ihex -e $(RAMSIZE) -o RAM/ram0.mif
+	$(IHEX2MIF) -f image.ihex -o RAM/ram0.mif
 	$(IHEX2BIN) -i image.ihex -o RAM/ram0.bin
 	$(BIN2HEX)  -f RAM/ram0.bin -h   
 	rm *.o

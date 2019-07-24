@@ -1,0 +1,302 @@
+#============================================================
+# Build by Terasic System Builder
+#============================================================
+
+set_global_assignment -name FAMILY "Stratix V"
+set_global_assignment -name DEVICE 5SGXEA7N2F45C2
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION "12.0"
+set_global_assignment -name LAST_QUARTUS_VERSION "12.0"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "16:38:23 JULY 08,2019"
+set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
+set_global_assignment -name DEVICE_FILTER_PIN_COUNT 1932
+set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 2_H2
+set_global_assignment -name SDC_FILE Top.SDC
+
+#============================================================
+# CLOCK
+#============================================================
+set_location_assignment PIN_AW35 -to OSC_50_B3B
+set_instance_assignment -name IO_STANDARD "2.5 V" -to OSC_50_B3B
+set_location_assignment PIN_BC28 -to OSC_50_B3D
+set_instance_assignment -name IO_STANDARD "1.8 V" -to OSC_50_B3D
+set_location_assignment PIN_AP10 -to OSC_50_B4A
+set_instance_assignment -name IO_STANDARD "1.8 V" -to OSC_50_B4A
+set_location_assignment PIN_AY18 -to OSC_50_B4D
+set_instance_assignment -name IO_STANDARD "1.8 V" -to OSC_50_B4D
+set_location_assignment PIN_M8 -to OSC_50_B7A
+set_instance_assignment -name IO_STANDARD "1.5 V" -to OSC_50_B7A
+set_location_assignment PIN_J18 -to OSC_50_B7D
+set_instance_assignment -name IO_STANDARD "1.5 V" -to OSC_50_B7D
+set_location_assignment PIN_R36 -to OSC_50_B8A
+set_instance_assignment -name IO_STANDARD "1.5 V" -to OSC_50_B8A
+set_location_assignment PIN_R25 -to OSC_50_B8D
+set_instance_assignment -name IO_STANDARD "1.8 V" -to OSC_50_B8D
+
+#============================================================
+# LED x 10
+#============================================================
+set_location_assignment PIN_AW37 -to LED[0]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to LED[0]
+set_location_assignment PIN_AV37 -to LED[1]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to LED[1]
+set_location_assignment PIN_BB36 -to LED[2]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to LED[2]
+set_location_assignment PIN_BB39 -to LED[3]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to LED[3]
+set_location_assignment PIN_AH15 -to LED_BRACKET[0]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to LED_BRACKET[0]
+set_location_assignment PIN_AH13 -to LED_BRACKET[1]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to LED_BRACKET[1]
+set_location_assignment PIN_AJ13 -to LED_BRACKET[2]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to LED_BRACKET[2]
+set_location_assignment PIN_AJ14 -to LED_BRACKET[3]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to LED_BRACKET[3]
+set_location_assignment PIN_AG15 -to LED_RJ45_L
+set_instance_assignment -name IO_STANDARD "2.5 V" -to LED_RJ45_L
+set_location_assignment PIN_AG16 -to LED_RJ45_R
+set_instance_assignment -name IO_STANDARD "2.5 V" -to LED_RJ45_R
+
+#============================================================
+# BUTTON x 4 and CPU_RESET_n
+#============================================================
+set_location_assignment PIN_AK15 -to BUTTON[0]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to BUTTON[0]
+set_location_assignment PIN_AK14 -to BUTTON[1]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to BUTTON[1]
+set_location_assignment PIN_AL14 -to BUTTON[2]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to BUTTON[2]
+set_location_assignment PIN_AL15 -to BUTTON[3]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to BUTTON[3]
+set_location_assignment PIN_BC37 -to CPU_RESET_n
+set_instance_assignment -name IO_STANDARD "2.5 V" -to CPU_RESET_n
+
+#============================================================
+# SWITCH x 4
+#============================================================
+set_location_assignment PIN_B25 -to SW[0]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SW[0]
+set_location_assignment PIN_A25 -to SW[1]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SW[1]
+set_location_assignment PIN_B23 -to SW[2]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SW[2]
+set_location_assignment PIN_A23 -to SW[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to SW[3]
+
+#============================================================
+# 7-Segement
+#============================================================
+set_location_assignment PIN_G8 -to HEX0_D[0]
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX0_D[0]
+set_location_assignment PIN_H8 -to HEX0_D[1]
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX0_D[1]
+set_location_assignment PIN_J9 -to HEX0_D[2]
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX0_D[2]
+set_location_assignment PIN_K10 -to HEX0_D[3]
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX0_D[3]
+set_location_assignment PIN_K8 -to HEX0_D[4]
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX0_D[4]
+set_location_assignment PIN_K9 -to HEX0_D[5]
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX0_D[5]
+set_location_assignment PIN_N8 -to HEX0_D[6]
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX0_D[6]
+set_location_assignment PIN_P8 -to HEX0_DP
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX0_DP
+set_location_assignment PIN_H18 -to HEX1_D[0]
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX1_D[0]
+set_location_assignment PIN_G16 -to HEX1_D[1]
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX1_D[1]
+set_location_assignment PIN_F16 -to HEX1_D[2]
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX1_D[2]
+set_location_assignment PIN_A7 -to HEX1_D[3]
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX1_D[3]
+set_location_assignment PIN_B7 -to HEX1_D[4]
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX1_D[4]
+set_location_assignment PIN_C9 -to HEX1_D[5]
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX1_D[5]
+set_location_assignment PIN_D10 -to HEX1_D[6]
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX1_D[6]
+set_location_assignment PIN_E9 -to HEX1_DP
+set_instance_assignment -name IO_STANDARD "1.5 V" -to HEX1_DP
+
+#============================================================
+# Temperature
+#============================================================
+set_location_assignment PIN_D21 -to TEMP_CLK
+set_instance_assignment -name IO_STANDARD "2.5 V" -to TEMP_CLK
+set_location_assignment PIN_D20 -to TEMP_DATA
+set_instance_assignment -name IO_STANDARD "2.5 V" -to TEMP_DATA
+set_location_assignment PIN_C21 -to TEMP_INT_n
+set_instance_assignment -name IO_STANDARD "2.5 V" -to TEMP_INT_n
+set_location_assignment PIN_C22 -to TEMP_OVERT_n
+set_instance_assignment -name IO_STANDARD "2.5 V" -to TEMP_OVERT_n
+
+#============================================================
+# Fan
+#============================================================
+set_location_assignment PIN_AR32 -to FAN_CTRL
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FAN_CTRL
+
+#============================================================
+# RS232
+#============================================================
+set_location_assignment PIN_AG14 -to RS422_DE
+set_instance_assignment -name IO_STANDARD "2.5 V" -to RS422_DE
+set_location_assignment PIN_AE18 -to RS422_DIN
+set_instance_assignment -name IO_STANDARD "2.5 V" -to RS422_DIN
+set_location_assignment PIN_AE17 -to RS422_DOUT
+set_instance_assignment -name IO_STANDARD "2.5 V" -to RS422_DOUT
+set_location_assignment PIN_AF17 -to RS422_RE_n
+set_instance_assignment -name IO_STANDARD "2.5 V" -to RS422_RE_n
+set_location_assignment PIN_AF16 -to RS422_TE
+set_instance_assignment -name IO_STANDARD "2.5 V" -to RS422_TE
+
+#============================================================
+# Flash/MAX Address/Data Share Bus
+#============================================================
+set_location_assignment PIN_AG26 -to FSM_D[0]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[0]
+set_location_assignment PIN_AD33 -to FSM_D[1]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[1]
+set_location_assignment PIN_AE34 -to FSM_D[2]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[2]
+set_location_assignment PIN_AF31 -to FSM_D[3]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[3]
+set_location_assignment PIN_AG28 -to FSM_D[4]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[4]
+set_location_assignment PIN_AG30 -to FSM_D[5]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[5]
+set_location_assignment PIN_AF29 -to FSM_D[6]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[6]
+set_location_assignment PIN_AE29 -to FSM_D[7]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[7]
+set_location_assignment PIN_AG25 -to FSM_D[8]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[8]
+set_location_assignment PIN_AF34 -to FSM_D[9]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[9]
+set_location_assignment PIN_AE33 -to FSM_D[10]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[10]
+set_location_assignment PIN_AE31 -to FSM_D[11]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[11]
+set_location_assignment PIN_AF28 -to FSM_D[12]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[12]
+set_location_assignment PIN_AE30 -to FSM_D[13]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[13]
+set_location_assignment PIN_AG29 -to FSM_D[14]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[14]
+set_location_assignment PIN_AG27 -to FSM_D[15]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[15]
+set_location_assignment PIN_AP28 -to FSM_D[16]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[16]
+set_location_assignment PIN_AN28 -to FSM_D[17]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[17]
+set_location_assignment PIN_AU31 -to FSM_D[18]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[18]
+set_location_assignment PIN_AW32 -to FSM_D[19]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[19]
+set_location_assignment PIN_BD32 -to FSM_D[20]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[20]
+set_location_assignment PIN_AY31 -to FSM_D[21]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[21]
+set_location_assignment PIN_BA30 -to FSM_D[22]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[22]
+set_location_assignment PIN_BB30 -to FSM_D[23]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[23]
+set_location_assignment PIN_AM29 -to FSM_D[24]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[24]
+set_location_assignment PIN_AR29 -to FSM_D[25]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[25]
+set_location_assignment PIN_AV31 -to FSM_D[26]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[26]
+set_location_assignment PIN_AV32 -to FSM_D[27]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[27]
+set_location_assignment PIN_BC31 -to FSM_D[28]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[28]
+set_location_assignment PIN_AW30 -to FSM_D[29]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[29]
+set_location_assignment PIN_BC32 -to FSM_D[30]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[30]
+set_location_assignment PIN_BD31 -to FSM_D[31]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_D[31]
+set_location_assignment PIN_AU32 -to FSM_A[0]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[0]
+set_location_assignment PIN_AH30 -to FSM_A[1]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[1]
+set_location_assignment PIN_AJ30 -to FSM_A[2]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[2]
+set_location_assignment PIN_AH31 -to FSM_A[3]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[3]
+set_location_assignment PIN_AK30 -to FSM_A[4]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[4]
+set_location_assignment PIN_AJ32 -to FSM_A[5]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[5]
+set_location_assignment PIN_AG33 -to FSM_A[6]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[6]
+set_location_assignment PIN_AL30 -to FSM_A[7]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[7]
+set_location_assignment PIN_AK33 -to FSM_A[8]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[8]
+set_location_assignment PIN_AJ33 -to FSM_A[9]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[9]
+set_location_assignment PIN_AN30 -to FSM_A[10]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[10]
+set_location_assignment PIN_AH33 -to FSM_A[11]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[11]
+set_location_assignment PIN_AK32 -to FSM_A[12]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[12]
+set_location_assignment PIN_AM32 -to FSM_A[13]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[13]
+set_location_assignment PIN_AM31 -to FSM_A[14]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[14]
+set_location_assignment PIN_AL31 -to FSM_A[15]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[15]
+set_location_assignment PIN_AN33 -to FSM_A[16]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[16]
+set_location_assignment PIN_AP33 -to FSM_A[17]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[17]
+set_location_assignment PIN_AT32 -to FSM_A[18]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[18]
+set_location_assignment PIN_AT29 -to FSM_A[19]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[19]
+set_location_assignment PIN_AP31 -to FSM_A[20]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[20]
+set_location_assignment PIN_AR30 -to FSM_A[21]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[21]
+set_location_assignment PIN_AU30 -to FSM_A[22]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[22]
+set_location_assignment PIN_AJ31 -to FSM_A[23]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[23]
+set_location_assignment PIN_AP30 -to FSM_A[24]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[24]
+set_location_assignment PIN_AN31 -to FSM_A[25]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[25]
+set_location_assignment PIN_AT30 -to FSM_A[26]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FSM_A[26]
+
+#============================================================
+# Flash Control
+#============================================================
+set_location_assignment PIN_AK29 -to FLASH_ADV_n
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FLASH_ADV_n
+set_location_assignment PIN_AE27 -to FLASH_CE_n[0]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FLASH_CE_n[0]
+set_location_assignment PIN_BA31 -to FLASH_CE_n[1]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FLASH_CE_n[1]
+set_location_assignment PIN_AL29 -to FLASH_CLK
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FLASH_CLK
+set_location_assignment PIN_AY30 -to FLASH_OE_n
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FLASH_OE_n
+set_location_assignment PIN_BA29 -to FLASH_RDY_BSY_n[0]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FLASH_RDY_BSY_n[0]
+set_location_assignment PIN_BB32 -to FLASH_RDY_BSY_n[1]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FLASH_RDY_BSY_n[1]
+set_location_assignment PIN_AE28 -to FLASH_RESET_n
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FLASH_RESET_n
+set_location_assignment PIN_AR31 -to FLASH_WE_n
+set_instance_assignment -name IO_STANDARD "2.5 V" -to FLASH_WE_n
+
+#============================================================
+# End of pin assignments by Terasic System Builder
+#============================================================
+
+
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
