@@ -2,6 +2,8 @@
 use Glib qw/TRUE FALSE/;
 use strict;
 use warnings;
+use FindBin;
+use lib $FindBin::Bin;
 use soc;
 use ip;
 use interface;
@@ -1076,10 +1078,7 @@ sub generate_soc{
 		
 			
 		# Write system.h and Software gen files
-		generate_header_file($soc,$project_dir,$sw_path,$hw_path,$dir);
-			 
-    		
-    			
+		generate_header_file($soc,$project_dir,$sw_path,$hw_path,$dir);   			
 
 
 		# Write main.c file if not exist
@@ -1092,9 +1091,11 @@ sub generate_soc{
 			
 		}
 			
-			
-			
-			
+		#write perl_object_file 
+		mkpath("$target_dir/perl_lib/",1,01777);
+		open(FILE,  ">$target_dir/perl_lib/$name.SOC") || die "Can not open: $!";
+		print FILE perl_file_header("$name.SOC");
+		print FILE Data::Dumper->Dump([\%$soc],['soc']);		
 			
 
 }	
@@ -1509,14 +1510,6 @@ sub replace_value{
 
 
 
-
-
-
-
-
-
-
-
 sub check_entered_address{
 my 	($base_ref,$end_ref,$connect_ref,$number)=@_;
 my @bases=@{$base_ref};
@@ -1745,7 +1738,7 @@ sub software_edit_soc {
 		}
 		
 		return if($error);
-		my $command = "cd $target_dir/sw; sh program.sh";
+		my $command = "cd $target_dir/sw; bash program.sh";
 		add_info(\$tview,"$command\n");
 		my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($command);
 		if(length $stderr>1){			
@@ -1769,8 +1762,7 @@ sub software_edit_soc {
 
 
 sub soc_mem_prog {
-	 my $string='
-#!/bin/sh
+	 my $string='#!/bin/bash
 
 
 #JTAG_INTFC="$PRONOC_WORK/toolchain/bin/JTAG_INTFC"
@@ -1795,7 +1787,7 @@ $JTAG_INTFC -n 127  -d  "I:1,D:2:3,D:2:2,I:0"
 
 #programe the memory
 
-	sh write_memory.sh 
+	bash write_memory.sh 
 
  
 #Enable the cpu
@@ -1934,7 +1926,7 @@ sub socgen_main{
 		
 		unlink  "$hw_dir/file_list";
 		generate_soc($soc,$info,$target_dir,$hw_dir,$sw_path,1,1);
-		#message_dialog("SoC \"$name\" has been created successfully at $target_dir/ " );
+		
 		my $has_ni= check_for_ni($soc);
 		if($has_ni){
 			my $dialog = Gtk2::MessageDialog->new (my $window,

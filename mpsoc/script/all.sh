@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 	./verilator_compile_hw.sh
 	./verilator_compile_sw.sh

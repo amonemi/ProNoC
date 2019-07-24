@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 script_path=$(pwd)
 path=$script_path/..
 src_noc_path=$path/src_noc	

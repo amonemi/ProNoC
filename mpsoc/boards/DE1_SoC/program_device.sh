@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #usage: 
 #	sh program_device.sh  programming_file.sof

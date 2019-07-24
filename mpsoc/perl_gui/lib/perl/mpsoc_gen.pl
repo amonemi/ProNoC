@@ -1278,6 +1278,14 @@ sub generate_mpsoc{
       
     my @ff= ("$target_dir/src_verilog/$name.v","$target_dir/src_verilog/${name}_top.v");       
     add_to_project_file_list(\@ff,"$hw_dir/lib/",$hw_dir);    
+    
+    
+    #write perl_object_file 
+	mkpath("$target_dir/perl_lib/",1,01777);
+	open(FILE,  ">$target_dir/perl_lib/$name.SOC") || die "Can not open: $!";
+	print FILE perl_file_header("$name.MPSOC");
+	print FILE Data::Dumper->Dump([\%$mpsoc],['mpsoc']);		
+    
              
     message_dialog("MPSoC \"$name\" has been created successfully at $target_dir/ " ) if($show_sucess_msg);
         
@@ -1303,8 +1311,7 @@ return $make;
 
 
 sub mpsoc_mem_prog {
-     my $string='
-#!/bin/sh
+     my $string='#!/bin/bash
 
 
 #JTAG_INTFC="$PRONOC_WORK/toolchain/bin/JTAG_INTFC"
@@ -1332,7 +1339,7 @@ $JTAG_INTFC -n 127  -d  "I:1,D:2:3,D:2:2,I:0"
 for i in $(ls -d */); do 
     echo "Enter ${i%%/}"
     cd ${i%%/}
-    sh write_memory.sh 
+    bash write_memory.sh 
     cd ..
 done
  
@@ -1582,7 +1589,7 @@ sub software_edit_mpsoc {
         }
         
         return if($error);
-        my $command = "cd $sw; sh program.sh";
+        my $command = "cd $sw; bash program.sh";
         add_info(\$tview,"$command\n");
         my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($command);
         if(length $stderr>1){            

@@ -245,6 +245,16 @@ void strreplace(char s[], char chr, char repl_chr)
           //printf("%s",s);
 }
 
+
+void  clean_stp_buff (){
+	char buf[1024];
+	fflush(to_stp);
+	fgets(buf, sizeof(buf), from_stp);
+	//printf("%s\n",buf);
+}
+
+
+
 char * read_stp (){
 	char buf[1024];
 	char * result=NULL;
@@ -324,13 +334,19 @@ void jtag_vdr(unsigned sz, unsigned bits, unsigned *out) {
 	hextostring( hexstring, &bits,  1, sz );
 	if (!out){
 		fprintf(to_stp,"device_lock -timeout 10000\n");
+		
 		fprintf(to_stp,"device_virtual_dr_shift -dr_value %s -instance_index %d  -length %d -no_captured_dr_value -value_in_hex\n", hexstring,index_num,sz);
+		
 		//printf("device_virtual_dr_shift -dr_value %s -instance_index %d  -length %d -no_captured_dr_value -value_in_hex\n",hexstring,index_num,sz);
 		fprintf(to_stp,"catch {device_unlock}\n");
+		clean_stp_buff();			
+//fflush(to_stp);
 	}else{
 		fprintf(to_stp,"device_lock -timeout 10000\n");
+		
 		fprintf(to_stp,"set data [device_virtual_dr_shift -dr_value %s -instance_index %d  -length %d  -value_in_hex]\n", hexstring,index_num,sz);
-		fprintf(to_stp,"catch {device_unlock}\n");		
+		
+		fprintf(to_stp,"catch {device_unlock}\n");
 		return_dr (out);
 	}
 }
@@ -346,6 +362,7 @@ void jtag_vdr_long(unsigned sz, unsigned * bits, unsigned *out, int words) {
 		//printf("device_virtual_dr_shift -dr_value %s -instance_index %d  -length %d -no_captured_dr_value -value_in_hex\n",hexstring,index_num,sz);
 
 		fprintf(to_stp,"catch {device_unlock}\n");
+		clean_stp_buff();	
 	}else{
 		fprintf(to_stp,"device_lock -timeout 10000\n");
 		fprintf(to_stp,"set data [device_virtual_dr_shift -dr_value %s -instance_index %d  -length %d  -value_in_hex]\n",hexstring,index_num,sz);

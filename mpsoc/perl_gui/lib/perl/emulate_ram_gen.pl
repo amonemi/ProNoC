@@ -41,7 +41,7 @@ use constant BYPAS_ST 		=> 0x0;
 sub reset_cmd {
 	my ($ctrl_reset, $noc_reset,$jtag_intfc)=@_;
 	my $reset_vector= (($ctrl_reset & 0x1) << 1) +  ($noc_reset & 0x1);
-	my $cmd = "sh $jtag_intfc \" -n ".JTAG_DONE_RESET_INDEX."  -d I:1,D:2:$reset_vector,I:0 \" ";
+	my $cmd = "bash $jtag_intfc \" -n ".JTAG_DONE_RESET_INDEX."  -d I:1,D:2:$reset_vector,I:0 \" ";
 	#print "$cmd\n";
 	return	$cmd;
 }
@@ -49,7 +49,7 @@ sub reset_cmd {
 sub set_time_limit_cmd {
 	my ($time_limit,$jtag_intfc)=@_;
 	my $hex = sprintf("0x%X", $time_limit);
-	my $cmd = "sh $jtag_intfc \" -n ".JTAG_COUNTER_INDEX."  -d I:1,D:".CLK_CNTw.":$hex,I:0 \" ";
+	my $cmd = "bash $jtag_intfc \" -n ".JTAG_COUNTER_INDEX."  -d I:1,D:".CLK_CNTw.":$hex,I:0 \" ";
 	#print "$cmd\n";
 	return	$cmd;
 }
@@ -291,7 +291,7 @@ sub programe_pck_gens{
 	
 
 	#programe packet generators rams
-	my $cmd= "sh $jtag_intfc \"-n ".JTAG_RAM_INDEX."  -w 8 -i $ENV{'PRONOC_WORK'}/emulate/emulate_ram.bin -c\" ";
+	my $cmd= "bash $jtag_intfc \"-n ".JTAG_RAM_INDEX."  -w 8 -i $ENV{'PRONOC_WORK'}/emulate/emulate_ram.bin -c\" ";
 	#my ($result,$exit) = run_cmd_in_back_ground_get_stdout($cmd);
 	
 	return 0 if(run_cmd_update_info ($cmd,$info));
@@ -309,7 +309,7 @@ return 1;
 
 sub read_jtag_memory{
 	my ($addr,$jtag_intfc,$info)=@_;
-	my $cmd= "sh $jtag_intfc \" -n ".JTAG_STATIC_INDEX." -w 8 -d I:".UPDATE_WB_ADDR.",D:64:$addr,I:5,R:64:$addr,I:0\"";
+	my $cmd= "bash $jtag_intfc \" -n ".JTAG_STATIC_INDEX." -w 8 -d I:".UPDATE_WB_ADDR.",D:64:$addr,I:5,R:64:$addr,I:0\"";
 	#print "$cmd\n";	
 	my ($result,$exit,$stderr) = run_cmd_in_back_ground_get_stdout($cmd);
 	if($exit){
@@ -373,7 +373,7 @@ sub read_statistic_mem_fast {
 	#read static memory
 	my $end= STATISTIC_NUM * 8 *$NE;
 	$end=sprintf ("%X",$end);
-	my $cmd= "sh $jtag_intfc \"-n ".JTAG_STATIC_INDEX."  -w 8 -r -s 0 -e $end\"";
+	my $cmd= "bash $jtag_intfc \"-n ".JTAG_STATIC_INDEX."  -w 8 -r -s 0 -e $end\"";
 	#print "$cmd\n";
 	my ($result,$exit,$stderr) = run_cmd_in_back_ground_get_stdout($cmd);
 	if($exit){
@@ -434,7 +434,7 @@ sub read_pack_gen{
     while ($done ==0){
 		usleep(300000);
 		#my ($result,$exit) = run_cmd_in_back_ground_get_stdout("quartus_stp -t ./lib/tcl/read.tcl done");
-		my ($result,$exit) = run_cmd_in_back_ground_get_stdout("sh $jtag_intfc".READ_DONE_CMD);
+		my ($result,$exit) = run_cmd_in_back_ground_get_stdout("bash $jtag_intfc".READ_DONE_CMD);
 		if($exit != 0 ){
 			add_colored_info($info,$result,'red');
 			return undef;
@@ -483,7 +483,7 @@ sub read_pack_gen{
 	#print "total active router=$total_router\n";
 	#read clock counter
 	my $clk_counter;
-	my ($result,$exit) = run_cmd_in_back_ground_get_stdout("sh $jtag_intfc".READ_COUNTER_CMD);
+	my ($result,$exit) = run_cmd_in_back_ground_get_stdout("bash $jtag_intfc".READ_COUNTER_CMD);
 	if($exit != 0 ){
 		add_colored_info($info,$result,'red');
 		

@@ -314,6 +314,7 @@ int send_binary_file(){
 	jtag_vdr(BIT_NUM, 0x1, &out);
 	jtag_vir(UPDATE_WB_ADDR);
 
+	printf("cpu is disabled.\n");
 
 	// change memory sizes from byte to word	
 	memory_offset_in_word=memory_offset /BYTE_NUM;
@@ -324,7 +325,7 @@ int send_binary_file(){
 	jtag_vir(UPDATE_WB_WR_DATA);
 	
 	printf ("start programing\n");
-	//printf ("num=%d\n",num);
+	printf ("Will send %d values to memory\n",num);
 	for(i=0;i<num;i++){
 		//printf("%d:%x\n",i,buffer[i]);
 		
@@ -340,7 +341,7 @@ int send_binary_file(){
 		}
 	}
 		
-	//printf ("done programing\n");
+	printf ("done programing\n");
 	if(write_verify){
 		if(!(fp = fopen(binary_file_name,"rb"))){  
 			fprintf (stderr,"Error: can not open %s file in read mode\n",binary_file_name);

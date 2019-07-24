@@ -719,7 +719,7 @@ sub run_emulator {
 			set_gui_status($emulate,"ref",2);
 			last;		
 		}
-		my $cmd =  "sh $programer $sof.sof";
+		my $cmd =  "bash $programer $sof.sof";
 		
 		
 		#my $Quartus_bin=  $ENV{QUARTUS_BIN};
