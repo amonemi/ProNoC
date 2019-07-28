@@ -43,6 +43,9 @@ sub initial_default_param{
     my $mpsoc=shift;
     my @socs=$mpsoc->mpsoc_get_soc_list();
     foreach my $soc_name (@socs){
+    	
+    
+    	
         my %param_value;
         my $top=$mpsoc->mpsoc_get_soc($soc_name);
         my @insts=$top->top_get_all_instances();
@@ -56,6 +59,29 @@ sub initial_default_param{
             }
         }
         $top->top_add_default_soc_param(\%param_value);
+        
+        
+        
+      #save default and custom parameter values
+        my $a= $mpsoc->object_get_attribute("soc_params_${soc_name}",undef);
+        return if(! defined $a);
+        my %r = %{$a};
+        foreach my $p (sort keys %r ){
+        	my $params=  $mpsoc->object_get_attribute("soc_params_${soc_name}","$p");   
+        
+        	if ($p eq 'default'){
+        		$top->top_add_default_soc_param($params); 
+        	} else {
+        		$top->top_add_custom_soc_param($params,$p); 
+        		
+        	}
+        	
+      #  $mpsoc->object_add_attribute("soc_params_${soc_name}","$tile",\%param_value); 
+        }
+        
+        
+        
+        
     }
     
 }
@@ -347,13 +373,17 @@ sub get_soc_parameter_setting{
         #save new values 
         if(!defined $tile ) {
             $top->top_add_default_soc_param(\%param_value);
+            $mpsoc->object_add_attribute("soc_params_${soc_name}","default",\%param_value);      
         }
         else {
-            $top->top_add_custom_soc_param(\%param_value,$tile);                
-            
+            $top->top_add_custom_soc_param(\%param_value,$tile);
+            $mpsoc->object_add_attribute("soc_params_${soc_name}","$tile",\%param_value);            
         }
         #set_gui_status($mpsoc,"refresh_soc",1);
         #$$refresh_soc->clicked;
+        
+        
+        
         
         });
     
@@ -510,7 +540,7 @@ sub defualt_tilles_setting {
                 
     }
     @socs=$mpsoc->mpsoc_get_soc_list();
-    
+   
     
     
     my $lab1=gen_label_in_center(' Tile name');
@@ -1174,15 +1204,19 @@ sub generate_soc_files{
 return $msg;    
 }    
 
-
+######
+# generate_mpsoc_lib_file 
+# remove soc libs from saved mpsoc file
+######
 sub generate_mpsoc_lib_file {
     my ($mpsoc,$info) = @_;
     my $name=$mpsoc->object_get_attribute('mpsoc_name');
-    $mpsoc->mpsoc_remove_all_soc_tops(); 
+    $mpsoc->mpsoc_remove_all_soc_tops();  
     open(FILE,  ">lib/mpsoc/$name.MPSOC") || die "Can not open: $!";
     print FILE perl_file_header("$name.MPSOC");
     print FILE Data::Dumper->Dump([\%$mpsoc],['mpsoc']);
     close(FILE) || die "Error closing file: $!";
+        
     get_soc_list($mpsoc,$info); 
     
 }    
