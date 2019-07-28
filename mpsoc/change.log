@@ -2,7 +2,7 @@ All notable changes to this project will be documented in this file.
 
 ##[1.9.1] -24-07-2019
 ## changed
-- Some bugs are fixed in jtag interface & mpsoc custom parameter setting
+- Some bugs are fixed in jtag interface & mpsoc custom parameter setting.
 
 ##[1.9.0] -30-04-2019
 ## Added
