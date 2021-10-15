@@ -41,7 +41,7 @@ extern "C" {
      @return true if is Thread 1
   */
   
-  inline int aembIsThread1() 
+  static inline int aembIsThread1() 
   {
     int rmsr = aembGetMSR();
     return ((rmsr & AEMB_MSR_PHA));
@@ -52,7 +52,7 @@ extern "C" {
      @return true if is Thread 0
   */
   
-  inline int aembIsThread0()
+  static inline int aembIsThread0()
   {
     int rmsr = aembGetMSR();
     return (!(rmsr & AEMB_MSR_PHA));
@@ -62,7 +62,7 @@ extern "C" {
      Checks to see if it is multi-threaded or not.
      @return true if thread capable
   */
-  inline int aembIsThreaded()
+  static inline int aembIsThreaded()
   {
     int rmsr = aembGetMSR();
     return (rmsr & AEMB_MSR_HTX);
@@ -72,7 +72,7 @@ extern "C" {
      Hardware Mutex Signal.  
      Unlock the hardware mutex, which is unlocked on reset.
    */
-  inline void _aembFreeMTX()
+  static inline void _aembFreeMTX()
   {
     int tmp;
     asm volatile ("msrclr %0, %1":"=r"(tmp):"K"(AEMB_MSR_MTX));
@@ -84,7 +84,7 @@ extern "C" {
      Waits until the hardware mutex is unlocked. This should be used
      as part of a larger software mutex mechanism.
    */
-  inline void _aembLockMTX()
+  static inline void _aembLockMTX()
   {
     int rmsr;
     do 

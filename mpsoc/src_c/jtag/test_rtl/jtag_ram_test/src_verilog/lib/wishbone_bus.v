@@ -479,7 +479,12 @@ module bus_arbiter # (
 
     assign comreq	=	|(grant & request);
 
-    always @ (posedge clk or posedge reset) begin 
+`ifdef SYNC_RESET_MODE 
+    always @ (posedge clk )begin 
+`else 
+    always @ (posedge clk or posedge reset)begin 
+`endif 
+   
 	   if (reset) begin 
 		  grant_registered	<= {M{1'b0}};
 	   end else begin

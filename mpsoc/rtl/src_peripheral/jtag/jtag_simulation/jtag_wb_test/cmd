@@ -1,0 +1,1 @@
+quit -sim; cd /home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_wb/simulation; do model.tcl; do /home/alireza/work/hca_git/mpsoc_work/simulation/wave.do;

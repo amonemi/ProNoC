@@ -1,0 +1,87 @@
+Verification Results:
+****************************custom1_topology : Compile *******************************:
+	 model generation is FAILED.
+	 make: *** [/opt/verilator/share/verilator/include/verilated.mk:235: testbench.o] Error 1
+
+****************************Fattree_k3_L3_st : Compile *******************************:
+	 model is generated successfully.
+****************************fmesh_1x1_openpiton : Compile *******************************:
+	 model is generated successfully.
+****************************fmesh_2x2_openpiton : Compile *******************************:
+	 model is generated successfully.
+****************************fmesh_8x8_2cycle_xy : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_2x2_openpiton : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_4x4x3_2cycle_xy : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_8x8_2cycle_adaptive : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_8x8_2cycle_west_first : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_8x8_2cycle_xy : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_8x8_b2 : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_8x8_sbp6_xy : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_8x8_ssa_xy : Compile *******************************:
+	 model is generated successfully.
+****************************torus_8x8_2cycle_xy : Compile *******************************:
+	 model is generated successfully.
+****************************custom1_topology	: random traffic *******************************:
+	 failed. Simulation model is not avaialable
+****************************Fattree_k3_L3_st	: random traffic *******************************:
+	 Passed:   zero load (2,13.657638) saturation (62,121.906154)
+****************************fmesh_1x1_openpiton	: random traffic *******************************:
+	 Passed:   zero load (6,7.283544) saturation (62,47.952866)
+****************************fmesh_2x2_openpiton	: random traffic *******************************:
+	 Passed:   zero load (2,8.446429) saturation (46,78.861712)
+****************************fmesh_8x8_2cycle_xy	: random traffic *******************************:
+	 Passed:   zero load (2,19.554508) saturation (18,155.581334)
+****************************mesh_2x2_openpiton	: random traffic *******************************:
+	 Passed:   zero load (6,9.340102) saturation (62,118.703556)
+****************************mesh_4x4x3_2cycle_xy	: random traffic *******************************:
+	 Passed:   zero load (2,12.745953) saturation (22,66.615217)
+****************************mesh_8x8_2cycle_adaptive	: random traffic *******************************:
+	 Passed:   zero load (2,17.839302) saturation (34,251.244891)
+****************************mesh_8x8_2cycle_west_first	: random traffic *******************************:
+	 Passed:   zero load (2,17.847107) saturation (34,187.292574)
+****************************mesh_8x8_2cycle_xy	: random traffic *******************************:
+	 Passed:   zero load (2,17.850781) saturation (34,182.910213)
+****************************mesh_8x8_b2	: random traffic *******************************:
+	 Passed:   zero load (2,22.376696) saturation (26,162.042382)
+****************************mesh_8x8_sbp6_xy	: random traffic *******************************:
+	 Passed:   zero load (2,10.914141) saturation (34,154.838619)
+****************************mesh_8x8_ssa_xy	: random traffic *******************************:
+	 Passed:   zero load (2,14.460973) saturation (34,160.415994)
+****************************torus_8x8_2cycle_xy	: random traffic *******************************:
+	 Passed:   zero load (2,16.560606) saturation (38,167.524583)
+****************************custom1_topology	: transposed 1 traffic *******************************:
+	 failed. Simulation model is not avaialable
+****************************Fattree_k3_L3_st	: transposed 1 traffic *******************************:
+	 Passed:   zero load (6,13.435701) saturation (100,-)
+****************************fmesh_1x1_openpiton	: transposed 1 traffic *******************************:
+	 Passed:   zero load (50,6.989811) saturation (100,-)
+****************************fmesh_2x2_openpiton	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,9.557895) saturation (42,56.488636)
+****************************fmesh_8x8_2cycle_xy	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,21.649798) saturation (14,162.411596)
+****************************mesh_2x2_openpiton	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,8.597222) saturation (100,-)
+****************************mesh_4x4x3_2cycle_xy	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,12.888742) saturation (14,182.267303)
+****************************mesh_8x8_2cycle_adaptive	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,19.576862) saturation (26,139.040209)
+****************************mesh_8x8_2cycle_west_first	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,19.552562) saturation (22,108.231955)
+****************************mesh_8x8_2cycle_xy	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,19.565240) saturation (18,136.996558)
+****************************mesh_8x8_b2	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,23.801373) saturation (18,145.991281)
+****************************mesh_8x8_sbp6_xy	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,11.445325) saturation (18,130.270034)
+****************************mesh_8x8_ssa_xy	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,15.634971) saturation (18,129.591605)
+****************************torus_8x8_2cycle_xy	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,18.048072) saturation (18,175.375388)

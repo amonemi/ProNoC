@@ -1,0 +1,6 @@
+sudo apt install python-pip
+pip install trueskill
+
+sudo pip install numpy
+
+pip install "networkx<2.0"

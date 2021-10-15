@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #JTAG_INTFC="$PRONOC_WORK/toolchain/bin/JTAG_INTFC"
 source ./jtag_intfc.sh

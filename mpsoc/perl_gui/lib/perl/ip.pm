@@ -7,6 +7,8 @@
 ###############################################################################
 use warnings;
 use strict;
+use FindBin;
+use lib $FindBin::Bin;
 use ip_gen;
 use Cwd;
 
@@ -15,6 +17,7 @@ package ip;
 
 
 sub lib_new {
+	
     my $class = ("ARRAY" eq ref $_[0]) ? "ip" : shift;
     my $self;
     $self = {};
@@ -436,7 +439,7 @@ sub add_ip{
 		ip_add_port($self,$category,$module,$port,$type,$range,$intfc_name,$intfc_port);
 	}
 	
-	my @fileds =("system_h","hdl_files","sw_files","gen_sw_files","gen_hw_files","sw_params_list","unused","parameters_order","description","version",'description_pdf');
+	my @fileds =("system_c","system_h","hdl_files","hdl_files_ticked","sw_files","gen_sw_files","gen_hw_files","sw_params_list","unused","parameters_order","description","version",'description_pdf');
 	foreach my $p (@fileds){
 		my $val=$ipgen->ipgen_get($p);
 		$self->{categories}{$category}{names}{$module}{$p}=$ipgen->ipgen_get($p) if(defined $val );	

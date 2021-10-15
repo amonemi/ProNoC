@@ -1,5 +1,23 @@
 #!/bin/bash
-/home/alireza/intelFPGA_lite/17.1/modelsim_ase/bin/vsim  -do model.tcl
+#/home/alireza/intelFPGA_lite/17.1/modelsim_ase/bin/vsim  -do model.tcl
 #/home/alireza/altera/13.0sp1/modelsim_ase/bin/vsim  -do model.tcl
 #/home/alireza/altera/modeltech/bin/vsim  -do model.tcl
 
+SCRPT_FULL_PATH=$(realpath ${BASH_SOURCE[0]})
+SCRPT_DIR_PATH=$(dirname $SCRPT_FULL_PATH)
+
+#questasim
+LM_LICENSE="1717@epi03.bsc.es"
+VSIM_BIN="/home/alireza/intelFPGA_lite/questa/questasim/bin/vsim"
+
+export LM_LICENSE_FILE=${LM_LICENSE}
+export LM_WORK_PLACE=${PRONOC_WORK}/simulation
+export LM_FILE_LIST="$SCRPT_DIR_PATH/modelsim_filelist.f"
+
+#"$SCRPT_DIR_PATH/../rtl/src_noc/noc_filelist.f $SCRPT_DIR_PATH/../rtl/src_modelsim/filelist.f"
+
+
+echo "Start simulation" >&3
+$VSIM_BIN  -quiet -64 -do model.tcl
+wait 
+echo "End of Simulation" >&3

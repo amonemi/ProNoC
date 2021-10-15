@@ -11,7 +11,7 @@
 
 $wb_master_dummy_request = bless( {
                                     'version' => 1,
-                                    'file_name' => '/home/alireza/mywork/mpsoc/src_peripheral/DMA/wb_master_dummy_request.v',
+                                    'file_name' => 'mpsoc/rtl/src_peripheral/DMA/wb_master_dummy_request.v',
                                     'ip_name' => 'dummy_module',
                                     'ports' => {
                                                  'clk' => {
@@ -190,7 +190,7 @@ $wb_master_dummy_request = bless( {
                                                       'status' => 'ideal'
                                                     },
                                     'hdl_files' => [
-                                                     '/mpsoc/src_peripheral/Other/wb_master_dummy_request.v'
+                                                     '/mpsoc/rtl/src_peripheral/Other/wb_master_dummy_request.v'
                                                    ],
                                     'category' => 'Other',
                                     'unused' => {

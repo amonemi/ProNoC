@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 HARDWARE_NAME="DE-SoC *"
 DEVICE_NAME="@2*" 

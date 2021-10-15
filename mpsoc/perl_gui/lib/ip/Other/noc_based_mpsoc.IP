@@ -1,0 +1,795 @@
+#######################################################################
+##	File: noc_based_mpsoc.IP
+##    
+##	Copyright (C) 2014-2019  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.9.1 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$ipgen = bless( {
+                  'hdl_files' => [],
+                  'version' => 1,
+                  'sockets' => {
+                                 'jtag_to_wb' => {
+                                                   'type' => 'num',
+                                                   '0' => {
+                                                            'name' => 'jtag_to_wb_0'
+                                                          },
+                                                   '2' => {
+                                                            'name' => 'jtag_to_wb_2'
+                                                          },
+                                                   '1' => {
+                                                            'name' => 'jtag_to_wb_1'
+                                                          },
+                                                   'value' => 3
+                                                 }
+                               },
+                  'category' => 'Other',
+                  'unused' => undef,
+                  'parameters' => {
+                                    'T0_ram_JINDEXw' => {
+                                                          'redefine_param' => 1,
+                                                          'global_param' => 'Localparam',
+                                                          'content' => undef,
+                                                          'default' => '8',
+                                                          'type' => 'Fixed',
+                                                          'info' => undef
+                                                        },
+                                    'T2_cpu_FEATURE_DMMU' => {
+                                                               'global_param' => 'Localparam',
+                                                               'redefine_param' => 1,
+                                                               'content' => undef,
+                                                               'default' => '"ENABLED"',
+                                                               'type' => 'Fixed',
+                                                               'info' => undef
+                                                             },
+                                    'T0_timer_PRESCALER_WIDTH' => {
+                                                                    'content' => undef,
+                                                                    'redefine_param' => 1,
+                                                                    'global_param' => 'Localparam',
+                                                                    'default' => '8',
+                                                                    'type' => 'Fixed',
+                                                                    'info' => undef
+                                                                  },
+                                    'T3_ram_JINDEXw' => {
+                                                          'global_param' => 'Localparam',
+                                                          'redefine_param' => 1,
+                                                          'content' => undef,
+                                                          'type' => 'Fixed',
+                                                          'default' => '8',
+                                                          'info' => undef
+                                                        },
+                                    'T2_cpu_FEATURE_INSTRUCTIONCACHE' => {
+                                                                           'info' => undef,
+                                                                           'default' => '"ENABLED"',
+                                                                           'type' => 'Fixed',
+                                                                           'content' => undef,
+                                                                           'global_param' => 'Localparam',
+                                                                           'redefine_param' => 1
+                                                                         },
+                                    'T2_ram_Aw' => {
+                                                     'redefine_param' => 1,
+                                                     'global_param' => 'Localparam',
+                                                     'content' => undef,
+                                                     'type' => 'Fixed',
+                                                     'default' => '14',
+                                                     'info' => undef
+                                                   },
+                                    'T1_ram_Aw' => {
+                                                     'info' => undef,
+                                                     'default' => '14',
+                                                     'type' => 'Fixed',
+                                                     'content' => undef,
+                                                     'global_param' => 'Localparam',
+                                                     'redefine_param' => 1
+                                                   },
+                                    'T0_cpu_FEATURE_DMMU' => {
+                                                               'type' => 'Fixed',
+                                                               'default' => '"ENABLED"',
+                                                               'info' => undef,
+                                                               'redefine_param' => 1,
+                                                               'global_param' => 'Localparam',
+                                                               'content' => undef
+                                                             },
+                                    'T1_cpu_FEATURE_DATACACHE' => {
+                                                                    'default' => '"ENABLED"',
+                                                                    'type' => 'Fixed',
+                                                                    'info' => undef,
+                                                                    'content' => undef,
+                                                                    'global_param' => 'Localparam',
+                                                                    'redefine_param' => 1
+                                                                  },
+                                    'T1_cpu_FEATURE_IMMU' => {
+                                                               'type' => 'Fixed',
+                                                               'default' => '"ENABLED"',
+                                                               'info' => undef,
+                                                               'redefine_param' => 1,
+                                                               'global_param' => 'Localparam',
+                                                               'content' => undef
+                                                             },
+                                    'T0_ram_FPGA_VENDOR' => {
+                                                              'global_param' => 'Localparam',
+                                                              'redefine_param' => 1,
+                                                              'content' => undef,
+                                                              'default' => '"XILINX"',
+                                                              'type' => 'Fixed',
+                                                              'info' => undef
+                                                            },
+                                    'T0_ram_JSTATUSw' => {
+                                                           'content' => undef,
+                                                           'global_param' => 'Localparam',
+                                                           'redefine_param' => 1,
+                                                           'info' => undef,
+                                                           'type' => 'Fixed',
+                                                           'default' => '8'
+                                                         },
+                                    'T2_cpu_IRQ_NUM' => {
+                                                          'info' => undef,
+                                                          'default' => '32',
+                                                          'type' => 'Fixed',
+                                                          'global_param' => 'Localparam',
+                                                          'redefine_param' => 1,
+                                                          'content' => undef
+                                                        },
+                                    'T3_timer_PRESCALER_WIDTH' => {
+                                                                    'redefine_param' => 1,
+                                                                    'global_param' => 'Localparam',
+                                                                    'content' => undef,
+                                                                    'default' => '8',
+                                                                    'type' => 'Fixed',
+                                                                    'info' => undef
+                                                                  },
+                                    'T2_led_PORT_WIDTH' => {
+                                                             'redefine_param' => 1,
+                                                             'global_param' => 'Localparam',
+                                                             'content' => undef,
+                                                             'type' => 'Fixed',
+                                                             'default' => '   1',
+                                                             'info' => undef
+                                                           },
+                                    'T0_ram_JTAG_CONNECT' => {
+                                                               'global_param' => 'Localparam',
+                                                               'redefine_param' => 1,
+                                                               'content' => undef,
+                                                               'info' => undef,
+                                                               'type' => 'Fixed',
+                                                               'default' => '"XILINX_JTAG_WB"'
+                                                             },
+                                    'T3_ram_JDw' => {
+                                                      'content' => undef,
+                                                      'redefine_param' => 1,
+                                                      'global_param' => 'Localparam',
+                                                      'default' => 'T3_ram_Dw',
+                                                      'type' => 'Fixed',
+                                                      'info' => undef
+                                                    },
+                                    'T3_ram_J2WBw' => {
+                                                        'default' => '(T3_ram_JTAG_CONNECT== "XILINX_JTAG_WB") ? 1+1+T3_ram_JDw+T3_ram_JAw : 1',
+                                                        'type' => 'Fixed',
+                                                        'info' => undef,
+                                                        'redefine_param' => 1,
+                                                        'global_param' => 'Localparam',
+                                                        'content' => undef
+                                                      },
+                                    'T3_ram_JTAG_CONNECT' => {
+                                                               'type' => 'Fixed',
+                                                               'default' => '"XILINX_JTAG_WB"',
+                                                               'info' => undef,
+                                                               'global_param' => 'Localparam',
+                                                               'redefine_param' => 1,
+                                                               'content' => undef
+                                                             },
+                                    'T1_cpu_OPTION_DCACHE_SNOOP' => {
+                                                                      'global_param' => 'Localparam',
+                                                                      'redefine_param' => 1,
+                                                                      'content' => undef,
+                                                                      'info' => undef,
+                                                                      'default' => '"ENABLED"',
+                                                                      'type' => 'Fixed'
+                                                                    },
+                                    'T0_cpu_FEATURE_DATACACHE' => {
+                                                                    'default' => '"ENABLED"',
+                                                                    'type' => 'Fixed',
+                                                                    'info' => undef,
+                                                                    'global_param' => 'Localparam',
+                                                                    'redefine_param' => 1,
+                                                                    'content' => undef
+                                                                  },
+                                    'T2_ram_JTAG_CONNECT' => {
+                                                               'info' => undef,
+                                                               'default' => '"XILINX_JTAG_WB"',
+                                                               'type' => 'Fixed',
+                                                               'redefine_param' => 1,
+                                                               'global_param' => 'Localparam',
+                                                               'content' => undef
+                                                             },
+                                    'T0_cpu_OPTION_OPERAND_WIDTH' => {
+                                                                       'info' => undef,
+                                                                       'default' => '32',
+                                                                       'type' => 'Fixed',
+                                                                       'global_param' => 'Localparam',
+                                                                       'redefine_param' => 1,
+                                                                       'content' => undef
+                                                                     },
+                                    'T2_ram_J2WBw' => {
+                                                        'default' => '(T2_ram_JTAG_CONNECT== "XILINX_JTAG_WB") ? 1+1+T2_ram_JDw+T2_ram_JAw : 1',
+                                                        'type' => 'Fixed',
+                                                        'info' => undef,
+                                                        'global_param' => 'Localparam',
+                                                        'redefine_param' => 1,
+                                                        'content' => undef
+                                                      },
+                                    'T1_ram_JAw' => {
+                                                      'type' => 'Fixed',
+                                                      'default' => '32',
+                                                      'info' => undef,
+                                                      'content' => undef,
+                                                      'redefine_param' => 1,
+                                                      'global_param' => 'Localparam'
+                                                    },
+                                    'T1_cpu_FEATURE_INSTRUCTIONCACHE' => {
+                                                                           'default' => '"ENABLED"',
+                                                                           'type' => 'Fixed',
+                                                                           'info' => undef,
+                                                                           'global_param' => 'Localparam',
+                                                                           'redefine_param' => 1,
+                                                                           'content' => undef
+                                                                         },
+                                    'T1_ram_JDw' => {
+                                                      'info' => undef,
+                                                      'default' => 'T1_ram_Dw',
+                                                      'type' => 'Fixed',
+                                                      'global_param' => 'Localparam',
+                                                      'redefine_param' => 1,
+                                                      'content' => undef
+                                                    },
+                                    'T3_cpu_OPTION_DCACHE_SNOOP' => {
+                                                                      'content' => undef,
+                                                                      'global_param' => 'Localparam',
+                                                                      'redefine_param' => 1,
+                                                                      'default' => '"ENABLED"',
+                                                                      'type' => 'Fixed',
+                                                                      'info' => undef
+                                                                    },
+                                    'T2_cpu_FEATURE_IMMU' => {
+                                                               'default' => '"ENABLED"',
+                                                               'type' => 'Fixed',
+                                                               'info' => undef,
+                                                               'global_param' => 'Localparam',
+                                                               'redefine_param' => 1,
+                                                               'content' => undef
+                                                             },
+                                    'T0_ram_J2WBw' => {
+                                                        'info' => undef,
+                                                        'default' => '(T0_ram_JTAG_CONNECT== "XILINX_JTAG_WB") ? 1+1+T0_ram_JDw+T0_ram_JAw : 1',
+                                                        'type' => 'Fixed',
+                                                        'global_param' => 'Localparam',
+                                                        'redefine_param' => 1,
+                                                        'content' => undef
+                                                      },
+                                    'T2_ram_FPGA_VENDOR' => {
+                                                              'redefine_param' => 1,
+                                                              'global_param' => 'Localparam',
+                                                              'content' => undef,
+                                                              'type' => 'Fixed',
+                                                              'default' => '"XILINX"',
+                                                              'info' => undef
+                                                            },
+                                    'T2_ram_JSTATUSw' => {
+                                                           'default' => '8',
+                                                           'type' => 'Fixed',
+                                                           'info' => undef,
+                                                           'content' => undef,
+                                                           'global_param' => 'Localparam',
+                                                           'redefine_param' => 1
+                                                         },
+                                    'T3_cpu_FEATURE_DATACACHE' => {
+                                                                    'default' => '"ENABLED"',
+                                                                    'type' => 'Fixed',
+                                                                    'info' => undef,
+                                                                    'global_param' => 'Localparam',
+                                                                    'redefine_param' => 1,
+                                                                    'content' => undef
+                                                                  },
+                                    'T0_cpu_FEATURE_INSTRUCTIONCACHE' => {
+                                                                           'global_param' => 'Localparam',
+                                                                           'redefine_param' => 1,
+                                                                           'content' => undef,
+                                                                           'default' => '"ENABLED"',
+                                                                           'type' => 'Fixed',
+                                                                           'info' => undef
+                                                                         },
+                                    'T2_cpu_FEATURE_DATACACHE' => {
+                                                                    'redefine_param' => 1,
+                                                                    'global_param' => 'Localparam',
+                                                                    'content' => undef,
+                                                                    'type' => 'Fixed',
+                                                                    'default' => '"ENABLED"',
+                                                                    'info' => undef
+                                                                  },
+                                    'T2_ram_JINDEXw' => {
+                                                          'content' => undef,
+                                                          'global_param' => 'Localparam',
+                                                          'redefine_param' => 1,
+                                                          'type' => 'Fixed',
+                                                          'default' => '8',
+                                                          'info' => undef
+                                                        },
+                                    'T3_ram_WB2Jw' => {
+                                                        'default' => '(T3_ram_JTAG_CONNECT== "XILINX_JTAG_WB") ? 1+T3_ram_JSTATUSw+T3_ram_JINDEXw+1+T3_ram_JDw  : 1',
+                                                        'type' => 'Fixed',
+                                                        'info' => undef,
+                                                        'content' => undef,
+                                                        'global_param' => 'Localparam',
+                                                        'redefine_param' => 1
+                                                      },
+                                    'T1_ram_FPGA_VENDOR' => {
+                                                              'info' => undef,
+                                                              'default' => '"XILINX"',
+                                                              'type' => 'Fixed',
+                                                              'content' => undef,
+                                                              'global_param' => 'Localparam',
+                                                              'redefine_param' => 1
+                                                            },
+                                    'T1_cpu_IRQ_NUM' => {
+                                                          'info' => undef,
+                                                          'type' => 'Fixed',
+                                                          'default' => '32',
+                                                          'redefine_param' => 1,
+                                                          'global_param' => 'Localparam',
+                                                          'content' => undef
+                                                        },
+                                    'T0_ram_Aw' => {
+                                                     'info' => undef,
+                                                     'type' => 'Fixed',
+                                                     'default' => '14',
+                                                     'redefine_param' => 1,
+                                                     'global_param' => 'Localparam',
+                                                     'content' => undef
+                                                   },
+                                    'T2_cpu_OPTION_DCACHE_SNOOP' => {
+                                                                      'content' => undef,
+                                                                      'global_param' => 'Localparam',
+                                                                      'redefine_param' => 1,
+                                                                      'default' => '"ENABLED"',
+                                                                      'type' => 'Fixed',
+                                                                      'info' => undef
+                                                                    },
+                                    'T1_ram_WB2Jw' => {
+                                                        'redefine_param' => 1,
+                                                        'global_param' => 'Localparam',
+                                                        'content' => undef,
+                                                        'default' => '(T1_ram_JTAG_CONNECT== "XILINX_JTAG_WB") ? 1+T1_ram_JSTATUSw+T1_ram_JINDEXw+1+T1_ram_JDw  : 1',
+                                                        'type' => 'Fixed',
+                                                        'info' => undef
+                                                      },
+                                    'T1_ram_Dw' => {
+                                                     'default' => '32',
+                                                     'type' => 'Fixed',
+                                                     'info' => undef,
+                                                     'redefine_param' => 1,
+                                                     'global_param' => 'Localparam',
+                                                     'content' => undef
+                                                   },
+                                    'T3_led_PORT_WIDTH' => {
+                                                             'type' => 'Fixed',
+                                                             'default' => '   1',
+                                                             'info' => undef,
+                                                             'global_param' => 'Localparam',
+                                                             'redefine_param' => 1,
+                                                             'content' => undef
+                                                           },
+                                    'T0_ram_WB2Jw' => {
+                                                        'info' => undef,
+                                                        'default' => '(T0_ram_JTAG_CONNECT== "XILINX_JTAG_WB") ? 1+T0_ram_JSTATUSw+T0_ram_JINDEXw+1+T0_ram_JDw  : 1',
+                                                        'type' => 'Fixed',
+                                                        'content' => undef,
+                                                        'global_param' => 'Localparam',
+                                                        'redefine_param' => 1
+                                                      },
+                                    'T3_cpu_FEATURE_DMMU' => {
+                                                               'type' => 'Fixed',
+                                                               'default' => '"ENABLED"',
+                                                               'info' => undef,
+                                                               'content' => undef,
+                                                               'redefine_param' => 1,
+                                                               'global_param' => 'Localparam'
+                                                             },
+                                    'T2_cpu_OPTION_OPERAND_WIDTH' => {
+                                                                       'info' => undef,
+                                                                       'type' => 'Fixed',
+                                                                       'default' => '32',
+                                                                       'global_param' => 'Localparam',
+                                                                       'redefine_param' => 1,
+                                                                       'content' => undef
+                                                                     },
+                                    'T3_ram_FPGA_VENDOR' => {
+                                                              'type' => 'Fixed',
+                                                              'default' => '"XILINX"',
+                                                              'info' => undef,
+                                                              'global_param' => 'Localparam',
+                                                              'redefine_param' => 1,
+                                                              'content' => undef
+                                                            },
+                                    'T1_cpu_FEATURE_DMMU' => {
+                                                               'type' => 'Fixed',
+                                                               'default' => '"ENABLED"',
+                                                               'info' => undef,
+                                                               'global_param' => 'Localparam',
+                                                               'redefine_param' => 1,
+                                                               'content' => undef
+                                                             },
+                                    'T1_ram_J2WBw' => {
+                                                        'type' => 'Fixed',
+                                                        'default' => '(T1_ram_JTAG_CONNECT== "XILINX_JTAG_WB") ? 1+1+T1_ram_JDw+T1_ram_JAw : 1',
+                                                        'info' => undef,
+                                                        'content' => undef,
+                                                        'global_param' => 'Localparam',
+                                                        'redefine_param' => 1
+                                                      },
+                                    'T3_ram_Aw' => {
+                                                     'content' => undef,
+                                                     'global_param' => 'Localparam',
+                                                     'redefine_param' => 1,
+                                                     'type' => 'Fixed',
+                                                     'default' => '14',
+                                                     'info' => undef
+                                                   },
+                                    'T1_timer_PRESCALER_WIDTH' => {
+                                                                    'global_param' => 'Localparam',
+                                                                    'redefine_param' => 1,
+                                                                    'content' => undef,
+                                                                    'type' => 'Fixed',
+                                                                    'default' => '8',
+                                                                    'info' => undef
+                                                                  },
+                                    'T2_ram_WB2Jw' => {
+                                                        'global_param' => 'Localparam',
+                                                        'redefine_param' => 1,
+                                                        'content' => undef,
+                                                        'default' => '(T2_ram_JTAG_CONNECT== "XILINX_JTAG_WB") ? 1+T2_ram_JSTATUSw+T2_ram_JINDEXw+1+T2_ram_JDw  : 1',
+                                                        'type' => 'Fixed',
+                                                        'info' => undef
+                                                      },
+                                    'T1_ram_JINDEXw' => {
+                                                          'content' => undef,
+                                                          'redefine_param' => 1,
+                                                          'global_param' => 'Localparam',
+                                                          'info' => undef,
+                                                          'default' => '8',
+                                                          'type' => 'Fixed'
+                                                        },
+                                    'T3_cpu_IRQ_NUM' => {
+                                                          'content' => undef,
+                                                          'redefine_param' => 1,
+                                                          'global_param' => 'Localparam',
+                                                          'type' => 'Fixed',
+                                                          'default' => '32',
+                                                          'info' => undef
+                                                        },
+                                    'T0_ram_JDw' => {
+                                                      'info' => undef,
+                                                      'default' => 'T0_ram_Dw',
+                                                      'type' => 'Fixed',
+                                                      'content' => undef,
+                                                      'redefine_param' => 1,
+                                                      'global_param' => 'Localparam'
+                                                    },
+                                    'T3_ram_JSTATUSw' => {
+                                                           'info' => undef,
+                                                           'default' => '8',
+                                                           'type' => 'Fixed',
+                                                           'redefine_param' => 1,
+                                                           'global_param' => 'Localparam',
+                                                           'content' => undef
+                                                         },
+                                    'T0_cpu_FEATURE_IMMU' => {
+                                                               'default' => '"ENABLED"',
+                                                               'type' => 'Fixed',
+                                                               'info' => undef,
+                                                               'content' => undef,
+                                                               'global_param' => 'Localparam',
+                                                               'redefine_param' => 1
+                                                             },
+                                    'T1_ram_JTAG_CONNECT' => {
+                                                               'type' => 'Fixed',
+                                                               'default' => '"XILINX_JTAG_WB"',
+                                                               'info' => undef,
+                                                               'content' => undef,
+                                                               'global_param' => 'Localparam',
+                                                               'redefine_param' => 1
+                                                             },
+                                    'T3_cpu_FEATURE_INSTRUCTIONCACHE' => {
+                                                                           'type' => 'Fixed',
+                                                                           'default' => '"ENABLED"',
+                                                                           'info' => undef,
+                                                                           'content' => undef,
+                                                                           'global_param' => 'Localparam',
+                                                                           'redefine_param' => 1
+                                                                         },
+                                    'T0_cpu_IRQ_NUM' => {
+                                                          'redefine_param' => 1,
+                                                          'global_param' => 'Localparam',
+                                                          'content' => undef,
+                                                          'type' => 'Fixed',
+                                                          'default' => '32',
+                                                          'info' => undef
+                                                        },
+                                    'T0_ram_JAw' => {
+                                                      'global_param' => 'Localparam',
+                                                      'redefine_param' => 1,
+                                                      'content' => undef,
+                                                      'default' => '32',
+                                                      'type' => 'Fixed',
+                                                      'info' => undef
+                                                    },
+                                    'T0_ram_Dw' => {
+                                                     'global_param' => 'Localparam',
+                                                     'redefine_param' => 1,
+                                                     'content' => undef,
+                                                     'default' => '32',
+                                                     'type' => 'Fixed',
+                                                     'info' => undef
+                                                   },
+                                    'T1_cpu_OPTION_OPERAND_WIDTH' => {
+                                                                       'redefine_param' => 1,
+                                                                       'global_param' => 'Localparam',
+                                                                       'content' => undef,
+                                                                       'info' => undef,
+                                                                       'type' => 'Fixed',
+                                                                       'default' => '32'
+                                                                     },
+                                    'T0_led_PORT_WIDTH' => {
+                                                             'info' => undef,
+                                                             'type' => 'Fixed',
+                                                             'default' => '   1',
+                                                             'content' => undef,
+                                                             'redefine_param' => 1,
+                                                             'global_param' => 'Localparam'
+                                                           },
+                                    'T3_cpu_FEATURE_IMMU' => {
+                                                               'info' => undef,
+                                                               'default' => '"ENABLED"',
+                                                               'type' => 'Fixed',
+                                                               'content' => undef,
+                                                               'redefine_param' => 1,
+                                                               'global_param' => 'Localparam'
+                                                             },
+                                    'T1_ram_JSTATUSw' => {
+                                                           'content' => undef,
+                                                           'redefine_param' => 1,
+                                                           'global_param' => 'Localparam',
+                                                           'info' => undef,
+                                                           'type' => 'Fixed',
+                                                           'default' => '8'
+                                                         },
+                                    'T3_ram_Dw' => {
+                                                     'info' => undef,
+                                                     'type' => 'Fixed',
+                                                     'default' => '32',
+                                                     'global_param' => 'Localparam',
+                                                     'redefine_param' => 1,
+                                                     'content' => undef
+                                                   },
+                                    'T2_timer_PRESCALER_WIDTH' => {
+                                                                    'content' => undef,
+                                                                    'global_param' => 'Localparam',
+                                                                    'redefine_param' => 1,
+                                                                    'info' => undef,
+                                                                    'default' => '8',
+                                                                    'type' => 'Fixed'
+                                                                  },
+                                    'T3_ram_JAw' => {
+                                                      'global_param' => 'Localparam',
+                                                      'redefine_param' => 1,
+                                                      'content' => undef,
+                                                      'info' => undef,
+                                                      'default' => '32',
+                                                      'type' => 'Fixed'
+                                                    },
+                                    'T1_led_PORT_WIDTH' => {
+                                                             'type' => 'Fixed',
+                                                             'default' => '   1',
+                                                             'info' => undef,
+                                                             'content' => undef,
+                                                             'global_param' => 'Localparam',
+                                                             'redefine_param' => 1
+                                                           },
+                                    'T0_cpu_OPTION_DCACHE_SNOOP' => {
+                                                                      'global_param' => 'Localparam',
+                                                                      'redefine_param' => 1,
+                                                                      'content' => undef,
+                                                                      'info' => undef,
+                                                                      'type' => 'Fixed',
+                                                                      'default' => '"ENABLED"'
+                                                                    },
+                                    'T3_cpu_OPTION_OPERAND_WIDTH' => {
+                                                                       'content' => undef,
+                                                                       'redefine_param' => 1,
+                                                                       'global_param' => 'Localparam',
+                                                                       'type' => 'Fixed',
+                                                                       'default' => '32',
+                                                                       'info' => undef
+                                                                     },
+                                    'T2_ram_JDw' => {
+                                                      'info' => undef,
+                                                      'type' => 'Fixed',
+                                                      'default' => 'T2_ram_Dw',
+                                                      'content' => undef,
+                                                      'global_param' => 'Localparam',
+                                                      'redefine_param' => 1
+                                                    },
+                                    'T2_ram_JAw' => {
+                                                      'info' => undef,
+                                                      'type' => 'Fixed',
+                                                      'default' => '32',
+                                                      'content' => undef,
+                                                      'global_param' => 'Localparam',
+                                                      'redefine_param' => 1
+                                                    },
+                                    'T2_ram_Dw' => {
+                                                     'default' => '32',
+                                                     'type' => 'Fixed',
+                                                     'info' => undef,
+                                                     'content' => undef,
+                                                     'redefine_param' => 1,
+                                                     'global_param' => 'Localparam'
+                                                   }
+                                  },
+                  'parameters_order' => [
+                                          'cpu_FEATURE_DATACACHE',
+                                          'cpu_FEATURE_DMMU',
+                                          'cpu_FEATURE_IMMU',
+                                          'cpu_FEATURE_INSTRUCTIONCACHE',
+                                          'cpu_IRQ_NUM',
+                                          'cpu_OPTION_DCACHE_SNOOP',
+                                          'cpu_OPTION_OPERAND_WIDTH',
+                                          'led_PORT_WIDTH',
+                                          'ram_Aw',
+                                          'ram_Dw',
+                                          'ram_FPGA_VENDOR',
+                                          'ram_J2WBw',
+                                          'ram_JAw',
+                                          'ram_JDw',
+                                          'ram_JINDEXw',
+                                          'ram_JSTATUSw',
+                                          'ram_JTAG_CONNECT',
+                                          'ram_WB2Jw',
+                                          'timer_PRESCALER_WIDTH'
+                                        ],
+                  'file_name' => undef,
+                  'gui_status' => {
+                                    'timeout' => 0,
+                                    'status' => 'ideal'
+                                  },
+                  'ports' => {
+                               'T0_led_port_o' => {
+                                                    'range' => 'T0_led_PORT_WIDTH-1     :   0',
+                                                    'intfc_port' => 'IO',
+                                                    'type' => 'output',
+                                                    'intfc_name' => 'IO'
+                                                  },
+                               'T2_led_port_o' => {
+                                                    'range' => 'T2_led_PORT_WIDTH-1     :   0',
+                                                    'intfc_port' => 'IO',
+                                                    'type' => 'output',
+                                                    'intfc_name' => 'IO'
+                                                  },
+                               'enable0' => {
+                                              'range' => undef,
+                                              'intfc_port' => 'enable_i',
+                                              'type' => 'input',
+                                              'intfc_name' => 'plug:enable[0]'
+                                            },
+                               'T3_ram_jtag_to_wb' => {
+                                                        'intfc_name' => 'IO',
+                                                        'type' => 'input',
+                                                        'intfc_port' => 'jwb_i',
+                                                        'range' => 'T3_ram_J2WBw-1 : 0'
+                                                      },
+                               'hh' => {
+                                         'type' => 'input',
+                                         'intfc_name' => 'plug:clk[0]',
+                                         'range' => undef,
+                                         'intfc_port' => 'clk_i'
+                                       },
+                               'T2_ram_wb_to_jtag' => {
+                                                        'range' => 'T2_ram_WB2Jw-1 : 0',
+                                                        'intfc_port' => 'jwb_o',
+                                                        'type' => 'output',
+                                                        'intfc_name' => 'socket:jtag_to_wb[2]'
+                                                      },
+                               'T1_led_port_o' => {
+                                                    'range' => 'T1_led_PORT_WIDTH-1     :   0',
+                                                    'intfc_port' => 'IO',
+                                                    'type' => 'output',
+                                                    'intfc_name' => 'IO'
+                                                  },
+                               'T0_ram_wb_to_jtag' => {
+                                                        'type' => 'output',
+                                                        'intfc_name' => 'socket:jtag_to_wb[0]',
+                                                        'range' => 'T0_ram_WB2Jw-1 : 0',
+                                                        'intfc_port' => 'jwb_o'
+                                                      },
+                               'reset0' => {
+                                             'type' => 'input',
+                                             'intfc_name' => 'plug:reset[0]',
+                                             'range' => undef,
+                                             'intfc_port' => 'reset_i'
+                                           },
+                               'T1_ram_wb_to_jtag' => {
+                                                        'range' => 'T1_ram_WB2Jw-1 : 0',
+                                                        'intfc_port' => 'jwb_o',
+                                                        'type' => 'output',
+                                                        'intfc_name' => 'socket:jtag_to_wb[1]'
+                                                      },
+                               'T3_led_port_o' => {
+                                                    'range' => 'T3_led_PORT_WIDTH-1     :   0',
+                                                    'intfc_port' => 'IO',
+                                                    'type' => 'output',
+                                                    'intfc_name' => 'IO'
+                                                  },
+                               'clk1' => {
+                                           'intfc_name' => 'plug:clk[1]',
+                                           'type' => 'input',
+                                           'intfc_port' => 'clk_i',
+                                           'range' => undef
+                                         },
+                               'T2_ram_jtag_to_wb' => {
+                                                        'intfc_port' => 'jwb_i',
+                                                        'range' => 'T2_ram_J2WBw-1 : 0',
+                                                        'intfc_name' => 'socket:jtag_to_wb[2]',
+                                                        'type' => 'input'
+                                                      },
+                               'T1_ram_jtag_to_wb' => {
+                                                        'intfc_name' => 'socket:jtag_to_wb[1]',
+                                                        'type' => 'input',
+                                                        'intfc_port' => 'jwb_i',
+                                                        'range' => 'T1_ram_J2WBw-1 : 0'
+                                                      },
+                               'T0_ram_jtag_to_wb' => {
+                                                        'type' => 'input',
+                                                        'intfc_name' => 'socket:jtag_to_wb[0]',
+                                                        'range' => 'T0_ram_J2WBw-1 : 0',
+                                                        'intfc_port' => 'jwb_i'
+                                                      },
+                               'T3_ram_wb_to_jtag' => {
+                                                        'type' => 'output',
+                                                        'intfc_name' => 'IO',
+                                                        'range' => 'T3_ram_WB2Jw-1 : 0',
+                                                        'intfc_port' => 'jwb_o'
+                                                      }
+                             },
+                  'plugs' => {
+                               'reset' => {
+                                            'value' => 1,
+                                            '0' => {
+                                                     'name' => 'reset0'
+                                                   },
+                                            'type' => 'num'
+                                          },
+                               'enable' => {
+                                             '0' => {
+                                                      'name' => 'enable0'
+                                                    },
+                                             'value' => 1,
+                                             'type' => 'num'
+                                           },
+                               'clk' => {
+                                          'value' => '2',
+                                          '1' => {
+                                                   'name' => 'clk1'
+                                                 },
+                                          '0' => {
+                                                   'name' => 'hh'
+                                                 },
+                                          'type' => 'num'
+                                        }
+                             },
+                  'ports_order' => [],
+                  'ip_name' => 'noc_based_mpsoc',
+                  'module_name' => 'noc_based_mpsoc'
+                }, 'ip_gen' );

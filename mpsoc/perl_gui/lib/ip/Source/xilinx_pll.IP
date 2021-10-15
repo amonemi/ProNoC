@@ -1,0 +1,356 @@
+#######################################################################
+##	File: xilinx_pll.IP
+##    
+##	Copyright (C) 2014-2019  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.9.1 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$ipgen = bless( {
+                  'plugs' => {
+                               'clk' => {
+                                          '0' => {
+                                                   'name' => 'clk_in'
+                                                 },
+                                          'type' => 'num',
+                                          'value' => 1
+                                        },
+                               'reset' => {
+                                            'value' => 1,
+                                            '0' => {
+                                                     'name' => 'reset_in'
+                                                   },
+                                            'type' => 'num'
+                                          }
+                             },
+                  'sockets' => {
+                                 'reset' => {
+                                              'connection_num' => 'multi connection',
+                                              'type' => 'num',
+                                              '0' => {
+                                                       'name' => 'reset'
+                                                     },
+                                              '1' => {
+                                                       'name' => 'reset_1'
+                                                     },
+                                              'value' => 1
+                                            },
+                                 'clk' => {
+                                            '1' => {
+                                                     'name' => 'clk_1'
+                                                   },
+                                            '3' => {
+                                                     'name' => 'clk_3'
+                                                   },
+                                            'value' => 'CLKOUT_NUM',
+                                            '5' => {
+                                                     'name' => 'clk_5'
+                                                   },
+                                            'type' => 'param',
+                                            'connection_num' => 'multi connection',
+                                            '0' => {
+                                                     'name' => 'clk'
+                                                   },
+                                            '2' => {
+                                                     'name' => 'clk_2'
+                                                   },
+                                            '4' => {
+                                                     'name' => 'clk_4'
+                                                   }
+                                          }
+                               },
+                  'category' => 'Source',
+                  'parameters_order' => [
+                                          'CLKOUT_NUM',
+                                          'BANDWIDTH',
+                                          'CLKFBOUT_MULT',
+                                          'CLKFBOUT_PHASE',
+                                          'CLKIN1_PERIOD',
+                                          'CLKOUT0_DIVIDE',
+                                          'CLKOUT1_DIVIDE',
+                                          'CLKOUT2_DIVIDE',
+                                          'CLKOUT3_DIVIDE',
+                                          'CLKOUT4_DIVIDE',
+                                          'CLKOUT5_DIVIDE',
+                                          'CLKOUT0_DUTY_CYCLE',
+                                          'CLKOUT1_DUTY_CYCLE',
+                                          'CLKOUT2_DUTY_CYCLE',
+                                          'CLKOUT3_DUTY_CYCLE',
+                                          'CLKOUT4_DUTY_CYCLE',
+                                          'CLKOUT5_DUTY_CYCLE',
+                                          'CLKOUT0_PHASE',
+                                          'CLKOUT1_PHASE',
+                                          'CLKOUT2_PHASE',
+                                          'CLKOUT3_PHASE',
+                                          'CLKOUT4_PHASE',
+                                          'CLKOUT5_PHASE',
+                                          'DIVCLK_DIVIDE',
+                                          'REF_JITTER1',
+                                          'STARTUP_WAIT'
+                                        ],
+                  'modules' => {
+                                 'xilinx_pll2_base' => {}
+                               },
+                  'gui_status' => {
+                                    'timeout' => 0,
+                                    'status' => 'ideal'
+                                  },
+                  'ports_order' => [
+                                     'clk_out',
+                                     'reset_out',
+                                     'clk_in',
+                                     'reset_in'
+                                   ],
+                  'parameters' => {
+                                    'CLKOUT1_DIVIDE' => {
+                                                          'info' => 'Divide amount for CLKOUT1  (1-128)',
+                                                          'global_param' => 'Localparam',
+                                                          'redefine_param' => 1,
+                                                          'type' => 'Spin-button',
+                                                          'content' => '1,128,1',
+                                                          'default' => '1'
+                                                        },
+                                    'CLKOUT4_DIVIDE' => {
+                                                          'type' => 'Spin-button',
+                                                          'content' => '1,128,1',
+                                                          'redefine_param' => 1,
+                                                          'global_param' => 'Localparam',
+                                                          'info' => 'Divide amount for CLKOUT4  (1-128)',
+                                                          'default' => '1'
+                                                        },
+                                    'CLKOUT2_DUTY_CYCLE' => {
+                                                              'global_param' => 'Localparam',
+                                                              'info' => ' Duty cycle for CLKOUT2 (0.001-0.999).',
+                                                              'content' => '0.001,0.999,0.001',
+                                                              'type' => 'Spin-button',
+                                                              'redefine_param' => 1,
+                                                              'default' => '0.5'
+                                                            },
+                                    'CLKIN1_PERIOD' => {
+                                                         'default' => '0.0',
+                                                         'global_param' => 'Localparam',
+                                                         'info' => 'Input clock period in ns to ps resolution (i.e. 33.333 is 30 MHz).',
+                                                         'content' => '0,1000,0.001',
+                                                         'type' => 'Spin-button',
+                                                         'redefine_param' => 1
+                                                       },
+                                    'CLKOUT4_PHASE' => {
+                                                         'type' => 'Spin-button',
+                                                         'content' => '-360.000,360.000,0.001',
+                                                         'redefine_param' => 1,
+                                                         'info' => 'Phase offset for each CLKOUT4 (-360.000-360.000).',
+                                                         'global_param' => 'Localparam',
+                                                         'default' => '0.0'
+                                                       },
+                                    'CLKOUT2_PHASE' => {
+                                                         'global_param' => 'Localparam',
+                                                         'info' => 'Phase offset for each CLKOUT2 (-360.000-360.000).',
+                                                         'redefine_param' => 1,
+                                                         'type' => 'Spin-button',
+                                                         'content' => '-360.000,360.000,0.001',
+                                                         'default' => '0.0'
+                                                       },
+                                    'CLKOUT_NUM' => {
+                                                      'global_param' => 'Localparam',
+                                                      'info' => 'Number of out put clk sources',
+                                                      'redefine_param' => 1,
+                                                      'content' => '1,2,3,4,5,6',
+                                                      'type' => 'Combo-box',
+                                                      'default' => '1'
+                                                    },
+                                    'CLKOUT3_DUTY_CYCLE' => {
+                                                              'info' => ' Duty cycle for CLKOUT3 (0.001-0.999).',
+                                                              'global_param' => 'Localparam',
+                                                              'redefine_param' => 1,
+                                                              'type' => 'Spin-button',
+                                                              'content' => '0.001,0.999,0.001',
+                                                              'default' => '0.5'
+                                                            },
+                                    'CLKOUT4_DUTY_CYCLE' => {
+                                                              'redefine_param' => 1,
+                                                              'type' => 'Spin-button',
+                                                              'content' => '0.001,0.999,0.001',
+                                                              'global_param' => 'Localparam',
+                                                              'info' => ' Duty cycle for CLKOUT4 (0.001-0.999).',
+                                                              'default' => '0.5'
+                                                            },
+                                    'CLKOUT2_DIVIDE' => {
+                                                          'default' => '1',
+                                                          'redefine_param' => 1,
+                                                          'content' => '1,128,1',
+                                                          'type' => 'Spin-button',
+                                                          'global_param' => 'Localparam',
+                                                          'info' => 'Divide amount for CLKOUT2  (1-128)'
+                                                        },
+                                    'CLKOUT0_PHASE' => {
+                                                         'redefine_param' => 1,
+                                                         'type' => 'Spin-button',
+                                                         'content' => '-360.000,360.000,0.001',
+                                                         'global_param' => 'Localparam',
+                                                         'info' => 'Phase offset for each CLKOUT0 (-360.000-360.000).',
+                                                         'default' => '0.0'
+                                                       },
+                                    'CLKFBOUT_MULT' => {
+                                                         'default' => '5',
+                                                         'type' => 'Spin-button',
+                                                         'content' => '2,64,1',
+                                                         'redefine_param' => 1,
+                                                         'info' => 'Multiply value for all CLKOUT',
+                                                         'global_param' => 'Localparam'
+                                                       },
+                                    'CLKOUT0_DIVIDE' => {
+                                                          'default' => '1',
+                                                          'global_param' => 'Localparam',
+                                                          'info' => 'Divide amount for CLKOUT0  (1-128)',
+                                                          'redefine_param' => 1,
+                                                          'content' => '1,128,1',
+                                                          'type' => 'Spin-button'
+                                                        },
+                                    'CLKOUT0_DUTY_CYCLE' => {
+                                                              'default' => '0.5',
+                                                              'type' => 'Spin-button',
+                                                              'content' => '0.001,0.999,0.001',
+                                                              'redefine_param' => 1,
+                                                              'info' => ' Duty cycle for CLKOUT0 (0.001-0.999).',
+                                                              'global_param' => 'Localparam'
+                                                            },
+                                    'CLKOUT3_PHASE' => {
+                                                         'default' => '0.0',
+                                                         'content' => '-360.000,360.000,0.001',
+                                                         'type' => 'Spin-button',
+                                                         'redefine_param' => 1,
+                                                         'info' => 'Phase offset for each CLKOUT3  (-360.000-360.000).',
+                                                         'global_param' => 'Localparam'
+                                                       },
+                                    'CLKOUT5_DIVIDE' => {
+                                                          'default' => '1',
+                                                          'info' => 'Divide amount for CLKOUT5  (1-128)',
+                                                          'global_param' => 'Localparam',
+                                                          'redefine_param' => 1,
+                                                          'type' => 'Spin-button',
+                                                          'content' => '1,128,1'
+                                                        },
+                                    'CLKOUT1_PHASE' => {
+                                                         'global_param' => 'Localparam',
+                                                         'info' => 'Phase offset for each CLKOUT1 (-360.000-360.000).',
+                                                         'content' => '-360.000,360.000,0.001',
+                                                         'type' => 'Spin-button',
+                                                         'redefine_param' => 1,
+                                                         'default' => '0.0'
+                                                       },
+                                    'BANDWIDTH' => {
+                                                     'default' => '"OPTIMIZED"',
+                                                     'redefine_param' => 1,
+                                                     'type' => 'Combo-box',
+                                                     'content' => '"OPTIMIZED","HIGH","LOW"',
+                                                     'info' => '',
+                                                     'global_param' => 'Localparam'
+                                                   },
+                                    'CLKFBOUT_PHASE' => {
+                                                          'info' => 'Phase offset in degrees of CLKFB, (-360.000-360.000).',
+                                                          'global_param' => 'Localparam',
+                                                          'redefine_param' => 1,
+                                                          'type' => 'Spin-button',
+                                                          'content' => '-360.000,360.000,0.001',
+                                                          'default' => '0.0'
+                                                        },
+                                    'DIVCLK_DIVIDE' => {
+                                                         'redefine_param' => 1,
+                                                         'content' => '1,56,1',
+                                                         'type' => 'Spin-button',
+                                                         'global_param' => 'Localparam',
+                                                         'info' => 'Master division value, (1-56)',
+                                                         'default' => '1'
+                                                       },
+                                    'STARTUP_WAIT' => {
+                                                        'default' => '"FALSE"',
+                                                        'global_param' => 'Localparam',
+                                                        'info' => 'Delay DONE until PLL Locks, ("TRUE"/"FALSE")',
+                                                        'redefine_param' => 1,
+                                                        'type' => 'Fixed',
+                                                        'content' => '"TRUE","FALSE"'
+                                                      },
+                                    'CLKOUT5_PHASE' => {
+                                                         'redefine_param' => 1,
+                                                         'content' => '-360.000,360.000,0.001',
+                                                         'type' => 'Spin-button',
+                                                         'info' => 'Phase offset for each CLKOUT5 (-360.000-360.000).',
+                                                         'global_param' => 'Localparam',
+                                                         'default' => '0.0'
+                                                       },
+                                    'CLKOUT5_DUTY_CYCLE' => {
+                                                              'redefine_param' => 1,
+                                                              'content' => '0.001,0.999,0.001',
+                                                              'type' => 'Spin-button',
+                                                              'info' => ' Duty cycle for CLKOUT5 (0.001-0.999).',
+                                                              'global_param' => 'Localparam',
+                                                              'default' => '0.5'
+                                                            },
+                                    'CLKOUT1_DUTY_CYCLE' => {
+                                                              'default' => '0.5',
+                                                              'global_param' => 'Localparam',
+                                                              'info' => ' Duty cycle for CLKOUT1 (0.001-0.999).',
+                                                              'type' => 'Spin-button',
+                                                              'content' => '0.001,0.999,0.001',
+                                                              'redefine_param' => 1
+                                                            },
+                                    'REF_JITTER1' => {
+                                                       'default' => '0.0',
+                                                       'redefine_param' => 1,
+                                                       'type' => 'Spin-button',
+                                                       'content' => '0.000,0.999,0.001',
+                                                       'global_param' => 'Localparam',
+                                                       'info' => 'Reference input jitter in UI, (0.000-0.999).'
+                                                     },
+                                    'CLKOUT3_DIVIDE' => {
+                                                          'info' => 'Divide amount for CLKOUT3  (1-128)',
+                                                          'global_param' => 'Localparam',
+                                                          'content' => '1,128,1',
+                                                          'type' => 'Spin-button',
+                                                          'redefine_param' => 1,
+                                                          'default' => '1'
+                                                        }
+                                  },
+                  'unused' => undef,
+                  'description' => 'PLLE2_BASE',
+                  'module_name' => 'xilinx_pll2_base',
+                  'version' => 17,
+                  'file_name' => 'mpsoc/rtl/src_peripheral/clk_source/xilinx_pll/xilinx_pll2_base.v',
+                  'hdl_files_ticked' => [
+                                          '/mpsoc/rtl/src_peripheral/clk_source/xilinx_pll/xilinx_pll_sim'
+                                        ],
+                  'ip_name' => 'xilinx_pll',
+                  'hdl_files' => [
+                                   '/mpsoc/rtl/src_peripheral/clk_source/xilinx_pll/xilinx_pll2_base.v',
+                                   '/mpsoc/rtl/src_peripheral/clk_source/xilinx_pll/xilinx_pll_sim'
+                                 ],
+                  'ports' => {
+                               'reset_in' => {
+                                               'range' => '',
+                                               'intfc_port' => 'reset_i',
+                                               'intfc_name' => 'plug:reset[0]',
+                                               'type' => 'input'
+                                             },
+                               'clk_in' => {
+                                             'intfc_port' => 'clk_i',
+                                             'intfc_name' => 'plug:clk[0]',
+                                             'range' => '',
+                                             'type' => 'input'
+                                           },
+                               'reset_out' => {
+                                                'type' => 'output',
+                                                'range' => '',
+                                                'intfc_name' => 'socket:reset[0]',
+                                                'intfc_port' => 'reset_o'
+                                              },
+                               'clk_out' => {
+                                              'range' => 'CLKOUT_NUM-1: 0',
+                                              'intfc_port' => 'clk_o',
+                                              'intfc_name' => 'socket:clk[array]',
+                                              'type' => 'output'
+                                            }
+                             }
+                }, 'ip_gen' );

@@ -74,7 +74,9 @@ module lm32_load_store_unit (
     d_we_o,
     d_cti_o,
     d_lock_o,
-    d_bte_o
+    d_bte_o,
+    snoop_adr_i,
+    d_snoop_valid
     );
 
 /////////////////////////////////////////////////////
@@ -164,6 +166,10 @@ output d_lock_o;                                        // Date Wishbone interfa
 wire   d_lock_o;
 output [`LM32_BTYPE_RNG] d_bte_o;                       // Data Wishbone interface burst type 
 wire   [`LM32_BTYPE_RNG] d_bte_o;
+
+
+input [31:0]          snoop_adr_i;
+input d_snoop_valid;
 
 /////////////////////////////////////////////////////
 // Internal nets and registers 
@@ -278,7 +284,10 @@ lm32_dcache #(
     .refill_request         (dcache_refill_request),
     .refill_address         (dcache_refill_address),
     .refilling              (dcache_refilling),
-    .load_data              (dcache_data_m)
+    .load_data              (dcache_data_m),
+    .snoop_adr_i            (snoop_adr_i),
+    .d_snoop_valid          (d_snoop_valid)
+
     );
 `endif
 

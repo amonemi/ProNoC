@@ -41,7 +41,7 @@ void ${IP}_putstring (char * buffer, char sz){
                                               's_dat_o',
                                               's_ack_o'
                                             ],
-                           'file_name' => '/home/alireza/mywork/mpsoc/src_peripheral/Other/simulator_UART.v',
+                           'file_name' => 'mpsoc/rtl/src_peripheral/Other/simulator_UART.v',
                            'version' => 7,
                            'unused' => {
                                          'plug:wb_slave[0]' => [
@@ -196,7 +196,7 @@ void ${IP}_putstring (char * buffer, char sz){
                                            },
                            'ip_name' => 'sim_uart',
                            'hdl_files' => [
-                                            '/mpsoc/src_peripheral/Other/simulator_UART.v'
+                                            '/mpsoc/rtl/src_peripheral/Other/simulator_UART.v'
                                           ],
                            'plugs' => {
                                         'clk' => {

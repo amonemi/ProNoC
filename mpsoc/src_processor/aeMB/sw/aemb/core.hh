@@ -31,8 +31,10 @@
 #include "heap.hh"
 #include "thread.hh"
 #include "hook.hh"
-#include "stdio.hh"
+//#include "stdio.hh"
 #include "semaphore.hh"
+
+
 
 #endif
 

@@ -1,0 +1,2799 @@
+#######################################################################
+##	File: custom1.NWM
+##    
+##	Copyright (C) 2014-2019  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.9.1 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAVIOR.
+################################################################################
+
+$nwmaker = bless( {
+                    'ROUTER10' => {
+                                    'NUM' => 0
+                                  },
+                    'ROUTER7' => {
+                                   'NUM' => 0
+                                 },
+                    'ROUTER4_4' => {
+                                     'NAME' => 'R12',
+                                     'PCONNECT' => {
+                                                     'Port[3]' => 'ROUTER4_3,Port[1]',
+                                                     'Port[1]' => 'ROUTER5_0,Port[4]',
+                                                     'Port[0]' => 'ENDP_8,Port[0]',
+                                                     'Port[2]' => 'ROUTER5_2,Port[3]'
+                                                   },
+                                     'TYPE' => 'ROUTER',
+                                     'PNUM' => 4,
+                                     'LOC_ASIC' => '1,1,0',
+                                     'RNUM' => 8
+                                   },
+                    'ROUTER9' => {
+                                   'NUM' => 0
+                                 },
+                    'ENDP_11' => {
+                                   'PNUM' => 1,
+                                   'PCONNECT' => {
+                                                   'Port[0]' => 'ROUTER4_7,Port[0]'
+                                                 },
+                                   'NAME' => 'T11',
+                                   'TYPE' => 'ENDP'
+                                 },
+                    'ROUTER4_1' => {
+                                     'RNUM' => 5,
+                                     'LOC_ASIC' => '2,3,0',
+                                     'PNUM' => 4,
+                                     'TYPE' => 'ROUTER',
+                                     'PCONNECT' => {
+                                                     'Port[0]' => 'ENDP_5,Port[0]',
+                                                     'Port[2]' => 'ROUTER4_2,Port[2]',
+                                                     'Port[3]' => 'ROUTER4_5,Port[2]',
+                                                     'Port[1]' => 'ROUTER5_3,Port[4]'
+                                                   },
+                                     'NAME' => 'R5'
+                                   },
+                    'P0# Router in all Paths_param' => {
+                                                         'Y_MIN' => 0,
+                                                         'x_axis_font' => 'MediumBold',
+                                                         'legend_placement' => 'BL',
+                                                         'X_MAX' => 100,
+                                                         'Y_Title' => 'The total number that a router is used in the routing',
+                                                         'X_MIN' => 0,
+                                                         'label_font' => 'MediumBold',
+                                                         'LINEw' => 3,
+                                                         'legend_font' => 'MediumBold',
+                                                         'X_Title' => 'Router Name'
+                                                       },
+                    'ROUTER5' => {
+                                   'NUM' => '4'
+                                 },
+                    'ENDP_6' => {
+                                  'PNUM' => 1,
+                                  'PCONNECT' => {
+                                                  'Port[0]' => 'ROUTER4_2,Port[0]'
+                                                },
+                                  'NAME' => 'T6',
+                                  'TYPE' => 'ENDP'
+                                },
+                    'P1' => {
+                              'active' => '# Links in all paths'
+                            },
+                    'ROUTER5_3' => {
+                                     'NAME' => 'R11',
+                                     'PCONNECT' => {
+                                                     'Port[1]' => 'ROUTER5_0,Port[1]',
+                                                     'Port[4]' => 'ROUTER4_1,Port[1]',
+                                                     'Port[3]' => 'ROUTER5_1,Port[1]',
+                                                     'Port[2]' => 'ROUTER5_2,Port[1]',
+                                                     'Port[0]' => 'ENDP_15,Port[0]'
+                                                   },
+                                     'TYPE' => 'ROUTER',
+                                     'PNUM' => 5,
+                                     'LOC_ASIC' => '2,2,0',
+                                     'RNUM' => 15
+                                   },
+                    'ROUTER2' => {
+                                   'NUM' => 0
+                                 },
+                    'ROUTER5_0' => {
+                                     'NAME' => 'R8',
+                                     'PCONNECT' => {
+                                                     'Port[1]' => 'ROUTER5_3,Port[1]',
+                                                     'Port[4]' => 'ROUTER4_4,Port[1]',
+                                                     'Port[3]' => 'ROUTER4_6,Port[1]',
+                                                     'Port[2]' => 'ROUTER4_5,Port[1]',
+                                                     'Port[0]' => 'ENDP_12,Port[0]'
+                                                   },
+                                     'TYPE' => 'ROUTER',
+                                     'PNUM' => 5,
+                                     'RNUM' => 12,
+                                     'LOC_ASIC' => '1,2,0'
+                                   },
+                    'ENDP_4' => {
+                                  'TYPE' => 'ENDP',
+                                  'PCONNECT' => {
+                                                  'Port[0]' => 'ROUTER4_0,Port[0]'
+                                                },
+                                  'NAME' => 'T4',
+                                  'PNUM' => 1
+                                },
+                    'routing_name' => 'custom',
+                    'ROUTER3_2' => {
+                                     'TYPE' => 'ROUTER',
+                                     'NAME' => 'R2',
+                                     'PCONNECT' => {
+                                                     'Port[1]' => 'ROUTER4_7,Port[2]',
+                                                     'Port[2]' => 'ROUTER3_1,Port[2]',
+                                                     'Port[0]' => 'ENDP_2,Port[0]'
+                                                   },
+                                     'RNUM' => 2,
+                                     'LOC_ASIC' => '1,0,0',
+                                     'PNUM' => 3
+                                   },
+                    'ENDP_12' => {
+                                   'PNUM' => 1,
+                                   'NAME' => 'T12',
+                                   'PCONNECT' => {
+                                                   'Port[0]' => 'ROUTER5_0,Port[0]'
+                                                 },
+                                   'TYPE' => 'ENDP'
+                                 },
+                    'ROUTER3_3' => {
+                                     'RNUM' => 3,
+                                     'LOC_ASIC' => '3,0,0',
+                                     'PNUM' => 3,
+                                     'TYPE' => 'ROUTER',
+                                     'NAME' => 'R3',
+                                     'PCONNECT' => {
+                                                     'Port[1]' => 'ROUTER4_7,Port[3]',
+                                                     'Port[2]' => 'ROUTER4_0,Port[2]',
+                                                     'Port[0]' => 'ENDP_3,Port[0]'
+                                                   }
+                                   },
+                    'active_setting' => undef,
+                    'connection_auto' => {
+                                           'MIN_ENDP_PER_ROUTER' => 1,
+                                           'DIMENTION' => '2D',
+                                           'ENDP_PER_ROUTER_DIST' => 'uniform',
+                                           'MAX_ENDP_PER_ROUTER' => 1
+                                         },
+                    'ROUTER11' => {
+                                    'NUM' => 0
+                                  },
+                    'ROUTER4' => {
+                                   'NUM' => '8'
+                                 },
+                    'ENDP_9' => {
+                                  'PNUM' => 1,
+                                  'NAME' => 'T9',
+                                  'PCONNECT' => {
+                                                  'Port[0]' => 'ROUTER4_5,Port[0]'
+                                                },
+                                  'TYPE' => 'ENDP'
+                                },
+                    'P1# Links in all paths_param' => {
+                                                        'label_font' => 'MediumBold',
+                                                        'LINEw' => 3,
+                                                        'legend_font' => 'MediumBold',
+                                                        'X_Title' => 'Connection Link',
+                                                        'X_MIN' => 0,
+                                                        'x_axis_font' => 'MediumBold',
+                                                        'Y_MIN' => 0,
+                                                        'Y_Title' => 'The total number that a link is used in the routing',
+                                                        'X_MAX' => 100,
+                                                        'legend_placement' => 'BL'
+                                                      },
+                    'chart_notebook' => {},
+                    'ROUTER4_5' => {
+                                     'RNUM' => 9,
+                                     'LOC_ASIC' => '1,3,0',
+                                     'PNUM' => 4,
+                                     'TYPE' => 'ROUTER',
+                                     'NAME' => 'R13',
+                                     'PCONNECT' => {
+                                                     'Port[0]' => 'ENDP_9,Port[0]',
+                                                     'Port[2]' => 'ROUTER4_1,Port[3]',
+                                                     'Port[3]' => 'ROUTER3_0,Port[2]',
+                                                     'Port[1]' => 'ROUTER5_0,Port[2]'
+                                                   }
+                                   },
+                    'process_notebook' => {
+                                            'currentpage' => 4
+                                          },
+                    'ROUTER4_3' => {
+                                     'PNUM' => 4,
+                                     'RNUM' => 7,
+                                     'LOC_ASIC' => '0,1,0',
+                                     'NAME' => 'R7',
+                                     'PCONNECT' => {
+                                                     'Port[3]' => 'ROUTER3_1,Port[1]',
+                                                     'Port[1]' => 'ROUTER4_4,Port[3]',
+                                                     'Port[0]' => 'ENDP_7,Port[0]',
+                                                     'Port[2]' => 'ROUTER4_6,Port[2]'
+                                                   },
+                                     'TYPE' => 'ROUTER'
+                                   },
+                    'graph_save' => {
+                                      'save_all_result' => 0
+                                    },
+                    'Verilog' => {
+                                   'Router_ports' => [
+                                                       {
+                                                         'connect' => 'flit_out_all',
+                                                         'type' => 'input',
+                                                         'endp' => 'yes',
+                                                         'name' => 'flit_in_all',
+                                                         'pwidth' => 'Fw',
+                                                         'pconnect' => 'flit_out',
+                                                         'pname' => 'flit_in',
+                                                         'width' => 'PFw'
+                                                       },
+                                                       {
+                                                         'width' => 'P',
+                                                         'pname' => 'flit_in_wr',
+                                                         'pconnect' => 'flit_out_wr',
+                                                         'name' => 'flit_in_wr_all',
+                                                         'pwidth' => 1,
+                                                         'endp' => 'yes',
+                                                         'type' => 'input',
+                                                         'connect' => 'flit_out_wr_all'
+                                                       },
+                                                       {
+                                                         'width' => 'CONG_ALw',
+                                                         'pname' => 'congestion_in',
+                                                         'pconnect' => 'congestion_out',
+                                                         'pwidth' => 'CONGw',
+                                                         'name' => 'congestion_in_all',
+                                                         'endp' => 'no',
+                                                         'type' => 'input',
+                                                         'connect' => 'congestion_out_all'
+                                                       },
+                                                       {
+                                                         'pname' => 'credit_out',
+                                                         'pconnect' => 'credit_in',
+                                                         'width' => 'PV',
+                                                         'name' => 'credit_out_all',
+                                                         'pwidth' => 'V',
+                                                         'endp' => 'yes',
+                                                         'type' => 'output',
+                                                         'connect' => 'credit_in_all'
+                                                       }
+                                                     ],
+                                   'Router_param' => [
+                                                       {
+                                                         'value' => 2,
+                                                         'param_name' => 'V '
+                                                       },
+                                                       {
+                                                         'param_name' => 'B ',
+                                                         'value' => 4
+                                                       },
+                                                       {
+                                                         'value' => 2,
+                                                         'param_name' => 'C '
+                                                       },
+                                                       {
+                                                         'param_name' => 'Fpay ',
+                                                         'value' => 32
+                                                       },
+                                                       {
+                                                         'value' => '"ONE_HOT"',
+                                                         'param_name' => 'MUX_TYPE'
+                                                       },
+                                                       {
+                                                         'value' => '"NONATOMIC"',
+                                                         'param_name' => 'VC_REALLOCATION_TYPE '
+                                                       },
+                                                       {
+                                                         'param_name' => 'COMBINATION_TYPE',
+                                                         'value' => '"COMB_NONSPEC"'
+                                                       },
+                                                       {
+                                                         'value' => 1,
+                                                         'param_name' => 'FIRST_ARBITER_EXT_P_EN '
+                                                       },
+                                                       {
+                                                         'value' => 7,
+                                                         'param_name' => 'CONGESTION_INDEX '
+                                                       },
+                                                       {
+                                                         'value' => 0,
+                                                         'param_name' => 'DEBUG_EN'
+                                                       },
+                                                       {
+                                                         'value' => 0,
+                                                         'param_name' => 'AVC_ATOMIC_EN'
+                                                       },
+                                                       {
+                                                         'value' => 0,
+                                                         'param_name' => 'ADD_PIPREG_AFTER_CROSSBAR'
+                                                       },
+                                                       {
+                                                         'param_name' => 'CVw',
+                                                         'value' => '(C==0)? V : C * V'
+                                                       },
+                                                       {
+                                                         'param_name' => 'CLASS_SETTING ',
+                                                         'value' => '{CVw{1\'b1}}'
+                                                       },
+                                                       {
+                                                         'value' => '"NO"',
+                                                         'param_name' => 'SSA_EN'
+                                                       },
+                                                       {
+                                                         'param_name' => 'SWA_ARBITER_TYPE ',
+                                                         'value' => '"RRA"'
+                                                       },
+                                                       {
+                                                         'value' => 7,
+                                                         'param_name' => 'WEIGHTw '
+                                                       },
+                                                       {
+                                                         'value' => 2,
+                                                         'param_name' => 'MIN_PCK_SIZE'
+                                                       },
+                                                       {
+                                                         'param_name' => 'BYTE_EN',
+                                                         'value' => 0
+                                                       }
+                                                     ]
+                                 },
+                    'ENDP_15' => {
+                                   'TYPE' => 'ENDP',
+                                   'PCONNECT' => {
+                                                   'Port[0]' => 'ROUTER5_3,Port[0]'
+                                                 },
+                                   'NAME' => 'T15',
+                                   'PNUM' => 1
+                                 },
+                    'map_info' => {
+                                    'va' => '0',
+                                    'ha' => '0'
+                                  },
+                    'routing_auto' => {
+                                        'MAX_LENGTH' => 1000,
+                                        'PATH_SELECT' => 'Cycle-free paths',
+                                        'acyclic_algorithms' => {
+                                                                  'H-Voting' => 19,
+                                                                  'mfas' => 21,
+                                                                  'TS-B' => 19,
+                                                                  'SA-Voting' => 19,
+                                                                  'SA-G' => 19,
+                                                                  'TS-Voting' => 19,
+                                                                  'TS-G' => 18
+                                                                },
+                                        'acyclic_turns_model' => [
+                                                                   '10551396 6553603',
+                                                                   '10551396 6553605',
+                                                                   '10551396 6553652',
+                                                                   '1114131 1245219',
+                                                                   '1114131 1245236',
+                                                                   '11599988 7602211',
+                                                                   '11599988 7602213',
+                                                                   '11599988 7602227',
+                                                                   '1245219 2293793',
+                                                                   '1245219 2293876',
+                                                                   '1245236 3407940',
+                                                                   '1245236 3407972',
+                                                                   '1245236 3407985',
+                                                                   '12648453 327733',
+                                                                   '12648453 327748',
+                                                                   '12648453 327764',
+                                                                   '12648453 327780',
+                                                                   '1310756 2359300',
+                                                                   '1310756 2359317',
+                                                                   '1310756 2359393',
+                                                                   '1310773 3473413',
+                                                                   '1310773 3473429',
+                                                                   '1310773 3473445',
+                                                                   '1310773 3473649',
+                                                                   '1310804 5505027',
+                                                                   '1310804 5505169',
+                                                                   '13697045 1376260',
+                                                                   '13697045 1376292',
+                                                                   '13697045 1376293',
+                                                                   '13697045 1376309',
+                                                                   '1376260 262195',
+                                                                   '1376260 262209',
+                                                                   '1376292 2359300',
+                                                                   '1376292 2359393',
+                                                                   '1376293 2424885',
+                                                                   '1376293 2424900',
+                                                                   '1376293 2424948',
+                                                                   '1376293 2425057',
+                                                                   '1376309 3473413',
+                                                                   '1376309 3473428',
+                                                                   '1376309 3473445',
+                                                                   '1376309 3473649',
+                                                                   '14745637 2424853',
+                                                                   '14745637 2424885',
+                                                                   '14745637 2424900',
+                                                                   '14745637 2424948',
+                                                                   '15794229 3473413',
+                                                                   '15794229 3473428',
+                                                                   '15794229 3473429',
+                                                                   '15794229 3473445',
+                                                                   '196692 5505029',
+                                                                   '196692 5505044',
+                                                                   '196692 5505169',
+                                                                   '196708 6553605',
+                                                                   '196708 6553652',
+                                                                   '196708 6553761',
+                                                                   '2162723 2293779',
+                                                                   '2162723 2293876',
+                                                                   '2293779 1245201',
+                                                                   '2293779 1245236',
+                                                                   '2293876 7602213',
+                                                                   '2293876 7602227',
+                                                                   '2293876 7602353',
+                                                                   '2359300 262195',
+                                                                   '2359300 262209',
+                                                                   '2359316 1310773',
+                                                                   '2359316 1310801',
+                                                                   '2359316 1310804',
+                                                                   '2359317 1376260',
+                                                                   '2359317 1376293',
+                                                                   '2359317 1376309',
+                                                                   '2359317 1376465',
+                                                                   '2424853 1376260',
+                                                                   '2424853 1376292',
+                                                                   '2424853 1376309',
+                                                                   '2424853 1376465',
+                                                                   '2424885 3473413',
+                                                                   '2424885 3473428',
+                                                                   '2424885 3473429',
+                                                                   '2424885 3473649',
+                                                                   '2424900 4456500',
+                                                                   '2424900 4456577',
+                                                                   '2424948 7602211',
+                                                                   '2424948 7602227',
+                                                                   '2424948 7602353',
+                                                                   '262165 1376292',
+                                                                   '262165 1376293',
+                                                                   '262165 1376309',
+                                                                   '262165 1376465',
+                                                                   '262180 2359316',
+                                                                   '262180 2359317',
+                                                                   '262180 2359393',
+                                                                   '262195 3342385',
+                                                                   '3211315 3342340',
+                                                                   '3211315 3342452',
+                                                                   '327733 3473428',
+                                                                   '327733 3473429',
+                                                                   '327733 3473445',
+                                                                   '327733 3473649',
+                                                                   '327748 4456500',
+                                                                   '327748 4456577',
+                                                                   '327764 5505027',
+                                                                   '327764 5505169',
+                                                                   '327780 6553603',
+                                                                   '327780 6553652',
+                                                                   '327780 6553761',
+                                                                   '3342340 262165',
+                                                                   '3342340 262180',
+                                                                   '3342340 262209',
+                                                                   '3342452 7602211',
+                                                                   '3342452 7602213',
+                                                                   '3342452 7602353',
+                                                                   '3407891 1245201',
+                                                                   '3407940 4456453',
+                                                                   '3407940 4456485',
+                                                                   '3407940 4456577',
+                                                                   '3407972 6553603',
+                                                                   '3407972 6553761',
+                                                                   '3473413 327748',
+                                                                   '3473413 327764',
+                                                                   '3473413 327780',
+                                                                   '3473413 327873',
+                                                                   '3473428 1310801',
+                                                                   '3473428 1310804',
+                                                                   '3473429 1376260',
+                                                                   '3473429 1376292',
+                                                                   '3473429 1376465',
+                                                                   '3473445 2424900',
+                                                                   '3473445 2424948',
+                                                                   '3473445 2425057',
+                                                                   '4259844 262165',
+                                                                   '4259844 262180',
+                                                                   '4259844 262195',
+                                                                   '4456453 327733',
+                                                                   '4456453 327764',
+                                                                   '4456453 327780',
+                                                                   '4456453 327873',
+                                                                   '4456485 2424853',
+                                                                   '4456485 2424885',
+                                                                   '4456485 2424948',
+                                                                   '4456485 2425057',
+                                                                   '4456500 3407891',
+                                                                   '4456500 3407972',
+                                                                   '4456500 3407985',
+                                                                   '5308436 1310756',
+                                                                   '5308436 1310773',
+                                                                   '5308436 1310804',
+                                                                   '5505027 196609',
+                                                                   '5505029 327733',
+                                                                   '5505029 327748',
+                                                                   '5505029 327780',
+                                                                   '5505029 327873',
+                                                                   '5505044 1310756',
+                                                                   '5505044 1310773',
+                                                                   '5505044 1310801',
+                                                                   '6357028 2359300',
+                                                                   '6357028 2359316',
+                                                                   '6357028 2359317',
+                                                                   '6553603 196609',
+                                                                   '6553605 327733',
+                                                                   '6553605 327748',
+                                                                   '6553605 327764',
+                                                                   '6553605 327873',
+                                                                   '6553652 3407891',
+                                                                   '6553652 3407985',
+                                                                   '65539 196692',
+                                                                   '65539 196708',
+                                                                   '7405620 3407891',
+                                                                   '7405620 3407940',
+                                                                   '7405620 3407972',
+                                                                   '7602211 2293793',
+                                                                   '7602213 2424853',
+                                                                   '7602213 2424885',
+                                                                   '7602213 2424900',
+                                                                   '7602213 2425057',
+                                                                   '7602227 3342385',
+                                                                   '8454212 4456453',
+                                                                   '8454212 4456485',
+                                                                   '8454212 4456500',
+                                                                   '9502804 5505027',
+                                                                   '9502804 5505029',
+                                                                   '9502804 5505044'
+                                                                 ],
+                                        'OFFSET' => 1,
+                                        'CYCLE_FREE_ALG' => 'TS-G  --  18'
+                                      },
+                    'ROUTER4_6' => {
+                                     'PNUM' => 4,
+                                     'LOC_ASIC' => '0,2,0',
+                                     'RNUM' => 10,
+                                     'PCONNECT' => {
+                                                     'Port[0]' => 'ENDP_10,Port[0]',
+                                                     'Port[2]' => 'ROUTER4_3,Port[2]',
+                                                     'Port[3]' => 'ROUTER3_0,Port[1]',
+                                                     'Port[1]' => 'ROUTER5_0,Port[3]'
+                                                   },
+                                     'NAME' => 'R14',
+                                     'TYPE' => 'ROUTER'
+                                   },
+                    'ROUTER6' => {
+                                   'NUM' => 0
+                                 },
+                    'id' => 1,
+                    'parameters_order' => {
+                                            'ROUTER2' => [
+                                                           'NUM'
+                                                         ],
+                                            'ROUTER5' => [
+                                                           'NUM'
+                                                         ],
+                                            'ROUTER6' => [
+                                                           'NUM'
+                                                         ],
+                                            'samples' => [
+                                                           'sample0'
+                                                         ],
+                                            'routing_auto' => [
+                                                                'OFFSET',
+                                                                'MAX_LENGTH',
+                                                                'PATH_SELECT',
+                                                                'CYCLE_FREE_ALG'
+                                                              ],
+                                            'ROUTER7' => [
+                                                           'NUM'
+                                                         ],
+                                            'ROUTER10' => [
+                                                            'NUM'
+                                                          ],
+                                            'ROUTER11' => [
+                                                            'NUM'
+                                                          ],
+                                            'connection_auto' => [
+                                                                   'MIN_ENDP_PER_ROUTER',
+                                                                   'MAX_ENDP_PER_ROUTER',
+                                                                   'ENDP_PER_ROUTER_DIST',
+                                                                   'DIMENTION'
+                                                                 ],
+                                            'ENDP' => [
+                                                        'NUM'
+                                                      ],
+                                            'ROUTER9' => [
+                                                           'NUM'
+                                                         ],
+                                            'ROUTER8' => [
+                                                           'NUM'
+                                                         ],
+                                            'ROUTER3' => [
+                                                           'NUM'
+                                                         ],
+                                            'ROUTER12' => [
+                                                            'NUM'
+                                                          ],
+                                            'ROUTER4' => [
+                                                           'NUM'
+                                                         ]
+                                          },
+                    'ROUTER3_0' => {
+                                     'PNUM' => 3,
+                                     'RNUM' => 0,
+                                     'LOC_ASIC' => '0,3,0',
+                                     'PCONNECT' => {
+                                                     'Port[1]' => 'ROUTER4_6,Port[3]',
+                                                     'Port[0]' => 'ENDP_0,Port[0]',
+                                                     'Port[2]' => 'ROUTER4_5,Port[3]'
+                                                   },
+                                     'NAME' => 'R0',
+                                     'TYPE' => 'ROUTER'
+                                   },
+                    'ROUTER5_2' => {
+                                     'NAME' => 'R10',
+                                     'PCONNECT' => {
+                                                     'Port[4]' => 'ROUTER4_7,Port[1]',
+                                                     'Port[3]' => 'ROUTER4_4,Port[2]',
+                                                     'Port[1]' => 'ROUTER5_3,Port[2]',
+                                                     'Port[0]' => 'ENDP_14,Port[0]',
+                                                     'Port[2]' => 'ROUTER5_1,Port[4]'
+                                                   },
+                                     'TYPE' => 'ROUTER',
+                                     'PNUM' => 5,
+                                     'RNUM' => 14,
+                                     'LOC_ASIC' => '2,1,0'
+                                   },
+                    'sample0' => {
+                                   'router_all_paths_result' => {
+                                                                  '-' => {
+                                                                           'R2' => 36,
+                                                                           'R14' => 46,
+                                                                           'R10' => 103,
+                                                                           'R6' => 53,
+                                                                           'R4' => 50,
+                                                                           'R15' => 59,
+                                                                           'R12' => 65,
+                                                                           'R5' => 67,
+                                                                           'R13' => 48,
+                                                                           'R8' => 71,
+                                                                           'R7' => 60,
+                                                                           'R11' => 85,
+                                                                           'R3' => 30,
+                                                                           'R9' => 77,
+                                                                           'R0' => 30,
+                                                                           'R1' => 35
+                                                                         }
+                                                                },
+                                   'link_all_paths_result' => {
+                                                                '-' => {
+                                                                         'R0-R13' => 10,
+                                                                         'R8-R12' => 9,
+                                                                         'R2-R1' => 6,
+                                                                         'R7-R12' => 19,
+                                                                         'R1-R7' => 13,
+                                                                         'R1-R2' => 7,
+                                                                         'R6-R5' => 21,
+                                                                         'R5-R13' => 14,
+                                                                         'R8-R14' => 14,
+                                                                         'R10-R12' => 22,
+                                                                         'R13-R8' => 8,
+                                                                         'R5-R6' => 14,
+                                                                         'R2-R15' => 15,
+                                                                         'R12-R7' => 20,
+                                                                         'R9-R4' => 24,
+                                                                         'R10-R9' => 19,
+                                                                         'R15-R3' => 4,
+                                                                         'R10-R11' => 22,
+                                                                         'R14-R8' => 14,
+                                                                         'R9-R6' => 12,
+                                                                         'R4-R9' => 12,
+                                                                         'R6-R9' => 17,
+                                                                         'R8-R11' => 24,
+                                                                         'R11-R5' => 16,
+                                                                         'R15-R2' => 14,
+                                                                         'R11-R10' => 19,
+                                                                         'R0-R14' => 5,
+                                                                         'R11-R8' => 21,
+                                                                         'R13-R5' => 15,
+                                                                         'R5-R11' => 24,
+                                                                         'R12-R10' => 17,
+                                                                         'R3-R15' => 4,
+                                                                         'R14-R7' => 12,
+                                                                         'R7-R1' => 14,
+                                                                         'R14-R0' => 5,
+                                                                         'R9-R10' => 26,
+                                                                         'R4-R6' => 12,
+                                                                         'R12-R8' => 13,
+                                                                         'R11-R9' => 14,
+                                                                         'R8-R13' => 9,
+                                                                         'R15-R10' => 26,
+                                                                         'R3-R4' => 11,
+                                                                         'R10-R15' => 25,
+                                                                         'R13-R0' => 10,
+                                                                         'R4-R3' => 11,
+                                                                         'R7-R14' => 12
+                                                                       }
+                                                              },
+                                   'color' => 1
+                                 },
+                    'ENDP_14' => {
+                                   'NAME' => 'T14',
+                                   'PCONNECT' => {
+                                                   'Port[0]' => 'ROUTER5_2,Port[0]'
+                                                 },
+                                   'TYPE' => 'ENDP',
+                                   'PNUM' => 1
+                                 },
+                    'save_as' => 'custom1',
+                    'Route' => {
+                                 'ENDP_4::ENDP_10' => [
+                                                        'ENDP_4',
+                                                        'ROUTER4_0',
+                                                        'ROUTER5_1',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_4',
+                                                        'ROUTER4_3',
+                                                        'ROUTER4_6',
+                                                        'ENDP_10'
+                                                      ],
+                                 'ENDP_0::ENDP_2' => [
+                                                       'ENDP_0',
+                                                       'ROUTER3_0',
+                                                       'ROUTER4_6',
+                                                       'ROUTER5_0',
+                                                       'ROUTER5_3',
+                                                       'ROUTER5_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER3_2',
+                                                       'ENDP_2'
+                                                     ],
+                                 'ENDP_3::ENDP_13' => [
+                                                        'ENDP_3',
+                                                        'ROUTER3_3',
+                                                        'ROUTER4_0',
+                                                        'ROUTER5_1',
+                                                        'ENDP_13'
+                                                      ],
+                                 'ENDP_6::ENDP_10' => [
+                                                        'ENDP_6',
+                                                        'ROUTER4_2',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_0',
+                                                        'ROUTER4_6',
+                                                        'ENDP_10'
+                                                      ],
+                                 'ENDP_8::ENDP_9' => [
+                                                       'ENDP_8',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_0',
+                                                       'ROUTER4_5',
+                                                       'ENDP_9'
+                                                     ],
+                                 'ENDP_13::ENDP_10' => [
+                                                         'ENDP_13',
+                                                         'ROUTER5_1',
+                                                         'ROUTER5_2',
+                                                         'ROUTER4_4',
+                                                         'ROUTER4_3',
+                                                         'ROUTER4_6',
+                                                         'ENDP_10'
+                                                       ],
+                                 'ENDP_0::ENDP_0' => undef,
+                                 'ENDP_1::ENDP_11' => [
+                                                        'ENDP_1',
+                                                        'ROUTER3_1',
+                                                        'ROUTER3_2',
+                                                        'ROUTER4_7',
+                                                        'ENDP_11'
+                                                      ],
+                                 'ENDP_8::ENDP_5' => [
+                                                       'ENDP_8',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_0',
+                                                       'ROUTER5_3',
+                                                       'ROUTER4_1',
+                                                       'ENDP_5'
+                                                     ],
+                                 'ENDP_12::ENDP_0' => [
+                                                        'ENDP_12',
+                                                        'ROUTER5_0',
+                                                        'ROUTER4_5',
+                                                        'ROUTER3_0',
+                                                        'ENDP_0'
+                                                      ],
+                                 'ENDP_5::ENDP_10' => [
+                                                        'ENDP_5',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_0',
+                                                        'ROUTER4_6',
+                                                        'ENDP_10'
+                                                      ],
+                                 'ENDP_15::ENDP_11' => [
+                                                         'ENDP_15',
+                                                         'ROUTER5_3',
+                                                         'ROUTER5_2',
+                                                         'ROUTER4_7',
+                                                         'ENDP_11'
+                                                       ],
+                                 'ENDP_5::ENDP_11' => [
+                                                        'ENDP_5',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_7',
+                                                        'ENDP_11'
+                                                      ],
+                                 'ENDP_3::ENDP_1' => [
+                                                       'ENDP_3',
+                                                       'ROUTER3_3',
+                                                       'ROUTER4_0',
+                                                       'ROUTER5_1',
+                                                       'ROUTER5_2',
+                                                       'ROUTER4_4',
+                                                       'ROUTER4_3',
+                                                       'ROUTER3_1',
+                                                       'ENDP_1'
+                                                     ],
+                                 'ENDP_13::ENDP_7' => [
+                                                        'ENDP_13',
+                                                        'ROUTER5_1',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_4',
+                                                        'ROUTER4_3',
+                                                        'ENDP_7'
+                                                      ],
+                                 'ENDP_4::ENDP_5' => [
+                                                       'ENDP_4',
+                                                       'ROUTER4_0',
+                                                       'ROUTER4_2',
+                                                       'ROUTER4_1',
+                                                       'ENDP_5'
+                                                     ],
+                                 'ENDP_14::ENDP_12' => [
+                                                         'ENDP_14',
+                                                         'ROUTER5_2',
+                                                         'ROUTER5_3',
+                                                         'ROUTER5_0',
+                                                         'ENDP_12'
+                                                       ],
+                                 'ENDP_1::ENDP_13' => [
+                                                        'ENDP_1',
+                                                        'ROUTER3_1',
+                                                        'ROUTER3_2',
+                                                        'ROUTER4_7',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_1',
+                                                        'ENDP_13'
+                                                      ],
+                                 'ENDP_4::ENDP_8' => [
+                                                       'ENDP_4',
+                                                       'ROUTER4_0',
+                                                       'ROUTER5_1',
+                                                       'ROUTER5_2',
+                                                       'ROUTER4_4',
+                                                       'ENDP_8'
+                                                     ],
+                                 'ENDP_15::ENDP_10' => [
+                                                         'ENDP_15',
+                                                         'ROUTER5_3',
+                                                         'ROUTER5_0',
+                                                         'ROUTER4_6',
+                                                         'ENDP_10'
+                                                       ],
+                                 'ENDP_7::ENDP_10' => [
+                                                        'ENDP_7',
+                                                        'ROUTER4_3',
+                                                        'ROUTER4_6',
+                                                        'ENDP_10'
+                                                      ],
+                                 'ENDP_11::ENDP_13' => [
+                                                         'ENDP_11',
+                                                         'ROUTER4_7',
+                                                         'ROUTER5_2',
+                                                         'ROUTER5_1',
+                                                         'ENDP_13'
+                                                       ],
+                                 'ENDP_2::ENDP_1' => [
+                                                       'ENDP_2',
+                                                       'ROUTER3_2',
+                                                       'ROUTER3_1',
+                                                       'ENDP_1'
+                                                     ],
+                                 'ENDP_3::ENDP_8' => [
+                                                       'ENDP_3',
+                                                       'ROUTER3_3',
+                                                       'ROUTER4_0',
+                                                       'ROUTER5_1',
+                                                       'ROUTER5_2',
+                                                       'ROUTER4_4',
+                                                       'ENDP_8'
+                                                     ],
+                                 'ENDP_0::ENDP_15' => [
+                                                        'ENDP_0',
+                                                        'ROUTER3_0',
+                                                        'ROUTER4_5',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ENDP_15'
+                                                      ],
+                                 'ENDP_3::ENDP_6' => [
+                                                       'ENDP_3',
+                                                       'ROUTER3_3',
+                                                       'ROUTER4_0',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_2',
+                                                       'ENDP_6'
+                                                     ],
+                                 'ENDP_4::ENDP_6' => [
+                                                       'ENDP_4',
+                                                       'ROUTER4_0',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_2',
+                                                       'ENDP_6'
+                                                     ],
+                                 'ENDP_12::ENDP_4' => [
+                                                        'ENDP_12',
+                                                        'ROUTER5_0',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_0',
+                                                        'ENDP_4'
+                                                      ],
+                                 'ENDP_1::ENDP_2' => [
+                                                       'ENDP_1',
+                                                       'ROUTER3_1',
+                                                       'ROUTER3_2',
+                                                       'ENDP_2'
+                                                     ],
+                                 'ENDP_5::ENDP_2' => [
+                                                       'ENDP_5',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER5_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER3_2',
+                                                       'ENDP_2'
+                                                     ],
+                                 'ENDP_2::ENDP_14' => [
+                                                        'ENDP_2',
+                                                        'ROUTER3_2',
+                                                        'ROUTER4_7',
+                                                        'ROUTER5_2',
+                                                        'ENDP_14'
+                                                      ],
+                                 'ENDP_2::ENDP_5' => [
+                                                       'ENDP_2',
+                                                       'ROUTER3_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER5_2',
+                                                       'ROUTER5_3',
+                                                       'ROUTER4_1',
+                                                       'ENDP_5'
+                                                     ],
+                                 'ENDP_10::ENDP_0' => [
+                                                        'ENDP_10',
+                                                        'ROUTER4_6',
+                                                        'ROUTER3_0',
+                                                        'ENDP_0'
+                                                      ],
+                                 'ENDP_5::ENDP_14' => [
+                                                        'ENDP_5',
+                                                        'ROUTER4_1',
+                                                        'ROUTER4_2',
+                                                        'ROUTER5_1',
+                                                        'ROUTER5_2',
+                                                        'ENDP_14'
+                                                      ],
+                                 'ENDP_0::ENDP_10' => [
+                                                        'ENDP_0',
+                                                        'ROUTER3_0',
+                                                        'ROUTER4_6',
+                                                        'ENDP_10'
+                                                      ],
+                                 'ENDP_12::ENDP_2' => [
+                                                        'ENDP_12',
+                                                        'ROUTER5_0',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_7',
+                                                        'ROUTER3_2',
+                                                        'ENDP_2'
+                                                      ],
+                                 'ENDP_4::ENDP_0' => [
+                                                       'ENDP_4',
+                                                       'ROUTER4_0',
+                                                       'ROUTER4_2',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_5',
+                                                       'ROUTER3_0',
+                                                       'ENDP_0'
+                                                     ],
+                                 'ENDP_10::ENDP_8' => [
+                                                        'ENDP_10',
+                                                        'ROUTER4_6',
+                                                        'ROUTER5_0',
+                                                        'ROUTER4_4',
+                                                        'ENDP_8'
+                                                      ],
+                                 'ENDP_14::ENDP_13' => [
+                                                         'ENDP_14',
+                                                         'ROUTER5_2',
+                                                         'ROUTER5_1',
+                                                         'ENDP_13'
+                                                       ],
+                                 'ENDP_11::ENDP_7' => [
+                                                        'ENDP_11',
+                                                        'ROUTER4_7',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_4',
+                                                        'ROUTER4_3',
+                                                        'ENDP_7'
+                                                      ],
+                                 'ENDP_12::ENDP_1' => [
+                                                        'ENDP_12',
+                                                        'ROUTER5_0',
+                                                        'ROUTER4_6',
+                                                        'ROUTER4_3',
+                                                        'ROUTER3_1',
+                                                        'ENDP_1'
+                                                      ],
+                                 'ENDP_3::ENDP_14' => [
+                                                        'ENDP_3',
+                                                        'ROUTER3_3',
+                                                        'ROUTER4_0',
+                                                        'ROUTER5_1',
+                                                        'ROUTER5_2',
+                                                        'ENDP_14'
+                                                      ],
+                                 'ENDP_15::ENDP_2' => [
+                                                        'ENDP_15',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_7',
+                                                        'ROUTER3_2',
+                                                        'ENDP_2'
+                                                      ],
+                                 'ENDP_11::ENDP_11' => undef,
+                                 'ENDP_5::ENDP_5' => undef,
+                                 'ENDP_10::ENDP_14' => [
+                                                         'ENDP_10',
+                                                         'ROUTER4_6',
+                                                         'ROUTER5_0',
+                                                         'ROUTER5_3',
+                                                         'ROUTER5_2',
+                                                         'ENDP_14'
+                                                       ],
+                                 'ENDP_8::ENDP_6' => [
+                                                       'ENDP_8',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_2',
+                                                       'ENDP_6'
+                                                     ],
+                                 'ENDP_2::ENDP_7' => [
+                                                       'ENDP_2',
+                                                       'ROUTER3_2',
+                                                       'ROUTER3_1',
+                                                       'ROUTER4_3',
+                                                       'ENDP_7'
+                                                     ],
+                                 'ENDP_10::ENDP_12' => [
+                                                         'ENDP_10',
+                                                         'ROUTER4_6',
+                                                         'ROUTER5_0',
+                                                         'ENDP_12'
+                                                       ],
+                                 'ENDP_12::ENDP_5' => [
+                                                        'ENDP_12',
+                                                        'ROUTER5_0',
+                                                        'ROUTER5_3',
+                                                        'ROUTER4_1',
+                                                        'ENDP_5'
+                                                      ],
+                                 'ENDP_12::ENDP_9' => [
+                                                        'ENDP_12',
+                                                        'ROUTER5_0',
+                                                        'ROUTER4_5',
+                                                        'ENDP_9'
+                                                      ],
+                                 'ENDP_14::ENDP_10' => [
+                                                         'ENDP_14',
+                                                         'ROUTER5_2',
+                                                         'ROUTER4_4',
+                                                         'ROUTER4_3',
+                                                         'ROUTER4_6',
+                                                         'ENDP_10'
+                                                       ],
+                                 'ENDP_11::ENDP_8' => [
+                                                        'ENDP_11',
+                                                        'ROUTER4_7',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_4',
+                                                        'ENDP_8'
+                                                      ],
+                                 'ENDP_12::ENDP_8' => [
+                                                        'ENDP_12',
+                                                        'ROUTER5_0',
+                                                        'ROUTER4_4',
+                                                        'ENDP_8'
+                                                      ],
+                                 'ENDP_6::ENDP_5' => [
+                                                       'ENDP_6',
+                                                       'ROUTER4_2',
+                                                       'ROUTER4_1',
+                                                       'ENDP_5'
+                                                     ],
+                                 'ENDP_1::ENDP_5' => [
+                                                       'ENDP_1',
+                                                       'ROUTER3_1',
+                                                       'ROUTER3_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER5_2',
+                                                       'ROUTER5_3',
+                                                       'ROUTER4_1',
+                                                       'ENDP_5'
+                                                     ],
+                                 'ENDP_14::ENDP_2' => [
+                                                        'ENDP_14',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_7',
+                                                        'ROUTER3_2',
+                                                        'ENDP_2'
+                                                      ],
+                                 'ENDP_0::ENDP_3' => [
+                                                       'ENDP_0',
+                                                       'ROUTER3_0',
+                                                       'ROUTER4_6',
+                                                       'ROUTER5_0',
+                                                       'ROUTER5_3',
+                                                       'ROUTER5_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER3_3',
+                                                       'ENDP_3'
+                                                     ],
+                                 'ENDP_6::ENDP_6' => undef,
+                                 'ENDP_14::ENDP_14' => undef,
+                                 'ENDP_7::ENDP_8' => [
+                                                       'ENDP_7',
+                                                       'ROUTER4_3',
+                                                       'ROUTER4_4',
+                                                       'ENDP_8'
+                                                     ],
+                                 'ENDP_14::ENDP_6' => [
+                                                        'ENDP_14',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_2',
+                                                        'ENDP_6'
+                                                      ],
+                                 'ENDP_9::ENDP_14' => [
+                                                        'ENDP_9',
+                                                        'ROUTER4_5',
+                                                        'ROUTER4_1',
+                                                        'ROUTER4_2',
+                                                        'ROUTER5_1',
+                                                        'ROUTER5_2',
+                                                        'ENDP_14'
+                                                      ],
+                                 'ENDP_0::ENDP_12' => [
+                                                        'ENDP_0',
+                                                        'ROUTER3_0',
+                                                        'ROUTER4_5',
+                                                        'ROUTER5_0',
+                                                        'ENDP_12'
+                                                      ],
+                                 'ENDP_15::ENDP_7' => [
+                                                        'ENDP_15',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_0',
+                                                        'ROUTER4_6',
+                                                        'ROUTER4_3',
+                                                        'ENDP_7'
+                                                      ],
+                                 'ENDP_2::ENDP_9' => [
+                                                       'ENDP_2',
+                                                       'ROUTER3_2',
+                                                       'ROUTER3_1',
+                                                       'ROUTER4_3',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_0',
+                                                       'ROUTER4_5',
+                                                       'ENDP_9'
+                                                     ],
+                                 'ENDP_2::ENDP_15' => [
+                                                        'ENDP_2',
+                                                        'ROUTER3_2',
+                                                        'ROUTER4_7',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_3',
+                                                        'ENDP_15'
+                                                      ],
+                                 'ENDP_12::ENDP_6' => [
+                                                        'ENDP_12',
+                                                        'ROUTER5_0',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_2',
+                                                        'ENDP_6'
+                                                      ],
+                                 'ENDP_14::ENDP_9' => [
+                                                        'ENDP_14',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_3',
+                                                        'ROUTER4_1',
+                                                        'ROUTER4_5',
+                                                        'ENDP_9'
+                                                      ],
+                                 'ENDP_6::ENDP_3' => [
+                                                       'ENDP_6',
+                                                       'ROUTER4_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_0',
+                                                       'ROUTER3_3',
+                                                       'ENDP_3'
+                                                     ],
+                                 'ENDP_12::ENDP_13' => [
+                                                         'ENDP_12',
+                                                         'ROUTER5_0',
+                                                         'ROUTER5_3',
+                                                         'ROUTER5_1',
+                                                         'ENDP_13'
+                                                       ],
+                                 'ENDP_15::ENDP_12' => [
+                                                         'ENDP_15',
+                                                         'ROUTER5_3',
+                                                         'ROUTER5_0',
+                                                         'ENDP_12'
+                                                       ],
+                                 'ENDP_0::ENDP_6' => [
+                                                       'ENDP_0',
+                                                       'ROUTER3_0',
+                                                       'ROUTER4_5',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_2',
+                                                       'ENDP_6'
+                                                     ],
+                                 'ENDP_9::ENDP_8' => [
+                                                       'ENDP_9',
+                                                       'ROUTER4_5',
+                                                       'ROUTER5_0',
+                                                       'ROUTER4_4',
+                                                       'ENDP_8'
+                                                     ],
+                                 'ENDP_13::ENDP_5' => [
+                                                        'ENDP_13',
+                                                        'ROUTER5_1',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_3',
+                                                        'ROUTER4_1',
+                                                        'ENDP_5'
+                                                      ],
+                                 'ENDP_6::ENDP_11' => [
+                                                        'ENDP_6',
+                                                        'ROUTER4_2',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_7',
+                                                        'ENDP_11'
+                                                      ],
+                                 'ENDP_1::ENDP_3' => [
+                                                       'ENDP_1',
+                                                       'ROUTER3_1',
+                                                       'ROUTER3_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER3_3',
+                                                       'ENDP_3'
+                                                     ],
+                                 'ENDP_15::ENDP_6' => [
+                                                        'ENDP_15',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_2',
+                                                        'ENDP_6'
+                                                      ],
+                                 'ENDP_1::ENDP_4' => [
+                                                       'ENDP_1',
+                                                       'ROUTER3_1',
+                                                       'ROUTER4_3',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_0',
+                                                       'ENDP_4'
+                                                     ],
+                                 'ENDP_2::ENDP_11' => [
+                                                        'ENDP_2',
+                                                        'ROUTER3_2',
+                                                        'ROUTER4_7',
+                                                        'ENDP_11'
+                                                      ],
+                                 'ENDP_8::ENDP_8' => undef,
+                                 'ENDP_0::ENDP_5' => [
+                                                       'ENDP_0',
+                                                       'ROUTER3_0',
+                                                       'ROUTER4_5',
+                                                       'ROUTER4_1',
+                                                       'ENDP_5'
+                                                     ],
+                                 'ENDP_4::ENDP_2' => [
+                                                       'ENDP_4',
+                                                       'ROUTER4_0',
+                                                       'ROUTER4_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER5_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER3_2',
+                                                       'ENDP_2'
+                                                     ],
+                                 'ENDP_6::ENDP_4' => [
+                                                       'ENDP_6',
+                                                       'ROUTER4_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_0',
+                                                       'ENDP_4'
+                                                     ],
+                                 'ENDP_8::ENDP_7' => [
+                                                       'ENDP_8',
+                                                       'ROUTER4_4',
+                                                       'ROUTER4_3',
+                                                       'ENDP_7'
+                                                     ],
+                                 'ENDP_13::ENDP_6' => [
+                                                        'ENDP_13',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_2',
+                                                        'ENDP_6'
+                                                      ],
+                                 'ENDP_7::ENDP_5' => [
+                                                       'ENDP_7',
+                                                       'ROUTER4_3',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_2',
+                                                       'ROUTER5_3',
+                                                       'ROUTER4_1',
+                                                       'ENDP_5'
+                                                     ],
+                                 'ENDP_5::ENDP_12' => [
+                                                        'ENDP_5',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_0',
+                                                        'ENDP_12'
+                                                      ],
+                                 'ENDP_5::ENDP_4' => [
+                                                       'ENDP_5',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_0',
+                                                       'ENDP_4'
+                                                     ],
+                                 'ENDP_12::ENDP_11' => [
+                                                         'ENDP_12',
+                                                         'ROUTER5_0',
+                                                         'ROUTER5_3',
+                                                         'ROUTER5_2',
+                                                         'ROUTER4_7',
+                                                         'ENDP_11'
+                                                       ],
+                                 'ENDP_10::ENDP_3' => [
+                                                        'ENDP_10',
+                                                        'ROUTER4_6',
+                                                        'ROUTER5_0',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_0',
+                                                        'ROUTER3_3',
+                                                        'ENDP_3'
+                                                      ],
+                                 'ENDP_15::ENDP_1' => [
+                                                        'ENDP_15',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_0',
+                                                        'ROUTER4_6',
+                                                        'ROUTER4_3',
+                                                        'ROUTER3_1',
+                                                        'ENDP_1'
+                                                      ],
+                                 'ENDP_10::ENDP_9' => [
+                                                        'ENDP_10',
+                                                        'ROUTER4_6',
+                                                        'ROUTER5_0',
+                                                        'ROUTER4_5',
+                                                        'ENDP_9'
+                                                      ],
+                                 'ENDP_6::ENDP_8' => [
+                                                       'ENDP_6',
+                                                       'ROUTER4_2',
+                                                       'ROUTER4_1',
+                                                       'ROUTER5_3',
+                                                       'ROUTER5_0',
+                                                       'ROUTER4_4',
+                                                       'ENDP_8'
+                                                     ],
+                                 'ENDP_14::ENDP_8' => [
+                                                        'ENDP_14',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_4',
+                                                        'ENDP_8'
+                                                      ],
+                                 'ENDP_9::ENDP_6' => [
+                                                       'ENDP_9',
+                                                       'ROUTER4_5',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_2',
+                                                       'ENDP_6'
+                                                     ],
+                                 'ENDP_7::ENDP_9' => [
+                                                       'ENDP_7',
+                                                       'ROUTER4_3',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_0',
+                                                       'ROUTER4_5',
+                                                       'ENDP_9'
+                                                     ],
+                                 'ENDP_7::ENDP_15' => [
+                                                        'ENDP_7',
+                                                        'ROUTER4_3',
+                                                        'ROUTER4_4',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_3',
+                                                        'ENDP_15'
+                                                      ],
+                                 'ENDP_10::ENDP_5' => [
+                                                        'ENDP_10',
+                                                        'ROUTER4_6',
+                                                        'ROUTER5_0',
+                                                        'ROUTER5_3',
+                                                        'ROUTER4_1',
+                                                        'ENDP_5'
+                                                      ],
+                                 'ENDP_7::ENDP_13' => [
+                                                        'ENDP_7',
+                                                        'ROUTER4_3',
+                                                        'ROUTER4_4',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_1',
+                                                        'ENDP_13'
+                                                      ],
+                                 'ENDP_4::ENDP_4' => undef,
+                                 'ENDP_5::ENDP_0' => [
+                                                       'ENDP_5',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_5',
+                                                       'ROUTER3_0',
+                                                       'ENDP_0'
+                                                     ],
+                                 'ENDP_9::ENDP_13' => [
+                                                        'ENDP_9',
+                                                        'ROUTER4_5',
+                                                        'ROUTER4_1',
+                                                        'ROUTER4_2',
+                                                        'ROUTER5_1',
+                                                        'ENDP_13'
+                                                      ],
+                                 'ENDP_4::ENDP_11' => [
+                                                        'ENDP_4',
+                                                        'ROUTER4_0',
+                                                        'ROUTER4_2',
+                                                        'ROUTER5_1',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_7',
+                                                        'ENDP_11'
+                                                      ],
+                                 'ENDP_12::ENDP_12' => undef,
+                                 'ENDP_6::ENDP_14' => [
+                                                        'ENDP_6',
+                                                        'ROUTER4_2',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_2',
+                                                        'ENDP_14'
+                                                      ],
+                                 'ENDP_9::ENDP_7' => [
+                                                       'ENDP_9',
+                                                       'ROUTER4_5',
+                                                       'ROUTER5_0',
+                                                       'ROUTER4_4',
+                                                       'ROUTER4_3',
+                                                       'ENDP_7'
+                                                     ],
+                                 'ENDP_0::ENDP_4' => [
+                                                       'ENDP_0',
+                                                       'ROUTER3_0',
+                                                       'ROUTER4_5',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_0',
+                                                       'ENDP_4'
+                                                     ],
+                                 'ENDP_2::ENDP_13' => [
+                                                        'ENDP_2',
+                                                        'ROUTER3_2',
+                                                        'ROUTER4_7',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_1',
+                                                        'ENDP_13'
+                                                      ],
+                                 'ENDP_4::ENDP_15' => [
+                                                        'ENDP_4',
+                                                        'ROUTER4_0',
+                                                        'ROUTER4_2',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ENDP_15'
+                                                      ],
+                                 'ENDP_0::ENDP_8' => [
+                                                       'ENDP_0',
+                                                       'ROUTER3_0',
+                                                       'ROUTER4_5',
+                                                       'ROUTER5_0',
+                                                       'ROUTER4_4',
+                                                       'ENDP_8'
+                                                     ],
+                                 'ENDP_1::ENDP_9' => [
+                                                       'ENDP_1',
+                                                       'ROUTER3_1',
+                                                       'ROUTER4_3',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_0',
+                                                       'ROUTER4_5',
+                                                       'ENDP_9'
+                                                     ],
+                                 'ENDP_11::ENDP_9' => [
+                                                        'ENDP_11',
+                                                        'ROUTER4_7',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_0',
+                                                        'ROUTER4_5',
+                                                        'ENDP_9'
+                                                      ],
+                                 'ENDP_14::ENDP_11' => [
+                                                         'ENDP_14',
+                                                         'ROUTER5_2',
+                                                         'ROUTER4_7',
+                                                         'ENDP_11'
+                                                       ],
+                                 'ENDP_5::ENDP_13' => [
+                                                        'ENDP_5',
+                                                        'ROUTER4_1',
+                                                        'ROUTER4_2',
+                                                        'ROUTER5_1',
+                                                        'ENDP_13'
+                                                      ],
+                                 'ENDP_8::ENDP_1' => [
+                                                       'ENDP_8',
+                                                       'ROUTER4_4',
+                                                       'ROUTER4_3',
+                                                       'ROUTER3_1',
+                                                       'ENDP_1'
+                                                     ],
+                                 'ENDP_7::ENDP_14' => [
+                                                        'ENDP_7',
+                                                        'ROUTER4_3',
+                                                        'ROUTER4_4',
+                                                        'ROUTER5_2',
+                                                        'ENDP_14'
+                                                      ],
+                                 'ENDP_10::ENDP_7' => [
+                                                        'ENDP_10',
+                                                        'ROUTER4_6',
+                                                        'ROUTER4_3',
+                                                        'ENDP_7'
+                                                      ],
+                                 'ENDP_7::ENDP_1' => [
+                                                       'ENDP_7',
+                                                       'ROUTER4_3',
+                                                       'ROUTER3_1',
+                                                       'ENDP_1'
+                                                     ],
+                                 'ENDP_5::ENDP_15' => [
+                                                        'ENDP_5',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ENDP_15'
+                                                      ],
+                                 'ENDP_9::ENDP_4' => [
+                                                       'ENDP_9',
+                                                       'ROUTER4_5',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_0',
+                                                       'ENDP_4'
+                                                     ],
+                                 'ENDP_9::ENDP_15' => [
+                                                        'ENDP_9',
+                                                        'ROUTER4_5',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ENDP_15'
+                                                      ],
+                                 'ENDP_9::ENDP_3' => [
+                                                       'ENDP_9',
+                                                       'ROUTER4_5',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_0',
+                                                       'ROUTER3_3',
+                                                       'ENDP_3'
+                                                     ],
+                                 'ENDP_13::ENDP_15' => [
+                                                         'ENDP_13',
+                                                         'ROUTER5_1',
+                                                         'ROUTER5_2',
+                                                         'ROUTER5_3',
+                                                         'ENDP_15'
+                                                       ],
+                                 'ENDP_4::ENDP_13' => [
+                                                        'ENDP_4',
+                                                        'ROUTER4_0',
+                                                        'ROUTER5_1',
+                                                        'ENDP_13'
+                                                      ],
+                                 'ENDP_0::ENDP_9' => [
+                                                       'ENDP_0',
+                                                       'ROUTER3_0',
+                                                       'ROUTER4_5',
+                                                       'ENDP_9'
+                                                     ],
+                                 'ENDP_7::ENDP_4' => [
+                                                       'ENDP_7',
+                                                       'ROUTER4_3',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_0',
+                                                       'ENDP_4'
+                                                     ],
+                                 'ENDP_5::ENDP_8' => [
+                                                       'ENDP_5',
+                                                       'ROUTER4_1',
+                                                       'ROUTER5_3',
+                                                       'ROUTER5_0',
+                                                       'ROUTER4_4',
+                                                       'ENDP_8'
+                                                     ],
+                                 'ENDP_2::ENDP_8' => [
+                                                       'ENDP_2',
+                                                       'ROUTER3_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER5_2',
+                                                       'ROUTER4_4',
+                                                       'ENDP_8'
+                                                     ],
+                                 'ENDP_10::ENDP_4' => [
+                                                        'ENDP_10',
+                                                        'ROUTER4_6',
+                                                        'ROUTER5_0',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_0',
+                                                        'ENDP_4'
+                                                      ],
+                                 'ENDP_10::ENDP_10' => undef,
+                                 'ENDP_5::ENDP_6' => [
+                                                       'ENDP_5',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_2',
+                                                       'ENDP_6'
+                                                     ],
+                                 'ENDP_15::ENDP_14' => [
+                                                         'ENDP_15',
+                                                         'ROUTER5_3',
+                                                         'ROUTER5_2',
+                                                         'ENDP_14'
+                                                       ],
+                                 'ENDP_3::ENDP_10' => [
+                                                        'ENDP_3',
+                                                        'ROUTER3_3',
+                                                        'ROUTER4_7',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_4',
+                                                        'ROUTER4_3',
+                                                        'ROUTER4_6',
+                                                        'ENDP_10'
+                                                      ],
+                                 'ENDP_6::ENDP_13' => [
+                                                        'ENDP_6',
+                                                        'ROUTER4_2',
+                                                        'ROUTER5_1',
+                                                        'ENDP_13'
+                                                      ],
+                                 'ENDP_1::ENDP_10' => [
+                                                        'ENDP_1',
+                                                        'ROUTER3_1',
+                                                        'ROUTER4_3',
+                                                        'ROUTER4_6',
+                                                        'ENDP_10'
+                                                      ],
+                                 'ENDP_7::ENDP_6' => [
+                                                       'ENDP_7',
+                                                       'ROUTER4_3',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_2',
+                                                       'ENDP_6'
+                                                     ],
+                                 'ENDP_15::ENDP_3' => [
+                                                        'ENDP_15',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_0',
+                                                        'ROUTER3_3',
+                                                        'ENDP_3'
+                                                      ],
+                                 'ENDP_2::ENDP_6' => [
+                                                       'ENDP_2',
+                                                       'ROUTER3_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER5_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_2',
+                                                       'ENDP_6'
+                                                     ],
+                                 'ENDP_11::ENDP_10' => [
+                                                         'ENDP_11',
+                                                         'ROUTER4_7',
+                                                         'ROUTER5_2',
+                                                         'ROUTER4_4',
+                                                         'ROUTER4_3',
+                                                         'ROUTER4_6',
+                                                         'ENDP_10'
+                                                       ],
+                                 'ENDP_1::ENDP_8' => [
+                                                       'ENDP_1',
+                                                       'ROUTER3_1',
+                                                       'ROUTER4_3',
+                                                       'ROUTER4_4',
+                                                       'ENDP_8'
+                                                     ],
+                                 'ENDP_4::ENDP_3' => [
+                                                       'ENDP_4',
+                                                       'ROUTER4_0',
+                                                       'ROUTER3_3',
+                                                       'ENDP_3'
+                                                     ],
+                                 'ENDP_4::ENDP_7' => [
+                                                       'ENDP_4',
+                                                       'ROUTER4_0',
+                                                       'ROUTER5_1',
+                                                       'ROUTER5_2',
+                                                       'ROUTER4_4',
+                                                       'ROUTER4_3',
+                                                       'ENDP_7'
+                                                     ],
+                                 'ENDP_9::ENDP_5' => [
+                                                       'ENDP_9',
+                                                       'ROUTER4_5',
+                                                       'ROUTER4_1',
+                                                       'ENDP_5'
+                                                     ],
+                                 'ENDP_4::ENDP_12' => [
+                                                        'ENDP_4',
+                                                        'ROUTER4_0',
+                                                        'ROUTER4_2',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_0',
+                                                        'ENDP_12'
+                                                      ],
+                                 'ENDP_9::ENDP_0' => [
+                                                       'ENDP_9',
+                                                       'ROUTER4_5',
+                                                       'ROUTER3_0',
+                                                       'ENDP_0'
+                                                     ],
+                                 'ENDP_7::ENDP_12' => [
+                                                        'ENDP_7',
+                                                        'ROUTER4_3',
+                                                        'ROUTER4_4',
+                                                        'ROUTER5_0',
+                                                        'ENDP_12'
+                                                      ],
+                                 'ENDP_15::ENDP_4' => [
+                                                        'ENDP_15',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_0',
+                                                        'ENDP_4'
+                                                      ],
+                                 'ENDP_0::ENDP_1' => [
+                                                       'ENDP_0',
+                                                       'ROUTER3_0',
+                                                       'ROUTER4_6',
+                                                       'ROUTER4_3',
+                                                       'ROUTER3_1',
+                                                       'ENDP_1'
+                                                     ],
+                                 'ENDP_1::ENDP_1' => undef,
+                                 'ENDP_8::ENDP_3' => [
+                                                       'ENDP_8',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_0',
+                                                       'ROUTER3_3',
+                                                       'ENDP_3'
+                                                     ],
+                                 'ENDP_3::ENDP_2' => [
+                                                       'ENDP_3',
+                                                       'ROUTER3_3',
+                                                       'ROUTER4_7',
+                                                       'ROUTER3_2',
+                                                       'ENDP_2'
+                                                     ],
+                                 'ENDP_7::ENDP_3' => [
+                                                       'ENDP_7',
+                                                       'ROUTER4_3',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_0',
+                                                       'ROUTER3_3',
+                                                       'ENDP_3'
+                                                     ],
+                                 'ENDP_4::ENDP_9' => [
+                                                       'ENDP_4',
+                                                       'ROUTER4_0',
+                                                       'ROUTER4_2',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_5',
+                                                       'ENDP_9'
+                                                     ],
+                                 'ENDP_3::ENDP_4' => [
+                                                       'ENDP_3',
+                                                       'ROUTER3_3',
+                                                       'ROUTER4_0',
+                                                       'ENDP_4'
+                                                     ],
+                                 'ENDP_14::ENDP_5' => [
+                                                        'ENDP_14',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_3',
+                                                        'ROUTER4_1',
+                                                        'ENDP_5'
+                                                      ],
+                                 'ENDP_0::ENDP_11' => [
+                                                        'ENDP_0',
+                                                        'ROUTER3_0',
+                                                        'ROUTER4_5',
+                                                        'ROUTER5_0',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_7',
+                                                        'ENDP_11'
+                                                      ],
+                                 'ENDP_1::ENDP_0' => [
+                                                       'ENDP_1',
+                                                       'ROUTER3_1',
+                                                       'ROUTER4_3',
+                                                       'ROUTER4_6',
+                                                       'ROUTER3_0',
+                                                       'ENDP_0'
+                                                     ],
+                                 'ENDP_9::ENDP_1' => [
+                                                       'ENDP_9',
+                                                       'ROUTER4_5',
+                                                       'ROUTER5_0',
+                                                       'ROUTER4_4',
+                                                       'ROUTER4_3',
+                                                       'ROUTER3_1',
+                                                       'ENDP_1'
+                                                     ],
+                                 'ENDP_12::ENDP_15' => [
+                                                         'ENDP_12',
+                                                         'ROUTER5_0',
+                                                         'ROUTER5_3',
+                                                         'ENDP_15'
+                                                       ],
+                                 'ENDP_13::ENDP_14' => [
+                                                         'ENDP_13',
+                                                         'ROUTER5_1',
+                                                         'ROUTER5_2',
+                                                         'ENDP_14'
+                                                       ],
+                                 'ENDP_6::ENDP_2' => [
+                                                       'ENDP_6',
+                                                       'ROUTER4_2',
+                                                       'ROUTER4_1',
+                                                       'ROUTER5_3',
+                                                       'ROUTER5_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER3_2',
+                                                       'ENDP_2'
+                                                     ],
+                                 'ENDP_3::ENDP_0' => [
+                                                       'ENDP_3',
+                                                       'ROUTER3_3',
+                                                       'ROUTER4_0',
+                                                       'ROUTER4_2',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_5',
+                                                       'ROUTER3_0',
+                                                       'ENDP_0'
+                                                     ],
+                                 'ENDP_6::ENDP_0' => [
+                                                       'ENDP_6',
+                                                       'ROUTER4_2',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_5',
+                                                       'ROUTER3_0',
+                                                       'ENDP_0'
+                                                     ],
+                                 'ENDP_15::ENDP_0' => [
+                                                        'ENDP_15',
+                                                        'ROUTER5_3',
+                                                        'ROUTER4_1',
+                                                        'ROUTER4_5',
+                                                        'ROUTER3_0',
+                                                        'ENDP_0'
+                                                      ],
+                                 'ENDP_14::ENDP_3' => [
+                                                        'ENDP_14',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_0',
+                                                        'ROUTER3_3',
+                                                        'ENDP_3'
+                                                      ],
+                                 'ENDP_8::ENDP_13' => [
+                                                        'ENDP_8',
+                                                        'ROUTER4_4',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_1',
+                                                        'ENDP_13'
+                                                      ],
+                                 'ENDP_5::ENDP_3' => [
+                                                       'ENDP_5',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_0',
+                                                       'ROUTER3_3',
+                                                       'ENDP_3'
+                                                     ],
+                                 'ENDP_7::ENDP_0' => [
+                                                       'ENDP_7',
+                                                       'ROUTER4_3',
+                                                       'ROUTER4_6',
+                                                       'ROUTER3_0',
+                                                       'ENDP_0'
+                                                     ],
+                                 'ENDP_6::ENDP_9' => [
+                                                       'ENDP_6',
+                                                       'ROUTER4_2',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_5',
+                                                       'ENDP_9'
+                                                     ],
+                                 'ENDP_8::ENDP_12' => [
+                                                        'ENDP_8',
+                                                        'ROUTER4_4',
+                                                        'ROUTER5_0',
+                                                        'ENDP_12'
+                                                      ],
+                                 'ENDP_4::ENDP_1' => [
+                                                       'ENDP_4',
+                                                       'ROUTER4_0',
+                                                       'ROUTER5_1',
+                                                       'ROUTER5_2',
+                                                       'ROUTER4_4',
+                                                       'ROUTER4_3',
+                                                       'ROUTER3_1',
+                                                       'ENDP_1'
+                                                     ],
+                                 'ENDP_8::ENDP_14' => [
+                                                        'ENDP_8',
+                                                        'ROUTER4_4',
+                                                        'ROUTER5_2',
+                                                        'ENDP_14'
+                                                      ],
+                                 'ENDP_11::ENDP_2' => [
+                                                        'ENDP_11',
+                                                        'ROUTER4_7',
+                                                        'ROUTER3_2',
+                                                        'ENDP_2'
+                                                      ],
+                                 'ENDP_13::ENDP_11' => [
+                                                         'ENDP_13',
+                                                         'ROUTER5_1',
+                                                         'ROUTER5_2',
+                                                         'ROUTER4_7',
+                                                         'ENDP_11'
+                                                       ],
+                                 'ENDP_14::ENDP_1' => [
+                                                        'ENDP_14',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_4',
+                                                        'ROUTER4_3',
+                                                        'ROUTER3_1',
+                                                        'ENDP_1'
+                                                      ],
+                                 'ENDP_10::ENDP_11' => [
+                                                         'ENDP_10',
+                                                         'ROUTER4_6',
+                                                         'ROUTER5_0',
+                                                         'ROUTER5_3',
+                                                         'ROUTER5_2',
+                                                         'ROUTER4_7',
+                                                         'ENDP_11'
+                                                       ],
+                                 'ENDP_13::ENDP_1' => [
+                                                        'ENDP_13',
+                                                        'ROUTER5_1',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_4',
+                                                        'ROUTER4_3',
+                                                        'ROUTER3_1',
+                                                        'ENDP_1'
+                                                      ],
+                                 'ENDP_1::ENDP_15' => [
+                                                        'ENDP_1',
+                                                        'ROUTER3_1',
+                                                        'ROUTER4_3',
+                                                        'ROUTER4_4',
+                                                        'ROUTER5_0',
+                                                        'ROUTER5_3',
+                                                        'ENDP_15'
+                                                      ],
+                                 'ENDP_2::ENDP_2' => undef,
+                                 'ENDP_6::ENDP_1' => [
+                                                       'ENDP_6',
+                                                       'ROUTER4_2',
+                                                       'ROUTER4_1',
+                                                       'ROUTER5_3',
+                                                       'ROUTER5_0',
+                                                       'ROUTER4_6',
+                                                       'ROUTER4_3',
+                                                       'ROUTER3_1',
+                                                       'ENDP_1'
+                                                     ],
+                                 'ENDP_11::ENDP_1' => [
+                                                        'ENDP_11',
+                                                        'ROUTER4_7',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_4',
+                                                        'ROUTER4_3',
+                                                        'ROUTER3_1',
+                                                        'ENDP_1'
+                                                      ],
+                                 'ENDP_10::ENDP_6' => [
+                                                        'ENDP_10',
+                                                        'ROUTER4_6',
+                                                        'ROUTER5_0',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_2',
+                                                        'ENDP_6'
+                                                      ],
+                                 'ENDP_7::ENDP_7' => undef,
+                                 'ENDP_9::ENDP_11' => [
+                                                        'ENDP_9',
+                                                        'ROUTER4_5',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_7',
+                                                        'ENDP_11'
+                                                      ],
+                                 'ENDP_10::ENDP_1' => [
+                                                        'ENDP_10',
+                                                        'ROUTER4_6',
+                                                        'ROUTER4_3',
+                                                        'ROUTER3_1',
+                                                        'ENDP_1'
+                                                      ],
+                                 'ENDP_11::ENDP_5' => [
+                                                        'ENDP_11',
+                                                        'ROUTER4_7',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_3',
+                                                        'ROUTER4_1',
+                                                        'ENDP_5'
+                                                      ],
+                                 'ENDP_15::ENDP_5' => [
+                                                        'ENDP_15',
+                                                        'ROUTER5_3',
+                                                        'ROUTER4_1',
+                                                        'ENDP_5'
+                                                      ],
+                                 'ENDP_2::ENDP_12' => [
+                                                        'ENDP_2',
+                                                        'ROUTER3_2',
+                                                        'ROUTER3_1',
+                                                        'ROUTER4_3',
+                                                        'ROUTER4_4',
+                                                        'ROUTER5_0',
+                                                        'ENDP_12'
+                                                      ],
+                                 'ENDP_2::ENDP_3' => [
+                                                       'ENDP_2',
+                                                       'ROUTER3_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER3_3',
+                                                       'ENDP_3'
+                                                     ],
+                                 'ENDP_7::ENDP_2' => [
+                                                       'ENDP_7',
+                                                       'ROUTER4_3',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER3_2',
+                                                       'ENDP_2'
+                                                     ],
+                                 'ENDP_15::ENDP_9' => [
+                                                        'ENDP_15',
+                                                        'ROUTER5_3',
+                                                        'ROUTER4_1',
+                                                        'ROUTER4_5',
+                                                        'ENDP_9'
+                                                      ],
+                                 'ENDP_2::ENDP_0' => [
+                                                       'ENDP_2',
+                                                       'ROUTER3_2',
+                                                       'ROUTER3_1',
+                                                       'ROUTER4_3',
+                                                       'ROUTER4_6',
+                                                       'ROUTER3_0',
+                                                       'ENDP_0'
+                                                     ],
+                                 'ENDP_3::ENDP_12' => [
+                                                        'ENDP_3',
+                                                        'ROUTER3_3',
+                                                        'ROUTER4_7',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_0',
+                                                        'ENDP_12'
+                                                      ],
+                                 'ENDP_15::ENDP_8' => [
+                                                        'ENDP_15',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_0',
+                                                        'ROUTER4_4',
+                                                        'ENDP_8'
+                                                      ],
+                                 'ENDP_12::ENDP_7' => [
+                                                        'ENDP_12',
+                                                        'ROUTER5_0',
+                                                        'ROUTER4_6',
+                                                        'ROUTER4_3',
+                                                        'ENDP_7'
+                                                      ],
+                                 'ENDP_3::ENDP_7' => [
+                                                       'ENDP_3',
+                                                       'ROUTER3_3',
+                                                       'ROUTER4_0',
+                                                       'ROUTER5_1',
+                                                       'ROUTER5_2',
+                                                       'ROUTER4_4',
+                                                       'ROUTER4_3',
+                                                       'ENDP_7'
+                                                     ],
+                                 'ENDP_1::ENDP_6' => [
+                                                       'ENDP_1',
+                                                       'ROUTER3_1',
+                                                       'ROUTER3_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER5_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_2',
+                                                       'ENDP_6'
+                                                     ],
+                                 'ENDP_10::ENDP_2' => [
+                                                        'ENDP_10',
+                                                        'ROUTER4_6',
+                                                        'ROUTER5_0',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_7',
+                                                        'ROUTER3_2',
+                                                        'ENDP_2'
+                                                      ],
+                                 'ENDP_8::ENDP_2' => [
+                                                       'ENDP_8',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER3_2',
+                                                       'ENDP_2'
+                                                     ],
+                                 'ENDP_11::ENDP_3' => [
+                                                        'ENDP_11',
+                                                        'ROUTER4_7',
+                                                        'ROUTER3_3',
+                                                        'ENDP_3'
+                                                      ],
+                                 'ENDP_14::ENDP_15' => [
+                                                         'ENDP_14',
+                                                         'ROUTER5_2',
+                                                         'ROUTER5_3',
+                                                         'ENDP_15'
+                                                       ],
+                                 'ENDP_3::ENDP_9' => [
+                                                       'ENDP_3',
+                                                       'ROUTER3_3',
+                                                       'ROUTER4_0',
+                                                       'ROUTER4_2',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_5',
+                                                       'ENDP_9'
+                                                     ],
+                                 'ENDP_13::ENDP_3' => [
+                                                        'ENDP_13',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_0',
+                                                        'ROUTER3_3',
+                                                        'ENDP_3'
+                                                      ],
+                                 'ENDP_3::ENDP_11' => [
+                                                        'ENDP_3',
+                                                        'ROUTER3_3',
+                                                        'ROUTER4_7',
+                                                        'ENDP_11'
+                                                      ],
+                                 'ENDP_11::ENDP_0' => [
+                                                        'ENDP_11',
+                                                        'ROUTER4_7',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_3',
+                                                        'ROUTER4_1',
+                                                        'ROUTER4_5',
+                                                        'ROUTER3_0',
+                                                        'ENDP_0'
+                                                      ],
+                                 'ENDP_11::ENDP_4' => [
+                                                        'ENDP_11',
+                                                        'ROUTER4_7',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_0',
+                                                        'ENDP_4'
+                                                      ],
+                                 'ENDP_13::ENDP_2' => [
+                                                        'ENDP_13',
+                                                        'ROUTER5_1',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_7',
+                                                        'ROUTER3_2',
+                                                        'ENDP_2'
+                                                      ],
+                                 'ENDP_2::ENDP_10' => [
+                                                        'ENDP_2',
+                                                        'ROUTER3_2',
+                                                        'ROUTER3_1',
+                                                        'ROUTER4_3',
+                                                        'ROUTER4_6',
+                                                        'ENDP_10'
+                                                      ],
+                                 'ENDP_9::ENDP_9' => undef,
+                                 'ENDP_1::ENDP_14' => [
+                                                        'ENDP_1',
+                                                        'ROUTER3_1',
+                                                        'ROUTER3_2',
+                                                        'ROUTER4_7',
+                                                        'ROUTER5_2',
+                                                        'ENDP_14'
+                                                      ],
+                                 'ENDP_11::ENDP_6' => [
+                                                        'ENDP_11',
+                                                        'ROUTER4_7',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_2',
+                                                        'ENDP_6'
+                                                      ],
+                                 'ENDP_6::ENDP_15' => [
+                                                        'ENDP_6',
+                                                        'ROUTER4_2',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ENDP_15'
+                                                      ],
+                                 'ENDP_8::ENDP_4' => [
+                                                       'ENDP_8',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_0',
+                                                       'ROUTER5_3',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_0',
+                                                       'ENDP_4'
+                                                     ],
+                                 'ENDP_0::ENDP_14' => [
+                                                        'ENDP_0',
+                                                        'ROUTER3_0',
+                                                        'ROUTER4_5',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_2',
+                                                        'ENDP_14'
+                                                      ],
+                                 'ENDP_3::ENDP_3' => undef,
+                                 'ENDP_1::ENDP_7' => [
+                                                       'ENDP_1',
+                                                       'ROUTER3_1',
+                                                       'ROUTER4_3',
+                                                       'ENDP_7'
+                                                     ],
+                                 'ENDP_9::ENDP_10' => [
+                                                        'ENDP_9',
+                                                        'ROUTER4_5',
+                                                        'ROUTER5_0',
+                                                        'ROUTER4_6',
+                                                        'ENDP_10'
+                                                      ],
+                                 'ENDP_12::ENDP_3' => [
+                                                        'ENDP_12',
+                                                        'ROUTER5_0',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_0',
+                                                        'ROUTER3_3',
+                                                        'ENDP_3'
+                                                      ],
+                                 'ENDP_8::ENDP_10' => [
+                                                        'ENDP_8',
+                                                        'ROUTER4_4',
+                                                        'ROUTER5_0',
+                                                        'ROUTER4_6',
+                                                        'ENDP_10'
+                                                      ],
+                                 'ENDP_15::ENDP_13' => [
+                                                         'ENDP_15',
+                                                         'ROUTER5_3',
+                                                         'ROUTER5_1',
+                                                         'ENDP_13'
+                                                       ],
+                                 'ENDP_0::ENDP_7' => [
+                                                       'ENDP_0',
+                                                       'ROUTER3_0',
+                                                       'ROUTER4_6',
+                                                       'ROUTER4_3',
+                                                       'ENDP_7'
+                                                     ],
+                                 'ENDP_0::ENDP_13' => [
+                                                        'ENDP_0',
+                                                        'ROUTER3_0',
+                                                        'ROUTER4_5',
+                                                        'ROUTER4_1',
+                                                        'ROUTER4_2',
+                                                        'ROUTER5_1',
+                                                        'ENDP_13'
+                                                      ],
+                                 'ENDP_3::ENDP_5' => [
+                                                       'ENDP_3',
+                                                       'ROUTER3_3',
+                                                       'ROUTER4_0',
+                                                       'ROUTER4_2',
+                                                       'ROUTER4_1',
+                                                       'ENDP_5'
+                                                     ],
+                                 'ENDP_9::ENDP_2' => [
+                                                       'ENDP_9',
+                                                       'ROUTER4_5',
+                                                       'ROUTER4_1',
+                                                       'ROUTER5_3',
+                                                       'ROUTER5_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER3_2',
+                                                       'ENDP_2'
+                                                     ],
+                                 'ENDP_6::ENDP_7' => [
+                                                       'ENDP_6',
+                                                       'ROUTER4_2',
+                                                       'ROUTER4_1',
+                                                       'ROUTER5_3',
+                                                       'ROUTER5_0',
+                                                       'ROUTER4_6',
+                                                       'ROUTER4_3',
+                                                       'ENDP_7'
+                                                     ],
+                                 'ENDP_5::ENDP_1' => [
+                                                       'ENDP_5',
+                                                       'ROUTER4_1',
+                                                       'ROUTER5_3',
+                                                       'ROUTER5_0',
+                                                       'ROUTER4_6',
+                                                       'ROUTER4_3',
+                                                       'ROUTER3_1',
+                                                       'ENDP_1'
+                                                     ],
+                                 'ENDP_15::ENDP_15' => undef,
+                                 'ENDP_10::ENDP_15' => [
+                                                         'ENDP_10',
+                                                         'ROUTER4_6',
+                                                         'ROUTER5_0',
+                                                         'ROUTER5_3',
+                                                         'ENDP_15'
+                                                       ],
+                                 'ENDP_5::ENDP_9' => [
+                                                       'ENDP_5',
+                                                       'ROUTER4_1',
+                                                       'ROUTER4_5',
+                                                       'ENDP_9'
+                                                     ],
+                                 'ENDP_9::ENDP_12' => [
+                                                        'ENDP_9',
+                                                        'ROUTER4_5',
+                                                        'ROUTER5_0',
+                                                        'ENDP_12'
+                                                      ],
+                                 'ENDP_3::ENDP_15' => [
+                                                        'ENDP_3',
+                                                        'ROUTER3_3',
+                                                        'ROUTER4_0',
+                                                        'ROUTER4_2',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ENDP_15'
+                                                      ],
+                                 'ENDP_11::ENDP_14' => [
+                                                         'ENDP_11',
+                                                         'ROUTER4_7',
+                                                         'ROUTER5_2',
+                                                         'ENDP_14'
+                                                       ],
+                                 'ENDP_6::ENDP_12' => [
+                                                        'ENDP_6',
+                                                        'ROUTER4_2',
+                                                        'ROUTER4_1',
+                                                        'ROUTER5_3',
+                                                        'ROUTER5_0',
+                                                        'ENDP_12'
+                                                      ],
+                                 'ENDP_7::ENDP_11' => [
+                                                        'ENDP_7',
+                                                        'ROUTER4_3',
+                                                        'ROUTER4_4',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_7',
+                                                        'ENDP_11'
+                                                      ],
+                                 'ENDP_11::ENDP_15' => [
+                                                         'ENDP_11',
+                                                         'ROUTER4_7',
+                                                         'ROUTER5_2',
+                                                         'ROUTER5_3',
+                                                         'ENDP_15'
+                                                       ],
+                                 'ENDP_13::ENDP_8' => [
+                                                        'ENDP_13',
+                                                        'ROUTER5_1',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_4',
+                                                        'ENDP_8'
+                                                      ],
+                                 'ENDP_8::ENDP_11' => [
+                                                        'ENDP_8',
+                                                        'ROUTER4_4',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_7',
+                                                        'ENDP_11'
+                                                      ],
+                                 'ENDP_14::ENDP_4' => [
+                                                        'ENDP_14',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_0',
+                                                        'ENDP_4'
+                                                      ],
+                                 'ENDP_5::ENDP_7' => [
+                                                       'ENDP_5',
+                                                       'ROUTER4_1',
+                                                       'ROUTER5_3',
+                                                       'ROUTER5_0',
+                                                       'ROUTER4_6',
+                                                       'ROUTER4_3',
+                                                       'ENDP_7'
+                                                     ],
+                                 'ENDP_13::ENDP_13' => undef,
+                                 'ENDP_10::ENDP_13' => [
+                                                         'ENDP_10',
+                                                         'ROUTER4_6',
+                                                         'ROUTER5_0',
+                                                         'ROUTER5_3',
+                                                         'ROUTER5_1',
+                                                         'ENDP_13'
+                                                       ],
+                                 'ENDP_8::ENDP_0' => [
+                                                       'ENDP_8',
+                                                       'ROUTER4_4',
+                                                       'ROUTER5_0',
+                                                       'ROUTER4_5',
+                                                       'ROUTER3_0',
+                                                       'ENDP_0'
+                                                     ],
+                                 'ENDP_8::ENDP_15' => [
+                                                        'ENDP_8',
+                                                        'ROUTER4_4',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_3',
+                                                        'ENDP_15'
+                                                      ],
+                                 'ENDP_13::ENDP_9' => [
+                                                        'ENDP_13',
+                                                        'ROUTER5_1',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_3',
+                                                        'ROUTER4_1',
+                                                        'ROUTER4_5',
+                                                        'ENDP_9'
+                                                      ],
+                                 'ENDP_12::ENDP_10' => [
+                                                         'ENDP_12',
+                                                         'ROUTER5_0',
+                                                         'ROUTER4_6',
+                                                         'ENDP_10'
+                                                       ],
+                                 'ENDP_13::ENDP_0' => [
+                                                        'ENDP_13',
+                                                        'ROUTER5_1',
+                                                        'ROUTER5_2',
+                                                        'ROUTER5_3',
+                                                        'ROUTER4_1',
+                                                        'ROUTER4_5',
+                                                        'ROUTER3_0',
+                                                        'ENDP_0'
+                                                      ],
+                                 'ENDP_13::ENDP_12' => [
+                                                         'ENDP_13',
+                                                         'ROUTER5_1',
+                                                         'ROUTER5_2',
+                                                         'ROUTER5_3',
+                                                         'ROUTER5_0',
+                                                         'ENDP_12'
+                                                       ],
+                                 'ENDP_4::ENDP_14' => [
+                                                        'ENDP_4',
+                                                        'ROUTER4_0',
+                                                        'ROUTER4_2',
+                                                        'ROUTER5_1',
+                                                        'ROUTER5_2',
+                                                        'ENDP_14'
+                                                      ],
+                                 'ENDP_14::ENDP_0' => [
+                                                        'ENDP_14',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_4',
+                                                        'ROUTER4_3',
+                                                        'ROUTER4_6',
+                                                        'ROUTER3_0',
+                                                        'ENDP_0'
+                                                      ],
+                                 'ENDP_13::ENDP_4' => [
+                                                        'ENDP_13',
+                                                        'ROUTER5_1',
+                                                        'ROUTER4_0',
+                                                        'ENDP_4'
+                                                      ],
+                                 'ENDP_12::ENDP_14' => [
+                                                         'ENDP_12',
+                                                         'ROUTER5_0',
+                                                         'ROUTER5_3',
+                                                         'ROUTER5_2',
+                                                         'ENDP_14'
+                                                       ],
+                                 'ENDP_1::ENDP_12' => [
+                                                        'ENDP_1',
+                                                        'ROUTER3_1',
+                                                        'ROUTER4_3',
+                                                        'ROUTER4_4',
+                                                        'ROUTER5_0',
+                                                        'ENDP_12'
+                                                      ],
+                                 'ENDP_11::ENDP_12' => [
+                                                         'ENDP_11',
+                                                         'ROUTER4_7',
+                                                         'ROUTER5_2',
+                                                         'ROUTER5_3',
+                                                         'ROUTER5_0',
+                                                         'ENDP_12'
+                                                       ],
+                                 'ENDP_14::ENDP_7' => [
+                                                        'ENDP_14',
+                                                        'ROUTER5_2',
+                                                        'ROUTER4_4',
+                                                        'ROUTER4_3',
+                                                        'ENDP_7'
+                                                      ],
+                                 'ENDP_2::ENDP_4' => [
+                                                       'ENDP_2',
+                                                       'ROUTER3_2',
+                                                       'ROUTER4_7',
+                                                       'ROUTER5_2',
+                                                       'ROUTER5_1',
+                                                       'ROUTER4_0',
+                                                       'ENDP_4'
+                                                     ]
+                               },
+                    'P0# Router in all Paths' => {
+                                                   'type' => '3D_bar',
+                                                   'ratio' => '-',
+                                                   'dimension' => '3D'
+                                                 },
+                    'P1# Links in all paths' => {
+                                                  'ratio' => '-',
+                                                  'dimension' => '3D',
+                                                  'type' => '3D_bar'
+                                                },
+                    'ENDP_0' => {
+                                  'PNUM' => 1,
+                                  'PCONNECT' => {
+                                                  'Port[0]' => 'ROUTER3_0,Port[0]'
+                                                },
+                                  'NAME' => 'T0',
+                                  'TYPE' => 'ENDP'
+                                },
+                    'topology_diagram' => {},
+                    'tile_diagram' => {
+                                        'auto_draw' => 'ON',
+                                        'gtype' => 'ON'
+                                      },
+                    'ENDP_13' => {
+                                   'TYPE' => 'ENDP',
+                                   'PCONNECT' => {
+                                                   'Port[0]' => 'ROUTER5_1,Port[0]'
+                                                 },
+                                   'NAME' => 'T13',
+                                   'PNUM' => 1
+                                 },
+                    'ROUTER4_7' => {
+                                     'PCONNECT' => {
+                                                     'Port[0]' => 'ENDP_11,Port[0]',
+                                                     'Port[2]' => 'ROUTER3_2,Port[1]',
+                                                     'Port[3]' => 'ROUTER3_3,Port[1]',
+                                                     'Port[1]' => 'ROUTER5_2,Port[4]'
+                                                   },
+                                     'NAME' => 'R15',
+                                     'TYPE' => 'ROUTER',
+                                     'PNUM' => 4,
+                                     'RNUM' => 11,
+                                     'LOC_ASIC' => '2,0,0'
+                                   },
+                    'gui_status' => {
+                                      'timeout' => 0,
+                                      'status' => 'ideal'
+                                    },
+                    'ENDP_3' => {
+                                  'PNUM' => 1,
+                                  'TYPE' => 'ENDP',
+                                  'PCONNECT' => {
+                                                  'Port[0]' => 'ROUTER3_3,Port[0]'
+                                                },
+                                  'NAME' => 'T3'
+                                },
+                    'ROUTER5_1' => {
+                                     'TYPE' => 'ROUTER',
+                                     'PCONNECT' => {
+                                                     'Port[4]' => 'ROUTER5_2,Port[2]',
+                                                     'Port[3]' => 'ROUTER4_2,Port[1]',
+                                                     'Port[1]' => 'ROUTER5_3,Port[3]',
+                                                     'Port[0]' => 'ENDP_13,Port[0]',
+                                                     'Port[2]' => 'ROUTER4_0,Port[1]'
+                                                   },
+                                     'NAME' => 'R9',
+                                     'LOC_ASIC' => '3,2,0',
+                                     'RNUM' => 13,
+                                     'PNUM' => 5
+                                   },
+                    'ENDP_2' => {
+                                  'TYPE' => 'ENDP',
+                                  'NAME' => 'T2',
+                                  'PCONNECT' => {
+                                                  'Port[0]' => 'ROUTER3_2,Port[0]'
+                                                },
+                                  'PNUM' => 1
+                                },
+                    'ROUTER3' => {
+                                   'NUM' => '4'
+                                 },
+                    'ENDP_5' => {
+                                  'PCONNECT' => {
+                                                  'Port[0]' => 'ROUTER4_1,Port[0]'
+                                                },
+                                  'NAME' => 'T5',
+                                  'TYPE' => 'ENDP',
+                                  'PNUM' => 1
+                                },
+                    'ENDP_8' => {
+                                  'PCONNECT' => {
+                                                  'Port[0]' => 'ROUTER4_4,Port[0]'
+                                                },
+                                  'NAME' => 'T8',
+                                  'TYPE' => 'ENDP',
+                                  'PNUM' => 1
+                                },
+                    'ENDP_10' => {
+                                   'NAME' => 'T10',
+                                   'PCONNECT' => {
+                                                   'Port[0]' => 'ROUTER4_6,Port[0]'
+                                                 },
+                                   'TYPE' => 'ENDP',
+                                   'PNUM' => 1
+                                 },
+                    'ENDP' => {
+                                'NUM' => '16'
+                              },
+                    'ROUTER4_0' => {
+                                     'PNUM' => 4,
+                                     'RNUM' => 4,
+                                     'LOC_ASIC' => '3,1,0',
+                                     'NAME' => 'R4',
+                                     'PCONNECT' => {
+                                                     'Port[2]' => 'ROUTER3_3,Port[2]',
+                                                     'Port[0]' => 'ENDP_4,Port[0]',
+                                                     'Port[1]' => 'ROUTER5_1,Port[2]',
+                                                     'Port[3]' => 'ROUTER4_2,Port[3]'
+                                                   },
+                                     'TYPE' => 'ROUTER'
+                                   },
+                    'ROUTER4_2' => {
+                                     'PNUM' => 4,
+                                     'LOC_ASIC' => '3,3,0',
+                                     'RNUM' => 6,
+                                     'PCONNECT' => {
+                                                     'Port[2]' => 'ROUTER4_1,Port[2]',
+                                                     'Port[0]' => 'ENDP_6,Port[0]',
+                                                     'Port[1]' => 'ROUTER5_1,Port[3]',
+                                                     'Port[3]' => 'ROUTER4_0,Port[3]'
+                                                   },
+                                     'NAME' => 'R6',
+                                     'TYPE' => 'ROUTER'
+                                   },
+                    'ROUTER12' => {
+                                    'NUM' => 0
+                                  },
+                    'ROUTER8' => {
+                                   'NUM' => 0
+                                 },
+                    'ENDP_1' => {
+                                  'TYPE' => 'ENDP',
+                                  'PCONNECT' => {
+                                                  'Port[0]' => 'ROUTER3_1,Port[0]'
+                                                },
+                                  'NAME' => 'T1',
+                                  'PNUM' => 1
+                                },
+                    'P0' => {
+                              'active' => '# Router in all Paths'
+                            },
+                    'ROUTER3_1' => {
+                                     'PNUM' => 3,
+                                     'LOC_ASIC' => '0,0,0',
+                                     'RNUM' => 1,
+                                     'PCONNECT' => {
+                                                     'Port[1]' => 'ROUTER4_3,Port[3]',
+                                                     'Port[2]' => 'ROUTER3_2,Port[2]',
+                                                     'Port[0]' => 'ENDP_1,Port[0]'
+                                                   },
+                                     'NAME' => 'R1',
+                                     'TYPE' => 'ROUTER'
+                                   },
+                    'SELECT_PATH' => {},
+                    'routing' => {
+                                   'type' => 'minimal'
+                                 },
+                    'ENDP_7' => {
+                                  'PNUM' => 1,
+                                  'NAME' => 'T7',
+                                  'PCONNECT' => {
+                                                  'Port[0]' => 'ROUTER4_3,Port[0]'
+                                                },
+                                  'TYPE' => 'ENDP'
+                                }
+                  }, 'ProNOC' );

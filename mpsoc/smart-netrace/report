@@ -1,0 +1,19 @@
+Verification Results:
+****************************B4_V1_S0 : Compile *******************************:
+	 model is generated successfully.
+****************************B4_V1_S2 : Compile *******************************:
+	 model is generated successfully.
+****************************B4_V1_S4 : Compile *******************************:
+	 model is generated successfully.
+****************************B4_V1_S0	: random traffic *******************************:
+	 Passed:   zero load (5,18.088219) saturation (30,287.989488)
+****************************B4_V1_S2	: random traffic *******************************:
+	 Passed:   zero load (5,12.905159) saturation (30,258.983062)
+****************************B4_V1_S4	: random traffic *******************************:
+	 Passed:   zero load (5,11.982739) saturation (30,254.371942)
+****************************B4_V1_S0	: transposed 1 traffic *******************************:
+	 Passed:   zero load (5,18.288139) saturation (30,216.819551)
+****************************B4_V1_S2	: transposed 1 traffic *******************************:
+	 Passed:   zero load (5,12.828334) saturation (30,209.070269)
+****************************B4_V1_S4	: transposed 1 traffic *******************************:
+	 Passed:   zero load (5,11.998302) saturation (30,210.981069)

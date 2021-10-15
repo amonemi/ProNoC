@@ -2,21 +2,22 @@
 use strict;
 use warnings;
 use GD::Graph::bars3d;
-use Glib qw/TRUE FALSE/;
+use GD::Graph::linespoints;
+use constant::boolean;
 
 
 
 
 
 sub gen_multiple_charts{
-	my ($self,$pageref,$charts_ref)=@_;
+	my ($self,$pageref,$charts_ref,$image_scale)=@_;
 	my @pages=@{$pageref};
 	my @charts=@{$charts_ref};
-	my $notebook = Gtk2::Notebook->new;
+	my $notebook = gen_notebook();
 	$notebook->set_scrollable(TRUE);
-	$notebook->can_focus(FALSE);
+	
 
-	#check if we ned to save all graph results
+	#check if we need to save all graph results
 	my $save_all_status = $self->object_get_attribute ("graph_save","save_all_result");
 	$save_all_status=0 if (!defined $save_all_status);
 	$self->object_add_attribute ("graph_save","save_all_result",0);
@@ -47,8 +48,8 @@ sub gen_multiple_charts{
 				
 			if($active eq $chart->{graph_name} && $page->{page_num} == $chart->{page_num}){
 				
-				my $p=  gen_graph  ($self,$chart,@selects);
-				$notebook->append_page ($p,Gtk2::Label->new_with_mnemonic ($page->{page_name})); 
+				my $p=  gen_graph  ($self,$chart,$image_scale,@selects);
+				$notebook->append_page ($p,gen_label_with_mnemonic ($page->{page_name})); 
 				$self->object_add_attribute ($graph_id,'type',$chart->{type});	
 			}
 			
@@ -62,9 +63,7 @@ sub gen_multiple_charts{
 		
 		
 		
-	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
-	$scrolled_win->set_policy( "automatic", "automatic" );
-	$scrolled_win->add_with_viewport($notebook);
+	my $scrolled_win = add_widget_to_scrolled_win($notebook);
 	$scrolled_win->show_all;
 	
 	my $page_num=$self->object_get_attribute ("chart_notebook","currentpage");
@@ -143,28 +142,41 @@ sub save_all_results{
 	
 	
 }	
-
+use Scalar::Util qw(looks_like_number);
+sub check_numeric {
+	my ($ref)=@_;	
+	my %r=%$ref;
+	foreach my $p (sort keys %r){
+		return 0 unless (looks_like_number($p));
+	}
+	return 1;
+}	
 
 sub get_uniq_keys {
-	my ($ref,@x)=@_;
-	
+	my ($ref,@x)=@_;		
+		
 	if(defined $ref) {
-				my %r=%$ref;
-				
-				push(@x, sort {$a<=>$b} keys %r);
-	
-	my  @x2;
-	@x2 =  uniq(sort {$a<=>$b} @x) if (scalar @x);
-	return @x2;	
+		my %r=%$ref;
+		my $n = check_numeric($ref);
+		
+		
+		push(@x, sort {$a<=>$b} keys %r) if ($n);
+		push(@x, sort {$a cmp $b} keys %r) unless ($n);
+		
+		my  @x2;
+		@x2 =  uniq(sort {$a<=>$b} @x) if (scalar @x && $n == 1);
+		@x2 =  uniq(sort {$a cmp $b} @x) if (scalar @x && $n==0);
+		
+		return @x2;	
 	}
 	return @x;
 }
 
 
 sub gen_graph {
-	my ($self,$chart,@selects)=@_;	
+	my ($self,$chart,$image_scale,@selects)=@_;	
 	if($chart->{type} eq '2D_line') {return gen_2D_line($self,$chart,@selects);}
-	return  gen_3D_bar($self,$chart,@selects);
+	return  gen_3D_bar($self,$chart,$image_scale,@selects);
 }
 
 
@@ -172,8 +184,8 @@ sub gen_graph {
 
 
 sub gen_3D_bar{
-	my ($self,$chart,@selects)=@_;
-
+	my ($self,$chart,$image_scale,@selects)=@_;
+   # $image_scale = .4 if (!defined $image_scale);
 	my($width,$hight)=max_win_size();
 	my $page_id= "P$chart->{page_num}";
 	my $graph_id= $page_id."$chart->{graph_name}";
@@ -214,7 +226,7 @@ my @ginfo = (
 
 my $content=join( ',', @selects);
 
-my $dimention=gen_combobox_object ($self,$graph_id,"dimention","2D,3D","3D",'ref',2);
+my $dimension=gen_combobox_object ($self,$graph_id,"dimension","2D,3D","3D",'ref',2);
 my $active_page=gen_combobox_object ($self,$page_id,"active",$content,$selects[0],'ref',2);
 
 
@@ -271,7 +283,7 @@ my $active_page=gen_combobox_object ($self,$page_id,"active",$content,$selects[0
 				foreach my $v (@x){
 					my $w=$ref->{$ratio}->{$v};
 					push(@y,$w);
-					$ymax=$w+1 if($w>$ymax);
+					if (defined $w){$ymax=$w+1 if($w>$ymax);}
 				}
 				$results[$i]=\@y if(scalar @x);
 				$i++;
@@ -307,10 +319,10 @@ my $active_page=gen_combobox_object ($self,$page_id,"active",$content,$selects[0
 		}
 	}
 	
-	my $graph_w=$width/2.5;
-	my $graph_h=$hight/2.5;
+	my $graph_w=$width*$image_scale;
+	my $graph_h=$hight*$image_scale;
 	my $graph = new GD::Graph::bars3d($graph_w, $graph_h);
-	my $dim = $self->object_get_attribute (${graph_id},"dimention");
+	my $dim = $self->object_get_attribute (${graph_id},"dimension");
 	#my $dir = $self->object_get_attribute ($graph_name,"direction"); 
 	my $over= ($dim eq "2D")? 0 : 1;
 	$graph->set(
@@ -342,7 +354,7 @@ my $active_page=gen_combobox_object ($self,$page_id,"active",$content,$selects[0
 		
 		 # Draw bars with width 3 pixels
     bar_width   => 3,
-    # Sepearte the bars with 4 pixels
+    # Separate the bars with 4 pixels
     bar_spacing => 10,
     # Show the grid
     #long_ticks  => 1,
@@ -369,84 +381,70 @@ my $active_page=gen_combobox_object ($self,$page_id,"active",$content,$selects[0
 	#@results=reorder_result(@results);
 	
 	my $gd =  $graph->plot( \@results );
-	my $loader = Gtk2::Gdk::PixbufLoader->new;
-	$loader->write ($gd->png);
-	$loader->close;
-	my $image = Gtk2::Image->new_from_pixbuf($loader->get_pixbuf);
-	
+	my $image =open_inline_image($gd->png);
+
 	write_image ($self,$graph_id,$gd);
 	write_image_result	($self,$graph_id,$graph,$result_name,$chart->{type},\@results);
-   # my $image = my_get_image($self,$graph,$data,$graph_name);
-        
-	
-        
-      # print  Data::Dumper->Dump ([\@results],['ttt']); 
+   
         
         
         
-        
-        my $table = Gtk2::Table->new (25, 10, FALSE);
-        
-           
-		my $box = Gtk2::HBox->new (TRUE, 2);
-		my $filename;
-		$box->set_border_width (4);
-		my   $align = Gtk2::Alignment->new (0.5, 0.5, 0, 0);
-		my $frame = Gtk2::Frame->new;
-		$frame->set_shadow_type ('in');
-		$frame->add ($image);
-		$align->add ($frame);
+	my $table = def_table (25, 10, FALSE);
+    my $filename;
+	my $align= add_frame_to_image($image);
+
 		
 		
-		my $plus = def_image_button('icons/plus.png',undef,TRUE);
-		my $minues = def_image_button('icons/minus.png',undef,TRUE);
-		my $setting = def_image_button('icons/setting.png',undef,TRUE);
-		my $save = def_image_button('icons/save.png',undef,TRUE);
-		my $scale= $self->object_get_attribute("${graph_id}_graph_scale",undef);
-		$scale = 5 if(!defined $scale);
-		$minues -> signal_connect("clicked" => sub{ 
-			$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale*1.05);
+		
+	my $plus = def_image_button('icons/plus.png',undef,TRUE);
+	my $minues = def_image_button('icons/minus.png',undef,TRUE);
+	my $setting = def_image_button('icons/setting.png',undef,TRUE);
+	my $save = def_image_button('icons/save.png',undef,TRUE);
+	my $scale= $self->object_get_attribute("${graph_id}_graph_scale",undef);
+	$scale = 5 if(!defined $scale);
+	$minues -> signal_connect("clicked" => sub{ 
+	$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale*1.05);
 			set_gui_status($self,"ref",1);	
-		});	
+	});	
 
-		$plus  -> signal_connect("clicked" => sub{ 
-			$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale*0.95) if( $scale>0.5);
+	$plus  -> signal_connect("clicked" => sub{ 
+		$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale*0.95) if( $scale>0.5);
 			set_gui_status($self,"ref",5);
-		});	
+	});	
 
-		$setting -> signal_connect("clicked" => sub{ 
-			get_graph_setting ($self,\@ginfo);
-		});
-		set_tip($setting, "Setting");		
+	$setting -> signal_connect("clicked" => sub{ 
+		get_graph_setting ($self,\@ginfo);
+	});
+	set_tip($setting, "Setting");		
 		
-		$save-> signal_connect("clicked" => sub{ 
-			# my $G = $graph->{graph};
-			 my @imags=$graph->export_format();  
+	$save-> signal_connect("clicked" => sub{ 
+			# my @imags=$graph->export_format();
+			 my @imags=('png');   
 			 save_graph_as ($self,\@imags,$graph_id);
-		});	
-		set_tip($save, "Save graph");
+	});	
+	set_tip($save, "Save graph");
 		
 		
 		
-		$table->attach_defaults ($align , 0, 9, 0, 25);
-		my $row=0;
-		$table->attach (gen_label_in_center('Injection-Ratio'), 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
-		$table->attach ($ratio_combx, 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
-		$table->attach ($active_page, 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
-		$table->attach ($dimention, 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
+	$table->attach_defaults ($align , 0, 9, 0, 25);
+	my $row=0;
+	$table->attach (gen_label_in_center("Injection-Ratio/"), 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
+	$table->attach (gen_label_in_center("Task-file index"), 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
+	$table->attach ($ratio_combx, 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
+	$table->attach ($active_page, 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
+	$table->attach ($dimension, 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
 		
-		#$table->attach ($plus , 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
-		#$table->attach ($minues, 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
-		$table->attach ($setting, 9, 10, $row,  $row+1,'shrink','shrink',2,2); $row++;
-		$table->attach ($save, 9, 10, $row,  $row+1,'shrink','shrink',2,2); $row++;
+	#$table->attach ($plus , 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
+	#$table->attach ($minues, 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
+	$table->attach ($setting, 9, 10, $row,  $row+1,'shrink','shrink',2,2); $row++;
+	$table->attach ($save, 9, 10, $row,  $row+1,'shrink','shrink',2,2); $row++;
 		
-		while ($row<10){
-			
-			my $tmp=gen_label_in_left('');
-			$table->attach_defaults ($tmp, 9, 10, $row,  $row+1);$row++;
-		}
+	while ($row<10){
+		my $tmp=gen_label_in_left('');
+		$table->attach_defaults ($tmp, 9, 10, $row,  $row+1);$row++;
+	}
 		
-        return $table;
+    return $table;
 }
 
 
@@ -593,7 +591,7 @@ my @ginfo = (
 	
 	my $graph_w=$width/2.5;
 	my $graph_h=$hight/2.5;
-	my $graph = Gtk2::Ex::Graph::GD->new($graph_w, $graph_h, 'linespoints');
+	my $graph = GD::Graph::linespoints->new($graph_w, $graph_h);
 
 	$graph->set (
             	x_label         => $graphs_info->{X_Title},
@@ -650,17 +648,13 @@ my @ginfo = (
         
         
         
-        my $table = Gtk2::Table->new (25, 10, FALSE);
+        my $table = def_table (25, 10, FALSE);
         
            
-		my $box = Gtk2::HBox->new (TRUE, 2);
+		
 		my $filename;
-		$box->set_border_width (4);
-		my   $align = Gtk2::Alignment->new (0.5, 0.5, 0, 0);
-		my $frame = Gtk2::Frame->new;
-		$frame->set_shadow_type ('in');
-		$frame->add ($image);
-		$align->add ($frame);
+		
+		my   $align = add_frame_to_image($image);
 		
 		
 		my $plus = def_image_button('icons/plus.png',undef,TRUE);
@@ -670,13 +664,15 @@ my @ginfo = (
 		
 
 		$minues -> signal_connect("clicked" => sub{ 
-			$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale*1.05);
-			set_gui_status($self,"ref",1);	
+			$scale*=1.05;
+			$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale);
+			set_gui_status($self,"ref",5);	
 		});
 		set_tip($minues, "Zoom out");	
 
 		$plus  -> signal_connect("clicked" => sub{ 
-			$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale*0.95) if( $scale>0.5);
+			$scale*=0.95  if( $scale>0.5);
+			$self->object_add_attribute("${graph_id}_graph_scale",undef,$scale); 
 			set_gui_status($self,"ref",5);
 		});
 		set_tip($plus, "Zoom in");
@@ -687,17 +683,18 @@ my @ginfo = (
 		set_tip($setting, "Setting");			
 
 		$save-> signal_connect("clicked" => sub{ 
-			 my $G = $graph->{graph};
-			 my @imags=$G->export_format();  
+			# my $G = $graph->{graph};
+			# my @imags=$G->export_format(); 
+			my @imags=('png'); 
 			save_graph_as ($self,\@imags,$graph_id);
 		});	
 		set_tip($save, "Save graph");
 		
 		
 		
-		$table->attach_defaults ($align , 0, 9, 0, 25);
+		$table->attach_defaults ($align , 0, 9, 0, 24);
 		my $row=0;
-		$table->attach ($active_page, 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
+		$table->attach ($active_page, 0, 9, 24, 25,'shrink','shrink',2,2);# $row++;
 		$table->attach ($plus , 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
 		$table->attach ($minues, 9, 10, $row, $row+1,'shrink','shrink',2,2); $row++;
 		$table->attach ($setting, 9, 10, $row,  $row+1,'shrink','shrink',2,2); $row++;
@@ -722,35 +719,15 @@ sub save_graph_as {
 	
 	my $file;
 	my $title ='Save as';
-
-
-
 	my @extensions=@$ref;
 	my $open_in=undef;
-	my $dialog = Gtk2::FileChooserDialog->new(
-            	'Save file', undef,
-            	'save',
-            	'gtk-cancel' => 'cancel',
-            	'gtk-ok'     => 'ok',
-        	);
-	# if(defined $extension){
+	my $dialog=save_file_dialog  ($title, @extensions);
+
+	$dialog->set_current_folder ($open_in) if(defined  $open_in);
 		
-		foreach my $ext (@extensions){
-			my $filter = Gtk2::FileFilter->new();
-			$filter->set_name($ext);
-			$filter->add_pattern("*.$ext");
-			$dialog->add_filter ($filter);
-		}
-		
-	# }
-	  if(defined  $open_in){
-		$dialog->set_current_folder ($open_in); 
-		# print "$open_in\n";
-		 
-	}
 		
 	if ( "ok" eq $dialog->run ) {
-	    		$file = $dialog->get_filename;
+	    	$file = $dialog->get_filename;
 			my $ext = $dialog->get_filter;
 			$ext=$ext->get_name;
 			my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
@@ -763,8 +740,8 @@ sub save_graph_as {
 			$self->object_add_attribute("graph_save","graph_name",$graph_name);
 			set_gui_status($self,"ref",1);
 					
-	      		 }
-	     		$dialog->destroy;
+	}
+	$dialog->destroy;
 }
 
 
@@ -772,7 +749,7 @@ sub save_graph_as {
 sub my_get_image {
 	my ($self,$exgraph, $data, $graph_name, $result_name,$charttype) = @_;
 	$exgraph->{graphdata} = $data;
-	my $graph = $exgraph->{graph};
+	my $graph = $exgraph;#->{graph};
 	my $font;
 	
 	$font=  $self->object_get_attribute( "${graph_name}_param"    ,'label_font');
@@ -787,11 +764,10 @@ sub my_get_image {
 	$graph->set_y_axis_font(GD::Font->$font);
 
 	my $gd2=$graph->plot($data) or warn $graph->error;
-	my $loader = Gtk2::Gdk::PixbufLoader->new;
 	
 	
-	#cut the upper side of the image to remove the stright line created by chaanging large results to ymax
-       
+	
+	#cut the upper side of the image to remove the straight line created by changing large results to ymax       
 	
 	my $gd1=  GD::Image->new($gd2->getBounds);
 	my $white= $gd1->colorAllocate(255,255,254);
@@ -799,41 +775,12 @@ sub my_get_image {
 	$gd1->transparent($white);
 	$gd1->copy( $gd2, 0, 0, 0, ,$h*0.05, $x ,$h*.95 );
 	
-	
-	$loader->write ($gd1->png);
-	$loader->close;
-
-	
 	write_image ($self,$graph_name,$gd1);
 	write_image_result	($self,$graph_name,$graph,$result_name,$charttype);	
 
-	my $image = Gtk2::Image->new_from_pixbuf($loader->get_pixbuf);
-
-
-	$exgraph->{graphimage} = $image;
-	my $hotspotlist;
-	if ($exgraph->{graphtype} eq 'bars' or
-		$exgraph->{graphtype} eq 'lines' or
-		$exgraph->{graphtype} eq 'linespoints') {
-		foreach my $hotspot ($graph->get_hotspot) {
-			push @$hotspotlist, $hotspot if $hotspot;
-		}
-	}
-	$exgraph->{hotspotlist} = $hotspotlist;
-	my $eventbox = $exgraph->{eventbox};
-	my @children = $eventbox->get_children;
-	foreach my $child (@children) {
-		$eventbox->remove($child);
-	}
-	
-	
-	
-	
-#	$eventbox->add ($image);
-
-	
-#	$eventbox->show_all;
+	my $image  =open_inline_image($gd1->png);
 	return $image;
+	
 }
 
 
@@ -859,9 +806,7 @@ foreach my $d (@data) {
 	
 	
 	
-	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
-	$scrolled_win->set_policy( "automatic", "automatic" );
-	$scrolled_win->add_with_viewport($table);
+	my $scrolled_win = add_widget_to_scrolled_win($table);
 	my $ok = def_image_button('icons/select.png',' OK ');
 	
 	

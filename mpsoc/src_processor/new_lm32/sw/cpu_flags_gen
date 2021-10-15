@@ -1,0 +1,43 @@
+
+
+# -mbarrel-shift-enabled   -mmultiply-enabled -mdivide-enabled -msign-extend-enabled  -fomit-frame-pointer
+
+CFG_SIGN_EXTEND=${SIGN_EXTEND}
+CFG_BARREL_SHIFT=${BARREL_SHIFT}
+CFG_MULTIPLY=${MULTIPLIER_TYPE}
+CFG_DIVIDE=${DIVIDOR_TYPE}
+
+
+ifeq (${CFG_SIGN_EXTEND},ENABLED)
+	FLAG1=  -msign-extend-enabled
+endif
+
+
+ifeq (${CFG_BARREL_SHIFT},PIPE_LINE)
+	FLAG2=  -mbarrel-shift-enabled
+endif 
+
+ifeq (${CFG_BARREL_SHIFT},MULTI_CYCLE)
+	FLAG2= -mbarrel-shift-enabled
+endif 
+
+
+
+ifeq (${CFG_DIVIDE},MULTI_CYCLE)
+	FLAG3=  -mdivide-enabled
+endif
+
+ifeq ($(CFG_MULTIPLY),PIPE_LINE)
+	FLAG4=  -mmultiply-enabled
+endif
+
+
+ifeq (${CFG_MULTIPLY},MULTI_CYCLE)
+	FLAG4=   -mmultiply-enabled
+endif
+
+
+CPU_FLAGS= -fomit-frame-pointer $(FLAG1) $(FLAG2) $(FLAG3) $(FLAG4)
+
+
+$(info ************cpu flags are:  $(CPU_FLAGS) ************)

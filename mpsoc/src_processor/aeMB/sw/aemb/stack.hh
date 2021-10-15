@@ -36,7 +36,7 @@ extern "C" {
   @return size of stack
   */
   
-  inline int aembGetStackSize()
+  static inline int aembGetStackSize()
   {
     int tmp;
     asm ("la %0, r0, _STACK_SIZE":"=r"(tmp));
@@ -49,7 +49,7 @@ extern "C" {
   @return end of stack
   */
   
-  inline int aembGetStackEnd()
+  static inline int aembGetStackEnd()
   {
     int tmp;
     asm ("la %0, r0, _stack_end":"=r"(tmp));
@@ -62,7 +62,7 @@ extern "C" {
   @return top of stack
   */
   
-  inline int aembGetStackTop()
+  static inline int aembGetStackTop()
   {
     int tmp;
     asm ("la %0, r0, _stack":"=r"(tmp));
@@ -74,7 +74,7 @@ extern "C" {
   @return stack pointer
   */
   
-  inline int aembGetStack()
+  static inline int aembGetStack()
   {
     int tmp;
     asm ("addk %0, r0, r1":"=r"(tmp));
@@ -87,7 +87,7 @@ extern "C" {
   @return new stack pointer
   */
   
-  inline int aembSetStack(int stk)
+  static inline int aembSetStack(int stk)
   {
     asm ("addk r1, r0, %0"::"r"(stk));
     return stk;
@@ -100,7 +100,7 @@ extern "C" {
      @param endp end of the stack
   */
 
-  inline void aembDupStack(unsigned int *newp, unsigned int *oldp, unsigned int *endp)
+  static inline void aembDupStack(unsigned int *newp, unsigned int *oldp, unsigned int *endp)
   {
     while (oldp < endp)
       {

@@ -35,7 +35,7 @@
 
 If the memory core and jtag_wb are connected to the same wishbone bus, you can program the memory using 
 
-	sh program.sh  
+	bash program.sh  
 
 
 

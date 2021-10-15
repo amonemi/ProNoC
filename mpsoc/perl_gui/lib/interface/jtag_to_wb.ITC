@@ -1,0 +1,49 @@
+#######################################################################
+##	File: jtag_to_wb.ITC
+##    
+##	Copyright (C) 2014-2019  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.9.1 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$HashRef = bless( {
+                    'module_name' => 'single_port_ram_top',
+                    'category' => 'Communication',
+                    'gui_status' => {
+                                      'status' => 'ideal',
+                                      'timeout' => 0
+                                    },
+                    'name' => 'jtag_to_wb',
+                    'modules' => {
+                                   'wb_single_port_ram' => {},
+                                   'single_port_ram_top' => {}
+                                 },
+                    'ports' => {
+                                 'jwb_i' => {
+                                              'connect_name' => 'jwb_i',
+                                              'default_out' => 'Active low',
+                                              'type' => 'input',
+                                              'connect_type' => 'output',
+                                              'range' => 'JWB_INw-1:0',
+                                              'connect_range' => 'JWB_INw-1:0',
+                                              'name' => 'jwb_i',
+                                              'outport_type' => 'concatenate'
+                                            },
+                                 'jwb_o' => {
+                                              'outport_type' => 'concatenate',
+                                              'name' => 'jwb_o',
+                                              'connect_type' => 'input',
+                                              'type' => 'output',
+                                              'default_out' => 'Active low',
+                                              'connect_range' => 'JWB_OUTw-1:0',
+                                              'range' => 'JWB_OUTw-1:0',
+                                              'connect_name' => 'jwb_o'
+                                            }
+                               },
+                    'connection_num' => 'single connection',
+                    'file_name' => 'mpsoc/rtl/src_peripheral/ram/wb_single_port_ram.v',
+                    'type' => 'socket'
+                  }, 'intfc_gen' );

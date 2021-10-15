@@ -57,7 +57,7 @@ extern "C" {
      @return register contents
   */
   
-  inline int aembGetMSR()
+ static inline int aembGetMSR()
   {
     int rmsr;
     asm volatile ("mfs %0, rmsr":"=r"(rmsr));
@@ -69,7 +69,7 @@ extern "C" {
      @param rmsr value to write
   */  
 
-  inline void aembPutMSR(int rmsr) 
+ static inline void aembPutMSR(int rmsr) 
   { 
     asm volatile ("mts rmsr, %0"::"r"(rmsr)); 
   }
@@ -80,7 +80,7 @@ extern "C" {
      @return msr value
    */
 
-  inline int aembClrMSR(const short rmsk)
+ static inline int aembClrMSR(const short rmsk)
   {
     int tmp;
     //asm volatile ("msrclr %0, %1":"=r"(tmp):"K"(rmsk):"memory");
@@ -93,7 +93,7 @@ extern "C" {
      @return msr value
    */
 
-  inline int aembSetMSR(const short rmsk)
+ static inline int aembSetMSR(const short rmsk)
   {
     int tmp;
     //asm volatile ("msrset %0, %1":"=r"(tmp):"K"(rmsk):"memory");
@@ -101,7 +101,7 @@ extern "C" {
   }
 
   /** Enable global interrupts */
-  inline int aembEnableInterrupts() 
+ static inline int aembEnableInterrupts() 
   { 
     int msr;
     asm volatile ("msrset %0, %1":"=r"(msr):"K"(AEMB_MSR_IE));
@@ -109,7 +109,7 @@ extern "C" {
   }
 
   /** Disable global interrupts */
-  inline int aembDisableInterrupts() 
+ static inline int aembDisableInterrupts() 
   { 
     int msr;
     asm volatile ("msrclr %0, %1":"=r"(msr):"K"(AEMB_MSR_IE));
@@ -117,7 +117,7 @@ extern "C" {
   }
 
   /** Enable global exception */
-  inline int aembEnableException() 
+ static inline int aembEnableException() 
   { 
     int msr;
     asm volatile ("msrset %0, %1":"=r"(msr):"K"(AEMB_MSR_EE));
@@ -125,7 +125,7 @@ extern "C" {
   }
 
   /** Disable global exception */
-  inline int aembDisableException() 
+  static inline int aembDisableException() 
   { 
     int msr;
     asm volatile ("msrclr %0, %1":"=r"(msr):"K"(AEMB_MSR_EE));
@@ -133,7 +133,7 @@ extern "C" {
   }
 
   /** Enable data caches */
-  inline int aembEnableDataTag() 
+ static inline int aembEnableDataTag() 
   { 
     int msr;
     asm volatile ("msrset %0, %1":"=r"(msr):"K"(AEMB_MSR_DTE));
@@ -141,7 +141,7 @@ extern "C" {
   }
 
   /** Disable data caches */  
-  inline int aembDisableDataTag()  
+ static  inline int aembDisableDataTag()  
   { 
     int msr;
     asm volatile ("msrclr %0, %1":"=r"(msr):"K"(AEMB_MSR_DTE));
@@ -149,7 +149,7 @@ extern "C" {
   }
 
   /** Enable inst caches */
-  inline int aembEnableInstTag() 
+  static inline int aembEnableInstTag() 
   { 
     int msr;
     asm volatile ("msrset %0, %1":"=r"(msr):"K"(AEMB_MSR_ITE));
@@ -157,7 +157,7 @@ extern "C" {
   }
 
   /** Disable inst caches */  
-  inline int aembDisableInstTag()  
+ static inline int aembDisableInstTag()  
   { 
     int msr;
     asm volatile ("msrclr %0, %1":"=r"(msr):"K"(AEMB_MSR_ITE));

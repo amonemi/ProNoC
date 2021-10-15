@@ -36,7 +36,7 @@ $HashRef = bless( {
                                                    'type' => 'input'
                                                  }
                                },
-                    'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/ni/ni.v',
+                    'file_name' => 'mpsoc/rtl/src_peripheral/ni/ni.v',
                     'module_name' => 'ni',
                     'type' => 'plug',
                     'category' => 'NoC'

@@ -28,7 +28,7 @@ $HashRef = bless( {
                                                       'type' => 'input'
                                                     }
                                },
-                    'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/bus/wishbone_bus.v',
+                    'file_name' => 'mpsoc/rtl/src_peripheral/bus/wishbone_bus.v',
                     'module_name' => 'wishbone_bus',
                     'type' => 'socket',
                     'category' => 'wishbone'
