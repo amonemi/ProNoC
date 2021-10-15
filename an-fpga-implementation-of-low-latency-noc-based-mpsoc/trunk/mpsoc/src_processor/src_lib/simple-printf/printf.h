@@ -60,7 +60,12 @@
 /* Platform must supply this function to output a character */
 void outbyte(char c);
 
-#include "printf.c"
+//#include "printf.c"
+
+//int simple_printf (__const char *__restrict __format, ...);
+int simple_printf(char *fmt, ...);
+
+int sprintf (char *str, __const char *__restrict __format, ...);
 
 #define printf simple_printf
 #define sprintf simple_sprintf

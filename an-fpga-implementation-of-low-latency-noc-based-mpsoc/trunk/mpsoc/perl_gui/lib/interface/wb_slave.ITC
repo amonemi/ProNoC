@@ -140,7 +140,7 @@ $HashRef = bless( {
                                               'type' => 'input'
                                             }
                                },
-                    'file_name' => '/home/alireza/Mywork/mpsoc/perl_gui/lib/verilog/bus.v',
+                    'file_name' => 'mpsoc/perl_gui/lib/verilog/bus.v',
                     'module_name' => 'wb_slave_socket',
                     'type' => 'socket',
                     'category' => 'wishbone'

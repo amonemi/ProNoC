@@ -173,7 +173,7 @@ sub get_synthetic_traffic_pattern{
 	my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info_sub ($topology, $T1, $T2, $T3, $V, $Fpay);
 	my $rnd=random_dest_gen_no_shuffle($NE); 
 	my $traffic=$self->object_get_attribute($sample,"traffic"); 
-	my @traffics=("tornado", "transposed 1", "transposed 2", "bit reverse", "bit complement","random", "hot spot", "shuffle", "neighbor", "bit rotation"   );	
+	my @traffics=("tornado", "transposed 1", "transposed 2", "bit reverse", "bit complement","random", "hot spot", "shuffle", "neighbor", "bit rotation"  );	
 	
 	#generate each node ram data
 	my $pattern="source->\t destination\n";
@@ -252,7 +252,7 @@ sub generate_emulator_ram {
 	#if ( !defined $xn || $xn!~ /\s*\d+\b/ ){ add_info($info,"programe_pck_gens:invalid X value\n"); help(); return 0;}
 	#if ( !defined $yn || $yn!~ /\s*\d+\b/ ){ add_info($info,"programe_pck_gens:invalid Y value\n"); help(); return 0;}
 	if ( !grep( /^$traffic$/, @traffics ) ){add_info($info,"programe_pck_gens:$traffic is an invalid Traffic name\n"); help(); return 0;}
-	if ( $EAw >8 ){ add_info($info,"programe_pck_gens:invalid EAw value: ($EAw). should be between 1 and 8 \n"); help(); return 0;}
+	if ( $EAw >8 ){ add_info($info,"Program_pck_gens:invalid EAw value: ($EAw). should be between 1 and 8 \n"); help(); return 0;}
 	#if ( $yn <2 || $yn >16 ){ add_info($info,"programe_pck_gens:invalid Y value:($yn). should be between 2 and 16 \n"); help(); return 0;}
 	#open file pointer
 	#open(my $file, '>', RAM_BIN_FILE) || die "Can not create: \">lib/emulate/emulate_ram.bin\" $!";
@@ -290,7 +290,7 @@ sub programe_pck_gens{
 
 	
 
-	#programe packet generators rams
+	#program the packet generators rams
 	my $cmd= "bash $jtag_intfc \"-n ".JTAG_RAM_INDEX."  -w 8 -i $ENV{'PRONOC_WORK'}/emulate/emulate_ram.bin -c\" ";
 	#my ($result,$exit) = run_cmd_in_back_ground_get_stdout($cmd);
 	

@@ -1,0 +1,17 @@
+
+
+Generate jtag_sim_input.v file
+1- uncomment #define PRINT_TO_XSCT in
+/mpsoc/src_c/jtag/jtag_xilinx_xsct/jtag.c 
+2- run makefile in src_c
+3- connect your FPGA-board to usb port
+4- run program.sh in target SoC folder 
+5- It generate a file called to_xsct.txt. Copy this file in mpsoc/src_c/jtag/test_rtl/jtag_sim_pattern and run ./main
+6- Replace the jtag_sim_input.v file in mpsoc/src_peripheral/jtag/jtag_simulation/src_verilog folder  add 
+
+7- in Target SoC/MpSoC folder create a folder called src_sim (next to src_verilog folder)
+8- in  copy altera.v  BSCANE2_sim.v  jtag_sim_input.v files from mpsoc/src_peripheral/jtag/jtag_simulation/src_verilog to src_sim
+9- add following lines to run.tcl in target_soc/modelsim/run.tcl file
+vlog -vlog01compat -work work +incdir+/home/alireza/work/hca_git/mpsoc_work/SOC/mor1k_soc/src_sim/ {/home/alireza/work/hca_git/mpsoc_work/SOC/mor1k_soc/src_sim/altera.v} 
+vlog -vlog01compat -work work +incdir+/home/alireza/work/hca_git/mpsoc_work/SOC/mor1k_soc/src_sim/ {/home/alireza/work/hca_git/mpsoc_work/SOC/mor1k_soc/src_sim/BSCANE2_sim.v}
+

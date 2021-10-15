@@ -12,7 +12,7 @@
 $HashRef = bless( {
                     'connection_num' => 'multi connection',
                     'category' => 'wishbone',
-                    'file_name' => '/home/alireza/mywork/mpsoc/src_peripheral/bus/wishbone_bus.v',
+                    'file_name' => 'mpsoc/rtl/src_peripheral/bus/wishbone_bus.v',
                     'gui_status' => {
                                       'status' => 'ideal',
                                       'timeout' => 0

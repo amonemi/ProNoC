@@ -19,7 +19,7 @@
 	
 	
 	Purpose:
-	generating the wishbone bus. 
+	generating the wishbone bus interfaces. 
 
 	Info: monemi@fkegraduate.utm.my
 

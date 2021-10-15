@@ -1,68 +1,29 @@
 #######################################################################
 ##	File: dma.IP
 ##    
-##	Copyright (C) 2014-2016  Alireza Monemi
+##	Copyright (C) 2014-2019  Alireza Monemi
 ##    
-##	This file is part of ProNoC 1.8.0 
+##	This file is part of ProNoC 1.9.1 
 ##
 ## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
 ##	MAY CAUSE UNEXPECTED BEHAIVOR.
 ################################################################################
 
 $ipgen = bless( {
-                  'description' => 'A wishbone bus round robin-based  multi channel DMA (no byte enable is supported yet). The DMA supports burst data transaction.',
-                  'modules' => {
-                                 'dma_multi_chan_wb' => {},
-                                 'shared_mem_fifos' => {},
-                                 'dma_single_wb' => {}
-                               },
-                  'plugs' => {
-                               'clk' => {
-                                          'type' => 'num',
-                                          'value' => 1,
-                                          '0' => {
-                                                   'name' => 'clk'
-                                                 },
-                                          'clk' => {}
-                                        },
-                               'wb_slave' => {
-                                               'value' => 1,
-                                               'wb_slave' => {},
-                                               'type' => 'num',
-                                               '0' => {
-                                                        'width' => 10,
-                                                        'addr' => '0x9300_0000	0x93ff_ffff		Memory Controller',
-                                                        'name' => 'wb_slave'
-                                                      }
-                                             },
-                               'interrupt_peripheral' => {
-                                                           'value' => 1,
-                                                           'interrupt_peripheral' => {},
-                                                           'type' => 'num',
-                                                           '0' => {
-                                                                    'name' => 'interrupt_peripheral'
-                                                                  }
-                                                         },
-                               'wb_master' => {
-                                                '1' => {
-                                                         'name' => 'wb_wr'
-                                                       },
-                                                'wb_master' => {},
-                                                'value' => 2,
-                                                'type' => 'num',
-                                                '0' => {
-                                                         'name' => 'wb_rd'
-                                                       }
-                                              },
-                               'reset' => {
-                                            'type' => 'num',
-                                            'reset' => {},
-                                            'value' => 1,
-                                            '0' => {
-                                                     'name' => 'reset'
-                                                   }
-                                          }
-                             },
+                  'system_h' => '#define ${IP}_STATUS_REG   (*((volatile unsigned int *) ($BASE)))   
+#define ${IP}_BURST_SIZE_ADDR_REG  (*((volatile unsigned int *) ($BASE+4)))
+
+#define ${IP}_chanel	${chanel}
+#define ${IP}_DATA_SIZE_ADDR_REG(chanel)  (*((volatile unsigned int *) ($BASE+8+(chanel<<5))))
+#define ${IP}_RD_START_ADDR_REG(chanel)   (*((volatile unsigned int *) ($BASE+12+(chanel<<5))))
+#define ${IP}_WR_START_ADDR_REG(chanel)  (*((volatile unsigned int *) ($BASE+16+(chanel<<5))))
+
+// assign status= {rd_enable_binarry,wr_enable_binarry,chanel_rd_is_active,chanel_wr_is_active};
+
+#define ${IP}_chanel_is_busy(chanel) ( (${IP}_STATUS_REG >> chanel) & 0x1)
+
+void ${IP}_initial (unsigned int burst_size) ;
+void ${IP}_transfer (unsigned int chanel, unsigned int read_start_addr,  unsigned int data_size, unsigned int write_start_addr);',
                   'ports_order' => [
                                      'reset',
                                      'clk',
@@ -93,8 +54,31 @@ $ipgen = bless( {
                                      'm_wr_ack_i',
                                      'irq'
                                    ],
+                  'file_name' => 'mpsoc/rtl/src_peripheral/DMA/dma_multi_chanel_wb.v',
+                  'unused' => {
+                                'plug:wb_slave[0]' => [
+                                                        'bte_i',
+                                                        'rty_o',
+                                                        'err_o',
+                                                        'tag_i'
+                                                      ],
+                                'plug:wb_master[1]' => [
+                                                         'tag_o',
+                                                         'err_i',
+                                                         'dat_i',
+                                                         'bte_o',
+                                                         'rty_i'
+                                                       ],
+                                'plug:wb_master[0]' => [
+                                                         'tag_o',
+                                                         'err_i',
+                                                         'dat_o',
+                                                         'bte_o',
+                                                         'rty_i'
+                                                       ]
+                              },
                   'parameters_order' => [
-                                          'CHANNEL',
+                                          'chanel',
                                           'MAX_TRANSACTION_WIDTH',
                                           'MAX_BURST_SIZE',
                                           'FIFO_B',
@@ -105,326 +89,340 @@ $ipgen = bless( {
                                           'TAGw',
                                           'SELw'
                                         ],
-                  'ip_name' => 'dma',
-                  'file_name' => '/home/alireza/mywork/mpsoc/src_peripheral/DMA/dma_multi_channel_wb.v',
-                  'hdl_files' => [
-                                   '/mpsoc/src_noc/main_comp.v',
-                                   '/mpsoc/src_noc/arbiter.v',
-                                   '/mpsoc/src_peripheral/DMA/dma_multi_channel_wb.v',
-                                   '/mpsoc/src_noc/flit_buffer.v'
-                                 ],
-                  'version' => 4,
-                  'category' => 'DMA',
                   'module_name' => 'dma_multi_chan_wb',
+                  'description_pdf' => '/mpsoc/rtl/src_peripheral/DMA/DMA.pdf',
+                  'category' => 'DMA',
+                  'plugs' => {
+                               'interrupt_peripheral' => {
+                                                           'value' => 1,
+                                                           'type' => 'num',
+                                                           '0' => {
+                                                                    'name' => 'interrupt_peripheral'
+                                                                  },
+                                                           'interrupt_peripheral' => {}
+                                                         },
+                               'clk' => {
+                                          'clk' => {},
+                                          '0' => {
+                                                   'name' => 'clk'
+                                                 },
+                                          'type' => 'num',
+                                          'value' => 1
+                                        },
+                               'reset' => {
+                                            'value' => 1,
+                                            '0' => {
+                                                     'name' => 'reset'
+                                                   },
+                                            'type' => 'num',
+                                            'reset' => {}
+                                          },
+                               'wb_master' => {
+                                                'wb_master' => {},
+                                                'value' => 2,
+                                                '1' => {
+                                                         'name' => 'wb_wr'
+                                                       },
+                                                '0' => {
+                                                         'name' => 'wb_rd'
+                                                       },
+                                                'type' => 'num'
+                                              },
+                               'wb_slave' => {
+                                               'wb_slave' => {},
+                                               'value' => 1,
+                                               '0' => {
+                                                        'addr' => '0x9300_0000	0x93ff_ffff		Memory Controller',
+                                                        'name' => 'wb_slave',
+                                                        'width' => 10
+                                                      },
+                                               'type' => 'num'
+                                             }
+                             },
+                  'modules' => {
+                                 'shared_mem_fifos' => {},
+                                 'dma_multi_chan_wb' => {},
+                                 'dma_single_wb' => {}
+                               },
+                  'ports' => {
+                               'm_wr_addr_o' => {
+                                                  'range' => 'M_Aw-1          :   0',
+                                                  'type' => 'output',
+                                                  'intfc_port' => 'adr_o',
+                                                  'intfc_name' => 'plug:wb_master[1]'
+                                                },
+                               'irq' => {
+                                          'intfc_name' => 'plug:interrupt_peripheral[0]',
+                                          'type' => 'output',
+                                          'intfc_port' => 'int_o',
+                                          'range' => ''
+                                        },
+                               's_stb_i' => {
+                                              'range' => '',
+                                              'intfc_port' => 'stb_i',
+                                              'type' => 'input',
+                                              'intfc_name' => 'plug:wb_slave[0]'
+                                            },
+                               'm_rd_ack_i' => {
+                                                 'range' => '',
+                                                 'intfc_port' => 'ack_i',
+                                                 'type' => 'input',
+                                                 'intfc_name' => 'plug:wb_master[0]'
+                                               },
+                               's_cyc_i' => {
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'range' => '',
+                                              'type' => 'input',
+                                              'intfc_port' => 'cyc_i'
+                                            },
+                               'm_rd_dat_i' => {
+                                                 'type' => 'input',
+                                                 'intfc_port' => 'dat_i',
+                                                 'range' => 'Dw-1           :  0',
+                                                 'intfc_name' => 'plug:wb_master[0]'
+                                               },
+                               's_ack_o' => {
+                                              'range' => '',
+                                              'type' => 'output',
+                                              'intfc_port' => 'ack_o',
+                                              'intfc_name' => 'plug:wb_slave[0]'
+                                            },
+                               's_dat_o' => {
+                                              'range' => 'Dw-1       :   0',
+                                              'type' => 'output',
+                                              'intfc_port' => 'dat_o',
+                                              'intfc_name' => 'plug:wb_slave[0]'
+                                            },
+                               'm_rd_cti_o' => {
+                                                 'intfc_name' => 'plug:wb_master[0]',
+                                                 'type' => 'output',
+                                                 'intfc_port' => 'cti_o',
+                                                 'range' => 'TAGw-1          :   0'
+                                               },
+                               's_cti_i' => {
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'type' => 'input',
+                                              'intfc_port' => 'cti_i',
+                                              'range' => 'TAGw-1     :   0'
+                                            },
+                               's_sel_i' => {
+                                              'intfc_port' => 'sel_i',
+                                              'type' => 'input',
+                                              'range' => 'SELw-1     :   0',
+                                              'intfc_name' => 'plug:wb_slave[0]'
+                                            },
+                               's_dat_i' => {
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'range' => 'Dw-1       :   0',
+                                              'intfc_port' => 'dat_i',
+                                              'type' => 'input'
+                                            },
+                               'm_wr_stb_o' => {
+                                                 'intfc_port' => 'stb_o',
+                                                 'type' => 'output',
+                                                 'range' => '',
+                                                 'intfc_name' => 'plug:wb_master[1]'
+                                               },
+                               's_we_i' => {
+                                             'type' => 'input',
+                                             'intfc_port' => 'we_i',
+                                             'range' => '',
+                                             'intfc_name' => 'plug:wb_slave[0]'
+                                           },
+                               'm_wr_we_o' => {
+                                                'range' => '',
+                                                'intfc_port' => 'we_o',
+                                                'type' => 'output',
+                                                'intfc_name' => 'plug:wb_master[1]'
+                                              },
+                               'm_wr_dat_o' => {
+                                                 'intfc_name' => 'plug:wb_master[1]',
+                                                 'range' => 'Dw-1            :   0',
+                                                 'type' => 'output',
+                                                 'intfc_port' => 'dat_o'
+                                               },
+                               'clk' => {
+                                          'range' => '',
+                                          'type' => 'input',
+                                          'intfc_port' => 'clk_i',
+                                          'intfc_name' => 'plug:clk[0]'
+                                        },
+                               'm_wr_ack_i' => {
+                                                 'intfc_name' => 'plug:wb_master[1]',
+                                                 'range' => '',
+                                                 'intfc_port' => 'ack_i',
+                                                 'type' => 'input'
+                                               },
+                               'm_rd_cyc_o' => {
+                                                 'range' => '',
+                                                 'type' => 'output',
+                                                 'intfc_port' => 'cyc_o',
+                                                 'intfc_name' => 'plug:wb_master[0]'
+                                               },
+                               'm_wr_cyc_o' => {
+                                                 'intfc_name' => 'plug:wb_master[1]',
+                                                 'intfc_port' => 'cyc_o',
+                                                 'type' => 'output',
+                                                 'range' => ''
+                                               },
+                               's_addr_i' => {
+                                               'type' => 'input',
+                                               'intfc_port' => 'adr_i',
+                                               'range' => 'S_Aw-1     :   0',
+                                               'intfc_name' => 'plug:wb_slave[0]'
+                                             },
+                               'm_rd_sel_o' => {
+                                                 'intfc_port' => 'sel_o',
+                                                 'type' => 'output',
+                                                 'range' => 'SELw-1          :   0',
+                                                 'intfc_name' => 'plug:wb_master[0]'
+                                               },
+                               'm_wr_sel_o' => {
+                                                 'intfc_port' => 'sel_o',
+                                                 'type' => 'output',
+                                                 'range' => 'SELw-1          :   0',
+                                                 'intfc_name' => 'plug:wb_master[1]'
+                                               },
+                               'm_rd_we_o' => {
+                                                'range' => '',
+                                                'intfc_port' => 'we_o',
+                                                'type' => 'output',
+                                                'intfc_name' => 'plug:wb_master[0]'
+                                              },
+                               'm_wr_cti_o' => {
+                                                 'intfc_name' => 'plug:wb_master[1]',
+                                                 'range' => 'TAGw-1          :   0',
+                                                 'intfc_port' => 'cti_o',
+                                                 'type' => 'output'
+                                               },
+                               'm_rd_stb_o' => {
+                                                 'range' => '',
+                                                 'intfc_port' => 'stb_o',
+                                                 'type' => 'output',
+                                                 'intfc_name' => 'plug:wb_master[0]'
+                                               },
+                               'reset' => {
+                                            'intfc_name' => 'plug:reset[0]',
+                                            'range' => '',
+                                            'intfc_port' => 'reset_i',
+                                            'type' => 'input'
+                                          },
+                               'm_rd_addr_o' => {
+                                                  'intfc_name' => 'plug:wb_master[0]',
+                                                  'range' => 'M_Aw-1          :   0',
+                                                  'intfc_port' => 'adr_o',
+                                                  'type' => 'output'
+                                                }
+                             },
+                  'version' => 6,
+                  'hdl_files' => [
+                                   '/mpsoc/rtl/main_comp.v',
+                                   '/mpsoc/rtl/arbiter.v',
+                                   '/mpsoc/rtl/src_peripheral/DMA/dma_multi_chanel_wb.v'
+                                 ],
+                  'ip_name' => 'dma',
                   'parameters' => {
+                                    'TAGw' => {
+                                                'global_param' => 'Localparam',
+                                                'redefine_param' => 1,
+                                                'info' => 'Parameter',
+                                                'default' => '3',
+                                                'type' => 'Fixed',
+                                                'content' => ''
+                                              },
                                     'M_Aw' => {
                                                 'redefine_param' => 1,
-                                                'type' => 'Fixed',
+                                                'global_param' => 'Localparam',
+                                                'info' => 'Parameter',
                                                 'default' => '32',
                                                 'content' => '',
-                                                'info' => 'Parameter',
-                                                'global_param' => 'Parameter'
+                                                'type' => 'Fixed'
                                               },
-                                    'CHANNEL' => {
-                                                   'global_param' => 'Parameter',
-                                                   'info' => 'Number of DMA channels. 
-In case there are multiple active DMA channels,  Each time one single active DMA channel get access to the wishbone bus using round robin arbiter. The Wishbone bus is granted for the winter channel until its FIFO is not full and the number of sent data is smaller than the burst size.',
-                                                   'redefine_param' => 1,
+                                    'FIFO_B' => {
+                                                  'default' => '4',
+                                                  'content' => '2,4,8,16,32,64,128,256,512,1024,2048',
+                                                  'type' => 'Combo-box',
+                                                  'redefine_param' => 1,
+                                                  'global_param' => 'Localparam',
+                                                  'info' => 'chanel  FIFO size in words.
+All chanels will share same FPGA block RAM. Hence, the total needed Block RAM words is the multiplication of chanel num in chanel FIFO size. 
+
+'
+                                                },
+                                    'MAX_BURST_SIZE' => {
+                                                          'content' => '2,4,8,16,32,64,128,256,512,1024,2048',
+                                                          'type' => 'Combo-box',
+                                                          'default' => '256',
+                                                          'info' => 'Maximum burst size in words. 
+The wishbone bus will be released each time one burst is completed or when the internal FIFO becomes full.  The bus will be released for one clock cycle. Then in case, there are other active chanels, another active chanel will get access to the bus using round robin arbiter.  This process will be continued until all desired data is transferred. ',
+                                                          'redefine_param' => 1,
+                                                          'global_param' => 'Localparam'
+                                                        },
+                                    'S_Aw' => {
+                                                'global_param' => 'Localparam',
+                                                'redefine_param' => 1,
+                                                'info' => 'Parameter',
+                                                'default' => '8',
+                                                'type' => 'Fixed',
+                                                'content' => ''
+                                              },
+                                    'MAX_TRANSACTION_WIDTH' => {
+                                                                 'info' => 'The width of maximum transaction size in words.
+The maximum data that can be sent via one DMA chanel will be 2 power of MAX_DMA_TRANSACTION_WIDTH in words.',
+                                                                 'global_param' => 'Localparam',
+                                                                 'redefine_param' => 1,
+                                                                 'type' => 'Spin-button',
+                                                                 'content' => '2,32,1',
+                                                                 'default' => '10'
+                                                               },
+                                    'DEBUG_EN' => {
+                                                    'default' => '1',
+                                                    'type' => 'Fixed',
+                                                    'content' => '',
+                                                    'global_param' => 'Localparam',
+                                                    'redefine_param' => 1,
+                                                    'info' => 'Parameter'
+                                                  },
+                                    'chanel' => {
+                                                   'content' => '1,32,1',
                                                    'type' => 'Spin-button',
                                                    'default' => '1',
-                                                   'content' => '1,32,1'
+                                                   'info' => 'Number of DMA chanels. 
+In case there are multiple active DMA chanels,  Each time one single active DMA chanel get access to the wishbone bus using round robin arbiter. The Wishbone bus is granted for the winter chanel until its FIFO is not full and the number of sent data is smaller than the burst size.',
+                                                   'redefine_param' => 1,
+                                                   'global_param' => 'Localparam'
                                                  },
                                     'SELw' => {
-                                                'info' => 'Parameter',
-                                                'global_param' => 'Parameter',
+                                                'global_param' => 'Localparam',
                                                 'redefine_param' => 1,
+                                                'info' => 'Parameter',
                                                 'default' => '4',
                                                 'type' => 'Fixed',
                                                 'content' => ''
                                               },
                                     'Dw' => {
-                                              'global_param' => 'Parameter',
                                               'info' => 'Wishbone bus Data size in bit',
                                               'redefine_param' => 1,
+                                              'global_param' => 'Localparam',
+                                              'content' => '8,1024,8',
                                               'type' => 'Spin-button',
-                                              'default' => '32',
-                                              'content' => '8,1024,8'
-                                            },
-                                    'FIFO_B' => {
-                                                  'global_param' => 'Parameter',
-                                                  'info' => 'Channel  FIFO size in words.
-All channels will share same FPGA block RAM. Hence, the total needed Block RAM words is the multiplication of channel num in channel FIFO size. 
-
-',
-                                                  'content' => '2,4,8,16,32,64,128,256,512,1024,2048',
-                                                  'default' => '4',
-                                                  'type' => 'Combo-box',
-                                                  'redefine_param' => 1
-                                                },
-                                    'MAX_BURST_SIZE' => {
-                                                          'global_param' => 'Parameter',
-                                                          'info' => 'Maximum burst size in words. 
-The wishbone bus will be released each time one burst is completed or when the internal FIFO becomes full.  The bus will be released for one clock cycle. Then in case, there are other active channels, another active channel will get access to the bus using round robin arbiter.  This process will be continued until all desired data is transferred. ',
-                                                          'content' => '2,4,8,16,32,64,128,256,512,1024,2048',
-                                                          'redefine_param' => 1,
-                                                          'type' => 'Combo-box',
-                                                          'default' => '256'
-                                                        },
-                                    'DEBUG_EN' => {
-                                                    'content' => '',
-                                                    'redefine_param' => 1,
-                                                    'type' => 'Fixed',
-                                                    'default' => '1',
-                                                    'global_param' => 'Parameter',
-                                                    'info' => 'Parameter'
-                                                  },
-                                    'TAGw' => {
-                                                'default' => '3',
-                                                'type' => 'Fixed',
-                                                'redefine_param' => 1,
-                                                'content' => '',
-                                                'info' => 'Parameter',
-                                                'global_param' => 'Parameter'
-                                              },
-                                    'S_Aw' => {
-                                                'info' => 'Parameter',
-                                                'global_param' => 'Parameter',
-                                                'type' => 'Fixed',
-                                                'default' => '8',
-                                                'redefine_param' => 1,
-                                                'content' => ''
-                                              },
-                                    'MAX_TRANSACTION_WIDTH' => {
-                                                                 'default' => '10',
-                                                                 'type' => 'Spin-button',
-                                                                 'redefine_param' => 1,
-                                                                 'content' => '2,32,1',
-                                                                 'info' => 'The width of maximum transaction size in words.
-The maximum data that can be sent via one DMA channel will be 2 power of MAX_DMA_TRANSACTION_WIDTH in words.',
-                                                                 'global_param' => 'Parameter'
-                                                               }
+                                              'default' => '32'
+                                            }
                                   },
-                  'gui_status' => {
-                                    'timeout' => 0,
-                                    'status' => 'ideal'
-                                  },
-                  'ports' => {
-                               'm_rd_sel_o' => {
-                                                 'intfc_name' => 'plug:wb_master[0]',
-                                                 'intfc_port' => 'sel_o',
-                                                 'range' => 'SELw-1          :   0',
-                                                 'type' => 'output'
-                                               },
-                               'm_rd_stb_o' => {
-                                                 'intfc_name' => 'plug:wb_master[0]',
-                                                 'intfc_port' => 'stb_o',
-                                                 'range' => '',
-                                                 'type' => 'output'
-                                               },
-                               'irq' => {
-                                          'type' => 'output',
-                                          'range' => '',
-                                          'intfc_port' => 'int_o',
-                                          'intfc_name' => 'plug:interrupt_peripheral[0]'
-                                        },
-                               'm_rd_ack_i' => {
-                                                 'range' => '',
-                                                 'type' => 'input',
-                                                 'intfc_name' => 'plug:wb_master[0]',
-                                                 'intfc_port' => 'ack_i'
-                                               },
-                               's_cti_i' => {
-                                              'intfc_port' => 'cti_i',
-                                              'intfc_name' => 'plug:wb_slave[0]',
-                                              'type' => 'input',
-                                              'range' => 'TAGw-1     :   0'
-                                            },
-                               'm_wr_we_o' => {
-                                                'intfc_name' => 'plug:wb_master[1]',
-                                                'intfc_port' => 'we_o',
-                                                'range' => '',
-                                                'type' => 'output'
-                                              },
-                               'm_rd_cyc_o' => {
-                                                 'range' => '',
-                                                 'type' => 'output',
-                                                 'intfc_name' => 'plug:wb_master[0]',
-                                                 'intfc_port' => 'cyc_o'
-                                               },
-                               'm_wr_dat_o' => {
-                                                 'intfc_port' => 'dat_o',
-                                                 'intfc_name' => 'plug:wb_master[1]',
-                                                 'type' => 'output',
-                                                 'range' => 'Dw-1            :   0'
-                                               },
-                               's_cyc_i' => {
-                                              'range' => '',
-                                              'type' => 'input',
-                                              'intfc_name' => 'plug:wb_slave[0]',
-                                              'intfc_port' => 'cyc_i'
-                                            },
-                               'm_wr_ack_i' => {
-                                                 'range' => '',
-                                                 'type' => 'input',
-                                                 'intfc_name' => 'plug:wb_master[1]',
-                                                 'intfc_port' => 'ack_i'
-                                               },
-                               'clk' => {
-                                          'intfc_port' => 'clk_i',
-                                          'intfc_name' => 'plug:clk[0]',
-                                          'type' => 'input',
-                                          'range' => ''
-                                        },
-                               'm_rd_cti_o' => {
-                                                 'range' => 'TAGw-1          :   0',
-                                                 'type' => 'output',
-                                                 'intfc_name' => 'plug:wb_master[0]',
-                                                 'intfc_port' => 'cti_o'
-                                               },
-                               's_dat_o' => {
-                                              'intfc_name' => 'plug:wb_slave[0]',
-                                              'intfc_port' => 'dat_o',
-                                              'range' => 'Dw-1       :   0',
-                                              'type' => 'output'
-                                            },
-                               's_sel_i' => {
-                                              'intfc_name' => 'plug:wb_slave[0]',
-                                              'intfc_port' => 'sel_i',
-                                              'range' => 'SELw-1     :   0',
-                                              'type' => 'input'
-                                            },
-                               's_we_i' => {
-                                             'type' => 'input',
-                                             'range' => '',
-                                             'intfc_port' => 'we_i',
-                                             'intfc_name' => 'plug:wb_slave[0]'
-                                           },
-                               'm_wr_cyc_o' => {
-                                                 'intfc_name' => 'plug:wb_master[1]',
-                                                 'intfc_port' => 'cyc_o',
-                                                 'range' => '',
-                                                 'type' => 'output'
-                                               },
-                               'm_wr_cti_o' => {
-                                                 'intfc_name' => 'plug:wb_master[1]',
-                                                 'intfc_port' => 'cti_o',
-                                                 'range' => 'TAGw-1          :   0',
-                                                 'type' => 'output'
-                                               },
-                               'reset' => {
-                                            'intfc_port' => 'reset_i',
-                                            'intfc_name' => 'plug:reset[0]',
-                                            'type' => 'input',
-                                            'range' => ''
-                                          },
-                               'm_rd_dat_i' => {
-                                                 'type' => 'input',
-                                                 'range' => 'Dw-1           :  0',
-                                                 'intfc_port' => 'dat_i',
-                                                 'intfc_name' => 'plug:wb_master[0]'
-                                               },
-                               's_stb_i' => {
-                                              'intfc_name' => 'plug:wb_slave[0]',
-                                              'intfc_port' => 'stb_i',
-                                              'range' => '',
-                                              'type' => 'input'
-                                            },
-                               's_addr_i' => {
-                                               'type' => 'input',
-                                               'range' => 'S_Aw-1     :   0',
-                                               'intfc_port' => 'adr_i',
-                                               'intfc_name' => 'plug:wb_slave[0]'
-                                             },
-                               'm_rd_addr_o' => {
-                                                  'range' => 'M_Aw-1          :   0',
-                                                  'type' => 'output',
-                                                  'intfc_name' => 'plug:wb_master[0]',
-                                                  'intfc_port' => 'adr_o'
-                                                },
-                               's_dat_i' => {
-                                              'range' => 'Dw-1       :   0',
-                                              'type' => 'input',
-                                              'intfc_name' => 'plug:wb_slave[0]',
-                                              'intfc_port' => 'dat_i'
-                                            },
-                               'm_wr_stb_o' => {
-                                                 'intfc_name' => 'plug:wb_master[1]',
-                                                 'intfc_port' => 'stb_o',
-                                                 'range' => '',
-                                                 'type' => 'output'
-                                               },
-                               'm_wr_addr_o' => {
-                                                  'intfc_port' => 'adr_o',
-                                                  'intfc_name' => 'plug:wb_master[1]',
-                                                  'type' => 'output',
-                                                  'range' => 'M_Aw-1          :   0'
-                                                },
-                               'm_rd_we_o' => {
-                                                'type' => 'output',
-                                                'range' => '',
-                                                'intfc_port' => 'we_o',
-                                                'intfc_name' => 'plug:wb_master[0]'
-                                              },
-                               's_ack_o' => {
-                                              'intfc_port' => 'ack_o',
-                                              'intfc_name' => 'plug:wb_slave[0]',
-                                              'type' => 'output',
-                                              'range' => ''
-                                            },
-                               'm_wr_sel_o' => {
-                                                 'intfc_name' => 'plug:wb_master[1]',
-                                                 'intfc_port' => 'sel_o',
-                                                 'range' => 'SELw-1          :   0',
-                                                 'type' => 'output'
-                                               }
-                             },
-                  'system_h' => '#define ${IP}_STATUS_REG   (*((volatile unsigned int *) ($BASE)))   
-#define ${IP}_BURST_SIZE_ADDR_REG  (*((volatile unsigned int *) ($BASE+4)))
-
-
-#define ${IP}_CHANNEL	${CHANNEL}
-#define ${IP}_DATA_SIZE_ADDR_REG(channel)  (*((volatile unsigned int *) ($BASE+8+(channel<<5))))
-#define ${IP}_RD_START_ADDR_REG(channel)   (*((volatile unsigned int *) ($BASE+12+(channel<<5))))
-#define ${IP}_WR_START_ADDR_REG(channel)  (*((volatile unsigned int *) ($BASE+16+(channel<<5))))
-
-
-// assign status= {rd_enable_binarry,wr_enable_binarry,channel_rd_is_active,channel_wr_is_active};
-
-#define ${IP}_channel_is_busy(channel) ( (${IP}_STATUS_REG >> channel) & 0x1)
-
-
-void ${IP}_initial (unsigned int burst_size) {
+                  'system_c' => 'void ${IP}_initial (unsigned int burst_size) {
 	 ${IP}_BURST_SIZE_ADDR_REG  =  burst_size;
 }
 
 
-void ${IP}_transfer (unsigned int channel, unsigned int read_start_addr,  unsigned int data_size, unsigned int write_start_addr){
-	while ( ${IP}_channel_is_busy(channel)); // wait until DMA  channel is busy
-	 ${IP}_RD_START_ADDR_REG(channel)  = read_start_addr;
-	 ${IP}_DATA_SIZE_ADDR_REG(channel)  =  data_size;	
-	 ${IP}_WR_START_ADDR_REG(channel)  = write_start_addr;
+void ${IP}_transfer (unsigned int chanel, unsigned int read_start_addr,  unsigned int data_size, unsigned int write_start_addr){
+	while ( ${IP}_chanel_is_busy(chanel)); // wait until DMA  chanel is busy
+	 ${IP}_RD_START_ADDR_REG(chanel)  = read_start_addr;
+	 ${IP}_DATA_SIZE_ADDR_REG(chanel)  =  data_size;	
+	 ${IP}_WR_START_ADDR_REG(chanel)  = write_start_addr;
 }',
-                  'description_pdf' => '/mpsoc/src_peripheral/DMA/DMA.pdf',
-                  'unused' => {
-                                'plug:wb_slave[0]' => [
-                                                        'rty_o',
-                                                        'bte_i',
-                                                        'err_o',
-                                                        'tag_i'
-                                                      ],
-                                'plug:wb_master[0]' => [
-                                                         'err_i',
-                                                         'dat_o',
-                                                         'rty_i',
-                                                         'bte_o',
-                                                         'tag_o'
-                                                       ],
-                                'plug:wb_master[1]' => [
-                                                         'err_i',
-                                                         'dat_i',
-                                                         'rty_i',
-                                                         'bte_o',
-                                                         'tag_o'
-                                                       ]
-                              }
+                  'gui_status' => {
+                                    'status' => 'ideal',
+                                    'timeout' => 0
+                                  },
+                  'description' => 'A wishbone bus round robin-based  multi chanel DMA (no byte enable is supported yet). The DMA supports burst data transaction.'
                 }, 'ip_gen' );

@@ -104,7 +104,12 @@ module lm32_cpu (
     D_WE_O,
     D_CTI_O,
     D_LOCK_O,
-    D_BTE_O
+    D_BTE_O,
+
+    snoop_adr_i,
+    d_snoop_valid
+
+
     );
 
 /////////////////////////////////////////////////////
@@ -277,6 +282,10 @@ output D_LOCK_O;                                // Date Wishbone interface lock 
 wire   D_LOCK_O;
 output [`LM32_BTYPE_RNG] D_BTE_O;               // Data Wishbone interface burst type 
 wire   [`LM32_BTYPE_RNG] D_BTE_O;
+
+
+input [31:0]          snoop_adr_i;
+input d_snoop_valid;
 
 /////////////////////////////////////////////////////
 // Internal nets and registers 
@@ -901,7 +910,11 @@ lm32_load_store_unit #(
     .d_we_o                 (D_WE_O),
     .d_cti_o                (D_CTI_O),
     .d_lock_o               (D_LOCK_O),
-    .d_bte_o                (D_BTE_O)
+    .d_bte_o                (D_BTE_O),
+
+    .snoop_adr_i            (snoop_adr_i),
+    .d_snoop_valid          (d_snoop_valid)
+
     );      
        
 // Adder       

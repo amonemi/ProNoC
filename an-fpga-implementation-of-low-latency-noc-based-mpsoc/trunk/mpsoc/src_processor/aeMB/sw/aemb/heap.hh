@@ -36,7 +36,7 @@ extern "C" {
   @return heap size
   */
   
-  inline int aembGetHeapSize()
+  static inline int aembGetHeapSize()
   {
     int tmp;
     asm ("la %0, r0, _HEAP_SIZE":"=r"(tmp));
@@ -48,7 +48,7 @@ extern "C" {
   @return heap end
   */
   
-  inline int aembGetHeapEnd()
+  static inline int aembGetHeapEnd()
   {
     int tmp;
     asm ("la %0, r0, _heap_end":"=r"(tmp));
@@ -60,7 +60,7 @@ extern "C" {
   @return heap top
   */
   
-  inline int aembGetHeapTop()
+  static inline int aembGetHeapTop()
   {
     int tmp;
     asm ("la %0, r0, _heap":"=r"(tmp));

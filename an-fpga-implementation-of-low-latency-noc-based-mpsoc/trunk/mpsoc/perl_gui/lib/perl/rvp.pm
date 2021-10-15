@@ -97,7 +97,7 @@ BEGIN {
      `nosuppress_faults     `suppress_faults 
      `timescale             `undef
      `resetall              `delay_mode_distributed
-
+     
      `default_nettype  `file `line `ifndef `elsif
     );    #`
 
@@ -1698,18 +1698,21 @@ sub chunk_read {
    if ( $this->{state} == 0 ) {
        $chunk->{type} = "code";
        if ( $this->{linebuf} =~ 
-	    s%^(.*?)((/\*)|           # anything followed by /* comment
+	    s%^(.*?)((/\*)|           # anything followed by /* comment		     
 		     (//)|            #    or // comment
 		     (\(\*(?!\s*\)))| #    or (* attribute (but not (*)
 		     (\`include\s)|   #    or `include
-		     (\"))            #    or start of string   
+		     (\")|            #    or start of string 
+		     (import\s))      # import package
+		     
+		                  
 	    %$2%ox ) {
 	   $chunk->{isEnd} = 1;
 	   $chunk->{text} = $1;
 	   if (defined($3)) {
 	       $this->{state} = 1;  # long comment
 	   }
-	   elsif (defined($4)) {
+	   elsif (defined($4) ||defined($8) ) {
 	       $this->{state} = 2;  # short comment
 	   }
 	   elsif (defined($5)) {
@@ -3318,7 +3321,7 @@ $languageDef =
  allowAnything => 1, 
  search => 
   [
-   { arcName   => 'CONCAT',      regexp    => '{' ,
+   { arcName   => 'CONCAT',      regexp    => '\{' ,
      nextState => ['IN_CONCAT','PARAM_AFTER_EQUALS'] ,  },
    { arcName   => 'COMMA',       regexp    => ',' ,
      nextState => ['PARAM_NAME'] ,    },
@@ -3331,7 +3334,7 @@ $languageDef =
  allowAnything => 1, 
  search => 
   [
-   { arcName   => 'CONCAT' ,   regexp    => '{' ,
+   { arcName   => 'CONCAT' ,   regexp    => '\{' ,
      nextState => ['IN_CONCAT','IN_CONCAT'] ,     },
    { arcName   => 'END' ,      regexp    => '}' , }, # pop up
    @$vid_vnum_or_string,
@@ -3444,7 +3447,7 @@ $languageDef =
    [ 
     { arcName=>'COMMA',     regexp => ',',    
       nextState => ['ASSIGN'],},
-    { arcName=>'CONCAT',    regexp => '{',
+    { arcName=>'CONCAT',    regexp => '\{',
       nextState => ['IN_CONCAT','ASSIGN_AFTER_EQUALS'],},
     # don't get confused by function calls (which can also contain commas)
     {	arcName=>'BRACKET',   regexp => '\(',    
@@ -3500,7 +3503,7 @@ $languageDef =
  search => 
    [ 
     { regexp => ',',    nextState => ['SIGNAL_NAME'],},
-    { regexp => '{',    nextState => ['IN_CONCAT','SIGNAL_AFTER_EQUALS'],},
+    { regexp => '\{',    nextState => ['IN_CONCAT','SIGNAL_AFTER_EQUALS'],},
     { regexp => '\(',   nextState => ['IN_BRACKET','SIGNAL_AFTER_EQUALS'],},
     { arcName => 'END', regexp => ';', }, # pop up
     @$vid_vnum_or_string,
@@ -3663,7 +3666,7 @@ $languageDef =
      nextState => ['STMNT_ASSIGN_OR_TASK'] , },
    { arcName   => 'ASSIGN_OR_TASK',	   regexp => '$VID' ,
      nextState => ['STMNT_ASSIGN_OR_TASK'] , },
-   { arcName   => 'CONCAT',	           regexp => '{' ,
+   { arcName   => 'CONCAT',	           regexp => '\{' ,
      nextState => ['IN_CONCAT','STMNT_ASSIGN'] ,  },
    { arcName   => 'NULL',                  regexp => ';' ,
      }, # pop up
@@ -3938,7 +3941,7 @@ $languageDef =
  allowAnything => 1, 
  search => 
   [
-   { arcName   => 'CONCAT',      regexp    => '{' ,
+   { arcName   => 'CONCAT',      regexp    => '\{' ,
      nextState => ['IN_CONCAT','PPL_AFTER_EQUALS'] ,  },
    { arcName   => 'BRACKET',      regexp    => '\(' ,
      nextState => ['IN_BRACKET','PPL_AFTER_EQUALS'] ,  },

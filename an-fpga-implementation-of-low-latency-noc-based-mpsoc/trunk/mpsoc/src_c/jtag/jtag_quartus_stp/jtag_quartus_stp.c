@@ -74,11 +74,15 @@ int p;
    /* don't want getopt to moan - I can do that just fine thanks! */
    opterr = 0;
    if (argc < 2)  usage();	
-   while ((c = getopt (argc, argv, "s:e:d:n:i:w:a:b:cr")) != -1)
+   while ((c = getopt (argc, argv, "s:e:d:n:i:t:w:a:b:cr")) != -1)
       {
 	 switch (c)
 	    {
-	    case 'a':	/* hardware_name */
+	     case 't':	/* chain number */
+		//not used for Altera
+               break;
+
+             case 'a':	/* hardware_name */
 	       hardware_name = optarg;
 	       break;
 	    case 'b':	/* device number in chain */
@@ -222,8 +226,9 @@ int send_data ()
 			//printf ("(bit=%d, data=%s)\n",bit, string);
 			//jtag_vdr(bit, data, 0);
 			vdr_large(bit,string,0);
-		}if(d==2){
+		}else if(d==2){
 
+			vdr_large(bit,string,out);
 			vdr_large(bit,string,out);
 			vdr_large(bit,string,out);
 			printf("###read data#%s###read data#\n",out);
@@ -416,7 +421,7 @@ int read_mem(){
 		
 	if(BYTE_NUM <= sizeof(unsigned )){
 			//printf("vdr\n");
-			for(i=2;i<=num; i++){
+			for(i=2;i<num; i++){
 				jtag_vdr(BIT_NUM, memory_offset_in_word+i, &out); 
 				printf("%X\n",out);	
 			}
@@ -430,7 +435,7 @@ int read_mem(){
 		}
 		else{
 			//printf("vdr_long\n");
-			for(i=2*words;i<=num+2; i+=words){
+			for(i=2*words;i<num+2; i+=words){
 				//printf("%d,%d,%d\n",i,words,num);
 				read_buff[0]= memory_offset_in_word+i/words;
 				jtag_vdr_long(BIT_NUM, read_buff, small_buff, words);

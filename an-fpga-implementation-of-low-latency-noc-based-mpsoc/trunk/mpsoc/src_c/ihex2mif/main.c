@@ -17,8 +17,9 @@ void usage (void)
 {
 	printf("Usage: ./ihex2mif  <options>  \n");
 	printf("\nOptions: \n");
-	printf("         -e <end memory address> : end memory address .\n");
-	printf("         -f <file name>: input ihex file  .\n");
+	printf("         -e <end memory address> : end memory address.\n");
+	printf("         -f <file name>: input ihex file name.\n");
+	printf("         -o <file name>: output mif file name.\n");
 	
 }
 
@@ -72,7 +73,7 @@ int main ( int argc, char **argv ){
 	if (end_addr  != NULL) sscanf(end_addr, "%x", &end_addr_int);
 	else end_addr_int = maxaddr;
 
-
+	printf("end_addr_int=%u\n",end_addr_int);
 	update_out_file();
 	
 

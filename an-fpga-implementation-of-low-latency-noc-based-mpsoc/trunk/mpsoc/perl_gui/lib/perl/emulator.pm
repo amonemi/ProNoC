@@ -10,9 +10,13 @@ use strict;
 
 
 
+
 package emulator;
 
-
+sub uniq {
+  my %seen;
+  return grep { !$seen{$_}++ } @_;
+}
 
 sub emulator_new {
     # be backwards compatible with non-OO call
@@ -66,18 +70,19 @@ sub object_get_attribute{
 
 sub object_add_attribute_order{
 	my ($self,$attribute,@param)=@_;
-	$self->{'parameters_order'}{$attribute}=[] if (!defined $self->{parameters_order}{$attribute});
-	foreach my $p (@param){
-		push (@{$self->{parameters_order}{$attribute}},$p);
-
-	}
+	my $r = $self->{'parameters_order'}{$attribute};
+	my @a;
+	@a = @{$r} if(defined $r);
+	push (@a,@param);
+	@a=uniq(@a);	
+	$self->{'parameters_order'}{$attribute} =\@a;
 }
 
 sub object_get_attribute_order{
 	my ($self,$attribute)=@_;
 	my @array;
 	@array =  @{$self->{parameters_order}{$attribute}} if (defined $self->{parameters_order}{$attribute});
-	return @array;
+	return uniq (@array);
 }
 
 

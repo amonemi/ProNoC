@@ -1,112 +1,68 @@
 #######################################################################
 ##	File: ni.ITC
 ##    
-##	Copyright (C) 2014-2016  Alireza Monemi
+##	Copyright (C) 2014-2019  Alireza Monemi
 ##    
-##	This file is part of ProNoC 1.8.1 
+##	This file is part of ProNoC 1.9.1 
 ##
 ## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
-##	MAY CAUSE UNEXPECTED BEHAIVOR.
+##	MAY CAUSE UNEXPECTED BEHAVIOR.
 ################################################################################
 
 $HashRef = bless( {
-                    'connection_num' => 'single connection',
-                    'name' => 'ni',
-                    'modules' => {
-                                   'ni' => {}
-                                 },
-                    'ports' => {
-                                 
-				
-                                 'flit_in_wr' => {
-                                                   'connect_type' => 'output',
-                                                   'name' => 'flit_in_wr',
-                                                   'default_out' => 'Active low',
-                                                   'range' => '',
-                                                   'outport_type' => 'concatenate',
-                                                   'type' => 'input',
-                                                   'connect_name' => 'flit_out_wr',
-                                                   'connect_range' => ''
-                                                 },
-                                 'credit_in' => {
-                                                  'range' => 'V-1:0',
-                                                  'outport_type' => 'concatenate',
-                                                  'connect_range' => 'V-1:0',
-                                                  'connect_name' => 'credit_out',
-                                                  'type' => 'input',
-                                                  'name' => 'credit_in',
-                                                  'connect_type' => 'output',
-                                                  'default_out' => 'Active low'
-                                                },
-                                 'current_e_addr' => {
-                                                  'default_out' => 'Active low',
-                                                  'connect_type' => 'output',
-                                                  'name' => 'current_e_addr',
-                                                  'type' => 'input',
-                                                  'connect_range' => 'EAw-1:0',
-                                                  'connect_name' => 'current_e_addr',
-                                                  'outport_type' => 'concatenate',
-                                                  'range' => 'EAw-1:0'
-                                                },
-				'current_r_addr' => {
-                                                  'default_out' => 'Active low',
-                                                  'connect_type' => 'output',
-                                                  'name' => 'current_r_addr',
-                                                  'type' => 'input',
-                                                  'connect_range' => 'RAw-1:0',
-                                                  'connect_name' => 'current_r_addr',
-                                                  'outport_type' => 'concatenate',
-                                                  'range' => 'RAw-1:0'
-                                                },
-
-
-                                 'credit_out' => {
-                                                   'name' => 'credit_out',
-                                                   'connect_type' => 'input',
-                                                   'default_out' => 'Active low',
-                                                   'outport_type' => 'concatenate',
-                                                   'range' => 'V-1:0',
-                                                   'connect_range' => 'V-1:0',
-                                                   'connect_name' => 'credit_in',
-                                                   'type' => 'output'
-                                                 },
-                                 'flit_in' => {
-                                                'connect_range' => 'Fw-1:0',
-                                                'connect_name' => 'flit_out',
-                                                'type' => 'input',
-                                                'range' => 'Fw-1:0',
-                                                'outport_type' => 'concatenate',
-                                                'default_out' => 'Active low',
-                                                'name' => 'flit_in',
-                                                'connect_type' => 'output'
-                                              },
-                                 'flit_out' => {
-                                                 'connect_range' => 'Fw-1:0',
-                                                 'connect_name' => 'flit_in',
-                                                 'type' => 'output',
-                                                 'outport_type' => 'concatenate',
-                                                 'range' => 'Fw-1:0',
-                                                 'default_out' => 'Active low',
-                                                 'name' => 'flit_out',
-                                                 'connect_type' => 'input'
-                                               },
-                                 'flit_out_wr' => {
-                                                    'type' => 'output',
-                                                    'connect_range' => '',
-                                                    'connect_name' => 'flit_in_wr',
-                                                    'outport_type' => 'concatenate',
-                                                    'range' => '',
-                                                    'default_out' => 'Active low',
-                                                    'connect_type' => 'input',
-                                                    'name' => 'flit_out_wr'
-                                                  }
-                               },
-                    'module_name' => 'ni',
-                    'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/ni/ni.v',
-                    'category' => 'NoC',
                     'gui_status' => {
                                       'status' => 'ideal',
                                       'timeout' => 0
                                     },
-                    'type' => 'socket'
+                    'name' => 'ni',
+                    'category' => 'NoC',
+                    'ports' => {
+                                 'chanel_in' => {
+                                                  'connect_type' => 'output',
+                                                  'outport_type' => 'concatenate',
+                                                  'connect_range' => 'smartflit_chanel_t',
+                                                  'name' => 'chan_in',
+                                                  'default_out' => 'Active low',
+                                                  'connect_name' => 'chan_out',
+                                                  'range' => 'smartflit_chanel_t',
+                                                  'type' => 'input'
+                                                },
+                                 'chanel_out' => {
+                                                   'range' => 'smartflit_chanel_t',
+                                                   'type' => 'output',
+                                                   'outport_type' => 'concatenate',
+                                                   'connect_range' => 'smartflit_chanel_t',
+                                                   'connect_type' => 'input',
+                                                   'connect_name' => 'chan_in',
+                                                   'name' => 'chan_out',
+                                                   'default_out' => 'Active low'
+                                                 },
+                                 'current_r_addr' => {
+                                                       'connect_name' => 'current_r_addr',
+                                                       'default_out' => 'Active low',
+                                                       'name' => 'current_r_addr',
+                                                       'connect_range' => 'RAw-1:0',
+                                                       'outport_type' => 'concatenate',
+                                                       'connect_type' => 'output',
+                                                       'type' => 'input',
+                                                       'range' => 'RAw-1:0'
+                                                     },
+                                 'current_e_addr' => {
+                                                       'default_out' => 'Active low',
+                                                       'name' => 'current_e_addr',
+                                                       'connect_name' => 'current_e_addr',
+                                                       'connect_type' => 'output',
+                                                       'outport_type' => 'concatenate',
+                                                       'connect_range' => 'EAw-1:0',
+                                                       'type' => 'input',
+                                                       'range' => 'EAw-1:0'
+                                                     }
+                               },
+                    'file_name' => 'mpsoc/rtl/src_peripheral/ni/ni.v',
+                    'type' => 'socket',
+                    'module_name' => 'ni',
+                    'modules' => {
+                                   'ni' => {}
+                                 },
+                    'connection_num' => 'single connection'
                   }, 'intfc_gen' );

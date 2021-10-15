@@ -58,13 +58,13 @@ module ram_test_top #(
           end     
      endfunction //i2s
   
- 	localparam	programer_DW=32;
-	localparam	programer_AW=32;
-	localparam	programer_S_Aw=   7;
-	localparam	programer_M_Aw=   32;
-	localparam	programer_TAGw=   3;
-	localparam	programer_SELw=   4;
-	localparam	programer_VJTAG_INDEX=CORE_ID;
+ 	localparam	programmer_DW=32;
+	localparam	programmer_AW=32;
+	localparam	programmer_S_Aw=   7;
+	localparam	programmer_M_Aw=   32;
+	localparam	programmer_TAGw=   3;
+	localparam	programmer_SELw=   4;
+	localparam	programmer_VJTAG_INDEX=CORE_ID;
 
  	localparam	ram_BYTE_WR_EN="YES";
 	localparam	ram_FPGA_VENDOR="ALTERA";

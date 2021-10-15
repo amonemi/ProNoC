@@ -1,375 +1,155 @@
 #######################################################################
 ##	File: aeMB.IP
 ##    
-##	Copyright (C) 2014-2016  Alireza Monemi
+##	Copyright (C) 2014-2019  Alireza Monemi
 ##    
-##	This file is part of ProNoC 1.7.0 
+##	This file is part of ProNoC 1.9.1 
 ##
 ## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
-##	MAY CAUSE UNEXPECTED BEHAIVOR.
+##	MAY CAUSE UNEXPECTED BEHAVIOR.
 ################################################################################
 
 $ipgen = bless( {
-                  'unused' => undef,
-                  'parameters' => {
-                                    'AEMB_DWB' => {
-                                                    'redefine_param' => 1,
-                                                    'info' => undef,
-                                                    'default' => ' 32',
-                                                    'content' => '',
-                                                    'global_param' => 'Localparam',
-                                                    'type' => 'Fixed'
-                                                  },
-                                    'AEMB_BSF' => {
-                                                    'default' => ' 1',
-                                                    'content' => '',
-                                                    'redefine_param' => 1,
-                                                    'info' => undef,
-                                                    'global_param' => 'Localparam',
-                                                    'type' => 'Fixed'
-                                                  },
-                                    'AEMB_IWB' => {
-                                                    'global_param' => 'Localparam',
-                                                    'type' => 'Fixed',
-                                                    'content' => '',
-                                                    'default' => ' 32',
-                                                    'redefine_param' => 1,
-                                                    'info' => undef
-                                                  },
-                                    'AEMB_XWB' => {
-                                                    'type' => 'Fixed',
-                                                    'global_param' => 'Localparam',
-                                                    'content' => '',
-                                                    'default' => ' 7',
-                                                    'info' => undef,
-                                                    'redefine_param' => 1
-                                                  },
-                                    'HEAP_SIZE' => {
-                                                     'info' => undef,
-                                                     'redefine_param' => 0,
-                                                     'content' => '',
-                                                     'default' => '0x400',
-                                                     'type' => 'Entry',
-                                                     'global_param' => 'Don\'t include'
-                                                   },
-                                    'AEMB_MUL' => {
-                                                    'default' => ' 1',
-                                                    'content' => '',
-                                                    'info' => undef,
-                                                    'redefine_param' => 1,
-                                                    'type' => 'Fixed',
-                                                    'global_param' => 'Localparam'
-                                                  },
-                                    'AEMB_IDX' => {
-                                                    'info' => undef,
-                                                    'redefine_param' => 1,
-                                                    'default' => ' 6',
-                                                    'content' => '',
-                                                    'type' => 'Fixed',
-                                                    'global_param' => 'Localparam'
-                                                  },
-                                    'AEMB_ICH' => {
-                                                    'global_param' => 'Localparam',
-                                                    'type' => 'Fixed',
-                                                    'content' => '',
-                                                    'default' => ' 11',
-                                                    'redefine_param' => 1,
-                                                    'info' => undef
-                                                  },
-                                    'STACK_SIZE' => {
-                                                      'type' => 'Entry',
-                                                      'global_param' => 'Don\'t include',
-                                                      'default' => '0x400',
-                                                      'content' => '',
-                                                      'info' => 'The stack size in hex',
-                                                      'redefine_param' => 0
-                                                    }
-                                  },
-                  'hdl_files' => [
-                                   '/mpsoc/src_processor/aeMB/verilog/aemb.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_core.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_xecu.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_sim.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_bpcu.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_edk32.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_xslif.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_ctrl.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_ibuf.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_tpsram.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_regf.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_exec.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_sparam.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_intu.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_regs.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_spsram.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_memif.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_mult.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_gprf.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_pipe.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_brcc.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_dparam.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_edk63.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_bsft.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_ctrl.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_dwbif.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_edk62.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_sim.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_iche.v',
-                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_iwbif.v'
-                                 ],
-                  'file_name' => '/home/alireza/Mywork/mpsoc/src_processor/aeMB/verilog/aemb.v',
-                  'module_name' => 'aeMB_top',
-                  'sockets' => {
-                                 'interrupt_cpu' => {
-                                                      'connection_num' => 'single connection',
-                                                      'type' => 'num',
-                                                      '0' => {
-                                                               'name' => 'interrupt_cpu'
-                                                             },
-                                                      'value' => 1
-                                                    }
-                               },
-                  'version' => 2,
-                  'description' => 'AEMB 32-bit Microprocessor Core
-For more information check 	http://opencores.org/project,aemb',
-                  'gen_sw_files' => [
-                                      '/mpsoc/src_processor/aeMB/sw/compile/gccromfrename_sep_tcompile/gccrom',
-                                      '/mpsoc/src_processor/aeMB/sw/Makefilefrename_sep_tMakefile'
-                                    ],
                   'plugs' => {
                                'enable' => {
-                                             'type' => 'num',
+                                             'value' => 1,
                                              '0' => {
                                                       'name' => 'enable'
                                                     },
-                                             'value' => 1,
-                                             'enable' => {}
+                                             'enable' => {},
+                                             'type' => 'num'
                                            },
-                               'clk' => {
-                                          'clk' => {},
-                                          'value' => 1,
-                                          '0' => {
-                                                   'name' => 'clk'
-                                                 },
-                                          'type' => 'num'
-                                        },
                                'wb_master' => {
                                                 'wb_master' => {},
-                                                '1' => {
-                                                         'name' => 'dwb'
-                                                       },
                                                 'value' => 2,
                                                 'type' => 'num',
                                                 '0' => {
                                                          'name' => 'iwb'
+                                                       },
+                                                '1' => {
+                                                         'name' => 'dwb'
                                                        }
                                               },
+                               'clk' => {
+                                          'clk' => {},
+                                          '0' => {
+                                                   'name' => 'clk'
+                                                 },
+                                          'type' => 'num',
+                                          'value' => 1
+                                        },
                                'reset' => {
                                             'reset' => {},
+                                            'value' => 1,
+                                            'type' => 'num',
                                             '0' => {
                                                      'name' => 'reset'
-                                                   },
-                                            'type' => 'num',
-                                            'value' => 1
+                                                   }
                                           }
                              },
-                  'ports' => {
-                               'iwb_tag_o' => {
-                                                'type' => 'output',
-                                                'intfc_name' => 'plug:wb_master[0]',
-                                                'intfc_port' => 'tag_o',
-                                                'range' => '2:0'
-                                              },
-                               'iwb_adr_o' => {
-                                                'type' => 'output',
-                                                'intfc_name' => 'plug:wb_master[0]',
-                                                'intfc_port' => 'adr_o',
-                                                'range' => '31:0'
-                                              },
-                               'clk' => {
-                                          'range' => '',
-                                          'intfc_port' => 'clk_i',
-                                          'type' => 'input',
-                                          'intfc_name' => 'plug:clk[0]'
-                                        },
-                               'dwb_rty_i' => {
-                                                'type' => 'input',
-                                                'intfc_name' => 'plug:wb_master[1]',
-                                                'intfc_port' => 'rty_i',
-                                                'range' => ''
-                                              },
-                               'dwb_stb_o' => {
-                                                'range' => '',
-                                                'intfc_port' => 'stb_o',
-                                                'type' => 'output',
-                                                'intfc_name' => 'plug:wb_master[1]'
-                                              },
-                               'dwb_wre_o' => {
-                                                'range' => '',
-                                                'intfc_port' => 'we_o',
-                                                'intfc_name' => 'plug:wb_master[1]',
-                                                'type' => 'output'
-                                              },
-                               'iwb_stb_o' => {
-                                                'range' => '',
-                                                'intfc_port' => 'stb_o',
-                                                'type' => 'output',
-                                                'intfc_name' => 'plug:wb_master[0]'
-                                              },
-                               'reset' => {
-                                            'intfc_name' => 'plug:reset[0]',
-                                            'type' => 'input',
-                                            'intfc_port' => 'reset_i',
-                                            'range' => ''
-                                          },
-                               'dwb_bte_o' => {
-                                                'type' => 'output',
-                                                'intfc_name' => 'plug:wb_master[1]',
-                                                'intfc_port' => 'bte_o',
-                                                'range' => '1:0'
-                                              },
-                               'dwb_dat_i' => {
-                                                'range' => '31:0',
-                                                'intfc_port' => 'dat_i',
-                                                'intfc_name' => 'plug:wb_master[1]',
-                                                'type' => 'input'
-                                              },
-                               'dwb_dat_o' => {
-                                                'range' => '31:0',
-                                                'intfc_port' => 'dat_o',
-                                                'type' => 'output',
-                                                'intfc_name' => 'plug:wb_master[1]'
-                                              },
-                               'iwb_rty_i' => {
-                                                'range' => '',
-                                                'intfc_port' => 'rty_i',
-                                                'type' => 'input',
-                                                'intfc_name' => 'plug:wb_master[0]'
-                                              },
-                               'iwb_cyc_o' => {
-                                                'intfc_port' => 'cyc_o',
-                                                'range' => '',
-                                                'intfc_name' => 'plug:wb_master[0]',
-                                                'type' => 'output'
-                                              },
-                               'dwb_cyc_o' => {
-                                                'intfc_name' => 'plug:wb_master[1]',
-                                                'type' => 'output',
-                                                'range' => '',
-                                                'intfc_port' => 'cyc_o'
-                                              },
-                               'dwb_sel_o' => {
-                                                'intfc_port' => 'sel_o',
-                                                'range' => '3:0',
-                                                'type' => 'output',
-                                                'intfc_name' => 'plug:wb_master[1]'
-                                              },
-                               'sys_int_i' => {
-                                                'intfc_port' => 'int_i',
-                                                'range' => '',
-                                                'type' => 'input',
-                                                'intfc_name' => 'socket:interrupt_cpu[0]'
-                                              },
-                               'iwb_dat_i' => {
-                                                'intfc_port' => 'dat_i',
-                                                'range' => '31:0',
-                                                'intfc_name' => 'plug:wb_master[0]',
-                                                'type' => 'input'
-                                              },
-                               'dwb_err_i' => {
-                                                'intfc_port' => 'err_i',
-                                                'range' => '',
-                                                'type' => 'input',
-                                                'intfc_name' => 'plug:wb_master[1]'
-                                              },
-                               'iwb_sel_o' => {
-                                                'type' => 'output',
-                                                'intfc_name' => 'plug:wb_master[0]',
-                                                'intfc_port' => 'sel_o',
-                                                'range' => '3:0'
-                                              },
-                               'iwb_wre_o' => {
-                                                'intfc_port' => 'we_o',
-                                                'range' => '',
-                                                'type' => 'output',
-                                                'intfc_name' => 'plug:wb_master[0]'
-                                              },
-                               'dwb_adr_o' => {
-                                                'intfc_name' => 'plug:wb_master[1]',
-                                                'type' => 'output',
-                                                'intfc_port' => 'adr_o',
-                                                'range' => '31:0'
-                                              },
-                               'iwb_cti_o' => {
-                                                'range' => '2:0',
-                                                'intfc_port' => 'cti_o',
-                                                'type' => 'output',
-                                                'intfc_name' => 'plug:wb_master[0]'
-                                              },
-                               'iwb_err_i' => {
-                                                'intfc_port' => 'err_i',
-                                                'range' => '',
-                                                'intfc_name' => 'plug:wb_master[0]',
-                                                'type' => 'input'
-                                              },
-                               'dwb_tag_o' => {
-                                                'type' => 'output',
-                                                'intfc_name' => 'plug:wb_master[1]',
-                                                'intfc_port' => 'tag_o',
-                                                'range' => '2:0'
-                                              },
-                               'sys_ena_i' => {
-                                                'intfc_name' => 'plug:enable[0]',
-                                                'type' => 'input',
-                                                'intfc_port' => 'enable_i',
-                                                'range' => ''
-                                              },
-                               'dwb_ack_i' => {
-                                                'range' => '',
-                                                'intfc_port' => 'ack_i',
-                                                'intfc_name' => 'plug:wb_master[1]',
-                                                'type' => 'input'
-                                              },
-                               'iwb_bte_o' => {
-                                                'range' => '1:0',
-                                                'intfc_port' => 'bte_o',
-                                                'intfc_name' => 'plug:wb_master[0]',
-                                                'type' => 'output'
-                                              },
-                               'iwb_dat_o' => {
-                                                'intfc_name' => 'plug:wb_master[0]',
-                                                'type' => 'output',
-                                                'intfc_port' => 'dat_o',
-                                                'range' => '31:0'
-                                              },
-                               'dwb_cti_o' => {
-                                                'type' => 'output',
-                                                'intfc_name' => 'plug:wb_master[1]',
-                                                'range' => '2:0',
-                                                'intfc_port' => 'cti_o'
-                                              },
-                               'iwb_ack_i' => {
-                                                'intfc_name' => 'plug:wb_master[0]',
-                                                'type' => 'input',
-                                                'intfc_port' => 'ack_i',
-                                                'range' => ''
-                                              }
-                             },
-                  'gui_status' => {
-                                    'status' => 'ideal',
-                                    'timeout' => 0
-                                  },
-                  'modules' => {
-                                 'aeMB_top' => {}
+                  'sockets' => {
+                                 'interrupt_cpu' => {
+                                                      'type' => 'num',
+                                                      '0' => {
+                                                               'name' => 'interrupt_cpu'
+                                                             },
+                                                      'connection_num' => 'single connection',
+                                                      'value' => 1
+                                                    }
                                },
-                  'ip_name' => 'aeMB',
-                  'system_h' => ' #include <stdio.h> 
- #include <stdlib.h> 
- #include "aemb/core.hh" 
+                  'gen_sw_files_ticked' => [],
+                  'system_h' => '
+#include "aemb/core.hh"
  
-	inline void nop (void) {
+static inline void nop (void) {
 		asm volatile ("nop");
-	}',
+}
+
+void general_int_main( void ) __attribute__ ((interrupt_handler)); // general_int_main() is defined by interrupt controller 
+void aemb_enable_interrupt (void);
+void exit (int);
+
+#define general_cpu_int_en   aemb_enable_interrupt
+
+',
+                  'parameters' => {
+                                    'AEMB_BSF' => {
+                                                    'content' => '',
+                                                    'global_param' => 'Localparam',
+                                                    'type' => 'Fixed',
+                                                    'info' => undef,
+                                                    'redefine_param' => 1,
+                                                    'default' => ' 1'
+                                                  },
+                                    'AEMB_ICH' => {
+                                                    'global_param' => 'Localparam',
+                                                    'content' => '',
+                                                    'default' => ' 11',
+                                                    'redefine_param' => 1,
+                                                    'info' => undef,
+                                                    'type' => 'Fixed'
+                                                  },
+                                    'AEMB_IDX' => {
+                                                    'type' => 'Fixed',
+                                                    'info' => undef,
+                                                    'redefine_param' => 1,
+                                                    'default' => ' 6',
+                                                    'content' => '',
+                                                    'global_param' => 'Localparam'
+                                                  },
+                                    'AEMB_IWB' => {
+                                                    'info' => undef,
+                                                    'type' => 'Fixed',
+                                                    'redefine_param' => 1,
+                                                    'default' => ' 32',
+                                                    'content' => '',
+                                                    'global_param' => 'Localparam'
+                                                  },
+                                    'AEMB_DWB' => {
+                                                    'global_param' => 'Localparam',
+                                                    'content' => '',
+                                                    'default' => ' 32',
+                                                    'redefine_param' => 1,
+                                                    'type' => 'Fixed',
+                                                    'info' => undef
+                                                  },
+                                    'AEMB_MUL' => {
+                                                    'content' => '',
+                                                    'global_param' => 'Localparam',
+                                                    'type' => 'Fixed',
+                                                    'info' => undef,
+                                                    'default' => ' 1',
+                                                    'redefine_param' => 1
+                                                  },
+                                    'STACK_SIZE' => {
+                                                      'content' => '',
+                                                      'global_param' => 'Don\'t include',
+                                                      'type' => 'Entry',
+                                                      'info' => 'The stack size in hex',
+                                                      'redefine_param' => 0,
+                                                      'default' => '0x400'
+                                                    },
+                                    'AEMB_XWB' => {
+                                                    'global_param' => 'Localparam',
+                                                    'content' => '',
+                                                    'default' => ' 7',
+                                                    'redefine_param' => 1,
+                                                    'type' => 'Fixed',
+                                                    'info' => undef
+                                                  },
+                                    'HEAP_SIZE' => {
+                                                     'global_param' => 'Don\'t include',
+                                                     'content' => '',
+                                                     'default' => '0x400',
+                                                     'redefine_param' => 0,
+                                                     'type' => 'Entry',
+                                                     'info' => undef
+                                                   }
+                                  },
+                  'description' => 'AEMB 32-bit Microprocessor Core
+For more information check 	http://opencores.org/project,aemb',
+                  'ip_name' => 'aeMB',
+                  'module_name' => 'aeMB_top',
                   'ports_order' => [
                                      'dwb_adr_o',
                                      'dwb_cyc_o',
@@ -402,14 +182,6 @@ For more information check 	http://opencores.org/project,aemb',
                                      'sys_int_i',
                                      'sys_ena_i'
                                    ],
-                  'category' => 'Processor',
-                  'sw_files' => [
-                                  '/mpsoc/src_processor/aeMB/sw/aemb',
-                                  '/mpsoc/src_processor/aeMB/sw/compile',
-                                  '/mpsoc/src_processor/aeMB/sw/program',
-                                  '/mpsoc/src_processor/program.sh',
-                                  '/mpsoc/src_processor/aeMB/sw/define_printf.h'
-                                ],
                   'parameters_order' => [
                                           'AEMB_IWB',
                                           'AEMB_DWB',
@@ -420,5 +192,278 @@ For more information check 	http://opencores.org/project,aemb',
                                           'AEMB_MUL',
                                           'STACK_SIZE',
                                           'HEAP_SIZE'
-                                        ]
+                                        ],
+                  'file_name' => 'mpsoc/src_processor/aeMB/verilog/aemb.v',
+                  'gui_status' => {
+                                    'status' => 'ideal',
+                                    'timeout' => 0
+                                  },
+                  'modules' => {
+                                 'aeMB_top' => {}
+                               },
+                  'hdl_files' => [
+                                   '/mpsoc/src_processor/aeMB/verilog/aemb.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_core.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_xecu.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_sim.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_bpcu.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_edk32.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_xslif.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_ctrl.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_ibuf.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_tpsram.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB_regf.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_exec.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_sparam.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_intu.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_regs.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_spsram.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_memif.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_mult.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_gprf.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_pipe.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_brcc.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_dparam.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_edk63.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_bsft.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_ctrl.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_dwbif.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_edk62.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_sim.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_iche.v',
+                                   '/mpsoc/src_processor/aeMB/verilog/src/aeMB2_iwbif.v'
+                                 ],
+                  'gen_sw_files' => [
+                                      '/mpsoc/src_processor/aeMB/sw/link.ldfrename_sep_tlink.ld'
+                                    ],
+                  'sw_files' => [
+                                  '/mpsoc/src_processor/aeMB/sw/aemb',
+                                  '/mpsoc/src_processor/aeMB/sw/aemb.specs',
+                                  '/mpsoc/src_processor/aeMB/sw/Makefile'
+                                ],
+                  'unused' => undef,
+                  'category' => 'Processor',
+                  'version' => 10,
+                  'ports' => {
+                               'dwb_wre_o' => {
+                                                'type' => 'output',
+                                                'intfc_port' => 'we_o',
+                                                'intfc_name' => 'plug:wb_master[1]',
+                                                'range' => ''
+                                              },
+                               'dwb_ack_i' => {
+                                                'range' => '',
+                                                'intfc_name' => 'plug:wb_master[1]',
+                                                'type' => 'input',
+                                                'intfc_port' => 'ack_i'
+                                              },
+                               'iwb_bte_o' => {
+                                                'range' => '1:0',
+                                                'intfc_name' => 'plug:wb_master[0]',
+                                                'type' => 'output',
+                                                'intfc_port' => 'bte_o'
+                                              },
+                               'iwb_wre_o' => {
+                                                'range' => '',
+                                                'intfc_name' => 'plug:wb_master[0]',
+                                                'type' => 'output',
+                                                'intfc_port' => 'we_o'
+                                              },
+                               'iwb_ack_i' => {
+                                                'type' => 'input',
+                                                'intfc_port' => 'ack_i',
+                                                'range' => '',
+                                                'intfc_name' => 'plug:wb_master[0]'
+                                              },
+                               'dwb_adr_o' => {
+                                                'range' => '31:0',
+                                                'intfc_name' => 'plug:wb_master[1]',
+                                                'intfc_port' => 'adr_o',
+                                                'type' => 'output'
+                                              },
+                               'clk' => {
+                                          'intfc_port' => 'clk_i',
+                                          'type' => 'input',
+                                          'intfc_name' => 'plug:clk[0]',
+                                          'range' => ''
+                                        },
+                               'iwb_tag_o' => {
+                                                'intfc_port' => 'tag_o',
+                                                'type' => 'output',
+                                                'intfc_name' => 'plug:wb_master[0]',
+                                                'range' => '2:0'
+                                              },
+                               'iwb_err_i' => {
+                                                'range' => '',
+                                                'intfc_name' => 'plug:wb_master[0]',
+                                                'type' => 'input',
+                                                'intfc_port' => 'err_i'
+                                              },
+                               'dwb_cti_o' => {
+                                                'intfc_name' => 'plug:wb_master[1]',
+                                                'range' => '2:0',
+                                                'intfc_port' => 'cti_o',
+                                                'type' => 'output'
+                                              },
+                               'dwb_cyc_o' => {
+                                                'type' => 'output',
+                                                'intfc_port' => 'cyc_o',
+                                                'range' => '',
+                                                'intfc_name' => 'plug:wb_master[1]'
+                                              },
+                               'dwb_err_i' => {
+                                                'range' => '',
+                                                'intfc_name' => 'plug:wb_master[1]',
+                                                'type' => 'input',
+                                                'intfc_port' => 'err_i'
+                                              },
+                               'dwb_bte_o' => {
+                                                'intfc_name' => 'plug:wb_master[1]',
+                                                'range' => '1:0',
+                                                'type' => 'output',
+                                                'intfc_port' => 'bte_o'
+                                              },
+                               'iwb_cti_o' => {
+                                                'intfc_port' => 'cti_o',
+                                                'type' => 'output',
+                                                'range' => '2:0',
+                                                'intfc_name' => 'plug:wb_master[0]'
+                                              },
+                               'iwb_adr_o' => {
+                                                'type' => 'output',
+                                                'intfc_port' => 'adr_o',
+                                                'intfc_name' => 'plug:wb_master[0]',
+                                                'range' => '31:0'
+                                              },
+                               'sys_ena_i' => {
+                                                'intfc_name' => 'plug:enable[0]',
+                                                'range' => '',
+                                                'intfc_port' => 'enable_i',
+                                                'type' => 'input'
+                                              },
+                               'iwb_cyc_o' => {
+                                                'range' => '',
+                                                'intfc_name' => 'plug:wb_master[0]',
+                                                'intfc_port' => 'cyc_o',
+                                                'type' => 'output'
+                                              },
+                               'dwb_dat_o' => {
+                                                'intfc_name' => 'plug:wb_master[1]',
+                                                'range' => '31:0',
+                                                'type' => 'output',
+                                                'intfc_port' => 'dat_o'
+                                              },
+                               'dwb_stb_o' => {
+                                                'range' => '',
+                                                'intfc_name' => 'plug:wb_master[1]',
+                                                'intfc_port' => 'stb_o',
+                                                'type' => 'output'
+                                              },
+                               'iwb_rty_i' => {
+                                                'range' => '',
+                                                'intfc_name' => 'plug:wb_master[0]',
+                                                'intfc_port' => 'rty_i',
+                                                'type' => 'input'
+                                              },
+                               'iwb_stb_o' => {
+                                                'intfc_name' => 'plug:wb_master[0]',
+                                                'range' => '',
+                                                'type' => 'output',
+                                                'intfc_port' => 'stb_o'
+                                              },
+                               'dwb_dat_i' => {
+                                                'range' => '31:0',
+                                                'intfc_name' => 'plug:wb_master[1]',
+                                                'type' => 'input',
+                                                'intfc_port' => 'dat_i'
+                                              },
+                               'iwb_sel_o' => {
+                                                'intfc_port' => 'sel_o',
+                                                'type' => 'output',
+                                                'intfc_name' => 'plug:wb_master[0]',
+                                                'range' => '3:0'
+                                              },
+                               'dwb_sel_o' => {
+                                                'intfc_port' => 'sel_o',
+                                                'type' => 'output',
+                                                'intfc_name' => 'plug:wb_master[1]',
+                                                'range' => '3:0'
+                                              },
+                               'iwb_dat_o' => {
+                                                'range' => '31:0',
+                                                'intfc_name' => 'plug:wb_master[0]',
+                                                'type' => 'output',
+                                                'intfc_port' => 'dat_o'
+                                              },
+                               'sys_int_i' => {
+                                                'type' => 'input',
+                                                'intfc_port' => 'int_i',
+                                                'range' => '',
+                                                'intfc_name' => 'socket:interrupt_cpu[0]'
+                                              },
+                               'iwb_dat_i' => {
+                                                'intfc_name' => 'plug:wb_master[0]',
+                                                'range' => '31:0',
+                                                'type' => 'input',
+                                                'intfc_port' => 'dat_i'
+                                              },
+                               'dwb_rty_i' => {
+                                                'range' => '',
+                                                'intfc_name' => 'plug:wb_master[1]',
+                                                'type' => 'input',
+                                                'intfc_port' => 'rty_i'
+                                              },
+                               'reset' => {
+                                            'intfc_name' => 'plug:reset[0]',
+                                            'range' => '',
+                                            'type' => 'input',
+                                            'intfc_port' => 'reset_i'
+                                          },
+                               'dwb_tag_o' => {
+                                                'intfc_name' => 'plug:wb_master[1]',
+                                                'range' => '2:0',
+                                                'type' => 'output',
+                                                'intfc_port' => 'tag_o'
+                                              }
+                             },
+                  'system_c' => '
+ #include "aemb/core.cc"
+
+/*!
+* Assembly macro to enable MSR_IE
+*/
+void aemb_enable_interrupt ()
+{
+  int msr, tmp;
+  asm volatile ("mfs %0, rmsr;"
+		"ori %1, %0, 0x02;"
+		"mts rmsr, %1;"
+		: "=r"(msr)
+		: "r" (tmp)
+		);
+}
+
+void aemb_disable_interrupt ()
+{
+  int msr, tmp;
+  asm volatile ("mfs %0, rmsr;"
+               "andi %1, %0, 0xFD;"
+               "mts rmsr, %1;"
+               : "=r"(msr)
+               : "r" (tmp)
+               );
+}
+
+
+/* Loops/exits simulation */
+void exit (int i)
+{
+  aemb_disable_interrupt ();
+  while (1);
+}
+
+
+
+
+'
                 }, 'ip_gen' );

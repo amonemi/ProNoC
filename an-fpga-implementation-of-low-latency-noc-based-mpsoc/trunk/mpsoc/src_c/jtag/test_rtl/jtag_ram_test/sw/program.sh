@@ -1,5 +1,4 @@
-
-#!/bin/sh
+#!/bin/bash
 
 
 #JTAG_INTFC="$PRONOC_WORK/toolchain/bin/JTAG_INTFC"
@@ -24,7 +23,7 @@ $JTAG_INTFC -n 127  -d  "I:1,D:2:3,D:2:2,I:0"
 
 #programe the memory
 
-	sh write_memory.sh 
+	bash write_memory.sh 
 
  
 #Enable the cpu

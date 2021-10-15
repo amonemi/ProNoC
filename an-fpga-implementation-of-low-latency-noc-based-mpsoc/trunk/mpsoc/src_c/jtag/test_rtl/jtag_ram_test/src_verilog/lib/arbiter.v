@@ -208,8 +208,12 @@ module my_one_hot_arbiter #(
     );
     
     
-    
-    always@(posedge clk or posedge reset) begin
+`ifdef SYNC_RESET_MODE 
+    always @ (posedge clk )begin 
+`else 
+    always @ (posedge clk or posedge reset)begin 
+`endif     
+
         if(reset) begin
             low_pr    <=    {ARBITER_BIN_WIDTH{1'b0}};
         end else begin
@@ -352,8 +356,13 @@ module my_one_hot_arbiter_priority_en #(
         .one_hot_code(grant),
         .bin_code(grant_bcd)
     );
-    
-    always@(posedge clk or posedge reset) begin
+
+`ifdef SYNC_RESET_MODE 
+    always @ (posedge clk )begin 
+`else 
+    always @ (posedge clk or posedge reset)begin 
+`endif 
+   
         if(reset) begin
             low_pr    <=    {ARBITER_BIN_WIDTH{1'b0}};
         end else begin
@@ -445,20 +454,23 @@ module thermo_arbiter #(
     );
 
     
-assign mux_out=(termo2[ARBITER_WIDTH-1])? termo2 : termo1;
-assign masked_request= request & pr;
-assign any_grant=termo1[ARBITER_WIDTH-1];
+    assign mux_out=(termo2[ARBITER_WIDTH-1])? termo2 : termo1;
+    assign masked_request= request & pr;
+    assign any_grant=termo1[ARBITER_WIDTH-1];
 
-always @(posedge clk or posedge reset)begin 
-    if(reset) pr<= {ARBITER_WIDTH{1'b1}};
-    else begin 
-        if(any_grant) pr<= edge_mask;
+`ifdef SYNC_RESET_MODE 
+    always @ (posedge clk )begin 
+`else 
+    always @ (posedge clk or posedge reset)begin 
+`endif 
+        if(reset) pr<= {ARBITER_WIDTH{1'b1}};
+        else begin 
+            if(any_grant) pr<= edge_mask;
+        end
     end
 
-end
-
-assign edge_mask= {mux_out[ARBITER_WIDTH-2:0],1'b0};
-assign grant= mux_out ^ edge_mask;
+    assign edge_mask= {mux_out[ARBITER_WIDTH-2:0],1'b0};
+    assign grant= mux_out ^ edge_mask;
 
 
 
@@ -518,7 +530,13 @@ assign mux_out=(termo2[ARBITER_WIDTH-1])? termo2 : termo1;
 assign masked_request= request & pr;
 assign any_grant=termo1[ARBITER_WIDTH-1];
 
-always @(posedge clk or posedge reset)begin 
+`ifdef SYNC_RESET_MODE 
+    always @ (posedge clk )begin 
+`else 
+    always @ (posedge clk or posedge reset)begin 
+`endif 
+
+ 
     if(reset) pr<= {ARBITER_WIDTH{1'b1}};
     else begin 
         if(priority_en) pr<= edge_mask;

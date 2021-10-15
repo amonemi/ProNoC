@@ -1,0 +1,617 @@
+set jseq [jtag sequence]
+connect
+jtag targets 3
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+
+
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7E00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+

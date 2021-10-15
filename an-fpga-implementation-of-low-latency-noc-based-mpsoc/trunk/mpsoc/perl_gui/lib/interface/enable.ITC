@@ -19,7 +19,7 @@ $HashRef = bless( {
                                               'type' => 'input'
                                             }
                                },
-                    'file_name' => '/home/alireza/Mywork/mpsoc/perl_gui/lib/verilog/bus.v',
+                    'file_name' => 'mpsoc/perl_gui/lib/verilog/bus.v',
                     'module_name' => 'clk_socket',
                     'category' => 'source',
                     'type' => 'plug'

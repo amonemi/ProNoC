@@ -1,0 +1,239 @@
+#######################################################################
+##	File: tt.EML
+##    
+##	Copyright (C) 2014-2019  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.9.1 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAVIOR.
+################################################################################
+
+$emulate = bless( {
+                    'samples' => undef,
+                    'compile_pin' => {
+                                       'done_led' => 'LED',
+                                       'reset' => 'FPGA_CLK1_50',
+                                       'jtag_reset_led' => 'LED',
+                                       'noc_reset_led' => 'LED',
+                                       'clk' => 'KEY'
+                                     },
+                    'noc_param' => {
+                                     'AVC_ATOMIC_EN' => 0,
+                                     'LB' => '4',
+                                     'SSA_EN' => '"NO"',
+                                     'DEBUG_EN' => '0',
+                                     'B' => '4',
+                                     'COMBINATION_TYPE' => '"COMB_NONSPEC"',
+                                     'VC_REALLOCATION_TYPE' => '"NONATOMIC"',
+                                     'T2' => '2',
+                                     'WEIGHTw' => '4',
+                                     'ESCAP_VC_MASK' => '2\'b01',
+                                     'C' => 0,
+                                     'SELF_LOOP_EN' => '"NO"',
+                                     'SWA_ARBITER_TYPE' => '"RRA"',
+                                     'MUX_TYPE' => '"BINARY"',
+                                     'V' => '2',
+                                     'BYTE_EN' => 0,
+                                     'T3' => '1',
+                                     'TOPOLOGY' => '"MESH"',
+                                     'PCK_TYPE' => '"MULTI_FLIT"',
+                                     'Fpay' => '32',
+                                     'ADD_PIPREG_AFTER_CROSSBAR' => '1\'b0',
+                                     'FIRST_ARBITER_EXT_P_EN' => 1,
+                                     'MIN_PCK_SIZE' => '2',
+                                     'ROUTE_NAME' => '"XY"',
+                                     'T1' => '2',
+                                     'CONGESTION_INDEX' => 3,
+                                     'SMART_MAX' => '0'
+                                   },
+                    'compile' => {
+                                   'quartus bin' => '/home/alireza/intelFPGA_lite/questa/questasim/bin/',
+                                   'type' => 'QuartusII',
+                                   'compilers' => 'QuartusII',
+                                   'board' => 'DE10_Nano_VB2'
+                                 },
+                    'compile_pin_range_hsb' => {},
+                    'process_notebook' => {
+                                            'currentpage' => 1
+                                          },
+                    'P3-_param' => {
+                                     'X_Title' => 'Desired Avg. Injected Load Per Router (flits/clock (%))',
+                                     'legend_placement' => 'BL',
+                                     'Y_MIN' => 0,
+                                     'X_MAX' => 100,
+                                     'label_font' => 'MediumBold',
+                                     'legend_font' => 'MediumBold',
+                                     'X_MIN' => 0,
+                                     'x_axis_font' => 'MediumBold',
+                                     'LINEw' => 3,
+                                     'Y_Title' => 'Total Emulation Time (clk)'
+                                   },
+                    'setting' => {
+                                   'show_adv_setting' => 0,
+                                   'soc_path' => 'lib/soc',
+                                   'show_noc_setting' => 1,
+                                   'show_tile_setting' => 0
+                                 },
+                    'noc_setting_gui' => {
+                                           'ha' => '0',
+                                           'va' => '0'
+                                         },
+                    'P0Latency_param' => {
+                                           'X_MIN' => 0,
+                                           'x_axis_font' => 'MediumBold',
+                                           'LINEw' => 3,
+                                           'Y_Title' => 'Avg. Latency (clock)',
+                                           'legend_placement' => 'BL',
+                                           'Y_MIN' => 0,
+                                           'X_MAX' => 100,
+                                           'label_font' => 'MediumBold',
+                                           'legend_font' => 'MediumBold',
+                                           'X_Title' => 'Desired Avg. Injected Load Per Router (flits/clock (%))'
+                                         },
+                    'P3' => {
+                              'active' => '-'
+                            },
+                    'noc_type' => {
+                                    'ROUTER_TYPE' => '"VC_BASED"'
+                                  },
+                    'P1Received_param' => {
+                                            'X_Title' => 'Core ID',
+                                            'legend_font' => 'MediumBold',
+                                            'label_font' => 'MediumBold',
+                                            'X_MAX' => 100,
+                                            'legend_placement' => 'BL',
+                                            'Y_MIN' => 0,
+                                            'X_MIN' => 0,
+                                            'Y_Title' => 'Received Packets Per Router',
+                                            'x_axis_font' => 'MediumBold',
+                                            'LINEw' => 3
+                                          },
+                    'P1' => {
+                              'active' => 'Received'
+                            },
+                    'graph_save' => {
+                                      'save_all_result' => 0
+                                    },
+                    'status' => 'ideal',
+                    'P2Received_param' => {
+                                            'X_Title' => 'Core ID',
+                                            'X_MIN' => 0,
+                                            'LINEw' => 3,
+                                            'x_axis_font' => 'MediumBold',
+                                            'Y_Title' => 'Worst-Case Delay (clk)',
+                                            'legend_placement' => 'BL',
+                                            'Y_MIN' => 0,
+                                            'legend_font' => 'MediumBold',
+                                            'label_font' => 'MediumBold',
+                                            'X_MAX' => 100
+                                          },
+                    'P0Latency' => {
+                                     'type' => '2D_line'
+                                   },
+                    'P0' => {
+                              'active' => 'Latency'
+                            },
+                    'P2Received' => {
+                                      'type' => '3D_bar',
+                                      'dimension' => '3D'
+                                    },
+                    'P3-' => {
+                               'type' => '2D_line'
+                             },
+                    'compile_pin_pos' => {
+                                           'done_led' => [
+                                                           3,
+                                                           0
+                                                         ],
+                                           'reset' => [
+                                                        4,
+                                                        0
+                                                      ],
+                                           'noc_reset_led' => [
+                                                                3,
+                                                                0
+                                                              ],
+                                           'jtag_reset_led' => [
+                                                                 3,
+                                                                 0
+                                                               ],
+                                           'clk' => [
+                                                      6,
+                                                      0
+                                                    ]
+                                         },
+                    'no_name' => {},
+                    'emulation_column' => {
+                                            'va' => '0',
+                                            'ha' => '0'
+                                          },
+                    'file_name' => undef,
+                    'chart_notebook' => {},
+                    'gui_status' => {
+                                      'timeout' => 0,
+                                      'status' => 'ideal'
+                                    },
+                    'compile_pin_range_lsb' => {
+                                                 'noc_reset_led' => 0,
+                                                 'jtag_reset_led' => 0,
+                                                 'clk' => 0,
+                                                 'done_led' => 0
+                                               },
+                    'compile_assign_type' => {
+                                               'clk' => 'Direct',
+                                               'reset' => 'Direct'
+                                             },
+                    'fpga_param' => {
+                                      'TIMSTMP_FIFO_NUM' => 16,
+                                      'SAVE_NAME' => 'emulate1',
+                                      'SOF_DIR' => '/home/alireza/work/git/hca_git/mpsoc_work/emulate'
+                                    },
+                    'parameters_order' => {
+                                            'fpga_param' => [
+                                                              'TIMSTMP_FIFO_NUM',
+                                                              'SAVE_NAME',
+                                                              'SOF_DIR'
+                                                            ],
+                                            'noc_type' => [
+                                                            'ROUTER_TYPE'
+                                                          ],
+                                            'noc_param' => [
+                                                             'TOPOLOGY',
+                                                             'T1',
+                                                             'T2',
+                                                             'T3',
+                                                             'V',
+                                                             'B',
+                                                             'LB',
+                                                             'Fpay',
+                                                             'ROUTE_NAME',
+                                                             'PCK_TYPE',
+                                                             'MIN_PCK_SIZE',
+                                                             'BYTE_EN',
+                                                             'SSA_EN',
+                                                             'SMART_MAX',
+                                                             'CONGESTION_INDEX',
+                                                             'ESCAP_VC_MASK',
+                                                             'VC_REALLOCATION_TYPE',
+                                                             'COMBINATION_TYPE',
+                                                             'MUX_TYPE',
+                                                             'C',
+                                                             'DEBUG_EN',
+                                                             'ADD_PIPREG_AFTER_CROSSBAR',
+                                                             'FIRST_ARBITER_EXT_P_EN',
+                                                             'SWA_ARBITER_TYPE',
+                                                             'WEIGHTw',
+                                                             'SELF_LOOP_EN',
+                                                             'AVC_ATOMIC_EN'
+                                                           ]
+                                          },
+                    'P1Received' => {
+                                      'dimension' => '3D',
+                                      'type' => '3D_bar'
+                                    },
+                    'emulate_name' => 'tt',
+                    'P2' => {
+                              'active' => 'Received'
+                            }
+                  }, 'emulator' );

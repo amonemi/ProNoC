@@ -168,6 +168,7 @@ static int simple_vsprintf(char **out, char *format, va_list ap)
 			}
 			switch (*format) {
 				case('d'):
+				case('i'):
 					u.i = va_arg(ap, int);
 					pc += simple_outputi(out, u.i, 10, 1, width, flags, 'a');
 					break;

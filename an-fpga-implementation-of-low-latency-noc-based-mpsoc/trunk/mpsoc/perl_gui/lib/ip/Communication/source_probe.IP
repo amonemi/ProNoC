@@ -1,0 +1,194 @@
+#######################################################################
+##	File: source_probe.IP
+##    
+##	Copyright (C) 2014-2019  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.9.1 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$ipgen = bless( {
+                  'ports_order' => [
+                                     'reset',
+                                     'clk',
+                                     'source_o',
+                                     'probe_i',
+                                     'jtag_to_wb',
+                                     'wb_to_jtag'
+                                   ],
+                  'unused' => undef,
+                  'gui_status' => {
+                                    'timeout' => 0,
+                                    'status' => 'ideal'
+                                  },
+                  'ports' => {
+                               'reset' => {
+                                            'intfc_port' => 'reset_i',
+                                            'intfc_name' => 'plug:reset[0]',
+                                            'type' => 'input',
+                                            'range' => ''
+                                          },
+                               'jtag_to_wb' => {
+                                                 'intfc_name' => 'socket:jtag_to_wb[0]',
+                                                 'intfc_port' => 'jwb_i',
+                                                 'type' => 'input',
+                                                 'range' => 'J2WBw-1 : 0'
+                                               },
+                               'source_o' => {
+                                               'type' => 'output',
+                                               'range' => 'Dw-1	:0',
+                                               'intfc_name' => 'IO',
+                                               'intfc_port' => 'IO'
+                                             },
+                               'probe_i' => {
+                                              'range' => 'Dw-1	:0',
+                                              'type' => 'input',
+                                              'intfc_port' => 'IO',
+                                              'intfc_name' => 'IO'
+                                            },
+                               'clk' => {
+                                          'range' => '',
+                                          'type' => 'input',
+                                          'intfc_port' => 'clk_i',
+                                          'intfc_name' => 'plug:clk[0]'
+                                        },
+                               'wb_to_jtag' => {
+                                                 'intfc_port' => 'jwb_o',
+                                                 'intfc_name' => 'socket:jtag_to_wb[0]',
+                                                 'range' => 'WB2Jw-1: 0',
+                                                 'type' => 'output'
+                                               }
+                             },
+                  'ip_name' => 'source_probe',
+                  'parameters' => {
+                                    'JTAG_CHAIN' => {
+                                                      'global_param' => 'Parameter',
+                                                      'default' => '3',
+                                                      'content' => '1,2,3,4 ',
+                                                      'redefine_param' => 0,
+                                                      'type' => 'Combo-box',
+                                                      'info' => 'Only used for Virtex 4/5 devices. May be 1, 2, 3, or 4. It is the  BSCANE2 JTAG tap number.'
+                                                    },
+                                    'JAw' => {
+                                               'type' => 'Fixed',
+                                               'info' => 'Parameter',
+                                               'global_param' => 'Parameter',
+                                               'default' => '32',
+                                               'redefine_param' => 1,
+                                               'content' => ''
+                                             },
+                                    'Dw' => {
+                                              'info' => 'probe/probe width in bits ',
+                                              'type' => 'Spin-button',
+                                              'content' => '1,32,1',
+                                              'redefine_param' => 1,
+                                              'global_param' => 'Localparam',
+                                              'default' => '2'
+                                            },
+                                    'JTAG_CONNECT' => {
+                                                        'info' => 'Parameter',
+                                                        'type' => 'Combo-box',
+                                                        'content' => '"ALTERA_JTAG_WB","XILINX_JTAG_WB" ',
+                                                        'redefine_param' => 1,
+                                                        'default' => '"XILINX_JTAG_WB"',
+                                                        'global_param' => 'Parameter'
+                                                      },
+                                    'WB2Jw' => {
+                                                 'default' => '(JTAG_CONNECT== "XILINX_JTAG_WB") ? 1+JSTATUSw+JINDEXw+1+JDw  : 1',
+                                                 'global_param' => 'Parameter',
+                                                 'content' => '',
+                                                 'redefine_param' => 1,
+                                                 'info' => 'Parameter',
+                                                 'type' => 'Fixed'
+                                               },
+                                    'JINDEXw' => {
+                                                   'default' => '8',
+                                                   'global_param' => 'Parameter',
+                                                   'redefine_param' => 1,
+                                                   'content' => '',
+                                                   'info' => 'Parameter',
+                                                   'type' => 'Fixed'
+                                                 },
+                                    'JDw' => {
+                                               'info' => 'Parameter',
+                                               'type' => 'Fixed',
+                                               'content' => '',
+                                               'redefine_param' => 1,
+                                               'global_param' => 'Parameter',
+                                               'default' => '32'
+                                             },
+                                    'JSTATUSw' => {
+                                                    'info' => 'Parameter',
+                                                    'type' => 'Fixed',
+                                                    'redefine_param' => 1,
+                                                    'content' => '',
+                                                    'default' => '8',
+                                                    'global_param' => 'Parameter'
+                                                  },
+                                    'J2WBw' => {
+                                                 'info' => 'Parameter',
+                                                 'type' => 'Fixed',
+                                                 'redefine_param' => 1,
+                                                 'content' => '',
+                                                 'global_param' => 'Parameter',
+                                                 'default' => '(JTAG_CONNECT== "XILINX_JTAG_WB") ? 1+1+JDw+JAw : 1'
+                                               },
+                                    'JTAG_INDEX' => {
+                                                      'global_param' => 'Parameter',
+                                                      'default' => ' 0',
+                                                      'content' => '0,128,1',
+                                                      'redefine_param' => 1,
+                                                      'info' => ' A unique index number which will be used for adressing this source probe module.',
+                                                      'type' => 'Spin-button'
+                                                    }
+                                  },
+                  'modules' => {
+                                 'pronoc_jtag_source_probe' => {}
+                               },
+                  'version' => 5,
+                  'module_name' => 'pronoc_jtag_source_probe',
+                  'file_name' => 'mpsoc/rtl/src_peripheral/jtag/jtag_wb/pronoc_jtag_source_probe.v',
+                  'plugs' => {
+                               'clk' => {
+                                          'value' => 1,
+                                          '0' => {
+                                                   'name' => 'clk'
+                                                 },
+                                          'type' => 'num'
+                                        },
+                               'reset' => {
+                                            '0' => {
+                                                     'name' => 'reset'
+                                                   },
+                                            'value' => 1,
+                                            'type' => 'num'
+                                          }
+                             },
+                  'description' => ' A source/probe that can be controled using xilinx bscan chain or Altera vjtag. ',
+                  'hdl_files' => [],
+                  'parameters_order' => [
+                                          'Dw',
+                                          'JTAG_CONNECT',
+                                          'JTAG_INDEX',
+                                          'JDw',
+                                          'JAw',
+                                          'JINDEXw',
+                                          'JSTATUSw',
+                                          'J2WBw',
+                                          'WB2Jw',
+                                          'JTAG_CHAIN'
+                                        ],
+                  'category' => 'Communication',
+                  'sockets' => {
+                                 'jtag_to_wb' => {
+                                                   'connection_num' => 'single connection',
+                                                   'type' => 'num',
+                                                   '0' => {
+                                                            'name' => 'jtag_to_wb'
+                                                          },
+                                                   'value' => 1
+                                                 }
+                               }
+                }, 'ip_gen' );

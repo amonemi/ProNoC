@@ -5,7 +5,7 @@
  /*  ss   */ 
  
  
- /*  programer   */ 
+ /*  programmer   */ 
  
  
  /*  ram   */ 

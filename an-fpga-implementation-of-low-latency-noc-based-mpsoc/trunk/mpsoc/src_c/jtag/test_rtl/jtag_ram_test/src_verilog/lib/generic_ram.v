@@ -54,8 +54,10 @@ module generic_dual_port_ram #(
    q_b
 );
 
+/* verilator lint_off WIDTH */
 localparam BYTE_ENw= ( BYTE_WR_EN == "YES")? Dw/8 : 1;
-
+/* verilator lint_on WIDTH */
+  
     input [(Dw-1):0] data_a, data_b;
     input [(Aw-1):0] addr_a, addr_b;
     input [BYTE_ENw-1	:	0]	byteena_a, byteena_b;
@@ -63,8 +65,9 @@ localparam BYTE_ENw= ( BYTE_WR_EN == "YES")? Dw/8 : 1;
     output  [(Dw-1):0] q_a, q_b;
     
 generate 
+/* verilator lint_off WIDTH */
 if   ( BYTE_WR_EN == "NO") begin : no_byten
-
+/* verilator lint_on WIDTH */
 	dual_port_ram #( 
 		.Dw (Dw),
 		.Aw (Aw),
@@ -140,9 +143,10 @@ module generic_single_port_ram #(
    q
    
 );
-
+/* verilator lint_off WIDTH */
 	localparam BYTE_ENw= ( BYTE_WR_EN == "YES")? Dw/8 : 1;
-
+/* verilator lint_on WIDTH */
+ 
 	input [(Dw-1):0] data;
 	input [(Aw-1):0] addr;
 	input [BYTE_ENw-1	:	0]	byteen;
@@ -150,8 +154,9 @@ module generic_single_port_ram #(
 	output  [(Dw-1):0] q;
     
 generate 
+/* verilator lint_off WIDTH */
 if   ( BYTE_WR_EN == "NO") begin : no_byten
-
+/* verilator lint_on WIDTH */
 	
 	single_port_ram #( 
 		.Dw (Dw),
@@ -249,7 +254,9 @@ module dual_port_ram
 
 	// initial the memory if the file is defined
 	generate 
+	    /* verilator lint_off WIDTH */
 		if (INITIAL_EN == "YES") begin : init
+		/* verilator lint_on WIDTH */
 		    initial $readmemh(INIT_FILE,ram);
 		end
 	endgenerate
@@ -328,7 +335,9 @@ module simple_dual_port_ram #(
 
 	// initial the memory if the file is defined
 	generate 
+	    /* verilator lint_off WIDTH */
 		if (INITIAL_EN == "YES") begin : init
+		/* verilator lint_on WIDTH */
 		    initial $readmemh(INIT_FILE,ram);
 		end
 	endgenerate
@@ -388,7 +397,9 @@ module single_port_ram #(
 
 	// initial the memory if the file is defined
 	generate 
+	    /* verilator lint_off WIDTH */
 		if (INITIAL_EN == "YES") begin : init
+		/* verilator lint_on WIDTH */
 		    initial $readmemh(INIT_FILE,ram);
 		end
 	endgenerate

@@ -23,7 +23,7 @@ typedef struct INDEX_INFO{
 typedef struct TRAFFIC_TASK {
 	char enable;
     unsigned int src;
-    unsigned int dst; // ID of the destination node (PE)
+    unsigned int dst; // ID of the destination endpoint (PE)
     unsigned int bytes;			
     unsigned int initial_weight;
     unsigned int min_pck_size;		//in flit
@@ -42,55 +42,58 @@ typedef struct TRAFFIC_TASK {
 
 
 
-typedef struct node {
+typedef struct endpt {
      task_t task;
-    struct node * next;
-} node_t;
+    struct endpt * next;
+} endpt_t;
 
 
 
 unsigned int total_active_routers=0;
 unsigned int task_graph_total_pck_num=0;
-node_t * task_graph_data[NE];
+unsigned int task_graph_min_pck_size=999999;
+unsigned int task_graph_max_pck_size=0;
+
+endpt_t * task_graph_data[NE];
 index_t task_graph_abstract[NE];
 
 
 
 
-void push(node_t ** head,  task_t task) {
-    node_t * new_node;
-    new_node =  (node_t *) malloc(sizeof(node_t));
-    if( new_node == NULL){
-       	printf("Error: cannot allocate memory in push function\n");
+void push(endpt_t ** head,  task_t task) {
+    endpt_t * new_endpt;
+    new_endpt =  (endpt_t *) malloc(sizeof(endpt_t));
+    if( new_endpt == NULL){
+       	printf("ERROR: cannot allocate memory in push function\n");
    	    exit(1);
    	}
-    new_node->task=task;
-    new_node->next = *head;
-    *head = new_node;
+    new_endpt->task=task;
+    new_endpt->next = *head;
+    *head = new_endpt;
 }
 
-int pop(node_t ** head) {
+int pop(endpt_t ** head) {
    // int retval = -1;
-    node_t * next_node = NULL;
+    endpt_t * next_endpt = NULL;
 
     if (*head == NULL) {
         return -1;
     }
 
-    next_node = (*head)->next;
+    next_endpt = (*head)->next;
     //retval = (*head)->val;
     free(*head);
-    *head = next_node;
+    *head = next_endpt;
 	return 1;
     //return retval;
 }
 
 
-int remove_by_index(node_t ** head, int n) {
+int remove_by_index(endpt_t ** head, int n) {
     int i = 0;
    // int retval = -1;
-    node_t * current = *head;
-    node_t * temp_node = NULL;
+    endpt_t * current = *head;
+    endpt_t * temp_endpt = NULL;
 
     if (n == 0) {
         return pop(head);
@@ -103,17 +106,17 @@ int remove_by_index(node_t ** head, int n) {
         current = current->next;
     }
 
-    temp_node = current->next;
-    //retval = temp_node->val;
-    current->next = temp_node->next;
-    free(temp_node);
+    temp_endpt = current->next;
+    //retval = temp_endpt->val;
+    current->next = temp_endpt->next;
+    free(temp_endpt);
     return 1;
 
 }
 
 
-int update_by_index(node_t * head,int loc,  task_t  task) {
-    node_t * current = head;
+int update_by_index(endpt_t * head,int loc,  task_t  task) {
+    endpt_t * current = head;
 	int i;
 	for (i=0;i<loc && current != NULL;i++){
 		current = current->next;
@@ -126,8 +129,8 @@ int update_by_index(node_t * head,int loc,  task_t  task) {
 }
 
 
-int read(node_t * head, int loc,  task_t  * task ) {
-    node_t * current = head;
+int read(endpt_t * head, int loc,  task_t  * task ) {
+    endpt_t * current = head;
 	int i;
 	for (i=0;i<loc && current != NULL;i++){
 		current = current->next;
@@ -154,7 +157,7 @@ int extract_traffic_data ( char * str,  task_t*  st)
 {
 	
 	unsigned int src;
-	unsigned int dst; // ID of the destination node (PE)
+	unsigned int dst; // ID of the destination endpt (PE)
 	unsigned int bytes;		
 	unsigned int initial_weight;	
 	unsigned int min_pck_size;		//in flit
@@ -182,6 +185,8 @@ int extract_traffic_data ( char * str,  task_t*  st)
 	st->estimated_total_pck_num = (bytes*8) /(st->avg_pck_size*Fpay);
 	if(st->estimated_total_pck_num==0) st->estimated_total_pck_num= 1; 
 	task_graph_total_pck_num=task_graph_total_pck_num+st->estimated_total_pck_num;
+	if(task_graph_min_pck_size > st->min_pck_size ) task_graph_min_pck_size=  st->min_pck_size;
+	if(task_graph_max_pck_size < st->max_pck_size ) task_graph_max_pck_size=  st->max_pck_size;
 
 	st->pck_sent=0;
 	st->byte_sent=0;
@@ -190,7 +195,7 @@ int extract_traffic_data ( char * str,  task_t*  st)
    return 1;
 }
 
-int calcualte_traffic_parameters(node_t * head[NE],index_t (* info)){
+int calcualte_traffic_parameters(endpt_t * head[NE],index_t (* info)){
 	int i,j;
 	 task_t  task;
 	
@@ -239,7 +244,7 @@ int calcualte_traffic_parameters(node_t * head[NE],index_t (* info)){
 
 
 
-void load_traffic_file(char * file, node_t * head[NE], index_t (* info)){
+void load_traffic_file(char * file, endpt_t * head[NE], index_t (* info)){
 	FILE * in;
 	char * line = NULL;
    
@@ -249,8 +254,8 @@ void load_traffic_file(char * file, node_t * head[NE], index_t (* info)){
     int n,i;
      
     if(in == NULL){
-    	printf("Error: cannot open %s file in read mode!\n",file);
-	    exit(1);
+    	fprintf(stderr,"ERROR: cannot open %s file in read mode!\n",file);
+    	exit(1);
 	}
 
     for(i=0;i<NE;i++){

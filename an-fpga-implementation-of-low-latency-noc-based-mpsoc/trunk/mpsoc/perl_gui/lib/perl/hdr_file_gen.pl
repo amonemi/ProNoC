@@ -2,6 +2,8 @@ use lib 'lib/perl';
 
 use strict;
 use warnings;
+use FindBin;
+use lib $FindBin::Bin;
 use soc;
 use ip;
 
@@ -69,8 +71,12 @@ sub generate_header_file{
 	$soc_name = uc($soc_name);
 	if(!defined $soc_name){$soc_name='soc'};
 	
+	my $name=$soc->object_get_attribute('soc_name');
+	
 	my @instances=$soc->soc_get_all_instances();
 	my $system_h="#ifndef $soc_name\_SYSTEM_H\n\t#define $soc_name\_SYSTEM_H\n";
+	my $system_c="#include \"$name.h\"\n\n";
+	
 	#add_text_to_string(\$system_h, "\n #include <stdio.h> \n #include <stdlib.h> \n #include \"aemb/core.hh\"");
 
 
@@ -83,7 +89,9 @@ sub generate_header_file{
 		my $category 	=$soc->soc_get_category($id);
 		my $inst   		=$soc->soc_get_instance_name($id);
 
-		add_text_to_string(\$system_h,"\n \n /*  $inst   */ \n");	
+		add_text_to_string(\$system_h,"\n \n /*  $inst   */ \n");
+		$system_c = $system_c . "\n \n /*  $inst   */ \n";
+			
 		#$inst=uc($inst);
 		# print base address
 		my @plugs= $soc->soc_get_all_plugs_of_an_instance($id);
@@ -101,21 +109,27 @@ sub generate_header_file{
 						add_text_to_string(\$system_h,"//intrrupt flag location\n");
 						add_text_to_string(\$system_h," #define $inst\_INT (1<<$connect_socket_num)\n") if(scalar (@nums)==1);
 						add_text_to_string(\$system_h," #define $inst\_$num\_INT    (1<<$connect_socket_num)\n") if(scalar (@nums)>1);
+						add_text_to_string(\$system_h," #define $inst\_INT_PIN $connect_socket_num\n") if(scalar (@nums)==1);
+						add_text_to_string(\$system_h," #define $inst\_$num\_INT_PIN    $connect_socket_num\n") if(scalar (@nums)>1);
 					}
 					
 			}
 		}
 		
 		
-		my $hdr 		=$ip->ip_get($category,$module,"system_h");
-		#print "$hdr";
-		
-		
-		#   \$\{?IP(\b|\})
-		if(defined $hdr){
-			$hdr=replace_golb_var($hdr,\%params);
-			add_text_to_string(\$system_h,"$hdr\n");
+		my $hdr_h=$ip->ip_get($category,$module,"system_h");
+		if(defined $hdr_h){
+			$hdr_h=replace_golb_var($hdr_h,\%params);
+			add_text_to_string(\$system_h,"$hdr_h\n");
 		}
+		
+		
+		my $hdr_c=$ip->ip_get($category,$module,"system_c");
+		if(defined $hdr_c){
+			$hdr_c=replace_golb_var($hdr_c,\%params);
+			$system_c=$system_c."$hdr_c\n";
+		}
+		
 
 		# Write Software gen files
 		my @sw_file_gen = $ip->ip_get_list($category,$module,"gen_sw_files");		
@@ -127,15 +141,10 @@ sub generate_header_file{
 				my $content=read_file_cntent($path,$project_dir);
 				$content=replace_golb_var($content,\%params);
 
-
-				if(defined $rename){
-			
-					open(FILE,  ">lib/verilog/tmp") || die "Can not open: $!";
+				if(defined $rename){			
+					open(FILE,  ">$sw_path/$rename") || die "Can not open: $!";
 					print FILE $content;
-					close(FILE) || die "Error closing file: $!";
-					move ("$dir/lib/verilog/tmp","$sw_path/$rename"); 
-
-				
+					close(FILE) || die "Error closing file: $!";				
 				}
 			}
 		}
@@ -150,15 +159,10 @@ sub generate_header_file{
 				my $content=read_file_cntent($path,$project_dir);
 				$content=replace_golb_var($content,\%params);
 
-
-				if(defined $rename){
-			
-					open(FILE,  ">lib/verilog/tmp") || die "Can not open: $!";
+				if(defined $rename){			
+					open(FILE,  ">$hw_path/$rename") || die "Can not open: $!";
 					print FILE $content;
-					close(FILE) || die "Error closing file: $!";
-					move ("$dir/lib/verilog/tmp","$hw_path/$rename"); 
-
-				
+					close(FILE) || die "Error closing file: $!";			
 				}
 			}
 		}
@@ -168,14 +172,20 @@ sub generate_header_file{
 	}
 	
 	add_text_to_string(\$system_h,"#endif\n");
-	my $name=$soc->object_get_attribute('soc_name');
-	open(FILE,  ">lib/verilog/$name.h") || die "Can not open: $!";
-			print FILE $system_h;
-			close(FILE) || die "Error closing file: $!";
-			move ("$dir/lib/verilog/$name.h","$sw_path/");
-
-
 	
+	#write sytem.h file
+	open(FILE,  ">$sw_path/$name.h") || die "Can not open: $!";
+	print FILE $system_h;
+	close(FILE) || die "Error closing file: $!";
+
+	#write system.c file
+	open(FILE,  ">$sw_path/$name.c") || die "Can not open: $!";
+	print FILE $system_c;
+	close(FILE) || die "Error closing file: $!";		
+	
+	
+		
+
 
 }
 

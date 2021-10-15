@@ -1,19 +1,15 @@
 #! /usr/bin/perl -w
-use Glib qw/TRUE FALSE/;
+use constant::boolean;
 use strict;
 use warnings;
 
 use FindBin;
 use lib $FindBin::Bin;
 
-use Gtk2;
-use Gtk2::Ex::Graph::GD;
 use GD::Graph::Data;
 use emulator;
-use IO::CaptureOutput qw(capture qxx qxy);
+
 use GD::Graph::colour qw/:colours/;
-use Proc::Background;
-use Time::HiRes qw( usleep ualarm gettimeofday tv_interval nanosleep  clock_gettime clock_getres clock_nanosleep clock stat );
 
 use File::Basename;
 use File::Path qw/make_path/;
@@ -50,8 +46,8 @@ use constant MAX_SIM_CLKs=> 1000000000; # simulation end at if clock counter rea
 
           
 use constant MAX_RATIO => 1000;# 0->0 1->0.1 ...  1000->100
-use constant EMULATION_RTLS => "/mpsoc/src_emulate/rtl/ , /mpsoc/src_peripheral/jtag/jtag_wb/ , /mpsoc/src_peripheral/ram/ , /mpsoc/src_noc/ ,";
-use constant EMULATION_TOP => "/mpsoc/src_emulate/emulator_top.v";
+
+use constant EMULATION_TOP => "/mpsoc/rtl/src_emulate/emulator_top.v";
 
 
 sub get_MAX_PCK_NUM(){MAX_PCK_NUM}
@@ -62,7 +58,7 @@ sub check_inserted_ratios {
 		my $str=shift;
 		my @ratios;
 	    	
-	    my @chunks=split(',',$str);
+	    my @chunks=split(/\s*,\s*/,$str);
 	    foreach my $p (@chunks){
 			if($p !~ /^[0-9.:,]+$/){ message_dialog ("$p has invalid character(S)" ); return undef; }
 			my @range=split(':',$p);
@@ -92,7 +88,7 @@ sub check_inserted_ratios {
 
 sub get_injection_ratios{
 		my ($emulate,$atrebute1,$atrebute2)=@_;
-		my $box = Gtk2::HBox->new( FALSE, 0 );
+		my $box =def_hbox(FALSE, 0);
 		my $init=$emulate->object_get_attribute($atrebute1,$atrebute2);
 		my $entry=gen_entry($init);
 		my $button=def_image_button("icons/right.png",'Check');		
@@ -146,7 +142,7 @@ sub get_emulator_noc_configuration{
 	#search path	
 	my $dir = Cwd::getcwd();
 	my $open_in	  = abs_path("$ENV{PRONOC_WORK}/emulate/sof");		
-	attach_widget_to_table ($table,$row,gen_label_in_left("Search Path:"),gen_button_message ("Select the the Path where the verilator simulation files are located. Different NoC verilated models can be generated using Generate NoC configuration tab.","icons/help.png"), 
+	attach_widget_to_table ($table,$row,gen_label_in_left("Search Path:"),gen_button_message ("Select the Path where the verilator simulation files are located. Different NoC verilated models can be generated using Generate NoC configuration tab.","icons/help.png"), 
 	get_dir_in_object ($emulate,$sample,"sof_path",undef,'ref_set_win',1,$open_in)); $row++;
 	$open_in	= $emulate->object_get_attribute($sample,"sof_path");	
 	
@@ -259,9 +255,7 @@ As an example defining 2,3,4:10:2 will result in (2,3,4,6,8,10) injection ratios
 		
 	attach_widget_to_table ($table,$row,gen_label_in_left("Injection ratios:"),gen_button_message ($l,"icons/help.png") , $u); $row++;
 	
-	my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
-	$scrolled_win->set_policy( "automatic", "automatic" );
-	$scrolled_win->add_with_viewport($table);
+	my $scrolled_win = add_widget_to_scrolled_win($table);
 		
 	my $ok = def_image_button('icons/select.png','OK');
 	my $mtable = def_table(10, 1, TRUE);
@@ -269,7 +263,7 @@ As an example defining 2,3,4:10:2 will result in (2,3,4,6,8,10) injection ratios
 	$mtable->attach_defaults($scrolled_win,0,1,0,9);
 	$mtable-> attach ($ok , 0, 1,  9, 10,'expand','shrink',2,2); 
 	
-	$set_win->add ($mtable);
+	add_widget_to_scrolled_win ($mtable,$set_win);
 	$set_win->show_all();
 
 	$set_win ->signal_connect (destroy => sub{
@@ -285,8 +279,8 @@ As an example defining 2,3,4:10:2 will result in (2,3,4,6,8,10) injection ratios
 		#check if injection ratios are valid
 		my $r=$emulate->object_get_attribute($sample,"ratios");
 		if(defined $s && defined $r) {	
-				$set_win->destroy;
-				#$emulate->object_add_attribute("active_setting",undef,undef);
+				$set_win->hide;
+				$emulate->object_add_attribute("active_setting",undef,undef);
 				set_gui_status($emulate,"ref",1);
 		} else {
 			
@@ -309,35 +303,48 @@ As an example defining 2,3,4:10:2 will result in (2,3,4,6,8,10) injection ratios
 ###################      
       
 sub gen_emulation_column {
-	my ($emulate,$mode, $row_num,$info,@charts)=@_;
+	my ($emulate,$mode, $row_num,$info,$set_win,@charts)=@_;
 	my $table=def_table($row_num,10,FALSE);
-	
-	my $set_win=def_popwin_size(40,80,"NoC configuration setting",'percent');
+	if(!defined $set_win){
+	 	$set_win=def_popwin_size(40,80,"NoC configuration setting",'percent');	
+	 	$set_win->signal_connect (delete_event => sub {$emulate->object_add_attribute("active_setting",undef,undef); $set_win->hide_on_delete });
+	 	
+	} else{
+		my @childs = $set_win->get_children;
+		foreach my $c (@childs){ $c->destroy;}
+	}
 	my $scrolled_win = gen_scr_win_with_adjst ($emulate,"emulation_column");
-	$scrolled_win->add_with_viewport($table);	
+	add_widget_to_scrolled_win($table,$scrolled_win);	
 	my $row=0;
 	
 	#title	
 	my $title_l =($mode eq "simulate" ) ? "NoC Simulator" : "NoC Emulator";
 	my $title=gen_label_in_center($title_l);
 	$table->attach ($title , 0, 10,  $row, $row+1,'expand','shrink',2,2); $row++;
-	my $separator = Gtk2::HSeparator->new;	
-	$table->attach ($separator , 0, 10 , $row, $row+1,'fill','fill',2,2);	$row++;
-	
+	add_Hsep_to_table($table,0,10,$row);$row++;
 
-	my @positions=(0,1,2,3,4,5,6,7);
-	my $col=0;
+
 	
-	my @title=("Name","Traffic", " Add/Remove "," Setting ", "Line\'s color", "Clear","Run");
-	foreach my $t (@title){		
-		$table->attach (gen_label_in_center($title[$col]), $positions[$col], $positions[$col+1], $row, $row+1,'expand','shrink',2,2);$col++;
+	
+	my %order;
+	$order{'+/-'}=0;
+	$order{'Setting'}=1;
+	$order{'Run'}=2;
+	$order{'Name'}=3;
+	$order{'Color'}=4;
+	$order{'Clear'}=5;
+	$order{'Traffic'}=6;	
+	$order{'Done'}=7;
+	
+	foreach my $t (sort keys %order){		
+		$table->attach (gen_label_in_center($t), $order{$t}, $order{$t}+1, $row, $row+1,'expand','shrink',2,2);
 	}
 	
 	my $traffics="Random,Transposed 1,Transposed 2,Tornado";
 
-	$col=0;
+	
 	$row++;
-	@positions=(0,2,3,4,5,6,7,8);
+	
 
 	
 	#my $i=0;
@@ -345,9 +352,11 @@ sub gen_emulation_column {
 	my @samples; 
 	@samples =$emulate->object_get_attribute_order("samples");
 	
+	
+	
 	foreach my $ss (@samples){
 		
-		$col=0;
+		
 		my $sample=$ss;
 		#my $sample="sample$i";
 		#my $n=$i;
@@ -380,31 +389,34 @@ sub gen_emulation_column {
 			 	$emulate->object_add_attribute('noc_param','T2',$T2);
 			 	$emulate->object_add_attribute('noc_param','T3',$T3);
 			 	$emulate->object_add_attribute('noc_param','TOPOLOGY',$topology);
-			 	my $pattern=get_synthetic_traffic_pattern($emulate, $sample);
+			 	my $pattern="";
+			 	my $traffictype=$emulate->object_get_attribute($sample,"TRAFFIC_TYPE");
+				$pattern=get_synthetic_traffic_pattern($emulate, $sample) if($traffictype eq "Synthetic");
+				$pattern=" Custom traffic based on input file. " if($traffictype eq "Task-graph");
+							 	
 			 	my $window = def_popwin_size(40,40,"Traffic pattern",'percent');
-			 	my ($outbox,$tview)= create_text();
-			 	show_info(\$tview,"$pattern");
+			 	my ($outbox,$tview)= create_txview();
+			 	show_info($tview,"$pattern");
 			 	$window->add ($outbox);
 				$window->show_all();	 
 			 	
     		 });
     		 
     		 
-    		 $table->attach ($l, $positions[$col], $positions[$col]+1, $row, $row+1,'expand','shrink',2,2);
-    		 $table->attach ($traffic, $positions[$col]+1, $positions[$col+1], $row, $row+1,'expand','shrink',2,2);    
-    		 $col++;
+    		 $table->attach ($l, $order{'Name'}, $order{'Name'}+1, $row, $row+1,'expand','shrink',2,2);
+    		 $table->attach ($traffic, $order{'Traffic'}, $order{'Traffic'}+1, $row, $row+1,'expand','shrink',2,2);    
+    		
 			 
 		} else {
 			$l=gen_label_in_left("Define NoC configuration");
 			$l->set_markup("<span  foreground= 'red' ><b>Define NoC configuration</b></span>");	
-			$table->attach ($l, $positions[$col], $positions[$col+1], $row, $row+1,'expand','shrink',2,2);$col++;		 
+			$table->attach ($l, $order{'Name'}, $order{'Name'}+1, $row, $row+1,'expand','shrink',2,2);	 
 		}
-		#my $box=def_pack_hbox(FALSE,0,(gen_label_in_left("$i- "),$l,$set));
-		
+				
 
 		#remove 
 		my $remove=def_image_button("icons/cancel.png");
-		$table->attach ($remove, $positions[$col], $positions[$col+1], $row, $row+1,'expand','shrink',2,2);$col++;
+		$table->attach ($remove,$order{'+/-'},$order{'+/-'}+1, $row, $row+1,'expand','shrink',2,2);
 		$remove->signal_connect("clicked"=> sub{
 			$emulate->object_delete_attribute_order("samples",$sample);
 			set_gui_status($emulate,"ref",2);
@@ -412,7 +424,7 @@ sub gen_emulation_column {
 
 		#setting
 		my $set=def_image_button("icons/setting.png");
-		$table->attach ($set, $positions[$col], $positions[$col+1], $row, $row+1,'expand','shrink',2,2);$col++;
+		$table->attach ($set, $order{'Setting'}, $order{'Setting'}+1, $row, $row+1,'expand','shrink',2,2);
 
 		
 		if(defined $active){#The setting windows ask for refershing so open it again
@@ -433,10 +445,8 @@ sub gen_emulation_column {
 			$color_num = (scalar @samples) +1;
 			$emulate->object_add_attribute($sample,"color",$color_num);
 		}
-		my $color=def_colored_button("    ",$color_num);
-		$table->attach ($color, $positions[$col], $positions[$col+1], $row, $row+1,'expand','shrink',2,2);$col++;
-		
-		
+		my $color=def_colored_button("   ",$color_num);
+		$table->attach ($color, $order{'Color'}, $order{'Color'}+1, $row, $row+1,'fill','fill',2,2);
 		
 		$color->signal_connect("clicked"=> sub{
 			get_color_window($emulate,$sample,"color");
@@ -453,10 +463,10 @@ sub gen_emulation_column {
 			}
 			set_gui_status($emulate,"ref",2);
 		});
-		$table->attach ($clear, $positions[$col], $positions[$col+1], $row, $row+1,'expand','shrink',2,2);$col++;
+		$table->attach ($clear, $order{'Clear'}, $order{'Clear'}+1, $row, $row+1,'expand','shrink',2,2);
 		#run/pause
 		my $run = def_image_button('icons/run.png',undef);
-		$table->attach ($run, $positions[$col], $positions[$col+1], $row, $row+1,'expand','shrink',2,2);$col++;
+		$table->attach ($run, $order{'Run'}, $order{'Run'}+1, $row, $row+1,'expand','shrink',2,2);
 		$run->signal_connect("clicked"=> sub{
 			$emulate->object_add_attribute ($sample,"status","run");
 			#start the emulator if it is not running	
@@ -470,17 +480,18 @@ sub gen_emulation_column {
 			
 		});
 		
-		my $image = gen_noc_status_image($emulate,$sample);
-		
-		$table->attach ($image, $positions[$col], $positions[$col+1], $row, $row+1,'expand','shrink',2,2);
-		
-		
+		my $image = gen_noc_status_image($emulate,$sample);		
+		$table->attach ($image, $order{'Done'},$order{'Done'}+1, $row, $row+1,'expand','shrink',2,2);
+				
 		$row++;
 		
 	}
 	# add new simulation
-	my $add=def_image_button("icons/plus.png", );
-	$table->attach ($add, $positions[1], $positions[2], $row, $row+1,'expand','shrink',2,2);
+
+	my $add=def_image_button("icons/plus.png",' A_dd ',FALSE,1);
+	$table->attach ($add, $order{'+/-'},$order{'+/-'}+2, $row, $row+1,'expand','shrink',2,2);
+
+	  
 
 	$add->signal_connect("clicked"=> sub{
 		my $n=$emulate->object_get_attribute("id",undef);
@@ -494,6 +505,7 @@ sub gen_emulation_column {
 		set_gui_status($emulate,"ref",1);		
 			
 	});	
+
 	
 	 
 	return ($scrolled_win,$set_win);
@@ -535,7 +547,7 @@ sub check_sample{
 			my $p=$pp->{'noc_param'};
 			
 			$status=0 if $@;
-			message_dialog("Error reading: $@") if $@;
+			message_dialog("Error reading: $@",'error') if $@;
 			if ($status==1){
 				$emulate->object_add_attribute ($sample,"noc_info",$p) ;
 					
@@ -549,73 +561,10 @@ sub check_sample{
 
 
 
-##########
-#  run external commands
-##########
-
-sub run_cmd_in_back_ground
-{
-  my $command = shift;
-  #print "\t$command\n";
- 
-  ### Start running the Background Job:
-    my $proc = Proc::Background->new($command);
-    my $PID = $proc->pid;
-    my $start_time = $proc->start_time;
-    my $alive = $proc->alive;
-
-  ### While $alive is NOT '0', then keep checking till it is...
-  #  *When $alive is '0', it has finished executing.
-  while($alive ne 0)
-  {
-    $alive = $proc->alive;
-
-    # This while loop will cause Gtk2 to conti processing events, if
-    # there are events pending... *which there are...
-    while (Gtk2->events_pending) {
-      Gtk2->main_iteration;
-    }
-    Gtk2::Gdk->flush;
-
-    usleep(1000);
-  }
-  
-  my $end_time = $proc->end_time;
- # print "*Command Completed at $end_time, with PID = $PID\n\n";
-
-  # Since the while loop has exited, the BG job has finished running:
-  # so close the pop-up window...
- # $popup_window->hide;
-
-  # Get the RETCODE from the Background Job using the 'wait' method
-  my $retcode = $proc->wait;
-  $retcode /= 256;
-
-  print "\t*RETCODE == $retcode\n\n";
-  Gtk2::Gdk->flush;
-  ### Check if the RETCODE returned with an Error:
-  if ($retcode ne 0) {
-    print "Error: The Background Job ($command) returned with an Error...!\n";
-    return 1;
-  } else {
-    #print "Success: The Background Job Completed Successfully...!\n";
-    return 0;
-  }
-	
-}
 
 
 
 
-sub run_cmd_in_back_ground_get_stdout
-{
-	my $cmd=shift;
-	my $exit;
-	my ($stdout, $stderr);
-	capture { $exit=run_cmd_in_back_ground($cmd) } \$stdout, \$stderr;
-	return ($stdout,$exit,$stderr);
-	
-}	
 
 
 #############
@@ -632,7 +581,7 @@ sub get_status_gif{
 			          ($width>=1200)? "icons/hamster_m.gif": "icons/hamster_s.gif"; 
 				  
 			return show_gif ($image);			
-		} elsif ($status eq 'programer_failed') {
+		} elsif ($status eq 'programmer_failed') {
 			return show_gif ("icons/Error.png");			
 		}
 	
@@ -644,24 +593,17 @@ sub get_status_gif{
 sub gen_noc_status_image {
 	my ($emulate,$sample)=@_;
 	my   $status= $emulate->object_get_attribute ($sample,"status");	
-	 $status='' if(!defined  $status);
+	$status='' if(!defined  $status);
 	my $image;
-	my $vbox = Gtk2::HBox->new (TRUE,1);
-	$image = Gtk2::Image->new_from_file ("icons/load.gif") if($status eq "run");
+	my $box = def_hbox(TRUE,1);
+	$image = new_image_from_file ("icons/load.gif") if($status eq "run");
 	$image = def_icon("icons/button_ok.png") if($status eq "done");
 	$image = def_icon("icons/warning.png") if($status eq "failed");
-	#$image_file = "icons/load.gif" if($status eq "run");
-	
-	if (defined $image) {
-		my $align = Gtk2::Alignment->new (0.5, 0.5, 0, 0);
-     	my $frame = Gtk2::Frame->new;
-		$frame->set_shadow_type ('in');
-		# Animation
-		$frame->add ($image);
-		$align->add ($frame);
-		$vbox->pack_start ($align, FALSE, FALSE, 0);
+		
+	if (defined $image) {		
+		$box->pack_start (add_frame_to_image($image), FALSE, FALSE, 0);
 	}
-	return $vbox;
+	return $box;
 	
 }
 
@@ -685,7 +627,7 @@ sub run_emulator {
 #	my $usb_blaster=$matches[0];
 # 	if (!defined $usb_blaster){
 #		add_info($info, "jtagconfig could not find any USB blaster cable: $stdout \n");
-#		$emulate->object_add_attribute('status',undef,'programer_failed');
+#		$emulate->object_add_attribute('status',undef,'programmer_failed');
 #		set_gui_status($emulate,"ref",2);
 #		#/***/
 #		return;	
@@ -703,23 +645,23 @@ sub run_emulator {
 		my $sof=get_sof_file_full_addr($emulate,$sample);	
 		add_info($info, "Programe FPGA device using $sof.sof\n");
 		my ($name,$path,$suffix) = fileparse("$sof",qr"\..[^.]*$");
-		my $programer="$path/program_device.sh";
+		my $programmer="$path/program_device.sh";
 		my $jtag_intfc="$path/jtag_intfc.sh";
-		if((-f $programer)==0){
-			add_colored_info ($info, " Error: file  \"$programer\"  dose not exist. \n",'red'); 
-			$emulate->object_add_attribute('status',undef,'programer_failed');
+		if((-f $programmer)==0){
+			add_colored_info ($info, " Error: file  \"$programmer\"  dose not exist. \n",'red'); 
+			$emulate->object_add_attribute('status',undef,'programmer_failed');
 			$emulate->object_add_attribute ($sample,"status","failed");	
 			set_gui_status($emulate,"ref",2);
 			last;		
 		}
 		if((-f $jtag_intfc)==0){
 			add_colored_info ($info, " Error: file  \"$jtag_intfc\"  dose not exist. \n",'red'); 
-			$emulate->object_add_attribute('status',undef,'programer_failed');
+			$emulate->object_add_attribute('status',undef,'programmer_failed');
 			$emulate->object_add_attribute ($sample,"status","failed");	
 			set_gui_status($emulate,"ref",2);
 			last;		
 		}
-		my $cmd =  "bash $programer $sof.sof";
+		my $cmd =  "bash $programmer $sof.sof";
 		
 		
 		#my $Quartus_bin=  $ENV{QUARTUS_BIN};
@@ -732,7 +674,7 @@ sub run_emulator {
 		#/***/
 		my ($stdout,$exit)=run_cmd_in_back_ground_get_stdout("$cmd");	
 		if($exit){#programming FPGA board has failed
-			$emulate->object_add_attribute('status',undef,'programer_failed');
+			$emulate->object_add_attribute('status',undef,'programmer_failed');
 			add_colored_info($info, "$stdout\n",'red');
 			$emulate->object_add_attribute ($sample,"status","failed");	
 			set_gui_status($emulate,"ref",2);
@@ -778,30 +720,25 @@ sub run_emulator {
 
 
 sub process_notebook_gen{
-		my ($emulate,$info,$mode,@charts)=@_;
-		my $notebook = Gtk2::Notebook->new;
+		my ($emulate,$info,$mode,$set_win,@charts)=@_;
+		my $notebook = gen_notebook();
 		$notebook->set_tab_pos ('left');
 		$notebook->set_scrollable(TRUE);
-		$notebook->can_focus(FALSE);
+		#$notebook->can_focus(FALSE);
 
-		
-		my ($page1,$set_win)=gen_emulation_column($emulate, $mode,10,$info,@charts);
-		$notebook->append_page ($page1,Gtk2::Label->new_with_mnemonic ("  _Run emulator  ")) if($mode eq "emulate");
-		$notebook->append_page ($page1,Gtk2::Label->new_with_mnemonic ("  _Run simulator ")) if($mode eq "simulate");
+		my $page1;
+		($page1,$set_win)=gen_emulation_column($emulate, $mode,10,$info,$set_win,@charts);
+		$notebook->append_page ($page1,gen_label_with_mnemonic ("  _Run emulator  ")) if($mode eq "emulate");
+		$notebook->append_page ($page1,gen_label_with_mnemonic ("  _Run simulator ")) if($mode eq "simulate");
 		
 		
 		my $page2=get_noc_setting_gui ($emulate,$info,$mode);
 		my $tt=($mode eq "emulate")? "  _Generate NoC \nEmulation Model" : "  _Generate NoC \nSimulation Model" ;
-		$notebook->append_page ($page2,Gtk2::Label->new_with_mnemonic ($tt));
+		$notebook->append_page ($page2,gen_label_with_mnemonic ($tt));
 		
-		#if($mode eq "simulate"){
-			#my $page3=gen_custom_traffic ($emulate,$info,$mode);
-			#$notebook->append_page ($page3,Gtk2::Label->new_with_mnemonic ("_Generate Custom\n Traffic Pattern"));
-		#}		
 		
-		my $scrolled_win = new Gtk2::ScrolledWindow (undef, undef);
-		$scrolled_win->set_policy( "automatic", "automatic" );
-		$scrolled_win->add_with_viewport($notebook);
+		
+		my $scrolled_win = add_widget_to_scrolled_win($notebook);
 		$scrolled_win->show_all;	
 		my $page_num=$emulate->object_get_attribute ("process_notebook","currentpage");		
 		$notebook->set_current_page ($page_num) if(defined $page_num);
@@ -819,12 +756,13 @@ sub get_noc_setting_gui {
 	my ($emulate,$info_text,$mode)=@_;
 	my $table=def_table(20,10,FALSE);#	my ($row,$col,$homogeneous)=@_;
 	
+	
 	my $scrolled_win = gen_scr_win_with_adjst ($emulate,"noc_setting_gui");
-	$scrolled_win->add_with_viewport($table);
-	my $row=noc_config ($emulate,$table);
+	add_widget_to_scrolled_win($table,$scrolled_win);
+	my $row=noc_config ($emulate,$table,$info_text);
 	    
 	my($label,$param,$default,$content,$type,$info);
-	my @dirs = grep {-d} glob("../boards/*");
+	my @dirs = grep {-d} glob("../boards/Altera/*");
 	my $fpgas;
 	foreach my $dir (@dirs) {
 		my ($name,$path,$suffix) = fileparse("$dir",qr"\..[^.]*$");
@@ -846,6 +784,7 @@ sub get_noc_setting_gui {
 		{ label=>'Pck. injector FIFO Width:', param_name=>'TIMSTMP_FIFO_NUM', type=>'Spin-button', default_val=>16, content=>"2,128,2", info=>"Packet injectors' timestamp FIFO width. In case a packet cannot be injected according to the desired injection ratio, the current system time is saved in a FIFO and then at injection time it will be read and attached to the packet. The larger FIFO width results in more accurate latency calculation." , param_parent=>'fpga_param', ref_delay=> undef},
   		{ label=>'Save as:', param_name=>'SAVE_NAME', type=>"Entry", default_val=>'simulate1', content=>undef, info=>undef, param_parent=>'sim_param', ref_delay=>undef},
 		{ label=>"Project directory", param_name=>"BIN_DIR", type=>"DIR_path", default_val=>"$ENV{'PRONOC_WORK'}/simulate", content=>undef, info=>"Define the working directory for generating simulation executable binarry file", param_parent=>'sim_param',ref_delay=>undef },
+		
 		);	
 	}
 	
@@ -853,11 +792,21 @@ sub get_noc_setting_gui {
 	foreach my $d (@fpgainfo) {		
 		($row,$coltmp)=add_param_widget  ($emulate, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,undef,1, $d->{param_parent}, $d->{ref_delay});
 	}   
+	  
+	my $maintable=def_table(20,10,FALSE);#	my ($row,$col,$homogeneous)=@_;
 	   
 	my $generate = def_image_button('icons/gen.png','Gener_ate',FALSE,1);
 	my $diagram  = def_image_button('icons/diagram.png','Diagram');
-	$table->attach ($generate, 0,2, $row, $row+1,'expand','shrink',2,2);
-	$table->attach ($diagram, 2,4, $row, $row+1,'expand','shrink',2,2);
+	my $import   = def_image_button('icons/import.png','I_mport',FALSE,1);
+	set_tip($import ,"Import NoC configuration from file");
+	
+	$maintable->attach_defaults ($scrolled_win, 0,10, 0, 9);
+	$maintable->attach_defaults (gen_Hsep(), 0,10, 8, 9);
+	$maintable->attach ($generate, 0,2, 9, 10,'expand','shrink',2,2);
+	$maintable->attach ($diagram, 2,4, 9, 10,'expand','shrink',2,2);
+	$maintable->attach ($import, 4,6, 9, 10,'expand','shrink',2,2);
+	
+	
     $diagram-> signal_connect("clicked" => sub{ 
         show_topology_diagram ($emulate);
     });			
@@ -866,8 +815,39 @@ sub get_noc_setting_gui {
 		generate_sim_bin_file($emulate,$info_text) if($mode eq "simulate");
 		
 	});
-		    
-	return $scrolled_win;	
+	
+	$import-> signal_connect("clicked" => sub{ 
+		import_noc_info_file($emulate,$mode);
+	});
+	
+	$scrolled_win->show_all;	    
+	return $maintable;	
+}
+
+sub import_noc_info_file{
+	my ($self,$mode)=@_;
+	my $file;
+	my $dialog = gen_file_dialog(undef,'inf');
+	
+	my $open_in	  = ($mode ne "emulate" ) ? abs_path("$ENV{'PRONOC_WORK'}/simulate") : abs_path("$ENV{'PRONOC_WORK'}/emulate");
+	$dialog->set_current_folder ($open_in); 
+	if ( "ok" eq $dialog->run ) {
+		my $status=1;
+		$file = $dialog->get_filename;
+		my $pp= do $file ;
+		my $p=$pp->{'noc_param'};
+		$status=0 if $@;
+		message_dialog("Error reading: $@") if $@;
+		if ($status==1){
+			$self->object_add_attribute ("noc_param",undef,$p);
+			my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
+			my $attr1 = ($mode ne "emulate" ) ? 'sim_param' : 'fpga_param';
+			$self->object_add_attribute ($attr1,'SAVE_NAME',$name);
+						
+			set_gui_status($self,"ref",1);
+		}			
+	}
+	$dialog->destroy;	
 }
 
 ##########
@@ -887,7 +867,15 @@ sub generate_sof_file {
 	}
 
 	#copy all noc source codes
-	my @files = split(/\s*,\s*/,EMULATION_RTLS);
+	my @files = (
+'/mpsoc/rtl/src_emulate/rtl/', 
+'/mpsoc/rtl/src_peripheral/jtag/jtag_wb/', 
+'/mpsoc/rtl/src_peripheral/ram/',
+'/mpsoc/rtl/main_comp.v',
+'/mpsoc/rtl/arbiter.v',
+'/mpsoc/rtl/src_topolgy/',
+'/mpsoc/rtl/src_noc/');
+
 	my $dir = Cwd::getcwd();
 	my $project_dir	  = abs_path("$dir/../../");
 	my ($stdout,$exit)=run_cmd_in_back_ground_get_stdout("mkdir -p $target_dir/src_verilog" );
@@ -895,15 +883,8 @@ sub generate_sof_file {
 	
 
 	#generate parameters for emulator_top.v file
-	my ($localparam, $pass_param)=gen_noc_param_v( $self);
-	open(FILE,  ">$target_dir/src_verilog/noc_parameters.v") || die "Can not open: $!";
-	print FILE $localparam;
-	close(FILE) || die "Error closing file: $!";
-	open(FILE,  ">$target_dir/src_verilog/pass_parameters.v") || die "Can not open: $!";
-	print FILE $pass_param;
-	my $fifow=$self->object_get_attribute('fpga_param','TIMSTMP_FIFO_NUM');
-	print FILE ",.TIMSTMP_FIFO_NUM($fifow)\n";
-	close(FILE) || die "Error closing file: $!";
+	gen_noc_localparam_v_file($self,"$target_dir/src_verilog/lib/src_noc/");
+	
 	open(FILE,  ">$top") || die "Can not open: $!";
 	print FILE create_emulate_top($self,$name,$top);
 	close(FILE) || die "Error closing file: $!";
@@ -936,9 +917,7 @@ module ${name}_top(
 		DONE_RESET_VJTAG_INDEX=127;
 				
 
-	//NoC parameters will be defined by user
-	`define NOC_PARAM
-	`include \"noc_parameters.v\"
+	
  	
 	wire  reset_noc, reset_injector, reset_noc_sync, reset_injector_sync, done;
 	wire jtag_reset_injector, jtag_reset_noc;
@@ -982,10 +961,8 @@ module ${name}_top(
 	//noc emulator
 	
 	noc_emulator #(
-	.STATISTIC_VJTAG_INDEX(STATISTIC_VJTAG_INDEX),  
-	.PATTERN_VJTAG_INDEX(PATTERN_VJTAG_INDEX),
-	`include \"pass_parameters.v\"
-		 
+		.STATISTIC_VJTAG_INDEX(STATISTIC_VJTAG_INDEX),  
+		.PATTERN_VJTAG_INDEX(PATTERN_VJTAG_INDEX)		 
 	)
 	noc_emulate_top
 	(
@@ -1064,14 +1041,14 @@ sub save_the_sof_file{
 	copy($files[0],"$sofdir/$fpga_board/$name.sof") or do { 
 		my $err= "Error copy($files[0] , $sofdir/$fpga_board/$name.sof";	
 		print "$err\n"; 	
-		message_dialog($err); 
+		message_dialog($err,'error'); 
 		return;
 	};
 	#copy the board's programming and jtag interface files
 	
 	my $board_name=$self->object_get_attribute('compile','board');
 	#copy board jtag_intfc.sh file 
-	copy("../boards/$board_name/jtag_intfc.sh","$sofdir/$fpga_board/jtag_intfc.sh");
+	copy("../boards/Altera/$board_name/jtag_intfc.sh","$sofdir/$fpga_board/jtag_intfc.sh");
 	#print "../boards/$board_name/jtag_intfc.sh","$sofdir/$fpga_board/jtag_intfc.sh\n";
 	#add argument run to jtag_interface file 
 	my $runarg='
@@ -1087,7 +1064,7 @@ fi
 	
 
 	#copy board program_device.sh file 
-	copy("../boards/$board_name/program_device.sh","$sofdir/$fpga_board/program_device.sh");
+	copy("../boards/Altera/$board_name/program_device.sh","$sofdir/$fpga_board/program_device.sh");
 	
 	
 
@@ -1124,20 +1101,9 @@ sub save_emulation {
 sub load_emulation {
 	my ($emulate,$info)=@_;
 	my $file;
-	my $dialog = Gtk2::FileChooserDialog->new(
-            	'Select a File', undef,
-            	'open',
-            	'gtk-cancel' => 'cancel',
-            	'gtk-ok'     => 'ok',
-        	);
-
-	my $filter = Gtk2::FileFilter->new();
-	$filter->set_name("EML");
-	$filter->add_pattern("*.EML");
-	$dialog->add_filter ($filter);
+	my $dialog =  gen_file_dialog (undef, 'EML');	
 	my $dir = Cwd::getcwd();
-	$dialog->set_current_folder ("$dir/lib/emulate");		
-
+	$dialog->set_current_folder ("$dir/lib/emulate");			
 
 	if ( "ok" eq $dialog->run ) {
 		$file = $dialog->get_filename;
@@ -1171,22 +1137,7 @@ sub update_result {
 }	
 
 
-sub capture_cores_data {
-	my ($data,$text)=@_;
-	my %result;
-	my @q =split  (/Core/,$text);
-	my $i=0;
-	foreach my $p (@q){
-		if ($i!=0){
-			my @d = split (/[^0-9. ]/,$p);
-			my $n=	$d[0];
-			my $val = capture_number_after("$data",$p);
-			$result{remove_all_white_spaces($n)}=remove_all_white_spaces($val);
-		}
-		$i++;
-	}	
-	return %result; 
-}
+
 
 sub gen_sim_parameter_h {
 	my ($param_h,$includ_h,$ne,$nr,$router_p,$fifow)=@_;
@@ -1201,6 +1152,10 @@ sub gen_sim_parameter_h {
  	#define NE  $ne
  	#define NR  $nr
  	#define ROUTER_P_NUM $router_p
+ 	
+	extern Vtraffic		*traffic[NE];
+	extern Vpck_inj     *pck_inj[NE];
+	extern int reset,clk;
 	
 	//simulation parameter	
 	#define MAX_RATIO   ".MAX_RATIO."
@@ -1212,25 +1167,39 @@ sub gen_sim_parameter_h {
 	return $text;	
 }	
 
-sub gen_vrouter_param_v {
-	my ($simulate,$src_verilog_dr)=@_;
-	# generate NoC parameter file
-	my ($noc_param,$pass_param)=gen_noc_param_v($simulate);
-	open(FILE,  ">$src_verilog_dr/parameter.v") || die "Can not open: $!";
+sub gen_noc_sim_param {
+	my $simulate=shift;
 	my $fifow=$simulate->object_get_attribute('fpga_param','TIMSTMP_FIFO_NUM');
-
-
-
-	print FILE  " \`ifdef     INCLUDE_PARAM \n \n 
-	$noc_param  
 	
+	$fifow= '16' if (!defined $fifow);
+	
+	return "
 	//simulation parameter	
-	localparam MAX_RATIO = ".MAX_RATIO.";
+	//localparam MAX_RATIO = ".MAX_RATIO.";
 	localparam MAX_PCK_NUM = ".MAX_SIM_CLKs.";
 	localparam MAX_PCK_SIZ = ".MAX_PCK_SIZ."; 
 	localparam MAX_SIM_CLKs=  ".MAX_SIM_CLKs.";
 	localparam TIMSTMP_FIFO_NUM = $fifow;	
-\n \n \`endif" ; 
+	";
+	
+}
+
+
+sub gen_noc_localparam_v_file {
+	my ($self,$dst_path,$sample)=@_;
+	# generate NoC parameter file
+	my ($noc_param,$pass_param)=gen_noc_param_v($self,$sample);
+	my $header=autogen_warning().get_license_header("noc_localparam.v");
+	open(FILE,  ">${dst_path}/noc_localparam.v") || die "Can not open: $!";
+	my $sim =gen_noc_sim_param($self);
+	print FILE  "$header
+	
+	\`ifdef   NOC_LOCAL_PARAM \n \n 
+	$noc_param  
+	
+	$sim
+		
+\n \n \`endif"; 
 	close FILE;	
 }
 
@@ -1244,17 +1213,18 @@ sub emulator_main{
 	my $emulate= emulator->emulator_new();
 	set_gui_status($emulate,"ideal",0);
 	$emulate->object_add_attribute('compile','compilers',"QuartusII");
-	my $left_table = Gtk2::Table->new (25, 6, FALSE);
-	my $right_table = Gtk2::Table->new (25, 6, FALSE);
-	my $main_table = Gtk2::Table->new (25, 12, FALSE);
-	my ($infobox,$info)= create_text();
+	my $left_table = def_table (25, 6, FALSE);
+	my $right_table =def_table (25, 6, FALSE);
+	my $main_table = def_table (25, 12, FALSE);
+	my ($infobox,$info)= create_txview();
+	
 	
 		
 	my @pages =(
 		{page_name=>" Avg. throughput/latency", page_num=>0},
 		{page_name=>" Injected Packet ", page_num=>1},
 		{page_name=>" Worst-Case Delay ",page_num=>2},
-		{page_name=>" Executaion Time ",page_num=>3},
+		{page_name=>" Execution Time ",page_num=>3},
 	);
 
 	my @charts = (
@@ -1266,8 +1236,8 @@ sub emulator_main{
   		{ type=>"2D_line", page_num=>3, graph_name=> "-", result_name => "exe_time_result",X_Title=>'Desired Avg. Injected Load Per Router (flits/clock (%))' , Y_Title=>'Total Emulation Time (clk)', Z_Title=>undef},
   	);
 		
-	my ($conf_box,$set_win)=process_notebook_gen($emulate,\$info,"emulate", @charts);
-	my $chart   =gen_multiple_charts ($emulate,\@pages,\@charts);
+	my ($conf_box,$set_win)=process_notebook_gen($emulate,$info,"emulate", undef,@charts);
+	my $chart   =gen_multiple_charts ($emulate,\@pages,\@charts,.4);
     
 	$main_table->set_row_spacings (4);
 	$main_table->set_col_spacings (1);
@@ -1310,22 +1280,17 @@ sub emulator_main{
 			return TRUE;
 			 
 		}
-		elsif($state eq 'ref_set_win'){
-			my $s=$emulate->object_get_attribute("active_setting",undef);
-			$set_win->destroy();
-			$emulate->object_add_attribute("active_setting",undef,$s);				
-		}
+		
 		
 		#refresh GUI
 		my $name=$emulate->object_get_attribute ("emulate_name",undef);	
 		$entry->set_text($name) if(defined $name);
 		$conf_box->destroy();
-		$set_win->destroy();
 		$chart->destroy();
 		$image->destroy(); 
 		$image = get_status_gif($emulate);
-		($conf_box,$set_win)=process_notebook_gen($emulate,\$info,"emulate", @charts);
-		$chart   =gen_multiple_charts  ($emulate,\@pages,\@charts);
+		($conf_box,$set_win)=process_notebook_gen($emulate,$info,"emulate",$set_win, @charts);
+		$chart   =gen_multiple_charts  ($emulate,\@pages,\@charts,.4);
 		$v1 -> pack1($conf_box, TRUE, TRUE); 	
 		$v1 -> pack2($image, TRUE, TRUE); 
 		$v2 -> pack2($chart, TRUE, TRUE); 
@@ -1346,12 +1311,12 @@ sub emulator_main{
 		foreach my $sample (@samples){
 			$emulate->object_add_attribute ($sample,"status","run");	
 		}
-		run_emulator($emulate,\$info);
+		run_emulator($emulate,$info);
 	});
 
 
 	$open-> signal_connect("clicked" => sub{ 
-		load_emulation($emulate,\$info);
+		load_emulation($emulate,$info);
 		set_gui_status($emulate,"ref",5);
 	});	
 
@@ -1360,11 +1325,9 @@ sub emulator_main{
 		set_gui_status($emulate,"ref",5);
 	});	
 
-	my $sc_win = new Gtk2::ScrolledWindow (undef, undef);
-	$sc_win->set_policy( "automatic", "automatic" );
-	$sc_win->add_with_viewport($main_table);	
+	
 
-	return $sc_win;
+	return add_widget_to_scrolled_win($main_table);
 }
 
 

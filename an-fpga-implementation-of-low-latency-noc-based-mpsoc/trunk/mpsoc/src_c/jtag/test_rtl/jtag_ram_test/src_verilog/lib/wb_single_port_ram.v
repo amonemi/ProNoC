@@ -36,7 +36,7 @@ module wb_single_port_ram #(
     parameter Aw=10, //RAM address width
     parameter BYTE_WR_EN= "YES",//"YES","NO"
     parameter FPGA_VENDOR= "ALTERA",//"ALTERA","GENERIC"
-    parameter JTAG_CONNECT= "JTAG_WB",//"DISABLED", "JTAG_WB" , "ALTERA_IMCE", if not disabled then the actual memory implements as a dual port RAM with the second port is connected either to In-System Memory Content Editor or Jtag_to_wb  
+    parameter JTAG_CONNECT= "ALTERA_JTAG_WB",//"DISABLED", "ALTERA_JTAG_WB" , "ALTERA_IMCE", if not disabled then the actual memory implements as a dual port RAM with the second port is connected either to In-System Memory Content Editor or Jtag_to_wb  
     parameter JTAG_INDEX= 0,
     parameter INITIAL_EN= "NO",
     parameter MEM_CONTENT_FILE_NAME= "ram0",// ram initial file name
@@ -192,7 +192,7 @@ module single_port_ram_top #(
     parameter Aw=10, //RAM address width
     parameter BYTE_WR_EN= "YES",//"YES","NO"
     parameter FPGA_VENDOR= "ALTERA",//"ALTERA","GENERIC"
-    parameter JTAG_CONNECT= "JTAG_WB",//"DISABLED", "JTAG_WB" , "ALTERA_IMCE", if not disabled then the actual memory implements as a dual port RAM with the second port is connected either to In-System Memory Content Editor or Jtag_to_wb  
+    parameter JTAG_CONNECT= "ALTERA_JTAG_WB",//"DISABLED", "ALTERA_JTAG_WB" , "ALTERA_IMCE", if not disabled then the actual memory implements as a dual port RAM with the second port is connected either to In-System Memory Content Editor or Jtag_to_wb  
     parameter JTAG_INDEX= 0,
     parameter INITIAL_EN= "NO",
     parameter INIT_FILE= "sw/ram/ram0.txt"// ram initial file 
@@ -207,7 +207,9 @@ module single_port_ram_top #(
         we_a, 
         q_a
 );
+  /* verilator lint_off WIDTH */
   localparam  BYTE_ENw= ( BYTE_WR_EN == "YES")? Dw/8 : 1;
+  /* verilator lint_on WIDTH */
   
 input                           clk,reset;
 input  [Dw-1   :   0]  data_a;
@@ -252,12 +254,15 @@ wire            [Dw-1   :   0]  q_b;
 
     
 generate 
+/* verilator lint_off WIDTH */
 if(FPGA_VENDOR=="ALTERA")begin:altera_fpga
+/* verilator lint_on WIDTH */
  localparam  RAM_TAG_STRING=i2s(JTAG_INDEX);  
 localparam  RAM_ID =(JTAG_CONNECT== "ALTERA_IMCE") ?  {"ENABLE_RUNTIME_MOD=YES,INSTANCE_NAME=",RAM_TAG_STRING}
                                     : {"ENABLE_RUNTIME_MOD=NO"};
-
-    if(JTAG_CONNECT== "JTAG_WB")begin:dual_ram
+    /* verilator lint_off WIDTH */
+    if(JTAG_CONNECT== "ALTERA_JTAG_WB")begin:dual_ram
+    /* verilator lint_on WIDTH */
 // aletra dual port ram 
         altsyncram #(
             .operation_mode("BIDIR_DUAL_PORT"),
@@ -351,10 +356,10 @@ localparam  RAM_ID =(JTAG_CONNECT== "ALTERA_IMCE") ?  {"ENABLE_RUNTIME_MOD=YES,I
 
     end
 end
-
+/* verilator lint_off WIDTH */
 else if(FPGA_VENDOR=="GENERIC")begin:generic_ram
-    if(JTAG_CONNECT== "JTAG_WB")begin:dual_ram
-        
+    if(JTAG_CONNECT== "ALTERA_JTAG_WB")begin:dual_ram
+/* verilator lint_on WIDTH */        
 
         generic_dual_port_ram #(
             .Dw(Dw),
@@ -405,9 +410,9 @@ else if(FPGA_VENDOR=="GENERIC")begin:generic_ram
     end//jtag_wb
 end //Generic
 
-
-if(JTAG_CONNECT == "JTAG_WB")begin:jtag_wb
-
+/* verilator lint_off WIDTH */
+if(JTAG_CONNECT == "ALTERA_JTAG_WB")begin:jtag_wb
+/* verilator lint_on WIDTH */
     reg jtag_ack;
     wire    jtag_we_o, jtag_stb_o;
 

@@ -1,0 +1,7 @@
+$model = bless( {
+		'compile' => "verilate_mesh.sh",
+        'noc_param'=> {
+				"TOPOLOGY" => "\"TORUS\"",
+				"ROUTE_NAME" => "\"TRANC_XY\"",    					
+						}
+}, 'ProNOC' );

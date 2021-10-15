@@ -122,10 +122,10 @@ module aeMB2_sim (/*AUTOARG*/
    always @(posedge sim.clk_i) if (sim.ena_i) begin   
 
       $write ("\n", ($stime/10));
-      $writeh (" T", sim.pha_i);
-      $writeh(" PC=", iwb_adr);
+      $write (" T", sim.pha_i);
+      $write(" PC=", iwb_adr);
       
-      $writeh ("\t| ");
+      $write ("\t| ");
       
       case (sim.rOPC_IF)
 	6'o00: if (sim.rRD_IF == 0) $write("   "); else $write("ADD");
@@ -252,8 +252,8 @@ module aeMB2_sim (/*AUTOARG*/
       endcase // case (sim.rOPC_IF)
 
       case (sim.rOPC_IF[3])
-	1'b1: $writeh("\t r",sim.rRD_IF,", r",sim.rRA_IF,", h",sim.rIMM_IF);
-	1'b0: $writeh("\t r",sim.rRD_IF,", r",sim.rRA_IF,", r",sim.rRB_IF,"  ");	
+	1'b1: $write("\t r",sim.rRD_IF,", r",sim.rRA_IF,", h",sim.rIMM_IF);
+	1'b0: $write("\t r",sim.rRD_IF,", r",sim.rRA_IF,", r",sim.rRB_IF,"  ");	
       endcase // case (sim.rOPC_IF[3])
 
       if (sim.bpcu.fHZD)
@@ -261,12 +261,12 @@ module aeMB2_sim (/*AUTOARG*/
       
       // ALU
       $write("\t|");
-      $writeh(" A=",sim.rOPA_OF);
-      $writeh(" B=",sim.rOPB_OF);
-      $writeh(" C=",sim.rOPX_OF);
-      $writeh(" M=",sim.rOPM_OF);
+      $write(" A=",sim.rOPA_OF);
+      $write(" B=",sim.rOPB_OF);
+      $write(" C=",sim.rOPX_OF);
+      $write(" M=",sim.rOPM_OF);
       
-      $writeh(" MSR=", wMSR," ");
+      $write(" MSR=", wMSR," ");
 
       case (sim.rALU_OF)
 	3'o0: $write(" ADD");
@@ -279,9 +279,9 @@ module aeMB2_sim (/*AUTOARG*/
       // MA
       $write ("\t| ");      
       if (sim.dwb_stb_o)
-	$writeh("@",sim.rRES_EX);
+	$write("@",sim.rRES_EX);
       else
-	$writeh("=",sim.rRES_EX);
+	$write("=",sim.rRES_EX);
 
       
       case (sim.rBRA)
@@ -297,18 +297,18 @@ module aeMB2_sim (/*AUTOARG*/
       if (|sim.rRD_MA) begin
 	 case (sim.rOPD_MA)
 	   2'o2: begin
-	      if (sim.rSEL_MA != 4'h0) $writeh("R",sim.rRD_MA,"=RAM(",sim.regf.rREGD,")");
-	      if (sim.rSEL_MA == 4'h0) $writeh("R",sim.rRD_MA,"=FSL(",sim.regf.rREGD,")");
+	      if (sim.rSEL_MA != 4'h0) $write("R",sim.rRD_MA,"=RAM(",sim.regf.rREGD,")");
+	      if (sim.rSEL_MA == 4'h0) $write("R",sim.rRD_MA,"=FSL(",sim.regf.rREGD,")");
 	   end
-	   2'o1: $writeh("R",sim.rRD_MA,"=LNK(",sim.regf.rREGD,")");
-	   2'o0: $writeh("R",sim.rRD_MA,"=ALU(",sim.regf.rREGD,")");
+	   2'o1: $write("R",sim.rRD_MA,"=LNK(",sim.regf.rREGD,")");
+	   2'o0: $write("R",sim.rRD_MA,"=ALU(",sim.regf.rREGD,")");
 	 endcase // case (sim.rOPD_MA)
       end
 
       /*
       // STORE
       if (dwb_stb_o & dwb_wre_o) begin
-	 $writeh("RAM(", dwb_adr ,")=", dwb_dat_o);
+	 $write("RAM(", dwb_adr ,")=", dwb_dat_o);
 	 case (dwb_sel_o)
 	   4'hF: $write(":L");
 	   4'h3,4'hC: $write(":W");

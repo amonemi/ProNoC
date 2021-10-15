@@ -1,0 +1,418 @@
+#######################################################################
+##	File: ProNoC_jtag_uart.IP
+##    
+##	Copyright (C) 2014-2019  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.9.1 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$ipgen = bless( {
+                  'system_h' => '
+#define ${IP}_DATA_REG					(*((volatile unsigned int *) ($BASE)))
+#define ${IP}_CONTROL_REG				(*((volatile unsigned int *) ($BASE+4)))
+#define ${IP}_CONTROL_WSPACE_MSK	0xFFFF0000
+#define ${IP}_DATA_RVALID_MSK			0x00008000
+#define ${IP}_DATA_DATA_MSK			0x000000FF
+
+//////////////////////////////*basic function for jtag_uart*////////////////////////////////////////
+void jtag_putchar(char ch);
+char jtag_getchar(void);
+void outbyte(char c); //called in printf();
+char inbyte(void);
+void jtag_putchar(char ch);
+char jtag_getchar(void);
+int jtag_scanstr(char* buf);
+int jtag_scanint(int *num);
+/////////////////////////////*END: basic function for jtag_uart*////////////////////////////////////
+
+#define INCLUDE_${INCLUDE_SIM_PRINTF}
+
+#ifdef INCLUDE_SIMPLE_PRINTF
+	#include "simple-printf/printf.h" 
+#endif
+
+#ifdef INCLUDE_SIMPLE_PRINTF_LONG
+	#include "simple-printf/printf.h" 
+#endif',
+                  'ports' => {
+                               'wb_adr_i' => {
+                                               'intfc_name' => 'plug:wb_slave[0]',
+                                               'range' => '',
+                                               'type' => 'input',
+                                               'intfc_port' => 'adr_i'
+                                             },
+                               'wb_stb_i' => {
+                                               'type' => 'input',
+                                               'intfc_port' => 'stb_i',
+                                               'intfc_name' => 'plug:wb_slave[0]',
+                                               'range' => ''
+                                             },
+                               'clk' => {
+                                          'intfc_name' => 'plug:clk[0]',
+                                          'range' => '',
+                                          'intfc_port' => 'clk_i',
+                                          'type' => 'input'
+                                        },
+                               'wb_we_i' => {
+                                              'range' => '',
+                                              'intfc_name' => 'plug:wb_slave[0]',
+                                              'intfc_port' => 'we_i',
+                                              'type' => 'input'
+                                            },
+                               'wb_dat_o' => {
+                                               'intfc_port' => 'dat_o',
+                                               'type' => 'output',
+                                               'intfc_name' => 'plug:wb_slave[0]',
+                                               'range' => 'Dw-1: 0'
+                                             },
+                               'wb_to_jtag' => {
+                                                 'range' => 'WB2Jw-1  : 0',
+                                                 'intfc_name' => 'socket:jtag_to_wb[0]',
+                                                 'intfc_port' => 'jwb_o',
+                                                 'type' => 'output'
+                                               },
+                               'reset' => {
+                                            'range' => '',
+                                            'intfc_name' => 'plug:reset[0]',
+                                            'intfc_port' => 'reset_i',
+                                            'type' => 'input'
+                                          },
+                               'wb_ack_o' => {
+                                               'intfc_port' => 'ack_o',
+                                               'type' => 'output',
+                                               'intfc_name' => 'plug:wb_slave[0]',
+                                               'range' => ''
+                                             },
+                               'wb_cyc_i' => {
+                                               'intfc_port' => 'cyc_i',
+                                               'type' => 'input',
+                                               'intfc_name' => 'plug:wb_slave[0]',
+                                               'range' => ''
+                                             },
+                               'jtag_to_wb' => {
+                                                 'range' => 'J2WBw-1 : 0',
+                                                 'intfc_name' => 'socket:jtag_to_wb[0]',
+                                                 'intfc_port' => 'jwb_i',
+                                                 'type' => 'input'
+                                               },
+'RxD_wr_sim' => {
+                                                 'intfc_port' => 'RxD_wr_sim',
+                                                 'type' => 'input',
+                                                 'range' => '',
+                                                 'intfc_name' => 'socket:RxD_sim[0]'
+                                               },
+ 'RxD_din_sim' => {
+                                                  'intfc_port' => 'RxD_din_sim',
+                                                  'type' => 'input',
+                                                  'range' => '7:0 ',
+                                                  'intfc_name' => 'socket:RxD_sim[0]'
+                                                },
+ 'RxD_ready_sim' => {
+                                                    'type' => 'output',
+                                                    'intfc_port' => 'RxD_ready_sim',
+                                                    'intfc_name' => 'socket:RxD_sim[0]',
+                                                    'range' => ''
+                                                  },
+                               'wb_dat_i' => {
+                                               'intfc_port' => 'dat_i',
+                                               'type' => 'input',
+                                               'range' => 'Dw-1: 0',
+                                               'intfc_name' => 'plug:wb_slave[0]'
+                                             }
+                             },
+                  'unused' => {
+                                'plug:wb_slave[0]' => [
+                                                        'tag_i',
+                                                        'err_o',
+                                                        'cti_i',
+                                                        'bte_i',
+                                                        'rty_o',
+                                                        'sel_i'
+                                                      ]
+                              },
+ 
+                  'category' => 'Communication',
+                  'plugs' => {
+                               'wb_slave' => {
+                                               'type' => 'num',
+                                               '0' => {
+                                                        'addr' => '0x9000_0000	0x90ff_ffff		UART16550 Controller',
+                                                        'width' => 4,
+                                                        'name' => 'wb_slave'
+                                                      },
+                                               'value' => 1
+                                             },
+                               'clk' => {
+                                          'type' => 'num',
+                                          '0' => {
+                                                   'name' => 'clk'
+                                                 },
+                                          'value' => 1
+                                        },
+                               'reset' => {
+                                            '0' => {
+                                                     'name' => 'reset'
+                                                   },
+                                            'type' => 'num',
+                                            'value' => 1
+                                          }
+                             },
+                  'file_name' => 'mpsoc/rtl/src_peripheral/jtag/jtag_uart/pronoc_jtag_uart.v',
+                  'parameters' => {
+                                    'JDw' => {
+                                               'type' => 'Fixed',
+                                               'global_param' => 'Parameter',
+                                               'default' => '32',
+                                               'info' => 'Parameter',
+                                               'redefine_param' => 1,
+                                               'content' => ''
+                                             },
+                                    'JINDEXw' => {
+                                                   'info' => 'Parameter',
+                                                   'default' => '8',
+                                                   'content' => '',
+                                                   'redefine_param' => 1,
+                                                   'global_param' => 'Parameter',
+                                                   'type' => 'Fixed'
+                                                 },
+                                    'J2WBw' => {
+                                                 'type' => 'Fixed',
+                                                 'global_param' => 'Parameter',
+                                                 'redefine_param' => 1,
+                                                 'content' => '',
+                                                 'default' => '(JTAG_CONNECT== "XILINX_JTAG_WB") ? 1+1+JDw+JAw : 1',
+                                                 'info' => undef
+                                               },
+                                    'Dw' => {
+                                              'default' => '32',
+                                              'info' => 'Parameter',
+                                              'redefine_param' => 1,
+                                              'content' => '',
+                                              'type' => 'Fixed',
+                                              'global_param' => 'Localparam'
+                                            },
+                                    'JAw' => {
+                                               'global_param' => 'Parameter',
+                                               'type' => 'Fixed',
+                                               'info' => 'Parameter',
+                                               'default' => '32',
+                                               'content' => '',
+                                               'redefine_param' => 1
+                                             },
+                                    'JSTATUSw' => {
+                                                    'global_param' => 'Parameter',
+                                                    'type' => 'Fixed',
+                                                    'content' => '',
+                                                    'redefine_param' => 1,
+                                                    'info' => 'Parameter',
+                                                    'default' => '8'
+                                                  },
+                                    'INCLUDE_SIM_PRINTF' => {
+                                                              'redefine_param' => 0,
+                                                              'content' => 'NONE,SIMPLE_PRINTF,SIMPLE_PRINTF_LONG',
+                                                              'default' => 'SIMPLE_PRINTF',
+                                                              'info' => 'Select source code for printf command:
+    "NONE":  Do not include simple_printf source code. Select "NONE" In case printf command is supported in <stdio.h>, or it is not needed in the software code. 
+    "SIMPLE_PRINTF" Include a source code of printf command which supports a subset of formatted data: %%d, %%i, %%u, %%x, %%c, and %%s. long and floating formats are not supported.
+    "SIMPLE_PRINTF_LONG" Include a source code of printf command which supports a subset of formatted data: %%d, %%i, %%u, %%x, %%c, %%l, and %%s.  floating format is not supported.',
+                                                              'type' => 'Combo-box',
+                                                              'global_param' => 'Don\'t include'
+                                                            },
+                                    'Aw' => {
+                                              'type' => 'Fixed',
+                                              'global_param' => 'Localparam',
+                                              'redefine_param' => 1,
+                                              'content' => '',
+                                              'default' => '1',
+                                              'info' => 'Parameter'
+                                            },
+                                    'JTAG_CONNECT' => {
+                                                        'content' => '"XILINX_JTAG_WB","ALTERA_JTAG_WB"',
+                                                        'redefine_param' => 1,
+                                                        'info' => 'For Altera FPGAs define it as "ALTERA_JTAG_WB". In this case, the UART uses Virtual JTAG tap IP core from Altera lib to communicate with the Host PC.
+
+For XILINX FPGAs define it as "XILINX_JTAG_WB". In this case, the UART uses BSCANE2 JTAG tap IP core from XILINX lib to communicate with the Host PC.',
+                                                        'default' => '"XILINX_JTAG_WB"',
+                                                        'global_param' => 'Parameter',
+                                                        'type' => 'Combo-box'
+                                                      },
+                                    'JTAG_INDEX' => {
+                                                      'content' => '',
+                                                      'redefine_param' => 1,
+                                                      'info' => 'The index number id used for communicating with this IP. all modules connected to the same jtag tab should have a unique JTAG index number. The default value is 126-CORE_ID. The core ID is the tile number in MPSoC. So if each tile has a UART, then each UART index would be different.',
+                                                      'default' => '126-CORE_ID',
+                                                      'global_param' => 'Parameter',
+                                                      'type' => 'Entry'
+                                                    },
+                                    'BUFF_Aw' => {
+                                                   'global_param' => 'Localparam',
+                                                   'type' => 'Spin-button',
+                                                   'content' => '2,16,1',
+                                                   'redefine_param' => 1,
+                                                   'info' => 'UART internal fifo buffer address width shared equally for send and recive FIFOs. Each of send and recive fifo buffers have 2^(BUFF_Aw-1) entry.',
+                                                   'default' => '6'
+                                                 },
+                                    'SELw' => {
+                                                'global_param' => 'Localparam',
+                                                'type' => 'Fixed',
+                                                'info' => 'Parameter',
+                                                'default' => '4',
+                                                'content' => '',
+                                                'redefine_param' => 1
+                                              },
+                                    'JTAG_CHAIN' => {
+                                                      'global_param' => 'Parameter',
+                                                      'type' => 'Combo-box',
+                                                      'info' => 'Only used for Virtex 4/5 devices. May be 1, 2, 3, or 4. It is the  BSCANE2 JTAG tap number. The default Jtag tap numbers are:
+    4: JTAG runtime memory programmers. 
+    3: UART
+    1,2: reserved',
+                                                      'default' => '3',
+                                                      'content' => '1,2,3,4',
+                                                      'redefine_param' => 0
+                                                    },
+                                    'WB2Jw' => {
+                                                 'content' => '',
+                                                 'redefine_param' => 1,
+                                                 'info' => '',
+                                                 'default' => '(JTAG_CONNECT== "XILINX_JTAG_WB") ? 1+JSTATUSw+JINDEXw+1+JDw  : 1',
+                                                 'global_param' => 'Parameter',
+                                                 'type' => 'Fixed'
+                                               },
+                                    'TAGw' => {
+                                                'type' => 'Fixed',
+                                                'global_param' => 'Localparam',
+                                                'default' => '3',
+                                                'info' => 'Parameter',
+                                                'redefine_param' => 1,
+                                                'content' => ''
+                                              }
+                                  },
+                  'gui_status' => {
+                                    'status' => 'ideal',
+                                    'timeout' => 0
+                                  },
+                  'ip_name' => 'ProNoC_jtag_uart',
+                  'ports_order' => [
+                                     'clk',
+                                     'reset',
+                                     'wb_dat_o',
+                                     'wb_ack_o',
+                                     'wb_adr_i',
+                                     'wb_stb_i',
+                                     'wb_cyc_i',
+                                     'wb_we_i',
+                                     'wb_dat_i',
+                                     'wb_to_jtag',
+                                     'jtag_to_wb',
+									 'RxD_din_sim',
+                                     'RxD_wr_sim',
+                                     'RxD_ready_sim'
+                                   ],
+                  'version' => 11,
+                  'description' => 'A jtag uart module. Controled using Altera Vjtag or Xilinx BSCANE2.',
+                  'parameters_order' => [
+                                          'Aw',
+                                          'SELw',
+                                          'TAGw',
+                                          'Dw',
+                                          'BUFF_Aw',
+                                          'JTAG_INDEX',
+                                          'JDw',
+                                          'JAw',
+                                          'JINDEXw',
+                                          'JSTATUSw',
+                                          'JTAG_CHAIN',
+                                          'JTAG_CONNECT',
+                                          'J2WBw',
+                                          'WB2Jw',
+                                          'INCLUDE_SIM_PRINTF'
+                                        ],
+                  'hdl_files' => [
+                                   '/mpsoc/rtl/src_peripheral/jtag/jtag_uart/pronoc_jtag_uart.v',
+                                   '/mpsoc/rtl/src_peripheral/jtag/jtag_uart/altera_uart_simulator.v'
+                                 ],
+                  'sw_files' => [
+                                  '/mpsoc/src_processor/src_lib/simple-printf'
+                                ],
+                  'sockets' => {
+ 'RxD_sim' => {
+                                                'connection_num' => 'single connection',
+                                                'value' => 1,
+                                                'type' => 'num',
+                                                '0' => {
+                                                         'name' => 'RxD_sim'
+                                                       }
+                                              },                                 
+
+'jtag_to_wb' => {
+                                                   'value' => 1,
+                                                   'type' => 'num',
+                                                   '0' => {
+                                                            'name' => 'jtag_to_wb'
+                                                          },
+                                                   'connection_num' => 'single connection'
+                                                 }
+                               },
+                  'modules' => {
+                                 'uart_dual_port_ram' => {},
+                                 'pronoc_jtag_uart' => {}
+                               },
+                  'system_c' => '
+void outbyte(char c){jtag_putchar(c);} //called in printf();
+
+char inbyte(){return jtag_getchar();}
+
+void jtag_putchar(char ch){ //print one char from jtag_uart
+	while((${IP}_CONTROL_REG&${IP}_CONTROL_WSPACE_MSK)==0);
+	${IP}_DATA_REG=ch;
+}
+
+char jtag_getchar(void){ //get one char from jtag_uart
+	unsigned int data;
+	data=${IP}_DATA_REG;
+	while(!(data & ${IP}_DATA_RVALID_MSK)) //wait for terminal input
+		data=${IP}_DATA_REG;
+	return (data & ${IP}_DATA_DATA_MSK);
+}	
+
+int jtag_scanstr(char* buf){ //scan string until <ENTER> to buf, return str length 
+	char ch; unsigned int i=0;
+	while(1){
+		ch=jtag_getchar();
+		if(ch==\'\\n\') { buf[i]=0; jtag_putchar(ch); i++; break; } //ENTER
+		else if(ch==127) { printf("\\b \\b"); if(i>0) i--; } //backspace
+		else { jtag_putchar(ch); buf[i]=ch; i++; } //valid
+	}
+	return i;
+}
+
+int jtag_scanint(int *num){ //return the scanned integer
+	unsigned int curr_num,strlen,i=0;
+	char str[11];
+	strlen=jtag_scanstr(str); //scan str
+	if(strlen>11) { printf("overflows 32-bit integer value\\n");return 1; } //check overflow
+	*num=0;
+	for(i=0;i<strlen;i++){ //str2int
+		curr_num=(unsigned int)str[i]-\'0\';
+		if(curr_num>9); //not integer: do nothing
+		else *num=*num*10+curr_num;  //is integer
+	}
+	return 0;
+}
+
+#ifdef INCLUDE_SIMPLE_PRINTF
+	#include "simple-printf/printf.c" 
+#endif
+
+#ifdef INCLUDE_SIMPLE_PRINTF_LONG
+	#include "simple-printf/prinf_long.c" 
+#endif
+
+
+',
+                  'module_name' => 'pronoc_jtag_uart'
+                }, 'ip_gen' );

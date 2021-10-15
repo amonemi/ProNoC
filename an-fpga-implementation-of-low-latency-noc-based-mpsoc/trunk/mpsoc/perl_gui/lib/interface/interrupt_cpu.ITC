@@ -10,7 +10,7 @@
 ################################################################################
 
 $HashRef = bless( {
-                    'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/int_ctrl/int_ctrl.v',
+                    'file_name' => 'mpsoc/rtl/src_peripheral/int_ctrl/int_ctrl.v',
                     'description' => 'interrupt signal between interrupt controller and cpu',
                     'modules' => {
                                    'int_ctrl' => {}

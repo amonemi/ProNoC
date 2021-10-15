@@ -16,38 +16,43 @@ $ipgen = bless( {
                                     'timeout' => 0,
                                     'status' => 'ideal'
                                   },
-                  'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/ext_int/ext_int.v',
+                  'file_name' => 'mpsoc/rtl/src_peripheral/ext_int/ext_int.v',
                   'parameters' => {
                                     'TAGw' => {
-                                                'type' => 'Fixed',
+												'redefine_param' => 1,                                                
+												'type' => 'Fixed',
                                                 'info' => undef,
                                                 'global_param' => 0,
                                                 'content' => '',
                                                 'default' => '3'
                                               },
                                     'SELw' => {
-                                                'default' => '4',
+												'redefine_param' => 1,                                                
+												'default' => '4',
                                                 'content' => '',
                                                 'global_param' => 0,
                                                 'info' => undef,
                                                 'type' => 'Fixed'
                                               },
                                     'Dw' => {
-                                              'info' => undef,
+											'redefine_param' => 1,	                                             
+											 'info' => undef,
                                               'type' => 'Fixed',
                                               'default' => '32',
                                               'content' => '',
                                               'global_param' => 0
                                             },
                                     'EXT_INT_NUM' => {
-                                                       'type' => 'Spin-button',
+														'redefine_param' => 1,                                                      
+													   'type' => 'Spin-button',
                                                        'info' => 'number of external interrupt pins.',
                                                        'global_param' => 0,
                                                        'content' => '1,32,1',
                                                        'default' => '3'
                                                      },
                                     'Aw' => {
-                                              'default' => '3',
+												'redefine_param' => 1,                                              
+											'default' => '3',
                                               'global_param' => 0,
                                               'content' => '',
                                               'info' => undef,
@@ -205,7 +210,7 @@ $ipgen = bless( {
 	#define ${IP}_RD   			(*((volatile unsigned int *) ($BASE+16	)))',
                   'ip_name' => 'ext_int',
                   'hdl_files' => [
-                                   '/mpsoc/src_peripheral/ext_int/ext_int.v'
+                                   '/mpsoc/rtl/src_peripheral/ext_int/ext_int.v'
                                  ],
                   'category' => 'Interrupt',
                   'modules' => {

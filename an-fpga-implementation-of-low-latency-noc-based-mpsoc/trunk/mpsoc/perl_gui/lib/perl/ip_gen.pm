@@ -9,6 +9,7 @@ use warnings;
 use strict;
 
 
+
 package ip_gen;
 #use Clone 'clone';
 
@@ -25,7 +26,7 @@ sub ip_gen_new {
     $self->{parameters_order}=[];
     $self->{ports_order}=[];
     $self->{hdl_files}=[];
-	
+	$self->{hdl_files_ticked}=[];
 	
 
     bless($self,$class);
@@ -334,10 +335,6 @@ sub ipgen_get_port_intfc_port{
 	return ($intfc_port);
 }	
 	
-	
-
-
-
 
 
 sub ipgen_save_wb_addr{
@@ -495,6 +492,14 @@ sub top_add_port{
 }
 
 
+sub top_get_interface{
+	my($self,$intfc_name,$port)=@_;
+	my $range= $self->{interface}{$intfc_name}{ports}{$port}{range};
+	my $type=  $self->{interface}{$intfc_name}{ports}{$port}{type};
+	my $inst = $self->{interface}{$intfc_name}{ports}{$port}{instance_name};
+	my $intfc_port=$self->{interface}{$intfc_name}{ports}{$port}{intfc_port};
+	return ($range,$type,$inst,$intfc_port);
+}
 
 
 sub top_get_port{
@@ -622,6 +627,21 @@ sub top_add_custom_soc_param{
 		#print"$self->{parameters}{$p}=$l{$p};\n";
 	}	
 }	
+
+
+sub top_get_custom_tile_list{
+	my ($self)=@_;
+	my %tiles_hash;
+	%tiles_hash=%{$self->{'tiles'}} if(defined $self->{'tiles'} );
+	my @tiles = sort keys %tiles_hash;
+	return  @tiles;	 
+}	
+
+
+
+	
+	
+	
 	
 sub top_get_custom_soc_param{
 	my ($self,$tile)=@_;
@@ -654,11 +674,12 @@ sub object_get_attribute{
 
 sub object_add_attribute_order{
 	my ($self,$attribute,@param)=@_;
-	$self->{'parameters_order'}{$attribute}=[] if (!defined $self->{parameters_order}{$attribute});
-	foreach my $p (@param){
-		push (@{$self->{parameters_order}{$attribute}},$p);
-
-	}
+	my $r = $self->{'parameters_order'}{$attribute};
+	my @a;
+	@a = @{$r} if(defined $r);
+	push (@a,@param);
+	@a=List::MoreUtils(@a);	
+	$self->{'parameters_order'}{$attribute} =\@a;
 }
 
 sub object_get_attribute_order{

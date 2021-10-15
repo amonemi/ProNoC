@@ -1,0 +1,296 @@
+#######################################################################
+##	File: ProNoC_jtag_wb.IP
+##    
+##	Copyright (C) 2014-2019  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.9.1 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$ipgen = bless( {
+                  'modules' => {
+                                 'pronoc_jtag_wb' => {}
+                               },
+                  'category' => 'Communication',
+                  'ports_order' => [
+                                     'clk',
+                                     'reset',
+                                     'status_i',
+                                     'm_sel_o',
+                                     'm_dat_o',
+                                     'm_addr_o',
+                                     'm_cti_o',
+                                     'm_stb_o',
+                                     'm_cyc_o',
+                                     'm_we_o',
+                                     'm_dat_i',
+                                     'm_ack_i',
+                                     'jtag_to_wb',
+                                     'wb_to_jtag'
+                                   ],
+                  'parameters' => {
+                                    'WB2Jw' => {
+                                                 'content' => '',
+                                                 'type' => 'Fixed',
+                                                 'info' => 'Parameter',
+                                                 'redefine_param' => 1,
+                                                 'global_param' => 'Parameter',
+                                                 'default' => '(JTAG_CONNECT== "XILINX_JTAG_WB") ? 1+JSTATUSw+JINDEXw+1+JDw  : 1'
+                                               },
+                                    'Dw' => {
+                                              'type' => 'Fixed',
+                                              'info' => 'Parameter',
+                                              'content' => '',
+                                              'default' => '32',
+                                              'global_param' => 'Localparam',
+                                              'redefine_param' => 1
+                                            },
+                                    'J2WBw' => {
+                                                 'global_param' => 'Parameter',
+                                                 'redefine_param' => 1,
+                                                 'default' => '(JTAG_CONNECT== "XILINX_JTAG_WB") ? 1+1+JDw+JAw : 1',
+                                                 'content' => '',
+                                                 'type' => 'Fixed',
+                                                 'info' => 'Parameter'
+                                               },
+                                    'JTAG_INDEX' => {
+                                                      'redefine_param' => 1,
+                                                      'global_param' => 'Parameter',
+                                                      'default' => 'CORE_ID',
+                                                      'content' => '',
+                                                      'info' => 'The index number id used for communicating with this IP. All modules connected to the same jtag tab should have a unique JTAG index number. The default value is CORE_ID. The core ID is the tile number in MPSoC. So if each tile has one JTAG_TO_WB module, its  index would be different. In case there are multiple number of  JTAG_TO_WB modules in one tile or the CORE_ID index number has been taken by another module such as RAM you need to manualy set a new value for this parameter.',
+                                                      'type' => 'Entry'
+                                                    },
+                                    'JTAG_CONNECT' => {
+                                                        'content' => '"ALTERA_JTAG_WB","XILINX_JTAG_WB"',
+                                                        'type' => 'Combo-box',
+                                                        'info' => 'For Altera FPGAs define it as "ALTERA_JTAG_WB". In this case, the Virtual JTAG tap IP core from Altera lib is used to communicate with the Host PC.
+
+For XILINX FPGAs define it as "XILINX_JTAG_WB". In this case, the BSCANE2 JTAG tap IP core from XILINX lib is used to communicate with the Host PC.',
+                                                        'redefine_param' => 1,
+                                                        'global_param' => 'Parameter',
+                                                        'default' => '"XILINX_JTAG_WB"'
+                                                      },
+                                    'JDw' => {
+                                               'content' => '',
+                                               'info' => 'Parameter',
+                                               'type' => 'Fixed',
+                                               'global_param' => 'Parameter',
+                                               'redefine_param' => 1,
+                                               'default' => '32'
+                                             },
+                                    'JINDEXw' => {
+                                                   'content' => '',
+                                                   'type' => 'Fixed',
+                                                   'info' => 'Parameter',
+                                                   'global_param' => 'Parameter',
+                                                   'redefine_param' => 1,
+                                                   'default' => '8'
+                                                 },
+                                    'JTAG_CHAIN' => {
+                                                      'content' => '1,2,3,4',
+                                                      'info' => 'Only used for Virtex 4/5 devices. May be 1, 2, 3, or 4. It is the  BSCANE2 JTAG tap number. The default Jtag tap numbers are:
+    4: JTAG runtime memory programmers. 
+    3: UART
+    1,2: reserved',
+                                                      'type' => 'Combo-box',
+                                                      'redefine_param' => 0,
+                                                      'global_param' => 'Parameter',
+                                                      'default' => '4'
+                                                    },
+                                    'JSTATUSw' => {
+                                                    'info' => 'Parameter',
+                                                    'type' => 'Fixed',
+                                                    'content' => '',
+                                                    'default' => '8',
+                                                    'redefine_param' => 1,
+                                                    'global_param' => 'Parameter'
+                                                  },
+                                    'JAw' => {
+                                               'content' => '',
+                                               'type' => 'Fixed',
+                                               'info' => 'Parameter',
+                                               'redefine_param' => 1,
+                                               'global_param' => 'Parameter',
+                                               'default' => '32'
+                                             },
+                                    'SELw' => {
+                                                'type' => 'Fixed',
+                                                'info' => 'Parameter',
+                                                'content' => '',
+                                                'default' => '4',
+                                                'redefine_param' => 1,
+                                                'global_param' => 'Localparam'
+                                              },
+                                    'Aw' => {
+                                              'content' => '',
+                                              'type' => 'Fixed',
+                                              'info' => 'Parameter',
+                                              'redefine_param' => 1,
+                                              'global_param' => 'Localparam',
+                                              'default' => '32'
+                                            },
+                                    'TAGw' => {
+                                                'redefine_param' => 1,
+                                                'global_param' => 'Localparam',
+                                                'default' => '3',
+                                                'content' => '',
+                                                'info' => 'Parameter',
+                                                'type' => 'Fixed'
+                                              }
+                                  },
+                  'module_name' => 'pronoc_jtag_wb',
+                  'ports' => {
+                               'status_i' => {
+                                               'type' => 'input',
+                                               'range' => 'JSTATUSw-1 :   0',
+                                               'intfc_name' => 'IO',
+                                               'intfc_port' => 'NC'
+                                             },
+                               'm_cyc_o' => {
+                                              'type' => 'output',
+                                              'range' => '',
+                                              'intfc_name' => 'plug:wb_master[0]',
+                                              'intfc_port' => 'cyc_o'
+                                            },
+                               'clk' => {
+                                          'intfc_port' => 'clk_i',
+                                          'intfc_name' => 'plug:clk[0]',
+                                          'range' => '',
+                                          'type' => 'input'
+                                        },
+                               'm_sel_o' => {
+                                              'intfc_port' => 'sel_o',
+                                              'intfc_name' => 'plug:wb_master[0]',
+                                              'range' => 'SELw-1          :   0',
+                                              'type' => 'output'
+                                            },
+                               'm_cti_o' => {
+                                              'intfc_port' => 'cti_o',
+                                              'intfc_name' => 'plug:wb_master[0]',
+                                              'range' => 'TAGw-1          :   0',
+                                              'type' => 'output'
+                                            },
+                               'wb_to_jtag' => {
+                                                 'range' => 'WB2Jw-1: 0',
+                                                 'type' => 'output',
+                                                 'intfc_port' => 'jwb_o',
+                                                 'intfc_name' => 'socket:jtag_to_wb[0]'
+                                               },
+                               'm_we_o' => {
+                                             'type' => 'output',
+                                             'range' => '',
+                                             'intfc_port' => 'we_o',
+                                             'intfc_name' => 'plug:wb_master[0]'
+                                           },
+                               'jtag_to_wb' => {
+                                                 'range' => 'J2WBw-1 : 0',
+                                                 'type' => 'input',
+                                                 'intfc_name' => 'socket:jtag_to_wb[0]',
+                                                 'intfc_port' => 'jwb_i'
+                                               },
+                               'm_dat_i' => {
+                                              'intfc_port' => 'dat_i',
+                                              'intfc_name' => 'plug:wb_master[0]',
+                                              'range' => 'Dw-1           :  0',
+                                              'type' => 'input'
+                                            },
+                               'm_stb_o' => {
+                                              'type' => 'output',
+                                              'range' => '',
+                                              'intfc_port' => 'stb_o',
+                                              'intfc_name' => 'plug:wb_master[0]'
+                                            },
+                               'm_ack_i' => {
+                                              'type' => 'input',
+                                              'range' => '',
+                                              'intfc_port' => 'ack_i',
+                                              'intfc_name' => 'plug:wb_master[0]'
+                                            },
+                               'reset' => {
+                                            'intfc_name' => 'plug:reset[0]',
+                                            'intfc_port' => 'reset_i',
+                                            'type' => 'input',
+                                            'range' => ''
+                                          },
+                               'm_addr_o' => {
+                                               'intfc_port' => 'adr_o',
+                                               'intfc_name' => 'plug:wb_master[0]',
+                                               'range' => 'Aw-1            :   0',
+                                               'type' => 'output'
+                                             },
+                               'm_dat_o' => {
+                                              'range' => 'Dw-1            :   0',
+                                              'type' => 'output',
+                                              'intfc_port' => 'dat_o',
+                                              'intfc_name' => 'plug:wb_master[0]'
+                                            }
+                             },
+                  'parameters_order' => [
+                                          'JTAG_CONNECT',
+                                          'JTAG_INDEX',
+                                          'JDw',
+                                          'JAw',
+                                          'JINDEXw',
+                                          'JSTATUSw',
+                                          'J2WBw',
+                                          'WB2Jw',
+                                          'Dw',
+                                          'Aw',
+                                          'TAGw',
+                                          'SELw',
+                                          'JTAG_CHAIN'
+                                        ],
+                  'sockets' => {
+                                 'jtag_to_wb' => {
+                                                   'connection_num' => 'single connection',
+                                                   'value' => 1,
+                                                   '0' => {
+                                                            'name' => 'jtag_to_wb'
+                                                          },
+                                                   'type' => 'num'
+                                                 }
+                               },
+                  'plugs' => {
+                               'reset' => {
+                                            'type' => 'num',
+                                            '0' => {
+                                                     'name' => 'reset'
+                                                   },
+                                            'value' => 1
+                                          },
+                               'wb_master' => {
+                                                'value' => 1,
+                                                '0' => {
+                                                         'name' => 'wb_master'
+                                                       },
+                                                'type' => 'num'
+                                              },
+                               'clk' => {
+                                          '0' => {
+                                                   'name' => 'clk'
+                                                 },
+                                          'value' => 1,
+                                          'type' => 'num'
+                                        }
+                             },
+                  'hdl_files' => [],
+                  'version' => 8,
+                  'file_name' => 'mpsoc/rtl/src_peripheral/jtag/jtag_wb/pronoc_jtag_wb.v',
+                  'gui_status' => {
+                                    'timeout' => 0,
+                                    'status' => 'ideal'
+                                  },
+                  'description' => 'JTAG to Wishbone bus interface. This module allows reading/writing data to the IP cores connected to the wishbone bus (e.g. memory cores). ',
+                  'ip_name' => 'ProNoC_jtag_wb',
+                  'unused' => {
+                                'plug:wb_master[0]' => [
+                                                         'tag_o',
+                                                         'bte_o',
+                                                         'err_i',
+                                                         'rty_i'
+                                                       ]
+                              }
+                }, 'ip_gen' );

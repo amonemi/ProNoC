@@ -1,0 +1,8 @@
+export PATH=$HOME/localperl:$PATH
+export PERL_LOCAL_LIB_ROOT="$HOME/localperl"
+export PERL_MB_OPT="--install_base $HOME/localperl"
+export PERL_MM_OPT="INSTALL_BASE=$HOME/localperl"
+export PERL5LIB=$HOME/localperl/lib/5.34.0:$HOME/localperl/lib/perl5:$PERL5LIB
+export localperl=/$HOME/localperl/bin/perl
+
+

@@ -17,7 +17,7 @@ $HashRef = bless( {
                                               'type' => 'input'
                                             }
                                },
-                    'file_name' => '/home/alireza/Mywork/mpsoc/src_peripheral/int_ctrl/int_ctrl.v',
+                    'file_name' => 'mpsoc/rtl/src_peripheral/int_ctrl/int_ctrl.v',
                     'module_name' => 'int_ctrl',
                     'type' => 'socket',
                     'category' => 'interrupt'

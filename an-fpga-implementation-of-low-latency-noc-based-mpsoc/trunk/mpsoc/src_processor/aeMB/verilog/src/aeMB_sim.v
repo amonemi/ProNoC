@@ -111,8 +111,8 @@ module aeMB_sim (/*AUTOARG*/
       if (cpu.gena) begin
 	 
 	 $write ("\n", ($stime/10));
-	 $writeh (" PC=", iwb_adr );
-	 $writeh ("\t");
+	 $write (" PC=", iwb_adr );
+	 $write ("\t");
 	 
 	 case (wBRA)
 	   2'b00: $write(" ");
@@ -246,8 +246,8 @@ module aeMB_sim (/*AUTOARG*/
 	 endcase // case (cpu.rOPC)
 	 
 	 case (cpu.rOPC[3])
-	   1'b1: $writeh("\tr",cpu.rRD,", r",cpu.rRA,", h",cpu.rIMM);
-	   1'b0: $writeh("\tr",cpu.rRD,", r",cpu.rRA,", r",cpu.rRB,"  ");	
+	   1'b1: $write("\tr",cpu.rRD,", r",cpu.rRA,", h",cpu.rIMM);
+	   1'b0: $write("\tr",cpu.rRD,", r",cpu.rRA,", r",cpu.rRB,"  ");	
 	 endcase // case (cpu.rOPC[3])
 	 
 	 
@@ -265,10 +265,10 @@ module aeMB_sim (/*AUTOARG*/
 	   3'o5: $write(" BSF");
 	   default: $write(" XXX");
 	 endcase // case (cpu.rMXALU)
-	 $writeh("=h",cpu.xecu.xRESULT);
+	 $write("=h",cpu.xecu.xRESULT);
 	 
 	 // WRITEBACK
-	 $writeh("\tSR=", wMSR," ");
+	 $write("\tSR=", wMSR," ");
 	 
 	 if (cpu.regf.fRDWE) begin
 	    case (cpu.rMXDST)
@@ -276,8 +276,8 @@ module aeMB_sim (/*AUTOARG*/
 		 if (dwb_stb_o) $writeh("R",cpu.rRW,"=RAM(h",cpu.regf.xWDAT,")");
 		 if (fsl_stb_o) $writeh("R",cpu.rRW,"=FSL(h",cpu.regf.xWDAT,")");
 	      end
-	      2'o1: $writeh("R",cpu.rRW,"=LNK(h",cpu.regf.xWDAT,")");
-	      2'o0: $writeh("R",cpu.rRW,"=ALU(h",cpu.regf.xWDAT,")");
+	      2'o1: $write("R",cpu.rRW,"=LNK(h",cpu.regf.xWDAT,")");
+	      2'o0: $write("R",cpu.rRW,"=ALU(h",cpu.regf.xWDAT,")");
 	    endcase // case (cpu.rMXDST)
 	 end
 	 

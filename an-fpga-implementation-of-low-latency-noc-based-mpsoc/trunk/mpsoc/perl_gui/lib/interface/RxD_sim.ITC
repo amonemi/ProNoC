@@ -19,7 +19,7 @@ $HashRef = bless( {
                                       'timeout' => 0
                                     },
                     'connection_num' => 'single connection',
-                    'file_name' => '/home/alireza/mywork/mpsoc/src_peripheral/jtag/jtag_uart/jtag_uart_wb.v',
+                    'file_name' => 'mpsoc/rtl/src_peripheral/jtag/jtag_uart/jtag_uart_wb.v',
                     'module_name' => 'jtag_uart_wb',
                     'name' => 'RxD_sim',
                     'ports' => {

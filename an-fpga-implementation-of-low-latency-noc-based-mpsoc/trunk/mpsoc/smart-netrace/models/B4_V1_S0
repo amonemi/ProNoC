@@ -1,0 +1,11 @@
+$model = bless( {
+		'noc_param'=> {
+						"ROUTE_NAME" => "\"XY\"",    					
+		"ADD_PIPREG_AFTER_CROSSBAR" => "1'b1",				
+		"V" => "1",
+		"B" => "4",
+		"SELF_LOOP_EN" => "\"YES\"",
+		"SMART_MAX" => "0",
+		"ESCAP_VC_MASK" => "1'b1",
+	}
+}, 'ProNOC' );

@@ -1,0 +1,164 @@
+set jseq [jtag sequence]
+connect
+jtag targets 3
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7f00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0100000002
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0300000004
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0200000004
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0000000002
+$jseq run
+puts "hi"
+set jseq [jtag sequence]
+connect
+jtag targets 3
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0000000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0400000002
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0100000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0700000002
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0000000004
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0600000002
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 deadbeef04
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 aaaaaaaa04
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 5555555504
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 1234567804
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 ffaabb0004
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0500000002
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0100000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0200000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0300000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0400000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0500000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0100000004
+set data[$jseq run]
+puts "RESULT:$data"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0400000002
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -capture -hex 36 0000000004
+set data[$jseq run]
+puts "RESULT:$data"
+set jseq [jtag sequence]
+connect
+jtag targets 3
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 7f00000001
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0100000002
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0000000004
+$jseq run
+puts "hi"
+$jseq clear
+$jseq irshift -state IDLE -hex 6 23
+$jseq drshift -state IDLE -hex 36 0000000002
+$jseq run
+puts "hi"

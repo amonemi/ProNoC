@@ -1,0 +1,127 @@
+#######################################################################
+##	File: xilinx_IBUFGDS.IP
+##    
+##	Copyright (C) 2014-2019  Alireza Monemi
+##    
+##	This file is part of ProNoC 1.9.1 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAIVOR.
+################################################################################
+
+$ipgen = bless( {
+                  'version' => 3,
+                  'modules' => {
+                                 'IBUFGDS' => {}
+                               },
+                  'description' => 'Xilinx Differential Signaling Input Clock Buffer',
+                  'file_name' => 'mpsoc/perl_gui/lib/verilog/IBUFGDS.v',
+                  'sockets' => {
+                                 'clk' => {
+                                            'type' => 'num',
+                                            'connection_num' => 'multi connection',
+                                            '1' => {
+                                                     'name' => 'clk_1'
+                                                   },
+                                            'value' => 1,
+                                            '0' => {
+                                                     'name' => 'clk'
+                                                   }
+                                          }
+                               },
+                  'ip_name' => 'xilinx_IBUFGDS',
+                  'hdl_files' => [],
+                  'ports_order' => [
+                                     'O',
+                                     'I',
+                                     'IB'
+                                   ],
+                  'module_name' => 'IBUFGDS',
+                  'category' => 'Source',
+                  'parameters' => {
+                                    'IBUF_LOW_PWR' => {
+                                                        'redefine_param' => 1,
+                                                        'default' => '"TRUE"',
+                                                        'info' => 'Low power="TRUE",Highest performance="FALSE"',
+                                                        'type' => 'Combo-box',
+                                                        'global_param' => 'Localparam',
+                                                        'content' => '"FALSE", "TRUE"'
+                                                      },
+                                    'CAPACITANCE' => {
+                                                       'content' => '"LOW", "NORMAL", "DONT_CARE"',
+                                                       'global_param' => 'Localparam',
+                                                       'type' => 'Combo-box',
+                                                       'info' => '',
+                                                       'default' => '"DONT_CARE"',
+                                                       'redefine_param' => 1
+                                                     },
+                                    'IBUF_DELAY_VALUE' => {
+                                                            'info' => 'Parameter',
+                                                            'type' => 'Combo-box',
+                                                            'default' => '"0"',
+                                                            'redefine_param' => 1,
+                                                            'content' => '"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"',
+                                                            'global_param' => 'Localparam'
+                                                          },
+                                    'IOSTANDARD' => {
+                                                      'global_param' => 'Localparam',
+                                                      'content' => '',
+                                                      'default' => '"DEFAULT"',
+                                                      'redefine_param' => 1,
+                                                      'info' => 'Specify the input I/O standard',
+                                                      'type' => 'Fixed'
+                                                    },
+                                    'DIFF_TERM' => {
+                                                     'info' => 'Differential Termination',
+                                                     'type' => 'Combo-box',
+                                                     'default' => '"FALSE"',
+                                                     'redefine_param' => 1,
+                                                     'content' => ' "TRUE", "FALSE"',
+                                                     'global_param' => 'Localparam'
+                                                   }
+                                  },
+                  'ports' => {
+                               'O' => {
+                                        'range' => '',
+                                        'intfc_name' => 'socket:clk[0]',
+                                        'intfc_port' => 'clk_o',
+                                        'type' => 'output'
+                                      },
+                               'I' => {
+                                        'intfc_port' => 'clk_i',
+                                        'type' => 'input',
+                                        'range' => '',
+                                        'intfc_name' => 'plug:clk[0]'
+                                      },
+                               'IB' => {
+                                         'intfc_port' => 'clk_i',
+                                         'type' => 'input',
+                                         'range' => '',
+                                         'intfc_name' => 'plug:clk[1]'
+                                       }
+                             },
+                  'unused' => undef,
+                  'gui_status' => {
+                                    'status' => 'ideal',
+                                    'timeout' => 0
+                                  },
+                  'parameters_order' => [
+                                          'CAPACITANCE',
+                                          'DIFF_TERM',
+                                          'IBUF_DELAY_VALUE',
+                                          'IBUF_LOW_PWR',
+                                          'IOSTANDARD'
+                                        ],
+                  'plugs' => {
+                               'clk' => {
+                                          'type' => 'num',
+                                          '0' => {
+                                                   'name' => 'clk_p'
+                                                 },
+                                          'value' => 2,
+                                          '1' => {
+                                                   'name' => 'clk_n'
+                                                 }
+                                        }
+                             }
+                }, 'ip_gen' );

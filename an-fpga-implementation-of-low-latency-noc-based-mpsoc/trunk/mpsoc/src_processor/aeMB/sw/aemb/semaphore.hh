@@ -49,7 +49,7 @@ extern "C" {
 
      Increment the semaphore and run. This is a software mechanism.
   */
-  inline void aembSignal(volatile semaphore _sem) 
+  static inline void aembSignal(volatile semaphore _sem) 
   { 
     _aembLockMTX();
     _sem++; 
@@ -62,7 +62,7 @@ extern "C" {
      Decrement the semaphore and block if < 0. This is a software
      mechanism.
   */
-  inline void aembWait(volatile semaphore _sem) 
+  static inline void aembWait(volatile semaphore _sem) 
   {
     _aembLockMTX();
     _sem--; 
@@ -70,14 +70,13 @@ extern "C" {
     while (_sem < 0); 
   }
 
-  semaphore __mutex_rendezvous0 = 0; ///< internal rendezvous mutex
-  semaphore __mutex_rendezvous1 = 1; ///< internal rendezvous mutex
+  
 
   /**
      Implements a simple rendezvous mechanism
    */
   /*
-  inline void aembRendezvous()
+  static inline void aembRendezvous()
   {
     if (isThread1())
       {

@@ -1,0 +1,401 @@
+# do /home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/model.tcl
+###################################################################
+##                Start Compilation Script 
+###################################################################
+###################################################################
+##---- Specify variables
+# /home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart
+# /home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/verilog
+# /home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/../../jtag_uart/pronoc_jtag_uart.v
+# /home/alireza/work/hca_git/mpsoc_work/simulation
+# /home/alireza/work/hca_git/mpsoc_work/simulation/work
+# reading modelsim.ini
+# 1
+###################################################################
+##---- 1. Creating working library
+# ** Warning: (vlib-34) Library already exists at "/home/alireza/work/hca_git/mpsoc_work/simulation/work".
+# Model Technology ModelSim - Intel FPGA Edition vmap 10.5b Lib Mapping Utility 2016.10 Oct  5 2016
+# vmap work /home/alireza/work/hca_git/mpsoc_work/simulation/work 
+# Modifying modelsim.ini
+###################################################################
+##---- 3. Compile the Design
+# 1587317519
+# 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 19:31:59 on Apr 19,2020
+# vlog -reportprogress 300 -work /home/alireza/work/hca_git/mpsoc_work/simulation/work "+acc=rn" "+incdir+/home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/verilog+/home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart" /home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/verilog/uart_jtag_testbench.v 
+# -- Compiling module uart_jtag_testbench
+# 
+# Top level modules:
+# 	uart_jtag_testbench
+# End time: 19:31:59 on Apr 19,2020, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 19:31:59 on Apr 19,2020
+# vlog -reportprogress 300 -work /home/alireza/work/hca_git/mpsoc_work/simulation/work "+acc=rn" "+incdir+/home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/verilog+/home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart" /home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/verilog/testbench.v 
+# -- Compiling module testbench
+# 
+# Top level modules:
+# 	testbench
+# End time: 19:31:59 on Apr 19,2020, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 19:31:59 on Apr 19,2020
+# vlog -reportprogress 300 -work /home/alireza/work/hca_git/mpsoc_work/simulation/work "+acc=rn" "+incdir+/home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/verilog+/home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart" /home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/../../jtag_uart/pronoc_jtag_uart.v 
+# -- Compiling module pronoc_jtag_uart
+# -- Compiling module pronoc_jtag_uart_hw
+# -- Compiling module uart_fifo
+# 
+# Top level modules:
+# 	pronoc_jtag_uart
+# 	pronoc_jtag_uart_hw
+# End time: 19:31:59 on Apr 19,2020, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# 1587317519
+###################################################################
+##                       END OF COMPILATION
+###################################################################
+# vsim -t ps work.testbench 
+# Start time: 19:31:59 on Apr 19,2020
+# Loading work.testbench
+# Loading work.pronoc_jtag_uart_hw
+# Loading work.uart_fifo
+# Loading work.uart_jtag_testbench
+# ** Warning: (vsim-3116) Problem reading symbols from linux-gate.so.1 : can not open ELF file.
+#             30064000jtag read h
+#             31120000jtag read i
+#             32176000jtag read  
+#             33232000jtag read e
+#             34288000jtag read v
+#             35344000jtag read e
+#             36400000jtag read r
+#             37456000jtag read y
+#             38512000jtag read  
+#             39568000jtag read o
+#             40624000jtag read n
+#             41680000jtag read e
+#             42736000jtag read !
+#             43792000jtag read  
+#             44848000jtag read T
+#             45904000jtag read h
+# Wb got X
+#             46960000jtag read i
+# Wb got Y
+#             48016000jtag read s
+# Wb got Z
+#             49072000jtag read  
+# Wb got X
+#             50128000jtag read i
+# Wb got Y
+#             51184000jtag read s
+# Wb got Z
+#             52240000jtag read  
+#             53296000jtag read a
+#             54352000jtag read  
+#             55408000jtag read t
+#             56464000jtag read e
+#             57520000jtag read s
+#             58576000jtag read t
+#             59632000jtag read  
+#             60688000jtag read m
+#             61744000jtag read e
+#             62800000jtag read s
+#             63856000jtag read s
+#             64912000jtag read a
+#             65968000jtag read g
+#             67024000jtag read e
+#             68080000jtag read 
+# 
+#             69136000jtag read A
+#             70192000jtag read l
+#             71248000jtag read s
+#             72304000jtag read o
+#             73360000jtag read  
+#             74416000jtag read t
+#             75472000jtag read h
+#             76528000jtag read i
+#             77584000jtag read s
+#             78640000jtag read  
+#             79696000jtag read o
+#             80752000jtag read n
+#             81808000jtag read e
+#             82864000jtag read !
+#             83920000jtag read h
+#             84976000jtag read i
+#             86032000jtag read  
+#             87088000jtag read e
+#             88144000jtag read v
+#             89200000jtag read e
+#             90256000jtag read r
+#             91312000jtag read y
+#             92368000jtag read  
+#             93424000jtag read o
+#             94480000jtag read n
+#             95536000jtag read e
+#             96592000jtag read !
+#             97648000jtag read  
+#             98704000jtag read T
+#             99760000jtag read h
+#            100816000jtag read i
+#            101872000jtag read s
+#            102928000jtag read  
+#            103984000jtag read i
+#            105040000jtag read s
+#            106096000jtag read  
+#            107152000jtag read a
+#            108208000jtag read  
+#            109264000jtag read t
+#            110320000jtag read e
+#            111376000jtag read s
+#            112432000jtag read t
+#            113488000jtag read  
+#            114544000jtag read m
+#            115600000jtag read e
+#            116656000jtag read s
+#            117712000jtag read s
+#            118768000jtag read a
+#            119824000jtag read g
+#            120880000jtag read e
+#            121936000jtag read 
+# 
+#            122992000jtag read h
+#            124048000jtag read i
+#            125104000jtag read  
+#            126160000jtag read e
+#            127216000jtag read v
+#            128272000jtag read e
+#            129328000jtag read r
+#            130384000jtag read y
+#            131440000jtag read  
+#            132496000jtag read o
+#            133552000jtag read n
+#            134608000jtag read e
+#            135664000jtag read !
+#            136720000jtag read  
+#            137776000jtag read T
+#            138832000jtag read h
+#            139888000jtag read i
+#            140944000jtag read s
+#            142000000jtag read  
+#            143056000jtag read i
+#            144112000jtag read s
+#            145168000jtag read  
+#            146224000jtag read a
+#            147280000jtag read  
+#            148336000jtag read t
+#            149392000jtag read e
+#            150448000jtag read s
+#            151504000jtag read t
+#            152560000jtag read  
+#            153616000jtag read m
+#            154672000jtag read e
+#            155728000jtag read s
+#            156784000jtag read s
+#            157840000jtag read a
+#            158896000jtag read g
+#            159952000jtag read e
+#            161008000jtag read 
+# 
+quit -sim;cd /home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart;do model.tcl
+# End time: 19:35:03 on Apr 19,2020, Elapsed time: 0:03:04
+# Errors: 0, Warnings: 1
+# reading /home/alireza/intelFPGA_lite/18.1/modelsim_ase/linuxaloem/../modelsim.ini
+###################################################################
+##                Start Compilation Script 
+###################################################################
+###################################################################
+##---- Specify variables
+# /home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart
+# /home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/verilog
+# /home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/../../jtag_uart/pronoc_jtag_uart.v
+# /home/alireza/work/hca_git/mpsoc_work/simulation
+# /home/alireza/work/hca_git/mpsoc_work/simulation/work
+# reading modelsim.ini
+# 1
+###################################################################
+##---- 1. Creating working library
+# ** Warning: (vlib-34) Library already exists at "/home/alireza/work/hca_git/mpsoc_work/simulation/work".
+# Model Technology ModelSim - Intel FPGA Edition vmap 10.5b Lib Mapping Utility 2016.10 Oct  5 2016
+# vmap work /home/alireza/work/hca_git/mpsoc_work/simulation/work 
+# Modifying modelsim.ini
+###################################################################
+##---- 3. Compile the Design
+# 1587317704
+# 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 19:35:04 on Apr 19,2020
+# vlog -reportprogress 300 -work /home/alireza/work/hca_git/mpsoc_work/simulation/work "+acc=rn" "+incdir+/home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/verilog+/home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart" /home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/verilog/uart_jtag_testbench.v 
+# -- Compiling module uart_jtag_testbench
+# 
+# Top level modules:
+# 	uart_jtag_testbench
+# End time: 19:35:04 on Apr 19,2020, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 19:35:04 on Apr 19,2020
+# vlog -reportprogress 300 -work /home/alireza/work/hca_git/mpsoc_work/simulation/work "+acc=rn" "+incdir+/home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/verilog+/home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart" /home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/verilog/testbench.v 
+# -- Compiling module testbench
+# 
+# Top level modules:
+# 	testbench
+# End time: 19:35:04 on Apr 19,2020, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+# Start time: 19:35:04 on Apr 19,2020
+# vlog -reportprogress 300 -work /home/alireza/work/hca_git/mpsoc_work/simulation/work "+acc=rn" "+incdir+/home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/verilog+/home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart" /home/alireza/work/hca_git/ProNoC/mpsoc/src_peripheral/jtag/jtag_simulation/pronoc_uart/../../jtag_uart/pronoc_jtag_uart.v 
+# -- Compiling module pronoc_jtag_uart
+# -- Compiling module pronoc_jtag_uart_hw
+# -- Compiling module uart_fifo
+# 
+# Top level modules:
+# 	pronoc_jtag_uart
+# 	pronoc_jtag_uart_hw
+# End time: 19:35:04 on Apr 19,2020, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# 1587317704
+###################################################################
+##                       END OF COMPILATION
+###################################################################
+# vsim -t ps work.testbench 
+# Start time: 19:35:04 on Apr 19,2020
+# Loading work.testbench
+# Loading work.pronoc_jtag_uart_hw
+# Loading work.uart_fifo
+# Loading work.uart_jtag_testbench
+# ** Warning: (vsim-3116) Problem reading symbols from linux-gate.so.1 : can not open ELF file.
+#            300070000jtag read h
+#            301126000jtag read i
+#            302182000jtag read  
+#            303238000jtag read e
+#            304294000jtag read v
+#            305350000jtag read e
+#            306406000jtag read r
+#            307462000jtag read y
+#            308518000jtag read  
+#            309574000jtag read o
+#            310630000jtag read n
+#            311686000jtag read e
+#            312742000jtag read !
+#            313798000jtag read  
+#            314854000jtag read T
+#            315910000jtag read h
+# Wb got X
+#            316966000jtag read i
+# Wb got Y
+#            318022000jtag read s
+# Wb got Z
+#            319078000jtag read  
+# Wb got X
+#            320134000jtag read i
+# Wb got Y
+#            321190000jtag read s
+# Wb got Z
+#            322246000jtag read  
+#            323302000jtag read a
+#            324358000jtag read  
+#            325414000jtag read t
+#            326470000jtag read e
+#            327526000jtag read s
+#            328582000jtag read t
+#            329638000jtag read  
+#            330694000jtag read m
+#            331750000jtag read e
+#            332806000jtag read s
+#            333862000jtag read s
+#            334918000jtag read a
+#            335974000jtag read g
+#            337030000jtag read e
+#            338086000jtag read 
+# 
+#            339142000jtag read A
+#            340198000jtag read l
+#            341254000jtag read s
+#            342310000jtag read o
+#            343366000jtag read  
+#            344422000jtag read t
+#            345478000jtag read h
+#            346534000jtag read i
+#            347590000jtag read s
+#            348646000jtag read  
+#            349702000jtag read o
+#            350758000jtag read n
+#            351814000jtag read e
+#            352870000jtag read !
+#            353926000jtag read h
+#            354982000jtag read i
+#            356038000jtag read  
+#            357094000jtag read e
+#            358150000jtag read v
+#            359206000jtag read e
+#            360262000jtag read r
+#            361318000jtag read y
+#            362374000jtag read  
+#            363430000jtag read o
+#            364486000jtag read n
+#            365542000jtag read e
+#            366598000jtag read !
+#            367654000jtag read  
+#            368710000jtag read T
+#            369766000jtag read h
+#            370822000jtag read i
+#            371878000jtag read s
+#            372934000jtag read  
+#            373990000jtag read i
+#            375046000jtag read s
+#            376102000jtag read  
+#            377158000jtag read a
+#            378214000jtag read  
+#            379270000jtag read t
+#            380326000jtag read e
+#            381382000jtag read s
+#            382438000jtag read t
+#            383494000jtag read  
+#            384550000jtag read m
+#            385606000jtag read e
+#            386662000jtag read s
+#            387718000jtag read s
+#            388774000jtag read a
+#            389830000jtag read g
+#            390886000jtag read e
+#            391942000jtag read 
+# 
+#            392998000jtag read h
+#            394054000jtag read i
+#            395110000jtag read  
+#            396166000jtag read e
+#            397222000jtag read v
+#            398278000jtag read e
+#            399334000jtag read r
+#            400390000jtag read y
+#            401446000jtag read  
+#            402502000jtag read o
+#            403558000jtag read n
+#            404614000jtag read e
+#            405670000jtag read !
+#            406726000jtag read  
+#            407782000jtag read T
+#            408838000jtag read h
+#            409894000jtag read i
+#            410950000jtag read s
+#            412006000jtag read  
+#            413062000jtag read i
+#            414118000jtag read s
+#            415174000jtag read  
+#            416230000jtag read a
+#            417286000jtag read  
+#            418342000jtag read t
+#            419398000jtag read e
+#            420454000jtag read s
+#            421510000jtag read t
+#            422566000jtag read  
+#            423622000jtag read m
+#            424678000jtag read e
+#            425734000jtag read s
+#            426790000jtag read s
+#            427846000jtag read a
+#            428902000jtag read g
+#            429958000jtag read e
+#            431014000jtag read 
+# 
+# End time: 19:43:09 on Apr 19,2020, Elapsed time: 0:08:05
+# Errors: 0, Warnings: 1

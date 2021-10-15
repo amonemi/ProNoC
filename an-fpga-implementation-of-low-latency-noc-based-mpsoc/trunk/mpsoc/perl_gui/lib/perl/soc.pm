@@ -2,9 +2,14 @@
 use strict;
 
 package soc;
-
+use FindBin;
+use lib $FindBin::Bin;
 use ip;
 
+sub uniq {
+  my %seen;
+  return grep { !$seen{$_}++ } @_;
+}
 
 sub soc_new {
     # be backwards compatible with non-OO call
@@ -15,6 +20,7 @@ sub soc_new {
     $self->{modules}        = {}; 
     $self->{instance_order}=();
     $self->{hdl_files}=();
+    $self->{hdl_files_ticked}=();
   
     bless($self,$class);
   
@@ -79,7 +85,7 @@ sub soc_add_instance_order{
 
 sub soc_remove_scolar_from_array{
 	my ($array_ref,$item)=@_;
-	my @array=@{$array_ref};
+	my @array=@{$array_ref} if(defined $array_ref);
 	my @new;
 	foreach my $p (@array){
 		if($p ne $item ){
@@ -404,7 +410,20 @@ sub soc_add_instance_param{
 			return 1;
 		}
 		return 0;
-}	
+}
+
+sub soc_add_instance_param_type	{
+	my ($self,$instance_id,$param_ref)=@_;
+		if(exists ($self->{instances}{$instance_id})){
+			my %param=%$param_ref;
+			foreach my $p (sort keys %param){
+				my $value = $param{$p};
+				$self->{instances}{$instance_id}{parameters_type}{$p}{value}=$value;				
+			}	
+			return 1;
+		}
+		return 0;
+}
 
 
 sub soc_add_instance_param_order{
@@ -435,16 +454,34 @@ sub soc_get_module_param{
 		{
 			foreach my $p (sort keys %{$self->{instances}{$instance_id}{parameters}})
 			{
-				$param{$p}=$self->{instances}{$instance_id}{parameters}{$p}{value};
+				my $value =	$self->{instances}{$instance_id}{parameters}{$p}{value};			
+				$param{$p}=$value if (defined $value);
 			}
 		}		
 		return %param; 
 }
 
 
+sub soc_get_module_param_type{
+		my ($self,$instance_id)=@_;
+		my %param_type;
+		if(exists ($self->{instances}{$instance_id}{parameters}))
+		{
+			foreach my $p (sort keys %{$self->{instances}{$instance_id}{parameters}})
+			{
+				my $value = $self->{instances}{$instance_id}{parameters_type}{$p}{value};
+				$param_type{$p}=$value if (defined $value);
+			}
+		}		
+		return %param_type; 
+}
+
+
+
 
 sub soc_get_module_param_value{
 		my ($self,$instance_id,$param)=@_;
+		return undef if(!defined $param);
 		my $value;
 		if(exists ($self->{instances}{$instance_id}{parameters}{$param})){
 			$value= $self->{instances}{$instance_id}{parameters}{$param}{value};
@@ -609,6 +646,11 @@ sub soc_get_hdl_files{
 	return @{$self->{hdl_files}};
 }
 
+sub soc_get_hdl_sim_files{
+	my ($self)=shift;
+	return @{$self->{hdl_files_ticked}};
+}
+
 
 sub soc_add_hdl_files{
 	my ($self,@hdl_list)=@_;
@@ -616,6 +658,14 @@ sub soc_add_hdl_files{
 	my @new=(@old,@hdl_list);
 	$self->{hdl_files}=\@new;	
 }
+
+sub soc_add_hdl_sim_files{
+	my ($self,@hdl_list)=@_;
+	my @old=@{$self->{hdl_files_ticked}};
+	my @new=(@old,@hdl_list);
+	$self->{hdl_files_ticked}=\@new;	
+}
+
 
 #a-b
 sub soc_get_diff_array{
@@ -635,6 +685,14 @@ sub soc_remove_hdl_files{
 	my @old=@{$self->{hdl_files}};
 	my @new=soc_get_diff_array(\@old,\@hdl_list);
 	$self->{hdl_files}=\@new;	
+}
+
+
+sub soc_remove_hdl_sim_files{
+	my ($self,@hdl_list)=@_;
+	my @old=@{$self->{hdl_files_ticked}};
+	my @new=soc_get_diff_array(\@old,\@hdl_list);
+	$self->{hdl_files_ticked}=\@new;	
 }
 
 
@@ -689,11 +747,12 @@ sub object_get_attribute{
 
 sub object_add_attribute_order{
 	my ($self,$attribute,@param)=@_;
-	$self->{'parameters_order'}{$attribute}=[] if (!defined $self->{parameters_order}{$attribute});
-	foreach my $p (@param){
-		push (@{$self->{parameters_order}{$attribute}},$p);
-
-	}
+	my $r = $self->{'parameters_order'}{$attribute};
+	my @a;
+	@a = @{$r} if(defined $r);
+	push (@a,@param);
+	@a=uniq(@a);	
+	$self->{'parameters_order'}{$attribute} =\@a;
 }
 
 sub object_get_attribute_order{

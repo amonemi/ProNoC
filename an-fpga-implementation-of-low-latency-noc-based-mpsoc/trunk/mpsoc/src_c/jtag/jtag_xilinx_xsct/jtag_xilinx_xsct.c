@@ -1,0 +1,616 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <stdint.h>
+#include <unistd.h> // getopt
+#include <inttypes.h>
+#include <string.h>
+#include "jtag.h"
+
+
+
+
+/* functions */
+int send_binary_file();
+int read_mem();
+void usage();
+void processArgs (int , char** );
+int send_data ();
+int hexcut( char *  , unsigned *  , int  );
+void vdr_large (unsigned , char * , char *);
+void hexgen( char * , unsigned *, int );
+
+int main(int argc, char **argv) {
+		
+	processArgs (argc, argv );
+        WORDS_NUM= (BYTE_NUM % sizeof(unsigned )) ? (BYTE_NUM / sizeof(unsigned ) )+1 : (BYTE_NUM / sizeof(unsigned ));	
+	printf("Initial Vjtag for index num=%u target num=%u and shift-reg size %u.\n",index_num,jtag_target_number,jtag_shift_reg_size);
+	if (jtag_init()){
+		fprintf (stderr, "Error opening jtag IP with %d index num\n",index_num);
+		return -1;
+	}
+	jtag_vindex(index_num);
+
+	//printf("jtag is initilized\n");
+	if (enable_binary_send | enable_binary_verify) {
+		if( send_binary_file() == -1) return -1;
+	}
+
+	if  (enable_binary_read){
+		if( read_mem() == -1) return -1;
+
+	}
+	
+	if (write_data!=0){	
+		printf("send %s to jtag\n",write_data);	
+		send_data();
+		
+
+	}
+
+	return 0;
+}
+
+
+
+void usage(){
+
+	printf ("usage:./jtag_main [-n	index number] -a jtag_target_number [-b jtag_shift_reg_size] [-i file_name][-c][-s rd/wr offset address][-d string] [-t Jtag_chain number]\n");
+	printf ("\t-a	the order number of target device in jtag chain. Run jtag targets after \"connect\" command in xsct terminal to list all availble targets\n");  
+	printf ("\t-b	Jtag shiftreg data width. It should be the target device Data width + 4\n");  
+	printf ("\t-t	Jtag_chain number: the BSCANE2 tab number :1,2,3 or 4. The default is 4\n");    	
+	printf ("\t-n	index number: the target jtag IP core index number. The default number is 126\n");  
+	printf ("\t-i	file_name:  input binary file name (.bin file)\n");
+	printf ("\t-r	read memory content and display in terminal\n");
+	printf ("\t-v	read memory content and verify with input binary file\n");
+	printf ("\t-w	bin file word width in byte. default is 4 bytes (32 bits)\n");
+	printf ("\t-c	verify after write\n");
+	printf ("\t-s	memory wr/rd offset address in byte (hex format). The default value is 0x0000000\n");
+	printf ("\t-e	memory  boundary address in byte (hex format).  The default value is 0xFFFFFFFF\n");
+	printf ("\t-d	string: use for setting instruction or data value to jtag tap.  string format : \"instr1,instr2,...,instrn\"\n \tinstri = I:instruct_num: send instruct_num to instruction register \n \tD:data_size_in_bit:data : send data in hex to data register\n  \tR:data_size_in_bit:data : Read data register and show it on screan then write given data in hex to data register\n");
+		
+}
+
+void processArgs (int argc, char **argv )
+{
+   char c;
+int p;
+
+	/* don't want getopt to moan - I can do that just fine thanks! */
+	opterr = 0;
+	if (argc < 2)  usage();
+	while ((c = getopt (argc, argv, "s:e:d:n:t:i:v:w:a:b:cr")) != -1)
+	{
+	   switch (c)
+	    {
+	    case 'a':	/* hardware_name */
+	       jtag_target_number = atoi(optarg);
+	       break;
+
+	    case 'b':	/* device number in chain */
+	       jtag_shift_reg_size = atoi(optarg);
+	       break;
+
+	    case 't':	/* Jtag_chain_num */
+	       chain_num = atoi(optarg);
+	       if (chain_num<1 || chain_num>4 ) {
+	    	   fprintf (stderr, "Wrong jtag_chain_num the given %u value is out of valid range 1,2,3 or 4.\n\n", chain_num);
+	    	   usage();
+	       }
+	       break;
+
+	    case 'n':	/* index number */
+	       index_num = atoi(optarg);
+	       break;
+
+	    case 'i':	/* input binary file name */
+	    	binary_file_name = optarg;
+	    	enable_binary_send=1;
+	    	break;
+
+	    case 'v':	/* input binary file name */
+	   		binary_file_name = optarg;
+	   		enable_binary_verify=1;
+	   		write_verify= 1;
+	   		break;
+
+
+	    case 'r':	/* read memory */
+	    	enable_binary_read=1;
+	    	break;
+
+	    case 'w':	/* word width in byte */
+	    	word_width= atoi(optarg);
+	    	break;
+
+	    case 'c':	/* enable write verify */
+	    	write_verify= 1;
+	    	break;
+
+	    case 'd':	/* send string */
+	    	write_data= optarg;
+	    	break;
+
+	    case 's':	/* set offset address*/
+		
+		p=sscanf(optarg,"%x",&memory_offset);
+		if( p==0){
+			 fprintf (stderr, "invalid memory offset adress format `%s'.\n", optarg);
+			 usage();
+			 exit(1);
+		}
+		//printf("p=%d,memory_offset=%x\n",p,memory_offset);		
+		break;
+	    case 'e':	/* wmemory  boundary address */
+		p=sscanf(optarg,"%x",&memory_boundary);
+		if( p==0){
+			 fprintf (stderr, "invalid memory boundary adress format `%s'.\n", optarg);
+			 usage();
+			 exit(1);
+		}		
+		break;
+
+	    case '?':
+	       if (isprint (optopt))
+		  fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+	       else
+		  fprintf (stderr,
+			   "Unknown option character `\\x%x'.\n",
+			   optopt);
+	    default:
+	       usage();
+	       exit(1);
+	    }
+      }
+}
+
+unsigned * read_file (FILE * fp, unsigned int  * n ){
+	
+	unsigned * buffer;
+	unsigned val;
+	unsigned char ch;
+	unsigned int i=0;
+	char cnt=0;
+	unsigned int num=0;
+	unsigned int width= (BYTE_NUM < sizeof(unsigned )) ? BYTE_NUM :  sizeof(unsigned ); //max is 4 then
+	fseek(fp, 0, SEEK_END); // seek to end of file
+	num = ftell(fp); // get current file pointer
+	*n=num;// number of bytes from the beginning of the file
+	
+	
+
+
+	num=(num/width)+2;
+	fseek(fp, 0, SEEK_SET);
+	//printf ("num=%u\n",num);	
+	buffer = (unsigned *) malloc(num * sizeof(unsigned ) );  //memory allocated using malloc
+    	if(buffer == NULL)                     
+    	{
+        	printf("Error! memory not allocated.");
+       		exit(0);
+   	}
+	ch=fgetc(fp);
+	
+	while(!feof(fp)){		
+		val<<=8;		
+		val|=ch;
+		cnt++;
+		//printf("ch=%x\t",ch);
+		if(cnt==width){
+			//printf("%d:%x\n",i,val);
+			buffer[i] = val;
+			val=0;
+			cnt=0;
+			i++;
+		}
+		ch=fgetc(fp);
+	}
+	if( cnt>0){
+		val<<=(8 *(width-cnt));
+		printf("%d:%x\n",i,val);
+		buffer[i] = val;
+		
+	}
+
+return buffer;
+
+}
+
+
+
+int send_data ()
+{  
+	char * pch;
+	char string[100];
+	int bit=0,  inst=0, d=0;
+	char out[100];
+	pch = strtok (write_data,",");
+	
+	while (pch != NULL)
+	{
+		//printf("pch=%s\n",pch);
+		while(1){
+			 d=1;
+			if(sscanf( pch, "D:%d:%s", &bit, string )) break;
+			if(sscanf( pch, "d:%d:%s", &bit, string )) break;
+			//if(sscanf( pch, "D:%d:" PRIx64  , &bit, &data )) break;
+			//if(sscanf( pch, "d:%d:%016x", &bit, &data )) break;
+			 d=2;
+			if(sscanf( pch, "R:%d:%s",&bit, string)) break;
+			if(sscanf( pch, "r:%d:%s",&bit, string)) break;
+			 d=0;
+			if(sscanf( pch, "I:%d", &inst)) break;
+			if(sscanf( pch, "i:%d", &inst)) break;
+			printf("invalid format : %s\n",pch);
+			return -1;
+
+		}
+		if(d==1){
+			//printf ("(bit=%d, data=%s)\n",bit, string);
+			//jtag_vdr(bit, data, 0);
+			vdr_large(bit,string,0);
+			
+		}else if(d==2){
+			vdr_large(bit,string,out);
+			vdr_large(bit,string,out);
+			vdr_large(bit,string,out);
+			printf("###read data#%s###read data#\n",out);
+		}else{
+			
+			//printf("I=%d\n",inst);				
+			jtag_vir(inst);
+			
+		}
+		
+		pch = strtok (NULL, ",");
+		
+  	}
+  return 0;
+}
+
+int compare_values( unsigned * val1, unsigned * val2, int words, unsigned int address){
+
+	int i,error=0;
+	for(i=0;i<words;i++){
+		if (val1[i] != val2[i]) error=1;
+	}
+	if(error){
+		 printf ("Error: missmatched at location %d. Expected 0X",address);
+		 for(i=0;i<words;i++) printf("%08X",val1[i] );
+		 printf (" but read 0X");
+		 for(i=0;i<words;i++) printf("%08X",val2[i] );
+		 printf ("\n");
+
+	}
+	return error;
+
+
+}
+
+void print_values( unsigned * val2, int words){
+		 int i;
+		 for(i=0;i<words;i++) printf("%08X",val2[words-i-1] );
+		 printf ("\n");
+}
+
+
+void reorder_buffer(unsigned * buff, unsigned int words){
+	unsigned tmp;
+	unsigned int i;
+	for(i=0;i<words/2;i++){
+		tmp= buff[i];
+		buff[i]=buff[i+words-1];
+		buff[i+words-1]=tmp;
+	}
+}
+
+
+void read_multi_sequence (unsigned * buffer, unsigned int num, unsigned int memory_offset_in_word ) {
+	int i;
+	jseq_multi_init ();
+
+	for(i=2;i<num; i++){
+		jtag_vdr_multi_capture(BIT_NUM, memory_offset_in_word+i);
+			//if(out!=buffer[i-2]) printf ("Error: missmatched at location %d. Expected %x but read %x\n",i-2,buffer[i-2], out);
+	}
+		jtag_vdr_multi_capture(BIT_NUM, 0);
+		//if(out!=buffer[i-2]) printf ("Error: missmatched at location %d. Expected %x but read %x\n",i-2,buffer[i-2], out);
+		jtag_vdr_multi_capture(BIT_NUM, 1 );
+		//if(out!=buffer[i-1]) printf ("Error: missmatched at location %d. Expected %x but read %x\n",i-1,buffer[i-1], out);
+		jseq_multi_get_results();
+		verify_memory_multi (buffer, num);
+}
+
+
+
+
+
+int send_binary_file_parts(unsigned * buffer,unsigned int num,unsigned int memory_offset_in_word, unsigned * comp_buff){
+	//FILE *fp;
+	int i=0;	
+	unsigned out;
+	//unsigned int file_size=0;
+	//unsigned int num=0;
+	//unsigned int mem_size;
+	//unsigned int memory_offset_in_word;
+	unsigned * small_buff;
+	int words= (BYTE_NUM % sizeof(unsigned )) ? (BYTE_NUM / sizeof(unsigned ) )+1 : (BYTE_NUM / sizeof(unsigned ));
+
+	small_buff = (unsigned *) malloc(words * sizeof(unsigned ) ); 
+	unsigned *  read_buff;
+	read_buff  = (unsigned *) calloc(words , sizeof(unsigned ) );
+	
+	
+	/*
+	mem_size=memory_boundary-memory_offset;
+	if(file_size>mem_size){
+		printf("\n\n Warning:  %s file size (%x) is larger than the given memory size (%x). I will stop writing on end of memory address\n\n",binary_file_name,file_size,mem_size);
+		file_size=mem_size;
+	}
+	fclose(fp);
+*/
+	//disable the cpu
+	jtag_vir(RD_WR_STATUS);
+	jtag_vdr(BIT_NUM, 0x1, &out);
+	
+
+	//printf("cpu is disabled.\n");
+
+	// change memory sizes from byte to word	
+	//memory_offset_in_word=memory_offset /BYTE_NUM;
+	//size of buffer
+	//num= (BYTE_NUM < sizeof(unsigned )) ? file_size /BYTE_NUM : file_size /sizeof(unsigned );
+
+	
+
+	if(enable_binary_send){
+		jtag_vir(UPDATE_WB_ADDR);
+		jtag_vdr(BIT_NUM, memory_offset_in_word, 0);
+		jtag_vir(UPDATE_WB_WR_DATA);
+		printf("send %s to the wishbone bus\n",binary_file_name);
+		printf ("start programming. Will send %d values to memory\n",num);
+		jseq_multi_init ();
+		for(i=0;i<num;i++){
+			//printf("%d:%x\n",i,buffer[i]);
+
+			if(BYTE_NUM <= sizeof(unsigned )){
+				//printf("%d:%x\n",i,buffer[i]);
+				jtag_vdr_multi(BIT_NUM, buffer[i]);
+			}else {
+				//printf("%d:%x\n",i,buffer[i]);
+				reorder_buffer(&buffer[i],words);
+				jtag_vdr_long_multi(BIT_NUM, &buffer[i],  words);
+				i+= (words-1);
+
+			}
+		}
+		jseq_multi_end ();
+		printf ("Write is done\n");
+	}
+
+	if(write_verify){
+		/*		
+		if(!(fp = fopen(binary_file_name,"rb"))){  
+			fprintf (stderr,"Error: can not open %s file in read mode\n",binary_file_name);
+			return -1;
+		}
+		buffer=read_file (fp, &file_size);
+		*/
+		//fclose(fp);
+		jtag_vir(UPDATE_WB_RD_DATA);
+		jtag_vdr(BIT_NUM,memory_offset_in_word+0, &out);
+		jtag_vdr(BIT_NUM,memory_offset_in_word+1, &out);
+		
+		
+		//create jseq for all memory
+		if(BYTE_NUM <= sizeof(unsigned )){
+
+			read_multi_sequence ( comp_buff,  num,  memory_offset_in_word );
+
+		}
+		else{
+			//printf("vdr_long\n");
+			for(i=2*words;i<num; i+=words){
+				read_buff[0]= memory_offset_in_word+i/words;
+				jtag_vdr_long(BIT_NUM, read_buff, small_buff, words);
+				reorder_buffer(&comp_buff[i-2*words],words);
+				compare_values(&comp_buff[i-2*words],small_buff,words,i/words);
+				 
+			}
+
+		}
+
+
+
+
+
+/*
+	
+		if(BYTE_NUM <= sizeof(unsigned )){
+			//printf("vdr\n");
+			for(i=2;i<num; i++){
+				jtag_vdr(BIT_NUM, memory_offset_in_word+i, &out); 
+				if(out!=buffer[i-2]) printf ("Error: missmatched at location %d. Expected %x but read %x\n",i-2,buffer[i-2], out);
+			}
+			jtag_vdr(BIT_NUM, 0, &out);
+			if(out!=buffer[i-2]) printf ("Error: missmatched at location %d. Expected %x but read %x\n",i-2,buffer[i-2], out);
+			jtag_vdr(BIT_NUM, 1, &out);
+			if(out!=buffer[i-1]) printf ("Error: missmatched at location %d. Expected %x but read %x\n",i-1,buffer[i-1], out);
+
+		}
+		else{
+			//printf("vdr_long\n");
+			for(i=2*words;i<num; i+=words){
+				read_buff[0]= memory_offset_in_word+i/words;
+				jtag_vdr_long(BIT_NUM, read_buff, small_buff, words);
+				reorder_buffer(&buffer[i-2*words],words);
+				compare_values(&buffer[i-2*words],small_buff,words,i/words);
+				 
+			}
+
+		}
+
+*/
+		
+		//check miss matched location
+		if(miss == 0){
+			printf ("Memory content is verified. There was no difference!\n");
+		}
+		else if(miss<=MISS_RETRY_NUM && enable_binary_send==1){
+			printf ("Try to write miss matched values\n");
+			for(i=0; i<miss; i++){
+
+				int loc = mis_addr[i];
+				write_specefic_loc (loc+memory_offset_in_word,buffer[loc]);
+			}
+			jtag_vir(UPDATE_WB_RD_DATA);
+			jtag_vdr(BIT_NUM,memory_offset_in_word+0, &out);
+			jtag_vdr(BIT_NUM,memory_offset_in_word+1, &out);
+			read_multi_sequence ( buffer,  num,  memory_offset_in_word );
+			if(miss != 0){
+						printf ("Error: write verification is failed!\n");
+						return -1;
+			}
+
+		}else{
+			printf ("Error: verification is failed!\n");
+			return -1;
+		}
+
+
+
+
+	}
+	//enable the cpu
+	jtag_vir(RD_WR_STATUS);
+	jtag_vdr(BIT_NUM, 0, &out);
+	//printf ("status=%x\n",out);
+	//free(buffer);
+	return 0;
+}
+
+
+
+int send_binary_file(){
+	FILE *fp;
+	unsigned int file_size=0;
+	unsigned int mem_size;
+	
+	fp = fopen(binary_file_name,"rb");
+	if (!fp) {
+		fprintf (stderr,"Error: can not open %s file in read mode\n",binary_file_name);
+		return -1;
+	}
+	unsigned * buffer;
+	buffer=read_file (fp, &file_size);
+	mem_size=memory_boundary-memory_offset;
+	if(file_size>mem_size){
+		printf("\n\n Warning:  %s file size (%x) is larger than the given memory size (%x). I will stop writing on end of memory address\n\n",binary_file_name,file_size,mem_size);
+		file_size=mem_size;
+	}
+	fclose(fp);
+	
+    unsigned int i,j;
+	unsigned int num,sec;
+ 	num= (BYTE_NUM < sizeof(unsigned )) ? file_size /BYTE_NUM : file_size /sizeof(unsigned );
+	
+	unsigned int memory_offset_in_word_sec;
+	memory_offset_in_word_sec=memory_offset /BYTE_NUM;
+	unsigned comp_buff [8192];
+	
+
+	for(i=0;i<num; i+=8192){
+		sec = (num -i)> 8192 ? 8192 : (num -i); 
+		for(j=0;j<sec; j++) comp_buff[j] = buffer[i+j];  
+		if(send_binary_file_parts(&buffer[i], sec, memory_offset_in_word_sec,comp_buff) ==-1) return -1;
+		memory_offset_in_word_sec+=sec;
+	}
+	
+	free(buffer);
+	return 0;
+}	
+
+
+int read_mem(){
+	int i=0;
+	unsigned int num=0;
+	unsigned int mem_size;
+	unsigned int memory_offset_in_word;
+	unsigned out;
+	unsigned * small_buff;
+	int words= (BYTE_NUM % sizeof(unsigned )) ? (BYTE_NUM / sizeof(unsigned ) )+1 : (BYTE_NUM / sizeof(unsigned ));
+	
+	small_buff = (unsigned *) malloc(words * sizeof(unsigned ) ); 
+	unsigned *  read_buff;
+	read_buff  = (unsigned *) calloc(words , sizeof(unsigned ) );
+	memory_offset_in_word=memory_offset /BYTE_NUM;
+	mem_size=memory_boundary-memory_offset;
+	num= (BYTE_NUM < sizeof(unsigned )) ? mem_size /BYTE_NUM : mem_size /sizeof(unsigned );
+
+	jtag_vir(UPDATE_WB_RD_DATA);
+	jtag_vdr(BIT_NUM, memory_offset_in_word+0, &out);
+	jtag_vdr(BIT_NUM, memory_offset_in_word+1, &out);
+	
+	printf("\n###read data#\n");	
+		
+	if(BYTE_NUM <= sizeof(unsigned )){
+			//printf("vdr\n");
+			for(i=2;i<num; i++){
+				jtag_vdr(BIT_NUM, memory_offset_in_word+i, &out); 
+				printf("%X\n",out);	
+			}
+			jtag_vdr(BIT_NUM, 0, &out);
+			printf("%X\n",out);	
+			
+			jtag_vdr(BIT_NUM, 1, &out);
+			printf("%X\n",out);	
+			
+
+		}
+		else{
+			//printf("vdr_long\n");
+			for(i=2*words;i<num+2; i+=words){
+				//printf("%d,%d,%d\n",i,words,num);
+				read_buff[0]= memory_offset_in_word+i/words;
+				jtag_vdr_long(BIT_NUM, read_buff, small_buff, words);
+				print_values(small_buff, words);		
+				 
+			}
+			
+	}
+	printf("\n###read data#\n");
+			
+	//enable the cpu
+	jtag_vir(RD_WR_STATUS);
+	jtag_vdr(BIT_NUM, 0, &out);
+	//printf ("status=%x\n",out);
+	free(read_buff);
+	return 0;
+}
+
+
+
+void vdr_large (unsigned sz, char * string, char *out){
+	int words= (sz%32)? (sz/32)+1 : sz/32;
+	unsigned  val[64],val_o[64];
+	//printf("data=%s\t",string);
+	hexcut(string, val, words );
+	
+	
+	if( out == 0) {
+		  jtag_vdr_long(sz,val,0,words);
+		return;
+	}
+	jtag_vdr_long(sz,val,val_o,words);
+	//printf("rdata=%s\n",out);
+	hexgen( out, val_o, words );
+	
+	
+	
+}
+
+
+
+
+
+
