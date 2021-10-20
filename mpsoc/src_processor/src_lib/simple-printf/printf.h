@@ -64,10 +64,10 @@ void outbyte(char c);
 
 //int simple_printf (__const char *__restrict __format, ...);
 int simple_printf(char *fmt, ...);
-
-int sprintf (char *str, __const char *__restrict __format, ...);
+int simple_sprintf (char *str, char *fmt, ...);
 
 #define printf simple_printf
 #define sprintf simple_sprintf
+
 
 #endif /* __SIMPLE_PRINTF__ */
