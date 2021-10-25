@@ -126,7 +126,7 @@ module packet_injector
 		LASTw=(LAST_TMP==0)? Fpay : LAST_TMP;
 	genvar i;
 	generate 
-		for(i=0; i<REMAIN_DAT_FLIT_I; i++) begin 
+		for(i=0; i<REMAIN_DAT_FLIT_I; i++) begin :Rm
 			assign remain_dat [i] = pck_injct_in.data [Fpay*(i+1)+HDR_DATA_w-1   : (Fpay*i)+HDR_DATA_w];				
 		end
 		if(REMAIN_DAT_FLIT_F ) begin 
