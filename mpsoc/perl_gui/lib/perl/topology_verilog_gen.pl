@@ -1634,7 +1634,7 @@ $ports
 		    .chan_in_all(chan_in_all),
 		    .chan_out_all(chan_out_all)  
 		);
-    
+    end
     endgenerate
 	
 	";
