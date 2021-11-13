@@ -948,11 +948,10 @@ sub run_synthetic_simulation {
 	}
 	
 	my $modelsim_bin=  $ENV{MODELSIM_BIN};
-			if(! defined $modelsim_bin){
-				add_colored_info($info, "Error: Path to modelsim bin directory is not defined in ProNoC setting\n",'red');
-				show_setting(0);
-				return;
-			}	
+	my $vsim = (! defined $modelsim_bin)? "vsim" : "$modelsim_bin/vsim";
+	
+	
+			
 		
 	my $cpu_num = $simulate->object_get_attribute('compile', 'cpu_num');
 	$cpu_num = 1 if (!defined $cpu_num);
@@ -1030,7 +1029,7 @@ quit
 	
 			save_file ("$out/model.tcl",$tcl);
 			
-			my $cmd="cd $out; rm -Rf rtl_work; $modelsim_bin/vsim -do $out/model.tcl ";
+			my $cmd="cd $out; rm -Rf rtl_work; $vsim -do $out/model.tcl ";
 			save_file ("$out/run.sh",'#!/bin/bash'."			
 			sed -i \"s/ INJRATIO=\[\[:digit:\]\]\\+/ INJRATIO=\$1/\" $out/sim_param.sv
 			".$cmd);			
@@ -1054,12 +1053,12 @@ quit
 	    	if ($simulator eq 'Modelsim'){
 	    		add_info($info, "Run $bin with  injection ratio of $ratio_in \% \n");
 	    		my $out="$out_path/modelsim/work$c";
-	    		$cmd="	xterm -e bash -c '	cd $out; sed -i \"s/ INJRATIO=\[\[:digit:\]\]\\+/ INJRATIO=$ratio_in/\" $out/sim_param.sv;  rm -Rf rtl_work; $modelsim_bin/vsim -c -do $out/model.tcl -l $out_path/sim_out$ratio_in;' &\n	";			
+	    		$cmd="	xterm -e bash -c '	cd $out; sed -i \"s/ INJRATIO=\[\[:digit:\]\]\\+/ INJRATIO=$ratio_in/\" $out/sim_param.sv;  rm -Rf rtl_work; $vsim -c -do $out/model.tcl -l $out_path/sim_out$ratio_in;' &\n	";			
 	    	
 	    	}elsif ($simulator eq 'Modelsim gui'){
 	    		add_info($info, "Run $bin with  injection ratio of $ratio_in \% \n");
 	    		my $out="$out_path/modelsim/work$c";
-	    		$cmd="cd $out; sed -i \"s/ INJRATIO=\[\[:digit:\]\]\\+/ INJRATIO=$ratio_in/\" $out/sim_param.sv;  rm -Rf rtl_work; $modelsim_bin/vsim  -do $out/model.tcl -l $out_path/sim_out$ratio_in;	";			
+	    		$cmd="cd $out; sed -i \"s/ INJRATIO=\[\[:digit:\]\]\\+/ INJRATIO=$ratio_in/\" $out/sim_param.sv;  rm -Rf rtl_work; $vsim  -do $out/model.tcl -l $out_path/sim_out$ratio_in;	";			
 	    	
 	    	}else{	
 	    		add_info($info, "Run $bin with  injection ratio of $ratio_in \% \n");
