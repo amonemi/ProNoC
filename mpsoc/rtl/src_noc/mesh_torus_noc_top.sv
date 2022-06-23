@@ -1,6 +1,4 @@
-// synthesis translate_off
-`timescale 1ns / 1ps
-// synthesis translate_on
+`include "pronoc_def.v"
 
 /**********************************************************************
 **    File:  mesh_torus_noc.v
@@ -42,14 +40,19 @@ module mesh_torus_noc_top
     reset,
     clk,    
     chan_in_all,
-    chan_out_all  
+    chan_out_all,
+    router_event
 );
+
 
     
 	input   clk,reset;
-	//local ports 
+	//Endpoints ports 
 	input   smartflit_chanel_t chan_in_all  [NE-1 : 0];
 	output  smartflit_chanel_t chan_out_all [NE-1 : 0];
+	
+	//Events
+	output  router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];
 	
 	//all routers port 
 	smartflit_chanel_t    router_chan_in   [NR-1 :0][MAX_P-1 : 0];
@@ -82,9 +85,11 @@ module mesh_torus_noc_top
 				router_top #(
 					.P               (MAX_P          )
 					) the_router (
+					.current_r_id    (x),
 					.current_r_addr  (current_r_addr [x]), 
 					.chan_in         (router_chan_in [x]), 
 					.chan_out        (router_chan_out[x]), 
+					.router_event    (router_event[x]),
 					.clk             (clk            ), 
 					.reset           (reset          ));
 	
@@ -126,15 +131,17 @@ module mesh_torus_noc_top
 			for (y=0;    y<NY;    y=y+1) begin: y_loop
 				for (x=0;    x<NX; x=x+1) begin :x_loop
 				localparam R_ADDR = (y<<NXw) + x;            
-				localparam ROUTER_NUM = (y * NX) +    x;					
-				assign current_r_addr [ROUTER_NUM] = R_ADDR[RAw-1 :0];
+				localparam RID = (y * NX) +    x;					
+				assign current_r_addr [RID] = R_ADDR[RAw-1 :0];
              	
 					router_top #(
 						.P               (MAX_P          )
-					) the_router (
-						.current_r_addr  (current_r_addr [ROUTER_NUM]),    
-						.chan_in         (router_chan_in [ROUTER_NUM]), 
-						.chan_out        (router_chan_out[ROUTER_NUM]), 
+					) the_router (					
+						.current_r_id    (RID),
+						.current_r_addr  (current_r_addr [RID]),    
+						.chan_in         (router_chan_in [RID]), 
+						.chan_out        (router_chan_out[RID]), 
+						.router_event    (router_event[RID]),
 						.clk             (clk            ), 
 						.reset           (reset          ));
 					

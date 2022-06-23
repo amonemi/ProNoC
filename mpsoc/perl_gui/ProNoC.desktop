@@ -1,0 +1,11 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Type=Application
+Terminal=true
+Name=Click-Script
+Icon=/usr/local/share/icons/hicolor/scalable/apps/ProNoC.svg
+#Exec=gnome-terminal -- ' bash -i -c cd \\"$(dirname "\\"%k\\"")\\"; ./ProNoC.pl;  $SHELL ' 
+Exec=gnome-terminal -e "bash -i -c 'cd \\"$(dirname "\\"%k\\"")\\"; ./ProNoC.pl;  $SHELL'"
+Categories=Application;
+Name[en_US]=ProNoC
+X-Desktop-File-Install-Version=0.24

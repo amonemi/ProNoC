@@ -12,8 +12,8 @@ if { [info exists $::env(LM_FILE_LIST)] } {
   exit(1)
 }
 
-
-
+set top pck_injector_test
+#set top multicast_test
 
 set rtl_work $::env(LM_WORK_PLACE)/rtl_work
 
@@ -28,7 +28,7 @@ vmap work $rtl_work
 
 vlog  +acc=rn  -F $::env(LM_FILE_LIST)
 
-vsim -t 1ps  -L $rtl_work -L work -voptargs="+acc"  pck_injector_test
+vsim -t 1ps  -L $rtl_work -L work -voptargs="+acc"  $top
 
 add wave *
 view structure

@@ -2837,6 +2837,7 @@ sub generate_topology{
 	#generate_connection_v($self,$info,$dir);
 	add_routing_instance_v($self,$info,$dir);
 	add_noc_instance_v($self,$info,$dir);
+	add_noc_custom_h($self,$info,$dir);
 	save_topology_parameter_object_file($self,$info);	
 	
 	#create the file list

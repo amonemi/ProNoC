@@ -22,6 +22,20 @@ sub get_topology_info {
 }	
 
 
+sub get_topology_info_from_parameters {
+	my ($ref) =@_;
+	my %noc_info;
+	my %param= %$ref if(defined $ref );			
+	my $topology=$param{'TOPOLOGY'};
+	my $T1  =$param{'T1'};
+	my $T2  =$param{'T2'};
+	my $T3  =$param{'T3'};
+	my $V   =$param{'V'};
+	my $Fpay=$param{'Fpay'};	
+	return get_topology_info_sub($topology, $T1, $T2, $T3,$V, $Fpay);	
+}
+
+
 
 sub get_topology_info_sub {
 
@@ -366,6 +380,20 @@ sub mesh_tori_addr_join {
 }
 
 
+sub mcast_partial_width {
+        my ($p,$NE)=@_;
+        my $m=0;
+        $p=remove_not_hex($p);
+        my @arr=split (//, $p);
+        foreach my $i (@arr) {        	
+        	my $n=hex($i);
+        	$m++ if($n & 0x1);
+        	$m++ if($n & 0x2);
+        	$m++ if($n & 0x4);
+        	$m++ if($n & 0x8);
+        }
+       return $m;
+}
 
 
 
@@ -376,12 +404,27 @@ sub get_noc_verilator_top_modules_info {
 	my $T1=$self->object_get_attribute('noc_param','T1');
 	my $T2=$self->object_get_attribute('noc_param','T2');
 	my $T3=$self->object_get_attribute('noc_param','T3');
+	my $cast = $self->object_get_attribute('noc_param','MCAST_ENDP_LIST');	
+	my $CAST_TYPE= $self->object_get_attribute('noc_param','CAST_TYPE');	
+	my $DAw_OFFSETw  =  ($topology eq '"MESH"' || $topology eq '"TORUS"' || $topology eq '"FMESH"')?  $T1 : 0; 
+	
 	
 	my %tops;
 	my %nr_p; # number of routers have $p port num
 	my $router_p; #number of routers with different port number in topology 
 	
 	my ($ne, $nr, $RAw, $EAw)=get_topology_info($self); 
+
+	my $MCAST_PRTLw= mcast_partial_width($cast,$ne);
+	my $MCASTw =
+            ($CAST_TYPE eq '"MULTICAST_FULL"') ? $ne :
+            ($CAST_TYPE eq '"MULTICAST_PARTIAL"' && $EAw >= $MCAST_PRTLw) ? $EAw +1 : 
+            ($CAST_TYPE eq '"MULTICAST_PARTIAL"' && $EAw <  $MCAST_PRTLw) ? $MCAST_PRTLw +1 :
+            $EAw +1; #broadcast
+	
+	my $DAw = ($CAST_TYPE eq '"UNICAST"') ?   $EAw: $MCASTw +  $DAw_OFFSETw;           
+	
+	print "$DAw=$DAw\n";
 
 	my $custom_include="";
 	if($topology eq '"FATTREE"') {
@@ -450,6 +493,7 @@ sub get_noc_verilator_top_modules_info {
     }elsif ($topology eq '"STAR"') { 
      	 $router_p=1;# number of router with different port number
      	 my $ports= $T1;
+     	 $nr_p{p1}=$ports;
      	 $nr_p{1}=1;
      	  %tops = (
         	#"Vrouter1" => "router_top_v_p${ports}.v",
@@ -495,7 +539,7 @@ sub get_noc_verilator_top_modules_info {
 		}	
 		$router_p=$i-1;	
 		${topology_name} =~ s/\"+//g;
-		$custom_include="#include \"${topology_name}_noc.h\"\n";
+		$custom_include="#define IS_${topology_name}_noc\n";
 	}#else
 	
 		
@@ -506,12 +550,19 @@ sub get_noc_verilator_top_modules_info {
 	}
 	my $rns_num = $router_p+1;
 	$includ_h.="int router_NRs[$rns_num];\n";
+	
+	my $max_p=0;
 	for (my $p=1; $p<=$router_p ; $p++){
+		  my $pnum= $nr_p{"p$p"};
 		 $includ_h=$includ_h."#define NR${p} $nr_p{$p}\n";
-		 my $pnum= $nr_p{"p$p"};
-		 $includ_h=$includ_h."Vrouter${p}		*router${p}[ $nr_p{$p} ];   // Instantiation of router with $pnum  port number\n";
+	 	 $includ_h=$includ_h."#define NR${p}_PNUM $pnum\n";
 		
+		 $includ_h=$includ_h."Vrouter${p}		*router${p}[ $nr_p{$p} ];   // Instantiation of router with $pnum  port number\n";
+		 $max_p = $pnum if($max_p < $pnum);
 	}
+	$includ_h.="#define MAX_P  $max_p //The maximum number of ports available in a router in this topology\n";
+	
+	$includ_h.="#define DAw $DAw //The traffic generator's destination address width\n";
 	
 	
 	my $st1='';
@@ -520,7 +571,9 @@ sub get_noc_verilator_top_modules_info {
 	my $st4='';
 	my $st5='';
 	my $st6='';
-	
+	my $st7='';
+	my $st8='';
+		
 	my $i=1;
 	my $j=0;
 	my $accum=0;
@@ -560,6 +613,34 @@ $st6=$st6."
 	if (i<NR${i}){ router${i}[i]->eval(); return;}
 	i-=	NR${i};
 ";
+
+
+
+
+
+$st7.="
+	if (i<NR${i}){ 
+		update_router_st(
+			NR${i}_PNUM,
+			router${i}[i]->current_r_id,   
+			router${i}[i]->router_event
+		); 
+		return;
+	}
+	i-=	NR${i};
+";
+
+$st8=$st8."
+	if (i<NR${i}){ 
+		router${i}[i]->reset= reset;
+		router${i}[i]->clk= clk ;
+		return;
+	}
+	i-=	NR${i};
+";
+
+
+
 	$i++;
 	$j++;
 	$accum=$accum+$nr_p{$p};
@@ -597,6 +678,26 @@ void inline single_router_eval(int i){
 	$st6
 }
 
+#define SMART_NUM  ((SMART_MAX==0)? 1 : SMART_MAX)
+#if SMART_NUM > 8
+	typedef unsigned int EVENT;
+#else
+	typedef unsigned char EVENT;
+#endif
+
+extern void update_router_st (
+  unsigned int,
+  unsigned int, 
+  EVENT *  
+);
+ 
+void  single_router_st_update(int i){
+	$st7
+}
+
+void  inline single_router_reset_clk(int i){
+	$st8
+}
 
 	
 ";	

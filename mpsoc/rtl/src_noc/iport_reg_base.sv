@@ -1,4 +1,4 @@
-`timescale    1ns/1ps
+`include "pronoc_def.v"
 //`define MONITORE_PATH
 
 /**********************************************************************
@@ -152,7 +152,7 @@ module iport_reg_base  #(
     input   [V-1 : 0] nonspec_first_arbiter_granted_ivc;
     input   [V-1 : 0] ssa_ivc_num_getting_sw_grant;    
     input   [(DSTPw*V)-1 : 0] destport_clear;            
-    output reg [WEIGHTw-1 : 0] iport_weight;
+    output  [WEIGHTw-1 : 0] iport_weight;
     output  [V-1 : 0] vc_weight_is_consumed;
     output  iport_weight_is_consumed;
     input   refresh_w_counter;
@@ -170,9 +170,9 @@ module iport_reg_base  #(
     wire [EAw-1 : 0] src_e_addr_in;
     wire [V-1 : 0] vc_num_in;
     wire [V-1 : 0] hdr_flit_wr,flit_wr;
-    reg  [V-1 : 0] hdr_flit_wr_delayed;
+    wire [V-1 : 0] hdr_flit_wr_delayed;
     wire [V-1 : 0] class_rd_fifo,dst_rd_fifo;
-    reg  [V-1 : 0] lk_dst_rd_fifo;
+    wire [V-1 : 0] lk_dst_rd_fifo;
     wire [DSTPw-1 : 0] lk_destination_in_encoded;
     wire [WEIGHTw-1  : 0] weight_in;   
     wire [Fw-1 : 0] buffer_out;
@@ -181,7 +181,7 @@ module iport_reg_base  #(
     wire [Cw-1 : 0] class_out [V-1 : 0];
     wire  [VELw-1 : 0] endp_localp_num;
     wire [ELw-1 : 0] endp_l_in;
-           
+    logic  [WEIGHTw-1 : 0] iport_weight_next;       
 
 //extract header flit info
     extract_header_flit_info #(
@@ -231,33 +231,29 @@ module iport_reg_base  #(
     // synthesis translate_on
     // synopsys  translate_on       
      
-     
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif   
-        if(reset) begin 
-              iport_weight <= 1;
-        end else begin 
-              if(hdr_flit_wr != {V{1'b0}})  iport_weight <= (weight_in=={WEIGHTw{1'b0}})? 1 : weight_in; // the minimum weight is 1
-        end
+
+    pronoc_register #(.W(WEIGHTw), .RESET_TO(1)) reg5(
+    		.in		(iport_weight_next ), 
+    		.reset  (reset ), 
+    		.clk    (clk   ), 
+    		.out    (iport_weight  ));
+	
+	
+    always @ (*)begin 
+    	iport_weight_next = iport_weight;
+    	if(hdr_flit_wr != {V{1'b0}})  iport_weight_next = (weight_in=={WEIGHTw{1'b0}})? 1 : weight_in; // the minimum weight is 1
     end
 
+
 // genrate write enable for lk_routing result with one clock cycle latency after reciveing the flit
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif   
-        if(reset) begin 
-            hdr_flit_wr_delayed <= {V{1'b0}};
-            //lk_dst_rd_fifo          <= {V{1'b0}};
-        end else begin 
-            hdr_flit_wr_delayed <= hdr_flit_wr;
-        //    lk_dst_rd_fifo          <= dst_rd_fifo;
-        end
-    end 
+    
+    pronoc_register #(.W(V)) reg1(
+    		.in		(hdr_flit_wr ), 
+    		.reset  (reset ), 
+    		.clk    (clk   ), 
+    		.out    (hdr_flit_wr_delayed  ));
+
+
 
 
 genvar i;
@@ -551,11 +547,7 @@ generate
     /* verilator lint_on WIDTH */ 
            
         flit_buffer #(
-            .V(V),
             .B(B),   // buffer space :flit per VC 
-            .PCK_TYPE(PCK_TYPE),
-            .Fw(Fw),
-            .DEBUG_EN(DEBUG_EN),
             .SSA_EN(SSA_EN)
         )
         the_flit_buffer
@@ -569,7 +561,10 @@ generate
             .vc_not_empty(ivc_not_empty),
             .reset(reset),
             .clk(clk),
-            .ssa_rd(ssa_ivc_num_getting_sw_grant)
+            .ssa_rd(ssa_ivc_num_getting_sw_grant),
+            .multiple_dest(),
+            .sub_rd_ptr_ld(),
+            .flit_is_tail()
         );
         
         
@@ -636,11 +631,7 @@ generate
  
 
         flit_buffer #(
-            .V(V),
             .B(B),   // buffer space :flit per VC 
-            .PCK_TYPE(PCK_TYPE),
-            .Fw(Fw),
-            .DEBUG_EN(DEBUG_EN),
             .SSA_EN(SSA_EN)
         )
         the_flit_buffer
@@ -654,7 +645,11 @@ generate
             .vc_not_empty(ivc_not_empty),
             .reset(reset),
             .clk(clk),
-            .ssa_rd(ssa_ivc_num_getting_sw_grant)
+            .ssa_rd(ssa_ivc_num_getting_sw_grant),
+            .multiple_dest(),
+            .sub_rd_ptr_ld(),
+            .flit_is_tail()  
+           
         );  
   
     end       
@@ -713,19 +708,14 @@ endgenerate
     
     assign flit_wr =(flit_in_wr )? vc_num_in : {V{1'b0}};
         
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif   
-        if(reset) begin 
-                lk_dst_rd_fifo          <= {V{1'b0}};
-        end else begin 
-                lk_dst_rd_fifo          <= dst_rd_fifo;
-            end
-    end//always 
-      
     
+    pronoc_register #(.W(V)) reg2(
+    		.in		(dst_rd_fifo ), 
+    		.reset  (reset ), 
+    		.clk    (clk   ), 
+    		.out    (lk_dst_rd_fifo  ));
+
+   
     assign    dst_rd_fifo = reset_ivc;
     assign    class_rd_fifo = (C>1)? reset_ivc : {V{1'bx}};
     assign    ivc_request = ivc_not_empty;    

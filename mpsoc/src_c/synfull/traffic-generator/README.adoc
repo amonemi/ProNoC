@@ -1,0 +1,69 @@
+= SynFull Traffic Generator 1.0
+
+Included is the source code for generating traffic based on models created for a full-system simulation as configured in the paper.
+The models generate traffic according to 32 nodes, 16 of which are private L2 caches and the other 16 are directories.
+You can map these nodes to your network simulator however you like.
+Even numbered nodes are the caches, while odd numbered nodes are directories. 
+
+== Source Files
+
+The src directory includes the source code for the traffic generator.
+Most of the code is commented for your convenience.
+It uses several global variables to keep implementation simple - that is, probability distributions and other model information are easily accessible anywhere.
+
+The traffic generator uses a file socket to communicate as defined in the src/netstream directory.
+In this implementation, SynFull is the client.
+As such, you must modify your network simulator to act as the server.
+An example of how to do this is shown in NetworkInterface.cpp.
+The traffic generator and your network simulator will work in lock-step during the simulation, incrementing by one cycle at a time. 
+
+== Step-by-Step Guide
+
+This section describes the steps you need to do in order to run SynFull with your desired network simulator.
+
+=== Modifying the Network Simulator
+
+Step 1:: Identify the portions of code in your network simulator where:
+** The network is initialized
+** The network progresses to the next cycle in the simulation	
+** packets are injected (e.g. into routers). 
+** packets have reached their destination
+
+Step 2:: Based on the portions of code identified in Step 1, you'll want to extract packets from NetworkInterface.cpp to inject and notify NetworkInterface.cpp of packets that have arrived. 
+One possible implementation is to use two queues - NetworkInterface will populate one queue with packets to be injected, and remove packets from another queue for packets to be "ejected" (i.e. they have reached their destination).
+
+Step 3:: When the network is initialized, NetworkInterface::Init should be called in order to set up the network simulator as a server.
+NetworkInterface will then "listen" on a file socket for a connection.
+Once a connection has been established with the TrafficGenerator, your network simulator will proceed to initialize everything else.
+
+Step 4:: For the portion of code where the network simulator progresses to the next cycle, call the NetworkInterface::Step function to receive packets from the TrafficGenerator and notify it of packets that have arrived.
+Continueing from the previous example, this can be done by populating and depopulating queues with packets.
+
+=== Running the Modified Network Simulator
+
+Step 1:: Run your network simulator, it should stop during initialization and wait for a connection before proceeding.
+
+Step 2:: Run the TrafficGenerator, indicating the model file, the desired number of cycles to simulate, and whether or not the simulation should end prematurely due to steady state (use 1 as the argument to end prematurely, 0 otherwise).
+A connection should be established and packets will be injected and ejected from the network simulator on a cycle by cycle basis.
+
+Example 1:: Run barnes for 10 million cycles and exit on steady state
+
+  ./tgen ../models/barnes.model 10000000 1 
+
+Example 2:: Run bodytrack for 50 million cycles
+
+  ./tgen ../models/bodytrack.model 50000000 0
+
+[WARNING]
+====
+You must run the traffic generator and your network simulator server from the same directory.
+This is because the file socket is created in this directory.
+You can modify this if you wish.
+Also, you must not run more than one server in the same directory at a time.
+You can also modify this if you want by using different file descriptors for different socket connections, but the current code does not support this.
+====
+
+== Conclusion
+
+This is only one application of our methodology.
+You can adapt the methodology to a number of different configurations and coherence protocols by using the same tools: volume distributions, spatial distributions and flows, and sharing patterns (e.g. modelling invalidates/forwarded requests at different directories).

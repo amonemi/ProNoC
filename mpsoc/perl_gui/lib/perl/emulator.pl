@@ -64,19 +64,19 @@ sub check_inserted_ratios {
 			my @range=split(':',$p);
 			my $size= scalar @range;
 			if($size==1){ # its a number
-				if ( $range[0] <= 0 || $range[0] >100  ) { message_dialog ("$range[0] is out of boundery (1:100)" ); return undef; }
+				if ( $range[0] <= 0 || $range[0] >100  ) { message_dialog ("Injection ratio $range[0] is out of bounds: 1<=ratio=<100" ); return undef; }
 				push(@ratios,$range[0]);
 			}elsif($size ==3){# its a range
 				my($min,$max,$step)=@range;
-				if ( $min <= 0 || $min >100  ) { message_dialog ("$min in  $p is out of boundery (1:100)" ); return undef; }
-				if ( $max <= 0 || $max >100  ) { message_dialog ("$max in  $p is out of boundery (1:100)" ); return undef; }
+				if ( $min <= 0 || $min >100  ) { message_dialog ("Injection ratio $min in  $p is out of bounds: 1<=ratio=<100" ); return undef; }
+				if ( $max <= 0 || $max >100  ) { message_dialog ("Injection ratio $max in  $p is out of bounds: 1<=ratio=<100" ); return undef; }
 				for (my $i=$min; $i<=$max; $i=$i+$step){
 						push(@ratios,$i);
 				}			
 				
 			}else{
-				 message_dialog ("$p has invalid format. The correct format for range is \$min:\$max:\$step" );
-				
+				 message_dialog ("Injection ratio $p has an invalid format. The correct format for range is \[min\]:\[max\]:\[step\]" );
+				 return undef;
 			}			
 			
 		}#foreach
@@ -249,8 +249,11 @@ my @hotspot_info=(
 		}
 	
 	}
-	my $l= "Define injection ratios. You can define individual ratios seprating by comma (\',\') or define a range of injection ratios with \$min:\$max:\$step format.
-As an example defining 2,3,4:10:2 will result in (2,3,4,6,8,10) injection ratios." ;
+	my $l= "Injection ratios in flits/clk/Endpoint (%). 
+E.g. Injection ratio 10% means each endpoint inject one flit every 10 cycles. 
+You can define individual ratios seprating by comma (\',\') or define a range of injection ratios with \$min:\$max:\$step format.
+As an example defining 2,3,4:10:2 will result in (2,3,4,6,8,10) injection ratios.
+" ;
 	my $u=get_injection_ratios ($emulate,$sample,"ratios");
 		
 	attach_widget_to_table ($table,$row,gen_label_in_left("Injection ratios:"),gen_button_message ($l,"icons/help.png") , $u); $row++;
@@ -370,14 +373,24 @@ sub gen_emulation_column {
 			
 			 $l=def_image_button('icons/diagram.png',$name);
 			 $l-> signal_connect("clicked" => sub{ 
+			 	
+			 	__PACKAGE__->mk_accessors(qw{noc_param});
+				my $temp = __PACKAGE__->new();
+			 
+			 	
+						 	
 			 	my $st = ($mode eq "simulate" )?  check_sim_sample($emulate,$sample,$info)   : check_sample($emulate,$sample,$info); 
 			 	return if $st==0;
 			 	my ($topology, $T1, $T2, $T3, $V, $Fpay) = get_sample_emulation_param($emulate,$sample);		
-			 	$emulate->object_add_attribute('noc_param','T1',$T1);
-			 	$emulate->object_add_attribute('noc_param','T2',$T2);
-			 	$emulate->object_add_attribute('noc_param','T3',$T3);
-			 	$emulate->object_add_attribute('noc_param','TOPOLOGY',$topology);
-        		show_topology_diagram ($emulate);
+			  	my $ref=$emulate->object_get_attribute($sample,"noc_info"); 
+			 	if (defined $ref){
+			 		my %noc_info= %$ref;			 	
+			 		foreach my $p (sort keys %noc_info){
+			 			$temp->object_add_attribute('noc_param',$p,$noc_info{$p});			 		
+			 		} 		
+			 	}			 	
+			 	
+        		show_topology_diagram ($temp);
     		 });
     		 
     		 my $traffic = def_button("Pattern");
@@ -873,6 +886,7 @@ sub generate_sof_file {
 '/mpsoc/rtl/src_peripheral/ram/',
 '/mpsoc/rtl/main_comp.v',
 '/mpsoc/rtl/arbiter.v',
+'/mpsoc/rtl/pronoc_def.v',
 '/mpsoc/rtl/src_topolgy/',
 '/mpsoc/rtl/src_noc/');
 

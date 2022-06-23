@@ -1,0 +1,42 @@
+= SynFull Models
+
+Several models are provided for you that have been generated based on ideal network traces as described in the paper.
+These models are for a variety of PARSEC and SPLASH-2 benchmarks.
+The model files themselves are in text format, so you can see the actual raw values that were modelled.
+The code takes these values and converts them into probability distributions (with the exception of the Markov probability matrices). 
+
+== Manually Changing Model Data
+
+You can potentially change the values found in the model files to create your own custom model, however I have not experimented with this.
+You should also be careful, as the traffic generator expects certain values for certain parts of the model.
+I would be weary of changing the Markov probabilities, for example, but changing the volume distributions (e.g. WRITE_INJECTION) is probably harmless.
+
+== Model Description
+
+The model files are divided into several sections with different headers.
+Simple headers act as name-value pairs, while complex headers have a BEGIN and END and usually identify some probability distribution.
+A description for each of these headers can be found below.
+
+=== Simple Headers
+
+HIER_CLASSES:: The number of macro phases in the model file.
+TIME_SPAN:: The number of cycles long each macro phase is.
+MEMORY:: The memory the Markov chain supports (currently, only 1 is supported).
+NUM_NODES:: The number of nodes in the simulation (i.e. sources and destinations).
+NUM_CLASSES:: The number of micro phases for a given macro phase.
+RESOLUTION:: The number of cycles long each micro phase is.
+
+=== Complex Headers
+
+HIER_BEGIN_ID:: The micro model for the given macro phase begins after this line.
+HIER_MARKOV:: The transition probability matrix for macro phases (Markov Chain).
+HIER_MARKOV_STEADY:: The Markov chain's steady state for macro phases.
+MARKOV:: The transition probability matrix for micro phases (Markov Chain).
+MARKOV_STEADY:: The Markov chain's steady state for micro phases (not used).
+*_SPATIAL:: The spatial injection distribution (i.e. who injects) per message type.
+*_FLOWS:: The flow injection distribution (i.e. destinations) per message type.
+*_INJECTION:: The volume distributions per message type. Starts at zero.
+FORWARD_PROB:: The probability a directory forwards a request.
+FORWARD_FLOWS:: The flow injection distribution for forwarded requests.
+INVALIDATE_PROB::	The volume distribution for invalidates at each message type.
+INVALIDATE_FLOWS:: The flow injection distribution for invalidates at each directory.

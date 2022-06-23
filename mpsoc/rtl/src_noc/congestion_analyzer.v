@@ -202,7 +202,7 @@ module  port_presel_based_dst_ports_credit #(
    
    
     reg     [BVw-1  :   0]  credit_per_port_next    [P_1-1    :   0];
-    reg     [BVw-1  :   0]  credit_per_port         [P_1-1    :   0];
+    wire    [BVw-1  :   0]  credit_per_port         [P_1-1    :   0];
     wire    [P_1-1  :   0]  credit_increased_per_port;
     wire    [P_1-1  :   0]  credit_decreased_per_port;
     wire    [P_1-1  :   0]  conjestion_cmp;
@@ -228,21 +228,20 @@ module  port_presel_based_dst_ports_credit #(
     end//always
     
   for(i=0;    i<P_1; i=i+1'b1) begin :blk2
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif 
+  
+      pronoc_register #(
+           .W(BVw),
+           .RESET_TO(C_INT)
+      ) reg1 ( 
+           .in(credit_per_port_next[i]),
+           .reset(reset),    
+           .clk(clk),      
+           .out(credit_per_port[i])
+      );
       
-            if(reset) begin 
-                credit_per_port[i]   <=  C_INT;
-            end else begin 
-                credit_per_port[i]   <=  credit_per_port_next[i];
-            end
-        end//for
-    end
+   end //for
     
- endgenerate//always
+ endgenerate
 
     /*******************    
 pre-sel[xy]
@@ -346,7 +345,7 @@ module mesh_torus_port_presel_based_dst_routers_vc #(
  
    
    // assign port_pre_sel = conjestion_cmp;
-   register #(.W(PPSw)) reg1 (.in(conjestion_cmp ), .reset(reset), .clk(clk), .out(port_pre_sel));    
+   pronoc_register #(.W(PPSw)) reg1 (.in(conjestion_cmp ), .reset(reset), .clk(clk), .out(port_pre_sel));    
  
  
 endmodule
@@ -675,20 +674,18 @@ endmodule
                 
     wire    [IVC_CNTw-1 :   0]  ivc_req_num;
     reg     [CONGw-1    :   0]  congestion_out ; 
-    reg     [PV-1       :   0]  ivc_request_not_granted; 
+    wire    [PV-1       :   0]  ivc_request_not_granted; 
+   
     
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif  
-        if(reset) begin 
-            ivc_request_not_granted <= 0;
-        end else begin 
-            ivc_request_not_granted <= ivc_request_all & ~(ivc_num_getting_sw_grant);
-        end//reset
-    end //always
-    
+    pronoc_register #(
+           .W(PV)          
+      ) reg1 ( 
+           .in(ivc_request_all & ~ivc_num_getting_sw_grant),
+           .reset(reset),    
+           .clk(clk),      
+           .out(ivc_request_not_granted)
+      );
+  
     
     accumulator #(
       	.INw(PV),
@@ -1181,22 +1178,19 @@ endmodule
     assign  counter_in[SOUTH]   ={ovc_not_avb[EAST] ,ovc_not_avb[NORTH] ,ovc_not_avb[WEST]};
     
     // counting not granted requests
-    reg     [PV-1       :   0]  ivc_request_not_granted; 
+    wire    [PV-1       :   0]  ivc_request_not_granted; 
     wire    [V-1        :   0]  ivc_not_grnt  [P_1-1  :   0];
     wire    [CNT_Vw-1   :   0]  ivc_not_grnt_num [P_1-1  :   0];
     
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif  
-        if(reset) begin 
-            ivc_request_not_granted <= 0;
-        end else begin 
-            ivc_request_not_granted <= ivc_request_all & ~(ivc_num_getting_sw_grant);
-        end//reset
-    end //always
     
+     pronoc_register #(
+           .W(PV)          
+      ) reg1 ( 
+           .in(ivc_request_all & ~ivc_num_getting_sw_grant),
+           .reset(reset),    
+           .clk(clk),      
+           .out(ivc_request_not_granted)
+      );
     
      assign  {ivc_not_grnt[SOUTH], ivc_not_grnt[WEST], ivc_not_grnt[NORTH],ivc_not_grnt[EAST]}= ivc_request_not_granted[PV-1     :   V];  
     
@@ -1457,7 +1451,7 @@ localparam PV       = P*V,
  input    [PV-1       :   0]  ovc_avalable_all; 
  input    [PV-1       :   0]  ivc_request_all;    
  input    [PV-1       :   0]  ivc_num_getting_sw_grant; 
- output  reg [CONG_ALw-1 :   0]  congestion_out_all;                 
+ output   [CONG_ALw-1 :   0]  congestion_out_all;                 
  input                        clk,reset;
 
   wire [CONG_ALw-1 :   0]  congestion_out_all_next;  
@@ -1570,19 +1564,16 @@ if(ROUTE_TYPE  !=  "DETERMINISTIC") begin :adpt
 
 endgenerate
 
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif 
-		if(reset)begin
-			congestion_out_all <= {CONG_ALw{1'b0}};  
-		end else begin 
-			congestion_out_all <= congestion_out_all_next;
-		
-		end	
-	end //always
 
+ pronoc_register #(
+           .W(CONG_ALw)          
+      ) reg1 ( 
+           .in(congestion_out_all_next),
+           .reset(reset),    
+           .clk(clk),      
+           .out(congestion_out_all)
+      );
+  
 
 endmodule
 
@@ -1624,64 +1615,66 @@ module  deadlock_detector #(
                 CNTw    = log2(MAX_CLK);
 
     
-  input [PV-1   :   0]  ivc_num_getting_sw_grant, ivc_request_all;
-  input             reset,clk;
-  output            detect;
+    input [PV-1   :   0]  ivc_num_getting_sw_grant, ivc_request_all;
+    input             reset,clk;
+    output            detect;
 
-  reg   [CNTw-1 :   0]  counter         [V-1   :   0];
-  wire  [P-1    :   0]  counter_rst_gen [V-1   :   0];
-  wire  [P-1    :   0]  counter_en_gen  [V-1   :   0];
-  wire  [V-1    :   0]  counter_rst,counter_en,detect_gen;
-  reg   [PV-1   :   0]  ivc_num_getting_sw_grant_reg;
+    wire  [CNTw-1 :   0]  counter         [V-1   :   0];
+    reg   [CNTw-1 :   0]  counter_next    [V-1   :   0];
+    wire  [P-1    :   0]  counter_rst_gen [V-1   :   0];
+    wire  [P-1    :   0]  counter_en_gen  [V-1   :   0];
+    wire  [V-1    :   0]  counter_rst,counter_en,detect_gen;
+    wire  [PV-1   :   0]  ivc_num_getting_sw_grant_reg;
  
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif 
+ 
+    pronoc_register #(
+           .W(PV)          
+      ) reg1 ( 
+           .in(ivc_num_getting_sw_grant),
+           .reset(reset),    
+           .clk(clk),      
+           .out(ivc_num_getting_sw_grant_reg)
+      );
+  
 
-    if(reset) begin 
-          ivc_num_getting_sw_grant_reg  <= {PV{1'b0}};
-    end else begin 
-          ivc_num_getting_sw_grant_reg  <= ivc_num_getting_sw_grant;
-    end  
-  end
  
- //seperate all same virtual chanels requests
- genvar i,j;
- generate 
- for (i=0;i<V;i=i+1)begin:v_loop
-     for (j=0;j<P;j=j+1)begin :p_loop
-        assign counter_rst_gen[i][j]=ivc_num_getting_sw_grant_reg[j*V+i];
-        assign counter_en_gen [i][j]=ivc_request_all[j*V+i];
-    end//j
-    //sum all signals belong to the same VC
-    assign counter_rst[i]   =|counter_rst_gen[i];
-    assign counter_en[i]    =|counter_en_gen [i]; 
-    // generate the counter
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif 
-        if(reset) begin 
-            counter[i]<={CNTw{1'b0}};
-        end else begin 
-            if(counter_rst[i])      counter[i]<={CNTw{1'b0}};
-            else if(counter_en[i])  counter[i]<=counter[i]+1'b1;
-        end//reset
-    end//always
-    // check counters value to detect deadlock
-    assign detect_gen[i]=     (counter[i]== MAX_CLK-1);
+    //seperate all same virtual chanels requests
+    genvar i,j;
+    generate 
+    for (i=0;i<V;i=i+1)begin:v_loop
+        for (j=0;j<P;j=j+1)begin :p_loop
+            assign counter_rst_gen[i][j]=ivc_num_getting_sw_grant_reg[j*V+i];
+            assign counter_en_gen [i][j]=ivc_request_all[j*V+i];
+        end//j
+		//sum all signals belong to the same VC
+		assign counter_rst[i]   =|counter_rst_gen[i];
+		assign counter_en[i]    =|counter_en_gen [i]; 
+		// generate the counter
+		
+		
+		 always @ (*) begin 
+		    counter_next[i] = counter[i];
+		    if(counter_rst[i])      counter_next[i] = {CNTw{1'b0}};
+		    else if(counter_en[i])  counter_next[i] = counter[i]+1'b1;
+		 end//always
+		
+		
+		pronoc_register #(
+		       .W(CNTw)          
+		  ) reg2 ( 
+		       .in(counter_next[i]),
+		       .reset(reset),    
+		       .clk(clk),      
+		       .out(counter[i])
+		  );
+
+		// check counters value to detect deadlock
+		assign detect_gen[i]=     (counter[i]== MAX_CLK-1);
     
- end//i
- 
- assign detect=|detect_gen;
- 
- 
- 
- endgenerate
+    end//i 
+    endgenerate
 
+    assign detect=|detect_gen;
 
 
 

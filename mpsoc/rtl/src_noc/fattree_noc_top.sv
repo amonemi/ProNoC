@@ -1,7 +1,4 @@
-// synthesis translate_off
-`timescale 1ns / 1ps
-// synthesis translate_on
-
+`include "pronoc_def.v"
 /**************************************
 * Module: fattree
 * Date:2019-01-01  
@@ -24,19 +21,20 @@ Description:
 module  fattree_noc_top 
 		import pronoc_pkg::*; 
 	(
-
 		reset,
 		clk,    
 		chan_in_all,
-		chan_out_all  
+		chan_out_all,
+		router_event
 	);
   
   
 	input   clk,reset;
-	//local ports 
+	//Endpoints ports 
 	input   smartflit_chanel_t chan_in_all  [NE-1 : 0];
 	output  smartflit_chanel_t chan_out_all [NE-1 : 0];
-	
+	//Events
+	output  router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];
 	
 	//all routers port 
 	smartflit_chanel_t    router_chan_in   [NR-1 :0][MAX_P-1 : 0];
@@ -82,35 +80,38 @@ genvar pos,level,port;
 
 generate 
 for( pos=0; pos<NRL; pos=pos+1) begin : root 
-      
+	  localparam RID = pos;
 	  router_top # (
                .P(K)               
       )
       the_router
       (              
-        	.current_r_addr  (current_r_addr [pos]), 
-           	.chan_in         (router_chan_in [pos][K-1 : 0]), 
-           	.chan_out        (router_chan_out[pos][K-1 : 0]), 
+      		.current_r_id    (RID),
+      		.current_r_addr  (current_r_addr [RID]), 
+           	.chan_in         (router_chan_in [RID][K-1 : 0]), 
+           	.chan_out        (router_chan_out[RID][K-1 : 0]), 
+           	.router_event    (router_event[RID][K-1 : 0]),
            	.clk             (clk            ), 
            	.reset           (reset          )
-      );
-      	
-  
+      );  
 end   
 
 //add leaves
 
 for( level=1; level<L; level=level+1) begin :level_lp
    for( pos=0; pos<NRL; pos=pos+1) begin : pos_lp 
-      
+    localparam RID = NRL*level+pos;
+   	   	
    	router_top # (
    			.P(2*K)         
    		)
    		the_router
    		(              
-   			.current_r_addr  (current_r_addr [NRL*level+pos]), 
-   			.chan_in         (router_chan_in [NRL*level+pos]), 
-   			.chan_out        (router_chan_out[NRL*level+pos]), 
+   			.current_r_id    (RID),
+   			.current_r_addr  (current_r_addr [RID]), 
+   			.chan_in         (router_chan_in [RID]), 
+   			.chan_out        (router_chan_out[RID]), 
+   			.router_event    (router_event[RID]), 
    			.clk             (clk            ), 
    			.reset           (reset          )
    		);           

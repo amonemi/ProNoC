@@ -236,7 +236,7 @@ module  comb_spec2_allocator #(
     //synthesis translate_off
     //synopsys  translate_off
     if(DEBUG_EN)begin :dbg
-        check_single_bit_assertation #(
+        is_onehot0 #(
             .IN_WIDTH(P_1)
     
         )check_ovc_allocated

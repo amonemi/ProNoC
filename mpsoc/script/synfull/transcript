@@ -1,0 +1,522 @@
+# //  Questa Sim-64
+# //  Version 10.7c linux_x86_64 Aug 17 2018
+# //
+# //  Copyright 1991-2018 Mentor Graphics Corporation
+# //  All Rights Reserved.
+# //
+# //  QuestaSim and its associated documentation contain trade
+# //  secrets and commercial or financial information that are the property of
+# //  Mentor Graphics Corporation and are privileged, confidential,
+# //  and exempt from disclosure under the Freedom of Information Act,
+# //  5 U.S.C. Section 552. Furthermore, this information
+# //  is prohibited from disclosure under the Trade Secrets Act,
+# //  18 U.S.C. Section 1905.
+# //
+# do model.tcl
+# /mtitcl/vsim
+# /home/alireza/work/git/hca_git/ProNoC/mpsoc/script/synfull
+# /home/alireza/work/git/hca_git/ProNoC/mpsoc/script/synfull/dpi_interface
+# synfull_top
+# /home/alireza/work/git/hca_git/mpsoc_work/simulation/rtl_work
+# if {[file exists $rtl_work]} {
+# 	vdel -lib $rtl_work -all
+# }
+# ** Warning: (vdel-134) Unable to remove locked optimized design "_opt2".  Locker is alireza@alireza-7490.
+# vlib $rtl_work
+# ** Warning: (vlib-34) Library already exists at "/home/alireza/work/git/hca_git/mpsoc_work/simulation/rtl_work".
+# vmap work $rtl_work
+# QuestaSim-64 vmap 10.7c Lib Mapping Utility 2018.08 Aug 17 2018
+# vmap work /home/alireza/work/git/hca_git/mpsoc_work/simulation/rtl_work 
+# Modifying modelsim.ini
+# 
+# 
+# vlog  +acc=rn  -F $::env(LM_FILE_LIST)
+# QuestaSim-64 vlog 10.7c Compiler 2018.08 Aug 17 2018
+# Start time: 17:35:40 on Mar 01,2022
+# vlog -reportprogress 300 "+acc=rn" -F /home/alireza/work/git/hca_git/ProNoC/mpsoc/script/synfull/modelsim_filelist.f 
+# -- Compiling package pronoc_pkg
+# -- Compiling module pronoc_register
+# -- Compiling module pronoc_register_reset_init
+# -- Compiling module pronoc_register_reset_init_ld_en
+# -- Compiling module pronoc_register_ld_en
+# -- Compiling module one_hot_mux
+# -- Compiling module one_hot_demux
+# -- Compiling module custom_or
+# -- Compiling module outport_sum
+# -- Compiling module bin_to_one_hot
+# -- Compiling module one_hot_to_bin
+# -- Compiling module binary_mux
+# -- Compiling module accumulator
+# -- Compiling module set_bits_counter
+# -- Compiling module is_onehot0
+# -- Compiling module fast_minimum_number
+# -- Compiling module parallel_counter
+# -- Compiling module CS_GEN
+# -- Compiling module PC_7_3
+# -- Compiling module PC_15_4
+# -- Compiling module PC_31_5
+# -- Compiling module PC_63_6
+# -- Compiling module PC_127_7
+# -- Compiling module start_delay_gen
+# -- Compiling module arbiter
+# -- Compiling module arbiter_priority_en
+# -- Compiling module my_one_hot_arbiter
+# -- Compiling module arbiter_2_one_hot
+# -- Compiling module arbiter_3_one_hot
+# -- Compiling module arbiter_4_one_hot
+# -- Compiling module my_one_hot_arbiter_priority_en
+# -- Compiling module thermo_gen
+# -- Compiling module thermo_arbiter
+# -- Compiling module thermo_arbiter_priority_en
+# -- Compiling module thermo_arbiter_ext_priority
+# -- Compiling module tree_arbiter
+# -- Compiling module my_one_hot_arbiter_ext_priority
+# -- Compiling module arbiter_ext_priority
+# -- Compiling module fixed_priority_arbiter
+# -- Compiling module class_ovc_table
+# -- Compiling module vc_priority_based_dest_port
+# -- Compiling module ss_allocator
+# -- Importing package pronoc_pkg
+# -- Compiling module ssa_per_vc
+# -- Compiling module ssa_check_destport
+# -- Compiling module add_ss_port
+# -- Compiling module tranc_xy_routing
+# -- Compiling module tranc_west_first_routing
+# -- Compiling module tranc_north_last_routing
+# -- Compiling module tranc_negetive_first_routing
+# -- Compiling module tranc_duato_routing
+# -- Compiling module tranc_dir
+# -- Compiling module header_flit_generator
+# -- Compiling module extract_header_flit_info
+# -- Compiling module header_flit_update_lk_route_ovc
+# -- Compiling module hdr_flit_weight_update
+# -- Compiling module noc_top
+# -- Compiling module noc_top_v
+# -- Compiling module fattree_noc_top
+# -- Compiling module fattree_nca_random_up_routing
+# -- Compiling module fattree_nca_destp_up_routing
+# -- Compiling module fattree_nca_straight_up_routing
+# -- Compiling module fattree_destport_up_select
+# -- Compiling module fattree_conventional_routing
+# -- Compiling module fattree_look_ahead_routing
+# -- Compiling module fattree_deterministic_look_ahead_routing
+# -- Compiling module fattree_destport_decoder
+# -- Compiling module fattree_mask_non_assignable_destport
+# -- Compiling module fattree_distance_gen
+# -- Compiling module fattree_addr_encoder
+# -- Compiling module fattree_addr_decoder
+# -- Compiling module fattree_ssa_check_destport
+# -- Compiling module fattree_router_addr_decode
+# -- Compiling module fattree_destp_generator
+# -- Compiling module comb_nonspec_allocator
+# -- Compiling module comb_nonspec_v2_allocator
+# -- Compiling module nonspec_sw_alloc
+# -- Compiling module swa_input_port_arbiter
+# -- Compiling module swa_output_port_arbiter
+# -- Compiling module inout_ports
+# -- Compiling module output_vc_status
+# -- Compiling module vc_alloc_request_gen
+# -- Compiling module vc_alloc_request_gen_determinstic
+# -- Compiling module wrra
+# -- Compiling module rra_priority_lock
+# -- Compiling module weight_counter
+# -- Compiling module classic_weight_counter
+# -- Compiling module weight_control
+# -- Compiling module wrra_contention_gen
+# -- Compiling module wrra_inputport_destports_sum
+# -- Compiling module weights_update
+# -- Compiling module weight_update_per_port
+# -- Compiling module output_weight_latch
+# -- Compiling module input_ports
+# -- Compiling module input_queue_per_port
+# -- Compiling module destp_generator
+# -- Compiling module custom_topology_destp_decoder
+# -- Compiling module tree_noc_top
+# -- Compiling module tree_nca_routing
+# -- Compiling module tree_conventional_routing
+# -- Compiling module tree_deterministic_look_ahead_routing
+# -- Compiling module tree_look_ahead_routing
+# -- Compiling module tree_destport_decoder
+# -- Compiling module tree_destp_generator
+# -- Compiling module comb_spec1_allocator
+# -- Compiling module spec_sw_alloc
+# -- Compiling module sw_alloc_sub
+# -- Compiling module combined_vc_sw_alloc
+# -- Compiling module mesh_torus_look_ahead_routing
+# -- Compiling module mesh_torus_deterministic_look_ahead_routing
+# -- Compiling module mesh_torus_adaptive_look_ahead_routing
+# -- Compiling module mesh_torus_next_router_addr_predictor
+# -- Compiling module mesh_torus_next_router_inport_predictor
+# -- Compiling module remove_sw_loc_one_hot
+# -- Compiling module remove_receive_port_one_hot
+# -- Compiling module add_sw_loc_one_hot
+# -- Compiling module add_sw_loc_one_hot_val
+# -- Compiling module mesh_torus_conventional_routing
+# -- Compiling module tranc_ring_routing
+# -- Compiling module xy_line_routing
+# -- Compiling module line_ring_encode_dstport
+# -- Compiling module line_ring_decode_dstport
+# -- Compiling module mesh_tori_decode_dstport
+# -- Compiling module baseline_allocator
+# -- Compiling module canonical_vc_alloc
+# -- Compiling module spec_sw_alloc_can
+# -- Compiling module comb_spec2_allocator
+# -- Compiling module spec_sw_alloc2
+# -- Compiling module sw_alloc_sub2
+# -- Compiling module spec_sw_alloc_sub2
+# -- Compiling module flit_buffer_reg_base
+# -- Compiling module xy_mesh_routing
+# -- Compiling module west_first_routing
+# -- Compiling module north_last_routing
+# -- Compiling module negetive_first_routing
+# -- Compiling module odd_even_routing
+# -- Compiling module duato_mesh_routing
+# -- Compiling module mesh_dir
+# -- Compiling module mesh_tori_encode_dstport
+# -- Compiling module reduction_or
+# -- Compiling module onehot_mux_2D
+# -- Compiling module onehot_mux_1D
+# -- Compiling module onehot_mux_1D_reverse
+# -- Compiling module header_flit_info
+# -- Compiling module smart_chanel_check
+# -- Compiling module smart_forward_ivc_info
+# -- Compiling module smart_bypass_chanels
+# -- Compiling module check_straight_oport
+# -- Compiling module smart_validity_check_per_ivc
+# -- Compiling module smart_allocator_per_iport
+# -- Compiling module smart_credit_manage
+# -- Compiling module smart_credit_manage_per_vc
+# -- Compiling module traffic_gen_top
+# -- Compiling module injection_ratio_ctrl
+# -- Compiling module packet_gen
+# -- Compiling module distance_gen
+# -- Compiling module port_presel_based_dst_ports_vc
+# -- Compiling module port_presel_based_dst_ports_credit
+# -- Compiling module mesh_torus_port_presel_based_dst_routers_vc
+# -- Compiling module port_presel_based_dst_routers_ovc
+# -- Compiling module port_pre_sel_gen
+# -- Compiling module congestion_out_based_ivc_req
+# -- Compiling module congestion_out_based_ivc_notgrant
+# -- Compiling module congestion_out_based_3port_avb_ovc
+# -- Compiling module congestion_out_based_avb_ovc_w2
+# -- Compiling module congestion_out_based_avb_ovc_w3
+# -- Compiling module congestion_out_based_avb_ovc_w4
+# -- Compiling module congestion_out_based_avb_ovc_not_granted_ivc
+# -- Compiling module parallel_count_normalize
+# -- Compiling module normalizer
+# -- Compiling module congestion_out_gen
+# -- Compiling module deadlock_detector
+# -- Compiling module output_ports
+# -- Compiling module credit_monitor_per_ovc
+# -- Compiling module oport_ovc_sig_gen
+# -- Compiling module full_ovc_predictor
+# -- Compiling module check_ovc
+# -- Compiling module conventional_routing
+# -- Compiling module look_ahead_routing
+# -- Compiling module next_router_addr_selector_onehot
+# -- Compiling module next_router_addr_selector_bin
+# -- Compiling module router_two_stage
+# -- Compiling module crossbar
+# -- Compiling module iport_reg_base
+# -- Compiling module flit_buffer
+# -- Compiling module fifo_ram
+# -- Compiling module fifo_ram_mem_size
+# -- Compiling module fwft_fifo
+# -- Compiling module fwft_fifo_with_output_clear
+# -- Compiling module fwft_fifo_bram
+# -- Compiling module bram_based_fifo
+# -- Compiling module mesh_torus_vc_alloc_request_gen_adaptive
+# -- Compiling module mesh_tori_dspt_clear_gen
+# -- Compiling module mesh_torus_mask_non_assignable_destport
+# -- Compiling module mesh_torus_mask_non_assignable_destport_no_self_loop
+# -- Compiling module mesh_torus_swap_port_presel_gen
+# -- Compiling module mesh_torus_adaptive_avb_ovc_mux
+# -- Compiling module mesh_torus_port_selector
+# -- Compiling module mesh_torus_adaptive_lk_dest_encoder
+# -- Compiling module mesh_torus_dtrmn_dest_encoder
+# -- Compiling module mesh_torus_distance_gen
+# -- Compiling module mesh_torus_ssa_check_destport
+# -- Compiling module line_ring_ssa_check_destport
+# -- Compiling module mesh_tori_router_addr_decode
+# -- Compiling module mesh_tori_endp_addr_decode
+# -- Compiling module mesh_tori_addr_encoder
+# -- Compiling module mesh_tori_addr_coder
+# -- Compiling module mesh_torus_destp_generator
+# -- Compiling module mesh_torus_destp_decoder
+# -- Compiling module line_ring_destp_decoder
+# -- Compiling module mesh_torus_dynamic_portsel_control
+# -- Compiling module check_flit_chanel_type_is_in_order
+# -- Compiling module debug_mesh_tori_route_ckeck
+# -- Compiling module debug_mesh_edges
+# -- Compiling module check_destination_addr
+# -- Compiling module endp_addr_encoder
+# -- Compiling module endp_addr_decoder
+# -- Compiling module router_top
+# -- Compiling module router_top_v
+# -- Compiling module mesh_torus_noc_top
+# -- Compiling module star_noc_top
+# -- Compiling module star_conventional_routing
+# -- Compiling module fmesh_addr_encoder
+# -- Compiling module fmesh_addr_coder
+# -- Compiling module fmesh_endp_addr_decode
+# -- Compiling module fmesh_destp_generator
+# -- Compiling module fmesh_destp_decoder
+# -- Compiling module fmesh_distance_gen
+# -- Compiling module packet_injector
+# -- Compiling module injector_ovc_status
+# -- Compiling module packet_injector_verilator
+# -- Compiling module multicast_routing
+# -- Compiling module multicast_routing_mesh
+# -- Compiling module multicast_routing_fmesh
+# -- Compiling module mcast_dest_list_decode
+# -- Compiling module multicast_chan_in_process
+# -- Compiling module multicast_dst_sel
+# -- Compiling package dpi_int_pkg_sv_unit
+# -- Importing package pronoc_pkg
+# -- Compiling package dpi_int_pkg
+# -- Compiling module pck_class_in_gen
+# -- Compiling module pck_dst_gen
+# -- Compiling module pck_dst_gen_unicast
+# -- Compiling module two_dimension_pck_dst_gen
+# -- Compiling module one_dimension_pck_dst_gen
+# -- Compiling module pck_size_gen
+# -- Compiling module hot_spot_dest_gen
+# -- Compiling module pck_injector_test
+# -- Compiling module routers_statistic_collector
+# ** Warning: ../../rtl/src_synfull/dpi_interface.sv(13): (vlog-13314) Defaulting port 'pronoc_synfull_del_all_i' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# -- Compiling package dpi_interface_sv_unit
+# -- Importing package pronoc_pkg
+# -- Importing package dpi_int_pkg
+# -- Compiling module top_dpi_interface
+# ** Warning: ../../rtl/src_synfull/dpi_interface.sv(13): (vlog-13314) Defaulting port 'pronoc_synfull_del_all_i' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# -- Compiling module synfull_top
+# 
+# Top level modules:
+# 	pronoc_register_ld_en
+# 	outport_sum
+# 	set_bits_counter
+# 	fast_minimum_number
+# 	parallel_counter
+# 	start_delay_gen
+# 	my_one_hot_arbiter_ext_priority
+# 	arbiter_ext_priority
+# 	vc_priority_based_dest_port
+# 	noc_top_v
+# 	wrra
+# 	rra_priority_lock
+# 	mesh_torus_next_router_inport_predictor
+# 	remove_receive_port_one_hot
+# 	onehot_mux_1D_reverse
+# 	traffic_gen_top
+# 	deadlock_detector
+# 	iport_reg_base
+# 	mesh_torus_dtrmn_dest_encoder
+# 	router_top_v
+# 	packet_injector_verilator
+# 	pck_class_in_gen
+# 	pck_dst_gen
+# 	pck_injector_test
+# 	synfull_top
+# End time: 17:35:40 on Mar 01,2022, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 2
+# 
+# vsim -t 1ps  -L $rtl_work -L work -voptargs="+acc"  $top -sv_lib $DPI_LIB
+# vsim -t 1ps -L /home/alireza/work/git/hca_git/mpsoc_work/simulation/rtl_work -L work -voptargs=""+acc"" synfull_top -sv_lib /home/alireza/work/git/hca_git/ProNoC/mpsoc/script/synfull/dpi_interface 
+# Start time: 17:35:40 on Mar 01,2022
+# ** Note: (vsim-3812) Design is being optimized...
+# ** Note: (vopt-143) Recognized 1 FSM in module "packet_injector(fast)".
+# ** Warning: ../../rtl/src_synfull/dpi_interface.sv(13): (vopt-13314) Defaulting port 'pronoc_synfull_del_all_i' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# Loading sv_std.std
+# Loading work.pronoc_pkg(fast)
+# Loading work.dpi_int_pkg(fast)
+# Loading work.synfull_top(fast)
+# Loading work.noc_top(fast)
+# Loading work.mesh_torus_noc_top(fast)
+# Loading work.router_top(fast)
+# Loading work.header_flit_info(fast)
+# Loading work.check_flit_chanel_type_is_in_order(fast)
+# Loading work.pronoc_register(fast)
+# Loading work.pronoc_register_reset_init(fast)
+# Loading work.router_two_stage(fast)
+# Loading work.inout_ports(fast)
+# Loading work.input_ports(fast)
+# Loading work.input_queue_per_port(fast)
+# Loading work.pronoc_register(fast__1)
+# Loading work.pronoc_register_reset_init(fast__1)
+# Loading work.extract_header_flit_info(fast)
+# Loading work.mesh_tori_endp_addr_decode(fast)
+# Loading work.one_hot_to_bin(fast)
+# Loading work.class_ovc_table(fast)
+# Loading work.onehot_mux_1D(fast__2)
+# Loading work.onehot_mux_2D(fast__2)
+# Loading work.fwft_fifo(fast)
+# Loading work.pronoc_register(fast__2)
+# Loading work.pronoc_register_reset_init(fast__2)
+# Loading work.fwft_fifo(fast__1)
+# Loading work.pronoc_register(fast__3)
+# Loading work.destp_generator(fast)
+# Loading work.mesh_torus_destp_generator(fast)
+# Loading work.mesh_torus_destp_decoder(fast)
+# Loading work.bin_to_one_hot(fast)
+# Loading work.mesh_torus_mask_non_assignable_destport(fast)
+# Loading work.remove_sw_loc_one_hot(fast)
+# Loading work.add_sw_loc_one_hot_val(fast)
+# Loading work.mesh_torus_mask_non_assignable_destport_no_self_loop(fast)
+# Loading work.flit_buffer(fast)
+# Loading work.onehot_mux_1D(fast__3)
+# Loading work.onehot_mux_2D(fast__3)
+# Loading work.fifo_ram(fast)
+# Loading work.pronoc_register(fast__4)
+# Loading work.pronoc_register_reset_init(fast__3)
+# Loading work.look_ahead_routing(fast)
+# Loading work.mesh_tori_router_addr_decode(fast)
+# Loading work.mesh_torus_look_ahead_routing(fast)
+# Loading work.mesh_torus_deterministic_look_ahead_routing(fast)
+# Loading work.mesh_tori_decode_dstport(fast)
+# Loading work.mesh_torus_next_router_addr_predictor(fast)
+# Loading work.mesh_torus_conventional_routing(fast)
+# Loading work.xy_mesh_routing(fast)
+# Loading work.mesh_tori_encode_dstport(fast)
+# Loading work.header_flit_update_lk_route_ovc(fast)
+# Loading work.onehot_mux_1D(fast)
+# Loading work.onehot_mux_2D(fast)
+# Loading work.onehot_mux_1D(fast__1)
+# Loading work.onehot_mux_2D(fast__1)
+# Loading work.debug_mesh_tori_route_ckeck(fast)
+# Loading work.input_queue_per_port(fast__1)
+# Loading work.destp_generator(fast__1)
+# Loading work.mesh_torus_destp_generator(fast__1)
+# Loading work.mesh_torus_mask_non_assignable_destport(fast__1)
+# Loading work.remove_sw_loc_one_hot(fast__1)
+# Loading work.mesh_torus_mask_non_assignable_destport_no_self_loop(fast__1)
+# Loading work.debug_mesh_tori_route_ckeck(fast__1)
+# Loading work.input_queue_per_port(fast__2)
+# Loading work.destp_generator(fast__2)
+# Loading work.mesh_torus_destp_generator(fast__2)
+# Loading work.mesh_torus_mask_non_assignable_destport(fast__2)
+# Loading work.remove_sw_loc_one_hot(fast__2)
+# Loading work.mesh_torus_mask_non_assignable_destport_no_self_loop(fast__2)
+# Loading work.debug_mesh_tori_route_ckeck(fast__2)
+# Loading work.input_queue_per_port(fast__3)
+# Loading work.destp_generator(fast__3)
+# Loading work.mesh_torus_destp_generator(fast__3)
+# Loading work.mesh_torus_mask_non_assignable_destport(fast__3)
+# Loading work.remove_sw_loc_one_hot(fast__3)
+# Loading work.mesh_torus_mask_non_assignable_destport_no_self_loop(fast__3)
+# Loading work.debug_mesh_tori_route_ckeck(fast__3)
+# Loading work.input_queue_per_port(fast__4)
+# Loading work.destp_generator(fast__4)
+# Loading work.mesh_torus_destp_generator(fast__4)
+# Loading work.mesh_torus_mask_non_assignable_destport(fast__4)
+# Loading work.remove_sw_loc_one_hot(fast__4)
+# Loading work.mesh_torus_mask_non_assignable_destport_no_self_loop(fast__4)
+# Loading work.debug_mesh_tori_route_ckeck(fast__4)
+# Loading work.input_queue_per_port(fast__5)
+# Loading work.destp_generator(fast__5)
+# Loading work.mesh_torus_destp_generator(fast__5)
+# Loading work.mesh_torus_mask_non_assignable_destport(fast__5)
+# Loading work.remove_sw_loc_one_hot(fast__5)
+# Loading work.mesh_torus_mask_non_assignable_destport_no_self_loop(fast__5)
+# Loading work.debug_mesh_tori_route_ckeck(fast__5)
+# Loading work.output_ports(fast)
+# Loading work.pronoc_register(fast__5)
+# Loading work.pronoc_register_reset_init(fast__4)
+# Loading work.oport_ovc_sig_gen(fast)
+# Loading work.one_hot_demux(fast)
+# Loading work.credit_monitor_per_ovc(fast)
+# Loading work.full_ovc_predictor(fast)
+# Loading work.onehot_mux_1D(fast__4)
+# Loading work.onehot_mux_2D(fast__4)
+# Loading work.credit_monitor_per_ovc(fast__1)
+# Loading work.credit_monitor_per_ovc(fast__2)
+# Loading work.credit_monitor_per_ovc(fast__3)
+# Loading work.credit_monitor_per_ovc(fast__4)
+# Loading work.credit_monitor_per_ovc(fast__5)
+# Loading work.port_pre_sel_gen(fast)
+# Loading work.accumulator(fast)
+# Loading work.check_ovc(fast)
+# Loading work.vc_alloc_request_gen(fast)
+# Loading work.vc_alloc_request_gen_determinstic(fast)
+# Loading work.congestion_out_gen(fast)
+# Loading work.pronoc_register(fast__6)
+# Loading work.pronoc_register_reset_init(fast__5)
+# Loading work.combined_vc_sw_alloc(fast)
+# Loading work.comb_nonspec_allocator(fast)
+# Loading work.nonspec_sw_alloc(fast)
+# Loading work.swa_input_port_arbiter(fast)
+# Loading work.arbiter_priority_en(fast)
+# Loading work.onehot_mux_1D(fast__5)
+# Loading work.onehot_mux_2D(fast__5)
+# Loading work.swa_output_port_arbiter(fast)
+# Loading work.arbiter(fast)
+# Loading work.thermo_arbiter(fast)
+# Loading work.thermo_gen(fast)
+# Loading work.custom_or(fast)
+# Loading work.arbiter(fast__1)
+# Loading work.pronoc_register(fast__7)
+# Loading work.pronoc_register_reset_init(fast__6)
+# Loading work.crossbar(fast)
+# Loading work.one_hot_to_bin(fast__1)
+# Loading work.one_hot_mux(fast)
+# Loading work.binary_mux(fast)
+# Loading work.pronoc_register(fast__8)
+# Loading work.pronoc_register_reset_init(fast__7)
+# Loading work.debug_mesh_edges(fast)
+# Loading work.dpi_interface_sv_unit(fast)
+# Loading work.top_dpi_interface(fast)
+# Loading work.fwft_fifo_bram(fast)
+# Loading work.bram_based_fifo(fast)
+# Loading work.pronoc_register(fast__9)
+# Loading work.pronoc_register_reset_init(fast__8)
+# Loading work.pronoc_register(fast__10)
+# Loading work.pronoc_register_reset_init(fast__9)
+# Loading work.endp_addr_encoder(fast)
+# Loading work.mesh_tori_addr_encoder(fast)
+# Loading work.packet_injector(fast)
+# Loading work.conventional_routing(fast)
+# Loading work.mesh_torus_conventional_routing(fast__1)
+# Loading work.header_flit_generator(fast)
+# Loading work.one_hot_mux(fast__1)
+# Loading work.pronoc_register(fast__11)
+# Loading work.pronoc_register_reset_init(fast__10)
+# Loading work.injector_ovc_status(fast)
+# Loading work.header_flit_info(fast__1)
+# Loading work.endp_addr_decoder(fast)
+# Loading work.mesh_tori_addr_coder(fast)
+# Loading work.distance_gen(fast)
+# Loading work.mesh_torus_distance_gen(fast)
+# Loading work.routers_statistic_collector(fast)
+# Loading /home/alireza/work/git/hca_git/ProNoC/mpsoc/script/synfull/dpi_interface.so
+# 
+# add wave *
+# view structure
+# .main_pane.structure.interior.cs.body.struct
+# view signals
+# .main_pane.objects.interior.cs.body.tree
+# run -all
+# NoC parameters:----------------
+# 	Topology: MESH
+# 	Routing algorithm: XY
+# 	VC_per port: 1
+# 	Non-local port buffer_width per VC: 4
+# 	Local port buffer_width per VC: 4
+# 	Router num in row: 4
+# 	Router num in column: 4
+# 	Endpoint num per router: 2
+# 	Number of Class: 2
+# 	Flit data width: 64
+# 	VC reallocation mechanism: NONATOMIC
+# 	VC/sw combination mechanism: COMB_NONSPEC
+# 	AVC_ATOMIC_EN:0
+# 	Congestion Index:3
+# 	ADD_PIPREG_AFTER_CROSSBAR:1
+# 	SSA_EN enabled:NO
+# 	Switch allocator arbitration type:RRA
+# 	Minimum supported packet size:1 flit(s)
+# 	Loop back is enabled:YES
+# 	Number of multihop bypass (SMART max):0
+# 	Castying type:UNICAST.
+# NoC parameters:----------------
+# Simulation parameters-------------
+# 	Debuging is enabled
+# Listening on socket

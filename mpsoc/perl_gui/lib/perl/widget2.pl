@@ -20,8 +20,8 @@ use HexSpin2;
 use Gtk2::Pango;
 #use Tk::Animation;
 
-our $FONT_SIZE;
-our $ICON_SIZE;
+our %glob_setting;
+
 
 ##############
 # combo box
@@ -378,11 +378,11 @@ sub button_box{
 sub get_icon_pixbuff{
     my $icon_file=shift;
 	my $size;
-    if ($ICON_SIZE eq 'default'){
+    if ($glob_setting{'ICON_SIZE'} eq 'default'){
    		my $font_size=get_defualt_font_size();
 		$size=($font_size *2.5);
     }else{
-    	$size = int ($ICON_SIZE);
+    	$size = int ($glob_setting{'ICON_SIZE'});
     }
 	my $pixbuf = Gtk2::Gdk::Pixbuf->new_from_file_at_scale($icon_file,$size,$size,FALSE);
 	return $pixbuf;
@@ -819,27 +819,21 @@ sub def_scrolled_window_box{
 }
 
 
-
-
-
-
-sub max_win_size{
-	my $screen =Gtk2::Gdk::Screen->get_default();
-	my $hight = $screen->get_height(); 
-	my $width = $screen->get_width(); 
-	return ($width,$hight);
+sub get_default_screen {
+  return Gtk2::Gdk::Screen->get_default();
 }
 
 
+
 sub get_defualt_font_size{
-	return int($FONT_SIZE) if ($FONT_SIZE ne 'default');
+	return int($glob_setting{'FONT_SIZE'}) if ($glob_setting{'FONT_SIZE'} ne 'default');
 	
 	my($width,$hight)=max_win_size();
 	#print "($width,$hight)\n";
 	my $font_size=($width>=1600)? 10:
 			      ($width>=1400)? 9:
 				  ($width>=1200)? 9:
-				  ($width>=1000)? 7:6;
+				  ($width>=1000)? 8:7;
 	#print "$font_size\n";	
 	return $font_size;
 }
@@ -2047,6 +2041,8 @@ sub run_cmd_in_back_ground_get_stdout
 	my $cmd=shift;
 	my $exit;
 	my ($stdout, $stderr);
+	STDOUT->flush();
+	STDERR->flush();
 	capture { $exit=run_cmd_in_back_ground($cmd) } \$stdout, \$stderr;
 	return ($stdout,$exit,$stderr);
 	

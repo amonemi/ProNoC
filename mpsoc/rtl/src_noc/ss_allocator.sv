@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+`include "pronoc_def.v"
 
 /**********************************************************************
 **	File:  ss_allocator.v
@@ -47,12 +47,11 @@ import pronoc_pkg::*;
         any_ovc_granted_in_outport_all ,
         any_ivc_sw_request_granted_all ,
         ovc_avalable_all,
-        assigned_ovc_not_full_all,
-        ivc_request_all,
-        dest_port_encoded_all,
-        assigned_ovc_num_all,
-        ovc_is_assigned_all,    
-            
+       // assigned_ovc_not_full_all,
+       // dest_port_encoded_all,
+       // assigned_ovc_num_all,
+       // ovc_is_assigned_all,    
+        ivc_info,   
         ssa_ctrl_o
    );
 
@@ -85,12 +84,10 @@ import pronoc_pkg::*;
     input   [P-1            :   0]  any_ovc_granted_in_outport_all;
     input   [P-1            :   0]  any_ivc_sw_request_granted_all;
     input   [PV-1           :   0]  ovc_avalable_all;
-    input   [PV-1           :   0]  assigned_ovc_not_full_all;
-    input   [PV-1           :   0]  ivc_request_all;
-    input   [PVDSTPw-1      :   0]  dest_port_encoded_all;
-    input   [PVV-1          :   0]  assigned_ovc_num_all;
-    input   [PV-1           :   0]  ovc_is_assigned_all;
+    
+   
     input   reset,clk;
+    input   ivc_info_t   ivc_info   [P-1 : 0][V-1 : 0];
     output  ssa_ctrl_t   ssa_ctrl_o [P-1 : 0]; 
 
 
@@ -102,7 +99,7 @@ import pronoc_pkg::*;
     wire   [PV-1      :   0] ivc_reset_all;
     wire   [PV-1      :   0] single_flit_pck_all,ovc_single_flit_pck_all;
     wire   [PV-1      :   0] decreased_credit_in_ss_ovc_all;
-    reg    [P-1       :   0] ssa_flit_wr_all;
+    wire   [P-1       :   0] ssa_flit_wr_all;
   
    
     wire [PV-1   :   0] any_ovc_granted_in_ss_port;
@@ -112,7 +109,11 @@ import pronoc_pkg::*;
     wire [PV-1   :   0] decreased_credit_in_ss_ovc;
     wire [PV-1   :   0] ivc_num_getting_sw_grantin_SS_all;
 
-
+    wire [PV-1       : 0] ivc_request_all;
+    wire [PV-1       : 0] assigned_ovc_not_full_all;  
+    wire [PVDSTPw-1  : 0] dest_port_encoded_all;
+    wire [PVV-1      : 0] assigned_ovc_num_all;
+    wire [PV-1       : 0] ovc_is_assigned_all;
 
 	genvar i;
     // there is no ssa for local port in 5 and 3 port routers
@@ -121,6 +122,14 @@ import pronoc_pkg::*;
     
         localparam  C_PORT  = i/V;
         localparam  SS_PORT = strieght_port (P,C_PORT);
+        
+        assign ivc_request_all[i] = ivc_info[C_PORT][i%V].ivc_req;
+        assign assigned_ovc_not_full_all[i] = ivc_info[C_PORT][i%V].assigned_ovc_not_full;
+        assign dest_port_encoded_all [(i+1)*DSTPw-1 : i*DSTPw] = ivc_info[C_PORT][i%V].dest_port_encoded;
+        assign assigned_ovc_num_all[(i+1)*V-1 : i*V] = ivc_info[C_PORT][i%V].assigned_ovc_num;
+        assign ovc_is_assigned_all[i] = ivc_info[C_PORT][i%V].ovc_is_assigned;
+        
+        
            
         if (SS_PORT == DISABLED)begin : no_prefrable
        
@@ -188,19 +197,16 @@ import pronoc_pkg::*;
     end// vc_loop
     
     
-    for(i=0;i<P;i=i+1)begin: P_                  
-`ifdef SYNC_RESET_MODE 
-        always @ (posedge clk )begin 
-`else 
-        always @ (posedge clk or posedge reset)begin 
-`endif  
-            if(reset)begin
-                    ssa_flit_wr_all[i]<=1'b0;
-            end else begin
-                    ssa_flit_wr_all[i]<= |ivc_num_getting_sw_grantin_SS_all[(i+1)*V-1    :   i*V];                
-            end //reset
-        end// always
-   
+    for(i=0;i<P;i=i+1)begin: P_     
+    	
+    	
+    	pronoc_register #(.W(1)) reg1 (
+    			.in(|ivc_num_getting_sw_grantin_SS_all[(i+1)*V-1    :   i*V] ),
+    			.out(ssa_flit_wr_all[i]),
+    			.reset(reset),
+    			.clk(clk));
+    	
+
     
        
             assign ssa_ctrl_o[i].ovc_is_allocated =ovc_allocated_all [(i+1)*V-1  : i*V];

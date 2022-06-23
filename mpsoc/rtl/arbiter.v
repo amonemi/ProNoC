@@ -34,6 +34,9 @@
 * 
 *
 ******************************************/
+`include "pronoc_def.v"
+
+
 
 module arbiter #(
     parameter    ARBITER_WIDTH    =8
@@ -207,13 +210,8 @@ module my_one_hot_arbiter #(
 
     );
     
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif     
-     
-        if(reset) begin
+    always @ (`pronoc_clk_reset_edge )begin 
+        if(`pronoc_reset) begin
             low_pr    <=    {ARBITER_BIN_WIDTH{1'b0}};
         end else begin
             if(any_grant) low_pr <= grant_bcd;
@@ -356,12 +354,8 @@ module my_one_hot_arbiter_priority_en #(
         .bin_code(grant_bcd)
     );
 
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif     
-        if(reset) begin
+    always @ (`pronoc_clk_reset_edge )begin 
+        if(`pronoc_reset) begin
             low_pr    <=    {ARBITER_BIN_WIDTH{1'b0}};
         end else begin
             if(priority_en) low_pr <= grant_bcd;
@@ -452,25 +446,20 @@ module thermo_arbiter #(
     );
 
     
-assign mux_out=(termo2[ARBITER_WIDTH-1])? termo2 : termo1;
-assign masked_request= request & pr;
-assign any_grant=termo1[ARBITER_WIDTH-1];
-
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif 
- 
-    if(reset) pr<= {ARBITER_WIDTH{1'b1}};
-    else begin 
-        if(any_grant) pr<= edge_mask;
+    assign mux_out=(termo2[ARBITER_WIDTH-1])? termo2 : termo1;
+    assign masked_request= request & pr;
+    assign any_grant=termo1[ARBITER_WIDTH-1];
+    
+    always @ (`pronoc_clk_reset_edge )begin 
+            if(`pronoc_reset) pr<= {ARBITER_WIDTH{1'b1}};
+        else begin 
+            if(any_grant) pr<= edge_mask;
+        end
+    
     end
-
-end
-
-assign edge_mask= {mux_out[ARBITER_WIDTH-2:0],1'b0};
-assign grant= mux_out ^ edge_mask;
+    
+    assign edge_mask= {mux_out[ARBITER_WIDTH-2:0],1'b0};
+    assign grant= mux_out ^ edge_mask;
 
 
 
@@ -530,21 +519,16 @@ module thermo_arbiter_priority_en #(
     assign masked_request= request & pr;
     assign any_grant=termo1[ARBITER_WIDTH-1];
 
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif 
- 
-    if(reset) pr<= {ARBITER_WIDTH{1'b1}};
-    else begin 
-        if(priority_en) pr<= edge_mask;
+    always @ (`pronoc_clk_reset_edge )begin 
+            if(`pronoc_reset) pr<= {ARBITER_WIDTH{1'b1}};
+        else begin 
+            if(priority_en) pr<= edge_mask;
+        end
+    
     end
-
-end
-
-assign edge_mask= {mux_out[ARBITER_WIDTH-2:0],1'b0};
-assign grant= mux_out ^ edge_mask;
+    
+    assign edge_mask= {mux_out[ARBITER_WIDTH-2:0],1'b0};
+    assign grant= mux_out ^ edge_mask;
 
 
 
@@ -871,12 +855,12 @@ endmodule
     input   [ARBITER_WIDTH-1            :   0]  request;
     output  [ARBITER_WIDTH-1            :   0]  grant;
     output                                      any_grant;
-   
+   /*
     wire    [ARBITER_WIDTH-1            :   0]  cout;
     reg     [ARBITER_WIDTH-1            :   0]  cin;
     
     
-    assign  any_grant= | request;
+  
     
     assign grant    = cin & request;
     assign cout     = cin & ~request; 
@@ -885,6 +869,34 @@ endmodule
         if( HIGH_PRORITY_BIT == "HSB")  cin      = {1'b1, cout[ARBITER_WIDTH-1 :1]}; // hsb has highest priority
         else                            cin      = {cout[ARBITER_WIDTH-2 :0] ,1'b1}; // lsb has highest priority
     end//always
+    
+    */
+    
+    assign  any_grant= | request;
+    wire  [ARBITER_WIDTH-1            :   0] termo_code, edge_mask;
+    
+     
+    genvar i;
+    generate
+    if( HIGH_PRORITY_BIT == "LSB") begin :hsb
+        for(i=0;i<ARBITER_WIDTH;i=i+1)begin :lp
+            assign termo_code[i]= | request[i    :0];    
+        end
+        assign edge_mask=  {termo_code[ARBITER_WIDTH-2:0],1'b0};
+        
+    end else begin :hsb
+        for(i=0;i<ARBITER_WIDTH;i=i+1)begin :lp
+            assign termo_code[i]= | request[ARBITER_WIDTH-1    :i];    
+        end
+        assign edge_mask=  {1'b0, termo_code[ARBITER_WIDTH-1:1]};
+        
+    end
+    endgenerate
+    
+    assign grant= termo_code ^ edge_mask;
+    
+    
+    
 endmodule
     
 

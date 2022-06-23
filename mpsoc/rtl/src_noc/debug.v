@@ -32,7 +32,8 @@ module check_flit_chanel_type_is_in_order #(
     
 
     wire [V-1 : 0] vc_num_hdr_wr, vc_num_tail_wr,vc_num_bdy_wr ;
-    reg  [V-1 : 0] hdr_passed, hdr_passed_next;
+    wire [V-1 : 0] hdr_passed;
+    reg  [V-1 : 0] hdr_passed_next;
     wire [V-1 : 0] single_flit_pck;
     
     assign  vc_num_hdr_wr =(hdr_flg_in & flit_in_wr) ?    vc_num_in : 0;
@@ -44,13 +45,19 @@ module check_flit_chanel_type_is_in_order #(
     end
     
     // synthesis translate_off
-    always @ (posedge clk or posedge reset) begin 
-        if(reset)  begin 
-            hdr_passed <= 0;
-            
-        end else begin 
-           
-            hdr_passed     <= hdr_passed_next;
+    
+    pronoc_register #(
+           .W(V)          
+      ) reg2 ( 
+           .in(hdr_passed_next),
+           .reset(reset),    
+           .clk(clk),      
+           .out(hdr_passed)
+      );    
+    
+    
+    
+    always @ (posedge clk ) begin 
             if(( hdr_passed & vc_num_hdr_wr)>0  )begin 
                 $display("%t ERROR: a header flit is received in  an active IVC %m",$time);               
                 $finish;
@@ -73,9 +80,8 @@ module check_flit_chanel_type_is_in_order #(
                 $display("%t ERROR: A single flit packet is injected while the minimum packet size is set to %d.  %m",$time,MIN_PCK_SIZE);
                 $finish;
             end
-            //TODO check that the injected packet size meets the MIN_PCK_SIZE
-            
-        end//else
+            //TODO check that the injected packet size meets the MIN_PCK_SIZE            
+       
     end//always
     // synthesis translate_on
 endmodule
@@ -97,7 +103,8 @@ module debug_mesh_tori_route_ckeck #(
     parameter TOPOLOGY="MESH",
     parameter DSTPw=4,
     parameter RAw=4,
-    parameter EAw=4    
+    parameter EAw=4,
+    parameter DAw=EAw
 )(
     reset,
     clk,
@@ -126,7 +133,8 @@ module debug_mesh_tori_route_ckeck #(
     input hdr_flg_in , flit_in_wr;
     input [V-1 : 0] vc_num_in, flit_is_tail,  ivc_num_getting_sw_grant;
     input [RAw-1 : 0] current_r_addr;
-    input [EAw-1 : 0] dest_e_addr_in,src_e_addr_in;
+    input [DAw-1 : 0] dest_e_addr_in;
+    input [EAw-1 : 0] src_e_addr_in;
     input [DSTPw-1 : 0]  destport_in; 
     
     localparam
@@ -217,29 +225,40 @@ if(ROUTE_TYPE == "DETERMINISTIC")begin :dtrmn
 if(ROUTE_TYPE == "FULL_ADAPTIVE")begin :full_adpt
 /* verilator lint_on WIDTH */    
       
-        reg [V-1 : 0] not_empty;
-        always@( posedge clk or posedge reset) begin
-            if(reset) begin
-               not_empty <=0;
-            end else begin 
-               if(hdr_flg_in & flit_in_wr) begin
-                    not_empty <= not_empty | vc_num_in;
-                    if( ((AVC_ATOMIC_EN==1)&& (SW_LOC!= LOCAL)) || (SW_LOC== NORTH) || (SW_LOC== SOUTH) )begin   
-                        if((vc_num_in  & ~ESCAP_VC_MASK)>0) begin // adaptive VCs
-                            if( (not_empty & vc_num_in)>0) $display("%t  :Error AVC allocated nonatomicly in %d port %m",$time,SW_LOC);
-                        end
-                    end//( AVC_ATOMIC_EN || SW_LOC== NORTH || SW_LOC== SOUTH )
-                    
-                        if((vc_num_in  & ESCAP_VC_MASK)>0 && (SW_LOC== SOUTH || SW_LOC== NORTH) )  begin // escape vc
-                            // if (a & b) $display("%t  :Error EVC allocation violate subfunction routing rules %m",$time);
-                            if ((current_x - x_dst_in) !=0 && (current_y- y_dst_in) !=0) $display("%t  :Error EVC allocation violate subfunction routing rules src_x=%d src_y=%d dst_x%d   dst_y=%d %m",$time,x_src_in, y_src_in, x_dst_in,y_dst_in);
-                        end
-                     
-                end//hdr_wr_in
-                if((flit_is_tail & ivc_num_getting_sw_grant)>0)begin
-                    not_empty <= not_empty & ~ivc_num_getting_sw_grant;
-                end//tail wr out
-            end//reset
+    wire [V-1 : 0] not_empty;
+    reg  [V-1 : 0] not_empty_next;
+        
+    pronoc_register #(
+           .W(V)          
+      ) reg2 ( 
+           .in(not_empty_next),
+           .reset(reset),    
+           .clk(clk),      
+           .out(not_empty)
+      );
+
+     always@(*) begin
+        not_empty_next = not_empty;
+        if(hdr_flg_in & flit_in_wr) begin
+            not_empty_next = not_empty | vc_num_in;
+        end//hdr_wr_in
+        if((flit_is_tail & ivc_num_getting_sw_grant)>0)begin
+            not_empty_next = not_empty & ~ivc_num_getting_sw_grant;
+        end//tail wr out
+     end//always
+        
+    always@( posedge clk ) begin
+        if(hdr_flg_in & flit_in_wr) begin
+            if( ((AVC_ATOMIC_EN==1)&& (SW_LOC!= LOCAL)) || (SW_LOC== NORTH) || (SW_LOC== SOUTH) )begin   
+                if((vc_num_in  & ~ESCAP_VC_MASK)>0) begin // adaptive VCs
+                    if( (not_empty & vc_num_in)>0) $display("%t  :Error AVC allocated nonatomicly in %d port %m",$time,SW_LOC);
+                end
+             end//( AVC_ATOMIC_EN || SW_LOC== NORTH || SW_LOC== SOUTH )
+             if((vc_num_in  & ESCAP_VC_MASK)>0 && (SW_LOC== SOUTH || SW_LOC== NORTH) )  begin // escape vc
+                       // if (a & b) $display("%t  :Error EVC allocation violate subfunction routing rules %m",$time);
+                    if ((current_x - x_dst_in) !=0 && (current_y- y_dst_in) !=0) $display("%t  :Error EVC allocation violate subfunction routing rules src_x=%d src_y=%d dst_x%d   dst_y=%d %m",$time,x_src_in, y_src_in, x_dst_in,y_dst_in);
+             end                     
+         end//hdr_wr_in            
         end//always
     end //SW_LOC
 
@@ -355,14 +374,18 @@ endmodule
     parameter T3=2,
     parameter T4=2,
     parameter EAw=2,
-    parameter SELF_LOOP_EN="NO"
+    parameter DAw=2,
+    parameter SELF_LOOP_EN="NO",
+    parameter CAST_TYPE = "UNICAST",
+    parameter NE=8
  )(
      dest_is_valid,
      dest_e_addr,
      current_e_addr    
  );
  
-    input [EAw-1 : 0]  dest_e_addr,current_e_addr;
+    input [DAw-1 : 0]  dest_e_addr;
+    input [EAw-1 : 0]  current_e_addr;
     output dest_is_valid;
  
     // general rules
@@ -371,6 +394,21 @@ endmodule
     /* verilator lint_on WIDTH */
     wire valid;
     generate
+    if(CAST_TYPE != "UNICAST") begin     
+           
+            wire [NE-1 : 0] dest_mcast_all_endp;            
+            
+            mcast_dest_list_decode decode (
+                .dest_e_addr(dest_e_addr),
+                .dest_o(dest_mcast_all_endp),
+                .row_has_any_dest( ),
+                .is_unicast()
+            );
+        //wire valid_dst_multi_r1  = (SELF_LOOP_EN   == "NO") ? ~(dest_mcast_all_endp[current_e_addr] == 1'b1) : 1'b1;
+        wire valid_dst_multi_r2  = ~(dest_mcast_all_endp == {NE{1'b0}}); // there should be atleast one asserted destination
+        
+        assign  dest_is_valid =  valid_dst_multi_r2;// & valid_dst_multi_r1 ;  
+    end else     
     /* verilator lint_off WIDTH */ 
     if(TOPOLOGY=="MESH" || TOPOLOGY == "TORUS" || TOPOLOGY=="RING" || TOPOLOGY == "LINE") begin : mesh        
    /* verilator lint_on WIDTH */ 
@@ -530,7 +568,9 @@ module endp_addr_decoder  #(
             ) addr_coder (
             .id    (id   ), 
             .code  (code ));
+      /* verilator lint_off WIDTH */          
      end else if (TOPOLOGY == "FMESH") begin :fmesh
+      /* verilator lint_on WIDTH */   
         fmesh_addr_coder #(
             .NX(T1),
             .NY(T2),
@@ -552,4 +592,132 @@ module endp_addr_decoder  #(
     endgenerate
 endmodule  
   
+
+module check_pck_size #(
+    parameter V=2,
+    parameter MIN_PCK_SIZE=2,
+    parameter Fw=36,
+    parameter DAw=4,
+    parameter CAST_TYPE="UNICAST",
+    parameter NE=4,
+    parameter B=4,
+    parameter LB=4
+)(
+    hdr_flg_in,
+    flit_in_wr,
+    tail_flg_in,
+    vc_num_in,  
+    dest_e_addr_in,
+    clk,
+    reset  
+
+);
+
+    input clk, reset;
+    input hdr_flg_in, tail_flg_in, flit_in_wr;
+    input [V-1 : 0] vc_num_in;
+    input [DAw-1: 0] dest_e_addr_in;
+
+    wire [NE-1 : 0] dest_mcast_all_endp [V-1 : 0];
+    wire [31 : 0] pck_size_counter [V-1: 0];
+    reg  [31 : 0] pck_size_counter_next [V-1: 0];
+    wire [DAw-1 : 0] dest_e_addr [V-1:0];
+    wire [V-1 : 0] vc_hdr_wr_en;
+    wire [V-1 : 0] onehot;
+
+    localparam MIN_B =  (B<LB)? B : LB;
+  
+    
+   
+  
+        
+        
+   genvar i;
+   generate 
+   for (i=0;i<V;i=i+1) begin 
+        
+        always @(*) begin 
+            pck_size_counter_next [i] = pck_size_counter [i];
+            if (vc_num_in == i)begin 
+                if(flit_in_wr) begin  
+                    if(hdr_flg_in) pck_size_counter_next[i]= 1;
+                    else pck_size_counter_next[i]=pck_size_counter[i]+1;      
+                end 
+            end
+        end     
+        
+        
+        pronoc_register #(.W(32)) reg1(
+            .in     (pck_size_counter_next[i]), 
+            .reset  (reset ), 
+            .clk    (clk   ), 
+            .out    (pck_size_counter[i]   ));
+            
+         always @(posedge clk) begin 
+            if (vc_num_in == i)begin 
+                if(flit_in_wr & tail_flg_in) begin 
+                    if( pck_size_counter_next[i] < MIN_PCK_SIZE) begin 
+                        $display ( "%t\t  ERROR: A packet is injected to the router with packet size (%d flits) that is smaller than MIN_PCK_SIZE (%d flits) parameter  %m",$time,pck_size_counter_next[i],MIN_PCK_SIZE);
+                        $finish;
+                    end
+                end       
+            end
+         end
+         
+        /* verilator lint_off WIDTH */   
+        if(CAST_TYPE!="UNICAST") begin
+        /* verilator lint_on WIDTH */   
+        //Check that the size of multicast/broadcast packets <= buffer size
+            assign vc_hdr_wr_en [i] = flit_in_wr & hdr_flg_in & (vc_num_in == i);
+            pronoc_register_ld_en #(.W(DAw)) reg2(
+                .in     (dest_e_addr_in), 
+                .reset  (reset ), 
+                .clk    (clk   ), 
+                .ld     (vc_hdr_wr_en [i] ),
+                .out    (dest_e_addr[i])
+            );
+            
+            
+            mcast_dest_list_decode decode (
+                .dest_e_addr(dest_e_addr[i]),
+                .dest_o(dest_mcast_all_endp[i]),
+                .row_has_any_dest(),
+                .is_unicast()
+            ); 
+            
+            is_onehot0 #(
+                .IN_WIDTH(NE)    
+            )
+            one_h
+            (
+                .in(dest_mcast_all_endp[i]),
+                .result(onehot[i])
+    
+            );
+            
+            
+            
+            
+            always @(posedge clk) begin 
+                if (vc_num_in == i)begin 
+                    if(flit_in_wr & ~onehot[i])begin 
+                        if(pck_size_counter_next[i]>MIN_B) begin 
+                            $display ( "%t\t  ERROR: A multicast packet is injected to the router with packet size (%d flits) that is larger than the minimum router buffer size (%d flits) parameter  %m",$time,pck_size_counter_next[i],MIN_B);
+                            $finish;
+                        end// size
+                    end//flit_wr
+                end//vc_num
+            end//always
+            
+        end//multicast
+   
+            
+    
+   
+   end  //for
+   endgenerate
+    
+    
+
+endmodule
 

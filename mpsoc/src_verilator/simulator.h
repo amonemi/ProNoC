@@ -50,18 +50,27 @@
 #endif
 
 
+#define xstr(s) str(s)
+#define str(s) #s
+
+
 //traffic type
 #define SYNTHETIC 0
 #define TASK      1
 #define NETRACE   2
+#define SYNFUL    3
+
+//injector type
+#define PCK_INJECTOR	0
+#define TRFC_INJECTOR 	1
+
 #define STND_DEV_EN 1
 
 
 int TRAFFIC_TYPE=SYNTHETIC;
+int ENDP_TYPE   =TRFC_INJECTOR;
 
 
-void * addr1;
-void * addr2;
    
 int get_router_num (int , int );
 	
@@ -75,34 +84,51 @@ int get_router_num (int , int );
 	#define CHAN_SIZE   sizeof(router1[0]->chan_in[0])
 
 	#define conect_r2r(T1,r1,p1,T2,r2,p2)  \
-		memcpy(&router##T1 [r1]->chan_in[p1] , &router##T2 [r2]->chan_out[p2], CHAN_SIZE );
+		memcpy(&router##T1 [r1]->chan_in[p1] , &router##T2 [r2]->chan_out[p2], CHAN_SIZE )
+
 //		router_is_active[get_router_num(T1,r1)] |=(( router##T1 [r1]-> ideal_port!=0) |  (router##T2 [r2]-> active_port[p2]==1))
 
 	#define connect_r2gnd(T,r,p)\
-		memset(&router##T [r]->chan_in [p],0x00,CHAN_SIZE)
+		memset(&router##T [r]->chan_in [p],0x00,CHAN_SIZE);
+
 
 	#define connect_r2e(T,r,p,e) \
-		addr1=(TRAFFIC_TYPE==NETRACE)? &pck_inj[e]->chan_out  : &traffic[e]->chan_out;\
-		addr2=(TRAFFIC_TYPE==NETRACE)? &pck_inj[e]->chan_in  : &traffic[e]->chan_in;\
+		void * addr1, * addr2;\
+		addr1=(ENDP_TYPE == PCK_INJECTOR)? &pck_inj[e]->chan_out  : &traffic[e]->chan_out;\
+		addr2=(ENDP_TYPE == PCK_INJECTOR)? &pck_inj[e]->chan_in  : &traffic[e]->chan_in;\
 		memcpy(&router##T [r]->chan_in[p], addr1, CHAN_SIZE );\
-		memcpy(addr2, &router##T [r]->chan_out[p], CHAN_SIZE );
-//		router_is_active[get_router_num(T,r)] |= (TRAFFIC_TYPE==NETRACE)? \
+		memcpy(addr2, &router##T [r]->chan_out[p], CHAN_SIZE )
+
+
+
+
+
+//		router_is_active[get_router_num(T,r)] |= (ENDP_TYPE == PCK_INJECTOR)? \
 			(( router##T [r]-> ideal_port!=0) |  (pck_inj[e]->pck_active_port==1)):\
 			(( router##T [r]-> ideal_port!=0) |  (traffic[e]->traffic_active_port==1))
 
 
 
 
-#define IS_SELF_LOOP_EN (strcmp(SELF_LOOP_EN ,"YES")==0)
-
+#define IS_SELF_LOOP_EN   (strcmp(SELF_LOOP_EN ,"YES")==0)
+#define IS_UNICAST        (strcmp(CAST_TYPE,"UNICAST")==0)
+#define IS_MCAST_FULL     (strcmp(CAST_TYPE,"MULTICAST_FULL")==0)
+#define IS_MCAST_PARTIAL  (strcmp(CAST_TYPE,"MULTICAST_PARTIAL")==0)
+#define IS_BCAST_FULL     (strcmp(CAST_TYPE,"BROADCAST_FULL")==0)
+#define IS_BCAST_PARTIAL  (strcmp(CAST_TYPE,"BROADCAST_PARTIAL")==0)
 
 #include "parameter.h"
 //alignas(64) int router_is_active [NR]={1};
+
 
 int reset,clk;
 
 Vtraffic		*traffic[NE]; // for synthetic and trace traffic pattern
 Vpck_inj        *pck_inj[NE]; // for netrace
+
+
+
+
 
 unsigned int total_rsv_pck_num=0;
 unsigned int total_sent_pck_num=0;
@@ -116,12 +142,7 @@ int AVG_PACKET_SIZE=5;
 int MIN_PACKET_SIZE=5;
 int MAX_PACKET_SIZE=5;
 
-unsigned int rsvd_core_total_pck_num[NE]= {0};
-unsigned int rsvd_core_total_flit_num[NE]= {0};
-unsigned int rsvd_core_worst_delay[NE] =  {0};
-unsigned int sent_core_total_pck_num[NE]= {0};
-unsigned int sent_core_total_flit_num[NE]= {0};
-unsigned int sent_core_worst_delay[NE] =  {0};
+
 unsigned int random_var[NE] = {100};
 
 
@@ -152,6 +173,45 @@ typedef struct  avg_st_struct {
 
 } avg_st_t;
 
+/*
+ typedef struct packed {
+    	bit flit_wr_i;
+    	bit pck_wr_i;
+    	bit flit_wr_o;
+    	bit pck_wr_o;
+    	bit flit_in_bypassed;
+    	logic [BYPASSw-1 : 0] bypassed_num;
+    } router_event_t;
+
+    localparam BYPASSw = log2(SMART_NUM);
+*/
+
+
+
+#define BYPASS_LSB          5
+#define FLIT_IN_WR_FLG    	(1<<4)
+#define PCK_IN_WR_FLG 		(1<<3)
+#define FLIT_OUT_WR_FLG 	(1<<2)
+#define PCK_OUT_WR_FLG		(1<<1)
+#define FLIT_IN_BYPASSED 	(1<<0)
+
+
+
+
+typedef  struct  router_st_struct {
+	unsigned int pck_num_in;
+	unsigned int flit_num_in;
+	unsigned int pck_num_out;
+	unsigned int flit_num_out;
+	unsigned int flit_num_in_bypassed;
+	unsigned int flit_num_in_buffered;
+	unsigned int bypass_counter [SMART_NUM+1 ] ;
+} router_st_t;
+
+alignas(64) router_st_t router_stat [NR][MAX_P];
+router_st_t router_stat_accum [NR];
+
+
 #if (C>1)
 	statistic_t sent_stat [NE][C];
 	statistic_t rsvd_stat [NE][C];
@@ -160,12 +220,19 @@ typedef struct  avg_st_struct {
 	statistic_t rsvd_stat [NE];
 #endif
 
+	statistic_t endp_to_endp [NE][NE];
+
+typedef struct mcast_struct {
+	int ratio;
+	int min;
+	int max;
+}mcast_t;
 
 
-void update_statistic_at_ejection (	int	, 	unsigned int, unsigned int, unsigned int,  unsigned int, unsigned int );
+void update_statistic_at_ejection (	int	, 	unsigned int, unsigned int, unsigned int,  unsigned int, unsigned int ,unsigned int);
 void update_noc_statistic (	int);
 unsigned char pck_class_in_gen(unsigned int);
-unsigned int pck_dst_gen_task_graph ( unsigned int);
+unsigned int pck_dst_gen_task_graph ( unsigned int, unsigned char *);
 void print_statistic (void);
 void print_parameter();
 void reset_all_register();
@@ -176,7 +243,7 @@ void traffic_clk_posedge_event(void);
 void connect_clk_reset_start_all(void);
 unsigned int rnd_between (unsigned int, unsigned int );
 void traffic_gen_init( void );
-void  pck_inj_init(void);
+void  pck_inj_init(int);
 void traffic_gen_final_report(void);
 void processArgs (int, char ** );
 void task_traffic_init (char * );
@@ -184,16 +251,20 @@ int parse_string ( char *, int *);
 void update_pck_size(char *);
 void update_custom_traffic (char *);
 void update_hotspot(char * );
+void update_mcast_traffic(char * str);
 void initial_threads (void);
 void print_statistic_new (unsigned long int);
-
-
+void allocate_rsv_pck_counters (void);
+void update_all_router_stat(void);
+void print_router_st(void);
+void print_endp_to_endp_st(const char *);
+void update_traffic_injector_st (unsigned int );
 
 #include "topology_top.h"
 #include "traffic_task_graph.h"
 #include "traffic_synthetic.h"
 #include "netrace_lib.h"
-
+#include "synful_wrapper.h"
 
 #define RATIO_INIT		2
 #define DISABLE -1
@@ -212,6 +283,7 @@ int HOTSPOT_NUM;
 int  * class_percentage;
 char * TRAFFIC;
 char * netrace_file;
+char * synful_file;
 unsigned char FIXED_SRC_DST_PAIR;
 unsigned char  NEw=0;
 unsigned long int main_time = 0;     // Current simulation time
@@ -232,6 +304,7 @@ unsigned int total_active_endp;
 char all_done=0;
 unsigned int total_sent_flit_number =0;
 unsigned int total_rsv_flit_number =0;
+unsigned int total_expect_rsv_flit_num =0;
 unsigned int total_rsv_flit_number_old=0;
 int ratio=RATIO_INIT;
 double first_avg_latency_flit,current_avg_latency_flit;
@@ -246,7 +319,7 @@ int verbosity=1;
 int thread_num =1;
 
 
-
+mcast_t mcast;
 
 
 
@@ -266,7 +339,49 @@ int thread_num =1;
 #endif
 
 
+	// set data[bit] to 1
+		#define VL_BIT_SET_I(data, bit) data |= (VL_UL(1) << VL_BITBIT_I(bit))
+		#define VL_BIT_SET_Q(data, bit) data |= (1ULL << VL_BITBIT_Q(bit))
+		#define VL_BIT_SET_E(data, bit) data |= (VL_EUL(1) << VL_BITBIT_E(bit))
+		#define VL_BIT_SET_W(data, bit) (data)[VL_BITWORD_E(bit)] |= (VL_EUL(1) << VL_BITBIT_E(bit))
+
+		// set data[bit] to 0
+		#define VL_BIT_CLR_I(data, bit) data &= ~(VL_UL(1) << VL_BITBIT_I(bit))
+		#define VL_BIT_CLR_Q(data, bit) data &= ~(1ULL << VL_BITBIT_Q(bit))
+		#define VL_BIT_CLR_E(data, bit) data &= ~ (VL_EUL(1) << VL_BITBIT_E(bit))
+		#define VL_BIT_CLR_W(data, bit) (data)[VL_BITWORD_E(bit)] &= ~ (VL_EUL(1) << VL_BITBIT_E(bit))
+
+
+		#if   (DAw<=VL_IDATASIZE)
+			#define DEST_ADDR_BIT_SET(data, bit)  VL_BIT_SET_I(data, bit)
+			#define DEST_ADDR_BIT_CLR(data, bit)  VL_BIT_CLR_I(data, bit)
+			#define DEST_ADDR_ASSIGN_RAND(data)   data = rand() & ((1<<DAw) -1)
+			#define DEST_ADDR_ASSIGN_ZERO(data)   data = 0
+			#define DEST_ADDR_ASSIGN_INT(data,val) data = val & ((1<<DAw) -1)
+			#define DEST_ADDR_IS_ZERO(a,data) a= (data ==0)
+		#elif (DAw<=VL_QUADSIZE)
+			#define DEST_ADDR_BIT_SET(data, bit)  VL_BIT_SET_Q(data, bit)
+			#define DEST_ADDR_BIT_CLR(data, bit)  VL_BIT_CLR_Q(data, bit)
+			#define DEST_ADDR_ASSIGN_RAND(data)   data = (rand()&0xFFFFFFFF) | \
+			(QData)	(rand() & ((1ULL<<(DAw-32)) -1))	<<32
+			#define DEST_ADDR_ASSIGN_ZERO(data)   data = 0ULL
+			#define DEST_ADDR_ASSIGN_INT(data,val) data = val & ((1ULL<<32) -1)
+			#define DEST_ADDR_IS_ZERO(a,data) a= (data == 0ULL)
+		#else
+			#define DEST_ADDR_BIT_SET(data, bit)  VL_BIT_SET_W(data, bit)
+			#define DEST_ADDR_BIT_CLR(data, bit)  VL_BIT_CLR_W(data, bit)
+			#define DEST_ADDR_ASSIGN_RAND(data) \
+			for(int n=0;n<=VL_BITWORD_E(DAw-1)-1;n++)  (data)[n]=rand();\
+			(data)[VL_BITWORD_E(DAw-1)]=rand() & ((1ULL<<(VL_BITBIT_E(DAw-1)+1)) -1)
+			#define DEST_ADDR_ASSIGN_ZERO(data) \
+			for(int n=0;n<=VL_BITWORD_E(DAw-1);n++)  (data)[n]= 0
+			#define DEST_ADDR_ASSIGN_INT(data,val) (data)[0] = val
+
+			#define DEST_ADDR_IS_ZERO(a,data) \
+			a=1; for(int n=0;n<=VL_BITWORD_E(DAw-1)-1;n++) 	\
+			if (a==1) a= ((data)[n]==0);\
+			if (a==1) a= ((data)[VL_BITWORD_E(DAw-1)] & ((1ULL<<(VL_BITBIT_E(DAw-1)+1)) -1))==0
+		#endif
 
 
 #endif
-

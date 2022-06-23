@@ -39,7 +39,7 @@ nt_packet_t* packet = NULL;
 int nt_packets_left = 0;
 
 
-int netrace_to_pronoc_map [64];
+int * traffic_model_mapping;
 int pronoc_to_netrace_map [NE];
 int pck_injct_in_pck_wr[NE];
 
@@ -63,7 +63,7 @@ unsigned long long int calc_packet_timing( nt_packet_t* packet ) {
 
 
 void netrace_init( char * tracefile){
-    int i=0;
+	int i=0;
 	nt_open_trfile( tracefile );
 	if( ignore_dependencies ) {
 		nt_disable_dependencies();
@@ -83,18 +83,20 @@ void netrace_init( char * tracefile){
 		nt_start_cycle=nt_cycle;
 	}
 
-	waiting  = (queue_t**) malloc( header->num_nodes * sizeof(queue_t*) );
-	inject   = (queue_t**) malloc( header->num_nodes * sizeof(queue_t*) );
-	traverse = (queue_t**) malloc( header->num_nodes * sizeof(queue_t*) );
+	waiting  = (queue_t**) malloc( NE * sizeof(queue_t*) );
+	inject   = (queue_t**) malloc( NE * sizeof(queue_t*) );
+	traverse = (queue_t**) malloc( NE * sizeof(queue_t*) );
 	if( (waiting == NULL) || (inject == NULL) || (traverse == NULL) ) {
 		printf( "ERROR: malloc fail queues\n" );
 		exit(0);
 	}
-	for( i = 0; i < header->num_nodes; ++i ) {
+
+	for( i = 0; i < NE; ++i ) {
 		waiting[i]  = queue_new();
 		inject[i]   = queue_new();
 		traverse[i] = queue_new();
 	}
+
 
 	if( !reader_throttling ) {
 		trace_packet = nt_read_packet();
@@ -122,6 +124,7 @@ void netrace_init( char * tracefile){
 
 void netrace_eval(unsigned int eval_num){
 	int i;
+	unsigned int pronoc_src_id,pronoc_dst_id;
 
 	if((reset==1) || (count_en==0))	return;
 
@@ -140,7 +143,8 @@ void netrace_eval(unsigned int eval_num){
 					queue_node_t* new_node = (queue_node_t*) nt_checked_malloc( sizeof(queue_node_t) );
 					new_node->packet = trace_packet;
 					new_node->cycle = (trace_packet->cycle > nt_cycle) ? trace_packet->cycle : nt_cycle;
-					queue_push( inject[trace_packet->src], new_node, new_node->cycle );
+					pronoc_src_id=traffic_model_mapping[trace_packet->src];
+					queue_push( inject[pronoc_src_id], new_node, new_node->cycle );
 					nt_total_rd_pck++;
 				} else {
 					printf( "ERROR: Malformed packet list" );
@@ -154,13 +158,14 @@ void netrace_eval(unsigned int eval_num){
 				queue_node_t* new_node = (queue_node_t*) nt_checked_malloc( sizeof(queue_node_t) );
 				new_node->packet = trace_packet;
 				new_node->cycle = (trace_packet->cycle > nt_cycle) ? trace_packet->cycle : nt_cycle;
+				pronoc_src_id=traffic_model_mapping[trace_packet->src];
 				if( ignore_dependencies || nt_dependencies_cleared( trace_packet ) ) {
 					// Add to inject queue
-					queue_push( inject[trace_packet->src], new_node, new_node->cycle );
+					queue_push( inject[pronoc_src_id], new_node, new_node->cycle );
 					nt_total_rd_pck++;
 				} else {
 					// Add to waiting queue
-					queue_push( waiting[trace_packet->src], new_node, new_node->cycle );
+					queue_push( waiting[pronoc_src_id], new_node, new_node->cycle );
 					nt_total_rd_pck++;
 				}
 				// Get another packet from trace
@@ -184,21 +189,20 @@ void netrace_eval(unsigned int eval_num){
 
 
 	// Inject where possible (max one per node)
-	for( i = 0; i < header->num_nodes; ++i ) {
+	//header->num_nodes;
+	for( i = 0; i < NE; ++i ) {
 		nt_packets_left |= !queue_empty( inject[i] );
-		//TODO define RRA if multiple netrace sources are mapped to one node. only one can sent packt at each cycle
-		int pronoc_src =  netrace_to_pronoc_map[i];
 		//TODO define sent vc policy
 		int sent_vc = 0;
 
-		if(pck_inj[pronoc_src]->pck_injct_in_pck_wr){
+		if(pck_inj[i]->pck_injct_in_pck_wr){
 			//the wr_pck should be asserted only for single cycle
-			pck_inj[pronoc_src]->pck_injct_in_pck_wr  	   = 0;
+			pck_inj[i]->pck_injct_in_pck_wr  	   = 0;
 			continue;
 		}
 
-		pck_inj[pronoc_src]->pck_injct_in_pck_wr  	   = 0;
-		if((pck_inj[pronoc_src]->pck_injct_out_ready & (0x1<<sent_vc)) == 0){
+		pck_inj[i]->pck_injct_in_pck_wr  	   = 0;
+		if((pck_inj[i]->pck_injct_out_ready & (0x1<<sent_vc)) == 0){
 			//This pck injector is not ready yet
 			continue;
 		}
@@ -214,13 +218,14 @@ void netrace_eval(unsigned int eval_num){
 				}
 				temp_node = (queue_node_t*) queue_pop_front( inject[i] );
 				temp_node->cycle = nt_cycle;//injection time
-				queue_push( traverse[packet->dst], temp_node, temp_node->cycle );
+				pronoc_dst_id =  traffic_model_mapping[packet->dst];
+				queue_push( traverse[pronoc_dst_id ], temp_node, temp_node->cycle );
 				long int ptr_addr = reinterpret_cast<long int> (temp_node);
 				int flit_num = (nt_get_packet_size(packet)* 8) / Fpay;
-				if(flit_num< pck_inj[pronoc_src]->min_pck_size) flit_num = pck_inj[pronoc_src]->min_pck_size;
-				int pronoc_dst =  netrace_to_pronoc_map[packet->dst];
+				if(flit_num< pck_inj[i]->min_pck_size) flit_num = pck_inj[i]->min_pck_size;
+
 				if(IS_SELF_LOOP_EN ==0){
-					if(packet->dst == pronoc_src ){
+					if(pronoc_dst_id == i ){
 						 fprintf(stderr,"ERROR: ProNoC is not configured with self-loop enable and Netrace aims to inject\n a "
 								 "packet with identical source and destination address. Enable the SELF_LOOP parameter\n"
 								 "in ProNoC and rebuild the simulation model\n");
@@ -228,21 +233,21 @@ void netrace_eval(unsigned int eval_num){
 					}
 				}
 				unsigned int sent_class =0;
-				pck_inj[pronoc_src]->pck_injct_in_data         = ptr_addr;
-				pck_inj[pronoc_src]->pck_injct_in_size         = flit_num;
-				pck_inj[pronoc_src]->pck_injct_in_endp_addr    = endp_addr_encoder(pronoc_dst);
-				pck_inj[pronoc_src]->pck_injct_in_class_num    = sent_class;
-				pck_inj[pronoc_src]->pck_injct_in_init_weight  = 1;
-				pck_inj[pronoc_src]->pck_injct_in_vc           = 0x1<<sent_vc;
-				pck_inj[pronoc_src]->pck_injct_in_pck_wr  	   = 1;
+				pck_inj[i]->pck_injct_in_data         = ptr_addr;
+				pck_inj[i]->pck_injct_in_size         = flit_num;
+				pck_inj[i]->pck_injct_in_endp_addr    = endp_addr_encoder(pronoc_dst_id);
+				pck_inj[i]->pck_injct_in_class_num    = sent_class;
+				pck_inj[i]->pck_injct_in_init_weight  = 1;
+				pck_inj[i]->pck_injct_in_vc           = 0x1<<sent_vc;
+				pck_inj[i]->pck_injct_in_pck_wr  	   = 1;
 				total_sent_pck_num++;
 
 				#if (C>1)
-					sent_stat[pronoc_src][sent_class].pck_num ++;
-					sent_stat[pronoc_src][sent_class].flit_num +=flit_num;
+					sent_stat[i][sent_class].pck_num ++;
+					sent_stat[i][sent_class].flit_num +=flit_num;
 				#else
-					sent_stat[pronoc_src].pck_num ++;
-					sent_stat[pronoc_src].flit_num +=flit_num;
+					sent_stat[i].pck_num ++;
+					sent_stat[i].flit_num +=flit_num;
 				#endif
 			}
 		}
@@ -294,19 +299,18 @@ void netrace_eval(unsigned int eval_num){
 					exit(1);
 				}
 				*/
+
+				pronoc_src_id=traffic_model_mapping[packet->src];
 				update_statistic_at_ejection (
 					i,//	core_num
 					clk_num_h2h, // clk_num_h2h,
 					(unsigned int) clk_num_h2t, // clk_num_h2t,
 					pck_inj[i]->pck_injct_out_distance, //    distance,
 					pck_inj[i]->pck_injct_out_class_num,//  	class_num,
-					packet->src//		unsigned int 	src
+					pronoc_src_id,//		unsigned int 	src
+					pck_inj[i]->pck_injct_out_size
 				);
-				#if(C>1)
-					rsvd_stat[i][pck_inj[i]->pck_injct_out_class_num].flit_num +=pck_inj[i]->pck_injct_out_size;
-   				#else
-					rsvd_stat[i].flit_num+=pck_inj[i]->pck_injct_out_size;
-				#endif
+
 				free( temp_node );
 
 			}
@@ -314,7 +318,7 @@ void netrace_eval(unsigned int eval_num){
 	}
 		// Check for cleared dependences... or not
 		if( !reader_throttling ) {
-		for( i = 0; i < header->num_nodes; ++i ) {
+		for( i = 0; i < NE; ++i ) {
 			nt_packets_left |= !queue_empty( waiting[i] );
 			node_t* temp = waiting[i]->head;
 			while( temp != NULL ) {
@@ -341,21 +345,21 @@ void netrace_eval(unsigned int eval_num){
 void netrace_posedge_event(){
 	unsigned int i;
 	clk = 1;       // Toggle clock
+	update_all_router_stat();
 	for(i=0;i<netrace_speed_up; i++)  netrace_eval(i);
-	connect_clk_reset_start_all();
+	//connect_clk_reset_start_all();
 	sim_eval_all();
 	//print total sent packet each 1024 clock cycles
 	if(verbosity==1) if(nt_cycle&0x3FF) printf("\rTotal sent packet: %9d", total_sent_pck_num);
 }
 
 
-void netrace_clk_negedge_event( ){
+void netrace_negedge_event( ){
 	int i;
 	clk = 0;
 	topology_connect_all_nodes ();
-	connect_clk_reset_start_all();
+	//connect_clk_reset_start_all();
 	sim_eval_all();
-
 }
 
 
@@ -372,21 +376,11 @@ void netrace_final_report(){
 			"\tNetrace end clock cycles: %llu\n"
 			"\tNetrace duration clock cycles: %llu\n"
 			"\tProNoC  duration clock cycles: %llu\n"
-	,nt_cycle,total_clock,pronoc_total_clock);
-
-
+			"\tSimulation clock cycles: %llu\n"
+	,nt_cycle,total_clock,pronoc_total_clock,pronoc_total_clock);
 
 	print_statistic_new (pronoc_total_clock);
-/*
-	printf("\t total , %u , %u, %u, %u  \n",total_sent_pck_num,	total_rsv_pck_num,total_sent_flit_number,total_rsv_flit_number);
-	printf("\nper node\n");
-	for(i=0;i<NE;i++){
-		printf("\t %u  , %u , %u , %u , %u \n",	i,sent_core_total_pck_num[i],rsvd_core_total_pck_num[i], sent_core_total_flit_num[i],rsv_core_total_flit_num[i]
-		sent_core_worst_delay[i], rsvd_core_worst_delay[i]
-
-		);
-	}
-	*/
+	printf("Netrace simulation results-------------------\n");
 }
 
 

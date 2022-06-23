@@ -1,0 +1,37 @@
+Verification Results:
+****************************mesh_4x4_2cycle_mcast_f : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_4x4_LB5_B4 : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_4x4_selflp_mcast_f : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_4x4x2_bcast_f : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_4x4x2_bcast_p : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_4x4x2_mcast_p : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_4x4_2cycle_mcast_f	: random traffic *******************************:
+	 Passed:   zero load (2,14.7167) saturation (22,242.263)
+****************************mesh_4x4_LB5_B4	: random traffic *******************************:
+	 Passed:   zero load (2,13.4003) saturation (30,148.581)
+****************************mesh_4x4_selflp_mcast_f	: random traffic *******************************:
+	 Passed:   zero load (2,14.6296) saturation (22,253.183)
+****************************mesh_4x4x2_bcast_f	: random traffic *******************************:
+	 Passed:   zero load (2,20.5842) saturation (6,941.073)
+****************************mesh_4x4x2_bcast_p	: random traffic *******************************:
+	 Passed:   zero load (2,16.2517) saturation (6,424.25)
+****************************mesh_4x4x2_mcast_p	: random traffic *******************************:
+	 Passed:   zero load (2,13.845) saturation (10,148.018)
+****************************mesh_4x4_2cycle_mcast_f	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,14.85) saturation (26,155.544)
+****************************mesh_4x4_LB5_B4	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,13.4164) saturation (26,161.581)
+****************************mesh_4x4_selflp_mcast_f	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,14.6437) saturation (22,146.14)
+****************************mesh_4x4x2_bcast_f	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,21.1226) saturation (6,801.4)
+****************************mesh_4x4x2_bcast_p	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,16.3185) saturation (6,334.15)
+****************************mesh_4x4x2_mcast_p	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,13.5848) saturation (14,251.856)

@@ -8,9 +8,9 @@
 /**********************************************************************
 **	File: /home/alireza/work/git/hca_git/ProNoC/mpsoc/rtl/src_topolgy/custom1/Tcustom1Rcustom_conventional_routing_genvar.v
 **    
-**	Copyright (C) 2014-2019  Alireza Monemi
+**	Copyright (C) 2014-2021  Alireza Monemi
 **    
-**	This file is part of ProNoC 1.9.1 
+**	This file is part of ProNoC 2.0.0 
 **
 **	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
 **	you can redistribute it and/or modify it under the terms of the GNU

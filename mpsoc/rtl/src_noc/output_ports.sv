@@ -1,4 +1,4 @@
-`timescale     1ns/1ps
+`include "pronoc_def.v"
 /**********************************************************************
 **	File:  output_ports.sv
 **    
@@ -33,8 +33,7 @@ module output_ports
 )(
     vsa_ovc_allocated_all,
     flit_is_tail_all,
-    assigned_ovc_num_all,
-    ovc_is_assigned_all,
+   
     dest_port_all,
     nonspec_granted_dest_port_all,
     credit_in_all,
@@ -53,7 +52,8 @@ module output_ports
     vsa_ovc_released_all,
     crossbar_flit_out_wr_all,
     oport_info,
-    ovc_info,    
+    ovc_info,  
+    ivc_info,
     vsa_ctrl_in,
     ssa_ctrl_in,
     smart_ctrl_in,
@@ -87,9 +87,7 @@ module output_ports
     localparam  CONG_ALw=   CONGw * P;   //  congestion width per router;             
                     
     input  [PV-1       :    0] vsa_ovc_allocated_all;
-    input  [PV-1       :    0] flit_is_tail_all;
-    input  [PVV-1      :    0] assigned_ovc_num_all;
-    input  [PV-1       :    0] ovc_is_assigned_all;
+    input  [PV-1       :    0] flit_is_tail_all;   
     input  [PVP_1-1    :    0] dest_port_all;
     input  [PP_1-1     :    0] nonspec_granted_dest_port_all;
     input  [PV-1       :    0] credit_in_all;
@@ -107,16 +105,18 @@ module output_ports
     output [PV-1    :    0]  vsa_ovc_released_all;
     output [PV-1    :    0]  vsa_credit_decreased_all;
     output oport_info_t oport_info [P-1:0];
-    output ovc_info_t   ovc_info   [P-1 : 0][V-1 : 0];    
-    input   vsa_ctrl_t  vsa_ctrl_in [P-1: 0];
-    input   ssa_ctrl_t  ssa_ctrl_in [P-1: 0];
+    output ovc_info_t   ovc_info   [P-1 : 0][V-1 : 0];
+    input   ivc_info_t ivc_info [P-1 : 0][V-1 : 0]; 
+    input   vsa_ctrl_t vsa_ctrl_in [P-1: 0];
+    input   ssa_ctrl_t ssa_ctrl_in [P-1: 0];
     input   smart_ctrl_t  smart_ctrl_in [P-1: 0];
     input   [CRDTw-1 : 0 ] credit_init_val_in  [P-1 : 0][V-1 : 0];
     
-    reg    [PV-1    :    0]    ovc_status;
+    logic  [PV-1    :    0]    ovc_status;
+    logic  [PV-1    :    0]    ovc_status_next;
     wire   [PV-1    :    0]    assigned_ovc_is_full_all;
-    wire   [VP_1-1    :    0]    credit_decreased        [P-1        :    0];
-    wire   [P_1-1    :    0]    credit_decreased_gen    [PV-1        :    0];
+    wire   [VP_1-1  :    0]    credit_decreased        [P-1        :    0];
+    wire   [P_1-1   :    0]    credit_decreased_gen    [PV-1        :    0];
     
     wire   [PV-1    :    0]  credit_increased_all;
     wire   [VP_1-1    :    0]    ovc_released            [P-1        :    0];
@@ -135,10 +135,13 @@ module output_ports
     wire [PV-1  :   0] ovc_allocated_all;
     wire [CREDITw-1   :    0] credit_counter [PV-1  :   0]; 
     
+    wire  [PVV-1      :    0] assigned_ovc_num_all;
+    wire  [PV-1       :    0] ovc_is_assigned_all;
     
-    register #(.W(PV)) reg_1 ( .in(full_all_next), .reset(reset), .clk(clk), .out(full_all));
-    register #(.W(PV)) reg_2 ( .in(nearly_full_all_next), .reset(reset), .clk(clk), .out(nearly_full_all));
-    register #(.W(PV)) reg_3 ( .in(empty_all_next), .reset(reset), .clk(clk), .out(empty_all));
+    
+    pronoc_register #(.W(PV)) reg_1 ( .in(full_all_next), .reset(reset), .clk(clk), .out(full_all));
+    pronoc_register #(.W(PV)) reg_2 ( .in(nearly_full_all_next), .reset(reset), .clk(clk), .out(nearly_full_all));
+    pronoc_register #(.W(PV)) reg_3 ( .in(empty_all_next), .reset(reset), .clk(clk), .out(empty_all));
     
     
     
@@ -174,7 +177,7 @@ module output_ports
                      end // for  
                 end//always
 
-                register #(.W(PV)) reg2 ( .in(full_adaptive_ovc_mask_next), .reset(reset), .clk(clk), .out(full_adaptive_ovc_mask));
+                pronoc_register #(.W(PV)) reg2 ( .in(full_adaptive_ovc_mask_next), .reset(reset), .clk(clk), .out(full_adaptive_ovc_mask));
          
                 assign ovc_avalable_all              = ~ovc_status & full_adaptive_ovc_mask;
             
@@ -283,6 +286,11 @@ module output_ports
     
     for(i=0; i<PV; i=i+1) begin :PV_loop2
         
+    	assign assigned_ovc_num_all[(i+1)*V-1 : i*V] = ivc_info[i/V][i%V].assigned_ovc_num;
+    	assign ovc_is_assigned_all[i]=ivc_info[i/V][i%V].ovc_is_assigned;
+    	    	
+    
+    	
     	credit_monitor_per_ovc	#( 
     			.SW_LOC(i/V)
     		)
@@ -301,7 +309,7 @@ module output_ports
     	
     	
     	
-    	sw_mask_gen #(
+    	full_ovc_predictor #(
          	.OVC_ALLOC_MODE(OVC_ALLOC_MODE),
          	.PCK_TYPE(PCK_TYPE),
          	.V (V), // vc_num_per_port
@@ -325,35 +333,31 @@ module output_ports
         );
     end//for
     
+	
+    	
+    	
+    	
+    	
     for(i=0;    i<PV; i=i+1) begin :reg_blk
-
-`ifdef SYNC_RESET_MODE 
-        always @ (posedge clk )begin 
-`else 
-        always @ (posedge clk or posedge reset)begin 
-`endif 
-            if(reset) begin 
-                //credit_counter[i]    <=    Bint;
-                ovc_status[i]        <=    1'b0;             
-            end else begin              
-                /* verilator lint_off WIDTH */
-               	if(PCK_TYPE == "SINGLE_FLIT")  ovc_status[i]<=1'b0; // donot change VC status for single flit packet
-               	/* verilator lint_on WIDTH */
-               	else begin 
-                	if(ovc_released_all[i])        ovc_status[i]<=1'b0;
-                	//if(ovc_allocated_all[i] & ~granted_dst_is_from_a_single_flit_pck[i/V])    ovc_status[i]<=1'b1; // donot change VC status for single flit packet
-            	                	
-                	if((vsa_ctrl_in[i/V].ovc_is_allocated[i%V] & ~granted_dst_is_from_a_single_flit_pck[i/V]) |
+    	always @ (*)begin 
+            ovc_status_next[i]   =  ovc_status[i];             
+            /* verilator lint_off WIDTH */
+          	if(PCK_TYPE == "SINGLE_FLIT")  ovc_status_next[i]=1'b0; // donot change VC status for single flit packet
+           	/* verilator lint_on WIDTH */
+           	else begin 
+               	if(ovc_released_all[i])        ovc_status_next[i] =1'b0;
+               	//if(ovc_allocated_all[i] & ~granted_dst_is_from_a_single_flit_pck[i/V])    ovc_status_next[i]=1'b1; // donot change VC status for single flit packet
+            	if((vsa_ctrl_in[i/V].ovc_is_allocated[i%V] & ~granted_dst_is_from_a_single_flit_pck[i/V]) |
                 	   (ssa_ctrl_in[i/V].ovc_is_allocated[i%V] & ~ssa_ctrl_in[i/V].ovc_single_flit_pck[i%V])|
                 	   (smart_ctrl_in[i/V].ovc_is_allocated[i%V] & ~smart_ctrl_in[i/V].ovc_single_flit_pck[i%V]))  
-                	   ovc_status[i]<=1'b1; // donot change VC status for single flit packet	
+                	   ovc_status_next[i]=1'b1; // donot change VC status for single flit packet	
                 	
-                end
-            end//else reset
+                end        
         end//always
     end//for     
     endgenerate
     
+    pronoc_register #(.W(PV)) reg2 (.in(ovc_status_next ), .out(ovc_status), .reset(reset), .clk(clk));
 
     port_pre_sel_gen #(
         .PPSw(PPSw),
@@ -385,14 +389,8 @@ module output_ports
 generate 
 if(DEBUG_EN) begin: debug
 
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif 
-        if(reset )begin 
 
-        end else begin
+    always @ (posedge clk )begin 
         for(k=0;    k<PV; k=k+1'b1) begin 
             if(empty_all[k] & credit_increased_all[k]) begin 
             	$display("%t: ERROR: unexpected credit recived for empty ovc[%d]: %m",$time,k);
@@ -415,26 +413,41 @@ if(DEBUG_EN) begin: debug
 				$finish;
 			end
         end//for
-       end
+
     end//always
     
-    localparam NUM_WIDTH = log2(PV+1);
-    wire [NUM_WIDTH-1        :    0] num1,num2;
-    parallel_counter #(
-        .IN_WIDTH(PV)
-    )cnt1
-    (
-        .in        (ovc_status),
-        .out        (num1)
-    );
 
-    parallel_counter #(
-        .IN_WIDTH(PV)
-    )cnt2
-    (
-        .in        (ovc_is_assigned_all),
-        .out        (num2)
-    );
+    /* verilator lint_off WIDTH */    
+    if(CAST_TYPE== "UNICAST") begin : unicast
+    /* verilator lint_on WIDTH */
+
+	    localparam NUM_WIDTH = log2(PV+1);
+	    wire [NUM_WIDTH-1        :    0] num1,num2;
+    
+	    accumulator #(
+	    	.INw(PV),
+	    	.OUTw(NUM_WIDTH),
+	    	.NUM(PV) 
+	   	)
+	   	cnt1
+	   	(
+	   		.in_all(ovc_status),
+	    	.out(num1)         
+	    );
+    
+	    accumulator #(
+	    	.INw(PV),
+	    	.OUTw(NUM_WIDTH),
+	    	.NUM(PV) 
+	    )
+	    cnt2
+	    (
+	    	.in_all(ovc_is_assigned_all),
+	    	.out(num2)         
+	    );
+	    	
+     
+   
     
     always @(posedge clk) begin
         if(num1    != num2 )begin 
@@ -442,7 +455,7 @@ if(DEBUG_EN) begin: debug
         	$finish;
         end
     end
-    
+    end //unicast
     check_ovc #(
         .V(V) , // vc_num_per_port
         .P(P), // router port num
@@ -519,20 +532,18 @@ module   credit_monitor_per_ovc
 	assign 	empty_all_next       =  (credit_counter_next  == Bint);
 	assign 	full_all_next        =  (credit_counter_next  == {DEPTHw{1'b0}});
 	assign 	nearly_full_all_next =  (credit_counter_next  <= 1);	
-		
-		   
-	`ifdef SYNC_RESET_MODE 
-		always @ (posedge clk )begin 
-	`else 
-		always @ (posedge clk or posedge reset)begin 
-	`endif 
-		if(reset) begin 
-			credit_counter   <=  credit_init_val_i [DEPTHw-1    :    0]; // Bint;
-		end else begin 
-			credit_counter   <=  credit_counter_next;
-		end
-	end
-		
+	
+	
+	pronoc_register_reset_init #(
+			.W(DEPTHw)			
+		)reg1( 
+			.in(credit_counter_next),
+			.reset(reset),	
+			.clk(clk),		
+			.out(credit_counter),
+			.reset_to(credit_init_val_i [DEPTHw-1    :    0]) // Bint;
+		);
+			
 	
 endmodule
 
@@ -625,11 +636,11 @@ endmodule
 
 /**********************************
 
-    sw_mask_gen
+    full_ovc_predictor
 
 *********************************/
 
-module sw_mask_gen #(
+module full_ovc_predictor #(
     parameter PCK_TYPE = "MULTI_FLIT",    
 	parameter V = 4, // vc_num_per_port
     parameter P = 5, // router port num
@@ -665,7 +676,7 @@ module sw_mask_gen #(
     wire        [VP_1-1        :    0]    full_muxin1,nearly_full_muxin1;
     wire         [V-1            :    0]    full_muxout1,nearly_full_muxout1;
     wire                                full_muxout2,nearly_full_muxout2;
-    reg    full_reg1,full_reg2;
+    wire   full_reg1,full_reg2;
     wire   full_reg1_next,full_reg2_next;
     
     
@@ -719,23 +730,13 @@ module sw_mask_gen #(
     
    assign full_reg1_next    =    full_muxout2;
    assign full_reg2_next    =    nearly_full_muxout2 & ivc_getting_sw_grant;
+   assign assigned_ovc_is_full    = (PCK_TYPE == "MULTI_FLIT")? full_reg1 | full_reg2: 1'b0;
     
-    
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif  
-        if(reset)  begin     
-            full_reg1    <= 1'b0;
-            full_reg2    <= 1'b0;
-        end else begin 
-            full_reg1    <= full_reg1_next;
-            full_reg2    <= full_reg2_next;
-        end
-    end//always
-    
-    assign assigned_ovc_is_full    = (PCK_TYPE == "MULTI_FLIT")? full_reg1 | full_reg2: 1'b0;
+   pronoc_register #(.W(1)) reg1 (.in(full_reg1_next ), .out(full_reg1), .reset(reset), .clk(clk));
+   pronoc_register #(.W(1)) reg2 (.in(full_reg2_next ), .out(full_reg2), .reset(reset), .clk(clk));
+   
+  
+ 
     
 endmodule
 

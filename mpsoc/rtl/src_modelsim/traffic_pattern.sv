@@ -73,9 +73,245 @@ endmodule
         pck_dst_gen
 
 *********************************/
+module  pck_dst_gen
+	import pronoc_pkg::*; 	
+	#(
+    parameter NE=4,
+    parameter TRAFFIC =   "RANDOM",
+    parameter MAX_PCK_NUM = 10000,
+    parameter HOTSPOT_NODE_NUM =  4,
+    parameter MCAST_TRAFFIC_RATIO =50,
+    parameter MCAST_PCK_SIZ_MIN = 2,
+    parameter MCAST_PCK_SIZ_MAX = 4,
+    parameter PCK_SIZw=5,
+    parameter MIN_PACKET_SIZE=5,
+    parameter MAX_PACKET_SIZE=5,
+    parameter PCK_SIZ_SEL="random-discrete",	
+    parameter DISCRETE_PCK_SIZ_NUM=1
+	
+)(
+    en,
+    current_e_addr,
+    core_num,
+    pck_number,
+    dest_e_addr, 
+    clk,
+    reset,
+    valid_dst,
+    hotspot_info,
+    custom_traffic_t,
+    custom_traffic_en,
+    pck_size_o,
+    rnd_discrete
+    
+    
+); 
  
  
-module  pck_dst_gen  
+    localparam      ADDR_DIMENSION =   (TOPOLOGY ==    "MESH" || TOPOLOGY ==  "TORUS") ? 2 : 1;  // "RING" and FULLY_CONNECT 
+ 
+ 
+ 
+     
+    localparam  NEw= log2(NE),
+                PCK_CNTw = log2(MAX_PCK_NUM+1),
+                HOTSPOT_NUM= (TRAFFIC=="HOTSPOT")? HOTSPOT_NODE_NUM : 1;
+    
+    input                       reset,clk,en;
+    input   [NEw-1      :   0]  core_num;
+    input   [PCK_CNTw-1 :   0]  pck_number; 
+    input   [EAw-1      :   0]  current_e_addr; 
+    output  [DAw-1      :   0]  dest_e_addr; 
+    output                      valid_dst;
+    input  [NEw-1 : 0] custom_traffic_t;
+    input  custom_traffic_en;
+  
+    
+    output [PCK_SIZw-1:0]  pck_size_o;
+    input rnd_discrete_t rnd_discrete [DISCRETE_PCK_SIZ_NUM-1: 0];
+    
+    input hotspot_t  hotspot_info [HOTSPOT_NUM-1 : 0];
+
+
+	wire [EAw-1      :   0] unicast_dest_e_addr; 
+	wire [PCK_SIZw-1 : 0] pck_size_uni;
+
+	pck_dst_gen_unicast #(
+		.NE(NE),
+		.TRAFFIC(TRAFFIC),
+		.MAX_PCK_NUM(MAX_PCK_NUM),
+		.HOTSPOT_NODE_NUM(HOTSPOT_NODE_NUM)
+	)
+	unicast
+	(
+		.en               (en              ),
+		.current_e_addr   (current_e_addr  ),
+		.core_num         (core_num        ),
+		.pck_number       (pck_number      ),
+		.dest_e_addr      (unicast_dest_e_addr),
+		.clk              (clk             ),
+		.reset            (reset           ),
+		.valid_dst        (valid_dst       ),
+		.hotspot_info     (hotspot_info    ),
+		.custom_traffic_t (custom_traffic_t),
+		.custom_traffic_en(custom_traffic_en)
+	); 
+	
+	pck_size_gen #(
+		.PCK_SIZw(PCK_SIZw),
+		.MIN(MIN_PACKET_SIZE),
+		.MAX(MAX_PACKET_SIZE),
+		.PCK_SIZ_SEL(PCK_SIZ_SEL),
+		.DISCRETE_PCK_SIZ_NUM(DISCRETE_PCK_SIZ_NUM)
+	)
+	unicast_pck_size
+	(
+		.reset(reset),
+		.clk(clk),
+		.en(en),
+		.pck_size(pck_size_uni) ,
+		.rnd_discrete(rnd_discrete)
+	);
+	
+	
+	
+	
+	
+
+	generate
+	if(CAST_TYPE == "UNICAST") begin :uni
+		assign dest_e_addr =	unicast_dest_e_addr;
+		assign pck_size_o  =   pck_size_uni;		
+	end else begin :multi
+		reg [DAw-1      :   0] multicast_dest_e_addr,temp; 
+		reg [6: 0] rnd_reg;
+		wire [PCK_SIZw-1 : 0] pck_size_mcast;
+		reg  [PCK_SIZw-1 : 0] pck_siz_tmp;
+		wire [NEw-1 : 0] unicast_id_num;  
+			
+			
+		endp_addr_decoder  #(
+				.T1(T1),
+				.T2(T2),
+				.T3(T3),
+				.NE(NE),
+				.EAw(EAw),
+				.TOPOLOGY(TOPOLOGY)
+			)enc
+			(
+				.code(unicast_dest_e_addr),
+				.id(unicast_id_num)
+			);    
+		
+		
+		pck_size_gen #(
+			.PCK_SIZw(PCK_SIZw),
+			.MIN(MCAST_PCK_SIZ_MIN),
+			.MAX(MCAST_PCK_SIZ_MAX),
+			.PCK_SIZ_SEL("random-range"),
+			.DISCRETE_PCK_SIZ_NUM(DISCRETE_PCK_SIZ_NUM)
+		)
+		mcast_pck_size
+		(
+			.reset(reset),
+			.clk(clk),
+			.en(en),
+			.pck_size(pck_size_mcast) ,
+			.rnd_discrete(rnd_discrete)
+		);
+		
+		
+		
+		
+		always @(posedge clk ) begin 
+			if(en | reset) begin 
+				rnd_reg <=     $urandom_range(99,0);
+			end
+		end		
+		
+		if(CAST_TYPE == "MULTICAST_FULL") begin :mful
+		
+			always @( * ) begin 
+				multicast_dest_e_addr = {DAw{1'b0}};
+				temp={DAw{1'b0}};
+				temp[unicast_id_num]=1'b1;
+				pck_siz_tmp= pck_size_uni;
+				if(rnd_reg >= MCAST_TRAFFIC_RATIO) begin 
+					multicast_dest_e_addr[unicast_id_num]=1'b1;				
+				end
+				else begin 
+					multicast_dest_e_addr =  $urandom();
+					pck_siz_tmp=pck_size_mcast;
+				end
+				if(SELF_LOOP_EN	== "NO") multicast_dest_e_addr[core_num]=1'b0;
+			end
+			
+			
+			
+			assign dest_e_addr = (multicast_dest_e_addr=={DAw{1'b0}} )? temp : multicast_dest_e_addr ;
+			assign pck_size_o = pck_siz_tmp;
+			
+		end else if(CAST_TYPE == "MULTICAST_PARTIAL") begin :mpar
+			
+			always @( * ) begin 
+				multicast_dest_e_addr = {DAw{1'b0}};
+				temp={unicast_dest_e_addr,1'b1};
+				pck_siz_tmp= pck_size_uni;
+				if(rnd_reg >= MCAST_TRAFFIC_RATIO) begin 
+					multicast_dest_e_addr = {unicast_dest_e_addr,1'b1};
+				end
+				else begin 
+					multicast_dest_e_addr =  $urandom();
+					multicast_dest_e_addr[0] =1'b0;
+					pck_siz_tmp=pck_size_mcast;
+					if(SELF_LOOP_EN	== "NO") begin						
+						if(MCAST_ENDP_LIST[core_num]==1'b1) multicast_dest_e_addr[endp_id_to_mcast_id(core_num)+1]=1'b0;
+					end
+				end
+			end
+			
+			assign dest_e_addr = (multicast_dest_e_addr=={DAw{1'b0}} )? temp : multicast_dest_e_addr ;
+			assign pck_size_o = pck_siz_tmp;
+			
+			
+			
+		end else begin //Broadcast
+			
+			always @( * ) begin 
+				multicast_dest_e_addr = {DAw{1'b0}};				
+				pck_siz_tmp = pck_size_uni;
+				if(rnd_reg >= MCAST_TRAFFIC_RATIO) begin 
+					multicast_dest_e_addr = {unicast_dest_e_addr,1'b1};
+				end
+				else begin							
+					pck_siz_tmp=pck_size_mcast;					
+				end
+			end
+			assign dest_e_addr =  multicast_dest_e_addr ;
+			assign pck_size_o = pck_siz_tmp;
+			
+			
+		end
+
+	end endgenerate
+
+endmodule
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+module  pck_dst_gen_unicast  
 	import pronoc_pkg::*; 	
 	#(
     parameter NE=4,

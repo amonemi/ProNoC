@@ -24,9 +24,16 @@ unsigned int CHAN_PER_LEVEL = 2*(K * powi( K , L-1 )); //up+down
 
 
 
-inline void fatree_local_addr (unsigned int t1, unsigned int r1, unsigned int addr){
-	if (t1==1 ) router1[r1]->current_r_addr = addr;
-	else router2[r1]->current_r_addr = addr;
+inline void fatree_local_addr (unsigned int t1, unsigned int r1, unsigned int addr, unsigned int id){
+	if (t1==1 ){
+		router1[r1]->current_r_addr = addr;
+		router1[r1]->current_r_id   = id;
+	}
+	else{
+		router2[r1]->current_r_addr = addr;
+		router2[r1]->current_r_id   = id;
+	}
+
 }
 
 
@@ -126,27 +133,30 @@ void topology_init (void){
 		     	
 				
 		       //fattree_connect(Ti(ID1),Ri(ID1),port,Ti(ID2),Ri(ID2),PORT2);
-		        r2r_cnt_all[num] =(r2r_cnt_table_t){.t1=Ti(ID1), .r1=Ri(ID1), .p1=port, .t2=Ti(ID2), .r2=Ri(ID2), .p2=PORT2 };       
+		        r2r_cnt_all[num] =(r2r_cnt_table_t){.id1=ID1, .t1=Ti(ID1), .r1=Ri(ID1), .p1=port, .id2=ID2, .t2=Ti(ID2), .r2=Ri(ID2), .p2=PORT2 };
 		        unsigned int current_layer_addr = LEAVE_L;
 		        unsigned int current_pos_addr   = ADRRENCODED;  
 				unsigned int addr = (current_layer_addr << LKw)| current_pos_addr;       
 		       
 //printf( "[%u] = t1=%u, r1=%u, p1=%u, t2=%u, r2=%u, p2=%u \n",  num, r2r_cnt_all[num].t1, r2r_cnt_all[num].r1, r2r_cnt_all[num].p1, r2r_cnt_all[num].t2, r2r_cnt_all[num].r2, r2r_cnt_all[num].p2 );
 				 //assign current_r_addr [ID1] = {current_layer_addr [ID1],current_pos_addr[ID1]};
-				fatree_local_addr(Ti(ID1),Ri(ID1),  addr);
-                  
+				fatree_local_addr(Ti(ID1),Ri(ID1),  addr, ID1);
+
 
 				if(level==L-2){// 
 					current_layer_addr  =0;
 		        	current_pos_addr = POS_ADR_CODE2;
 					addr = (current_layer_addr << LKw)| current_pos_addr;           
 		        	 //assign current_r_addr [ID2] = {current_layer_addr [ID2],current_pos_addr[ID2]};
-					fatree_local_addr(Ti(ID2),Ri(ID2),  addr);
+					fatree_local_addr(Ti(ID2),Ri(ID2),  addr, ID2);
 				}//if
 		     num++;
 		     }
 		}
 	} 
+
+	R2R_TABLE_SIZ=num;
+
 	for ( pos = 0; pos <  NE; pos=pos+1 ) {// : }points
 		unsigned int RID= NRL*(L-1)+(pos/K);
 		unsigned int RPORT = pos%K;
@@ -170,11 +180,17 @@ void topology_init (void){
 
 
 
+void topology_connect_r2r (int n){
+	fattree_connect(r2r_cnt_all[n]);
+}
+
+void topology_connect_r2e (int n){
+	connect_r2e(2,r2e_cnt_all[n].r1,r2e_cnt_all[n].p1,n);
+}
 
 
 
-
-
+/*
 void topology_connect_all_nodes (void){
 
 	unsigned int pos,level,port;
@@ -201,7 +217,7 @@ void topology_connect_all_nodes (void){
 	 }
 	
 }
-
+*/
 
 
 unsigned int get_mah_distance ( unsigned int id1, unsigned int id2){

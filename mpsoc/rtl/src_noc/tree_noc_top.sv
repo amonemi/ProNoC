@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+`include "pronoc_def.v"
 
 /**************************************
  * Module: tree
@@ -19,14 +19,18 @@ module  tree_noc_top
 		reset,
 		clk,    
 		chan_in_all,
-		chan_out_all  
+		chan_out_all,
+		router_event
 	);
   
   
 	input   clk,reset;
-	//local ports 
+	//Endpoints ports 
 	input   smartflit_chanel_t chan_in_all  [NE-1 : 0];
 	output  smartflit_chanel_t chan_out_all [NE-1 : 0];
+	
+	//Events
+	output  router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];
 	
 	//all routers port 
 	smartflit_chanel_t    router_chan_in   [NR-1 :0][MAX_P-1 : 0];
@@ -86,9 +90,11 @@ module  tree_noc_top
 		)
 		root_router
 		(              
+			.current_r_id    (ROOT_ID),
 			.current_r_addr  (current_r_addr [ROOT_ID]), 
 			.chan_in         (router_chan_in [ROOT_ID][K-1:0]), 
 			.chan_out        (router_chan_out[ROOT_ID][K-1:0]), 
+			.router_event    (router_event[ROOT_ID][K-1 : 0]),
 			.clk             (clk            ), 
 			.reset           (reset          )
 		);
@@ -103,15 +109,17 @@ module  tree_noc_top
 			localparam NPOS1 = powi(K,level); // number of routers in this level
 			localparam NRATTOP1 = sum_powi ( K,level); // number of routers at top levels : from root until last level
 			for( pos=0; pos<NPOS1; pos=pos+1) begin : pos_lp 
-                    
+                localparam RID = NRATTOP1+pos;
 				router_top # (
 						.P(K+1)// leaves have K+1 port number						
 					)
 					the_router
 					(                                  
-						.current_r_addr  (current_r_addr [NRATTOP1+pos]), 
-						.chan_in         (router_chan_in [NRATTOP1+pos]), 
-						.chan_out        (router_chan_out[NRATTOP1+pos]), 
+						.current_r_id    (RID),
+						.current_r_addr  (current_r_addr [RID]), 
+						.chan_in         (router_chan_in [RID]), 
+						.chan_out        (router_chan_out[RID]), 
+						.router_event    (router_event[RID]),
 						.clk             (clk            ), 
 						.reset           (reset          )						
 					);  

@@ -1,8 +1,4 @@
-// synthesis translate_off
-`timescale 1ns / 1ps
-// synthesis translate_on
-
-
+`include "pronoc_def.v"
 /**********************************************************************
 **    File:  noc_top.sv
 **    
@@ -37,15 +33,17 @@ module  noc_top
 	reset,
 	clk,    
 	chan_in_all,
-	chan_out_all  
+	chan_out_all,
+	router_event
 );
   
   	
 	input   clk,reset;
-	//local ports 
+	//Endpoints ports 
 	input   smartflit_chanel_t chan_in_all  [NE-1 : 0];
 	output  smartflit_chanel_t chan_out_all [NE-1 : 0];
-
+	//Events
+	output  router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];
  
    
 
@@ -58,7 +56,8 @@ module  noc_top
 			.reset         (reset        ), 
 			.clk           (clk          ), 
 			.chan_in_all   (chan_in_all  ), 
-			.chan_out_all  (chan_out_all )
+			.chan_out_all  (chan_out_all ),
+			.router_event  (router_event )
 		);
 	
     
@@ -68,7 +67,8 @@ module  noc_top
         		.reset         (reset        ), 
         		.clk           (clk          ), 
         		.chan_in_all   (chan_in_all  ), 
-        		.chan_out_all  (chan_out_all )
+        		.chan_out_all  (chan_out_all ),
+        		.router_event  (router_event )
         );
         
         
@@ -77,14 +77,16 @@ module  noc_top
         	.reset         (reset        ), 
         	.clk           (clk          ), 
         	.chan_in_all   (chan_in_all  ), 
-        	.chan_out_all  (chan_out_all )
+        	.chan_out_all  (chan_out_all ),
+        	.router_event  (router_event )
         );
     end else if (TOPOLOGY == "STAR") begin : star_
     	star_noc_top  noc_top ( 
     			.reset         (reset        ), 
     			.clk           (clk          ), 
     			.chan_in_all   (chan_in_all  ), 
-    			.chan_out_all  (chan_out_all )
+    			.chan_out_all  (chan_out_all ),
+    			.router_event  (router_event )
     		);
     	
     end else begin :custom_
@@ -93,7 +95,8 @@ module  noc_top
 			.reset         (reset        ), 
 			.clk           (clk          ), 
 			.chan_in_all   (chan_in_all  ), 
-			.chan_out_all  (chan_out_all )
+			.chan_out_all  (chan_out_all ),
+			.router_event  (router_event )
 		);
 
     end     
@@ -106,7 +109,7 @@ endmodule
 
 
 /**********************************
-The noc top module that can be caled in Verilog module. 
+The noc top module that can be called in Verilog module. 
 
 ***********************************/
 
@@ -141,7 +144,8 @@ module  noc_top_v
 		.reset(reset),
 		.clk(clk),    
 		.chan_in_all(chan_in_all),
-		.chan_out_all(chan_out_all)  
+		.chan_out_all(chan_out_all),
+		.router_event  (  )
 	);
 
 	

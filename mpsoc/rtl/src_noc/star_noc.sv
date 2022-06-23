@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+`include "pronoc_def.v"
 
 /**************************************
  * Module: tree
@@ -19,14 +19,18 @@ module  star_noc_top
 		reset,
 		clk,    
 		chan_in_all,
-		chan_out_all  
+		chan_out_all,
+		router_event
 	);
   
   
 	input   clk,reset;
-	//local ports 
+	//Endpoints ports 
 	input   smartflit_chanel_t chan_in_all  [NE-1 : 0];
 	output  smartflit_chanel_t chan_out_all [NE-1 : 0];
+	
+	//Events
+	output  router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];
 		  
  
 	    router_top # (
@@ -34,9 +38,11 @@ module  star_noc_top
 		)
 		the_router
 		(              
+			.current_r_id    (0),
 			.current_r_addr  (1'b0), 
 			.chan_in         (chan_in_all), 
 			.chan_out        (chan_out_all), 
+			.router_event    (router_event[0]),
 			.clk             (clk            ), 
 			.reset           (reset          )
 		);

@@ -1,4 +1,4 @@
-`timescale    1ns/1ps
+`include "pronoc_def.v"
 //`define MONITORE_PATH
 
 /**********************************************************************
@@ -28,6 +28,9 @@
  **
  **************************************************************/
 
+
+
+
 module input_ports 
 	import pronoc_pkg::*; 	
 #(
@@ -42,19 +45,18 @@ module input_ports
 			reset_ivc_all,
 			flit_is_tail_all,
 			ivc_request_all,
-			dest_port_encoded_all,
-			dest_port_all,
-			candidate_ovcs_all,
+			dest_port_all,			
 			flit_out_all,
-			assigned_ovc_num_all,
+		
 			assigned_ovc_not_full_all,
 			ovc_is_assigned_all,
 			sel,
 			port_pre_sel,
 			swap_port_presel,
 			nonspec_first_arbiter_granted_ivc_all,
+			credit_out_all,
 			
-			destport_clear_all,
+			destport_clear,
 			vc_weight_is_consumed_all,
 			iport_weight_is_consumed_all,
 			iport_weight_all,
@@ -99,11 +101,11 @@ module input_ports
 	output  [PV-1 : 0] reset_ivc_all;
 	output  [PV-1 : 0] flit_is_tail_all;
 	output  [PV-1 : 0] ivc_request_all;
-	output  [PVDSTPw-1 : 0] dest_port_encoded_all;
+	output  [PV-1 : 0] credit_out_all;
+	
 	output  [PVP_1-1 : 0] dest_port_all;
-	output  [PVV-1 : 0] candidate_ovcs_all;
 	output  [PFw-1 : 0] flit_out_all;
-	output  [PVV-1 : 0] assigned_ovc_num_all;
+	
 	input   [PV-1  : 0] assigned_ovc_not_full_all;
 	output  [PV-1  : 0] ovc_is_assigned_all;
 	input   [PV-1 : 0] sel;
@@ -111,12 +113,15 @@ module input_ports
 	input   [PV-1  : 0]  swap_port_presel;
 	input   [PV-1 : 0] nonspec_first_arbiter_granted_ivc_all;
 	
-	input   [PVDSTPw-1 : 0] destport_clear_all;
+	
 	output  [WP-1 : 0] iport_weight_all;
 	output  [PV-1 : 0] vc_weight_is_consumed_all;
 	output  [P-1 : 0] iport_weight_is_consumed_all;
 	input   [PP_1-1 : 0] granted_dest_port_all;
 	output  [WPP-1 : 0] oports_weight_all;
+	
+	
+
 	output  ivc_info_t ivc_info [P-1 : 0][V-1 : 0]; 
 	input   vsa_ctrl_t  vsa_ctrl_in [P-1: 0];
 	input   ssa_ctrl_t  ssa_ctrl_in [P-1: 0];
@@ -125,10 +130,14 @@ module input_ports
 	
 	input refresh_w_counter;
     
+	input   [DSTPw-1 : 0] destport_clear [P-1 : 0][V-1 : 0];   
 
 	genvar i;
 	generate 
-		for(i=0;i<P;i=i+1)begin : Port_    
+		for(i=0;i<P;i=i+1)begin : Port_ 
+			
+			
+			
     
 			input_queue_per_port
 			// iport_reg_base
@@ -138,6 +147,7 @@ module input_ports
 				)
 				the_input_queue_per_port
 				(
+					.credit_out(credit_out_all [(i+1)*V-1 : i*V]),
 					.current_r_addr(current_r_addr),    
 					.neighbors_r_addr(neighbors_r_addr),
 					.ivc_num_getting_sw_grant(ivc_num_getting_sw_grant  [(i+1)*V-1 : i*V]),// for non spec ivc_num_getting_first_sw_grant,
@@ -147,11 +157,8 @@ module input_ports
 					.reset_ivc(reset_ivc_all [(i+1)*V-1 : i*V]),
 					.flit_is_tail(flit_is_tail_all  [(i+1)*V-1 : i*V]),
 					.ivc_request(ivc_request_all [(i+1)*V-1 : i*V]),    
-					.dest_port_encoded(dest_port_encoded_all   [(i+1)*DSTPw*V-1 : i*DSTPw*V]),
 					.dest_port(dest_port_all [(i+1)*P_1*V-1 : i*P_1*V]),
-					.candidate_ovcs(candidate_ovcs_all [(i+1) * VV -1 : i*VV]),
 					.flit_out(flit_out_all [(i+1)*Fw-1 : i*Fw]),
-					.assigned_ovc_num(assigned_ovc_num_all [(i+1)*VV-1 : i*VV]),
 					.assigned_ovc_not_full(assigned_ovc_not_full_all [(i+1)*V-1 : i*V]), 
 					.ovc_is_assigned(ovc_is_assigned_all [(i+1)*V-1 : i*V]), 
 					.sel(sel [(i+1)*V-1 : i*V]),
@@ -161,7 +168,7 @@ module input_ports
 					.reset(reset),
 					.clk(clk),
 					
-					.destport_clear(destport_clear_all[(i+1)*DSTPw*V-1 : i*DSTPw*V]),
+					.destport_clear(destport_clear [i]),
 					.iport_weight(iport_weight_all[(i+1)*W-1 : i*W]),
 					.oports_weight(oports_weight_all[(i+1)*WP-1 : i*WP]),
 					.vc_weight_is_consumed(vc_weight_is_consumed_all [(i+1)*V-1 : i*V]),
@@ -195,6 +202,7 @@ module input_queue_per_port
 		parameter SW_LOC = 0
 		)(
 			current_r_addr,
+			credit_out,
 			neighbors_r_addr,
 			ivc_num_getting_sw_grant,// for non spec ivc_num_getting_first_sw_grant,
 			any_ivc_sw_request_granted,
@@ -203,11 +211,8 @@ module input_queue_per_port
 			reset_ivc,
 			flit_is_tail,
 			ivc_request,
-			dest_port_encoded,
 			dest_port,
-			candidate_ovcs,
-			flit_out,
-			assigned_ovc_num,
+			flit_out,			
 			assigned_ovc_not_full,
 			ovc_is_assigned,
 			sel,
@@ -232,17 +237,12 @@ module input_queue_per_port
 		);
 
  
-	function integer log2;
-		input integer number; begin   
-			log2=(number <=1) ? 1: 0;    
-			while(2**log2<number) begin    
-				log2=log2+1;    
-			end 	   
-		end   
-	endfunction // log2 
+	
    
 	
-	localparam PORT_B = port_buffer_size(SW_LOC);	
+	localparam 
+		PORT_B = port_buffer_size(SW_LOC),
+		PORT_Bw= log2(PORT_B);	
 		 
 	
     
@@ -272,6 +272,7 @@ module input_queue_per_port
    
  
 	input reset, clk;
+	output  [V-1 : 0] credit_out;
 	input   [RAw-1 : 0] current_r_addr;
 	input   [PRAw-1:  0]  neighbors_r_addr;
 	output  [V-1 : 0] ivc_num_getting_sw_grant;
@@ -281,18 +282,15 @@ module input_queue_per_port
 	output  [V-1 : 0] reset_ivc;
 	output  [V-1 : 0] flit_is_tail;
 	output  [V-1 : 0] ivc_request;
-	output  [VDSTPw-1 : 0] dest_port_encoded;
 	output  [VP_1-1 : 0] dest_port;
-	output  [VV-1 : 0] candidate_ovcs;
 	output  [Fw-1 : 0] flit_out;
-	output  [VV-1 : 0] assigned_ovc_num;
 	input   [V-1  : 0] assigned_ovc_not_full;
 	output  [V-1  : 0] ovc_is_assigned;
 	input   [V-1 : 0] sel;    
 	input   [V-1 : 0] nonspec_first_arbiter_granted_ivc;
 	   
-	input   [(DSTPw*V)-1 : 0] destport_clear;            
-	output reg [WEIGHTw-1 : 0] iport_weight;
+	input   [DSTPw-1 : 0] destport_clear [V-1 : 0];            
+	output  [WEIGHTw-1 : 0] iport_weight;
 	output  [V-1 : 0] vc_weight_is_consumed;
 	output  iport_weight_is_consumed;
 	input   refresh_w_counter;
@@ -307,15 +305,23 @@ module input_queue_per_port
 	input   ssa_ctrl_t  ssa_ctrl_in;
 	output  [CRDTw-1 : 0 ] credit_init_val_out [V-1 : 0];
     
+	wire  [DSTPw-1 : 0] dest_port_encoded [V-1 : 0];
+	//for multicast
+	wire  [DSTPw-1 : 0] dest_port_multi   [V-1 : 0];
+	wire  [V-1 : 0] multiple_dest,dst_onhot0;
+	wire   [DSTPw-1 : 0] clear_dspt_mulicast  [V-1 : 0];
+	
+	wire  [VV-1 : 0] candidate_ovcs;
+	
 	wire [Cw-1 : 0] class_in;
 	wire [DSTPw-1 : 0] destport_in,destport_in_encoded;
 	wire [VDSTPw-1 : 0] lk_destination_encoded;
 	
-	wire [EAw-1 : 0] dest_e_addr_in;
+	wire [DAw-1 : 0] dest_e_addr_in;
 	wire [EAw-1 : 0] src_e_addr_in;
 	wire [V-1 : 0] vc_num_in;
 	wire [V-1 : 0] hdr_flit_wr,flit_wr;
-	
+	wire [VV-1 : 0] assigned_ovc_num;
 	
 	wire [DSTPw-1 : 0] lk_destination_in_encoded;
 	wire [WEIGHTw-1  : 0] weight_in;   
@@ -338,52 +344,66 @@ module input_queue_per_port
 	wire [P-1 : 0] destport_one_hot [V-1 :0];		
 	wire [V-1 : 0] mux_out[V-1 : 0];
 	
+	wire [V-1 : 0] dstport_fifo_not_empty;
+
+	logic  [WEIGHTw-1 : 0] iport_weight_next;
+	
 	assign smart_hdr_en  = (SMART_EN) ? smart_ctrl_in.ivc_num_getting_ovc_grant: {V{1'b0}};
 	assign reset_ivc  = smart_ctrl_in.ivc_reset | ssa_ctrl_in.ivc_reset | vsa_ctrl_in.ivc_reset;
 	assign ivc_num_getting_sw_grant = ssa_ctrl_in.ivc_num_getting_sw_grant | vsa_ctrl_in.ivc_num_getting_sw_grant;
 	assign flit_wr =(flit_in_wr )? vc_num_in : {V{1'b0}};
-	assign rd_hdr_fwft_fifo  = ssa_ctrl_in.ivc_reset | vsa_ctrl_in.ivc_reset | (smart_ctrl_in.ivc_reset  & ~ smart_ctrl_in.ivc_single_flit_pck);
+	assign rd_hdr_fwft_fifo  = (ssa_ctrl_in.ivc_reset | vsa_ctrl_in.ivc_reset | (smart_ctrl_in.ivc_reset  & ~ smart_ctrl_in.ivc_single_flit_pck)) & ~ multiple_dest;
 	assign wr_hdr_fwft_fifo  = hdr_flit_wr | (smart_hdr_en & ~ smart_ctrl_in.ivc_single_flit_pck);
 	assign ivc_request = ivc_not_empty;    
 	
 	
+	wire  [V-1 : 0] flit_is_tail2;
 	
-	register #(.W(V)) reg1(
+	
+	pronoc_register #(.W(V)) reg1(
 			.in		(ovc_is_assigned_next), 
 			.reset  (reset ), 
 			.clk    (clk   ), 
 			.out    (ovc_is_assigned   ));
 		
-	register #(.W(VV)) reg2(
+	pronoc_register #(.W(VV)) reg2(
 			.in		(assigned_ovc_num_next), 
 			.reset  (reset ), 
 			.clk    (clk   ), 
 			.out    (assigned_ovc_num  ));
 	
-	register #(.W(V)) reg3(
+	pronoc_register #(.W(V)) reg3(
 			.in		(rd_hdr_fwft_fifo), 
 			.reset  (reset ), 
 			.clk    (clk   ), 
 			.out    (rd_hdr_fwft_fifo_delay ));
 	
-	register #(.W(V)) reg4(
+	pronoc_register #(.W(V)) reg4(
 			.in		(wr_hdr_fwft_fifo), 
 			.reset  (reset ), 
 			.clk    (clk   ), 
 			.out    (wr_hdr_fwft_fifo_delay ));
 	
+	pronoc_register #(.W(WEIGHTw), .RESET_TO(1)) reg5(
+			.in		(iport_weight_next ), 
+			.reset  (reset ), 
+			.clk    (clk   ), 
+			.out    (iport_weight  ));
 	
-	`ifdef SYNC_RESET_MODE 
-		always @ (posedge clk )begin 
-		`else 
-			always @ (posedge clk or posedge reset)begin 
-			`endif   
-			if(reset) begin 
-				iport_weight <= 1;
-			end else begin 
-				if(hdr_flit_wr != {V{1'b0}})  iport_weight <= (weight_in=={WEIGHTw{1'b0}})? 1 : weight_in; // the minimum weight is 1
-			end
-		end
+	
+	pronoc_register #(.W(V)) credit_reg (
+			.in     (ivc_num_getting_sw_grant & ~ multiple_dest),
+			.reset  (reset),
+			.clk    (clk),
+			.out    (credit_out)); 
+    
+    
+	
+	
+	always @ (*)begin 
+		iport_weight_next = iport_weight;
+		if(hdr_flit_wr != {V{1'b0}})  iport_weight_next = (weight_in=={WEIGHTw{1'b0}})? 1 : weight_in; // the minimum weight is 1
+	end
 
 	
 	//extract header flit info
@@ -412,7 +432,7 @@ module input_queue_per_port
 	genvar i;
 	generate
 		/* verilator lint_off WIDTH */  
-		if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && (T3>1)) begin : multi_local
+		if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && (T3>1) && CAST_TYPE== "UNICAST") begin : multi_local
 		/* verilator lint_on WIDTH */  
 		
 				
@@ -434,7 +454,7 @@ module input_queue_per_port
 				);
 		end
 		/* verilator lint_off WIDTH */  
-		if ( TOPOLOGY == "FMESH") begin : fmesh
+		if ( TOPOLOGY == "FMESH" && CAST_TYPE== "UNICAST" ) begin : fmesh
 		/* verilator lint_on WIDTH */  
 				
 			
@@ -484,7 +504,11 @@ module input_queue_per_port
 					.bin_code(ivc_info[i].assigned_ovc_bin)
 				);	
     	
-        
+        	assign ivc_info[i].single_flit_pck =
+        		/* verilator lint_off WIDTH */
+        		(PCK_TYPE == "SINGLE_FLIT")? 1'b1  :
+        		/* verilator lint_on WIDTH */
+        		(MIN_PCK_SIZE == 1)? flit_is_tail[i] & ~ovc_is_assigned[i] :  1'b0; 
 			assign ivc_info[i].ivc_req = ivc_request[i];
 			assign ivc_info[i].class_num = class_out[i];
 			assign ivc_info[i].flit_is_tail = flit_is_tail[i];
@@ -492,7 +516,7 @@ module input_queue_per_port
 			assign ivc_info[i].candidate_ovc=   candidate_ovcs [(i+1)*V-1 : i*V];
 			assign ivc_info[i].ovc_is_assigned = ovc_is_assigned[i];
 			assign ivc_info[i].assigned_ovc_num= assigned_ovc_num[(i+1)*V-1 : i*V];
-			assign ivc_info[i].dest_port_encoded=dest_port_encoded[(i+1)*DSTPw-1 : i*DSTPw];
+			assign ivc_info[i].dest_port_encoded=dest_port_encoded[i];
 			//assign ivc_info[i].getting_swa_first_arbiter_grant=nonspec_first_arbiter_granted_ivc[i];
 			//assign ivc_info[i].getting_swa_grant=ivc_num_getting_sw_grant[i];
 			if(P==MAX_P) begin :max_
@@ -512,6 +536,10 @@ module input_queue_per_port
 			end	
 			//synthesis translate_on
 			
+			
+			
+			
+			
 			class_ovc_table #(
 					.CVw(CVw),
 					.CLASS_SETTING(CLASS_SETTING),   
@@ -524,7 +552,7 @@ module input_queue_per_port
 					.candidate_ovcs(candidate_ovcs [(i+1)*V-1 : i*V])
 				);    
         
-			if(PCK_TYPE == "MULTI_FLIT") begin : multi 
+			if(PCK_TYPE == "MULTI_FLIT") begin : multi_flit 
 				
 				always @ (*) begin
 					ovc_is_assigned_next[i] = ovc_is_assigned[i];		
@@ -559,7 +587,7 @@ module input_queue_per_port
 					);
 					
 				
-				
+				/*
 				//tail fifo
 				fwft_fifo #(
 					.DATA_WIDTH(1),
@@ -579,8 +607,10 @@ module input_queue_per_port
 					.reset (reset),
 					.clk (clk)            
 				);
-			end else begin :single
-				assign flit_is_tail[i]=1'b1;
+				*/
+				
+			end else begin :single_flit
+				//assign flit_is_tail[i]=1'b1;
 				assign ovc_is_assigned_next[i] = 1'b0;
 				
 				always @(*) begin
@@ -656,6 +686,60 @@ module input_queue_per_port
 				assign class_out[i] = 1'b0;
 			end
        
+			
+			//localparam CAST_TYPE = "UNICAST"; // multicast is not yet supported
+			/* verilator lint_off WIDTH */    
+			if(CAST_TYPE!= "UNICAST") begin : muticast
+			/* verilator lint_on WIDTH */
+				
+				// for multicast we send one packet to each direction in order. The priority is according to DoR routing dimentions 
+				
+				fwft_fifo_with_output_clear #(
+					.DATA_WIDTH(DSTPw),
+					.MAX_DEPTH (MAX_PCK),
+					.IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
+				)
+				dest_fifo
+				(
+					.din(destport_in_encoded),
+					.wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
+					.rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
+					.dout(dest_port_multi[i]),    // Data out
+					.full(),
+					.nearly_full(),
+					.recieve_more_than_0(),
+					.recieve_more_than_1(),
+					.reset(reset),
+					.clk(clk),
+					.clear(clear_dspt_mulicast [i])   // clear the  destination port once it got  the entire packet
+				);               
+				
+				//TODO remove multiple_dest[i] to see if it works?
+				
+				assign clear_dspt_mulicast [i] = (reset_ivc[i] & multiple_dest[i]) ? dest_port_encoded[i] : {DSTPw{1'b0}}; 
+				
+				// a fix priority arbiter. 
+				multicast_dst_sel  sel(
+					.destport_in(dest_port_multi[i]),
+					.destport_out(dest_port_encoded[i])						
+				);
+				
+				//check if we have multiple port to send a packet to 
+				is_onehot0 #(
+					.IN_WIDTH(DSTPw)
+    			)
+    			one_h
+				(
+					.in(dest_port_multi[i]),
+					.result(dst_onhot0[i])
+    			);
+				assign multiple_dest[i]=~dst_onhot0[i];
+				
+			
+		end	else begin : unicast
+			assign multiple_dest[i] = 1'b0;
+			
+			
 			//lk_dst_fifo
 			fwft_fifo #(
 					.DATA_WIDTH(DSTPw),
@@ -676,86 +760,57 @@ module input_queue_per_port
 					.clk (clk)
              
 				);
-			localparam CAST_TYPE = "UNICAST"; // multicast is not yet supported
-			/* verilator lint_off WIDTH */    
-			if(CAST_TYPE!= "UNICAST") begin : no_unicast
-			/* verilator lint_on WIDTH */
-				
-				fwft_fifo_with_output_clear #(
-						.DATA_WIDTH(DSTPw),
-						.MAX_DEPTH (MAX_PCK),
-						.IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
-					)
-					dest_fifo
-					(
-						.din(destport_in_encoded),
-						.wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
-						.rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
-						.dout(dest_port_encoded[(i+1)*DSTPw-1 : i*DSTPw]),    // Data out
-						.full(),
-						.nearly_full(),
-						.recieve_more_than_0(),
-						.recieve_more_than_1(),
-						.reset(reset),
-						.clk(clk),
-						.clear(destport_clear[(i+1)*DSTPw-1 : i*DSTPw])   // clear the destination ports once it got its flit
-					);                  
-				
-				
-				
-				
-				
 			
 			
-        
-			/* verilator lint_off WIDTH */    
-			end else if( ROUTE_TYPE=="DETERMINISTIC") begin : dtrmn_dest
-			/* verilator lint_on WIDTH */
-				//destport_fifo
-				fwft_fifo #(
-						.DATA_WIDTH(DSTPw),
-						.MAX_DEPTH (MAX_PCK),
-						.IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
-					)
-					dest_fifo
-					(
-						.din(destport_in_encoded),
-						.wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
-						.rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
-						.dout(dest_port_encoded[(i+1)*DSTPw-1 : i*DSTPw]),    // Data out
-						.full(),
-						.nearly_full(),
-						.recieve_more_than_0(),
-						.recieve_more_than_1(),
-						.reset(reset),
-						.clk(clk) 
-					);               
-                         
-			end else begin : adptv_dest   
-
-				fwft_fifo_with_output_clear #(
-						.DATA_WIDTH(DSTPw),
-						.MAX_DEPTH (MAX_PCK),
-						.IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
-					)
-					dest_fifo
-					(
-						.din(destport_in_encoded),
-						.wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
-						.rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
-						.dout(dest_port_encoded[(i+1)*DSTPw-1 : i*DSTPw]),    // Data out
-						.full(),
-						.nearly_full(),
-						.recieve_more_than_0(),
-						.recieve_more_than_1(),
-						.reset(reset),
-						.clk(clk),
-						.clear(destport_clear[(i+1)*DSTPw-1 : i*DSTPw])   // clear other destination ports once one of them is selected
-					);                  
-    
-                
-			end        	
-        
+				
+				/* verilator lint_off WIDTH */    
+				if( ROUTE_TYPE=="DETERMINISTIC") begin : dtrmn_dest
+				/* verilator lint_on WIDTH */
+					//destport_fifo
+					fwft_fifo #(
+							.DATA_WIDTH(DSTPw),
+							.MAX_DEPTH (MAX_PCK),
+							.IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
+						)
+						dest_fifo
+						(
+							.din(destport_in_encoded),
+							.wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
+							.rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
+							.dout(dest_port_encoded[i]),    // Data out
+							.full(),
+							.nearly_full(),
+							.recieve_more_than_0(),
+							.recieve_more_than_1(),
+							.reset(reset),
+							.clk(clk) 
+						);               
+	                         
+				end else begin : adptv_dest   
+	
+					fwft_fifo_with_output_clear #(
+							.DATA_WIDTH(DSTPw),
+							.MAX_DEPTH (MAX_PCK),
+							.IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
+						)
+						dest_fifo
+						(
+							.din(destport_in_encoded),
+							.wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
+							.rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
+							.dout(dest_port_encoded[i]),    // Data out
+							.full(),
+							.nearly_full(),
+							.recieve_more_than_0(),
+							.recieve_more_than_1(),
+							.reset(reset),
+							.clk(clk),
+							.clear(destport_clear[i])   // clear other destination ports once one of them is selected
+						);                  
+	    
+	                
+				end        	
+		end//unicast
                      
                      
 			destp_generator #(
@@ -769,12 +824,13 @@ module input_queue_per_port
 					.PLw(PLw),
 					.PPSw(PPSw),
 					.SELF_LOOP_EN (SELF_LOOP_EN),
-					.SW_LOC(SW_LOC)
+					.SW_LOC(SW_LOC),
+					.CAST_TYPE(CAST_TYPE)
 				)
 				decoder
 				(
 					.destport_one_hot (destport_one_hot[i]),
-					.dest_port_encoded(dest_port_encoded[(i+1)*DSTPw-1 : i*DSTPw]),             
+					.dest_port_encoded(dest_port_encoded[i]),             
 					.dest_port_out(dest_port[(i+1)*P_1-1 : i*P_1]),   
 					.endp_localp_num(endp_localp_num[(i+1)*PLw-1 : i*PLw]),
 					.swap_port_presel(swap_port_presel[i]),
@@ -784,7 +840,7 @@ module input_queue_per_port
          
          
 			/* verilator lint_off WIDTH */  
-			if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && (T3>1)) begin : multi_local
+			if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && (T3>1) && (CAST_TYPE== "UNICAST")) begin : multi_local
 				/* verilator lint_on WIDTH */  
 				// the router has multiple local ports. Save the destination local port 
                 
@@ -809,7 +865,7 @@ module input_queue_per_port
 						.clk(clk) 
 					);       
 			/* verilator lint_off WIDTH */  
-			end else if ( TOPOLOGY == "FMESH") begin : fmesh
+			end else if ( TOPOLOGY == "FMESH" && CAST_TYPE== "UNICAST") begin : fmesh
 			/* verilator lint_on WIDTH */  
 				
 				fwft_fifo #(
@@ -903,13 +959,22 @@ module input_queue_per_port
 		/* verilator lint_off WIDTH */
 		if(COMBINATION_TYPE == "COMB_NONSPEC") begin  : nonspec  
 			/* verilator lint_on WIDTH */ 
+			
+			
+			
+			
+			 /* 
+			
+			always @(posedge clk) 
+				if ((ivc_not_empty & flit_is_tail2) != (ivc_not_empty & flit_is_tail))begin 
+					$display("ERROR:    %b !=%b",flit_is_tail2 , flit_is_tail ) ;
+					$finish;
+				end
+			*/
+			
            
 			flit_buffer #(
-					.V(V),
 					.B(PORT_B),   // buffer space :flit per VC 
-					.PCK_TYPE(PCK_TYPE),
-					.Fw(Fw),
-					.DEBUG_EN(DEBUG_EN),
 					.SSA_EN(SSA_EN)
 				)
 				the_flit_buffer
@@ -924,62 +989,76 @@ module input_queue_per_port
 					.vc_not_empty(ivc_not_empty),
 					.reset(reset),
 					.clk(clk),
-					.ssa_rd(ssa_ctrl_in.ivc_num_getting_sw_grant)
+					.ssa_rd(ssa_ctrl_in.ivc_num_getting_sw_grant),
+					.multiple_dest( multiple_dest ),
+					.sub_rd_ptr_ld(reset_ivc) ,
+					.flit_is_tail(flit_is_tail)
 				);
    
 		end else begin :spec//not nonspec comb
  
 
 			flit_buffer #(
-					.V(V),
 					.B(PORT_B),   // buffer space :flit per VC 
-					.PCK_TYPE(PCK_TYPE),
-					.Fw(Fw),
-					.DEBUG_EN(DEBUG_EN),
 					.SSA_EN(SSA_EN)
 				)
 				the_flit_buffer
 				(
 					.din(flit_in),     // Data in
-					.vc_num_wr(vc_num_in),//write vertual chanel   
-					.vc_num_rd(ivc_num_getting_sw_grant),//read vertual chanel     
+					.vc_num_wr(vc_num_in),//write virtual channel   
+					.vc_num_rd(ivc_num_getting_sw_grant),//read virtual channel     
 					.wr_en(flit_in_wr),   // Write enable
 					.rd_en(any_ivc_sw_request_granted),     // Read the next word
 					.dout(buffer_out),    // Data out
 					.vc_not_empty(ivc_not_empty),
 					.reset(reset),
 					.clk(clk),
-					.ssa_rd(ssa_ctrl_in.ivc_num_getting_sw_grant)
+					.ssa_rd(ssa_ctrl_in.ivc_num_getting_sw_grant),
+					.multiple_dest(  multiple_dest ),
+					.sub_rd_ptr_ld(reset_ivc) ,
+					.flit_is_tail(flit_is_tail)  
+				
 				);  
   
-		end       
+		end  
+
+			
+		/* verilator lint_off WIDTH */    
+		if(CAST_TYPE== "UNICAST") begin : unicast
+		/* verilator lint_on WIDTH */
+			look_ahead_routing #(
+				.T1(T1),
+				.T2(T2),
+				.T3(T3),
+				.T4(T4), 
+				.P(P),       
+				.RAw(RAw),  
+				.EAw(EAw), 
+				.DAw(DAw),
+				.DSTPw(DSTPw),
+				.SW_LOC(SW_LOC),
+				.TOPOLOGY(TOPOLOGY),
+				.ROUTE_NAME(ROUTE_NAME),
+				.ROUTE_TYPE(ROUTE_TYPE)
+			)
+			lk_routing
+			(
+				.current_r_addr(current_r_addr),
+				.neighbors_r_addr(neighbors_r_addr),
+				.dest_e_addr(dest_e_addr_in),
+				.src_e_addr(src_e_addr_in),
+				.destport_encoded(destport_in_encoded),
+				.lkdestport_encoded(lk_destination_in_encoded),
+				.reset(reset),
+				.clk(clk)
+			);
+		end // unicast	
+			
+			
+			
 	endgenerate    
 
-	look_ahead_routing #(
-		.T1(T1),
-		.T2(T2),
-		.T3(T3),
-		.T4(T4), 
-		.P(P),       
-		.RAw(RAw),  
-		.EAw(EAw), 
-		.DSTPw(DSTPw),
-		.SW_LOC(SW_LOC),
-		.TOPOLOGY(TOPOLOGY),
-		.ROUTE_NAME(ROUTE_NAME),
-		.ROUTE_TYPE(ROUTE_TYPE)
-	)
-	lk_routing
-	(
-		.current_r_addr(current_r_addr),
-		.neighbors_r_addr(neighbors_r_addr),
-		.dest_e_addr(dest_e_addr_in),
-		.src_e_addr(src_e_addr_in),
-		.destport_encoded(destport_in_encoded),
-		.lkdestport_encoded(lk_destination_in_encoded),
-		.reset(reset),
-		.clk(clk)
-	);
+	
 
 	header_flit_update_lk_route_ovc #(
 		.P(P)    
@@ -1005,6 +1084,8 @@ module input_queue_per_port
 	generate 
 	if(DEBUG_EN) begin :debg
 		
+		
+		
 		always @ (posedge clk) begin			
 			if((|vsa_ctrl_in.ivc_num_getting_sw_grant)  & (|ssa_ctrl_in.ivc_num_getting_sw_grant))begin 
 				$display("%t: ERROR: VSA/SSA conflict: an input port cannot get both sva and ssa grant at the same time %m",$time);
@@ -1025,10 +1106,19 @@ module input_queue_per_port
 				$finish;
 			end		
 		end//always
-		end
+		
+		
+		
+		always @(posedge clk) begin
+			if((dest_port [(i+1)*P_1-1 : i*P_1] == {P_1{1'b0}})  && (ivc_request[i]==1'b1)) begin 
+				$display ("%t: ERROR: The destination port is not set for an active IVC request: %m \n",$time);
+				$finish;
+			end
+		end		
+		end//for
 		
 		/* verilator lint_off WIDTH */  
-		if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS")) begin : mesh_based
+		if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && CAST_TYPE== "UNICAST") begin : mesh_based
 		/* verilator lint_on WIDTH */  
 
 				debug_mesh_tori_route_ckeck #(
@@ -1105,7 +1195,8 @@ module destp_generator #(
 	parameter PLw=1,
 	parameter PPSw=4,
 	parameter SW_LOC=0,
-	parameter SELF_LOOP_EN="NO"
+	parameter SELF_LOOP_EN="NO",
+	parameter CAST_TYPE = "UNICAST"
 
 )
 (
@@ -1128,9 +1219,27 @@ module destp_generator #(
 	input odd_column;
     
 	generate
-		/* verilator lint_off WIDTH */
-			if(TOPOLOGY == "FATTREE" ) begin : fat
-			/* verilator lint_on WIDTH */
+		
+	/* verilator lint_off WIDTH */    
+	if(CAST_TYPE!= "UNICAST") begin : muticast
+	/* verilator lint_on WIDTH */
+		// destination port is not coded for multicast/broadcast
+		if( SELF_LOOP_EN=="NO") begin : nslp
+			remove_sw_loc_one_hot #(
+					.P(P),
+					.SW_LOC(SW_LOC)
+				)
+				remove_sw_loc
+				(
+					.destport_in(dest_port_encoded),
+					.destport_out(dest_port_out)
+				);
+		end else begin : slp		
+			assign dest_port_out = dest_port_encoded;
+		end
+	/* verilator lint_off WIDTH */
+	end else if(TOPOLOGY == "FATTREE" ) begin : fat
+	/* verilator lint_on WIDTH */
 			fattree_destp_generator #(
 				.K(T1),
 				.P(P),
@@ -1143,9 +1252,9 @@ module destp_generator #(
 				.dest_port_in_encoded(dest_port_encoded),
 				.dest_port_out(dest_port_out)
 			);
-		/* verilator lint_off WIDTH */ 
+	/* verilator lint_off WIDTH */ 
 	end else  if (TOPOLOGY == "TREE") begin :tree
-		/* verilator lint_on WIDTH */
+	/* verilator lint_on WIDTH */
 		tree_destp_generator #(
 			.K(T1),
 			.P(P),
@@ -1182,7 +1291,9 @@ module destp_generator #(
 			.port_pre_sel(port_pre_sel),
 			.odd_column(odd_column)// only needed for odd even routing
 		);
+		/* verilator lint_off WIDTH */
 	end else if (TOPOLOGY == "FMESH") begin :fmesh
+		/* verilator lint_on WIDTH */
 		fmesh_destp_generator  #(
 			.ROUTE_NAME(ROUTE_NAME),
 			.ROUTE_TYPE(ROUTE_TYPE),

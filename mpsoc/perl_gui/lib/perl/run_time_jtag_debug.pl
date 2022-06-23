@@ -46,8 +46,8 @@ __PACKAGE__->mk_accessors(qw{
 
 my $NAME = 'Soure Probe';
 my 	$path = "";
-our $FONT_SIZE='default';
-our $ICON_SIZE='default';
+
+
 
 my %memory;
 my %status;
@@ -60,9 +60,7 @@ sub source_probe_stand_alone(){
 	my $paths_file= "$project_dir/mpsoc/perl_gui/lib/Paths";
 	if (-f 	$paths_file){#} && defined $ENV{PRONOC_WORK} ) {
 		my $paths= do $paths_file;
-		my %p=%{$paths};
-		$FONT_SIZE= $p{'GUI_SETTING'}{'FONT_SIZE'} if (defined $p{'GUI_SETTING'}{'FONT_SIZE'});
-		$ICON_SIZE= $p{'GUI_SETTING'}{'ICON_SIZE'} if (defined $p{'GUI_SETTING'}{'ICON_SIZE'});
+		set_gui_setting($paths);
 	}
 	
 	set_defualt_font_size();

@@ -1,0 +1,48 @@
+#!/bin/bash
+#use -batch as a flag to run in batch mode
+
+#/home/alireza/intelFPGA_lite/17.1/modelsim_ase/bin/vsim  -do model.tcl
+#/home/alireza/altera/13.0sp1/modelsim_ase/bin/vsim  -do model.tcl
+#/home/alireza/altera/modeltech/bin/vsim  -do model.tcl
+
+SCRPT_FULL_PATH=$(realpath ${BASH_SOURCE[0]})
+SCRPT_DIR_PATH=$(dirname $SCRPT_FULL_PATH)
+
+#questasim
+LM_LICENSE="1717@epi03.bsc.es"
+VSIM_BIN="vsim"
+
+export LM_LICENSE_FILE=${LM_LICENSE}
+export LM_WORK_PLACE=${PRONOC_WORK}/simulation
+export LM_FILE_LIST="$SCRPT_DIR_PATH/modelsim_filelist.f"
+export PATH=$PATH:$MODELSIM_BIN
+
+#"$SCRPT_DIR_PATH/../rtl/src_noc/noc_filelist.f $SCRPT_DIR_PATH/../rtl/src_modelsim/filelist.f"
+
+
+#***********************************************************
+# c++ interface compile - Synfull
+
+DPI_DIR=$SCRPT_DIR_PATH/../../../mpsoc/src_c/synfull/pronoc-interface
+
+echo " "
+echo "******-----------------*******"
+echo "****** GCC COMPILATION *******"
+echo "******-----------------*******"
+echo " "
+
+g++ -c -fPIC -I$DPI_DIR/includes -I$DPI_DIR/netstream $DPI_DIR/src/dpi_interface.cpp -o dpi_interface.o
+g++ -shared -o dpi_interface.so dpi_interface.o
+echo " "
+echo "******-----------------*******"
+echo " "
+#***********************************************************
+
+
+
+
+exec 3> /dev/tty # open fd 3 and point to controlling terminal
+echo "Start simulation" >&3
+$VSIM_BIN $1 -quiet -64 -do model.tcl
+wait 
+echo "End of Simulation" >&3

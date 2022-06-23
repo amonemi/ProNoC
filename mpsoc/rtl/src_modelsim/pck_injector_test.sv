@@ -26,7 +26,8 @@ module pck_injector_test;
 		.reset(reset),
 		.clk(clk),    
 		.chan_in_all(chan_in_all),
-		.chan_out_all(chan_out_all)  
+		.chan_out_all(chan_out_all),
+		.router_event( )
 	);
 		
 	reg [NEw-1 : 0] dest_id [NE-1 : 0];

@@ -162,8 +162,8 @@ sub trace_pad_ctrl{
 	
 	
 			
-	my $dir = Cwd::getcwd();
-	my $project_dir	  = abs_path("$dir/.."); #mpsoc directory address
+	
+	my $project_dir	  = get_project_dir()."/mpsoc/";
 	
 	
 	$add->signal_connect ( 'clicked'=> sub{

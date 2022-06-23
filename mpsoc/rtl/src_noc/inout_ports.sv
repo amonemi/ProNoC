@@ -1,5 +1,4 @@
-`timescale     1ns/1ps
-
+`include "pronoc_def.v"
 /**********************************************************************
 **	File: inout_ports.v
 **    
@@ -67,7 +66,6 @@ import pronoc_pkg::*;
     ivc_request_all,
     assigned_ovc_not_full_all,
     masked_ovc_request_all,
-    pck_is_single_flit_all,
     vc_weight_is_consumed_all, 
     iport_weight_is_consumed_all, 
     flit_is_tail_all,
@@ -139,7 +137,6 @@ import pronoc_pkg::*;
     // to vc/sw allocator
     output [PVP_1-1 : 0] dest_port_all;
     output [PV-1 : 0] ovc_is_assigned_all;
-    output [PV-1 : 0] pck_is_single_flit_all;   
     output [PV-1 : 0] ivc_request_all;
     output [PV-1 : 0] assigned_ovc_not_full_all;
     output [PVV-1: 0] masked_ovc_request_all;
@@ -157,8 +154,8 @@ import pronoc_pkg::*;
     
     output  [PV-1 : 0] vsa_ovc_released_all;
     output  [PV-1 : 0] vsa_credit_decreased_all;
-    output  ivc_info_t   ivc_info    [P-1 : 0][V-1 : 0];
-    output  ovc_info_t   ovc_info    [P-1 : 0][V-1 : 0];
+    output  ivc_info_t ivc_info    [P-1 : 0][V-1 : 0];
+    output  ovc_info_t ovc_info    [P-1 : 0][V-1 : 0];
     
     output  oport_info_t oport_info  [P-1 : 0]; 
     input   smart_ctrl_t   smart_ctrl_in [P-1 : 0];
@@ -167,21 +164,16 @@ import pronoc_pkg::*;
     output  [CRDTw-1 : 0 ] credit_init_val_out [P-1 : 0][V-1 : 0];
    
   
-    wire [PVV-1     : 0] candidate_ovc_all;
-    wire [PVDSTPw-1 : 0] dest_port_encoded_all;
+   
  
 
     wire [PPSw-1 : 0] port_pre_sel;
     wire [PV-1 :  0]  swap_port_presel;
-    wire [PV-1 : 0] reset_ivc_all;    
-    
-    wire  [PV-1 : 0] ovc_is_assigned_all;
-    wire  [PVV-1 : 0] assigned_ovc_num_all;
-    
+    wire [PV-1 : 0] reset_ivc_all;     
     wire [PV-1 : 0] sel; 
     wire [PV-1 : 0] ovc_avalable_all; 
     
-    wire [PVDSTPw-1 : 0] destport_clear_all;// clear non preferable ports in adaptive routing     
+    wire [DSTPw-1 : 0] destport_clear [P-1 : 0][V-1 : 0];   // clear non preferable ports in adaptive routing     
     wire [PV-1 : 0] ivc_num_getting_sw_grant; 
     
     ssa_ctrl_t ssa_ctrl [P-1 : 0];
@@ -203,19 +195,17 @@ import pronoc_pkg::*;
 		.reset_ivc_all (reset_ivc_all),
 		.flit_is_tail_all (flit_is_tail_all),
 		.ivc_request_all (ivc_request_all),    
-		.dest_port_encoded_all (dest_port_encoded_all),
 		.dest_port_all(dest_port_all),
-		.candidate_ovcs_all (candidate_ovc_all),
 		.flit_out_all (flit_out_all),
-		.assigned_ovc_num_all (assigned_ovc_num_all),
 		.assigned_ovc_not_full_all(assigned_ovc_not_full_all),
 		.ovc_is_assigned_all(ovc_is_assigned_all),
 		.sel (sel),
 		.port_pre_sel(port_pre_sel),
 		.swap_port_presel(swap_port_presel),
+		.credit_out_all(credit_out_all),
 		// .lk_destination_encoded_all (lk_destination_encoded_all),
 		.nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all),       
-		.destport_clear_all (destport_clear_all),
+		.destport_clear (destport_clear),
 		.vc_weight_is_consumed_all (vc_weight_is_consumed_all),
 		.iport_weight_is_consumed_all (iport_weight_is_consumed_all),
 		.iport_weight_all(iport_weight_all),
@@ -237,10 +227,9 @@ import pronoc_pkg::*;
 	)
 	output_ports
 	(
+		
 		.vsa_ovc_allocated_all                      (vsa_ovc_allocated_all),
 		.flit_is_tail_all                           (flit_is_tail_all),
-		.assigned_ovc_num_all                       (assigned_ovc_num_all),
-		.ovc_is_assigned_all                        (ovc_is_assigned_all),
 		.dest_port_all                              (dest_port_all),
 		.nonspec_granted_dest_port_all              (nonspec_granted_dest_port_all),
 		.credit_in_all                              (credit_in_all),
@@ -260,6 +249,7 @@ import pronoc_pkg::*;
 		.vsa_ovc_released_all (vsa_ovc_released_all),
 		.vsa_credit_decreased_all(vsa_credit_decreased_all),
 		.oport_info (oport_info),
+		.ivc_info(ivc_info),
 		.ovc_info (ovc_info),
 		.smart_ctrl_in(smart_ctrl_in),
 		.vsa_ctrl_in(vsa_ctrl_in),
@@ -273,19 +263,17 @@ import pronoc_pkg::*;
     )
     vc_alloc_req_gen
     (
-    	.ovc_avalable_all(ovc_avalable_all),
-    	.dest_port_encoded_all(dest_port_encoded_all),
-    	.ivc_request_all(ivc_request_all),
-    	.ovc_is_assigned_all(ovc_is_assigned_all),
+    	.ivc_info(ivc_info),
+    	.ovc_avalable_all(ovc_avalable_all),    	
     	.dest_port_decoded_all(dest_port_all),
     	.masked_ovc_request_all(masked_ovc_request_all),
-    	.candidate_ovc_all(candidate_ovc_all),
+    	
     	.port_pre_sel(port_pre_sel),
     	.swap_port_presel(swap_port_presel),
     	.sel(sel),
     	.reset(reset),
     	.clk(clk),
-    	.destport_clear_all(destport_clear_all),
+    	.destport_clear(destport_clear),
     	.ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant),
     	//.ssa_ivc_num_getting_ovc_grant_all(nla_ivc_num_getting_ovc_grant_all),
     	.smart_ctrl_in (smart_ctrl_in),
@@ -310,16 +298,8 @@ import pronoc_pkg::*;
         .reset(reset)
    );   
      
-    
-   assign pck_is_single_flit_all = 
-   	/* verilator lint_off WIDTH */
-   	(PCK_TYPE == "SINGLE_FLIT")? {PV{1'b1}}  :
-   	/* verilator lint_on WIDTH */
-   	(MIN_PCK_SIZE == 1)? flit_is_tail_all & ~ovc_is_assigned_all :  {PV{1'b0}}; 
-   
-   register #(.W(PV)) credit_reg (.in(ivc_num_getting_sw_grant),.reset(reset),.clk(clk),.out(credit_out_all)); 
-    
-	
+     
+  
     
     
   
@@ -335,16 +315,12 @@ import pronoc_pkg::*;
 		   	)
 		   	the_ssa
 		   	(
+		   		.ivc_info(ivc_info),
 		   		.flit_in_wr_all(flit_in_wr_all),
 		   		.flit_in_all(flit_in_all),
 		   		.any_ivc_sw_request_granted_all(any_ivc_sw_request_granted_all),
 		   		.any_ovc_granted_in_outport_all(any_ovc_granted_in_outport_all),
 		   		.ovc_avalable_all(ovc_avalable_all),
-		   		.ivc_request_all(ivc_request_all),
-		   		.assigned_ovc_not_full_all(assigned_ovc_not_full_all),
-		   		.dest_port_encoded_all(dest_port_encoded_all),
-		   		.assigned_ovc_num_all(assigned_ovc_num_all),
-		   		.ovc_is_assigned_all(ovc_is_assigned_all),
 		   		.clk(clk),
 		   		.reset(reset),		    	    	
 		    	.ssa_ctrl_o(ssa_ctrl)
@@ -417,7 +393,7 @@ endmodule
  	output  [V-1 :0] nearly_full_vc;
  	output  [V-1 : 0] full_vc;
  	output  [V-1 :0] empty_vc;
- 	output reg [V-1 :0] cand_vc;
+ 	output  [V-1 :0] cand_vc;
  	input   cand_wr_vc_en;
  	input   clk;
  	input   reset;
@@ -436,7 +412,8 @@ endmodule
     localparam  DEPTH_WIDTH =   log2(B+1);
  
     
-    reg  [DEPTH_WIDTH-1 : 0] credit    [V-1 : 0];
+    logic  [DEPTH_WIDTH-1 : 0] credit    [V-1 : 0];
+    logic  [DEPTH_WIDTH-1 : 0] credit_next    [V-1 : 0];
     wire  [V-1 : 0] cand_vc_next;
    
     wire  [V-1 :0] request;
@@ -444,17 +421,26 @@ endmodule
     genvar i;
     generate
         for(i=0;i<V;i=i+1) begin : vc_loop
-`ifdef SYNC_RESET_MODE 
-            always @ (posedge clk )begin 
-`else 
-            always @ (posedge clk or posedge reset)begin 
-`endif  
-                    if(reset)begin
-                        credit[i]<= credit_init_val_in[i][DEPTH_WIDTH-1:0];
-                    end else begin
-                        if(  wr_in[i]  && ~credit_in[i])   credit[i] <= credit[i]-1'b1;
-                        if( ~wr_in[i]  &&  credit_in[i])   credit[i] <= credit[i]+1'b1;
-                    end //reset
+        	
+        	
+        	      	
+        	
+        	pronoc_register_reset_init #(
+        			.W(DEPTH_WIDTH)			
+        		)reg1( 
+        			.in(credit_next[i]),
+        			.reset(reset),	
+        			.clk(clk),		
+        			.out(credit[i]),
+        			.reset_to(credit_init_val_in[i][DEPTH_WIDTH-1:0])
+        		);
+        		
+      
+
+            always @ ( * )begin 
+                  credit_next[i] = credit [i];
+                  if(  wr_in[i]  && ~credit_in[i])   credit_next[i] = credit[i]-1'b1;
+                  if( ~wr_in[i]  &&  credit_in[i])   credit_next[i] = credit[i]+1'b1;                 
             end//always
 
             assign  full_vc[i]   = (credit[i] == {DEPTH_WIDTH{1'b0}});
@@ -479,21 +465,13 @@ endmodule
                     .any_grant       ()
                 );
 
-       
-
-`ifdef SYNC_RESET_MODE 
-        always @ (posedge clk )begin 
-`else 
-        always @ (posedge clk or posedge reset)begin 
-`endif  
-            if          (reset)          cand_vc    <= {V{1'b0}};
-            else    if(cand_wr_vc_en)    cand_vc    <=  cand_vc_next;
-        end
-
-   
-
-
-
+    logic [V-1 : 0] cand_vc_ld_next;  
+	pronoc_register #(.W(V)) reg2 (.in(cand_vc_ld_next ), .out(cand_vc), .reset(reset), .clk(clk));
+            
+	always  @ ( *) begin 
+		cand_vc_ld_next = cand_vc;
+		if(cand_wr_vc_en)    cand_vc_ld_next  =  cand_vc_next;
+    end
 
 endmodule
 
@@ -511,11 +489,8 @@ import pronoc_pkg::*;
     parameter P = 5
    
 )(
-    ovc_avalable_all,
-    dest_port_encoded_all,
-    candidate_ovc_all,
-    ivc_request_all,
-    ovc_is_assigned_all,
+	ivc_info,
+	ovc_avalable_all,
     dest_port_decoded_all,
     masked_ovc_request_all,    
     port_pre_sel,
@@ -523,7 +498,7 @@ import pronoc_pkg::*;
     sel,
     reset,
     clk,    
-    destport_clear_all,
+    destport_clear,
     ivc_num_getting_ovc_grant, 
     smart_ctrl_in,
     ssa_ctrl_in
@@ -535,34 +510,46 @@ import pronoc_pkg::*;
                 PVP_1   =   PV      *   P_1,
                 PVDSTPw= PV * DSTPw;
 
-
+    
+    
     input   [PV-1       :   0]  ovc_avalable_all;
-    input   [PVDSTPw-1  :   0]  dest_port_encoded_all;
-    input   [PV-1       :   0]  ivc_request_all;
-    input   [PV-1       :   0]  ovc_is_assigned_all;
-    input   [PVP_1-1    :   0]  dest_port_decoded_all;
+    input   [PVP_1-1    :   0]  dest_port_decoded_all;   
     output  [PVV-1      :   0]  masked_ovc_request_all;
-    input   [PVV-1      :   0]  candidate_ovc_all;    
+      
     input   [PPSw-1 : 0] port_pre_sel;
     output  [PV-1   : 0] sel;
     output  [PV-1   : 0] swap_port_presel;
     input   reset;
     input   clk;
-    output  [PVDSTPw-1 : 0] destport_clear_all;
+    output  [DSTPw-1 : 0] destport_clear [P-1 : 0][V-1 : 0];   
+    
     input   [PV-1 : 0] ivc_num_getting_ovc_grant; 
     input   ssa_ctrl_t  ssa_ctrl_in [P-1: 0];
     input   smart_ctrl_t  smart_ctrl_in [P-1: 0];
-        
+    input   ivc_info_t   ivc_info    [P-1 : 0][V-1 : 0];
+    
+    wire   [PV-1       :   0]  ivc_request_all;
+    wire   [PVDSTPw-1  :   0]  dest_port_encoded_all;
+    wire   [PVV-1      :   0]  candidate_ovc_all; 
+    wire   [PV-1       :   0]  ovc_is_assigned_all;
    
     wire [PV-1 : 0] ovc_avalable_all_masked;
-    wire [PV-1 : 0] non_vsa_ivc_num_getting_ovc_grant_all;     
+    wire [PV-1 : 0] non_vsa_ivc_num_getting_ovc_grant_all;   
+    wire [PVDSTPw-1 : 0] destport_clear_all;
     
-    genvar i;
+    genvar i,j;
     generate 
     
     for(i=0;i< P;i=i+1) begin :p_
 		assign ovc_avalable_all_masked [(i+1)*V-1 : i*V] = (SMART_EN)?  ovc_avalable_all [(i+1)*V-1 : i*V] & ~smart_ctrl_in[i].mask_available_ovc : ovc_avalable_all [(i+1)*V-1 : i*V];
     	assign non_vsa_ivc_num_getting_ovc_grant_all [(i+1)*V-1 : i*V] = ssa_ctrl_in[i].ivc_num_getting_ovc_grant | smart_ctrl_in[i].ivc_num_getting_ovc_grant;
+    	for(j=0;j< V;j=j+1) begin :V_
+    		assign ivc_request_all[i*V+j] = ivc_info[i][j].ivc_req;
+    		assign ovc_is_assigned_all[i*V+j] = ivc_info[i][j].ovc_is_assigned;                  
+    		assign dest_port_encoded_all [(i*V+j+1)*DSTPw-1  :  (i*V+j)*DSTPw]=ivc_info[i][j].dest_port_encoded;
+    		assign candidate_ovc_all[(i*V+j+1)*V-1  :  (i*V+j)*V]= ivc_info[i][j].candidate_ovc;
+    		assign destport_clear [i][j]=destport_clear_all [(i*V+j+1)*DSTPw-1  :  (i*V+j)*DSTPw];
+    	end    	
     end//for
     
     	
@@ -574,7 +561,8 @@ import pronoc_pkg::*;
         vc_alloc_request_gen_determinstic #(
         	.P(P),
         	.V(V),
-        	.SELF_LOOP_EN(SELF_LOOP_EN)
+        	.SELF_LOOP_EN(SELF_LOOP_EN),
+        	.CAST_TYPE(CAST_TYPE)
         )
         vc_request_gen
         (
@@ -677,7 +665,8 @@ endmodule
 module  vc_alloc_request_gen_determinstic #(    
     parameter P = 5,
     parameter V = 4,
-    parameter SELF_LOOP_EN="NO"
+    parameter SELF_LOOP_EN="NO",
+    parameter CAST_TYPE = "UNICAST" 
     
 )(
     ovc_avalable_all,
@@ -714,14 +703,14 @@ module  vc_alloc_request_gen_determinstic #(
   genvar i;
 
 generate
-	if(SELF_LOOP_EN == "NO") begin
+	if(SELF_LOOP_EN == "NO" ) begin :nslp
 		//remove available ovc of receiver port 
 		for(i=0;i< P;i=i+1) begin :port_loop
 	        if(i==0) begin : first assign ovc_avalable_perport[i]=ovc_avalable_all [PV-1              :   V]; end
 	        else if(i==(P-1)) begin : last assign ovc_avalable_perport[i]=ovc_avalable_all [PV-V-1               :   0]; end
 	        else  begin : midle  assign ovc_avalable_perport[i]={ovc_avalable_all [PV-1  :   (i+1)*V],ovc_avalable_all [(i*V)-1  :   0]}; end
 	    end
-    end else begin 
+    end else begin :slp
     	for(i=0;i< P;i=i+1) begin :port_loop
     		 assign ovc_avalable_perport[i]=ovc_avalable_all;
 	    end

@@ -1,4 +1,4 @@
-`timescale  1ns/1ps
+`include "pronoc_def.v"
 
 module  traffic_gen_top
 		import pronoc_pkg::*; 
@@ -39,6 +39,7 @@ module  traffic_gen_top
 		time_stamp_h2h,
 		time_stamp_h2t,
 		pck_size_o,
+		mcast_dst_num_o,
 		
 		reset,
 		clk
@@ -78,7 +79,7 @@ module  traffic_gen_top
 	// the current endpoint address
 	input  [EAw-1                   :0] current_e_addr;    
 	// the destination endpoint address
-	input  [EAw-1                   :0] dest_e_addr;  
+	input  [DAw-1                   :0] dest_e_addr;  
     
 	output [PCK_CNTw-1              :0] pck_number;
 	input  [PCK_SIZw-1              :0] pck_size_in;
@@ -93,6 +94,7 @@ module  traffic_gen_top
 	// the received packet source endpoint address
 	output [EAw-1        :   0]    src_e_addr;
 	output [PCK_SIZw-1   :   0]    pck_size_o;	
+	output [NEw-1 : 0] mcast_dst_num_o;
 	
 		
 	logic  [Fw-1                   :0] flit_out;     
@@ -108,10 +110,14 @@ module  traffic_gen_top
 	wire  [RAw-1                   :0] current_r_addr;    
 		
 		
+	/* verilator lint_off WIDTH */
+	wire [PCK_SIZw-1 : 0] pck_size_tmp= (PCK_TYPE == "SINGLE_FLIT" )?   1 : pck_size_in;
+	/* verilator lint_on WIDTH */
+	
 	assign 	chan_out.flit_chanel.flit = flit_out; 
 	assign  chan_out.flit_chanel.flit_wr = flit_out_wr;
 	assign  chan_out.flit_chanel.credit = credit_out;
-		
+	assign  chan_out.smart_chanel = {SMART_CHANEL_w {1'b0}};	
 		
 	assign flit_in   =  chan_in.flit_chanel.flit;   
 	assign flit_in_wr=  chan_in.flit_chanel.flit_wr; 
@@ -124,15 +130,18 @@ module  traffic_gen_top
 		assign chan_out.ctrl_chanel.credit_init_val[i]= PORT_B;
 	end
 	endgenerate
-		
+	
+	assign chan_out.ctrl_chanel.endp_port =1'b1;
+	assign chan_out.ctrl_chanel.credit_release_en={V{1'b0}};
+	
 	//old traffic.v file
 		
 	reg [2:0]   ps,ns;
 	localparam IDEAL =3'b001, SENT =3'b010, WAIT=3'b100;
 		
 	reg                                 inject_en,cand_wr_vc_en,pck_rd;
-	reg    [PCK_SIZw-1              :0] pck_size, pck_size_next;    
-	reg    [EAw-1                    :0] dest_e_addr_reg;
+	reg    [PCK_SIZw-1              :0] pck_size;    
+	logic  [DAw-1                   :0] dest_e_addr_reg,dest_e_addr_o;
 		
 	// synopsys  translate_off
 	// synthesis translate_off
@@ -167,18 +176,9 @@ module  traffic_gen_top
    
 	wire [HDR_Dw-1 : 0] hdr_data_in,rd_hdr_data_out;
    
-    
-	`ifdef SYNC_RESET_MODE 
-		always @ (posedge clk )begin 
-		`else 
-			always @ (posedge clk or posedge reset)begin 
-			`endif   
-			if(reset) begin 
-				dest_e_addr_reg<={EAw{1'b0}};           
-			end else begin 
-				dest_e_addr_reg<=dest_e_addr;       
-			end
-		end
+	pronoc_register #(.W(DAw)) reg2 (.in(dest_e_addr ), .out(dest_e_addr_reg), .reset(reset), .clk(clk));
+	  
+	
    
 		wire    [DSTPw-1                :   0] destport;   
 		wire    [V-1                    :   0] ovc_wr_in;
@@ -194,7 +194,9 @@ module  traffic_gen_top
 		wire                                   rd_hdr_flg,rd_tail_flg;
 		wire    [Cw-1   :   0] rd_class_hdr;
 		//  wire    [P_1-1      :   0] rd_destport_hdr;
-		wire    [EAw-1      :   0] rd_des_e_addr, rd_src_e_addr;  
+		wire    [DAw-1      :   0] rd_des_e_addr;
+		wire    [EAw-1      :   0] rd_src_e_addr;  
+		
 		reg     [CLK_CNTw-1             :   0] rsv_counter;
 		reg     [CLK_CNTw-1             :   0] clk_counter;
 		wire    [Vw-1                   :   0] rd_vc_bin;//,wr_vc_bin;
@@ -215,8 +217,8 @@ module  traffic_gen_top
 		logic [DELAYw-1 : 0] start_delay_counter,start_delay_counter_next;
 		logic  start_en_next , start_en;
 
-		register #(.W(1)) streg1 (.reset(reset),.clk(clk), .in(start_en_next), .out(start_en)	);
-		register #(.W(DELAYw)) streg2 (.reset(reset),.clk(clk), .in(start_delay_counter_next), .out(start_delay_counter)	);
+		pronoc_register #(.W(1)) streg1 (.reset(reset),.clk(clk), .in(start_en_next), .out(start_en)	);
+		pronoc_register #(.W(DELAYw)) streg2 (.reset(reset),.clk(clk), .in(start_delay_counter_next), .out(start_delay_counter)	);
 		
 		
 		
@@ -245,7 +247,10 @@ module  traffic_gen_top
 				.T2(T2),
 				.T3(T3),   
 				.EAw(EAw),
-				.SELF_LOOP_EN(SELF_LOOP_EN)
+				.SELF_LOOP_EN(SELF_LOOP_EN),
+				.DAw(DAw),
+				.CAST_TYPE(CAST_TYPE),
+				.NE(NE)
 			)
 			check_destination_addr(
 				.dest_e_addr(dest_e_addr),
@@ -265,7 +270,7 @@ module  traffic_gen_top
 			pck_inject_ratio_ctrl
 			(
 				.en(inject_en),
-				.pck_size_in(pck_size_in),
+				.pck_size_in(pck_size_tmp),
 				.clk(clk),
 				.reset(reset),
 				.freez(buffer_full),
@@ -294,24 +299,18 @@ module  traffic_gen_top
 				.reset                      (reset)
 			);
     
-       
+		
+		
     
 		packet_gen #(
-				.P(MAX_P),
-				.T1(T1),
-				.T2(T2),
-				.T3(T3),
-				.RAw(RAw),  
-				.EAw(EAw),  
-				.TOPOLOGY(TOPOLOGY),
-				.DSTPw(DSTPw),
-				.ROUTE_NAME(ROUTE_NAME),
+				.P(MAX_P),	
+				.PCK_TYPE(PCK_TYPE),
 				.ROUTE_TYPE(ROUTE_TYPE),
 				.MAX_PCK_NUM(MAX_PCK_NUM),
 				.MAX_SIM_CLKs(MAX_SIM_CLKs),
 				.TIMSTMP_FIFO_NUM(TIMSTMP_FIFO_NUM),
 				.MIN_PCK_SIZE(MIN_PCK_SIZE),
-				.MAX_PCK_SIZ(MAX_PCK_SIZ)
+				.MAX_PCK_SIZ(MAX_PCK_SIZ)			
 			)
 			packet_buffer
 			(
@@ -323,15 +322,19 @@ module  traffic_gen_top
 				.current_e_addr(current_e_addr),
 				.clk_counter(clk_counter+1'b1),//in case of zero load latency, the flit will be injected in the next clock cycle
 				.pck_number(pck_number),
-				.dest_e_addr(dest_e_addr_reg),        
+				.dest_e_addr_in(dest_e_addr),  
+				.dest_e_addr_o(dest_e_addr_o),     
 				.pck_timestamp(pck_timestamp),
 				.buffer_full(buffer_full),
 				.pck_ready(pck_ready),
 				.valid_dst(valid_dst),
 				.destport(destport),
-				.pck_size_in(pck_size_in),
+				.pck_size_in(pck_size_tmp),
 				.pck_size_o(pck_size)
 			);
+		
+		
+		
 
     
 		assign wr_timestamp    =pck_timestamp; 
@@ -366,7 +369,7 @@ module  traffic_gen_top
 				.flit_out(hdr_flit_out),
 				.vc_num_in(wr_vc),
 				.class_in(pck_class_in),
-				.dest_e_addr_in(dest_e_addr_reg),
+				.dest_e_addr_in(dest_e_addr_o),
 				.src_e_addr_in(current_e_addr),
 				.weight_in(init_weight),
 				.destport_in(destport),
@@ -569,17 +572,9 @@ module  traffic_gen_top
 		end else credit_out_next = {V{1'd0}};
 	end
  
-	always @ (*)begin 
-		pck_size_next    = pck_size;
-		if((tail_flit & flit_out_wr ) || not_yet_sent_aflit) pck_size_next  = pck_size_in;
-	end
-    
-	`ifdef SYNC_RESET_MODE 
-		always @ (posedge clk )begin 
-		`else 
-			always @ (posedge clk or posedge reset)begin 
-			`endif   
-			if(reset) begin 
+	
+		always @ (`pronoc_clk_reset_edge )begin 
+			if(`pronoc_reset) begin 
 				inject_en       <= 1'b0;
 				ps              <= IDEAL;
 				wr_vc           <=1; 
@@ -587,7 +582,6 @@ module  traffic_gen_top
 				credit_out      <= {V{1'd0}};
 				rsv_counter     <= 0;
 				clk_counter     <=  0;
-				//pck_size        <= 0;
 				not_yet_sent_aflit<=1'b1;          
         
 			end else begin 
@@ -600,7 +594,7 @@ module  traffic_gen_top
 				if (flit_cnt_rst)      flit_counter    <= {PCK_SIZw{1'b0}};
 				else if(flit_cnt_inc)   flit_counter    <= flit_counter + 1'b1;     
 				credit_out      <= credit_out_next;
-				//pck_size  <= pck_size_next;
+			
            
 				//sink
 				if(flit_in_wr) begin 
@@ -639,29 +633,130 @@ module  traffic_gen_top
 		end//always
 		
 		
-		// synopsys  translate_off
-		// synthesis translate_off			
-			
-		localparam NEw=log2(NE);
+		
+		
+		
+		
+		wire [NE-1 :0] dest_mcast_all_endp1;	
+		
+		
+		generate 
+			/* verilator lint_off WIDTH */
+			if(CAST_TYPE != "UNICAST") begin :mb_cast
+			/* verilator lint_on WIDTH */
+				
+				wire [NEw-1 : 0] sum_temp;
+				wire is_unicast;
+				
+				mcast_dest_list_decode decode1 (
+						.dest_e_addr(dest_e_addr_o),
+						.dest_o(dest_mcast_all_endp1),
+						.row_has_any_dest(),
+						.is_unicast(is_unicast)
+					);
+				
+				/* verilator lint_off WIDTH */
+				if (CAST_TYPE == "BROADCAST_FULL") begin :bcastf				
+					assign mcast_dst_num_o = (is_unicast) ? 1 : (SELF_LOOP_EN == "NO")? NE-1 : NE;				
+				end else  if ( CAST_TYPE == "BROADCAST_PARTIAL" )  begin :bcastp 
+				
+					if (SELF_LOOP_EN == "NO") begin 
+						//check if injector node is included in partial list
+						wire [NEw-1: 0]  current_enp_id;
+						endp_addr_decoder  #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) decod1 ( .id(current_enp_id), .code(current_e_addr));
+						assign mcast_dst_num_o = (is_unicast) ? 1 : (MCAST_ENDP_LIST[current_enp_id]== 1'b1)?  MCAST_PRTLw-1 :  MCAST_PRTLw;
+						
+					end else begin 
+						assign mcast_dst_num_o = (is_unicast)? 1 :  MCAST_PRTLw;
+					end			
+				/* verilator lint_on WIDTH */
+				end else begin : mcast
+					accumulator #(
+							.INw(NE),
+							.OUTw(NEw),
+							.NUM(NE)
+						)accum
+						(
+							.in_all(dest_mcast_all_endp1),
+							.out(sum_temp)         
+						);				
+					assign mcast_dst_num_o = sum_temp;
+				end			
+			end
+		endgenerate
+		
+		
+		
+		
+		
+/***************************************************************
+ * 			simulation code
+ * ************************************************************/		
+		
+		
+		
+		
+		
+// synthesis translate_off			
+				
 		wire [NEw-1: 0]  src_id,dst_id,current_id;
     
 		endp_addr_decoder  #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) decod1 ( .id(current_id), .code(current_e_addr));
-		endp_addr_decoder  #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) decod2 ( .id(dst_id), .code(rd_des_e_addr));
+		endp_addr_decoder  #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) decod2 ( .id(dst_id), .code(rd_des_e_addr[EAw-1 : 0]));// only for unicast
 		endp_addr_decoder  #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) decod3 ( .id(src_id), .code(rd_src_e_addr));
     
     
-    
+		
+		
+		
+		wire [NE-1 :0] dest_mcast_all_endp2;	
+		generate 
+		if(CAST_TYPE != "UNICAST") begin :no_unicast		
+			mcast_dest_list_decode decode2 (
+					.dest_e_addr(rd_des_e_addr),
+					.dest_o(dest_mcast_all_endp2),
+					.row_has_any_dest(),
+					.is_unicast()
+				);
+		end endgenerate
+		
+		
     
 		always @(posedge clk) begin     
-			if(flit_out_wr && hdr_flit && dest_e_addr_reg  == current_e_addr && SELF_LOOP_EN == "NO") begin 
-				$display("%t: ERROR: The self-loop is not enabled in the router while a packet is injected to the NoC with identical source and destination address in endpoint (%h).: %m",$time, dest_e_addr );
-				$finish;
-			end
-			if(flit_in_wr && rd_hdr_flg && (rd_des_e_addr  != current_e_addr )) begin 
-				$display("%t: ERROR: packet with destination %d (code %h) which is sent by source %d (code %h) has been recieved in wrong destination %d (code %h).  %m",$time,dst_id,rd_des_e_addr, src_id,rd_src_e_addr, current_id,current_e_addr);
-				$finish;
-			end
+			/* verilator lint_off WIDTH */
+			if(CAST_TYPE == "UNICAST") begin
+				/* verilator lint_on WIDTH */	
+				if(flit_out_wr && hdr_flit && dest_e_addr_o [EAw-1 : 0]  == current_e_addr  && SELF_LOOP_EN == "NO") begin 
+					$display("%t: ERROR: The self-loop is not enabled in the router while a packet is injected to the NoC with identical source and destination address in endpoint (%h).: %m",$time, dest_e_addr_o );
+					$finish;
+				end				
+				if(flit_in_wr && rd_hdr_flg && (rd_des_e_addr[EAw-1 : 0]  != current_e_addr )) begin 
+					$display("%t: ERROR: packet with destination %d (code %h) which is sent by source %d (code %h) has been recieved in wrong destination %d (code %h).  %m",$time,dst_id,rd_des_e_addr, src_id,rd_src_e_addr, current_id,current_e_addr);
+					$finish;
+				end
 				
+			end else begin 
+				/* verilator lint_off WIDTH */
+				if((CAST_TYPE == "MULTICAST_FULL") || (CAST_TYPE == "MULTICAST_PARTIAL")) begin
+				/* verilator lint_on WIDTH */
+					
+					if(flit_out_wr && hdr_flit && dest_mcast_all_endp1[current_id]  == 1'b1  && SELF_LOOP_EN == "NO") begin 
+						$display("%t: ERROR: The self-loop is not enabled in the router while a packet is injected to the NoC with identical source and destination address in endpoint %d. destination nodes:0X%h. : %m",$time, current_id,dest_mcast_all_endp1 );
+						$finish;
+					end				
+				end			
+				if(flit_in_wr && rd_hdr_flg && (dest_mcast_all_endp2[current_id] !=1'b1 )) begin 
+					$display("%t: ERROR: packet with destination %b  which is sent by source %d (code %h) has been recieved in wrong destination %d (code %h).  %m",$time, dest_mcast_all_endp2, src_id,rd_src_e_addr, current_id,current_e_addr);
+					$finish;
+				end
+				
+				//check multicast packet size to be smaller than B & LB
+				if(flit_out_wr & hdr_flit & (mcast_dst_num_o>1) & (pck_size >B || pck_size> LB))begin 
+					$display("%t: ERROR: A multicast packat is injected to the NoC which has larger size (%d) than router buffer width.  %m",$time, pck_size);
+					$finish;
+				end
+				
+			end
 			if(update) begin
 				if (hdr_flit_timestamp<= rd_timestamp) begin 
 					$display("%t: ERROR: In destination %d packt which is sent by source %d, the time when header flit is recived (%d) should be larger than the packet timestamp %d.  %m",$time, current_id ,src_e_addr, hdr_flit_timestamp, rd_timestamp);
@@ -680,13 +775,10 @@ module  traffic_gen_top
 			end				
 				
 		end
-		// synthesis translate_on
-		// synopsys  translate_on
-    
+	
     
 		`ifdef CHECK_PCKS_CONTENT
-			// synopsys  translate_off
-			// synthesis translate_off
+		
     
 			wire     [PCK_SIZw-1             :   0] rsv_flit_counter; 
 			reg      [PCK_SIZw-1             :   0] old_flit_counter    [V-1   :   0];
@@ -704,18 +796,15 @@ module  traffic_gen_top
     
     
 				integer ii;
-			`ifdef SYNC_RESET_MODE 
-				always @ (posedge clk )begin 
-				`else 
-					always @ (posedge clk or posedge reset)begin 
-					`endif  
-					if(reset) begin
+				
+				always @ (`pronoc_clk_reset_edge )begin 
+					if(`pronoc_reset) begin
 						for(ii=0;ii<V;ii=ii+1'b1)begin
 							old_flit_counter[ii]<=0;            
 						end        
 					end else begin
 						if(flit_in_wr)begin
-							if      ( flit_in[Fw-1:Fw-2]==2'b10)  begin
+							if ( flit_in[Fw-1:Fw-2]==2'b10)  begin
 								old_pck_number[rd_vc_bin]<=0;
 								old_flit_counter[rd_vc_bin]<=0;
 							end else if ( flit_in[Fw-1:Fw-2]==2'b00)begin 
@@ -723,10 +812,10 @@ module  traffic_gen_top
 								old_flit_counter[rd_vc_bin]<=rsv_flit_counter;
 							end                    
                 
-						end       
+						end //flit_in_wr      
         
-					end    
-				end
+					end    //reset
+				end//always
     
     
 				always @(posedge clk) begin     
@@ -737,11 +826,16 @@ module  traffic_gen_top
 					end
    
 				end
-				// synthesis translate_on
-				// synopsys  translate_on
+				
     
 			`endif
     
+// synthesis translate_on
+
+		
+		
+		
+		
 //				`ifdef VERILATOR
 //					logic  endp_is_active   /*verilator public_flat_rd*/ ;
 //			
@@ -854,12 +948,8 @@ module injection_ratio_ctrl #
 	
 	
 	
-	`ifdef SYNC_RESET_MODE 
-		always @ (posedge clk )begin 
-		`else 
-			always @ (posedge clk or posedge reset)begin 
-			`endif  
-			if( reset) begin            
+	always @ (`pronoc_clk_reset_edge )begin 
+		if(`pronoc_reset) begin             
 				state       <=  STATE_INIT;
 				inject      <=  1'b0; 
 				sent        <=  1'b1; 
@@ -893,23 +983,17 @@ endmodule
 **************************************/
 
  
-module packet_gen #(   
-	parameter P = 5,    
-	parameter T1= 4,    
-	parameter T2= 4,
-	parameter T3= 4,
-	parameter RAw = 3,  
-	parameter EAw = 3, 
-	parameter TOPOLOGY  = "MESH",
-	parameter DSTPw = 4,
-	parameter ROUTE_NAME = "XY",
+module packet_gen 
+	import pronoc_pkg::*; 		
+	#(   
+	parameter P = 5,
+	parameter PCK_TYPE = "SINGLE_FLIT",
 	parameter ROUTE_TYPE = "DETERMINISTIC",
 	parameter MAX_PCK_NUM   = 10000,
 	parameter MAX_SIM_CLKs  = 100000,
 	parameter TIMSTMP_FIFO_NUM=16,
 	parameter MIN_PCK_SIZE=2,
 	parameter MAX_PCK_SIZ=100
-
 )(
 	clk_counter,
 	pck_wr,
@@ -917,7 +1001,8 @@ module packet_gen #(
 	current_r_addr,
 	current_e_addr,
 	pck_number,
-	dest_e_addr,
+	dest_e_addr_in,
+	dest_e_addr_o,
 	pck_timestamp,
 	destport,
 	buffer_full,
@@ -949,7 +1034,8 @@ module packet_gen #(
 	input  [EAw-1 : 0] current_e_addr;
 	input  [CLK_CNTw-1 :0] clk_counter;	
 	input  [PCK_SIZw-1 :0] pck_size_in;
-	input  [EAw-1  :0] dest_e_addr;
+	input  [DAw-1  :0] dest_e_addr_in;
+	output [DAw-1  :0] dest_e_addr_o;
 	input  valid_dst; 
 	
 	output [PCK_CNTw-1 :0] pck_number;
@@ -963,7 +1049,7 @@ module packet_gen #(
 	
 	assign pck_ready = ~buffer_empty & valid_dst;
     
-  
+	generate if(CAST_TYPE == "UNICAST") begin : uni 
 	conventional_routing #(
 		.TOPOLOGY(TOPOLOGY),
 		.ROUTE_NAME(ROUTE_NAME),
@@ -981,26 +1067,29 @@ module packet_gen #(
 		.reset(reset),
 		.clk(clk),
 		.current_r_addr(current_r_addr),
-		.dest_e_addr(dest_e_addr),
+		.dest_e_addr(dest_e_addr_o),
 		.src_e_addr(current_e_addr),
 		.destport(destport)
 	);
-
+	end endgenerate
+	
 	wire timestamp_fifo_nearly_full , timestamp_fifo_full;
 	assign buffer_full = (MIN_PCK_SIZE==1) ? timestamp_fifo_nearly_full : timestamp_fifo_full;
 	
+	wire  [DAw-1  :0] tmp1;
+	wire  [PCK_SIZw-1 : 0] tmp2;
 	
 	wire recieve_more_than_0;
 	fwft_fifo_bram #(
-		.DATA_WIDTH(CLK_CNTw+PCK_SIZw),
+		.DATA_WIDTH(CLK_CNTw+PCK_SIZw+DAw),
 		.MAX_DEPTH(TIMSTMP_FIFO_NUM)        
 	)
 	timestamp_fifo
 	(
-		.din({pck_size_in,clk_counter}),
+		.din({dest_e_addr_in,pck_size_in,clk_counter}),
 		.wr_en(pck_wr),
 		.rd_en(pck_rd),
-		.dout({pck_size_o,pck_timestamp}),
+		.dout({tmp1,tmp2,pck_timestamp}),
 		.full(timestamp_fifo_full),
 		.nearly_full(timestamp_fifo_nearly_full),       
 		.recieve_more_than_0(recieve_more_than_0),
@@ -1009,6 +1098,12 @@ module packet_gen #(
 		.clk(clk)
 	);
 	
+	//assign dest_e_addr_o = dest_e_addr_in;
+		
+	assign dest_e_addr_o =tmp1;
+	/* verilator lint_off WIDTH */
+	assign pck_size_o = (PCK_TYPE == "SINGLE_FLIT" )?   1 : tmp2;
+	/* verilator lint_on WIDTH */
 	assign buffer_empty = ~recieve_more_than_0;
     
 				/*
@@ -1031,14 +1126,9 @@ module packet_gen #(
     );
 				 */ 
     
-	`ifdef SYNC_RESET_MODE 
-		always @ (posedge clk )begin 
-		`else 
-			always @ (posedge clk or posedge reset)begin 
-			`endif   
-			if(reset) begin 
-				packet_counter <= {PCK_CNTw{1'b0}};
-	
+	always @ (`pronoc_clk_reset_edge )begin 
+		if(`pronoc_reset) begin 
+				packet_counter <= {PCK_CNTw{1'b0}};	
 			end else begin 
 				if(pck_rd) begin 
 					packet_counter <= packet_counter+1'b1;

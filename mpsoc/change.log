@@ -1,21 +1,27 @@
 All notable changes to this project will be documented in this file.
+
+##[2.1.0] -26-03-2022
+## added
+- Multicast/Broadcast support
+- SynFull traffic model is Integrated to NoC simulator 
+
+
 ##[2.0.0] -15-10-2020
 ## added
-- SMART, single cycle multi hop bypass
-- Selfloop suport
+- SMART, single cycle multi-hop bypass
+- Selfloop support
 - gui for UART terminal
-- gui for runtime memory controler
-- Suport Xilinx FPFAs
+- gui for a runtime memory controller
+- Support Xilinx FPFAs
 - Software Auto-generation using CAL language (CAL2C)
-- Suport multitreading in Verilator-based NoC simulator
-- Intigrated netrace to NoC simulator 
+- Support multi threading in Verilator-based NoC simulator
+- Integrated Netrace to NoC simulator 
 - add new topologies: Fmesh 
-- gui for custom noc topology generation
+- gui for custom NoC topology generation
 - GTK3 support
 
 ## changed
 - NoC codes are changing to systemVerilog. Now it uses struct for router connection interface.
-
 
 
 ##[1.9.1] -24-07-2019

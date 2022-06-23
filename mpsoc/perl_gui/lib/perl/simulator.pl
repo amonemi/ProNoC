@@ -45,8 +45,8 @@ sub generate_sim_bin_file {
 	$tops{Vpck_inj} = "--top-module packet_injector_verilator";	
 	my $target_dir= "$ENV{PRONOC_WORK}/simulate";
 	
-	my $dir = Cwd::getcwd();
-	my $project_dir	  = abs_path("$dir/..");
+	
+	my $project_dir	  = get_project_dir()."/mpsoc/";
 	my $src_verilator_dir="$project_dir/src_verilator";
 	my $src_c="$project_dir/src_c";
 	my $src_noc_dir="$project_dir/rtl/src_noc";	
@@ -73,6 +73,7 @@ sub generate_sim_bin_file {
 	push (@files,$src_noc_dir);
 	push (@files,"$project_dir/rtl/arbiter.v");
 	push (@files,"$project_dir/rtl/main_comp.v");
+	push (@files,"$project_dir/rtl/pronoc_def.v");
 	
 		
 	#my @files=(
@@ -103,7 +104,7 @@ sub generate_sim_bin_file {
 	}
 	copy_file_and_folders (\@files,$project_dir,$target_modelsim_dr);
 	
-		
+	
 		
 	
 	#check if we have a custom topology 
@@ -150,6 +151,13 @@ sub generate_sim_bin_file {
 		return;
 	}
 	
+	my $r;	
+	#copy nettrace synful
+	dircopy("$src_c/netrace-1.0","$obj_dir/netrace-1.0") or $r=$!;
+	dircopy("$src_c/synfull","$obj_dir/synful") or $r=$!;
+	add_colored_info($info_text,"ERROR: $r\n","red") if(defined $r ) ; 	
+	
+	
 	#copy simulation c header files
 	@files = File::Find::Rule->file()
                             ->name( '*.h')
@@ -158,16 +166,13 @@ sub generate_sim_bin_file {
 	copy_file_and_folders (\@files,$project_dir,$obj_dir);
 	copy($testbench_file,"$obj_dir/testbench.cpp"); 
 		
-	my $r;	
-	#copy nettrace
-	dircopy("$src_c/netrace-1.0","$obj_dir/netrace-1.0") or $r=$!;
-	add_colored_info($info_text,"ERROR: $r\n","red") if(defined $r ) ; 
+	
 		
 	#compile the testbench
 	my $param_h=gen_noc_param_h($simulate);
 	my $text = gen_sim_parameter_h($param_h,$includ_h,$ne,$nr,$router_p,$fifow);	
 	
-	$param_h =~ s/\d\'b/ /g;
+	
 	open(FILE,  ">$obj_dir/parameter.h") || die "Can not open: $!";
 	print FILE  "$text";
 	
@@ -392,7 +397,8 @@ sub get_simulator_noc_configuration{
 	my $table=def_table(10,2,FALSE);	
 	my $row=0;
 	
-	my $scrolled_win = add_widget_to_scrolled_win ($table);
+	
+	my $scrolled_win = add_widget_to_scrolled_win ($table,gen_scr_win_with_adjst($self,'noc_conf_scr_win'));
 		
 	my $ok = def_image_button('icons/select.png','_OK',FALSE,1);
 	my $import   = def_image_button('icons/import.png','I_mport',FALSE,1);
@@ -465,14 +471,43 @@ sub get_simulator_noc_configuration{
 			$exe_files="$exe_files,$name";
 		}		
 	}
-		
+	my $model_obj = gen_combobox_object ($self,$sample, "sof_file", $exe_files, undef,'ref_set_win',1);	
 	attach_widget_to_table ($table,$row,gen_label_in_left(" Verilated Model:"),gen_button_message ("Select the verilator simulation file. Different NoC simulators can be generated using Generate NoC configuration tab.","icons/help.png"), 
-	gen_combobox_object ($self,$sample, "sof_file", $exe_files, undef,'ref_set_win',1)); $row++;
-                            
-   
+	$model_obj); $row++;
+      
+    my $cast_type=  '"UNICAST"';
+      
+    #get simulation parameters here                        
+  	my $s=$self->object_get_attribute($sample,"sof_file");
+  	if (defined $s){
+  		my ($infobox,$info)= create_txview();
+  		my $sof=get_sim_bin_path($self,$sample,$info);  		
+  		my ($name,$path,$suffix) = fileparse("$sof",qr"\..[^.]*$");
+		my $sof_info= "$path$name.inf";
+  		
+  		my $pp= do $sof_info ;
+		my $p=$pp->{'noc_param'};
+  		$cast_type = $p->{'CAST_TYPE'};  
+  		$cast_type=  '"UNICAST"' if (!defined $cast_type);
+  	}
+  
+   my $trf_info = "Select of the following traffic models:
+   1- Synthetic
+   2- Task-graph :  
+       The task graph traffic pattern can be generated
+       using ProNoC trace generator	
+   3- Netrace: 
+       Dependency-Tracking Trace-Based Network-on-Chip
+       Simulation. For downloading the trace files and more 
+       information refere to https://www.cs.utexas.edu/~netrace/
+   4- SynFull: 
+       Synthetic Traffic Models Capturing a Full Range
+       of Cache Coherent Behaviour
+       https://github.com/mariobadr/synfull-isca   
+"; 
    
     my $coltmp=0;
-    ($row,$coltmp)=add_param_widget  ($self, "Traffic Type", "TRAFFIC_TYPE", "Synthetic", 'Combo-box', "Synthetic,Task-graph", undef, $table,$row,undef,1, $sample, 1,'ref_set_win');
+    ($row,$coltmp)=add_param_widget  ($self, "Traffic Type", "TRAFFIC_TYPE", "Synthetic", 'Combo-box', "Synthetic,Task-graph,SynFull,Netrace", $trf_info, $table,$row,undef,1, $sample, 1,'ref_set_win');
     
     my $traffictype=$self->object_get_attribute($sample,"TRAFFIC_TYPE");
     my $MIN_PCK_SIZE=$self->object_get_attribute($sample,"MIN_PCK_SIZE");
@@ -607,6 +642,31 @@ sub get_simulator_noc_configuration{
 		}
 		
 		
+		if ($cast_type ne '"UNICAST"'){	
+			my $min=$self->object_get_attribute($sample,'MCAST_PCK_SIZ_MIN');
+			my $max=$self->object_get_attribute($sample,'MCAST_PCK_SIZ_MAX');
+			$min=5 if(!defined $min);
+			$max=5 if(!defined $max);
+			$max= $min if($max< $min);
+		
+				
+			my $s = ($cast_type eq '"BROADCAST_FULL"' || $cast_type eq '"BROADCAST_PARTIAL"')? "Broadcast" :  "Milticast";
+			my $info1= "Define the percentage ratio of $s traffic towards Unicast traffic";
+			my $info2= "Define how destinations is selected in Multicast packets";
+			($row,$coltmp)=add_param_widget  ($self, "$s Node Select"  , "MCAST_TRAFFIC_TYPE" , "Uniform-Random",  'Combo-box', "Uniform-Random", $info1, $table,$row,undef,1, $sample);
+			($row,$coltmp)=add_param_widget  ($self, "$s Traffic Ratio", "MCAST_TRAFFIC_RATIO", 5 , 'Spin-button',  "0,100,1"  , $info2, $table,$row,undef,1, $sample);	
+			
+			($row,$coltmp)=add_param_widget  ($self, "$s min pck size", "MCAST_PCK_SIZ_MIN", 5 , 'Spin-button',  "1,$max,1"  , $info2, $table,$row,undef,1, $sample,1,'ref_set_win');	
+			
+			($row,$coltmp)=add_param_widget  ($self, "$s max pck size", "MCAST_PCK_SIZ_MAX", 5 , 'Spin-button',  "$min,100,1"  , $info2, $table,$row,undef,1, $sample,1,'ref_set_win');	
+			
+			
+						
+		}
+		
+		
+		
+		
 		my $d= { label=>'number of message class:', param_name=>'MESSAGE_CLASS', type=>'Spin-button', default_val=>0,  content=>"0,256,1", info=>"Number of packet message classes. Each message class can be configured to use specefic subset of avilable VCs",			  param_parent=>$sample, ref_delay=> 1, new_status=>'ref_set_win'};
 		($row,$coltmp)=add_param_widget ($self, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,undef,1, $d->{param_parent}, $d->{ref_delay}, $d->{new_status});
 		my $num=$self->object_get_attribute($sample,"MESSAGE_CLASS");
@@ -675,6 +735,7 @@ sub get_simulator_noc_configuration{
 			my $s=$self->object_get_attribute($sample,"sof_file");
 			#check if injection ratios are valid
 			my $r=$self->object_get_attribute($sample,"ratios");
+			
 			my $h;
 			
 			my $t=$self->object_get_attribute($sample,"PCK_SIZ_SEL");
@@ -690,7 +751,12 @@ sub get_simulator_noc_configuration{
 				$h=	check_hotspot_parameters($self,$sample);
 			}
 			
-			if(defined $s && defined $r && !defined $h) {	
+			my $v;
+			if(defined $r ){
+					$v=check_inserted_ratios($r);
+			}
+			
+			if(defined $s && defined $r && defined $v && !defined $h) {	
 					#$set_win->destroy;
 					$set_win->hide();
 					$self->object_add_attribute("active_setting",undef,undef);
@@ -702,7 +768,7 @@ sub get_simulator_noc_configuration{
 					message_dialog($m);  
 				} elsif (! defined $r) {
 					 message_dialog("Please define valid injection ratio(s)!");
-				} else {
+				} elsif (defined $h){
 					 message_dialog("$h");					
 				}
 			}
@@ -771,6 +837,129 @@ sub get_simulator_noc_configuration{
 	}
 	
 	
+	if($traffictype eq "SynFull"){
+		#get the synful model names
+		my $models_dir  = get_project_dir()."/mpsoc/src_c/synfull/generated-models/";		
+		my ($flist)=get_file_list_by_extention ("$models_dir",".model");
+	
+		
+		my $model_obj = gen_combobox_object ($self,$sample, "MODEL_NAME", $flist, undef,undef,undef);	
+		attach_widget_to_table ($table,$row,gen_label_in_left(" Traffic Model name:"),gen_button_message ("Select an application traffic model.","icons/help.png"), 
+		$model_obj); $row++;
+		
+		
+		
+		my @custominfo = (
+		{ label=>"Synful Flit-size:(Bytes)", param_name=>'SYNFUL_FLITw', type=>'Spin-button', default_val=>4, content=>"4,72,4", info=>"The synful flit size in Byte. It defines the number of flits that should be set to ProNoC for each synful packets. The ProNoC packet size is : 
+		\t Ceil( synful packet size/synful flit size).  ", param_parent=>$sample, ref_delay=>undef,  new_status=>undef},
+		{ label=>'Configuration name:', param_name=>'line_name', type=>'Entry', default_val=>$sample, content=>undef, info=>"NoC configuration name. This name will be shown in load-latency graph for this configuration", param_parent=>$sample, ref_delay=> undef, new_status=>undef},
+	    { label=>"Total packet number limit:", param_name=>'PCK_NUM_LIMIT', type=>'Spin-button', default_val=>200000, content=>"2,$max_pck_num,1", info=>"Simulation will stop when total number of sent packets by all nodes reaches packet number limit  or total simulation clock reach its limit", param_parent=>$sample, ref_delay=>undef, new_status=>undef},
+		{ label=>"Simulator clocks limit:", param_name=>'SIM_CLOCK_LIMIT', type=>'Spin-button', default_val=>100000, content=>"2,$max_sim_clk,1", info=>"Each node stops sending packets when it reaches packet number limit  or simulation clock number limit", param_parent=>$sample, ref_delay=>undef,  new_status=>undef},
+		{ label=>"Markov Chain Random seed:", param_name=>'RND_SEED', type=>'Spin-button', default_val=>53432145, content=>"0,999999999,1", info=>"The seed valus is passe to synfull random number generator.", param_parent=>$sample, ref_delay=>undef,  new_status=>undef},
+		{ label=>"Exit at steady state:", param_name=>'EXIT_STEADY', type=>'Check-box', default_val=>0, content=>"1", info=>"Exit the simulation when it reaches to a steady state.", param_parent=>$sample, ref_delay=>undef,  new_status=>undef},
+		
+	
+	
+		);
+		
+		
+		
+		foreach my $d (@custominfo) {
+			($row,$coltmp)=add_param_widget ($self, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,undef,1, $d->{param_parent}, $d->{ref_delay}, $d->{new_status});
+			
+		}	
+		
+		$ok->signal_connect("clicked"=> sub{
+			#check if sof file has been selected
+			my $s=$self->object_get_attribute($sample,"MODEL_NAME");
+			if(!defined $s){
+					message_dialog("Please select a SynFull traffic model"); 
+					return;
+			}
+						
+			
+			#$set_win->destroy;
+			$set_win->hide();
+			$self->object_add_attribute("active_setting",undef,undef);
+			set_gui_status($self,"ref",1);
+				
+		});
+		
+		
+		
+	}#SynFull
+	
+	
+	if($traffictype eq "Netrace"){
+		#get the synful model names
+		my $models_dir  = "$ENV{PRONOC_WORK}/simulate/netrace";		
+		my ($flist)=get_file_list_by_extention ("$models_dir",".bz2");
+	
+		my $model_obj = gen_combobox_object ($self,$sample, "MODEL_NAME", $flist, undef,undef,undef);	
+		my $download=def_image_button("icons/download.png",'Download');	
+		my $box =def_hbox(FALSE, 0);
+		$box->pack_start( $model_obj , 1,1, 0);
+		$box->pack_start( $download, 0, 1, 3);
+				
+		attach_widget_to_table ($table,$row,gen_label_in_left(" Trace name:"),gen_button_message ("Select a netrace trace file. You can download traces using download button.","icons/help.png"), 
+		$box); 
+		
+		
+		$row++;
+		
+		
+		
+		my @custominfo = (
+		{ label=>'Configuration name:', param_name=>'line_name', type=>'Entry', default_val=>$sample, content=>undef, info=>"NoC configuration name. This name will be shown in load-latency graph for this configuration", param_parent=>$sample, ref_delay=> undef, new_status=>undef},
+	    { label=>"Total packet number limit:", param_name=>'PCK_NUM_LIMIT', type=>'Spin-button', default_val=>200000, content=>"2,$max_pck_num,1", info=>"Simulation will stop when total number of sent packets by all nodes reaches packet number limit  or total simulation clock reach its limit", param_parent=>$sample, ref_delay=>undef, new_status=>undef},
+		#{ label=>"Simulator clocks limit:", param_name=>'SIM_CLOCK_LIMIT', type=>'Spin-button', default_val=>100000, content=>"2,$max_sim_clk,1", info=>"Each node stops sending packets when it reaches packet number limit  or simulation clock number limit", param_parent=>$sample, ref_delay=>undef,  new_status=>undef},
+		{ label=>"ignore dependencies:", param_name=>'IGNORE_DPNDCY', type=>'Check-box', default_val=>0, content=>"1", info=>"Ignore dependency between packets", param_parent=>$sample, ref_delay=>undef,  new_status=>undef},
+		{ label=>"Enable reader throttling:", param_name=>'READER_THRL', type=>'Check-box', default_val=>0, content=>"1", info=>"If Reader throttling is enabled, simulators offloads much of the work of reading and tracking packets to the Netrace reader,
+which simplifies the code in the network simulator.", param_parent=>$sample, ref_delay=>undef,  new_status=>undef},
+		{ label=>"trace file start region:", param_name=>'START_RGN', type=>'Spin-button', default_val=>0, content=>"0,10000,1", info=>undef, param_parent=>$sample, ref_delay=>undef,  new_status=>undef},
+		{ label=>"Netrace to Pronoc clk ratio:", param_name=>'SPEED_UP', type=>'Spin-button', default_val=>1, content=>"1,99,1", info=>"The ratio of netrace frequency to pronoc.The higher value results in higher injection ratio to the NoC. Default is one\n", param_parent=>$sample, ref_delay=>undef,  new_status=>undef},
+		
+		
+		
+		
+	
+	
+		);
+		
+		
+		
+		foreach my $d (@custominfo) {
+			($row,$coltmp)=add_param_widget ($self, $d->{label}, $d->{param_name}, $d->{default_val}, $d->{type}, $d->{content}, $d->{info}, $table,$row,undef,1, $d->{param_parent}, $d->{ref_delay}, $d->{new_status});
+			
+		}	
+		
+		$ok->signal_connect("clicked"=> sub{
+			#check if sof file has been selected
+			my $s=$self->object_get_attribute($sample,"MODEL_NAME");
+			if(!defined $s){
+					message_dialog("Please select a SynFull traffic model"); 
+					return;
+			}
+						
+			
+			#$set_win->destroy;
+			$set_win->hide();
+			$self->object_add_attribute("active_setting",undef,undef);
+			set_gui_status($self,"ref",1);
+				
+		});
+		
+		$download->signal_connect("clicked"=> sub{ download_netrace("$models_dir")	});
+
+
+		
+	}#netrace
+	
+	
+	
+	
+	
+	
 	add_widget_to_scrolled_win ($mtable,$set_win);
 	
 	$set_win->show_all();	
@@ -800,9 +989,9 @@ sub run_simulator {
 		next if($status ne "run");
 		next if(!check_sim_sample($simulate,$sample,$info));
 		my $traffictype=$simulate->object_get_attribute($sample,"TRAFFIC_TYPE");
-		run_synthetic_simulation($simulate,$info,$sample,$name) if($traffictype eq "Synthetic");
-		run_task_simulation($simulate,$info,$sample,$name) if($traffictype eq "Task-graph");
-		
+		if($traffictype eq "Synthetic") {run_synthetic_simulation($simulate,$info,$sample,$name);} 
+		elsif($traffictype eq "Task-graph"){run_task_simulation($simulate,$info,$sample,$name) ;}
+		else {run_trace_simulation($simulate,$info,$sample,$name);}
     	
 	}
 	
@@ -878,6 +1067,30 @@ sub run_synthetic_simulation {
 		$custom_sv.="localparam CUSTOM_NODE_NUM=0;\n\twire [NEw-1 : 0] custom_traffic_t   [NE-1 : 0];\n\twire [NE-1 : 0] custom_traffic_en;
 		";		
 	}
+	#multicast
+	my $mcast="";
+	my $mcast_sv="";
+	my $p= $simulate->object_get_attribute ($sample,"noc_info");    
+    my $cast_type=$p->{"CAST_TYPE"};
+	if ($cast_type ne '"UNICAST"'){	
+		#$self->object_get_attribute ($sample,  "MCAST_TRAFFIC_TYPE");
+		my $mr   = $simulate->object_get_attribute  ($sample,  "MCAST_TRAFFIC_RATIO");
+		my $mmax = $simulate->object_get_attribute  ($sample,  "MCAST_PCK_SIZ_MAX");
+		my $mmin = $simulate->object_get_attribute  ($sample,  "MCAST_PCK_SIZ_MIN");
+		
+		$mcast = "-u \"$mr,$mmin,$mmax\"";
+		$mcast_sv.= "localparam	MCAST_TRAFFIC_RATIO =	$mr;\n";
+		$mcast_sv.= "localparam	MCAST_PCK_SIZ_MAX =	$mmax;\n";
+		$mcast_sv.= "localparam	MCAST_PCK_SIZ_MIN =	$mmin;\n";	
+	}else {
+		$mcast_sv.= "localparam	MCAST_TRAFFIC_RATIO =	0;\n";	
+		$mcast_sv.= "localparam	MCAST_PCK_SIZ_MAX =	0;\n";
+		$mcast_sv.= "localparam	MCAST_PCK_SIZ_MIN =	0;\n";	
+	}
+	
+	
+	
+	
 	
 	my $classes;
 	my $num=$simulate->object_get_attribute($sample,"MESSAGE_CLASS");
@@ -979,10 +1192,13 @@ sub run_synthetic_simulation {
 		MAX_PACKET_SIZE=$MAX_PCK_SIZE,
 		STOP_PCK_NUM=$PCK_NUM_LIMIT,
 		STOP_SIM_CLK=$SIM_CLOCK_LIMIT;
+	
 	    		
 	$hotspot_sv	
 		
 	$custom_sv
+	
+	$mcast_sv
 	
 $discrete_sv
 		
@@ -1053,16 +1269,16 @@ quit
 	    	if ($simulator eq 'Modelsim'){
 	    		add_info($info, "Run $bin with  injection ratio of $ratio_in \% \n");
 	    		my $out="$out_path/modelsim/work$c";
-	    		$cmd="	xterm -e bash -c '	cd $out; sed -i \"s/ INJRATIO=\[\[:digit:\]\]\\+/ INJRATIO=$ratio_in/\" $out/sim_param.sv;  rm -Rf rtl_work; $vsim -c -do $out/model.tcl -l $out_path/sim_out$ratio_in;' &\n	";			
+	    		$cmd="	xterm -e bash -c '	cd $out; sed -i \"s/ INJRATIO=\[\[:digit:\]\]\\+/ INJRATIO=$ratio_in/\" $out/sim_param.sv; rm -Rf rtl_work; $vsim -c -do $out/model.tcl -l $out_path/sim_out$ratio_in;' &\n	";			
 	    	
 	    	}elsif ($simulator eq 'Modelsim gui'){
 	    		add_info($info, "Run $bin with  injection ratio of $ratio_in \% \n");
 	    		my $out="$out_path/modelsim/work$c";
-	    		$cmd="cd $out; sed -i \"s/ INJRATIO=\[\[:digit:\]\]\\+/ INJRATIO=$ratio_in/\" $out/sim_param.sv;  rm -Rf rtl_work; $vsim  -do $out/model.tcl -l $out_path/sim_out$ratio_in;	";			
+	    		$cmd="cd $out; sed -i \"s/ INJRATIO=\[\[:digit:\]\]\\+/ INJRATIO=$ratio_in/\" $out/sim_param.sv;  rm -Rf rtl_work; $vsim -do $out/model.tcl -l $out_path/sim_out$ratio_in;	";			
 	    	
 	    	}else{	
 	    		add_info($info, "Run $bin with  injection ratio of $ratio_in \% \n");
-		    	$cmd="$bin -t \"$patern\"   $pck_size -T $thread_num  -n  $PCK_NUM_LIMIT  -c	$SIM_CLOCK_LIMIT   -i $ratio_in $classes  $hotspot $custom > $out_path/sim_out$ratio_in & ";
+		    	$cmd="$bin -t \"$patern\" $pck_size -T $thread_num -n $PCK_NUM_LIMIT -c $SIM_CLOCK_LIMIT -i $ratio_in $classes $hotspot $custom $mcast > $out_path/sim_out$ratio_in & ";
 							
 	    	}
 	    	$cmds .=$cmd;	
@@ -1118,45 +1334,59 @@ quit
 	
 }
 
-sub extract_and_update_noc_sim_statistic {
-	my ($simulate,$sample,$ratio_in,$stdout)=@_;
-	my @results = split("#node,",$stdout);
+
+sub extract_st_by_name{
+	my($st_name, $stdout)=@_;
+	
+	my @results = split($st_name,$stdout);
 	my %statistcs;
-	my @lines = split("\n",$results[1]);
-	#first line is statsitic names
+	my @lines = split("\n",$results[1]);	
 	my @names;
 	my $i=0;
 	foreach my $line (@lines){
 		$line=remove_all_white_spaces($line);
 		$line =~ s/^#//g; #remove # from beginig of each line in modelsim 
-		if($i==0){
-			 @names=split(",",$line);
-			
-		}else{
+		if($i==0) {
+			$i++;
+			next;
+		}
+		elsif($i==1){
+			#first line is statsitic names
+			@names=split(",",$line);
+			$i++;
+			next;
+		}elsif(length($line)>1) {
 			my @fileds=split(",",$line);
 			my $j=0;
 			#print ("ff :@fileds\n");
 			foreach my $f (@fileds){				
 				unless($j==0){
-					$statistcs{$fileds[0]}{$names[$j-1]}=$f;	
+					$statistcs{$fileds[0]}{$names[$j]}=$f;	
 				}
 				$j++;
 			}
+			$i++;
+		}else{ #empty line end of endp statistic
+			last;
 		}
-		$i++;
+		
 	}
 	#print Dumper(\%statistcs);
-	
+	return  %statistcs;	
+}
+
+
+
+sub extract_and_update_noc_sim_statistic {
+	my ($simulate,$sample,$ratio_in,$stdout)=@_;
+		
 	
 	
 	my $total_time =capture_number_after("Simulation clock cycles:",$stdout);
 
-	my %packet_rsvd_per_core = capture_cores_data("total number of received packets:",$stdout);
-	my %worst_rsvd_delay_per_core = capture_cores_data('worst-case-delay of received packets \(clks\):',$stdout);
-	my %packet_sent_per_core = capture_cores_data("total number of sent packets:",$stdout);
-	my %worst_sent_delay_per_core = capture_cores_data('worst-case-delay of sent packets \(clks\):',$stdout);
-		
-	next if (!defined $statistcs{"total"}{'avg_latency_pck'});
+	my %statistcs = extract_st_by_name("Endpoints Statistics:",$stdout);
+			
+	return if (!defined $statistcs{"total"}{'avg_latency_pck'});
 	update_result($simulate,$sample,"latency_result",$ratio_in,$statistcs{"total"}{'avg_latency_pck'});
 	update_result($simulate,$sample,"latency_flit_result",$ratio_in,$statistcs{"total"}{'avg_latency_flit'});
 	update_result($simulate,$sample,"sd_latency_result",$ratio_in,$statistcs{"total"}{'avg.std_dev'});
@@ -1173,7 +1403,33 @@ sub extract_and_update_noc_sim_statistic {
 		update_result($simulate,$sample,"worst_delay_rsvd_result",$ratio_in,$p,$statistcs{$p}{'rsvd_stat.worst_latency'});
 		update_result($simulate,$sample,"packet_sent_result",$ratio_in,$p,$statistcs{$p}{'sent_stat.pck_num'} );
 		update_result($simulate,$sample,"worst_delay_sent_result",$ratio_in,$p,$statistcs{$p}{'sent_stat.worst_latency'});
+		update_result($simulate,$sample,"flit_rsvd_result",$ratio_in,$p,$statistcs{$p}{'rsvd_stat.flit_num'});
+		update_result($simulate,$sample,"flit_sent_result",$ratio_in,$p,$statistcs{$p}{'sent_stat.flit_num'});
 	}	
+	
+	my %st1 = extract_st_by_name("Endp_to_Endp flit_num:",$stdout);
+	update_result($simulate,$sample,"endp-endp-flit_result",$ratio_in,\%st1);
+	
+	my %st2 = extract_st_by_name("Endp_to_Endp pck_num:",$stdout);
+	update_result($simulate,$sample,"endp-endp-pck_result",$ratio_in,\%st2);
+	
+	my %st3 = extract_st_by_name("Routers' statistics:",$stdout);
+	foreach my $p (sort keys %st3){
+		update_result($simulate,$sample,"flit_per_router_result",$ratio_in,$p,$st3{$p}{'flit_in'});
+		update_result($simulate,$sample,"packet_per_router_result",$ratio_in,$p,$st3{$p}{'pck_in'});
+		my $tmp= ($st3{$p}{'flit_in_buffered'}*100) / $st3{$p}{'flit_in'};
+		#print " $tmp= ($st3{$p}{'flit_in_buffered'}*100) / $st3{$p}{'flit_in'};\n";
+		update_result($simulate,$sample,"flit_buffered_router_ratio",$ratio_in,$p,$tmp);
+		$tmp= ($st3{$p}{'flit_in_bypassed'}*100) / $st3{$p}{'flit_in'};
+		update_result($simulate,$sample,"flit_bypass_router_ratio",$ratio_in,$p,$tmp);
+		
+	}
+	
+	#my $p= $simulate->object_get_attribute ($sample,"noc_info");    
+   # my $TOPOLOGY=$p->{"TOPOLOGY"};
+	#print "$TOPOLOGY\n";
+	
+	
 }
 
 
@@ -1247,6 +1503,103 @@ sub run_task_simulation{
 	
 	$simulate->object_add_attribute ($sample,"status","done");	
 }	
+
+
+
+
+sub run_trace_simulation{
+	my ($simulate,$info,$sample,$name)=@_;
+	my $log= (defined $name)? "$ENV{PRONOC_WORK}/simulate/$name.log": "$ENV{PRONOC_WORK}/simulate/sim.log";
+	
+		
+	my $bin=get_sim_bin_path($simulate,$sample,$info);
+	
+	
+	my $project_dir	  = get_project_dir();
+	$bin= "$project_dir/$bin"   if(!(-f $bin));
+	
+	
+	my $cpu_num = $simulate->object_get_attribute('compile', 'cpu_num');
+	$cpu_num = 1 if (!defined $cpu_num);
+	
+	my @paralel_ratio;
+	
+	my $jobs=0;	
+	my $c=0;
+	my $cmds="";
+	my $out_path ="$ENV{PRONOC_WORK}/simulate/"; 
+	my $thread_num = $simulate->object_get_attribute('compile', 'thread_num');
+	$thread_num = 1 if (!defined $thread_num);
+	
+	my $model= $simulate->object_get_attribute($sample,'MODEL_NAME');
+	
+	add_info($info, "Run $bin for $model model \n");
+	
+	my $cmd="$bin -T $thread_num ";	
+	my $traffictype=$simulate->object_get_attribute($sample,"TRAFFIC_TYPE");
+	if($traffictype eq "Netrace"){
+		my $PCK_NUM_LIMIT=$simulate->object_get_attribute ($sample,"PCK_NUM_LIMIT");		
+		my $IGNORE_DPNDCY=$simulate->object_get_attribute ($sample,"IGNORE_DPNDCY");
+		my $READER_THRL=$simulate->object_get_attribute ($sample,"READER_THRL");
+		my $START_RGN=$simulate->object_get_attribute ($sample,"START_RGN");
+		my $SPEED_UP=$simulate->object_get_attribute ($sample,"SPEED_UP");
+	
+		my $models_dir  = "$ENV{PRONOC_WORK}/simulate/netrace";		
+		
+		$cmd .="-F $models_dir/$model.bz2 -n $PCK_NUM_LIMIT -r $START_RGN  -v 0 -s $SPEED_UP";
+		$cmd .=" -l " if ($READER_THRL eq "1\'b1" );
+		$cmd .=" -d " if ($IGNORE_DPNDCY eq "1\'b1");
+		
+		
+	
+		
+		
+	}else{#synful
+		my $SIM_CLOCK_LIMIT=$simulate->object_get_attribute ($sample,"SIM_CLOCK_LIMIT");
+		my $PCK_NUM_LIMIT=$simulate->object_get_attribute ($sample,"PCK_NUM_LIMIT");
+		my $RND_SEED=$simulate->object_get_attribute ($sample,"RND_SEED");
+		my $EXIT_STEADY=$simulate->object_get_attribute ($sample,"EXIT_STEADY");
+		my $FLITw=$simulate->object_get_attribute ($sample,"SYNFUL_FLITw");
+		
+		
+		my $models_dir  = get_project_dir()."/mpsoc/src_c/synfull/generated-models/";	
+		$cmd .=" -S $models_dir/$model.model -n $PCK_NUM_LIMIT -r $RND_SEED -c $SIM_CLOCK_LIMIT -v 0 -w $FLITw";
+		$cmd .=" -s " if ($EXIT_STEADY eq "1\'b1");
+
+		
+		
+	}
+	$cmd .=" > $out_path/sim_out";	
+	add_info($info, "$cmd \n");
+	
+	my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout("$cmd\n wait\n");
+	if($exit || (length $stderr >4)){
+		add_colored_info($info, "Error in running simulation: $stderr \n",'red');
+		$simulate->object_add_attribute ($sample,"status","failed");	
+		$simulate->object_add_attribute('status',undef,'ideal');
+		return;
+	 } 
+		
+	
+		 
+	$stdout = load_file("$out_path/sim_out");
+	my @errors = unix_grep("$out_path/sim_out","ERROR:");
+	if (scalar @errors  ){
+		add_colored_info($info, "Error in running simulation: @errors \n",'red');
+		$simulate->object_add_attribute ($sample,"status","failed");	
+		$simulate->object_add_attribute('status',undef,'ideal');
+		return;						
+	}		
+			
+	extract_and_update_noc_sim_statistic ($simulate,$sample,0,$stdout);
+	
+			
+	set_gui_status($simulate,"ref",2);	
+		
+	
+	$simulate->object_add_attribute ($sample,"status","done");	
+}	
+
 
 
 
@@ -1427,10 +1780,11 @@ sub simulator_main{
 	
 
 my @pages =(
-	{page_name=>" Avg. throughput/latency", page_num=>0},
-	{page_name=>" Injected Packet ", page_num=>1},
-	{page_name=>" Worst-Case Delay ",page_num=>2},
-	{page_name=>" Execution Time ",page_num=>3},
+	{page_name=>" Average/Total ", page_num=>0},
+	{page_name=>" Per node ", page_num=>1},
+	#{page_name=>" Worst-Case Delay ",page_num=>2},
+	#{page_name=>" Execution Time ",page_num=>3},
+	{page_name=>" Heat-Map. ",page_num=>4},
 );
 
 
@@ -1441,19 +1795,41 @@ my @charts = (
   	{ type=>"2D_line", page_num=>0, graph_name=> "Avg. flit Latency per hop", result_name => "latency_perhop_result", X_Title=> 'Desired Avg. Injected Load Per Router (flits/clock (%))', Y_Title=>'Avg. Flit Latency per hop (clock)', Z_Title=>undef, Y_Max=>100},
     { type=>"2D_line", page_num=>0, graph_name=> "Avg. throughput", result_name => "throughput_result", X_Title=> 'Desired Avg. Injected Load Per Router (flits/clock (%))', Y_Title=>'Avg. Throughput (flits/clock (%))', Z_Title=>undef,Y_Max=>100},
   	{ type=>"2D_line", page_num=>0, graph_name=> "Avg. SD latency", result_name => "sd_latency_result", X_Title=> 'Desired Avg. Injected Load Per Router (flits/clock (%))', Y_Title=>'Latency Standard Deviation (clock)', Z_Title=>undef},
-	
 	{ type=>"2D_line", page_num=>0, graph_name=> "Worst pck latency (clk)", result_name => "worst_latency_result", X_Title=> 'Desired Avg. Injected Load Per Router (flits/clock (%))', Y_Title=>'Worst Packet Latency (clock)', Z_Title=>undef},
 	{ type=>"2D_line", page_num=>0, graph_name=> "Min pck latency (clk)", result_name => "min_latency_result", X_Title=> 'Desired Avg. Injected Load Per Router (flits/clock (%))', Y_Title=>'Minimum Packet Latency (clock)', Z_Title=>undef},
 	{ type=>"2D_line", page_num=>0, graph_name=> "Total injected pck", result_name =>"injected_pck_total" , X_Title=> 'Desired Avg. Injected Load Per Router (flits/clock (%))', Y_Title=>'Total Injected packets', Z_Title=>undef},
 	{ type=>"2D_line", page_num=>0, graph_name=> "Total injected flit",result_name =>"injected_flit_total", X_Title=> 'Desired Avg. Injected Load Per Router (flits/clock (%))', Y_Title=>'Total Injected Fslits', Z_Title=>undef},
+	{ type=>"2D_line", page_num=>0, graph_name=> "Execuation Cycles", result_name => "exe_time_result",X_Title=>'Desired Avg. Injected Load Per Router (flits/clock (%))' , Y_Title=>'Total Simulation Time (clk)', Z_Title=>undef},
 	
 	
 
-	{ type=>"3D_bar",  page_num=>1, graph_name=> "Received", result_name => "packet_rsvd_result", X_Title=>'Core ID' , Y_Title=>'Received Packets Per Router', Z_Title=>undef},
-	{ type=>"3D_bar",  page_num=>1, graph_name=> "Sent", result_name => "packet_sent_result", X_Title=>'Core ID' , Y_Title=>'Sent Packets Per Router', Z_Title=>undef},
-	{ type=>"3D_bar",  page_num=>2, graph_name=> "Received", result_name => "worst_delay_rsvd_result",X_Title=>'Core ID' , Y_Title=>'Worst-Case Delay (clk)', Z_Title=>undef},
-	{ type=>"3D_bar",  page_num=>2, graph_name=> "Sent", result_name => "worst_delay_sent_result",X_Title=>'Core ID' , Y_Title=>'Worst-Case Delay (clk)', Z_Title=>undef},
-	{ type=>"2D_line", page_num=>3, graph_name=> "-", result_name => "exe_time_result",X_Title=>'Desired Avg. Injected Load Per Router (flits/clock (%))' , Y_Title=>'Total Simulation Time (clk)', Z_Title=>undef},
+	{ type=>"3D_bar",  page_num=>1, graph_name=> "Received packets per Endp", result_name => "packet_rsvd_result", X_Title=>'Endpoint ID' , Y_Title=>'Received Packets Per Endpoint', Z_Title=>undef},
+	{ type=>"3D_bar",  page_num=>1, graph_name=> "Sent packets per Endp", result_name => "packet_sent_result", X_Title=>'Endpoint ID' , Y_Title=>'Sent Packets Per Endpoint', Z_Title=>undef},
+	{ type=>"3D_bar",  page_num=>1, graph_name=> "Received flits per Endp", result_name => "flit_rsvd_result", X_Title=>'Endpoint ID' , Y_Title=>'Received Flits Per Endpoint', Z_Title=>undef},
+	{ type=>"3D_bar",  page_num=>1, graph_name=> "Sent flits per Endp", result_name => "flit_sent_result", X_Title=>'Endpoint ID' , Y_Title=>'Sent Packets Flits Endpoint', Z_Title=>undef},
+	{ type=>"3D_bar",  page_num=>1, graph_name=> "Flits per Router", result_name => "flit_per_router_result", X_Title=>'Router ID' , Y_Title=>'Received Flits Per Router', Z_Title=>undef},
+	{ type=>"3D_bar",  page_num=>1, graph_name=> "Packets per Router", result_name => "packet_per_router_result", X_Title=>'Router ID' , Y_Title=>'Received Packets Per Router', Z_Title=>undef},
+	{ type=>"3D_bar",  page_num=>1, graph_name=> "Worst Received pck latency per Endp", result_name => "worst_delay_rsvd_result",X_Title=>'Endpoint ID' , Y_Title=>'Worst-Case Delay (clk)', Z_Title=>undef},
+	{ type=>"3D_bar",  page_num=>1, graph_name=> "Worst Sent pck latency per Endp", result_name => "worst_delay_sent_result",X_Title=>'Endpoint ID' , Y_Title=>'Worst-Case Delay (clk)', Z_Title=>undef},
+	
+	{ type=>"3D_bar",  page_num=>1, graph_name=> "Buffered Flit in Ratio Per Router", result_name => "flit_buffered_router_ratio",X_Title=>'Router ID' , Y_Title=>'Flit in buffered in router/Flit in (%)', Z_Title=>undef},
+	{ type=>"3D_bar",  page_num=>1, graph_name=> "Bypassed Flit in Ratio Per Router", result_name => "flit_bypass_router_ratio",X_Title=>'Router ID' , Y_Title=>'Flit in bypassed in router/Flit in (%)', Z_Title=>undef},
+	
+	
+	
+	
+		
+	
+	
+	
+	
+	
+	
+	
+	{ type=>"Heat-map", page_num=>4, graph_name=> "Select", result_name => "undef",X_Title=>'-' , Y_Title=> undef, Z_Title=>undef},
+	{ type=>"Heat-map", page_num=>4, graph_name=> "Endp-2-Endp Flit-num", result_name => "endp-endp-flit_result",X_Title=>'total flit number sent from an endpoint to another' , Y_Title=> undef, Z_Title=>undef},
+	{ type=>"Heat-map", page_num=>4, graph_name=> "Endp-2-Endp Packet-num", result_name => "endp-endp-pck_result",X_Title=>'total packet number sent from an endpoint to another' , Y_Title=> undef, Z_Title=>undef},
+	
 	
 	);
 	
@@ -1554,3 +1930,65 @@ sub custom_traffic_dest{
 	return ($core_num, -1);#off	
 }
 
+sub download_netrace{
+	my ($path) =@_;
+	#create path if it is not exist
+	unless (-d $path){
+		mkpath("$path",1,01777);
+	}
+	my $window = def_popwin_size(30,85,"Netrace download",'percent');
+	my $table = def_table(1, 1, FALSE);	
+	my $scrolled_win = add_widget_to_scrolled_win($table);
+	
+	
+my @links =(
+{ label=>"blackscholes simlarge (907M) ",name=>"blackscholes_64c_simlarge.tra.bz2" ,url=>"https://www.cs.utexas.edu/~netrace/download/blackscholes_64c_simlarge.tra.bz2"},
+{ label=>"blackscholes simmedium (182M)",name=>"blackscholes_64c_simmedium.tra.bz2",url=>"https://www.cs.utexas.edu/~netrace/download/blackscholes_64c_simmedium.tra.bz2"},
+{ label=>"blackscholes simsmall (55M)  ",name=>"blackscholes_64c_simsmall.tra.bz2" ,url=>"https://www.cs.utexas.edu/~netrace/download/blackscholes_64c_simsmall.tra.bz2"},
+{ label=>"bodytrack simlarge (3.5G)    ",name=>"bodytrack_64c_simlarge.tra.bz2"    ,url=>"https://www.cs.utexas.edu/~netrace/download/bodytrack_64c_simlarge.tra.bz2"},
+{ label=>"canneal simmedium (3.5G)     ",name=>"canneal_64c_simmedium.tra.bz2"     ,url=>"https://www.cs.utexas.edu/~netrace/download/canneal_64c_simmedium.tra.bz2"},
+{ label=>"dedup simmedium (4.1G)       ",name=>"dedup_64c_simmedium.tra.bz2"       ,url=>"https://www.cs.utexas.edu/~netrace/download/dedup_64c_simmedium.tra.bz2"},
+{ label=>"ferret simmedium (2.7G)      ",name=>"ferret_64c_simmedium.tra.bz2"      ,url=>"https://www.cs.utexas.edu/~netrace/download/ferret_64c_simmedium.tra.bz2"},
+{ label=>"fluidanimate simlarge (1.8G) ",name=>"fluidanimate_64c_simlarge.tra.bz2" ,url=>"https://www.cs.utexas.edu/~netrace/download/fluidanimate_64c_simlarge.tra.bz2"},
+{ label=>"fluidanimate simmedium (677M)",name=>"fluidanimate_64c_simmedium.tra.bz2",url=>"https://www.cs.utexas.edu/~netrace/download/fluidanimate_64c_simmedium.tra.bz2"},
+{ label=>"fluidanimate simsmall (317M) ",name=>"fluidanimate_64c_simsmall.tra.bz2" ,url=>"https://www.cs.utexas.edu/~netrace/download/fluidanimate_64c_simsmall.tra.bz2"},
+{ label=>"swaptions simlarge (3.0G)    ",name=>"swaptions_64c_simlarge.tra.bz2"    ,url=>"https://www.cs.utexas.edu/~netrace/download/swaptions_64c_simlarge.tra.bz2"},
+{ label=>"vips simmedium (3.1G)        ",name=>"vips_64c_simmedium.tra.bz2"        ,url=>"https://www.cs.utexas.edu/~netrace/download/vips_64c_simmedium.tra.bz2"},
+{ label=>"x264 simmedium (5.1G)        ",name=>"x264_64c_simmedium.tra.bz2"        ,url=>"https://www.cs.utexas.edu/~netrace/download/x264_64c_simmedium.tra.bz2"},
+{ label=>"x264 simsmall (1.2G)         ",name=>"x264_64c_simsmall.tra.bz2"         ,url=>"https://www.cs.utexas.edu/~netrace/download/x264_64c_simsmall.tra.bz2"},
+);
+
+	my $row=0;
+	
+
+	foreach my $d (@links){
+		my $srow=$row;
+		$table-> attach (gen_label_in_left($d->{label}) , 0, 1,  $row,$row+1,'expand','shrink',2,2); 
+		my $file="$path/$d->{name}";
+		if (-f $file){
+			
+		}else{
+			my $download=def_image_button("icons/download.png",'Download');	
+			$table-> attach ($download , 2, 3,  $row,$row+1,'expand','shrink',2,2);
+			$download->signal_connect("clicked"=> sub{
+					$download ->set_sensitive (FALSE);
+					my $load= show_gif("icons/load.gif");
+				    $table->attach ($load, 1, 2, $srow,$srow+ 1,'shrink','shrink',0,0); 
+				    $load->show_all;
+					my $o=$d->{name};					
+					download_from_google_drive("$d->{url}" ,"$path/$o"  );
+					$load->destroy;
+					$download->destroy if (-f $file);
+			});
+		}
+		$row++;
+	}
+
+
+
+
+
+$window ->add($scrolled_win);
+$window->show_all;
+
+}

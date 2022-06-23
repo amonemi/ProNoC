@@ -8,9 +8,9 @@
 /**********************************************************************
 **	File: /home/alireza/work/git/hca_git/ProNoC/mpsoc/rtl/src_topolgy/custom1/custom1_noc_genvar.sv
 **    
-**	Copyright (C) 2014-2019  Alireza Monemi
+**	Copyright (C) 2014-2021  Alireza Monemi
 **    
-**	This file is part of ProNoC 1.9.1 
+**	This file is part of ProNoC 2.0.0 
 **
 **	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
 **	you can redistribute it and/or modify it under the terms of the GNU
@@ -26,6 +26,8 @@
 ** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
 ******************************************************************************/ 
 
+`include "pronoc_def.v"
+
 module   custom1_noc_genvar 
    import pronoc_pkg::*; 
 	(
@@ -33,7 +35,8 @@ module   custom1_noc_genvar
     reset,
     clk,    
     chan_in_all,
-    chan_out_all  
+    chan_out_all,
+    router_event  
 );
 
 	 function integer log2;
@@ -58,9 +61,13 @@ module   custom1_noc_genvar
 	input  smartflit_chanel_t chan_in_all  [NE-1 : 0];
 	output smartflit_chanel_t chan_out_all [NE-1 : 0];
 
+//Events
+	output  router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];
+
 //all routers port 
 	smartflit_chanel_t    router_chan_in   [NR-1 :0][MAX_P-1 : 0];
 	smartflit_chanel_t    router_chan_out  [NR-1 :0][MAX_P-1 : 0];
+
 
 	wire [RAw-1 : 0] current_r_addr [NR-1 : 0];
 
@@ -76,6 +83,8 @@ module   custom1_noc_genvar
 	generate	
 	
 	for( i=0; i<4; i=i+1) begin : router_3_port_lp
+	localparam RID = i;
+	assign current_r_addr [RID] = RID[RAw-1: 0]; 
 
 	router_top #(
 		.P(3)
@@ -84,9 +93,11 @@ module   custom1_noc_genvar
 	(	
 		.clk(clk), 
 		.reset(reset),
-		.current_r_addr(i),	
-		.chan_in  (router_chan_in[i]), 
-		.chan_out (router_chan_out[i])		
+		.current_r_id(RID),
+		.current_r_addr(current_r_addr[RID]),	
+		.chan_in  (router_chan_in [RID] [2 : 0]), 
+		.chan_out (router_chan_out[RID] [2 : 0]),
+		.router_event(router_event[RID] [2 : 0])	
 	);
     
     
@@ -94,6 +105,8 @@ module   custom1_noc_genvar
 	end    
 			
 	for( i=0; i<8; i=i+1) begin : router_4_port_lp
+	localparam RID = i+4;
+	assign current_r_addr [RID] = RID[RAw-1: 0]; 
 
 	router_top #(
 		.P(4)
@@ -102,9 +115,11 @@ module   custom1_noc_genvar
 	(	
 		.clk(clk), 
 		.reset(reset),
-		.current_r_addr(i+4),	
-		.chan_in  (router_chan_in[i+4]), 
-		.chan_out (router_chan_out[i+4])		
+		.current_r_id(RID),
+		.current_r_addr(current_r_addr[RID]),	
+		.chan_in  (router_chan_in [RID] [3 : 0]), 
+		.chan_out (router_chan_out[RID] [3 : 0]),
+		.router_event(router_event[RID] [3 : 0])	
 	);
     
     
@@ -112,6 +127,8 @@ module   custom1_noc_genvar
 	end    
 			
 	for( i=0; i<4; i=i+1) begin : router_5_port_lp
+	localparam RID = i+12;
+	assign current_r_addr [RID] = RID[RAw-1: 0]; 
 
 	router_top #(
 		.P(5)
@@ -120,9 +137,11 @@ module   custom1_noc_genvar
 	(	
 		.clk(clk), 
 		.reset(reset),
-		.current_r_addr(i+12),	
-		.chan_in  (router_chan_in[i+12]), 
-		.chan_out (router_chan_out[i+12])		
+		.current_r_id(RID),
+		.current_r_addr(current_r_addr[RID]),	
+		.chan_in  (router_chan_in [RID] [4 : 0]), 
+		.chan_out (router_chan_out[RID] [4 : 0]),
+		.router_event(router_event[RID] [4 : 0])	
 	);
     
     

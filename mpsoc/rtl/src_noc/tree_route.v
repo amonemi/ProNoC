@@ -279,8 +279,8 @@ module tree_look_ahead_routing #(
     output [DSPw-1: 0]    lkdestport_encoded;
     input                   reset,clk;
     
-    reg  [DSPw-1 :0]    destport_encoded_delayed;
-    reg  [LKw-1 :0]    dest_addr_encoded_delayed;
+    wire  [DSPw-1 :0]    destport_encoded_delayed;
+    wire  [LKw-1 :0]    dest_addr_encoded_delayed;
     
      tree_deterministic_look_ahead_routing #(
         .P(P),
@@ -297,20 +297,11 @@ module tree_look_ahead_routing #(
         .lkdestport_encoded(lkdestport_encoded)
      );
      
+      pronoc_register #(.W(DSPw)) reg1 (.in(destport_encoded  ), .out(destport_encoded_delayed), .reset(reset), .clk(clk));
+      pronoc_register #(.W(LKw )) reg2 (.in(dest_addr_encoded ), .out(dest_addr_encoded_delayed),.reset(reset), .clk(clk));
+     
         
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif  
-        if(reset)begin
-            destport_encoded_delayed <= {DSPw{1'b0}};
-            dest_addr_encoded_delayed<= {LKw{1'b0}};
-        end else begin
-            destport_encoded_delayed<=destport_encoded;
-            dest_addr_encoded_delayed<=dest_addr_encoded;
-        end//else reset
-    end//always
+
     
 endmodule
 

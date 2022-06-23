@@ -8,9 +8,9 @@
 /**********************************************************************
 **	File: /home/alireza/work/git/hca_git/ProNoC/mpsoc/rtl/src_topolgy/custom1/Tcustom1Rcustom_look_ahead_routing.v
 **    
-**	Copyright (C) 2014-2019  Alireza Monemi
+**	Copyright (C) 2014-2021  Alireza Monemi
 **    
-**	This file is part of ProNoC 1.9.1 
+**	This file is part of ProNoC 2.0.0 
 **
 **	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
 **	you can redistribute it and/or modify it under the terms of the GNU
@@ -26,6 +26,8 @@
 ** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
 ******************************************************************************/ 
 
+ 
+ `include "pronoc_def.v"
 /*******************
 *  Tcustom1Rcustom_look_ahead_routing
 *******************/  
@@ -52,8 +54,8 @@ module Tcustom1Rcustom_look_ahead_routing  #(
 	reg [EAw-1   :0] dest_e_addr_delay;
 	reg [EAw-1   :0] src_e_addr_delay;
 
-	always @(posedge clk)begin 
-		if(reset)begin 
+	always @ (`pronoc_clk_reset_edge )begin 
+        if(`pronoc_reset)begin 
 			dest_e_addr_delay<={EAw{1'b0}};
 			src_e_addr_delay<={EAw{1'b0}};			
 		end else begin 

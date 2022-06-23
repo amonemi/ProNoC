@@ -266,13 +266,14 @@ endmodule
 *************************************/
 
 module look_ahead_routing #(
-    parameter P         =5,
+    parameter P = 5,
     parameter T1= 8,
     parameter T2= 8,
     parameter T3= 8,
     parameter T4= 8,
     parameter RAw = 3,  
-    parameter EAw = 3,  
+    parameter EAw = 3, 
+    parameter DAw = 3,
     parameter DSTPw=P-1,
     parameter SW_LOC    =0,
     parameter TOPOLOGY  ="MESH",//"MESH","TORUS"
@@ -312,7 +313,7 @@ module look_ahead_routing #(
    
     input   [PRAw-1:  0]  neighbors_r_addr;
     input   [RAw-1   :   0]  current_r_addr;
-    input   [EAw-1   :   0]  dest_e_addr;
+    input   [DAw-1   :   0]  dest_e_addr;
     input   [EAw-1   :   0]  src_e_addr;
     input   [DSTPw-1  :   0]  destport_encoded;
     output  [DSTPw-1  :   0]  lkdestport_encoded;

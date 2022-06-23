@@ -18,7 +18,9 @@ ls /opt/rh/devtoolset-7/root/usr/bin/make
 
 
 #2-
- perl -MCPAN -e shell
+ export PATH=$HOME/localperl:$PATH
+
+ /$HOME/localperl/bin/perl -MCPAN -e shell
  o conf makepl_arg INSTALL_BASE=~/localperl
  o conf commit
 
@@ -28,8 +30,9 @@ ls /opt/rh/devtoolset-7/root/usr/bin/make
  install Try::Tiny
  install Test::Fatal
  install Test::MockRandom
- install File::Copy::Recursive File::Find::Rule constant::boolean Class::Accessor::Fast Proc::Background List::MoreUtils
+ install File::Copy::Recursive File::Find::Rule constant::boolean Class::Accessor::Fast Proc::Background List::MoreUtils  IO::CaptureOutput
  install IPC::Run
+
 
 
 

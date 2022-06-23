@@ -65,20 +65,21 @@ module fattree_nca_random_up_routing  #(
     
     wire [L-1 : 0] parrents_node_missmatch; 
     
-    reg [K-1 : 0] counter; // a one hot counter. The value of the counter is used as a random destination port number when going to the up ports
+    wire [K-1 : 0] counter; // a one hot counter. The value of the counter is used as a random destination port number when going to the up ports
+        
+     pronoc_register #(
+           .W(K),
+           .RESET_TO(1)
+      ) reg1 ( 
+           .in({counter[0],counter[K-1:1]}),
+           .reset(reset),    
+           .clk(clk),      
+           .out(counter)
+      );
+      
     
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif  
-        if(reset) begin 
-            counter <= 1;
-        end 
-        else begin 
-            counter <= {counter[0],counter[K-1:1]};         
-        end    
-    end
+    
+
     
     assign current_addr [0]={Kw{1'b0}}; 
     assign parrent_dest_addr [0]={Kw{1'b0}}; 
@@ -181,21 +182,18 @@ module fattree_nca_destp_up_routing  #(
     
     wire [L-1 : 0] parrents_node_missmatch; 
     
-    reg [K-1 : 0] counter; // a one hot counter. The value of the counter is used as a random destination port number when going to the up ports
+    wire [K-1 : 0] counter; // a one hot counter. The value of the counter is used as a random destination port number when going to the up ports
     
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif  
-        if(reset) begin 
-            counter <= 1;
-        end 
-        else begin 
-            counter <= {counter[0],counter[K-1:1]};         
-        end    
-    end
-    
+     pronoc_register #(
+           .W(K),
+           .RESET_TO(1)
+      ) reg1 ( 
+           .in({counter[0],counter[K-1:1]}),
+           .reset(reset),    
+           .clk(clk),      
+           .out(counter)
+      );
+   
     assign current_addr [0]={Kw{1'b0}}; 
     assign parrent_dest_addr [0]={Kw{1'b0}}; 
        
@@ -298,20 +296,17 @@ module fattree_nca_straight_up_routing  #(
     
     wire [L-1 : 0] parrents_node_missmatch; 
     
-    reg [K-1 : 0] counter; // a one hot counter. The value of the counter is used as a random destination port number when going to the up ports
+    wire  [K-1 : 0] counter; // a one hot counter. The value of the counter is used as a random destination port number when going to the up ports
     
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif  
-        if(reset) begin 
-            counter <= 1;
-        end 
-        else begin 
-            counter <= {counter[0],counter[K-1:1]};         
-        end    
-    end
+     pronoc_register #(
+           .W(K),
+           .RESET_TO(1)
+      ) reg1 ( 
+           .in({counter[0],counter[K-1:1]}),
+           .reset(reset),    
+           .clk(clk),      
+           .out(counter)
+      );
     
     assign current_addr [0]={Kw{1'b0}}; 
     assign parrent_dest_addr [0]={Kw{1'b0}}; 
@@ -526,8 +521,8 @@ module fattree_look_ahead_routing #(
     output [K: 0]    lkdestport_encoded;
     input                   reset,clk;
     
-    reg  [K :0]    destport_encoded_delayed;
-    reg  [LKw-1 :0]    dest_addr_encoded_delayed;
+    wire  [K :0]    destport_encoded_delayed;
+    wire  [LKw-1 :0]    dest_addr_encoded_delayed;
     
      fattree_deterministic_look_ahead_routing #(
         .P(P),
@@ -546,20 +541,28 @@ module fattree_look_ahead_routing #(
         .lkdestport_encoded(lkdestport_encoded)
      );
      
+     
+      pronoc_register #(
+           .W(K+1)
+      ) reg1 ( 
+           .in(destport_encoded),
+           .reset(reset),    
+           .clk(clk),      
+           .out(destport_encoded_delayed)
+      );
+     
+       pronoc_register #(
+           .W(LKw)
+      ) reg2 ( 
+           .in(dest_addr_encoded),
+           .reset(reset),    
+           .clk(clk),      
+           .out(dest_addr_encoded_delayed)
+      );
+     
+     
         
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif  
-        if(reset)begin
-            destport_encoded_delayed <= {(K+1){1'b0}};
-            dest_addr_encoded_delayed<= {LKw{1'b0}};
-        end else begin
-            destport_encoded_delayed<=destport_encoded;
-            dest_addr_encoded_delayed<=dest_addr_encoded;
-        end//else reset
-    end//always
+
     
 endmodule
 
@@ -1115,3 +1118,9 @@ module  fattree_destp_generator #(
         end
         endgenerate
  endmodule
+ 
+ 
+ 
+ 
+
+ 

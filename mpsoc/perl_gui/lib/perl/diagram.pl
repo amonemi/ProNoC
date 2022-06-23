@@ -11,7 +11,7 @@ require "widget.pl";
 require "emulator.pl";
 use File::Copy;
 
-
+use Chart::Gnuplot;
 
 
 sub get_dot_file{
@@ -248,14 +248,48 @@ sub gen_show_diagram{
 
 
 sub show_topology_diagram {
-	my $self= shift;
-
+	my ($self)= @_;
+	
 	my $table=def_table(20,20,FALSE);
 	
 	my $window=def_popwin_size(80,80,"NoC-based MPSoC topology block diagram",'percent');	
 	my $scrolled_win = add_widget_to_scrolled_win();
 	
-	$window->add ($table);
+	
+	my $notebook = gen_notebook();
+	$notebook->set_tab_pos ('top');
+	$notebook->set_scrollable(TRUE);
+	$window->add($notebook);
+	
+	
+	
+	
+	my @data;	
+	my $ref =$self->object_get_attribute('noc_param');
+	if(defined $ref){
+		my %param=%{$ref};
+		foreach my $p (sort keys %param){
+			push (@data, {0 => "$p", 1 =>"$param{$p}"});
+		}		
+	}
+	
+	# create list store
+	my @clmn_type =  ('Glib::String',  'Glib::String'); 
+	my @clmns = (" Parameter Name   ", " Value ");
+	my $page2=add_widget_to_scrolled_win(gen_list_store (\@data,\@clmn_type,\@clmns));
+	
+	
+	
+	$notebook->append_page ($table,gen_label_with_mnemonic ("Topology diagram")) ;
+	$notebook->append_page ($page2,gen_label_with_mnemonic ("NoC parameters")) ;
+	
+	
+	
+	
+	
+	
+	
+
 
 	my $plus = def_image_button('icons/plus.png',undef,TRUE);
 	my $minues = def_image_button('icons/minus.png',undef,TRUE);
@@ -304,7 +338,7 @@ sub show_topology_diagram {
 		
 	});	
 	$minues  -> signal_connect("clicked" => sub{ 
-		$scale*=.9  if ($scale >0.1); ;
+		$scale*=.9  if ($scale >0.1);
 		$self->object_add_attribute("topology_diagram","scale", $scale );
 		gen_show_diagram($self,$scrolled_win,'topology',"topology_diagram");	
 	});
@@ -331,6 +365,7 @@ sub show_topology_diagram {
 	
 	gen_show_diagram($self,$scrolled_win,'topology',"topology_diagram");	
 	$window->show_all();
+	$notebook->set_current_page (0);
 }
 
 
@@ -390,8 +425,8 @@ sub gen_diagram {
 
 
 sub show_diagram {
-	my ($self,$scrolled_win,$name)=@_;	
-	
+	my ($self,$scrolled_win,$name,$image_name)=@_;	
+	$image_name="diagram.png" if (!defined $image_name);
 	my @list = $scrolled_win->get_children();
 	foreach my $l (@list){ 
 		$scrolled_win->remove($l);			
@@ -401,7 +436,7 @@ sub show_diagram {
 	my $scale=$self->object_get_attribute($name,"scale");
 	$scale= 1 if (!defined $scale);
 	my $tmp_dir  = "$ENV{'PRONOC_WORK'}/tmp";
-	my $diagram=open_image("$tmp_dir/diagram.png",70*$scale,70*$scale,'percent');
+	my $diagram=open_image("$tmp_dir/$image_name",70*$scale,70*$scale,'percent');
 	
 	add_widget_to_scrolled_win($diagram,$scrolled_win);
 	$scrolled_win->show_all();	
@@ -669,6 +704,181 @@ sub node_connection2{
 ##################################
 #
 ##################################
+
+
+
+
+sub generate_heat_map_table{
+	my ($d)=@_ ;
+	
+	return (def_table (1, 1, FALSE),def_table (1, 1, FALSE)) if (!defined $d);
+	my %data=%{$d};
+	my @xs = (sort {$a<=>$b} keys %data);
+	
+	
+	
+	
+	my $max=0;
+	#for(my $y=0; $y<$dim; $y++){ 		
+	#	for(my $x=0; $x<$dim; $x++){    
+		foreach my $y (@xs){
+			foreach my $x (@xs){
+			#$data{$x}{$y}=int(rand(50000));
+			#$data{$x}{$y}=$y*64+$x;
+			$max = $data{$x}{$y} if( $max < $data{$x}{$y});
+		}
+	}
+	
+
+	my $width_max = length int $max;
+	
+	my $table = def_table (1, 1, FALSE);
+	
+	#for(my $y=0; $y<$dim; $y++){ 
+	foreach my $y (@xs){
+		my $l=gen_label_in_center("$y");
+		$table->attach ($l,	$y+1,$y+2,0,1,'expand','shrink',2,2);  	
+	}			
+	#for(my $x=0; $x<$dim; $x++){
+	foreach my $x (@xs){
+		my $l=gen_label_in_center("$x");
+		$table->attach ($l,	0,1,$x+1,$x+2,'expand','shrink',2,2);  	
+	}
+	
+	#for(my $y=0; $y<$dim; $y++){ 		
+	#	for(my $x=0; $x<$dim; $x++){
+		foreach my $y (@xs){
+			foreach my $x (@xs){
+			my $d=$data{$x}{$y}; 
+			my $c = int (((5*$d))/($max+1));
+			my $v = length int $d;
+			until ($v >= $width_max){
+				$d="  ".$d;
+				$v++;
+			}   
+		
+  		my $l =gen_colored_label( "   " ,32+$c);	
+  		set_tip($l,"E[$x]->E[$y]=$d");
+  		$table->attach ($l, $y+1,$y+2,$x+1,$x+2,'expand','shrink',2,2);  		  
+  	}
+  
+  }   
+  
+  my $scale = def_table (1, 1, FALSE);
+  my $v=gen_label_in_center("0");	
+  $scale->attach ($v, 1,2,0,1,'expand','shrink',2,2); 
+  for (my $i=0; $i<5; $i++){
+  	my $l =gen_colored_label( "   " ,32+$i);
+  	my $val =int( (2*$i+1)*$max/10); 
+  	my $v=gen_label_in_center($val);	
+  	$scale->attach ($v, 0,1,$i+1,$i+2,'expand','shrink',2,2); 		  
+  	$scale->attach ($l, 1,2,$i+1,$i+2,'expand','shrink',2,2); 
+  	$scale->attach (gen_label_in_center("$max"), 1,2,$i+2,$i+3,'expand','shrink',2,2) if($i==4);
+  }
+  
+  
+   return ($table,$scale);
+  
+} 
+
+
+sub generate_heat_map_img_file{
+	my ($d,$image_file,$title)=@_ ;
+	return  if (!defined $d);
+	my %hash=%{$d};		
+	my @data;
+	my @xs = (sort {$a<=>$b} keys %hash);
+	foreach my $y (@xs){
+		my @b;
+  		push (@data ,\@b) if ($y!=0);   
+		foreach my $x (@xs){
+			my @a=($x,$y, $hash{$x}{$y});
+			push (@data ,\@a); 
+		}
+		 
+	}
+		
+my $length = @xs;
+$length+=1;
+
+my $chart = Chart::Gnuplot->new(
+    bg         => 'white',
+    view       => 'map',
+    palette    => 'defined (0 0 0 1, 1 1 1 0, 2 1 0 0)',
+    output     => "$image_file",
+    title      => "$title",
+    xlabel     => 'Endp-ID',
+    ylabel     => 'Endp-ID',
+    xrange	   => [-1, $length],
+    size       => 'ratio -1',
+    xtics      => {
+    	labels   => \@xs,
+    },
+    ytics      => {
+       labels   => \@xs,
+    },
+    mxtics => '2',
+    mytics => '2',
+    border => undef,
+    grid   => 'front mxtics mytics lw 1.5 lt -1 lc rgb \'white\'',
+        
+);
+my $dataSet = Chart::Gnuplot::DataSet->new(
+	points => \@data,
+	view   => 'map',
+  	type   => 'matrix',
+    using  => "1:2:3 with image",	 
+);
+
+
+$chart->plot2d($dataSet);
+	
+	
+	
+	
+	
+}
+
+
+
+sub generate_heat_map_dot_file{
+	my ($data,$dim)=@_ ;
+	my $dotfile=
+"digraph G {
+	graph [layout = neato, rankdir = RL , splines = true, overlap = true]; 
+	node[shape=record];	
+	";
+	for(my $y=0; $y<$dim; $y++){ 		
+		for(my $x=0; $x<$dim; $x++){
+			my $tx=$x*2+0.5;
+			my $ty=($dim-$y-1)*2+0.5;		
+			my $w=2;
+		
+		    $tx/=2;
+			$ty/=2;		
+			$w/=2;
+		
+			
+			$dotfile.="
+					\"t${x}_$y\"[
+	label = \"8822255\"
+    pos = \"$tx,$ty!\"
+    width =$w
+    height=$w  
+	style=filled
+	fontsize=\"12\"
+	fillcolor=orange
+    
+];
+"					
+		}
+	}
+	
+	$dotfile=$dotfile."\n}\n";
+	return $dotfile;
+	
+}
+
 
 
 sub generate_mesh_dot_file{

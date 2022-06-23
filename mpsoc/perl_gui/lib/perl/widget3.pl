@@ -3,14 +3,16 @@ use Gtk3;
 use strict;
 use warnings;
 
+use FindBin;
+use lib $FindBin::Bin;
+
 use Data::Dumper;
 use Gtk3::SourceView;
 use Consts;
 
 require "common.pl"; 
 
-use FindBin;
-use lib $FindBin::Bin;
+
 use IO::CaptureOutput qw(capture qxx qxy);
 
 #use ColorButton;
@@ -18,8 +20,7 @@ use HexSpin3;
 
 #use Tk::Animation;
 
-our $FONT_SIZE;
-our $ICON_SIZE;
+our %glob_setting;
 
 ##############
 # combo box
@@ -388,11 +389,11 @@ sub button_box{
 sub get_icon_pixbuff{
     my $icon_file=shift;
     my $size;
-    if ($ICON_SIZE eq 'default'){
+    if ($glob_setting{'ICON_SIZE'} eq 'default'){
    		my $font_size=get_defualt_font_size();
 		$size=($font_size *2.5);
     }else{
-    	$size = int ($ICON_SIZE);
+    	$size = int ($glob_setting{'ICON_SIZE'});
     }
 	my $pixbuf = Gtk3::Gdk::Pixbuf->new_from_file_at_scale($icon_file,$size,$size,FALSE);
 	return $pixbuf;
@@ -868,35 +869,12 @@ sub def_scrolled_window_box{
 }
 
 
-
-
-my ($scr, $curr_scr, %screens);
-
-sub max_win_size{
-#	my $screen =Gtk3::Gdk::Screen::get_default;
-
-	if(!defined $curr_scr){
-
-		open my $fh, "xdpyinfo|" or die;
-
-		while (<$fh>) {
-		  $scr = $1 if m/^\s*screen\s+#(\d+):/;
-		  $curr_scr = $1 if m/^\s*default screen number:\s+(\d+)/;
-		  @{$screens{$scr}}{'x','y'} = ($1, $2)
-			if m/^\s*dimensions:\s+(\d+)x(\d+)/;
-		}
-		close $fh;
-	}
-
-	
-	my $width  = $screens{$curr_scr}{'y'};
-	my $height  = $screens{$curr_scr}{'x'};
-	return ($height,$width);
+sub get_default_screen {
+  return Gtk3::Gdk::Screen::get_default;
 }
 
-
 sub get_defualt_font_size{
-	return int($FONT_SIZE) if ($FONT_SIZE ne 'default');	
+	return int($glob_setting{'FONT_SIZE'}) if ($glob_setting{'FONT_SIZE'} ne 'default');	
 	
 	my($width,$hight)=max_win_size();
 	#print "($width,$hight)\n";
@@ -1008,7 +986,7 @@ sub load_scrolled_win_adj {
 sub save_adj {
 	my ($self,$adjustment,$at1,$at2)=@_;  	
 	my $value = $adjustment->get_value;
-	$self->object_add_attribute($at1,$at2,$value);
+	$self->object_add_attribute($at1,$at2,$value) if (defined $self);
 }
 
 
@@ -1537,9 +1515,7 @@ sub gen_combobox_object {
 		$object->object_add_attribute($attribute1,$attribute2,$new_param_value);
 		set_gui_status($object,$status,$timeout) if (defined $status);
 	 });
-	return $widget;		 
-	
-
+	return $widget;
 }
 
 
@@ -1977,7 +1953,8 @@ sub gen_list_store {
 		my $renderer = Gtk3::CellRendererText->new;
 		my $column = Gtk3::TreeViewColumn->new_with_attributes ("$l",
 							       $renderer,
-							       text => $c );
+							       text => $c
+							       );
 		$column->set_sort_column_id ($c );
 		$treeview->append_column ($column);
 		$c++;
@@ -2190,6 +2167,7 @@ sub run_cmd_in_back_ground
     # This while loop will cause Gtk3 to continue processing events, if
     # there are events pending... *which there are...
     while (Gtk3::events_pending) {
+     
       Gtk3::main_iteration;
     }
     Gtk3::Gdk::flush;
@@ -2227,17 +2205,20 @@ sub run_cmd_in_back_ground_get_stdout
 	my $exit;
 	my ($stdout, $stderr);	
 	
-	open(OLDERR, ">&STDERR");
-	open(STDERR, ">>/tmp/tmp.spderr") or die "Can't dup stdout";
-	select(STDOUT); $| = 1;     # make unbuffered
-	print OLDERR "";  #this fixed an error about OLDERR not being used 
+	#open(OLDERR, ">&STDERR");
+	#open(STDERR, ">>/tmp/tmp.spderr") or die "Can't dup stdout";
+	#select(STDOUT); $| = 1;     # make unbuffered
+	#print OLDERR "";  #this fixed an error about OLDERR not being used 
 
 ## do my stuff here.
 	
+	STDOUT->flush();
+	STDERR->flush();
+	
 	capture { $exit=run_cmd_in_back_ground($cmd) } \$stdout, \$stderr;
 	
-	close(STDERR);
-	open(STDERR, ">&OLDERR");
+	#close(STDERR);
+	#open(STDERR, ">&OLDERR");
 	return ($stdout,$exit,$stderr);
 	
 }		

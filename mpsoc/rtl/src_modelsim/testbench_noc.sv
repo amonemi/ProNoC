@@ -150,17 +150,17 @@ module testbench_noc;
 	
 
 
-    
+    reg print_router_st;
     
 	smartflit_chanel_t chan_in_all  [NE-1 : 0];
 	smartflit_chanel_t chan_out_all [NE-1 : 0];
-    
+	router_event_t router_event [NR-1 : 0] [MAX_P-1 : 0];
     
     
     
    
 	wire [NE-1      :   0]  hdr_flit_sent;
-	wire [EAw-1     :   0]  dest_e_addr             [NE-1           :0];  
+	wire [DAw-1     :   0]  dest_e_addr             [NE-1           :0];  
 	wire [EAw-1     :   0]  src_e_addr				[NE-1           :0]; 
 	wire [Cw-1      :   0]  pck_class_in            [NE-1           :0]; 
 	wire [Cw-1      :   0]  flit_out_class          [NE-1           :0]; 
@@ -168,7 +168,7 @@ module testbench_noc;
     
 	wire [PCK_SIZw-1:   0] pck_size_in [NE-1        :0]; 
 	wire [PCK_SIZw-1:   0] pck_size_o  [NE-1        :0];   
-    
+        wire [NEw-1 : 0] mcast_dst_num [NE-1        :0];   
     
 	//   wire    [NE-1           :0] report;
 	reg     [CLK_CNTw-1             :0] clk_counter;
@@ -210,7 +210,8 @@ module testbench_noc;
 			.reset(reset),
 			.clk(clk),    
 			.chan_in_all(chan_in_all),
-			.chan_out_all(chan_out_all)  
+			.chan_out_all(chan_out_all),
+			.router_event(router_event)
 		);
           
       
@@ -267,7 +268,8 @@ module testbench_noc;
 			        
 			    
 			traffic_gen_top #(
-				.MAX_RATIO(100)          
+				.MAX_RATIO(100),
+				.ENDP_ID(i)
 			)
 			the_traffic_gen
 			(
@@ -297,7 +299,8 @@ module testbench_noc;
 				.start_delay(start_delay[i]),
                 .flit_out_class(flit_out_class[i]),
 				.flit_out_wr(),
-				.flit_in_wr()
+				.flit_in_wr(),
+				.mcast_dst_num_o(mcast_dst_num[i])
           
 			);
 			
@@ -338,7 +341,15 @@ module testbench_noc;
 				.NE(NE),
 				.MAX_PCK_NUM(MAX_PCK_NUM),
 				.TRAFFIC(TRAFFIC),
-				.HOTSPOT_NODE_NUM(HOTSPOT_NODE_NUM)
+				.HOTSPOT_NODE_NUM(HOTSPOT_NODE_NUM),
+				.MCAST_TRAFFIC_RATIO(MCAST_TRAFFIC_RATIO),
+				.MCAST_PCK_SIZ_MIN(MCAST_PCK_SIZ_MIN),
+				.MCAST_PCK_SIZ_MAX(MCAST_PCK_SIZ_MAX),
+				.PCK_SIZw(PCK_SIZw),
+				.MIN_PACKET_SIZE(MIN_PACKET_SIZE),
+				.MAX_PACKET_SIZE(MAX_PACKET_SIZE),
+				.PCK_SIZ_SEL(PCK_SIZ_SEL),
+				.DISCRETE_PCK_SIZ_NUM(DISCRETE_PCK_SIZ_NUM)				
 			)
 			the_pck_dst_gen
 			(
@@ -351,25 +362,13 @@ module testbench_noc;
 				.dest_e_addr(dest_e_addr[i]),
 				.valid_dst(valid_dst[i]),
 				.hotspot_info(hotspot_info),
+				.pck_size_o( pck_size_in[i]) ,
+				.rnd_discrete(rnd_discrete),
 				.custom_traffic_t(custom_traffic_t[i]),  // defined in sim_param.sv
 				.custom_traffic_en(custom_traffic_en[i])  // defined in sim_param.sv
 			);
        
-			pck_size_gen #(
-				.PCK_SIZw(PCK_SIZw),
-				.MIN(MIN_PACKET_SIZE),
-				.MAX(MAX_PACKET_SIZE),
-				.PCK_SIZ_SEL(PCK_SIZ_SEL),
-				.DISCRETE_PCK_SIZ_NUM(DISCRETE_PCK_SIZ_NUM)
-			)
-			the_pck_siz_gen
-			(
-				.reset(reset),
-				.clk(clk),
-				.en(hdr_flit_sent[i]),
-				.pck_size( pck_size_in[i]) ,
-				.rnd_discrete(rnd_discrete)
-			);
+			
   
 	end
 	endgenerate
@@ -394,7 +393,7 @@ module testbench_noc;
 	integer             sent_core_worst_delay           [NE-1   :   0];
 	integer				total_active_endp;
 	integer             total_rsv_pck_num,total_rsv_flit_number;
-	integer				total_sent_pck_num,total_sent_flit_number;
+	integer				total_sent_pck_num,total_sent_flit_number,total_expect_rsv_flit_num;
 	
 	integer core_num,k;
 	always @(posedge clk or posedge reset)begin
@@ -407,6 +406,7 @@ module testbench_noc;
 			sum_clk_per_hop=0;
 			total_sent_flit_number=0;
 			total_rsv_flit_number=0;
+			total_expect_rsv_flit_num=0;
 			for (k=0;k<C;k=k+1) begin 
 					sum_clk_pow2_per_class[k]=0;
 					total_rsv_pck_num_per_class[k]=0;
@@ -427,6 +427,10 @@ module testbench_noc;
 		for (core_num=0; core_num<NE; core_num=core_num+1)begin 
 			if(chan_in_all[core_num].flit_chanel.flit_wr)begin 
 				total_sent_flit_number+=1;
+				if (CAST_TYPE != "UNICAST") total_expect_rsv_flit_num+=mcast_dst_num[core_num];
+				else   total_expect_rsv_flit_num++;
+				
+				
 				if (C>1) sent_stat [core_num][flit_out_class[core_num]].flit_num++;
 				else  	 sent_stat [core_num][0].flit_num++;
 				if(chan_in_all[core_num].flit_chanel.flit[Fw-1])begin
@@ -476,11 +480,11 @@ module testbench_noc;
 					sum_clk_pow2+=time_stamp_h2h[core_num] * time_stamp_h2h[core_num];
 					sum_clk_pow2_per_class[pck_class_out[core_num]]+=time_stamp_h2h[core_num] * time_stamp_h2h[core_num];
 				`endif
-				sum_clk_per_hop+= $itor(time_stamp_h2h[core_num])/$itor(distance[core_num]);
+				if(distance[core_num] > 0) sum_clk_per_hop+= $itor(time_stamp_h2h[core_num])/$itor(distance[core_num]);
 				total_rsv_pck_num_per_class[pck_class_out[core_num]]+=1;
 				sum_clk_h2h_per_class[pck_class_out[core_num]]+=time_stamp_h2h[core_num] ;
 				sum_clk_h2t_per_class[pck_class_out[core_num]]+=time_stamp_h2t[core_num] ;
-				sum_clk_per_hop_per_class[pck_class_out[core_num]]+= $itor(time_stamp_h2h[core_num])/$itor(distance[core_num]);
+				if(distance[core_num]>0) sum_clk_per_hop_per_class[pck_class_out[core_num]]+= $itor(time_stamp_h2h[core_num])/$itor(distance[core_num]);
 				rsvd_core_total_rsv_pck_num[core_num]+=1;
 				if (rsvd_core_worst_delay[core_num] < time_stamp_h2t[core_num]) rsvd_core_worst_delay[core_num] = ( AVG_LATENCY_METRIC == "HEAD_2_TAIL")? time_stamp_h2t[core_num] : time_stamp_h2h[core_num];
 				if (sent_core_worst_delay[src_id[core_num]] < time_stamp_h2t[core_num]) sent_core_worst_delay[src_id[core_num]] = (AVG_LATENCY_METRIC == "HEAD_2_TAIL")?  time_stamp_h2t[core_num] : time_stamp_h2h[core_num];
@@ -528,11 +532,12 @@ module testbench_noc;
 			if(all_done_in) begin //All injectors stopped injecting packets 
 				if(total_rsv_flit_number_old==total_rsv_flit_number) rsv_ideal_cnt<=rsv_ideal_cnt+1;//count the number of cycle when no flit is received by any injector  
 				else rsv_ideal_cnt=0;
-				if(total_sent_flit_number == total_rsv_flit_number) begin // All injected packets are consumed
+				if(total_expect_rsv_flit_num == total_rsv_flit_number) begin // All injected packets are consumed
 					done<=1'b1;
 				end
 				if(rsv_ideal_cnt >= 100) begin //  Injectors stopped sending packets, number of received and sent flits are not equal yet and for 100 cycles no flit is consumed. 
-					$display ("ERROR: The number of sent (%d) & received flits (%d) were not equal at the end of simulation",total_sent_flit_number ,total_rsv_flit_number);
+					done<=1'b1;
+					#100 $display ("ERROR: The number of expected (%d) & received flits (%d) were not equal at the end of simulation",total_expect_rsv_flit_num ,total_rsv_flit_number);
 					
 					$stop;
 				end
@@ -551,11 +556,12 @@ module testbench_noc;
 	end
 	
 
-	
+	initial print_router_st=1'b0;
 	
 	//report 
 	always @( posedge done) begin
-	
+		
+		
 		for (core_num=0; core_num<NE; core_num=core_num+1) begin  
 			if(pck_counter[core_num]>0) total_active_endp   	= 	total_active_endp +1;
 		end
@@ -566,6 +572,10 @@ module testbench_noc;
 		avg_latency_per_hop    = sum_clk_per_hop/$itor(total_rsv_pck_num);
 		$display("simulation results-------------------");
 		$display("\tSimulation clock cycles:%0d",clk_counter);
+		
+		print_router_st=1'b1;
+		#1
+		
 /*
 		$display(" total sent/received packets:%d/%d",total_sent_pck_num,total_rsv_pck_num);
 		$display(" total sent/received flits:%d/%d",total_sent_flit_number,total_rsv_flit_number);
@@ -579,12 +589,12 @@ module testbench_noc;
 		$display(" average packet latency = %f \n average flit latency = %f ",avg_latency_pck, avg_latency_flit);
 */		
 		$display("\n\tTotal injected packet in different size:");
-		for (m=0;m<=(MAX_PACKET_SIZE - MIN_PACKET_SIZE);m++) begin
-			$write("\tflit_size,");
+		$write("\tflit_size,");
+		for (m=0;m<=(MAX_PACKET_SIZE - MIN_PACKET_SIZE);m++) begin			
 			if(rsv_size_array[m]>0)$write("%0d,",m+ MIN_PACKET_SIZE);
 		end
-		for (m=0;m<=(MAX_PACKET_SIZE - MIN_PACKET_SIZE);m++) begin
-			$write("\n\t#pck,");
+		$write("\n\t#pck,");
+		for (m=0;m<=(MAX_PACKET_SIZE - MIN_PACKET_SIZE);m++) begin			
 			if(rsv_size_array[m]>0)$write("%0d,",rsv_size_array[m]);
 		end
 		
@@ -593,16 +603,12 @@ module testbench_noc;
 				//std_dev= standard_dev( sum_clk_pow2,total_rsv_pck_num, avg_latency_flit);
 				//$display(" standard_dev = %f",std_dev);
 		//`endif
-
-		$write("\n\n\t#node,sent_stat.pck_num,rsvd_stat.pck_num,sent_stat.flit_num,rsvd_stat.flit_num,sent_stat.worst_latency,rsvd_stat.worst_latency,sent_stat.min_latency,rsvd_stat.min_latency,avg_latency_per_hop,avg_latency_flit,avg_latency_pck,avg_throughput(%%),avg_pck_size,");
+		$display("\n\n\tEndpoints' statistics");
+		$write("\t#node,sent_stat.pck_num,rsvd_stat.pck_num,sent_stat.flit_num,rsvd_stat.flit_num,sent_stat.worst_latency,rsvd_stat.worst_latency,sent_stat.min_latency,rsvd_stat.min_latency,avg_latency_per_hop,avg_latency_flit,avg_latency_pck,avg_throughput(%%),avg_pck_size,");
 `ifdef STND_DEV_EN
 		$write("avg.std_dev");
 `endif
-		$write("\n");
-
-
-
-	
+		$write("\n");	
 		
 		for (m=0; m<NE;m++)begin
 			for (c=0; c<STAT_NUM;c++)begin
@@ -701,41 +707,7 @@ module testbench_noc;
 
    
 	initial begin
-
-		//print_parameter 
-		$display ("NoC parameters:----------------");
-		$display ("\tTopology: %s",TOPOLOGY);
-		$display ("\tRouting algorithm: %s",ROUTE_NAME);
-		$display ("\tVC_per port: %0d", V);
-		$display ("\tNon-local port buffer_width per VC: %0d", B);
-		$display ("\tLocal port buffer_width per VC: %0d", LB);
-		if(TOPOLOGY=="MESH" || TOPOLOGY=="TORUS")begin
-			$display ("\tRouter num in row: %0d",T1);
-			$display ("\tRouter num in column: %0d",T2);
-			$display ("\tEndpoint num per router: %0d",T3);
-		end else if (TOPOLOGY=="RING" || TOPOLOGY == "LINE") begin
-			$display ("\tTotal Router num: %0d",T1);
-			$display ("\tEndpoint num per router: %0d",T3);
-		end else if (TOPOLOGY == "TREE" ||  TOPOLOGY == "FATTREE")begin
-			$display ("\tK: %0d",T1);
-			$display ("\tL: %0d",T2);
-		end else begin //CUSTOM
-			$display ("\tTotal Endpoints number: %0d",T1);
-			$display ("\tTotal Routers number: %0d",T2);
-		end
-		$display ("\tNumber of Class: %0d", C);
-		$display ("\tFlit data width: %0d", Fpay);
-		$display ("\tVC reallocation mechanism: %s",  VC_REALLOCATION_TYPE);
-		$display ("\tVC/sw combination mechanism: %s", COMBINATION_TYPE);
-		$display ("\tAVC_ATOMIC_EN:%0d", AVC_ATOMIC_EN);
-		$display ("\tCongestion Index:%0d",CONGESTION_INDEX);
-		$display ("\tADD_PIPREG_AFTER_CROSSBAR:%0d",ADD_PIPREG_AFTER_CROSSBAR);
-		$display ("\tSSA_EN enabled:%s",SSA_EN);
-		$display ("\tSwitch allocator arbitration type:%s",SWA_ARBITER_TYPE);
-		$display ("\tMinimum supported packet size:%0d flit(s)",MIN_PCK_SIZE);
-		$display ("\tLoop back is enabled:%s",SELF_LOOP_EN);
-		$display ("\tNumber of multihop bypass (SMART max):%0d",SMART_MAX);
-		$display ("NoC parameters:----------------");		
+		display_noc_parameters();		
 		$display ("Simulation parameters-------------");
 		if(DEBUG_EN)
 			$display ("\tDebuging is enabled");
@@ -753,6 +725,12 @@ module testbench_noc;
 			//$display ("\tHot spot percentage: %u\n", HOTSPOT_PERCENTAGE);
 			$display ("\tNumber of hot spot cores: %0d", HOTSPOT_NODE_NUM);
 		end
+		if (CAST_TYPE != "UNICAST")begin
+			$display ("\tMULTICAST traffic ratio: %d(%%), min: %d, max: %d\n", MCAST_TRAFFIC_RATIO,MCAST_PCK_SIZ_MIN,MCAST_PCK_SIZ_MAX);
+		end 
+
+		
+		
 		//$display ("\tTotal packets sent by one router: %u\n", TOTAL_PKT_PER_ROUTER);
 		$display ("\tSimulation timeout =%0d", STOP_SIM_CLK);
 		$display ("\tSimulation ends on total packet num of =%0d", STOP_PCK_NUM);
@@ -799,7 +777,7 @@ module testbench_noc;
 			rsvd_stat[core_num][0].pck_num ++;
 		    rsvd_stat[core_num][0].sum_clk_h2h +=clk_num_h2h;
 		    rsvd_stat[core_num][0].sum_clk_h2t +=clk_num_h2t;
-		    rsvd_stat[core_num][0].sum_clk_per_hop+= (clk_num_h2h/$itor(distance));
+		    if(distance>0) rsvd_stat[core_num][0].sum_clk_per_hop+= (clk_num_h2h/$itor(distance));
 		    if (rsvd_stat[core_num][0].worst_latency < latency ) rsvd_stat[core_num][0].worst_latency=latency;
 		    if (rsvd_stat[core_num][0].min_latency==0          ) rsvd_stat[core_num][0].min_latency  =latency;
 		    if (rsvd_stat[core_num][0].min_latency   > latency ) rsvd_stat[core_num][0].min_latency  =latency;
@@ -946,6 +924,14 @@ module testbench_noc;
 			.start_o(start_o)
 		);
 	 */
+	
+	
+	routers_statistic_collector router_stat( 
+		.reset(reset),
+		.clk(clk),		
+		.router_event(router_event),
+		.print(print_router_st)
+	);
 
 endmodule
 // synthesis translate_on

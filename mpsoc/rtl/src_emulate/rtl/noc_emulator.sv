@@ -62,7 +62,8 @@ module  noc_emulator
 		.reset(reset),
 		.clk(clk),    
 		.chan_in_all(chan_in_all),
-		.chan_out_all(chan_out_all)  
+		.chan_out_all(chan_out_all),
+		.router_event()
 	);
 
  
@@ -536,6 +537,7 @@ module  traffic_gen_ram
          //noc
          .chan_in(chan_in),
 		 .chan_out(chan_out),  
+		 .mcast_dst_num_o()
 			
                
     );

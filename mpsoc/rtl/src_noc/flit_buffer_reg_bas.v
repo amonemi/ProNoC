@@ -69,8 +69,10 @@ module  flit_buffer_reg_base #(
    // input  [V-1        :0]  ssa_rd;
 
     wire [Fw-1       :0]  dout_all [V-1 : 0];    // Data out
-    reg  [VCw-1 : 0] class_vc [V-1 : 0];  
-    reg [REGFw-1 : 0] flit_regs [V-1 : 0];   // a register array save the head of each quque
+    wire [VCw-1 : 0] class_vc [V-1 : 0];
+    reg  [VCw-1 : 0] class_vc_next [V-1 : 0];  
+    wire [REGFw-1 : 0] flit_regs [V-1 : 0];   // a register array save the head of each quque
+    reg  [REGFw-1 : 0] flit_regs_next [V-1 : 0];
     reg [V-1 : 0] valid,valid_next; // if valid is asseted it shows the VC queue has a flit waiting to be sent 
 
     wire [Fw-1 : 0] bram_dout;
@@ -131,11 +133,7 @@ module  flit_buffer_reg_base #(
     
 
     flit_buffer #(
-        .V(V),
         .B(B),
-        .PCK_TYPE(PCK_TYPE),
-        .Fw(Fw),
-        .DEBUG_EN(DEBUG_EN),
         .SSA_EN("NO")// should be "NO" even if SSA is enabled
     )
     flit_buffer
@@ -151,7 +149,12 @@ module  flit_buffer_reg_base #(
         .vc_not_empty(bram_not_empty),
         .reset(reset),
         .clk(clk),
-        .ssa_rd({V{1'b0}})
+        .ssa_rd({V{1'b0}}),
+        .multiple_dest(),
+        .sub_rd_ptr_ld(),
+        .flit_is_tail()
+        
+       
     );
 
 
@@ -201,28 +204,33 @@ module  flit_buffer_reg_base #(
         assign  class_all[(i+1)*Cw-1 : i*Cw] = class_vc[i];
          
         
+      pronoc_register #(
+           .W(REGFw)          
+      ) reg1 ( 
+           .in(flit_regs_next[i]),
+           .reset(reset),    
+           .clk(clk),      
+           .out(flit_regs[i])
+      );
+      
+      
+       pronoc_register #(
+           .W(Cw)           
+      ) reg2 ( 
+           .in(class_vc_next[i]),
+           .reset(reset),    
+           .clk(clk),      
+           .out(class_vc[i])
+      );
+        
+        
        
-               
-           
-`ifdef SYNC_RESET_MODE 
-        always @ (posedge clk )begin 
-`else 
-        always @ (posedge clk or posedge reset)begin 
-`endif  
-            if(reset)begin 
-                flit_regs[i]<= {REGFw{1'b0}};
-                class_vc[i]<=  {Cw{1'b0}};
-            //    dest_port_encoded_vc[i]<={DSTPw{1'b0}}; 
-            end
-            else begin //1 :din, 0: bram
-               // if(pass_din_to_flit_reg_delaied[i] & (flit_reg_mux_sel_delay==1'b0)) $display("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-               // if( bram_out_is_valid_delaied[i] & flit_reg_mux_sel_delay)  $display("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR");
-                if(pass_din_to_flit_reg_delaied[i]) flit_regs[i] <= {din[Fw-1:Fw-2],din_reg[Fpay-1:0]} ;
-                if(bram_out_is_valid_delaied[i])    flit_regs[i] <= {bram_dout[Fw-1:Fw-2],bram_dout[Fpay-1:0]};
-                if(flit_reg_wr_en[i] & flit_reg_mux_out[REGFw-1] ) class_vc[i]<=class_i;// writing header flit 
-             //   if(destport_clear[i]>0) dest_port_encoded_vc<= dest_port_encoded_vc & ~destport_clear[i];
-              //  else if(flit_reg_wr_en[i] & flit_reg_mux_out[REGFw-1] ) dest_port_encoded_vc <=destport_i;
-            end
+        always @ (*)begin 
+            flit_regs_next[i] = flit_regs[i];
+            class_vc_next[i]  = class_vc[i];
+            if(pass_din_to_flit_reg_delaied[i]) flit_regs_next[i] = {din[Fw-1:Fw-2],din_reg[Fpay-1:0]} ;
+            if(bram_out_is_valid_delaied[i])    flit_regs_next[i] = {bram_dout[Fw-1:Fw-2],bram_dout[Fpay-1:0]};
+            if(flit_reg_wr_en[i] & flit_reg_mux_out[REGFw-1] ) class_vc_next[i] = class_i;// writing header flit 
         end 
         
        
@@ -230,12 +238,8 @@ module  flit_buffer_reg_base #(
         /* verilator lint_off WIDTH */
          /*
         if( ROUTE_TYPE=="DETERMINISTIC") begin : dtrmn_dest
-`ifdef SYNC_RESET_MODE 
-            always @ (posedge clk )begin 
-`else 
-            always @ (posedge clk or posedge reset)begin 
-`endif  
-                if(reset)begin 
+        always @ (`pronoc_clk_reset_edge )begin 
+               if(`pronoc_reset)begin  
                    
                 end else begin 
                     dest_port_encoded_vc[i]<= destport_in_encoded;  

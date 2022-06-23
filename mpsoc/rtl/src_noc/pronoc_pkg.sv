@@ -1,20 +1,24 @@
-`timescale     1ns/1ps
+`include "pronoc_def.v"
 /****************************************************************************
  * pronoc_pkg.sv
  ****************************************************************************/
 
 package pronoc_pkg; 
   
+	
+		
+	
   
 `define NOC_LOCAL_PARAM
 `include "noc_localparam.v"
+		
+		
+		
 
 `define  INCLUDE_TOPOLOGY_LOCALPARAM
 `include "topology_localparam.v"
-	
-	
 
-	
+
 
 localparam
 	Vw=  log2(V),
@@ -26,8 +30,8 @@ localparam
 	SMART_NUM= (SMART_EN) ? SMART_MAX : 1,	
 	NEV  = NE * V,
 	T4 = 0,
-	BEw = (BYTE_EN)? log2(Fpay/8) : 1,
-	DELAYw = EAw+2; //Injector start delay counter width
+	BEw = (BYTE_EN)? log2(Fpay/8) : 1;
+	
 
 
  localparam CONGw= (CONGESTION_INDEX==3)?  3:
@@ -40,7 +44,7 @@ localparam
 
  localparam 
  	E_SRC_LSB =0,                   E_SRC_MSB = E_SRC_LSB + EAw-1,
- 	E_DST_LSB = E_SRC_MSB +1,       E_DST_MSB = E_DST_LSB + EAw-1,  
+ 	E_DST_LSB = E_SRC_MSB +1,       E_DST_MSB = E_DST_LSB + DAw-1,  
  	DST_P_LSB = E_DST_MSB + 1,      DST_P_MSB = DST_P_LSB + DSTPw-1, 
  	CLASS_LSB = DST_P_MSB + 1,      CLASS_MSB = CLASS_LSB + Cw -1, 
  	MSB_CLASS = (C>1)? CLASS_MSB : DST_P_MSB,
@@ -178,7 +182,8 @@ localparam
 		logic flit_is_tail;
 		logic assigned_ovc_not_full;
 		logic [V-1  : 0] candidate_ovc;
-		logic [Cw-1 : 0] class_num;			
+		logic [Cw-1 : 0] class_num;
+		logic single_flit_pck;
 		
 	} ivc_info_t;
 	localparam  IVC_INFO_w = $bits( ivc_info_t);
@@ -196,17 +201,17 @@ localparam
 	}ovc_info_t;
 	localparam  OVC_INFO_w = $bits( ovc_info_t);
 	
+
+		
 	
-	
-    
-	
+		
 /*********************
 * router_chanels 
 *********************/
 	
 	typedef struct packed {	
 		logic [EAw-1 	: 0] src_e_addr;
-		logic [EAw-1 	: 0] dest_e_addr;
+		logic [DAw-1 	: 0] dest_e_addr;
 		logic [DSTPw-1	: 0] destport;    
 		logic [Cw-1		: 0] message_class;
 		logic [WEIGHTw-1: 0] weight;
@@ -230,8 +235,6 @@ localparam
 		Fw = FLIT_w,
 		NEFw = NE *Fw;	
 	
-	
-	
 	typedef struct packed {	
 		logic  flit_wr;
 		logic  [V-1 :  0]  credit;
@@ -240,22 +243,28 @@ localparam
 	} flit_chanel_t;
 	localparam FLIT_CHANEL_w = $bits(flit_chanel_t); 
 	
-	
+	localparam BYPASSw = log2(SMART_NUM+1);
 	typedef struct packed {
 		logic [SMART_NUM-1: 0] requests;
 		logic [V-1   	: 0] ovc;		
 		logic [EAw-1 	: 0] dest_e_addr;
 		bit   hdr_flit;
+		bit   flit_in_bypassed; 
+		logic [BYPASSw-1 : 0] bypassed_num;
 	} smart_chanel_t;
 	localparam SMART_CHANEL_w = $bits(smart_chanel_t);
 	
 
 	localparam CRDTw = (B>LB) ? log2(B+1) : log2(LB+1);
 	typedef struct packed {
+		bit    endp_port;  // if it is one, it means the corresponding port is connected o an endpoint
 		logic [RAw-1:   0]  neighbors_r_addr;
-		logic [V-1  :0] [CRDTw-1: 0] credit_init_val; // the connected port initial credit value. It is taken at reset time		
+		logic [V-1  :0] [CRDTw-1: 0] credit_init_val; // the connected port initial credit value. It is taken at reset time	
+		logic [V-1  :0] credit_release_en;
 	} ctrl_chanel_t; 
 	localparam CTRL_CHANEL_w = $bits(ctrl_chanel_t);
+	
+	
 	
 	typedef struct packed {
 		flit_chanel_t    flit_chanel;
@@ -270,6 +279,9 @@ localparam
 /***********
  * simulation
  * **********/
+	
+	localparam DELAYw = EAw+2; //Injector start delay counter width
+	
  	typedef struct packed {
  		integer   ip_num;
 		bit send_enable;
@@ -290,7 +302,7 @@ localparam
  	typedef struct packed {
  		logic [PCK_INJ_Dw-1 : 0] data;
  		logic [PCK_SIZw-1 : 0] size;
- 		logic [EAw-1 : 0] endp_addr; 
+ 		logic [DAw-1 : 0] endp_addr; 
  		logic [Cw-1  : 0] class_num; 
  		logic [WEIGHTw-1   : 0] init_weight;
  		logic [V-1   : 0] vc;
@@ -301,7 +313,16 @@ localparam
     }	pck_injct_t;
     localparam PCK_INJCT_w = $bits(pck_injct_t); 
     
- 	
+    typedef struct packed {
+    	logic [BYPASSw-1 : 0] bypassed_num;
+    	bit flit_wr_i;
+    	bit pck_wr_i;
+    	bit flit_wr_o;
+    	bit pck_wr_o;
+    	bit flit_in_bypassed;    	
+    } router_event_t;
+    localparam ROUTER_EVENT_w = $bits(router_event_t); 
+    
 	
 endpackage : pronoc_pkg
 

@@ -3,8 +3,8 @@
 
  
 
-void topology_connect_all_nodes (void){
-	router1[0]->current_r_addr = 0;
+void topology_connect_all_nodes_old (void){
+
 
 	unsigned int pos;
 	for ( pos = 0; pos <  NE; pos=pos+1 ) {// : endpoints   
@@ -17,6 +17,15 @@ void topology_connect_all_nodes (void){
 	}//pos 
 }
 
+void topology_connect_r2r (unsigned int n){
+
+}
+
+void topology_connect_r2e (unsigned int n){
+	connect_r2e(1,0,n,n);
+}
+
+
 
 
 unsigned int endp_addr_encoder ( unsigned int id){
@@ -24,10 +33,16 @@ unsigned int endp_addr_encoder ( unsigned int id){
 }
 
 unsigned int endp_addr_decoder (unsigned int code){
-    return id;
+    return code;
 }
 
 void topology_init (void){
+	router1[0]->current_r_addr = 0;
+	router1[0]->current_r_id   = 0;
+	for ( int pos = 0; pos <  NE; pos=pos+1 ) {// : endpoints
+		  er_addr [pos] = 0;
+
+	}
 
 }
 

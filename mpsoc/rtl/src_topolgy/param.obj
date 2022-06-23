@@ -1,9 +1,9 @@
 #######################################################################
 ##	File: /home/alireza/work/git/hca_git/ProNoC/mpsoc/rtl/src_topolgy/param.obj
 ##    
-##	Copyright (C) 2014-2019  Alireza Monemi
+##	Copyright (C) 2014-2021  Alireza Monemi
 ##    
-##	This file is part of ProNoC 1.9.1 
+##	This file is part of ProNoC 2.0.0 
 ##
 ## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
 ##	MAY CAUSE UNEXPECTED BEHAVIOR.
@@ -11,15 +11,12 @@
 
 $Topology = {
               '"custom1"' => {
-                               'T3' => 5,
-                               'ROUTE_NAME' => '"custom"',
                                'T2' => 16,
                                'ROUTER_Ps' => {
                                                 '4' => 8,
-                                                '5' => 4,
-                                                '3' => 4
+                                                '3' => 4,
+                                                '5' => 4
                                               },
-                               'T1' => 16,
                                'er_addr' => [
                                               0,
                                               1,
@@ -37,6 +34,36 @@ $Topology = {
                                               13,
                                               14,
                                               15
-                                            ]
+                                            ],
+                               'T1' => 16,
+                               'ROUTE_NAME' => '"custom"',
+                               'T3' => 5
+                             },
+              '"mesh4x4"' => {
+                               'T2' => 16,
+                               'ROUTER_Ps' => {
+                                                '5' => 16
+                                              },
+                               'er_addr' => [
+                                              4,
+                                              5,
+                                              6,
+                                              7,
+                                              8,
+                                              9,
+                                              10,
+                                              11,
+                                              0,
+                                              1,
+                                              2,
+                                              3,
+                                              12,
+                                              13,
+                                              14,
+                                              15
+                                            ],
+                               'ROUTE_NAME' => '"custom","m4"',
+                               'T1' => 16,
+                               'T3' => 5
                              }
             };

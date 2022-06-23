@@ -322,10 +322,12 @@ sub gen_noc_param_v{
 	my $pass_param="";
 	my @params=$mpsoc->object_get_attribute_order('noc_param');
 	my $custom_topology = $mpsoc->object_get_attribute('noc_param','CUSTOM_TOPOLOGY_NAME');
+	my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info($mpsoc);
 	my %noc_info;
 	if(defined $sample ){
 		my $ref=$mpsoc->object_get_attribute($sample,"noc_info"); 
-		%noc_info= %$ref;		
+		%noc_info= %$ref;	
+		($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info_from_parameters($ref);			
 	}
 	
 	foreach my $p (@params){
@@ -333,6 +335,10 @@ sub gen_noc_param_v{
 		my $val= (defined $sample) ? $noc_info{$p} :$mpsoc->object_get_attribute('noc_param',$p);
 		next if($p eq "CUSTOM_TOPOLOGY_NAME");
 		$val=$custom_topology if($p eq "TOPOLOGY" && $val eq "\"CUSTOM\"");
+		if($p eq 'MCAST_ENDP_LIST'){
+			
+			$val="$NE".$val;
+		}
 		$param_v= $param_v."\tlocalparam $p=$val;\n";
 		$pass_param=$pass_param."\t\t.$p($p),\n";
 		#print "$p:$val\n";
@@ -376,6 +382,10 @@ sub gen_noc_param_h{
 	$topology =~ s/"//g;
 	$param_h.="\t#define  IS_${topology}\n";
 	
+	my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info($mpsoc);
+	
+	
+	
 	
 	my @params=$mpsoc->object_get_attribute_order('noc_param');
 	my $custom_topology = $mpsoc->object_get_attribute('noc_param','CUSTOM_TOPOLOGY_NAME');
@@ -383,6 +393,12 @@ sub gen_noc_param_h{
 		my $val=$mpsoc->object_get_attribute('noc_param',$p);
 		next if($p eq "CUSTOM_TOPOLOGY_NAME");
 		$val=$custom_topology if($p eq "TOPOLOGY" && $val eq "\"CUSTOM\"");
+		if($p eq "MCAST_ENDP_LIST" || $p eq "ESCAP_VC_MASK"){
+			$val="$NE".$val if($p eq 'MCAST_ENDP_LIST');
+			$val =~ s/\'/\\\'/g;
+			$val="\"$val\"";			
+		}
+		
 		$param_h=$param_h."\t#define $p\t$val\n";
 		
 		#print "$p:$val\n";
@@ -415,7 +431,9 @@ sub gen_noc_param_h{
 	#add_text_to_string (\$pass_param,".CVw(CVw)\n");
 	
 	
-	
+	#remove 'b and 'h
+	#$param_h =~ s/\d\'b/ /g;
+	#$param_h =~ s/\'h/ /g;
 	
 	return  $param_h;	
 }
@@ -448,7 +466,8 @@ sub gen_noc_v{
 		.reset(noc_reset_in),
 		.clk(noc_clk_in),    
 		.chan_in_all(ni_chan_out),
-		.chan_out_all(ni_chan_in)  
+		.chan_out_all(ni_chan_in),
+		.router_event( )  
 	);
           
 	

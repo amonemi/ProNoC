@@ -83,6 +83,8 @@ void topology_init (void){
 	//assign current_pos_addr [ROOT_ID] = {LKw{1'b0}}; 
 	unsigned int addr = ROOT_L << LKw; 
 	router1[ROOT_ID]->current_r_addr = addr; 
+	router1[ROOT_ID]->current_r_id   = ROOT_ID;
+
 
 	unsigned int pos,level;
 	unsigned int num = 0;
@@ -109,7 +111,7 @@ void topology_init (void){
 			//assign  router_chan_out [ID1][K] = router_chan_in [ID2][PORT2];
 			//assign  router_chan_out [ID2][PORT2]= router_chan_in[ID1][K];  
 			//bintree_connect(Ti(ID1),Ri(ID1),port,Ti(ID2),Ri(ID2),PORT2);
-		    r2r_cnt_all[num] =(r2r_cnt_table_t){.t1=Ti(ID1), .r1=Ri(ID1), .p1=K, .t2=Ti(ID2), .r2=Ri(ID2), .p2=PORT2 };    			
+		    r2r_cnt_all[num] =(r2r_cnt_table_t){.id1=ID1, .t1=Ti(ID1), .r1=Ri(ID1), .p1=K,.id2=ID2, .t2=Ti(ID2), .r2=Ri(ID2), .p2=PORT2 };    			
 
 			
 			   
@@ -120,6 +122,8 @@ void topology_init (void){
 			unsigned int addr = (current_layer_addr << LKw)| current_pos_addr;    
        		
 			router2[Ri(ID1)]->current_r_addr = addr;
+			router2[Ri(ID1)]->current_r_id   = ID1;
+
 			//printf( "[%u] =(addr=%x), t1=%u, r1=%u, p1=%u, t2=%u, r2=%u, p2=%u \n",  num,addr, r2r_cnt_all[num].t1, r2r_cnt_all[num].r1, r2r_cnt_all[num].p1, r2r_cnt_all[num].t2, r2r_cnt_all[num].r2, r2r_cnt_all[num].p2 );
 
 
@@ -133,6 +137,7 @@ void topology_init (void){
     
 		} //level
 
+		R2R_TABLE_SIZ=num;
 
 		// connect }points 
    
@@ -154,6 +159,15 @@ void topology_init (void){
 }
  
 
+void topology_connect_r2r (int n){
+	fattree_connect(r2r_cnt_all[n]);
+}
+
+void topology_connect_r2e (int n){
+	connect_r2e(2,r2e_cnt_all[n].r1,r2e_cnt_all[n].p1,n);
+}
+
+/*
 void topology_connect_all_nodes (void){
 	unsigned int pos,level;
 	unsigned int num=0;
@@ -180,7 +194,7 @@ void topology_connect_all_nodes (void){
 	} 
 }
 
-
+*/
 
 unsigned int get_mah_distance ( unsigned int id1, unsigned int id2){
 

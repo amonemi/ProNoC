@@ -1,4 +1,4 @@
-`timescale     1ns/1ps
+`include "pronoc_def.v"
 
 //`define MONITORE_PATH
 
@@ -36,6 +36,7 @@ module router_two_stage
 		# (
 			parameter P = 6     // router port num		   
 		)(
+		current_r_id,
 		current_r_addr,// connected to constant parameter  
 		
 		chan_in,
@@ -64,6 +65,7 @@ module router_two_stage
 	// compilation time. Note that they wont be implemented as  input ports in the final synthesized code. 
 
 	input [RAw-1 :  0]  current_r_addr;
+	input [31:0] current_r_id;
 	
 	input   flit_chanel_t chan_in  [P-1 : 0];
 	output  flit_chanel_t chan_out [P-1 : 0];
@@ -97,7 +99,7 @@ module router_two_stage
 		PRAw= P * RAw;     
 	
 	
-	
+	flit_chanel_t chan_in_tmp  [P-1 : 0];
 	
     
 
@@ -111,7 +113,7 @@ module router_two_stage
 	wire  [PV-1 :  0]  credit_in_all;
 	wire  [CONG_ALw-1 :  0]  congestion_out_all;
     
-	
+	wire  [PV-1 : 0] credit_release_out;
 	
 
 	// old router verilog code
@@ -138,7 +140,7 @@ module router_two_stage
 	wire  [PV-1 : 0] ivc_request_all;
 	wire  [PV-1 : 0] assigned_ovc_not_full_all;
 	wire  [PVV-1: 0] masked_ovc_request_all;
-	wire  [PV-1 : 0] pck_is_single_flit_all; 
+	
 	wire  [PV-1 : 0] vc_weight_is_consumed_all;
 	wire  [P-1  : 0] iport_weight_is_consumed_all;       
     wire  [PV-1 : 0] vsa_ovc_released_all;  
@@ -147,7 +149,7 @@ module router_two_stage
 	// to/from the crossbar
 	wire  [PFw-1 : 0] iport_flit_out_all;
 	wire  [P-1 : 0] ssa_flit_wr_all;
-	reg   [PP_1-1 : 0] granted_dest_port_all_delayed;
+	logic [PP_1-1 : 0] granted_dest_port_all_delayed;
 	wire  [PFw-1 :  0]  crossbar_flit_out_all;
 	wire  [P-1   :  0]  crossbar_flit_out_wr_all;
 	wire  [PFw-1 :  0]  link_flit_out_all;
@@ -168,19 +170,45 @@ module router_two_stage
 	
 	
 	
+	
+	
+	
 	genvar i,j;
-	generate for (i=0; i<P; i=i+1 ) begin :p_
+	generate 		
+		for (i=0; i<P; i=i+1 ) begin :p_
+			
+			if(CAST_TYPE == "UNICAST") begin : uni 
+				assign chan_in_tmp[i] = chan_in[i];			
+			end else begin : multi
+				multicast_chan_in_process #(
+					.P(P), 
+					.SW_LOC  (i)
+				) multicast_process (
+					.endp_port       (ctrl_in[i].endp_port),
+					.current_r_addr  (current_r_addr ), 
+					.chan_in         (chan_in[i]     ), 
+					.chan_out        (chan_in_tmp[i] ),
+					.clk			 (clk)
+				);
+			
+			end	
+			
+			
 			assign  neighbors_r_addr  [(i+1)*RAw-1:  i*RAw] = ctrl_in[i].neighbors_r_addr;			
-			assign  flit_in_all       [(i+1)*Fw-1:  i*Fw] = chan_in[i].flit;
-			assign  flit_in_wr_all    [i] = chan_in[i].flit_wr;   
-			assign  credit_in_all     [(i+1)*V-1:  i*V] = chan_in[i].credit;
-			assign  congestion_in_all [(i+1)*CONGw-1:  i*CONGw] = chan_in[i].congestion; 
+			assign  flit_in_all       [(i+1)*Fw-1:  i*Fw] = chan_in_tmp[i].flit;
+			assign  flit_in_wr_all    [i] = chan_in_tmp[i].flit_wr;   
+			assign  credit_in_all     [(i+1)*V-1:  i*V] = chan_in_tmp[i].credit;
+			assign  congestion_in_all [(i+1)*CONGw-1:  i*CONGw] = chan_in_tmp[i].congestion; 
 			
 			assign  ctrl_out[i].neighbors_r_addr = current_r_addr;
+			assign  ctrl_out[i].endp_port =1'b0;
+			
+			
 			assign  chan_out[i].flit=          flit_out_all       [(i+1)*Fw-1:  i*Fw];       
 			assign  chan_out[i].flit_wr=       flit_out_wr_all    [i];                       
-			assign  chan_out[i].credit=        credit_out_all     [(i+1)*V-1:  i*V];         
+			assign  chan_out[i].credit=        credit_out_all     [(i+1)*V-1:  i*V] | credit_release_out [(i+1)*V-1:  i*V];         
 			assign  chan_out[i].congestion=    congestion_out_all [(i+1)*CONGw-1:  i*CONGw];
+			
 			
 			assign  iport_info[i].swa_first_level_grant =nonspec_first_arbiter_granted_ivc_all[(i+1)*V-1:  i*V]; 
 			assign  iport_info[i].swa_grant = ivc_num_getting_sw_grant[(i+1)*V-1:  i*V]; 			
@@ -209,9 +237,28 @@ module router_two_stage
 			end
 			
 			for (j=0;j<V;j++)begin :V_
-				assign credit_init_val_in[i][j]      = ctrl_in[i].credit_init_val[j];
-				assign ctrl_out[i].credit_init_val[j] = credit_init_val_out [i][j];				
+				
+				//credit_release. Only activated for local ports as credit_release_en never be asserted in router to router connection.  
+				credit_release_gen #(
+					.CREDIT_NUM  (LB)
+				) credit_release_gen (
+					.clk         (clk        ), 
+					.reset       (reset      ), 
+					.en          (ctrl_in[i].credit_release_en[j] ), 
+					.credit_out  (credit_release_out[i*V+j] )
+				);
+				
+				
+				assign ctrl_out[i].credit_release_en[j] =1'b0;
+				assign credit_init_val_in[i][j]       = ctrl_in[i].credit_init_val[j];
+				assign ctrl_out[i].credit_init_val[j] = credit_init_val_out [i][j];		
+				
+				
+				
+				
 			end
+			
+			
 			
 		end		
 	endgenerate
@@ -231,8 +278,7 @@ module router_two_stage
 			.flit_in_wr_all(flit_in_wr_all),
 			.credit_out_all(credit_out_all),
 			.credit_in_all(credit_in_all),
-			.masked_ovc_request_all(masked_ovc_request_all),
-			.pck_is_single_flit_all(pck_is_single_flit_all),
+			.masked_ovc_request_all(masked_ovc_request_all),			
 			.granted_dst_is_from_a_single_flit_pck(granted_dst_is_from_a_single_flit_pck),
 			.vsa_ovc_allocated_all(ovc_allocated_all), 
 			.granted_ovc_num_all(granted_ovc_num_all), 
@@ -276,23 +322,12 @@ module router_two_stage
 
 
 	combined_vc_sw_alloc #(
-			.V(V),    
-			.P(P), 
-			.COMBINATION_TYPE(COMBINATION_TYPE),
-			.FIRST_ARBITER_EXT_P_EN (FIRST_ARBITER_EXT_P_EN),
-			.SWA_ARBITER_TYPE (SWA_ARBITER_TYPE ), 
-			.DEBUG_EN(DEBUG_EN),
-			.MIN_PCK_SIZE(MIN_PCK_SIZE),
-			.SELF_LOOP_EN(SELF_LOOP_EN)
+			.P(P)			
 		)
 		vsa
 		(
 			.dest_port_all(dest_port_all), 
-			.masked_ovc_request_all(masked_ovc_request_all),
-			.ovc_is_assigned_all(ovc_is_assigned_all), 
-			.ivc_request_all(ivc_request_all), 
-			.assigned_ovc_not_full_all(assigned_ovc_not_full_all), 
-			.pck_is_single_flit_all(pck_is_single_flit_all),
+			.masked_ovc_request_all(masked_ovc_request_all),			
 			.granted_dst_is_from_a_single_flit_pck(granted_dst_is_from_a_single_flit_pck),
 			.ovc_allocated_all(ovc_allocated_all), 
 			.granted_ovc_num_all(granted_ovc_num_all), 
@@ -309,26 +344,14 @@ module router_two_stage
 			// .lk_destination_all(lk_destination_all),  
 			.vc_weight_is_consumed_all(vc_weight_is_consumed_all),  
 			.iport_weight_is_consumed_all(iport_weight_is_consumed_all),  
+			.ivc_info(ivc_info),
 			.clk(clk), 
 			.reset(reset)
 		);
         
-		
+	pronoc_register #(.W(PP_1)) reg2 (.in(granted_dest_port_all ), .out(granted_dest_port_all_delayed), .reset(reset), .clk(clk));
 	
-	
-   
-	`ifdef SYNC_RESET_MODE 
-		always @ (posedge clk )begin 
-		`else 
-			always @ (posedge clk or posedge reset)begin 
-			`endif  
-			if(reset) begin 
-				granted_dest_port_all_delayed<= {PP_1{1'b0}};            
-			end else begin
-				granted_dest_port_all_delayed<= granted_dest_port_all;            
-			end    
-		end//always
-    
+	    
 		crossbar #(
 				
 				.TOPOLOGY(TOPOLOGY),
@@ -358,20 +381,10 @@ module router_two_stage
                 
 			reg [PFw-1 : 0] flit_out_all_pipe;
 			reg [P-1 : 0] flit_out_wr_all_pipe;
-            
-			`ifdef SYNC_RESET_MODE 
-				always @ (posedge clk )begin 
-			`else 
-				always @ (posedge clk or posedge reset)begin 
-			`endif  
-				if(reset)begin
-					flit_out_all_pipe    <=  {PFw{1'b0}};
-					flit_out_wr_all_pipe <=  {P{1'b0}};
-				end else begin
-					flit_out_all_pipe     <=  crossbar_flit_out_all;
-					flit_out_wr_all_pipe  <=  crossbar_flit_out_wr_all;               
-				end
-			end        
+			
+			pronoc_register #(.W(PFw)) reg1 (.in(crossbar_flit_out_all    ), .out(flit_out_all_pipe), .reset(reset), .clk(clk));
+			pronoc_register #(.W(P)  ) reg2 (.in(crossbar_flit_out_wr_all ), .out(flit_out_wr_all_pipe), .reset(reset), .clk(clk));
+					
             
 			assign link_flit_out_all    = flit_out_all_pipe;
 			assign link_flit_out_wr_all = flit_out_wr_all_pipe;       
@@ -493,14 +506,16 @@ module router_two_stage
 						t1[i]<=1'b0;
 						t2[i]<=1'b0;             
 					end else begin 
-						if(flit_in_wr_all[i]>0 && t1[i]==0)begin 
-							$display("%t :In router (addr=%h, port=%d), flitin=%h",$time,current_r_addr,i,flit_in_all[(i+1)*Fw-1 : i*Fw]);
-							t1[i]<=1;
-						end
 						if(flit_out_wr_all[i]>0 && t2[i]==0)begin 
-							$display("%t :Out router (addr=%h, port=%d), flitout=%h",$time,current_r_addr,i,flit_out_all[(i+1)*Fw-1 : i*Fw]);
+							$display("%t :Out router (id=%d, addr=%h, port=%d), flitout=%h",$time,current_r_id,current_r_addr,i,flit_out_all[(i+1)*Fw-1 : i*Fw]);
 							t2[i]<=1;
 						end
+						
+						if(flit_in_wr_all[i]>0 && t1[i]==0)begin 
+							$display("%t :In router (id=%d, addr=%h, port=%d), flitin=%h",$time,current_r_id,current_r_addr,i,flit_in_all[(i+1)*Fw-1 : i*Fw]);
+							t1[i]<=1;
+						end
+						
             
             
 					end
@@ -518,8 +533,8 @@ module router_two_stage
     reg [10 :  0]  counter;
     reg [31 :  0]  flit_counter;
     
-    always @(posedge clk or posedge reset) begin
-        if(reset) begin 
+    always @ (`pronoc_clk_reset_edge )begin 
+		if(`pronoc_reset) begin 
             flit_counter <=0;
             counter <= 0;
         end else begin 
@@ -541,4 +556,47 @@ module router_two_stage
 
 
 endmodule
+
+
+
+module credit_release_gen
+	import pronoc_pkg::*;
+#(
+	parameter CREDIT_NUM=4
+)(
+	clk,
+	reset,
+	en,
+	credit_out		
+);
+	input  clk,	reset;
+	input  en;
+	output reg credit_out;		
+	
+	localparam W=log2(CREDIT_NUM +1);
+	
+	reg [W-1 : 0] counter;
+	wire counter_is_zero = counter=={W{1'b0}};	
+	wire counter_is_max = counter==CREDIT_NUM;
+	wire counter_incr = (en & counter_is_zero ) | (~counter_is_zero & ~counter_is_max);
+	
+	
+	
+			
+	always @ (`pronoc_clk_reset_edge )begin 
+		if(`pronoc_reset) begin 
+			counter <= {W{1'b0}};	
+			credit_out<=1'b0;
+		end else begin 
+			if(counter_incr) begin 
+				counter<= counter +1'b1;
+				credit_out<=1'b1;
+			end else begin 
+				credit_out<=1'b0;				
+			end
+		end
+	end
+			
+	
+endmodule	
 

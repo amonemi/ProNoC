@@ -577,7 +577,7 @@ end
     
       
     
-    
+    assign chan_out.ctrl_chanel.endp_port =1'b1;
     
     
     
@@ -985,26 +985,26 @@ end
     
     wire [Fw-1  :   0] fifo_dout;
     
+    localparam LBw = log2(LB);
+    
     flit_buffer #(
-        .V(V),
         .B(LB),
-        .PCK_TYPE(PCK_TYPE),
-        .Fw(Fw),
-        .DEBUG_EN(DEBUG_EN),
         .SSA_EN("NO")
      )
      the_ififo
      (
         .din(flit_in),     // Data in
-        .vc_num_wr(flit_in_vc_num),//write vertual chanel    
+        .vc_num_wr(flit_in_vc_num),//write virtual chanel    
         .wr_en(flit_in_wr),   // Write enable
-        .vc_num_rd(receive_vc_enable),//read vertual chanel     
+        .vc_num_rd(receive_vc_enable),//read virtual chanel     
         .rd_en(fifo_rd),   // Read the next word
         .dout(fifo_dout),    // Data out
         .vc_not_empty(ififo_vc_not_empty),
         .reset(reset),
         .clk(clk),
-        .ssa_rd({V{1'b0}})   
+        .ssa_rd({V{1'b0}}),
+        .multiple_dest(),
+        .sub_rd_ptr_ld()  
     ); 
     
    extract_header_flit_info #(

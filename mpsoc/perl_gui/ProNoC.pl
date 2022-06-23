@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl 
 package ProNOC;
 
 
@@ -22,10 +22,11 @@ use Consts;
 use Getopt::Long;
 use base 'Class::Accessor::Fast';
 
-
-our $FONT_SIZE='default';
-our $ICON_SIZE='default';
-
+our %glob_setting;
+$glob_setting{'FONT_SIZE'}='default';
+$glob_setting{'ICON_SIZE'}='default';
+$glob_setting{'DSPLY_X'}  ='default';
+$glob_setting{'DSPLY_Y'}  ='default';
 
 BEGIN {
     my $module = (Consts::GTK_VERSION==2) ? 'Gtk2' : 'Gtk3';
@@ -67,14 +68,15 @@ $| = 1;
 
 
 sub main{
-	# check if envirement variables are defined
+	# check if environment variables are defined
+	#STDERR->autoflush ;
 	my $project_dir	  = get_project_dir(); #mpsoc dir addr
 	my $paths_file= "$project_dir/mpsoc/perl_gui/lib/Paths";
 	if (-f 	$paths_file){#} && defined $ENV{PRONOC_WORK} ) {
 		my $paths= do $paths_file;
-		my %p=%{$paths};
-		$FONT_SIZE= $p{'GUI_SETTING'}{'FONT_SIZE'} if (defined $p{'GUI_SETTING'}{'FONT_SIZE'});
-		$ICON_SIZE= $p{'GUI_SETTING'}{'ICON_SIZE'} if (defined $p{'GUI_SETTING'}{'ICON_SIZE'});
+		
+		set_gui_setting($paths);
+		
 		main_window();		
 	}
 	else{
@@ -91,6 +93,8 @@ sub main_window{
 	set_path_env();
 
 	my($width,$hight)=max_win_size();
+	#print "($width,$hight)\n";
+	
 	set_defualt_font_size();
 	
 	if ( !defined $ENV{PRONOC_WORK} ) {
@@ -345,9 +349,13 @@ sub show_setting{
 		my  ($file_path,$text)=@_;
 		$set_win->destroy;
 		
-		my $new_fontsize = $self->object_get_attribute('GUI_SETTING', 'FONT_SIZE');
-		my $new_icon_size= $self->object_get_attribute('GUI_SETTING', 'ICON_SIZE');
-		if($new_fontsize ne $FONT_SIZE || $new_icon_size ne $ICON_SIZE){
+		my %new_setting = %{$self->object_get_attribute('GUI_SETTING')};
+		my $eq=1;
+		foreach my $k (sort keys %new_setting){
+			$eq= 0 if	$new_setting{$k} ne $glob_setting{$k};
+		}
+			
+		if($eq ==0){
 			restart_Pronoc ();
 		}
 		
@@ -538,15 +546,27 @@ sub get_gui_setting{
 	my ($self,$set_win,$reset)=@_;
 	my $table = def_table(10, 1, FALSE);
 	
-	
+	my $w="default";
+	for (my $i=100;$i<3000;$i+=100) {$w.= ",$i";} 
 
 	my @gui=(
-	{ label=>'Font size:', param_name=>'FONT_SIZE', type=>'Combo-box', default_val=> $FONT_SIZE, 
+	{ label=>'Font size:', param_name=>'FONT_SIZE', type=>'Combo-box', default_val=> $glob_setting{'FONT_SIZE'},
 	  content=>"default,5,6,7,8,9,10,11,12,13,14,15", info=>undef, 
 	  param_parent=>"GUI_SETTING", ref_delay=> undef, new_status=>undef},
-	  { label=>'ICON size:', param_name=>'ICON_SIZE', type=>'Combo-box', default_val=> $ICON_SIZE, 
+	
+	{ label=>'ICON size:', param_name=>'ICON_SIZE', type=>'Combo-box', default_val=> $glob_setting{'ICON_SIZE'},
 	  content=>"default,11,14,17,20,23,26,29,32,35,38,41", info=>undef, 
-	  param_parent=>"GUI_SETTING", ref_delay=> undef, new_status=>undef}, 	  	  
+	  param_parent=>"GUI_SETTING", ref_delay=> undef, new_status=>undef},
+	  
+	  
+	{ label=>'Display width:', param_name=>'DSPLY_X', type=>'Combo-box', default_val=> $glob_setting{'DSPLY_X'},
+	  content=>"$w", info=>undef, 
+	  param_parent=>"GUI_SETTING", ref_delay=> undef, new_status=>undef}, 	  
+	  
+	  
+	{ label=>'Display height:', param_name=>'DSPLY_Y', type=>'Combo-box', default_val=> $glob_setting{'DSPLY_Y'},
+	  content=>"$w", info=>undef, 
+	  param_parent=>"GUI_SETTING", ref_delay=> undef, new_status=>undef}, 	   	  	  
 	
 	);
 	

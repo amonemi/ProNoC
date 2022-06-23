@@ -1,8 +1,21 @@
-#!/bin/sh
+#!/bin/bash
 
 # run the following line in terminal to install the necessary packages
-#    sudo sh install.sh 
+#    sudo bash install.sh 
 
+
+
+
+shel=$(ps -p $$);
+shel=${shel##* }
+
+if [ "$shel" !=  "bash" ] 
+then
+  echo "make sure that you source this script in a bash shell"
+  echo "The current shel is ($shel), aborting" 
+  exit
+fi
+if [ $SUDO_USER ]; then user=$SUDO_USER; else user=`whoami`; fi
 
 #the current script path
 	SCRPT_FULL_PATH=$(realpath ${BASH_SOURCE[0]})
@@ -13,10 +26,11 @@
 
 
 
+
 #list of packages
 LIST_OF_APPS="build-essential  libpango1.0-dev clang lib32z1 libgd-graph-perl libgd-gd2-perl libglib-perl cpanminus libusb-1.0 graphviz libcanberra-gtk-module unzip xterm verilator wget python python-pip curl" 
 
-PERL_LIBS="ExtUtils::Depends ExtUtils::PkgConfig Glib Pango String::Similarity  IO::CaptureOutput Proc::Background List::MoreUtils File::Find::Rule  Verilog::EditFiles IPC::Run File::Which Class::Accessor String::Scanf File::Copy::Recursive  GD::Graph::bars3d GD::Graph::linespoints GD::Graph::Data constant::boolean Event::MakeMaker Glib::Event" 
+PERL_LIBS="ExtUtils::Depends ExtUtils::PkgConfig Glib Pango String::Similarity  IO::CaptureOutput Proc::Background List::MoreUtils File::Find::Rule  Verilog::EditFiles IPC::Run File::Which Class::Accessor String::Scanf File::Copy::Recursive  GD::Graph::bars3d GD::Graph::linespoints GD::Graph::Data constant::boolean Event::MakeMaker Glib::Event Chart::Gnuplot" 
 
 
 
@@ -41,7 +55,7 @@ done
 echo "#This file is created by ${SCRPT_DIR_PATH}/intsall.sh
 package Consts;
 
-use constant VERSION  => '2.0.0'; 
+use constant VERSION  => '2.1.0'; 
 use constant END_YEAR => '2021';
 use constant GTK_VERSION => '$gtk_version';
 
@@ -80,8 +94,9 @@ else
 	cpanm $PERL_GTK3
 fi
 
-
-
+#install icon
+cp $SCRPT_DIR_PATH/perl_gui/icons/ProNoC.png  /usr/local/share/icons/hicolor/128x128/apps/
+cp $SCRPT_DIR_PATH/perl_gui/icons/ProNoC.svg  /usr/local/share/icons/hicolor/scalable/apps/
 
 #install python
 echo "install python" 
@@ -91,6 +106,13 @@ curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
 sudo python2 get-pip.py 
 pip install trueskill numpy "networkx<2.0"
 
+#make pronoc application/executable file
+cd $SCRPT_DIR_PATH/src_c/app_executable
+make
+mv ./ProNoC $SCRPT_DIR_PATH/perl_gui/
+chown -R $user $SCRPT_DIR_PATH/perl_gui/ProNoC 
+echo "pronoc application/executable file is generated!"
+cd $SCRPT_DIR_PATH
 
 
 

@@ -1,3 +1,5 @@
+#!/usr/bin/perl -w
+
 use strict;
 use warnings;
 
@@ -12,6 +14,20 @@ use Cwd 'abs_path';
 use Term::ANSIColor qw(:constants);
 use IPC::Run qw(start pump finish timeout pumpable);
  
+use FindBin;
+use lib $FindBin::Bin;
+use constant::boolean;
+use IO::CaptureOutput qw(capture qxx qxy);
+
+
+our %glob_setting;
+$glob_setting{'FONT_SIZE'}='default';
+$glob_setting{'ICON_SIZE'}='default';
+$glob_setting{'DSPLY_X'}  ='default';
+$glob_setting{'DSPLY_Y'}  ='default';
+
+
+
 
 sub log2{
 	my $num=shift;
@@ -175,8 +191,7 @@ sub gen_verilator_makefile{
 		$all_lib=$all_lib." lib$lib_num";
 		$lib_num++;
 	}
-	
-	
+
 	my $make= "
 	
 default: sim
@@ -199,14 +214,21 @@ CPPFLAGS += -DVL_THREADED=1
 CPPFLAGS += -W -Werror -Wall
 endif
 
+SLIB = 
+HLIB = 
+ifneq (\$(wildcard synful/synful.a),) 
+SLIB += synful/synful.a
+HLIB += synful/synful.h
+endif 
+
 #######################################################################
 # Linking final exe -- presumes have a sim_main.cpp
 
 
-sim:	testbench.o \$(VK_GLOBAL_OBJS) $p
+sim:	testbench.o \$(VK_GLOBAL_OBJS) $p \$(SLIB)
 	\$(LINK) \$(LDFLAGS) -g \$^ \$(LOADLIBES) \$(LDLIBS) -o testbench \$(LIBS) -Wall -O3 -lpthread 2>&1 | c++filt
 
-testbench.o: testbench.cpp $h
+testbench.o: testbench.cpp $h  \$(HLIB)
 
 clean:
 	rm *.o *.a testbench	
@@ -434,7 +456,7 @@ sub source_file {
     while (<$fh>) {
         chomp;
         #FIXME: this regex isn't quite good enough
-        next unless my ($var, $value) = /\s*(\w+)=([^#]+)/;
+        next unless my ($var, $value) = /\s*(\w+)=([^#]+)/; 
         $ENV{$var} = $value;
     }
     return undef;
@@ -811,7 +833,13 @@ sub get_color {
 	0x800080,#Purple
 	0x4B0082,#Indigo
 	0xFFFFFF,#white	
-	0x000000 #Black		
+	0x000000, #Black		
+		#heatmap
+	0xbdff00, #	(189,255,0)
+	0xe3f018, #	(227,240,24)
+	0xffce00, #	(255,206,0)
+	0xff6612, #	(255,102,18)
+	0xc12424, #	(193,36,36)
 		);
 	
 	my $color= 	($num< scalar (@colors))? $colors[$num]: 0xFFFFFF;	
@@ -859,7 +887,15 @@ sub get_color_hex_string {
 	"800080",#Purple
 	"4B0082",#Indigo
 	"FFFFFF",#white	
-	"000000" #Black		
+	"000000", #Black	
+		#heatmap
+	"bdff00", #	(189,255,0)
+	"e3f018", #	(227,240,24)
+	"ffce00", #	(255,206,0)
+	"ff6612", #	(255,102,18)
+	"c12424", #	(193,36,36)
+	
+		
 		);
 	
 	my $color= 	($num< scalar (@colors))? $colors[$num]: "FFFFFF";	
@@ -1052,7 +1088,7 @@ sub generate_and_show_graph_using_graphviz {
 	$scale= 1 if (!defined $scale);	
 	my $diagram;
 	
-	my $cmd = "echo \'$dotfile\' | dot -Tpng";
+	my $cmd = "echo \'$dotfile\' | dot -Tpng -q";
 	my ($stdout,$exit,$stderr)= run_cmd_in_back_ground_get_stdout ($cmd);
 	if ( length( $stderr || '' ) !=0)  {
 		message_dialog("$stderr\nHave you installed graphviz? If not run \n \t \"sudo apt-get install graphviz\" \n in terminal",'error');
@@ -1298,6 +1334,75 @@ sub add_param_widget {
     return ($row,$column,$widget);
 }
 
+
+#get the list of files matching the given extention
+sub get_file_list_by_extention {
+	my ($open_in, $ext)=@_;		
+	my @files = glob "$open_in/*";
+	my $file_list="";
+	foreach my $file (@files){
+		my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
+		if($suffix eq $ext || $suffix eq ".$ext" ){
+			$file_list.=",$name";
+		}		
+	}
+	return 	($file_list,\@files);
+}
+
+
+
+
+sub set_gui_setting{
+	my $paths=shift;
+	my %p=%{$paths};
+	$glob_setting{'FONT_SIZE'}= $p{'GUI_SETTING'}{'FONT_SIZE'} if (defined $p{'GUI_SETTING'}{'FONT_SIZE'});
+	$glob_setting{'ICON_SIZE'}= $p{'GUI_SETTING'}{'ICON_SIZE'} if (defined $p{'GUI_SETTING'}{'ICON_SIZE'});
+	$glob_setting{'DSPLY_X'}  = $p{'GUI_SETTING'}{'DSPLY_X'}   if (defined $p{'GUI_SETTING'}{'DSPLY_X'});
+	$glob_setting{'DSPLY_Y'}  = $p{'GUI_SETTING'}{'DSPLY_Y'}   if (defined $p{'GUI_SETTING'}{'DSPLY_Y'});
+}
+
+my ($screen_x,$screen_y);
+
+sub get_default_screen_size{
+	return  ($screen_x,$screen_y) if (defined $screen_x && defined $screen_y);
+	
+	my $fh= 'xrandr --current | awk \'$2~/\*/{print $1}\'' ;
+	my ($stdout, $stderr, $success) = qxx( ($fh) );
+	my @a = split ("\n",$stdout);
+	($screen_x,$screen_y) = split ("x",$a[0]);
+	$screen_x = 600 if(!defined $screen_x);
+	$screen_y = 800 if(!defined $screen_y);
+	return  ($screen_x,$screen_y);
+} 
+
+
+sub get_current_monitor_working_area{
+    my $screen = get_default_screen();
+	my $hight = $screen->get_height(); 
+	my $active = $screen->get_active_window();
+	my $monitor =	$screen->get_monitor_at_window($active);
+	my $warea = $screen->get_monitor_workarea($monitor);#get_width(); 
+	#print  Data::Dumper->Dump ([$warea],['ttt']);  
+	return ($warea->{'width'},$warea->{'height'});
+}
+
+
+
+
+sub max_win_size {
+	my ($x,$y);
+	$x= int($glob_setting{'DSPLY_X'}) if ($glob_setting{'DSPLY_X'} ne 'default');
+	$y= int($glob_setting{'DSPLY_Y'}) if ($glob_setting{'DSPLY_Y'} ne 'default');
+	if (!defined $x || !defined $y){
+		my ($X,$Y)=get_current_monitor_working_area();
+		$x=$X if (!defined $x);
+		$y=$Y if (!defined $y);
+	}
+	
+	return ($x,$y); 
+	 
+	
+}
 
 
 1	 

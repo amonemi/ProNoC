@@ -1,4 +1,5 @@
 +incdir+./
++incdir+./../
 ./pronoc_pkg.sv
 ./../main_comp.v
 ./../arbiter.v
@@ -9,14 +10,14 @@
 ./noc_top.sv
 ./fattree_noc_top.sv
 ./fattree_route.v
-./comb_nonspec.v
+./comb_nonspec.sv
 ./inout_ports.sv
 ./wrra.v
 ./input_ports.sv
 ./tree_noc_top.sv
 ./tree_route.v
 ./comb-spec1.v
-./combined_vc_sw_alloc.v
+./combined_vc_sw_alloc.sv
 ./mesh_torus_routting.v
 ./baseline.v
 ./comb_spec2.v
@@ -30,14 +31,15 @@
 ./router_two_stage.sv
 ./crossbar.v
 ./iport_reg_base.sv
-./flit_buffer.v
-./mesh_torus.v
+./flit_buffer.sv
+./mesh_torus.sv
 ./debug.v
 ./router_top.sv
 ./mesh_torus_noc_top.sv
 ./star_noc.sv
 ./fmesh.sv
 ./packet_injector.sv
+./multicast.sv
 
 
 

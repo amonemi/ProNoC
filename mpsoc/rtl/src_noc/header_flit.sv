@@ -1,5 +1,4 @@
-`timescale 1ns / 1ps
-
+`include "pronoc_def.v"
 /**********************************************************************
 **  File:  header_flit.sv
 **  Date:2017-07-11   
@@ -78,7 +77,7 @@ import pronoc_pkg::*;
     
     output   [Fw-1  :   0] flit_out; 
     input    [Cw-1  :   0] class_in;    
-    input    [EAw-1 :   0] dest_e_addr_in;
+    input    [DAw-1 :   0] dest_e_addr_in;
     input    [EAw-1 :   0] src_e_addr_in;
     input    [V-1   :   0] vc_num_in;
     input    [WEIGHTw-1 :   0] weight_in;
@@ -192,7 +191,7 @@ module extract_header_flit_info
     input flit_in_wr;
     
     output [EAw-1 : 0] src_e_addr_o;
-    output [EAw-1 : 0] dest_e_addr_o;
+    output [DAw-1 : 0] dest_e_addr_o;
     output [DSTPw-1 : 0] destport_o;    
     output [Cw-1 : 0] class_o;
     output [W-1  : 0] weight_o;
@@ -290,11 +289,7 @@ module header_flit_update_lk_route_ovc
         VDSTPw = V * DSTPw,
         VV = V * V;
                  
-    
-     localparam 
-        E_SRC_LSB =0,                   E_SRC_MSB = E_SRC_LSB + EAw-1,
-        E_DST_LSB = E_SRC_MSB +1,       E_DST_MSB = E_DST_LSB + EAw-1,  
-        DST_P_LSB = E_DST_MSB + 1,      DST_P_MSB = DST_P_LSB + DSTPw-1;
+        
      
 
     input [Fw-1 : 0]  flit_in;
@@ -308,25 +303,16 @@ module header_flit_update_lk_route_ovc
     input [DSTPw-1 : 0]  lk_dest_not_registered;
     
     wire hdr_flag;
-    reg [V-1 : 0]  vc_num_delayed;
+    logic [V-1 : 0]  vc_num_delayed;
     wire [V-1 : 0]  ovc_num; 
     wire [DSTPw-1 : 0]  lk_dest,dest_coded;
     wire [DSTPw-1 : 0]  lk_mux_out;
 
+    pronoc_register #(.W(V)) reg1 (.in(vc_num_in), .out(vc_num_delayed), .reset(reset), .clk(clk));
    
-`ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif   
-        if(reset) begin 
-            vc_num_delayed                  <= {V{1'b0}};
-            //assigned_ovc_num_delayed  <=  {VV{1'b0}};
-        end else begin
-            vc_num_delayed<= vc_num_in;
-            //assigned_ovc_num_delayed  <=assigned_ovc_num;
-        end
-    end
+ 
+    
+
     /* verilator lint_off WIDTH */
     assign hdr_flag = ( PCK_TYPE == "MULTI_FLIT")? flit_in[Fw-1]: 1'b1;
     /* verilator lint_on WIDTH */
@@ -346,20 +332,10 @@ module header_flit_update_lk_route_ovc
     /* verilator lint_off WIDTH */
     if( SSA_EN == "YES" ) begin : predict // bypass the lk fifo when no ivc is granted
     /* verilator lint_on WIDTH */
-        reg ivc_any_delayed;
-
-`ifdef SYNC_RESET_MODE 
-        always @ (posedge clk )begin 
-`else 
-        always @ (posedge clk or posedge reset)begin 
-`endif   
-            if(reset) begin 
-                ivc_any_delayed <= 1'b0;
-            end else begin
-                ivc_any_delayed <= any_ivc_sw_request_granted;
-            end
-        end
+        logic ivc_any_delayed;
         
+        pronoc_register #(.W(1)) reg2 (.in(any_ivc_sw_request_granted ), .out(ivc_any_delayed), .reset(reset), .clk(clk));
+       
         assign lk_dest = (ivc_any_delayed == 1'b0)? lk_dest_not_registered : lk_mux_out;
 
     end else begin : no_predict

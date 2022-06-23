@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+`include "pronoc_def.v"
 
 module   custom_noc_top 
     	import pronoc_pkg::*; 
@@ -7,7 +7,8 @@ module   custom_noc_top
     reset,
     clk,    
     chan_in_all,
-    chan_out_all  
+    chan_out_all,
+    router_event  
 );
 
     
@@ -16,13 +17,20 @@ module   custom_noc_top
 	input   smartflit_chanel_t chan_in_all  [NE-1 : 0];
 	output  smartflit_chanel_t chan_out_all [NE-1 : 0];
 	
+	//Events
+	output  router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];
 	   
 
     generate 
 
-	             
+          
 
- 
+	
+    
+     
+	
+    
+     
 	//do not modify this line ===custom1===
     if(TOPOLOGY == "custom1" ) begin : Tcustom1
     
@@ -31,11 +39,24 @@ module   custom_noc_top
 		    .reset(reset),
 		    .clk(clk),    
 		    .chan_in_all(chan_in_all),
-		    .chan_out_all(chan_out_all)  
+		    .chan_out_all(chan_out_all),
+		    .router_event(router_event)  
 		);
+    end
     
-	end
     endgenerate
+	
+	 
+	
+	 
+	
+	 
+	
+	 
+	
+	 
+	
+	 
 	
 
 

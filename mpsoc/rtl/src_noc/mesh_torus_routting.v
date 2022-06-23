@@ -50,9 +50,9 @@ module mesh_torus_look_ahead_routing #(
     output  [P_1-1  :   0]  lkdestport_encoded;
     input                   reset,clk;
     
-    reg     [Xw-1   :   0]  destx_delayed;
-    reg     [Yw-1   :   0]  desty_delayed;
-    reg     [P_1-1  :   0]  destport_delayed;
+    wire     [Xw-1   :   0]  destx_delayed;
+    wire     [Yw-1   :   0]  desty_delayed;
+    wire     [P_1-1  :   0]  destport_delayed;
     
     
     // routing algorithm
@@ -100,22 +100,9 @@ module mesh_torus_look_ahead_routing #(
     end
     endgenerate
     
-
- `ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-`else 
-    always @ (posedge clk or posedge reset)begin 
-`endif  
-        if(reset)begin
-            destx_delayed               <= {Xw{1'b0}};
-            desty_delayed               <= {Yw{1'b0}};
-            destport_delayed            <= {P_1{1'b0}};
-        end else begin
-            destx_delayed                <= dest_x;
-            desty_delayed                <= dest_y;
-            destport_delayed             <= destport_encoded;
-        end//else reset
-    end//always
+     pronoc_register #(.W(Xw) ) reg1 (.in(dest_x ), .out(destx_delayed), .reset(reset), .clk(clk));
+     pronoc_register #(.W(Yw) ) reg2 (.in(dest_y ), .out(desty_delayed), .reset(reset), .clk(clk));
+     pronoc_register #(.W(P_1)) reg3 (.in(destport_encoded ), .out(destport_delayed), .reset(reset), .clk(clk));
     
 endmodule
 

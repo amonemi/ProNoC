@@ -343,7 +343,8 @@ $ipgen = bless( {
                   'hdl_files' => [
                                    '/mpsoc/rtl/src_peripheral/bus/wishbone_bus.v',
                                    '/mpsoc/rtl/main_comp.v',
-                                   '/mpsoc/rtl/arbiter.v'
+                                   '/mpsoc/rtl/arbiter.v',
+								   '/mpsoc/rtl/pronoc_def.v'
                                  ],
                   'parameters_order' => [
                                           'M',

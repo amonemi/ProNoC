@@ -1,6 +1,32 @@
 #ifndef TOPOLOGY_TOP_H
 #define TOPOLOGY_TOP_H
 
+	unsigned int	R2R_TABLE_SIZ =0;
+
+	#define CNT_R2R_SIZ  (NR * MAX_P)     //((NR1+NR2+1)*(K+1))
+	#define CNT_R2E_SIZ  (NE+1)
+
+	typedef struct R2R_CNT_TABLE {
+		unsigned int id1;
+		unsigned int t1;
+		unsigned int r1;
+		unsigned int p1;
+		unsigned int id2;
+		unsigned int t2;
+		unsigned int r2;
+		unsigned int p2;
+	} r2r_cnt_table_t;
+
+	r2r_cnt_table_t r2r_cnt_all[CNT_R2R_SIZ];
+
+	typedef struct R2E_CNT_TABLE {
+		unsigned int r1;
+		unsigned int p1;
+	} r2e_cnt_table_t;
+
+	r2e_cnt_table_t r2e_cnt_all[CNT_R2E_SIZ];
+
+
 	int get_router_num (int NR_num, int NR_id){
 		int offset=0;
 		if(NR_num* sizeof(int) > sizeof(router_NRs)){
@@ -53,26 +79,9 @@
 		
 		#define 	K T1
 		#define     L T2 
-		#define CNT_R2R_SIZ  ((NR1+NR2+1)*(K+1)) 
-		#define CNT_R2E_SIZ  (NE+1)
 		
-		typedef struct R2R_CNT_TABLE {
-			unsigned int t1;
-			unsigned int r1;
-			unsigned int p1;
-			unsigned int t2;
-			unsigned int r2;
-			unsigned int p2;	
-		} r2r_cnt_table_t;  
 
-		r2r_cnt_table_t r2r_cnt_all[CNT_R2R_SIZ];
 
-		typedef struct R2E_CNT_TABLE {
-			unsigned int r1;
-			unsigned int p1;  
-		} r2e_cnt_table_t;  
-
-		r2e_cnt_table_t r2e_cnt_all[CNT_R2E_SIZ];
 
 		inline void fattree_connect ( r2r_cnt_table_t in){
 			unsigned int t1 = in.t1;
@@ -105,6 +114,10 @@
 
 
 	#if defined (IS_MESH) || defined (IS_FMESH) || defined (IS_TORUS) || defined (IS_LINE) || defined (IS_RING )
+
+
+
+
 		#include "mesh.h"
 	#elif  defined (IS_FATTREE)
 		#include "fattree.h"
@@ -121,6 +134,7 @@
 		unsigned int endp_addr_decoder (unsigned int code){
 			return code;
 		}
+		#include "custom.h"
 
 	#endif
 
