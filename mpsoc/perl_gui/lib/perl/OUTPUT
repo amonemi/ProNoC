@@ -1,1 +1,0 @@
-bash: line 1:  9757 Aborted                 (core dumped) /home/alireza/work/git/hca_git/mpsoc_work/simulate/simulate1 -t "random" -s 1 -m 1 -n 200000 -c100000 -i 5 -p "100,0,0,0,0" > OUTPUT

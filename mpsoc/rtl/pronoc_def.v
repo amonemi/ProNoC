@@ -34,6 +34,19 @@
     `endif
 
 
+/****************
+	TRACE dump 
+*****************/    
+   //uncomment following define to enable TRACE dumping
+   
+   
+   // `define TRACE_DUMP_PER_NoC	    // dump all in/out traces to the NoC in single file
+   // `define TRACE_DUMP_PER_ROUTER	    // dump each router in/out traces in a seprate file
+  // `define TRACE_DUMP_PER_PORT	    // dump each router port in/out in a single file
+ 
+
+
+
 
 `endif
 

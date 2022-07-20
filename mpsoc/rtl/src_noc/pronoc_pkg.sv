@@ -62,7 +62,7 @@ localparam
  	/* verilator lint_off WIDTH */ 
 localparam 
 	DISTw =  (TOPOLOGY=="FATTREE" || TOPOLOGY=="TREE" ) ? log2(2*L+1): log2(NR+1),
-	OVC_ALLOC_MODE= (B<=4 && SSA_EN=="NO")?   1'b1 : 1'b0;
+	OVC_ALLOC_MODE= ((V==1 || B<=4) )?   1'b1 : 1'b0;
  	/* verilator lint_on WIDTH */ 
  	
  	// 0: The new ovc is allocated only if its not nearly full. Results in a simpler sw_mask_gen logic    

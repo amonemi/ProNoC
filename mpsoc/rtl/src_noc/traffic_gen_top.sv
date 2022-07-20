@@ -4,7 +4,7 @@ module  traffic_gen_top
 		import pronoc_pkg::*; 
 	#(
 		parameter MAX_RATIO = 1000,
-		parameter ENDP_ID   = 10
+		parameter ENDP_ID   = 100000
 	)
 	(
 					

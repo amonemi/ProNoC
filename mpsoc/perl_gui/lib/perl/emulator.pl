@@ -751,7 +751,7 @@ sub process_notebook_gen{
 		
 		
 		
-		my $scrolled_win = add_widget_to_scrolled_win($notebook);
+		my $scrolled_win = add_widget_to_scrolled_win($notebook,gen_scr_win_with_adjst($emulate,"process_sc_win"));	
 		$scrolled_win->show_all;	
 		my $page_num=$emulate->object_get_attribute ("process_notebook","currentpage");		
 		$notebook->set_current_page ($page_num) if(defined $page_num);

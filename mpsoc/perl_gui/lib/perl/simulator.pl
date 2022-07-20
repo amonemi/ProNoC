@@ -1417,10 +1417,10 @@ sub extract_and_update_noc_sim_statistic {
 	foreach my $p (sort keys %st3){
 		update_result($simulate,$sample,"flit_per_router_result",$ratio_in,$p,$st3{$p}{'flit_in'});
 		update_result($simulate,$sample,"packet_per_router_result",$ratio_in,$p,$st3{$p}{'pck_in'});
-		my $tmp= ($st3{$p}{'flit_in_buffered'}*100) / $st3{$p}{'flit_in'};
+		my $tmp= ($st3{$p}{'flit_in'}==0)? 0 : ($st3{$p}{'flit_in_buffered'}*100) / $st3{$p}{'flit_in'};
 		#print " $tmp= ($st3{$p}{'flit_in_buffered'}*100) / $st3{$p}{'flit_in'};\n";
 		update_result($simulate,$sample,"flit_buffered_router_ratio",$ratio_in,$p,$tmp);
-		$tmp= ($st3{$p}{'flit_in_bypassed'}*100) / $st3{$p}{'flit_in'};
+		$tmp= ($st3{$p}{'flit_in'}==0)? 0 : ($st3{$p}{'flit_in_bypassed'}*100) / $st3{$p}{'flit_in'};
 		update_result($simulate,$sample,"flit_bypass_router_ratio",$ratio_in,$p,$tmp);
 		
 	}
@@ -1758,7 +1758,7 @@ sub noc_sim_ctrl{
 	});	
 	
 	
-	return $table;
+	return add_widget_to_scrolled_win($table,gen_scr_win_with_adjst($simulate,"ctrl_sc_win"));
 	
 }
 
@@ -1860,7 +1860,7 @@ my @charts = (
 	$main_table->attach_defaults ($h1  , 0, 12, 0,24);
 	$main_table->attach ($ctrl, 0,12, 24,25,'fill','fill',2,2);
 	
-	
+	my $sc_win=add_widget_to_scrolled_win($main_table);
 
 
 	#check soc status every 0.5 second. refresh device table if there is any changes 
@@ -1883,6 +1883,7 @@ my @charts = (
 		
 		#refresh GUI
 		
+		
 		$ctrl->destroy();							
 		$conf_box->destroy();
 		$chart->destroy();
@@ -1903,6 +1904,7 @@ my @charts = (
 		$main_table->show_all();			
 		set_gui_status($simulate,"ideal",0);
 		
+		
 		return TRUE;
 		
 	} );
@@ -1912,7 +1914,7 @@ my @charts = (
 		
 	
 
-	return add_widget_to_scrolled_win($main_table);	
+	return $sc_win;
 
 		
 

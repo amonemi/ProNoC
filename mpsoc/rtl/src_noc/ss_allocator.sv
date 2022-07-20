@@ -52,6 +52,7 @@ import pronoc_pkg::*;
        // assigned_ovc_num_all,
        // ovc_is_assigned_all,    
         ivc_info,   
+        ovc_info,   
         ssa_ctrl_o
    );
 
@@ -88,6 +89,7 @@ import pronoc_pkg::*;
    
     input   reset,clk;
     input   ivc_info_t   ivc_info   [P-1 : 0][V-1 : 0];
+    input   ovc_info_t   ovc_info   [P-1 : 0][V-1 : 0];
     output  ssa_ctrl_t   ssa_ctrl_o [P-1 : 0]; 
 
 
@@ -114,6 +116,7 @@ import pronoc_pkg::*;
     wire [PVDSTPw-1  : 0] dest_port_encoded_all;
     wire [PVV-1      : 0] assigned_ovc_num_all;
     wire [PV-1       : 0] ovc_is_assigned_all;
+    wire [MAX_P-1     : 0] destport_one_hot [PV-1 : 0];
 
 	genvar i;
     // there is no ssa for local port in 5 and 3 port routers
@@ -124,11 +127,14 @@ import pronoc_pkg::*;
         localparam  SS_PORT = strieght_port (P,C_PORT);
         
         assign ivc_request_all[i] = ivc_info[C_PORT][i%V].ivc_req;
-        assign assigned_ovc_not_full_all[i] = ivc_info[C_PORT][i%V].assigned_ovc_not_full;
+        assign assigned_ovc_not_full_all[i] = ~ovc_info[SS_PORT][i%V].full;
+        //assign assigned_ovc_not_full_all[i] = ivc_info[C_PORT][i%V].assigned_ovc_not_full;
+        
         assign dest_port_encoded_all [(i+1)*DSTPw-1 : i*DSTPw] = ivc_info[C_PORT][i%V].dest_port_encoded;
         assign assigned_ovc_num_all[(i+1)*V-1 : i*V] = ivc_info[C_PORT][i%V].assigned_ovc_num;
         assign ovc_is_assigned_all[i] = ivc_info[C_PORT][i%V].ovc_is_assigned;
         
+        assign destport_one_hot[i] = ivc_info[C_PORT][i%V].destport_one_hot;
         
            
         if (SS_PORT == DISABLED)begin : no_prefrable
@@ -184,6 +190,7 @@ import pronoc_pkg::*;
                 .ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant_all[i]),
                 .ivc_reset(ivc_reset_all[i]), 
                 .single_flit_pck(single_flit_pck_all[i]),
+                .destport_one_hot(destport_one_hot[i]),
                 .decreased_credit_in_ss_ovc(decreased_credit_in_ss_ovc[i])
                 //synthesis translate_off 
                 //synopsys  translate_off
@@ -265,6 +272,7 @@ module ssa_per_vc
         ovc_allocated,
         decreased_credit_in_ss_ovc,
         single_flit_pck,
+        destport_one_hot,
         ivc_reset      
 //synthesis translate_off 
 //synopsys  translate_off
@@ -296,6 +304,7 @@ module ssa_per_vc
     input   [DSTPw-1      :    0]  destport_encoded;//exsited packet destination port
     input                          assigned_to_ssovc;
     input                          ovc_is_assigned;
+    input   [MAX_P-1       :    0]  destport_one_hot;
     
     output reg [V-1          :   0]  granted_ovc_num;
     output                        ivc_num_getting_sw_grant;
@@ -339,6 +348,7 @@ module ssa_per_vc
     
     
     wire   condition_1_2_valid;   
+    wire [DAw-1 : 0]  dest_e_addr_in;
    
     extract_header_flit_info #(
     	.DATA_w(0)	
@@ -350,7 +360,7 @@ module ssa_per_vc
         .class_o(),
         .destport_o(destport_in_encoded),
         .src_e_addr_o( ),
-        .dest_e_addr_o( ),
+        .dest_e_addr_o(dest_e_addr_in ),
         .vc_num_o(vc_num_in),
         .hdr_flit_wr_o( ),
         .hdr_flg_o(hdr_flg),
@@ -369,20 +379,19 @@ assign condition_1_2_valid = ~(any_ovc_granted_in_ss_port  | any_ivc_sw_request_
 //check destination port is ss
 wire ss_port_hdr_flit, ss_port_nonhdr_flit;
 
-ssa_check_destport #(
-    .TOPOLOGY(TOPOLOGY),
-    .ROUTE_TYPE(ROUTE_TYPE),
+ssa_check_destport #(   
     .SW_LOC(SW_LOC),
-    .P(P),
-    .DEBUG_EN(DEBUG_EN),
-    .DSTPw(DSTPw),
+    .P(P),    
     .SS_PORT(SS_PORT)
 )
  check_destport
 (   
     .destport_encoded(destport_encoded),
     .destport_in_encoded(destport_in_encoded),
+    .destport_one_hot(destport_one_hot),
     .ss_port_hdr_flit(ss_port_hdr_flit),
+    .dest_e_addr_in(dest_e_addr_in),
+
     .ss_port_nonhdr_flit(ss_port_nonhdr_flit)
 //synthesis translate_off
 //synopsys  translate_off
@@ -446,19 +455,20 @@ endmodule
 
 
 
-module ssa_check_destport #(
-    parameter TOPOLOGY = "MESH",
-    parameter ROUTE_TYPE="DETERMINISTIC",
+module ssa_check_destport
+	import pronoc_pkg::*;	
+#(
     parameter SW_LOC = 0,
-    parameter P=5,
-    parameter DEBUG_EN = 0,
-    parameter DSTPw = P-1,
+    parameter P=5,  
     parameter SS_PORT=0
 )(
     destport_encoded, //non header flit dest port
     destport_in_encoded, // header flit packet dest port
     ss_port_hdr_flit, // asserted if the header incomming flit goes to ss port
-    ss_port_nonhdr_flit // assert if the body or tail incomming flit goes to ss port
+    ss_port_nonhdr_flit, // assert if the body or tail incomming flit goes to ss port
+    dest_e_addr_in,
+    destport_one_hot
+    
 //synthesis translate_off 
 //synopsys  translate_off
     ,clk,
@@ -475,6 +485,8 @@ module ssa_check_destport #(
 //synthesis translate_on    
 
     input [DSTPw-1 : 0] destport_encoded, destport_in_encoded; 
+    input [MAX_P-1 : 0] destport_one_hot; // buffered flit destination port
+    input [DAw-1 : 0]  dest_e_addr_in;
     output ss_port_hdr_flit, ss_port_nonhdr_flit;
 
     generate
@@ -494,7 +506,7 @@ module ssa_check_destport #(
         .ss_port_nonhdr_flit(ss_port_nonhdr_flit)
        );
      /* verilator lint_off WIDTH */
-    end else if (TOPOLOGY == "MESH" || TOPOLOGY == "TORUS" || TOPOLOGY == "FMESH") begin : mesh
+    end else if (TOPOLOGY == "MESH" || TOPOLOGY == "TORUS" ) begin : mesh
     /* verilator lint_on WIDTH */
      
         mesh_torus_ssa_check_destport #(
@@ -520,6 +532,61 @@ module ssa_check_destport #(
             //synthesis translate_on 
 
         );
+    /* verilator lint_off WIDTH */
+    end else if (TOPOLOGY == "FMESH") begin :fmesh
+    /* verilator lint_on WIDTH */
+    	localparam 
+    		ELw = log2(T3),
+    		Pw  = log2(P),
+    		PLw = (TOPOLOGY == "FMESH") ? Pw : ELw;
+    		
+    	wire [Pw-1 : 0] endp_p_in;
+    	wire [MAX_P-1 : 0] destport_one_hot_in;
+    	
+    	fmesh_endp_addr_decode #(
+    			.T1(T1),
+    			.T2(T2),
+    			.T3(T3),
+    			.EAw(EAw)
+    		)
+    		endp_addr_decode
+    		(
+    			.e_addr(dest_e_addr_in),
+    			.ex(),
+    			.ey(),
+    			.ep(endp_p_in),
+    			.valid()
+    		);
+    	
+    	destp_generator #(
+    			.TOPOLOGY(TOPOLOGY),
+    			.ROUTE_NAME(ROUTE_NAME),
+    			.ROUTE_TYPE(ROUTE_TYPE),
+    			.T1(T1),
+    			.NL(T3),
+    			.P(P),
+    			.DSTPw(DSTPw),
+    			.PLw(PLw),
+    			.PPSw(PPSw),
+    			.SELF_LOOP_EN (SELF_LOOP_EN),
+    			.SW_LOC(SW_LOC),
+    			.CAST_TYPE(CAST_TYPE)
+    		)
+    		decoder
+    		(
+    			.destport_one_hot (destport_one_hot_in),
+    			.dest_port_encoded(destport_in_encoded),             
+    			.dest_port_out( ),   
+    			.endp_localp_num(endp_p_in),
+    			.swap_port_presel(1'b0),
+    			.port_pre_sel({PPSw{1'b0}}),
+    			.odd_column(1'b0)
+    		);
+    	
+    	
+    assign ss_port_nonhdr_flit = destport_one_hot [SS_PORT];     	
+    assign ss_port_hdr_flit    = destport_one_hot_in [SS_PORT]; 
+    
         end else begin : line
             line_ring_ssa_check_destport #(
                .ROUTE_TYPE(ROUTE_TYPE),

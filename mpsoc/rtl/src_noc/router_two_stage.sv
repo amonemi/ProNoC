@@ -551,11 +551,62 @@ module router_two_stage
 	 */
 
 
+//TRACE_DUMP_PER is defined in pronoc_def file
+ 
+ 
+`ifdef TRACE_DUMP_PER_NoC
+	pronoc_trace_dump #(
+		.P(P),
+		.TRACE_DUMP_PER("NOC"), //NOC, ROUTER, PORT 
+		.CYCLE_REPORT(0) // 1 : enable, 0 : disable
+	
+	)dump1
+	(
+		.current_r_id(current_r_id),
+		.chan_in(chan_in),
+		.chan_out(chan_out),
+		.clk(clk)
+	);
+`endif	
+`ifdef TRACE_DUMP_PER_ROUTER
+	pronoc_trace_dump #(
+		.P(P),
+		.TRACE_DUMP_PER("ROUTER"), //NOC, ROUTER, PORT 
+		.CYCLE_REPORT(0) // 1 : enable, 0 : disable
+	
+	)dump2
+	(
+		.current_r_id(current_r_id),
+		.chan_in(chan_in),
+		.chan_out(chan_out),
+		.clk(clk)
+	);
+`endif	
+`ifdef TRACE_DUMP_PER_PORT
+	pronoc_trace_dump #(
+		.P(P),
+		.TRACE_DUMP_PER("PORT"), //NOC, ROUTER, PORT 
+		.CYCLE_REPORT(0) // 1 : enable, 0 : disable
+	
+	)dump3
+	(
+		.current_r_id(current_r_id),
+		.chan_in(chan_in),
+		.chan_out(chan_out),
+		.clk(clk)
+	);
+`endif	
+
+
+
+
 	//synopsys  translate_on
 	//synthesis translate_on 
 
 
 endmodule
+
+
 
 
 
@@ -599,4 +650,109 @@ module credit_release_gen
 			
 	
 endmodule	
+
+
+
+
+//synthesis translate_off
+module pronoc_trace_dump
+	import pronoc_pkg::*;
+#(
+	parameter P = 6,
+	parameter TRACE_DUMP_PER= "ROUTER", //NOC, ROUTER, PORT 
+	parameter CYCLE_REPORT=0 // 1 : enable, 0 : disable
+	
+)(
+	current_r_id,
+	chan_in,
+	chan_out,
+	clk
+);
+
+	input  [31:0] current_r_id;
+	input   flit_chanel_t chan_in  [P-1 : 0];
+	input   flit_chanel_t chan_out [P-1 : 0];
+	input   clk;
+
+	pronoc_trace_dump_sub #(
+		.P(P),
+		.TRACE_DUMP_PER(TRACE_DUMP_PER), //NOC, ROUTER, PORT 
+		.DIRECTION("in"), // in,out
+		.CYCLE_REPORT(CYCLE_REPORT) // 1 : enable, 0 : disable
+	
+	)dump_in
+	(
+		.current_r_id(current_r_id),
+		.chan_in(chan_in),
+		.clk(clk)
+	);
+
+	pronoc_trace_dump_sub #(
+		.P(P),
+		.TRACE_DUMP_PER(TRACE_DUMP_PER), //NOC, ROUTER, PORT 
+		.DIRECTION("out"), // in,out
+		.CYCLE_REPORT(CYCLE_REPORT) // 1 : enable, 0 : disable
+	
+	)dump_out
+	(
+		.current_r_id(current_r_id),
+		.chan_in(chan_out),
+		.clk(clk)
+	);
+endmodule
+
+module pronoc_trace_dump_sub 
+	import pronoc_pkg::*;
+#(
+	parameter P = 6,
+	parameter TRACE_DUMP_PER= "ROUTER", //NOC, ROUTER, PORT 
+	parameter DIRECTION="in", // in,out
+	parameter CYCLE_REPORT=0 // 1 : enable, 0 : disable
+	
+)(
+	current_r_id,
+	chan_in,
+	clk
+);
+
+input  [31:0] current_r_id;
+input   flit_chanel_t chan_in  [P-1 : 0];
+input   clk;
+
+integer out;
+string fname [P-1 : 0];
+
+genvar p;
+generate 
+for (p=0;p<P;p++)begin 
+	initial begin 
+	/* verilator lint_off WIDTH */ 
+		if(TRACE_DUMP_PER == "PORT"  ) fname[p] = $sformatf("trace_dump_R%0d_P%0d.out",current_r_id,p);
+		if(TRACE_DUMP_PER == "ROUTER") fname[p] = $sformatf("trace_dump_R%0d.out",current_r_id);
+		if(TRACE_DUMP_PER == "NOC"   ) fname[p] = $sformatf("trace_dump.out",current_r_id,p);
+	/* verilator lint_on WIDTH */ 
+		out = $fopen(fname[p],"w");
+		$fclose(out);
+	end
+
+
+	always @(posedge clk) begin 
+		if(chan_in[p].flit_wr) begin 
+			out = $fopen(fname[p],"a");
+			if(CYCLE_REPORT) $fwrite(out,"%t:",$time);
+			$fwrite(out, "Flit %s: Port %0d, Payload: %h\n",DIRECTION, p, chan_in[p].flit);
+			$fclose(out);				
+		end
+		if(chan_in[p].credit>0) begin 
+			out = $fopen(fname[p],"a");
+			if(CYCLE_REPORT) $fwrite(out,"%t:",$time);
+			$fwrite(out, "credit %s:%h Port %0d\n",DIRECTION, chan_in[p].credit,p);
+			$fclose(out);				
+		end		
+	end
+
+end
+endgenerate
+endmodule
+//synthesis translate_on	
 

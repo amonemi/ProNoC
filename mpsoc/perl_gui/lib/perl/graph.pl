@@ -62,7 +62,7 @@ sub gen_multiple_charts{
 		
 		
 		
-	my $scrolled_win = add_widget_to_scrolled_win($notebook);
+	my $scrolled_win = add_widget_to_scrolled_win($notebook,gen_scr_win_with_adjst($self,"chart_sc_win"));	
 	$scrolled_win->show_all;
 	
 	my $page_num=$self->object_get_attribute ("chart_notebook","currentpage");

@@ -316,6 +316,7 @@ import pronoc_pkg::*;
 		   	the_ssa
 		   	(
 		   		.ivc_info(ivc_info),
+		   		.ovc_info(ovc_info),
 		   		.flit_in_wr_all(flit_in_wr_all),
 		   		.flit_in_all(flit_in_all),
 		   		.any_ivc_sw_request_granted_all(any_ivc_sw_request_granted_all),

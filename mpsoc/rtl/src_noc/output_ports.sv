@@ -112,6 +112,8 @@ module output_ports
     input   smart_ctrl_t  smart_ctrl_in [P-1: 0];
     input   [CRDTw-1 : 0 ] credit_init_val_in  [P-1 : 0][V-1 : 0];
     
+    wire   [PVV-1 : 0] ssa_granted_ovc_num_all;
+    
     logic  [PV-1    :    0]    ovc_status;
     logic  [PV-1    :    0]    ovc_status_next;
     wire   [PV-1    :    0]    assigned_ovc_is_full_all;
@@ -196,7 +198,7 @@ module output_ports
     wire [PV-1 : 0] non_smart_ovc_allocated_all;
     generate
     for(i=0;i<P;i=i+1    ) begin :P_
-    
+    	assign ssa_granted_ovc_num_all[(i+1)*VV-1:  i*VV] = ssa_ctrl_in[i].ivc_granted_ovc_num;      	
     	assign credit_decreased_all [(i+1)*V-1 : i*V] = vsa_ctrl_in[i].buff_space_decreased | 	ssa_ctrl_in[i].buff_space_decreased | smart_ctrl_in[i].buff_space_decreased;
     	assign ovc_released_all 	[(i+1)*V-1 : i*V] = vsa_ctrl_in[i].ovc_is_released  | ssa_ctrl_in[i].ovc_is_released  | smart_ctrl_in[i].ovc_is_released;
     	assign ovc_allocated_all 	[(i+1)*V-1 : i*V] = vsa_ctrl_in[i].ovc_is_allocated | ssa_ctrl_in[i].ovc_is_allocated | smart_ctrl_in[i].ovc_is_allocated;  
@@ -284,6 +286,10 @@ module output_ports
     end
     
     
+    
+   
+    
+    
     for(i=0; i<PV; i=i+1) begin :PV_loop2
         
     	assign assigned_ovc_num_all[(i+1)*V-1 : i*V] = ivc_info[i/V][i%V].assigned_ovc_num;
@@ -319,6 +325,7 @@ module output_ports
         )
         sw_mask
         (
+        	.ssa_granted_ovc_num(ssa_granted_ovc_num_all[(i+1)*V-1        :i*V]),
         	.granted_ovc_num(granted_ovc_num_all[(i+1)*V-1        :i*V]),
         	.ovc_is_assigned(ovc_is_assigned_all[i]),
         	.assigned_ovc_num (assigned_ovc_num_all[(i+1)*V-1        :i*V]),
@@ -648,6 +655,7 @@ module full_ovc_predictor #(
     parameter SELF_LOOP_EN = "NO"
         
 )(
+	ssa_granted_ovc_num,
 	granted_ovc_num,
 	ovc_is_assigned,
 	assigned_ovc_num,
@@ -664,7 +672,7 @@ module full_ovc_predictor #(
                     VP_1    =    V        *     P_1;
     input	clk,reset;                
     input	ovc_is_assigned;
-    input	[V-1           :    0]	assigned_ovc_num,granted_ovc_num;
+    input	[V-1           :    0]	assigned_ovc_num,granted_ovc_num,ssa_granted_ovc_num;
     input	[P_1-1         :    0]	dest_port;
     input	[VP_1-1        :    0]	full;
     input	[VP_1-1        :    0]	credit_increased;
@@ -716,7 +724,7 @@ module full_ovc_predictor #(
         .sel (assigned_ovc_num)
     );
     	 
-   wire [V-1 : 0]  nearlyfull_sel = (ovc_is_assigned | ~OVC_ALLOC_MODE)? assigned_ovc_num : granted_ovc_num;	
+   wire [V-1 : 0]  nearlyfull_sel = (ovc_is_assigned | ~OVC_ALLOC_MODE)? assigned_ovc_num : granted_ovc_num ;// or (granted_ovc_num | ssa_granted_ovc_num) ?	
    	
     onehot_mux_1D #(
         .W  (1),
