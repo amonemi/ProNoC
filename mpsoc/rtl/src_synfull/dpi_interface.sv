@@ -1,9 +1,8 @@
 
-import pronoc_pkg::*; 
+`include "pronoc_def.v"
+parameter NOC_ID=0;
+`NOC_CONF
 import dpi_int_pkg::*; 
-
-
-localparam NE = 4*4*2 ;
 
 module top_dpi_interface (
     input   logic               clk_i, rst_i  ,

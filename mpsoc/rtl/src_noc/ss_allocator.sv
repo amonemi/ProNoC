@@ -34,12 +34,10 @@
 ***************************************/
 
 
-module  ss_allocator
-import pronoc_pkg::*;
-#(
-    parameter P = 5   
-   )
-   (
+module  ss_allocator #(
+    parameter NOC_ID=0,
+    parameter P=5     
+)(
    		clk,
    		reset,  
    		flit_in_wr_all,
@@ -51,12 +49,14 @@ import pronoc_pkg::*;
        // dest_port_encoded_all,
        // assigned_ovc_num_all,
        // ovc_is_assigned_all,    
-        ivc_info,   
+        ivc_info,
         ovc_info,   
         ssa_ctrl_o
    );
 
 
+	`NOC_CONF    	
+	
     localparam  PV          =   V   *   P,
     			VV			=   V * V,
                 PVV         =   PV  *   V,
@@ -64,21 +64,7 @@ import pronoc_pkg::*;
                 PFw         =   P   *   Fw;
                 
     localparam    DISABLED = P;                       
-                
-    //MESH, TORUS Topology p=5           
-    localparam    EAST    =   1,
-                  NORTH   =   2, 
-                  WEST    =   3,
-                  SOUTH   =   4;
-                   
-               
-      
-    //LINE RING Topology p=3           
-    localparam  FORWARD =  1,
-                BACKWARD=  2;
-                  
-                
-                
+             
 
     input   [PFw-1          :   0]  flit_in_all;
     input   [P-1            :   0]  flit_in_wr_all;
@@ -117,7 +103,7 @@ import pronoc_pkg::*;
     wire [PVV-1      : 0] assigned_ovc_num_all;
     wire [PV-1       : 0] ovc_is_assigned_all;
     wire [MAX_P-1     : 0] destport_one_hot [PV-1 : 0];
-
+    
 	genvar i;
     // there is no ssa for local port in 5 and 3 port routers
     generate
@@ -167,6 +153,7 @@ import pronoc_pkg::*;
              
        
             ssa_per_vc #(
+                .NOC_ID(NOC_ID),
                 .SS_PORT(SS_PORT),
                 .V_GLOBAL(i),
                 .P(P)              
@@ -247,13 +234,12 @@ endmodule
  *  ssa_per_vc 
  * ***********/
 
-module ssa_per_vc 
-    import pronoc_pkg::*;
-#(
+module ssa_per_vc #(
+    parameter NOC_ID=0,
+    parameter P=5,
     parameter SS_PORT = "WEST",
-    parameter V_GLOBAL = 1,
-    parameter P=5
-    )
+    parameter V_GLOBAL = 1
+)
     (
         flit_in_wr,
         flit_in,
@@ -281,7 +267,10 @@ module ssa_per_vc
 //synthesis translate_on 
           
         
-   );             
+   );      
+    
+    
+    `NOC_CONF    	
         
     
     //header packet filds width
@@ -289,7 +278,7 @@ module ssa_per_vc
                 V_LOCAL            =V_GLOBAL%V;
 
     /* verilator lint_off WIDTH */ 
-    localparam SSA_EN = ((TOPOLOGY== "MESH" || TOPOLOGY == "TORUS") && (ROUTE_TYPE == "FULL_ADAPTIVE") && (SS_PORT==2 || SS_PORT == 4) && ((1<<V_LOCAL &  ~ESCAP_VC_MASK ) != {V{1'b0}})) ? 1'b0 :1'b1;
+    localparam SSA_EN_IN_PORT = ((TOPOLOGY== "MESH" || TOPOLOGY == "TORUS") && (ROUTE_TYPE == "FULL_ADAPTIVE") && (SS_PORT==2 || SS_PORT == 4) && ((1<<V_LOCAL &  ~ESCAP_VC_MASK ) != {V{1'b0}})) ? 1'b0 :1'b1;
     /* verilator lint_on WIDTH */   
       
                
@@ -347,14 +336,13 @@ module ssa_per_vc
     /* verilator lint_on WIDTH */ 	
     
     
-    wire   condition_1_2_valid;   
+    wire   condition_1_2_valid;     
     wire [DAw-1 : 0]  dest_e_addr_in;
    
     extract_header_flit_info #(
+        .NOC_ID(NOC_ID),
     	.DATA_w(0)	
-       )
-       extractor
-       (
+    ) extractor (
         .flit_in(flit_in),
         .flit_in_wr(flit_in_wr),
         .class_o(),
@@ -368,7 +356,7 @@ module ssa_per_vc
         .weight_o( ),
         .be_o( ),
         .data_o( )
-   );
+    );
    
     
 
@@ -380,8 +368,9 @@ assign condition_1_2_valid = ~(any_ovc_granted_in_ss_port  | any_ivc_sw_request_
 wire ss_port_hdr_flit, ss_port_nonhdr_flit;
 
 ssa_check_destport #(   
+    .NOC_ID(NOC_ID),
     .SW_LOC(SW_LOC),
-    .P(P),    
+    .P(P),  
     .SS_PORT(SS_PORT)
 )
  check_destport
@@ -417,7 +406,7 @@ wire ssa_permited_by_iport;
 
 
 generate
-if (SSA_EN) begin : enable
+if (SSA_EN_IN_PORT) begin : enable
     assign ssa_permited_by_iport = ss_ovc_ready & (~ivc_request) & condition_1_2_valid;  
 end else begin : disabled
     assign ssa_permited_by_iport = 1'b0;
@@ -455,13 +444,13 @@ endmodule
 
 
 
-module ssa_check_destport
-	import pronoc_pkg::*;	
-#(
+module ssa_check_destport #(
+    parameter NOC_ID=0,
     parameter SW_LOC = 0,
-    parameter P=5,  
+    parameter P=5,
     parameter SS_PORT=0
-)(
+)
+	(
     destport_encoded, //non header flit dest port
     destport_in_encoded, // header flit packet dest port
     ss_port_hdr_flit, // asserted if the header incomming flit goes to ss port
@@ -477,6 +466,12 @@ module ssa_check_destport
 //synopsys  translate_on
 //synthesis translate_on    
 );
+   
+
+	`NOC_CONF
+
+
+
 
 //synthesis translate_off 
 //synopsys  translate_off
@@ -531,7 +526,7 @@ module ssa_check_destport
             //synopsys  translate_on
             //synthesis translate_on 
 
-        );
+        ); 
     /* verilator lint_off WIDTH */
     end else if (TOPOLOGY == "FMESH") begin :fmesh
     /* verilator lint_on WIDTH */
@@ -587,7 +582,7 @@ module ssa_check_destport
     assign ss_port_nonhdr_flit = destport_one_hot [SS_PORT];     	
     assign ss_port_hdr_flit    = destport_one_hot_in [SS_PORT]; 
     
-        end else begin : line
+	end else begin : line
             line_ring_ssa_check_destport #(
                .ROUTE_TYPE(ROUTE_TYPE),
                 .SW_LOC(SW_LOC),
@@ -617,15 +612,18 @@ If no output is granted replace the output port with ss one
 **************************/
  
 
-module add_ss_port 
- 	import pronoc_pkg::*;
-#( 
-    parameter SW_LOC=1,    
-    parameter P=5
+module add_ss_port #(
+    parameter NOC_ID=0,
+    parameter SW_LOC=0,    
+ 	parameter P=5
 )(
     destport_in,
     destport_out 
 );
+
+
+	`NOC_CONF
+
 
 	localparam SS_PORT = strieght_port(P,SW_LOC);
 	localparam DISABLED = P;   

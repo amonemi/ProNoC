@@ -55,7 +55,7 @@ done
 echo "#This file is created by ${SCRPT_DIR_PATH}/intsall.sh
 package Consts;
 
-use constant VERSION  => '2.1.0'; 
+use constant VERSION  => '2.2.0'; 
 use constant END_YEAR => '2022';
 use constant GTK_VERSION => '$gtk_version';
 

@@ -6,7 +6,7 @@
 * Description: 
 ***************************************/
 
-`timescale  1ns/1ps
+`include "pronoc_def.v"
 
 
  
@@ -52,7 +52,7 @@ module pck_class_in_gen #(
    
  // generate a random num between 0 to 99
     always @(posedge clk ) begin 
-    	if(en | reset) begin 
+    	if(en | `pronoc_reset) begin 
     		rnd =     $urandom_range(99,0);    		
     	end    		
     end
@@ -74,16 +74,13 @@ endmodule
 
 *********************************/
 module  pck_dst_gen
-	import pronoc_pkg::*; 	
-	#(
-    parameter NE=4,
-    parameter TRAFFIC =   "RANDOM",
-    parameter MAX_PCK_NUM = 10000,
+   #(
+    parameter NOC_ID=0,
+	parameter TRAFFIC = "RANDOM",
     parameter HOTSPOT_NODE_NUM =  4,
     parameter MCAST_TRAFFIC_RATIO =50,
     parameter MCAST_PCK_SIZ_MIN = 2,
     parameter MCAST_PCK_SIZ_MAX = 4,
-    parameter PCK_SIZw=5,
     parameter MIN_PACKET_SIZE=5,
     parameter MAX_PACKET_SIZE=5,
     parameter PCK_SIZ_SEL="random-discrete",	
@@ -107,14 +104,14 @@ module  pck_dst_gen
     
 ); 
  
+    `NOC_CONF
  
     localparam      ADDR_DIMENSION =   (TOPOLOGY ==    "MESH" || TOPOLOGY ==  "TORUS") ? 2 : 1;  // "RING" and FULLY_CONNECT 
  
  
  
      
-    localparam  NEw= log2(NE),
-                PCK_CNTw = log2(MAX_PCK_NUM+1),
+    localparam  PCK_CNTw = log2(MAX_PCK_NUM+1),
                 HOTSPOT_NUM= (TRAFFIC=="HOTSPOT")? HOTSPOT_NODE_NUM : 1;
     
     input                       reset,clk,en;
@@ -137,9 +134,8 @@ module  pck_dst_gen
 	wire [PCK_SIZw-1 : 0] pck_size_uni;
 
 	pck_dst_gen_unicast #(
-		.NE(NE),
+		.NOC_ID(NOC_ID),
 		.TRAFFIC(TRAFFIC),
-		.MAX_PCK_NUM(MAX_PCK_NUM),
 		.HOTSPOT_NODE_NUM(HOTSPOT_NODE_NUM)
 	)
 	unicast
@@ -158,7 +154,7 @@ module  pck_dst_gen
 	); 
 	
 	pck_size_gen #(
-		.PCK_SIZw(PCK_SIZw),
+		.NOC_ID(NOC_ID),
 		.MIN(MIN_PACKET_SIZE),
 		.MAX(MAX_PACKET_SIZE),
 		.PCK_SIZ_SEL(PCK_SIZ_SEL),
@@ -171,11 +167,7 @@ module  pck_dst_gen
 		.en(en),
 		.pck_size(pck_size_uni) ,
 		.rnd_discrete(rnd_discrete)
-	);
-	
-	
-	
-	
+	);	
 	
 
 	generate
@@ -191,37 +183,32 @@ module  pck_dst_gen
 			
 			
 		endp_addr_decoder  #(
-				.T1(T1),
-				.T2(T2),
-				.T3(T3),
-				.NE(NE),
-				.EAw(EAw),
-				.TOPOLOGY(TOPOLOGY)
-			)enc
-			(
-				.code(unicast_dest_e_addr),
-				.id(unicast_id_num)
-			);    
+			.T1(T1),
+			.T2(T2),
+			.T3(T3),
+			.NE(NE),
+			.EAw(EAw),
+			.TOPOLOGY(TOPOLOGY)
+		) enc (
+			.code(unicast_dest_e_addr),
+			.id(unicast_id_num)
+		);    
 		
 		
 		pck_size_gen #(
+			.NOC_ID(NOC_ID),
 			.PCK_SIZw(PCK_SIZw),
 			.MIN(MCAST_PCK_SIZ_MIN),
 			.MAX(MCAST_PCK_SIZ_MAX),
 			.PCK_SIZ_SEL("random-range"),
 			.DISCRETE_PCK_SIZ_NUM(DISCRETE_PCK_SIZ_NUM)
-		)
-		mcast_pck_size
-		(
+		) mcast_pck_size (
 			.reset(reset),
 			.clk(clk),
 			.en(en),
 			.pck_size(pck_size_mcast) ,
 			.rnd_discrete(rnd_discrete)
-		);
-		
-		
-		
+		);	
 		
 		always @(posedge clk ) begin 
 			if(en | reset) begin 
@@ -296,27 +283,12 @@ module  pck_dst_gen
 	end endgenerate
 
 endmodule
-
-
-
-
-
-
-
-
-
-
-
-
-
  
  
 module  pck_dst_gen_unicast  
-	import pronoc_pkg::*; 	
-	#(
-    parameter NE=4,
-    parameter TRAFFIC =   "RANDOM",
-    parameter MAX_PCK_NUM = 10000,
+#(
+    parameter NOC_ID=0,
+	parameter TRAFFIC =   "RANDOM",
     parameter HOTSPOT_NODE_NUM =  4
 )(
     en,
@@ -332,22 +304,11 @@ module  pck_dst_gen_unicast
 	custom_traffic_en
 ); 
  
- 
+    `NOC_CONF
     localparam      ADDR_DIMENSION =   (TOPOLOGY ==    "MESH" || TOPOLOGY ==  "TORUS") ? 2 : 1;  // "RING" and FULLY_CONNECT 
- 
- 
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end 	   
-      end   
-    endfunction // log2 
+    
      
-     
-    localparam  NEw= log2(NE),
-                PCK_CNTw = log2(MAX_PCK_NUM+1),
+    localparam  PCK_CNTw = log2(MAX_PCK_NUM+1),
                 HOTSPOT_NUM= (TRAFFIC=="HOTSPOT")? HOTSPOT_NODE_NUM : 1;
     
     input                       reset,clk,en;
@@ -362,13 +323,12 @@ module  pck_dst_gen_unicast
     input hotspot_t  hotspot_info [HOTSPOT_NUM-1 : 0];
  
  
-     generate 
-     if ( ADDR_DIMENSION == 2) begin :two_dim
+    generate 
+    if ( ADDR_DIMENSION == 2) begin :two_dim
      
         two_dimension_pck_dst_gen #(
-        	.NE(NE),
+			.NOC_ID(NOC_ID),
         	.TRAFFIC(TRAFFIC),
-        	.MAX_PCK_NUM(MAX_PCK_NUM),
         	.HOTSPOT_NODE_NUM(HOTSPOT_NODE_NUM)
         	
         )
@@ -387,13 +347,12 @@ module  pck_dst_gen_unicast
 			.custom_traffic_en(custom_traffic_en)
         );
         
-     end else begin : one_dim
+    end else begin : one_dim
       
         one_dimension_pck_dst_gen #(
-        		.NE(NE),
-        		.TRAFFIC(TRAFFIC),
-        		.MAX_PCK_NUM(MAX_PCK_NUM),
-        		.HOTSPOT_NODE_NUM(HOTSPOT_NODE_NUM)
+       		.NOC_ID(NOC_ID),
+			.TRAFFIC(TRAFFIC),
+       		.HOTSPOT_NODE_NUM(HOTSPOT_NODE_NUM)
         )
         the_one_dimension_pck_dst_gen
         (
@@ -410,20 +369,18 @@ module  pck_dst_gen_unicast
 			.custom_traffic_en(custom_traffic_en)
         );       
        
-     end     
-     endgenerate 
- endmodule
+    end     
+    endgenerate 
+endmodule
  
  
  
  
 module two_dimension_pck_dst_gen  
-		import pronoc_pkg::*; 	
-	#(
-		parameter NE=4,
-		parameter TRAFFIC =   "RANDOM",
-		parameter MAX_PCK_NUM = 10000,
-		parameter HOTSPOT_NODE_NUM =  4
+#(
+    parameter NOC_ID=0,
+	parameter TRAFFIC =   "RANDOM",
+    parameter HOTSPOT_NODE_NUM =  4
 
 )(
     en,
@@ -435,23 +392,16 @@ module two_dimension_pck_dst_gen
     reset,
     valid_dst,
     hotspot_info,
-	custom_traffic_t,
-	custom_traffic_en
+    custom_traffic_t,
+    custom_traffic_en
 );    
     
+    `NOC_CONF
+
    
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end 	   
-      end   
-    endfunction // log2 
      
      
-    localparam NEw= log2(NE),
-                PCK_CNTw = log2(MAX_PCK_NUM+1),
+    localparam  PCK_CNTw = log2(MAX_PCK_NUM+1),
                 HOTSPOT_NUM= (TRAFFIC=="HOTSPOT")? HOTSPOT_NODE_NUM : 1;
     
     input                       reset,clk,en;
@@ -464,13 +414,7 @@ module two_dimension_pck_dst_gen
 	input  [NEw-1 : 0] custom_traffic_t;
 	input  custom_traffic_en;
     
-    localparam 
-        NX = T1,
-        NY = T2,    
-        NL = T3,
-        NXw = log2(NX),
-        NYw= log2(NY),
-        NLw= log2(NL);
+  
     
     wire [NXw-1 : 0] current_x; 
     wire [NYw-1 : 0] current_y;  
@@ -510,7 +454,7 @@ module two_dimension_pck_dst_gen
     	logic [6 : 0] rnd_reg;
     
     	always @(posedge clk ) begin 
-    		if(en | reset) begin 
+    		if(en | `pronoc_reset) begin 
     			rnd_reg =     $urandom_range(NE-1,0);
     			if(SELF_LOOP_EN	== "NO")	while(rnd_reg==core_num) rnd_reg =     $urandom_range(NE-1,0);// get a random IP core, make sure its not same as sender core   			
     			
@@ -535,19 +479,19 @@ module two_dimension_pck_dst_gen
      end else if (TRAFFIC == "HOTSPOT") begin 
                       
      	hot_spot_dest_gen  #(
-     			.HOTSPOT_NUM(HOTSPOT_NUM),	
-     			.NE(NE),
-     			.NEw(NEw)
-     		)hspot
-     		(
-     			.reset(reset),
-     			.clk(clk),
-     			.en(en),
-     			.hotspot_info(hotspot_info),
-     			.dest_ip_num (dest_ip_num),
-     			.core_num(core_num),
-     			.off_flag(off_flag)
-     		);
+			.NOC_ID(NOC_ID),
+     		.HOTSPOT_NUM(HOTSPOT_NUM),	
+     		.NE(NE),
+     		.NEw(NEw)
+     	) hspot (
+     		.reset(reset),
+     		.clk(clk),
+     		.en(en),
+     		.hotspot_info(hotspot_info),
+     		.dest_ip_num (dest_ip_num),
+     		.core_num(core_num),
+     		.off_flag(off_flag)
+     	);
        
         endp_addr_encoder #(
             .T1(T1),
@@ -556,13 +500,10 @@ module two_dimension_pck_dst_gen
             .NE(NE),
             .EAw(EAw),
             .TOPOLOGY(TOPOLOGY)
-        )
-        addr_encoder
-        (
+        ) addr_encoder (
             .id(dest_ip_num),
             .code(dest_e_addr)
-        );
-   
+        ); 
        
         
     end else if( TRAFFIC == "TRANSPOSE1") begin 
@@ -702,7 +643,7 @@ module two_dimension_pck_dst_gen
 		 
 		 
 	end else if( TRAFFIC == "SHUFFLE") begin: shuffle
-		//di = si−1 mod b
+		//di = siÃ¢ÂÂ1 mod b
 		for(i=1; i<(EAw); i=i+1'b1) begin :lp//reverse the address
             assign dest_ip_num[i]  = current_e_addr [i-1];
         end
@@ -790,12 +731,10 @@ endmodule
 
 
 module one_dimension_pck_dst_gen 
-import pronoc_pkg::*; 	
 #(
-		parameter NE=4,
-		parameter TRAFFIC =   "RANDOM",
-		parameter MAX_PCK_NUM = 10000,
-		parameter HOTSPOT_NODE_NUM =  4
+	parameter NOC_ID=0,
+	parameter TRAFFIC =   "RANDOM",
+	parameter HOTSPOT_NODE_NUM =  4
 
 )(
     en,
@@ -807,22 +746,14 @@ import pronoc_pkg::*;
     reset,
     valid_dst,
     hotspot_info,
-	custom_traffic_t,
-	custom_traffic_en
+    custom_traffic_t,
+    custom_traffic_en
 ); 
       
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end 	   
-      end   
-    endfunction // log2 
+    `NOC_CONF 
+
      
-     
-     localparam 
-        NEw= log2(NE),
+    localparam 
         PCK_CNTw = log2(MAX_PCK_NUM+1),
         HOTSPOT_NUM= (TRAFFIC=="HOTSPOT")? HOTSPOT_NODE_NUM : 1;
     
@@ -844,7 +775,7 @@ import pronoc_pkg::*;
     	logic [6 : 0] rnd_reg;
     
     	always @(posedge clk ) begin 
-    		if(en | reset) begin 
+    		if(en | `pronoc_reset) begin 
     			rnd_reg =     $urandom_range(NE-1,0);
     			if(SELF_LOOP_EN	== "NO")	while(rnd_reg==core_num) rnd_reg =     $urandom_range(NE-1,0);// get a random IP core, make sure its not same as sender core   			
      		end    		
@@ -855,19 +786,18 @@ import pronoc_pkg::*;
      end else if (TRAFFIC == "HOTSPOT") begin 
         
      	hot_spot_dest_gen  #(
-     		.HOTSPOT_NUM(HOTSPOT_NUM),	
+     		.NOC_ID(NOC_ID),
+			.HOTSPOT_NUM(HOTSPOT_NUM),	
      		.NE(NE),
      		.NEw(NEw)
-		)hspot
-		(
+		) hspot (
      		.clk(clk),
      		.en(en),
      		.hotspot_info(hotspot_info),
      		.dest_ip_num (dest_ip_num),
      		.core_num(core_num),
      		.off_flag(off_flag)
-     	);
-     	
+     	);     	
      	
        
     end else if( TRAFFIC == "TRANSPOSE1") begin :tran1
@@ -893,7 +823,7 @@ import pronoc_pkg::*;
 		 assign dest_ip_num = ((core_num + 1) >= NE) ? 0 : (core_num + 1);
 		
 	end else if( TRAFFIC == "SHUFFLE") begin: shuffle
-		//di = si−1 mod b
+		//di = siÃ¢ÂÂ1 mod b
 		for(i=1; i<(NEw); i=i+1'b1) begin :lp
             assign dest_ip_num[i]  = core_num [i-1];
         end
@@ -942,13 +872,12 @@ endmodule
  * *************************/
 
 module pck_size_gen
-		import pronoc_pkg::*; 
 #(
-		parameter PCK_SIZw=4,
-        parameter MIN = 2,
-        parameter MAX = 5,
-        parameter PCK_SIZ_SEL="random-discrete",	
-        parameter DISCRETE_PCK_SIZ_NUM=1
+    parameter NOC_ID=0,
+	parameter MIN = 2,
+    parameter MAX = 5,
+    parameter PCK_SIZ_SEL="random-discrete",	
+    parameter DISCRETE_PCK_SIZ_NUM=1
 )
 (
     reset,
@@ -957,6 +886,8 @@ module pck_size_gen
     pck_size,
     rnd_discrete
 );
+
+	`NOC_CONF
 
 	input rnd_discrete_t rnd_discrete [DISCRETE_PCK_SIZ_NUM-1: 0];
      
@@ -985,7 +916,7 @@ module pck_size_gen
 			
 			
 			always @(posedge clk) begin 
-				if(reset)  begin 
+				if(`pronoc_reset)  begin 
 					rnd2<= 0;
 					rnd <= rnd_discrete[0].value;					
 				end else  begin 
@@ -1003,7 +934,7 @@ module pck_size_gen
 	    end  else begin :noteq
 	        reg [PCK_SIZw-1 : 0] rnd;
 	        always @(posedge clk) begin 
-	            if(reset) rnd = MIN;
+	            if(`pronoc_reset) rnd = MIN;
 	            else if(en) rnd = $urandom_range(MAX,MIN);
 	        end
 	        assign pck_size = rnd;
@@ -1016,22 +947,21 @@ endmodule
 
 
 module hot_spot_dest_gen 
-	import pronoc_pkg::*; 
 #(
-	parameter HOTSPOT_NUM=2,	
-	parameter NE=16,
-	parameter NEw=4
-)
-(
-clk,
-reset,
-en,
-hotspot_info,
-core_num,
-dest_ip_num,
-off_flag
+   parameter NOC_ID=0,
+   parameter HOTSPOT_NUM=2
+) (
+   clk,
+   reset,
+   en,
+   hotspot_info,
+   core_num,
+   dest_ip_num,
+   off_flag
 );
 	
+   `NOC_CONF
+
 	input clk,en,reset;
 	input hotspot_t  hotspot_info [HOTSPOT_NUM-1 : 0];
 	input   [NEw-1 : 0] core_num;
@@ -1041,7 +971,7 @@ off_flag
 	logic [6 : 0] rnd_reg, hotspot_node;
 	reg [9 : 0] rnd1000;
 	always @(posedge clk ) begin 
-		if(en | reset) begin 
+		if(en | `pronoc_reset) begin 
 			rnd_reg =     $urandom_range(NE-1,0);
 			if(SELF_LOOP_EN	== "NO")	while(rnd_reg==core_num) rnd_reg =     $urandom_range(NE-1,0);// get a random IP core, make sure its not same as sender core    			
      			

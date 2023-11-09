@@ -1,8 +1,19 @@
 #!/bin/bash
 
+servers=( 'mn3' 'mn2' 'mn1' )
+#servers' shorthand name. They should be defined in ~/.ssh/config :
+# 
+#	Host your_short_name
+#		HostName server.on.the.web
+#		User user_to_user
+
+
+
+
+
 #the max server load that is permited for runing the parallel test
-max_allowed_server_load=26
-source "my_password.sh" # define servers and passwords
+max_allowed_server_load=24
+
 
 SCRPT_FULL_PATH=$(realpath ${BASH_SOURCE[0]})
 SCRPT_DIR_PATH=$(dirname $SCRPT_FULL_PATH)
@@ -70,7 +81,7 @@ while getopts "h?p:u:l:s:d:m:" opt; do
 		for d in $models_path/*/
 		do
 			m=$(basename "${d%/}")
-			if [ $m != "src" ]; then 
+			if [ $m != "src" ] &&  [ $m != "perl_lib" ]; then 
 			 	dirs[i++]="$m"
 			fi
 		done

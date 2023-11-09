@@ -1184,7 +1184,7 @@ endmodule
         NX = T1,
         NY = T2,
         RXw = log2(NX),    // number of node in x axis
-        RYw = log2(NY);    // number of node in y axis
+        RYw = (TOPOLOGY=="RING" || TOPOLOGY == "LINE") ? 1 : log2(NY);    // number of node in y axis
     
     /* verilator lint_off WIDTH */ 
     localparam [RXw-1 : 0]    MAXX = (NX-1); 
@@ -1241,7 +1241,7 @@ module mesh_tori_endp_addr_decode #(
         NY = T2,
         NL = T3, 
         EXw = log2(NX),    // number of node in x axis
-        EYw = log2(NY),
+        EYw = (TOPOLOGY=="RING" || TOPOLOGY == "LINE")? 1 : log2(NY),
         ELw = log2(NL);    // number of node in y axis
     
     /* verilator lint_off WIDTH */ 
@@ -1334,7 +1334,7 @@ module  mesh_tori_addr_encoder #(
       
     localparam 
         NXw= log2(NX),
-        NYw= log2(NY),
+        NYw= (TOPOLOGY=="RING" || TOPOLOGY=="LINE")? 0 : log2(NY),
         NEw = log2(NE);    
 
 
@@ -1358,6 +1358,7 @@ endmodule
 
 
 module  mesh_tori_addr_coder #(
+    parameter   TOPOLOGY = "MESH",
     parameter   NX=2,
     parameter   NY=2,
     parameter   NL=2,
@@ -1393,7 +1394,7 @@ module  mesh_tori_addr_coder #(
       
     localparam 
         NXw= log2(NX),
-        NYw= log2(NY),
+        NYw= (TOPOLOGY=="RING" || TOPOLOGY=="LINE")? 0 : log2(NY),
         NEw = log2(NE);    
 
 

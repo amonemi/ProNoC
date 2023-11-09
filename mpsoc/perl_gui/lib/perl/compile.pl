@@ -358,7 +358,7 @@ e.g.  export MODELSIM_BIN=/home/alireza/altera/modeltech/bin",'Modelsim  bin:'),
 	
 }
 
-
+my $cpu_num;
 sub select_parallel_process_num {
 	my ($self,$name,$top,$target_dir)=@_;	
 	my $table = def_table(2, 2, FALSE);
@@ -367,20 +367,22 @@ sub select_parallel_process_num {
 	
 	#get total number of processor in the system
 	my $cmd = "nproc\n";
-	my $cpu_num=4;
-	my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($cmd);
-	if(length $stderr>1){			
-		#nproc command has failed. set default 4 paralel processor
-					
-	}else {
-		 my ($number ) = $stdout =~ /(\d+)/;
-		 if (defined  $number ){ 
-		 	$cpu_num =$number if  ($number > 0 );
-		 }
+	if(!defined $cpu_num){
+		my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($cmd);
+		if(length $stderr>1){			
+			#nproc command has failed. set default 4 paralel processor
+						
+		}else {
+			my ($number ) = $stdout =~ /(\d+)/;
+			if (defined  $number ){ 
+				$cpu_num =$number if  ($number > 0 );
+			}
+		}
 	}
 	($row,$col)= add_param_widget ($self,"Paralle run:" , "cpu_num", 1, 'Spin-button', "1,$cpu_num,1","specify the number of processors the Verilator can use at once to run parallel compilations/simulations", $table,$row,$col,1, 'compile', undef,undef,'vertical');
 	return $table;	
 }
+
 sub select_parallel_thread_num {
 	my ($self,$name,$top,$target_dir)=@_;	
 	my $table = def_table(2, 2, FALSE);
@@ -389,16 +391,17 @@ sub select_parallel_thread_num {
 	
 	#get total number of processor in the system
 	my $cmd = "nproc\n";
-	my $cpu_num=4;
-	my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($cmd);
-	if(length $stderr>1){			
-		#nproc command has failed. set default 4 paralel processor
-					
-	}else {
-		 my ($number ) = $stdout =~ /(\d+)/;
-		 if (defined  $number ){ 
-		 	$cpu_num =$number if  ($number > 0 );
-		 }
+	if(!defined $cpu_num){
+		my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($cmd);
+		if(length $stderr>1){			
+			#nproc command has failed. set default 4 paralel processor
+						
+		}else {
+			my ($number ) = $stdout =~ /(\d+)/;
+			if (defined  $number ){ 
+				$cpu_num =$number if  ($number > 0 );
+			}
+		}
 	}
 	($row,$col)= add_param_widget ($self,"Thread run:" , "thread_num", 1, 'Spin-button', "1,$cpu_num,1","specify the number of threads the Verilator can use at once in one simulation", $table,$row,$col,1, 'compile', undef,undef,'vertical');
 	return $table;	

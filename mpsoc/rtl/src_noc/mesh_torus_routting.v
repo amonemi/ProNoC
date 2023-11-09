@@ -40,7 +40,7 @@ module mesh_torus_look_ahead_routing #(
    
     localparam  P_1     =   P-1,
                 Xw      =   log2(NX),   // number of node in x axis
-                Yw      =   log2(NY);    // number of node in y axis
+                Yw      =  (TOPOLOGY=="RING" || TOPOLOGY == "LINE") ? 1 : log2(NY);    // number of node in y axis
    
     input   [Xw-1   :   0]  current_x;
     input   [Yw-1   :   0]  current_y;                  
@@ -148,7 +148,7 @@ module  mesh_torus_deterministic_look_ahead_routing #(
  
     localparam  P_1     =   P-1,
                 Xw      =   log2(NX),   // number of node in x axis
-                Yw      =   log2(NY);    // number of node in y axis
+                Yw      = (TOPOLOGY=="RING" || TOPOLOGY == "LINE") ? 1 :  log2(NY);    // number of node in y axis
                     
  
     input   [Xw-1   :   0]  current_x;
@@ -418,7 +418,7 @@ module mesh_torus_next_router_addr_predictor #(
     endfunction // log2 
     
     localparam  Xw          =   log2(NX),
-                Yw          =   log2(NY);
+                Yw          =  (TOPOLOGY=="RING" || TOPOLOGY == "LINE")? 1 : log2(NY);
     // mesh torus            
     localparam  EAST   =       3'd1, 
                 NORTH  =       3'd2,  
@@ -770,7 +770,7 @@ module mesh_torus_conventional_routing #(
    /* verilator lint_on WIDTH */ 
               P_1   =   P-1,
               Xw    =   log2(NX),
-              Yw    =   log2(NY);
+              Yw    =  (TOPOLOGY=="RING" || TOPOLOGY=="LINE" )? 1 : log2(NY);
               
     localparam DSTw     =    P_1;               
               

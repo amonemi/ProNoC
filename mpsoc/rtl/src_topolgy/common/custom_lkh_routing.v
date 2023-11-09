@@ -2,7 +2,7 @@
 
 module custom_lkh_routing  #(
 	parameter TOPOLOGY = "CUSTOM_NAME",
-        parameter ROUTE_NAME = "CUSTOM_NAME",
+    parameter ROUTE_NAME = "CUSTOM_NAME",
 	parameter ROUTE_TYPE = "DETERMINISTIC",
 	parameter RAw = 3,  
 	parameter EAw = 3,   
@@ -25,17 +25,7 @@ module custom_lkh_routing  #(
 
     generate 
     
-    
-    
-     
-	
-    
-     
-	
-    
-     
-	
-    
+       
      
 	//do not modify this line ===Tcustom1Rcustom===
     if(TOPOLOGY == "custom1" && ROUTE_NAME== "custom" ) begin : Tcustom1Rcustom
@@ -58,6 +48,12 @@ module custom_lkh_routing  #(
     end	
     
     endgenerate
+    	
+ 
+    	
+ 
+    	
+ 
     	
  
     	

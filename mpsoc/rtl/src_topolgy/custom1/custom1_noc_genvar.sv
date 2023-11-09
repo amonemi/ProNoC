@@ -6,11 +6,11 @@
 
 
 /**********************************************************************
-**	File: /home/alireza/work/git/hca_git/ProNoC/mpsoc/rtl/src_topolgy/custom1/custom1_noc_genvar.sv
+**	File: /home/alireza/work/git/pronoc/mpsoc/rtl/src_topolgy/custom1/custom1_noc_genvar.sv
 **    
 **	Copyright (C) 2014-2021  Alireza Monemi
 **    
-**	This file is part of ProNoC 2.0.0 
+**	This file is part of ProNoC 2.1.0 
 **
 **	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
 **	you can redistribute it and/or modify it under the terms of the GNU
@@ -28,9 +28,10 @@
 
 `include "pronoc_def.v"
 
-module   custom1_noc_genvar 
-   import pronoc_pkg::*; 
-	(
+module   custom1_noc_genvar    
+#(
+	parameter NOC_ID=0
+)(
 
     reset,
     clk,    
@@ -39,21 +40,7 @@ module   custom1_noc_genvar
     router_event  
 );
 
-	 function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end 	   
-      end   
-    endfunction // log2 
-
-	localparam 
-		NE = 16,
-		NR = 16,
-		RAw=log2(NR),
-		MAX_P=5;
-	
+`NOC_CONF
     
 
 	input  reset;
@@ -87,6 +74,7 @@ module   custom1_noc_genvar
 	assign current_r_addr [RID] = RID[RAw-1: 0]; 
 
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(3)
 	)
 	router_3_port
@@ -109,6 +97,7 @@ module   custom1_noc_genvar
 	assign current_r_addr [RID] = RID[RAw-1: 0]; 
 
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(4)
 	)
 	router_4_port
@@ -131,6 +120,7 @@ module   custom1_noc_genvar
 	assign current_r_addr [RID] = RID[RAw-1: 0]; 
 
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(5)
 	)
 	router_5_port

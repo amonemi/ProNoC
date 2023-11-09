@@ -28,10 +28,14 @@
 
 
 module flit_buffer 
-		import pronoc_pkg::*;  
 	#(
 		parameter B =4,
-		parameter SSA_EN="YES" // "YES" , "NO"       
+		parameter SSA_EN="YES", // "YES" , "NO" 
+		parameter Fw=32,
+		parameter PCK_TYPE ="MULTI_FLIT",
+		parameter CAST_TYPE = "UNICAST",
+		parameter DEBUG_EN = 1,
+		parameter V=1
 		)	
 		(
 			din,     // Data in
@@ -51,7 +55,14 @@ module flit_buffer
 			flit_is_tail
 		);
 
-   
+     function  integer log2;
+      input integer number; begin   
+         log2=(number <=1) ? 1: 0;    
+         while(2**log2<number) begin    
+            log2=log2+1;    
+         end       
+      end   
+    endfunction // log2 
    
     
 	localparam      
@@ -718,7 +729,7 @@ module fwft_fifo #(
        
 				for(i=0;i<DATA_WIDTH; i=i+1) begin : lp
 					always @(posedge clk ) begin 
-						//if (reset) begin 
+						//if (`pronoc_reset) begin 
 						//  shiftreg[i] <= {MAX_DEPTH{1'b0}};
 						//end else begin
 						if(wr_en) shiftreg[i] <= {shiftreg[i][MAX_DEPTH-3   :   0]  ,din[i]};
@@ -920,7 +931,7 @@ module fwft_fifo_with_output_clear #(
        
 				for(i=0;i<DATA_WIDTH; i=i+1) begin : lp
 					always @(posedge clk ) begin 
-						//if (reset) begin 
+						//if (`pronoc_reset) begin 
 						//  shiftreg[i] <= {MAX_DEPTH{1'b0}};
 						//end else begin
 						if(wr_en) shiftreg[i] <= {shiftreg[i][MAX_DEPTH-3   :   0]  ,din[i]};
@@ -1011,7 +1022,7 @@ module fwft_fifo_with_output_clear #(
 	always @(posedge clk)
 
 	begin
-		if(~reset)begin
+		if(`pronoc_reset==0)begin
 			if (wr_en && ~rd_en && full) begin
 				$display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,MAX_DEPTH);
 				$finish;
@@ -1034,12 +1045,9 @@ module fwft_fifo_with_output_clear #(
 endmodule   
 
 
-
-
-
-
-
-
+/***************
+fwft_fifo_bram
+****************/
 
 module fwft_fifo_bram #(
 		parameter DATA_WIDTH = 2,
@@ -1082,6 +1090,9 @@ module fwft_fifo_bram #(
 	wire [DATA_WIDTH-1 : 0] bram_dout;
 	wire [DATA_WIDTH-1 : 0] out_reg;
 	reg  [DATA_WIDTH-1 : 0] out_reg_next;
+	
+	wire [DEPTH_DATA_WIDTH-1         :   0]  depth;
+	reg  [DEPTH_DATA_WIDTH-1         :   0]  depth_next;
      
 	assign dout = (bram_out_is_valid)?  bram_dout : out_reg;
 
@@ -1100,8 +1111,9 @@ module fwft_fifo_bram #(
    
 	always @(*) begin
 		valid_next = valid;
-		if(out_reg_wr_en) valid_next =1'b1;
-		else if( bram_empty & rd_en) valid_next =1'b0;
+		if(depth_next == {DEPTH_DATA_WIDTH{1'b0}}) valid_next =1'b0;
+		else if(out_reg_wr_en) valid_next =1'b1;
+		else if(bram_empty & rd_en) valid_next =1'b0;
 	end   
     
     
@@ -1120,8 +1132,7 @@ module fwft_fifo_bram #(
 			.clk(clk)
 		);
     
-	wire [DEPTH_DATA_WIDTH-1         :   0]  depth;
-	reg  [DEPTH_DATA_WIDTH-1         :   0]  depth_next;
+	
    
    
 	pronoc_register #(.W(DATA_WIDTH)      ) reg1 (.in(out_reg_next           ), .out(out_reg), .reset(reset), .clk(clk));
@@ -1137,7 +1148,7 @@ module fwft_fifo_bram #(
 		if (wr_en & ~rd_en) depth_next =   depth + 1'h1;
 		else if (~wr_en & rd_en) depth_next  = depth - 1'h1;  
 		if(pass_din_to_out_reg) out_reg_next = din;
-		if(bram_out_is_valid)   out_reg_next = bram_dout; 
+		else if(bram_out_is_valid)   out_reg_next = bram_dout; 
 	end  
     
        
@@ -1256,7 +1267,7 @@ module bram_based_fifo  #(
 
 	always @(posedge clk)
 	begin
-		if (reset) begin
+		if (`pronoc_reset) begin
 			rd_ptr <= {Bw{1'b0}};
 			wr_ptr <= {Bw{1'b0}};
 			depth  <= {DEPTHw{1'b0}};
@@ -1281,7 +1292,7 @@ module bram_based_fifo  #(
 	//synopsys  translate_off
 	always @(posedge clk)
 	begin
-		if(~reset)begin
+		if(`pronoc_reset==1'b0)begin
 			if (wr_en && depth == B[DEPTHw-1   :   0] && !rd_en) begin
 				$display(" %t: ERROR: Attempt to write to full FIFO: %m",$time);
 				$finish;

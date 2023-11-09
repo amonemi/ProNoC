@@ -2,16 +2,16 @@
 	#define MESH_H
 
 	#define  LOCAL		0
-	#define  EAST       1 
-	#define  NORTH      2  
-	#define  WEST       3  
+	#define  EAST       1
+	#define  NORTH      2
+	#define  WEST       3
 	#define  SOUTH      4
 
-	//ring line            
+	//ring line
 	#define  FORWARD    1
 	#define  BACKWARD   2
 	#define router_id(x,y)  ((y * T1) +    x)
-	#define endp_id(x,y,l)  ((y * T1) +    x) * T3 + l 
+	#define endp_id(x,y,l)  ((y * T1) +    x) * T3 + l
 
 
 
@@ -37,19 +37,35 @@
 		(*l) = code;
 	}
 
-
+	void ring_line_addr_sep(unsigned int code, unsigned int *x, unsigned int *l){
+		(*x) = code &  maskx;
+		code>>=nxw;		
+		(*l) = code;
+	}
 
 	unsigned int mesh_tori_addr_join(unsigned int x, unsigned int y, unsigned int l){
-
 		unsigned int addrencode=0;
 		addrencode =(T3==1)?   (y<<nxw | x) : (l<<(nxw+nyw)|  (y<<nxw) | x);
 		return addrencode;
 	}
 
+    unsigned int ring_line_addr_join(unsigned int x, unsigned int l){
+		unsigned int addrencode=0;
+		addrencode =(T3==1)?   x : (l<<nxw) | x;
+		return addrencode;
+	}
+
+
 	unsigned int mesh_tori_addrencode (unsigned int id){
 		unsigned int y, x, l;
 		mesh_tori_addrencod_sep(id,&x,&y,&l);
 		return mesh_tori_addr_join(x,y,l);
+	}
+
+	unsigned int ring_line_addrencode (unsigned int id){
+		unsigned int y , x, l;
+		mesh_tori_addrencod_sep(id,&x,&y,&l);
+		return ring_line_addr_join(x,l);
 	}
 
 
@@ -118,18 +134,32 @@
 		return ((y*T1)+x)*T3+l;
 	}
 
+	unsigned int ring_line_endp_addr_decoder (unsigned int code){
+		unsigned int x, l;
+		ring_line_addr_sep(code,&x,&l);
+		//if(code==0x1a) printf("code=%x,x=%u,y=%u,l=%u\n",code,x,y,l);
+		return x*T3+l;
+	}
+
+
+
 
 	unsigned int endp_addr_encoder ( unsigned int id){
-			#if defined (IS_MESH) || defined (IS_TORUS) || defined (IS_LINE) || defined (IS_RING )
+			#if defined (IS_MESH) || defined (IS_TORUS)
 				return mesh_tori_addrencode(id);
+			#elif  defined (IS_LINE) || defined (IS_RING )
+				return ring_line_addrencode(id);
+			#else
+				return fmesh_addrencode(id);
 			#endif
-			return fmesh_addrencode(id);
 	}
 
 
 	unsigned int endp_addr_decoder (unsigned int code){
-		#if defined (IS_MESH) || defined (IS_TORUS) || defined (IS_LINE) || defined (IS_RING )
+		#if defined (IS_MESH) || defined (IS_TORUS)
 			return mesh_tori_endp_addr_decoder (code);
+		#elif defined (IS_LINE) || defined (IS_RING )
+			return ring_line_endp_addr_decoder (code);		
 		#endif
 		return fmesh_endp_addr_decoder (code);
 	}
@@ -155,13 +185,13 @@ void topology_connect_all_nodes_old (void){
 
 	
 	unsigned int  x,y,l;
-	#if defined (IS_LINE) || defined (IS_RING ) 
-			#define R2R_CHANELS_MESH_TORI   2 
-			for  (x=0;   x<T1; x=x+1) {             
-                       
+	#if defined (IS_LINE) || defined (IS_RING )
+			#define R2R_CHANELS_MESH_TORI   2
+			for  (x=0;   x<T1; x=x+1) {
+
 				router1[x]->current_r_addr = x;
 				router1[x]->current_r_id   = x;
-				if(x    <   T1-1){// not_last_node 
+				if(x    <   T1-1){// not_last_node
 					//assign  router_chan_in[x][FORWARD] = router_chan_out [(x+1)][BACKWARD];
 					conect_r2r(1,x,FORWARD,1,(x+1),BACKWARD);
 
@@ -169,13 +199,13 @@ void topology_connect_all_nodes_old (void){
 					
 					#if defined (IS_LINE) // : line_last_x
 						//assign  router_chan_in[x][FORWARD]= {SMARTFLIT_CHANEL_w{1'b0}};
-						connect_r2gnd(1,x,FORWARD);				      
+						connect_r2gnd(1,x,FORWARD);				
 					#else // : ring_last_x
 						//assign router_chan_in[x][FORWARD]= router_chan_out [0][BACKWARD];
 						conect_r2r(1,x,FORWARD,1,0,BACKWARD);
 					#endif
 				}
-            
+
 				if(x>0){// :not_first_x
 					//assign router_chan_in[x][BACKWARD]= router_chan_out [(x-1)][FORWARD];
 					conect_r2r(1,x,BACKWARD,1,(x-1),FORWARD);
@@ -188,30 +218,30 @@ void topology_connect_all_nodes_old (void){
 						//assign  router_chan_in[x][BACKWARD]= router_chan_out [(NX-1)][FORWARD];											
 						conect_r2r(1,x,BACKWARD,1,(T1-1),FORWARD);
 					#endif
-				}           
-            
+				}
+
 				// connect other local ports
 				for  (l=0;   l<T3; l=l+1) {// :locals
-					unsigned int ENDPID = endp_id(x,0,l); 
-					unsigned int LOCALP = (l==0) ? l : l + R2R_CHANELS_MESH_TORI; // first local port is connected to router port 0. The rest are connected at the } 
+					unsigned int ENDPID = endp_id(x,0,l);
+					unsigned int LOCALP = (l==0) ? l : l + R2R_CHANELS_MESH_TORI; // first local port is connected to router port 0. The rest are connected at the }
 					//assign router_chan_in[x][LOCALP]= chan_in_all [ENDPID];
 					//assign chan_out_all [ENDPID] = router_chan_out[x][LOCALP];
 					connect_r2e(1,x,LOCALP,ENDPID);
-					er_addr [ENDPID] = x;        
-					                
-				}// locals               
-			}//x    
+					er_addr [ENDPID] = x;
+					
+				}// locals
+			}//x
 			
 		#else // :mesh_torus
-			#define R2R_CHANELS_MESH_TORI   4 
+			#define R2R_CHANELS_MESH_TORI   4
 			for (y=0;    y<T2;    y=y+1) {//: y_loop
 				for (x=0;    x<T1; x=x+1) {// :x_loop
-				unsigned int R_ADDR = (y<<nxw) + x;            
+				unsigned int R_ADDR = (y<<nxw) + x;
 				unsigned int ROUTER_NUM = (y * T1) +    x;					
 				//assign current_r_addr [ROUTER_NUM] = R_ADDR[RAw-1 :0];
-             	router1[ROUTER_NUM]->current_r_addr = R_ADDR;  
+             	router1[ROUTER_NUM]->current_r_addr = R_ADDR;
              	router1[ROUTER_NUM]->current_r_id   = ROUTER_NUM;
-        
+
 				if(x    <    T1-1) {//: not_last_x
 					//assign router_chan_in[`router_id(x,y)][EAST]= router_chan_out [`router_id(x+1,y)][WEST];
 					conect_r2r(1,router_id(x,y),EAST,1,router_id(x+1,y),WEST);
@@ -230,15 +260,15 @@ void topology_connect_all_nodes_old (void){
 						er_addr [EAST_ID] = R_ADDR;
 					#endif//topology
 				}
-            
-        
+
+
 				if(y>0) {// : not_first_y
 					//assign router_chan_in[`router_id(x,y)][NORTH] =  router_chan_out [`router_id(x,(y-1))][SOUTH];					
 					conect_r2r(1,router_id(x,y),NORTH,1,router_id(x,(y-1)),SOUTH);		
 				}else {// :first_y
 					#if defined (IS_MESH) // : first_y_mesh
 					 	//assign router_chan_in[`router_id(x,y)][NORTH] =  {SMARTFLIT_CHANEL_w{1'b0}};												
-					 	connect_r2gnd(1,router_id(x,y),NORTH);	 
+					 	connect_r2gnd(1,router_id(x,y),NORTH);	
 					#elif defined (IS_TORUS)// :first_y_torus
 						//assign router_chan_in[`router_id(x,y)][NORTH] =  router_chan_out [`router_id(x,(T2-1))][SOUTH];
 						conect_r2r(1,router_id(x,y),NORTH,1,router_id(x,(T2-1)),SOUTH);							
@@ -248,17 +278,17 @@ void topology_connect_all_nodes_old (void){
 						er_addr [NORTH_ID] = R_ADDR;
 					#endif//topology
 				}//y>0
-            
-            
+
+
 				if(x>0){// :not_first_x
 					//assign    router_chan_in[`router_id(x,y)][WEST] =  router_chan_out [`router_id((x-1),y)][EAST];					
 					conect_r2r(1,router_id(x,y),WEST,1,router_id((x-1),y),EAST);	
 				}else {// :first_x
-					 
+					
 					#if defined (IS_MESH) // :first_x_mesh
 						//assign    router_chan_in[`router_id(x,y)][WEST] =   {SMARTFLIT_CHANEL_w{1'b0}};
 						connect_r2gnd(1,router_id(x,y),WEST);							
-						                
+						
 					#elif defined (IS_TORUS) // :first_x_torus
 						//assign    router_chan_in[`router_id(x,y)][WEST] =   router_chan_out [`router_id((NX-1),y)][EAST] ;						
 						conect_r2r(1,router_id(x,y),WEST,1,router_id((T1-1),y),EAST);
@@ -267,18 +297,18 @@ void topology_connect_all_nodes_old (void){
 						connect_r2e(1,router_id(x,y),WEST,WEST_ID);
 						er_addr [WEST_ID] = R_ADDR;
 					#endif//topology
-				}   
-            
+				}
+
 				if(y    <    T2-1) {// : firsty
 					//assign  router_chan_in[`router_id(x,y)][SOUTH] =    router_chan_out [`router_id(x,(y+1))][NORTH];					
 					conect_r2r(1,router_id(x,y),SOUTH,1,router_id(x,(y+1)),NORTH);
 				}else     {// : lasty
-					 
+					
 					#if defined (IS_MESH) // :ly_mesh
-						 
+						
 						//assign  router_chan_in[`router_id(x,y)][SOUTH]=  {SMARTFLIT_CHANEL_w{1'b0}};
 						connect_r2gnd(1,router_id(x,y),SOUTH);	
-						 
+						
 					#elif defined (IS_TORUS) // :ly_torus
 						//assign  router_chan_in[`router_id(x,y)][SOUTH]=    router_chan_out [`router_id(x,0)][NORTH];
 						conect_r2r(1,router_id(x,y),SOUTH,1,router_id(x,0),NORTH);
@@ -287,26 +317,26 @@ void topology_connect_all_nodes_old (void){
 						connect_r2e(1,router_id(x,y),SOUTH,SOUTH_ID);
 						er_addr [SOUTH_ID] = R_ADDR;
 					#endif//topology
-				}         
-        
-        
+				}
+
+
 				// endpoint(s) connection
 				// connect other local ports
 				for  (l=0;   l<T3; l=l+1) {// :locals
-					unsigned int ENDPID = endp_id(x,y,l); 
-					unsigned int LOCALP = (l==0) ? l : l + R2R_CHANELS_MESH_TORI; // first local port is connected to router port 0. The rest are connected at the } 
-                
+					unsigned int ENDPID = endp_id(x,y,l);
+					unsigned int LOCALP = (l==0) ? l : l + R2R_CHANELS_MESH_TORI; // first local port is connected to router port 0. The rest are connected at the }
+
 					//assign router_chan_in [`router_id(x,y)][LOCALP] =    chan_in_all [ENDPID];
 					//assign chan_out_all [ENDPID] = router_chan_out [`router_id(x,y)][LOCALP];	
 					//assign er_addr [ENDPID] = R_ADDR;		
-                    connect_r2e(1,router_id(x,y),LOCALP,ENDPID); 
-					er_addr [ENDPID] = R_ADDR;         
-				}// locals                 
-    
+                    connect_r2e(1,router_id(x,y),LOCALP,ENDPID);
+					er_addr [ENDPID] = R_ADDR;
+				}// locals
+
 			}//y
 		}//x
-	#endif     
-    
+	#endif
+
 	
 }	
 

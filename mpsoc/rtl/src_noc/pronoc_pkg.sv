@@ -1,12 +1,16 @@
+
 `include "pronoc_def.v"
 /****************************************************************************
  * pronoc_pkg.sv
  ****************************************************************************/
 
+`ifdef PRONOC_PKG	
+
+`ifdef IMPORT_PRONOC_PCK
 package pronoc_pkg; 
-  
+`endif  
 	
-		
+	
 	
   
 `define NOC_LOCAL_PARAM
@@ -260,7 +264,7 @@ localparam
 		bit    endp_port;  // if it is one, it means the corresponding port is connected o an endpoint
 		logic [RAw-1:   0]  neighbors_r_addr;
 		logic [V-1  :0] [CRDTw-1: 0] credit_init_val; // the connected port initial credit value. It is taken at reset time	
-		logic [V-1  :0] credit_release_en;
+		logic [V-1  :0] credit_release_en;		
 	} ctrl_chanel_t; 
 	localparam CTRL_CHANEL_w = $bits(ctrl_chanel_t);
 	
@@ -280,7 +284,7 @@ localparam
  * simulation
  * **********/
 	
-	localparam DELAYw = EAw+2; //Injector start delay counter width
+	localparam DELAYw = 9; //Injector start delay counter width. 10 to 500 clk cycles delay randomly selected
 	
  	typedef struct packed {
  		integer   ip_num;
@@ -295,7 +299,7 @@ localparam
  	
  	//packet injector interface
  	localparam PCK_INJ_Dw =64;//TODO to be defined by user
- 	localparam PCK_SIZw= log2(MAX_PCK_SIZ);
+ 	localparam PCK_SIZw= log2(MAX_PCK_SIZ+1);
 	
  	
 
@@ -319,11 +323,14 @@ localparam
     	bit pck_wr_i;
     	bit flit_wr_o;
     	bit pck_wr_o;
-    	bit flit_in_bypassed;    	
+    	bit flit_in_bypassed;
+    	bit active_high_reset; // if asserted means ProNoC is configured with active high reset    	
     } router_event_t;
     localparam ROUTER_EVENT_w = $bits(router_event_t); 
     
-	
+
+`ifdef IMPORT_PRONOC_PCK	
 endpackage : pronoc_pkg
+`endif
 
-
+`endif

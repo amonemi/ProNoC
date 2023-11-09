@@ -20,18 +20,18 @@
 
  *************************************/
  
-module multicast_routing
-		import pronoc_pkg::*;
-	#(
-		parameter P = 5,
-		parameter SW_LOC = 0		
-		)
-		(
-			current_r_addr,  //current router  address
-			dest_e_addr,  // destination endpoint address		
-			destport		
-		);
-	
+module multicast_routing # (
+	parameter NOC_ID=0,
+	parameter SW_LOC=0,    
+ 	parameter P=5
+)(
+	current_r_addr,  //current router  address
+	dest_e_addr,  // destination endpoint address		
+	destport		
+);
+
+	`NOC_CONF	
+		
 	input   [RAw-1   :   0]  current_r_addr;
 	input   [DAw-1   :   0]  dest_e_addr;
 	output  [DSTPw-1  :   0] destport;
@@ -40,13 +40,11 @@ module multicast_routing
  	/* verilator lint_off WIDTH */	
  	if(TOPOLOGY=="MESH") begin: mesh
  	/* verilator lint_on WIDTH */	
-		multicast_routing_mesh
- 		#(
- 			.P(P) ,
+		multicast_routing_mesh #(
+ 			.NOC_ID(NOC_ID),
+			.P(P) ,
  			.SW_LOC(SW_LOC)		
- 		)
- 		routing
- 		(
+ 		) routing (
  			.current_r_addr(current_r_addr),  //current router  address
  			.dest_e_addr(dest_e_addr),  // destination endpoint address		
  			.destport(destport)		
@@ -54,13 +52,11 @@ module multicast_routing
  	/* verilator lint_off WIDTH */	
  	end else if (TOPOLOGY == "FMESH") begin : fmesh 
  	/* verilator lint_on WIDTH */
- 		multicast_routing_fmesh
- 		#(
- 			.P(P) ,
+ 		multicast_routing_fmesh #(
+ 			.NOC_ID(NOC_ID),
+			.P(P) ,
  			.SW_LOC(SW_LOC)		
- 		)
- 		routing
- 		(
+ 		) routing (
  			.current_r_addr(current_r_addr),  //current router  address
  			.dest_e_addr(dest_e_addr),  // destination endpoint address		
  			.destport(destport)		
@@ -78,19 +74,17 @@ module multicast_routing
  
 endmodule
 
-module multicast_routing_mesh
-	import pronoc_pkg::*;
-	#(
-		parameter P = 5,
-		parameter SW_LOC = 0		
-	)
-	(
-		current_r_addr,  //current router  address
-		dest_e_addr,  // destination endpoint address		
-		destport		
-	);
-     	
-   
+module multicast_routing_mesh	#(
+	parameter NOC_ID=0,
+	parameter SW_LOC=0,   
+ 	parameter P=5
+) (
+	current_r_addr,  //current router  address
+	dest_e_addr,  // destination endpoint address		
+	destport		
+);   
+    
+   `NOC_CONF
 	
 	input   [RAw-1   :   0]  current_r_addr;
 	input   [DAw-1   :   0]  dest_e_addr;
@@ -98,8 +92,6 @@ module multicast_routing_mesh
 
     
 	localparam
-		NX = T1,
-		NY = T2,
 		RXw = log2(NX),   
 		RYw = log2(NY),  
 		EXw = RXw,
@@ -136,7 +128,9 @@ module multicast_routing_mesh
 		wire [NX-1 : 0] row_has_any_dest;
 		wire [NE-1 : 0] dest_mcast_all_endp;			
 		
-		mcast_dest_list_decode decode (
+		mcast_dest_list_decode #(
+			.NOC_ID(NOC_ID)
+		) decode (
 			.dest_e_addr(dest_e_addr),
 			.dest_o(dest_mcast_all_endp),
 			.row_has_any_dest(row_has_any_dest),
@@ -228,30 +222,25 @@ endmodule
 
 
 
-
-
-
-module multicast_routing_fmesh
-	import pronoc_pkg::*;
-	#(
-	parameter P = 5,
-	parameter SW_LOC = 0		
-	)
-	(
+module multicast_routing_fmesh #(
+	parameter NOC_ID=0,
+	parameter SW_LOC=0,    
+ 	parameter P=5
+) (
 	current_r_addr,  //current router  address
 	dest_e_addr,  // destination endpoint address		
 	destport		
-	);
-     	
+);
+
+	`NOC_CONF
+	
 	input   [RAw-1   :   0]  current_r_addr;
 	input   [DAw-1   :   0]  dest_e_addr;
 	output  [DSTPw-1 :   0]  destport;
 
 	localparam Pw = log2(MAX_P_FMESH);
 	
-	localparam
-		NX = T1,
-		NY = T2,
+	localparam		
 		RXw = log2(NX),   
 		RYw = log2(NY),  
 		EXw = RXw,
@@ -287,12 +276,14 @@ module multicast_routing_fmesh
 	wire [NX-1 : 0] row_has_any_dest;
 	wire [NE-1 : 0] dest_mcast_all_endp;			
 		
-	mcast_dest_list_decode decode (
-			.dest_e_addr(dest_e_addr),
-			.dest_o(dest_mcast_all_endp),
-			.row_has_any_dest(row_has_any_dest),
-			.is_unicast()
-		);
+	mcast_dest_list_decode # (
+		.NOC_ID(NOC_ID)
+	) decode (
+		.dest_e_addr(dest_e_addr),
+		.dest_o(dest_mcast_all_endp),
+		.row_has_any_dest(row_has_any_dest),
+		.is_unicast()
+	);
 	
 	
 	genvar i,j;
@@ -312,8 +303,7 @@ module multicast_routing_fmesh
 			ADR = fmesh_addrencode(i),			
 			XX = ADR [NXw -1 : 0],
 			YY = ADR [NXw+NYw-1 : NXw], 
-			PP = ADR [NXw+NYw+Pw-1 : NXw+NYw]; 
-			
+			PP = ADR [NXw+NYw+Pw-1 : NXw+NYw]; 			
 		
 		/* verilator lint_off CMPCONST */
 		assign y_plus[i]  = (current_rx	==	XX) && (current_ry >  YY);
@@ -326,9 +316,6 @@ module multicast_routing_fmesh
 		for(j=0;j<MAX_P_FMESH;j++)begin : lp
 			assign local_p[j][i] = (current_rx	==	XX) && (current_ry == YY) && (PP == j);
 		end		
-		
-			
-	
 	end//for ne
 	
 	wire [MAX_P_FMESH-1 : 0] goto_local;
@@ -343,49 +330,45 @@ module multicast_routing_fmesh
 	wire goto_west  = (|(x_plus  & row_has_any_dest))    | goto_local[WEST];
 		
 			
-	
-	
-		
-		reg [4  :   0] destport_tmp;
+	reg [4  :   0] destport_tmp;
 			
-		always @(*) begin 
-			destport_tmp = {DSTPw{1'b0}};
-			destport_tmp[LOCAL]=goto_local[LOCAL];				
-			if     (SW_LOC == SOUTH)begin 
-				destport_tmp [NORTH] = goto_north ;
-				destport_tmp [EAST]  = goto_east;
-				destport_tmp [WEST]  = goto_west;
-			end
-			else if(SW_LOC == NORTH) begin 
-				destport_tmp [SOUTH] = goto_south ;
-				destport_tmp [EAST]  = goto_east;
-				destport_tmp [WEST]  = goto_west;
-			end
-			else if(SW_LOC == WEST)begin 
-				destport_tmp [NORTH] = goto_north ;
-				destport_tmp [SOUTH] = goto_south;
-				destport_tmp [EAST ] = goto_east;					
-			end
-			else if(SW_LOC == EAST) begin 
-				destport_tmp [NORTH] = goto_north;
-				destport_tmp [SOUTH] = goto_south;
-				destport_tmp [WEST ] = goto_west;					
-			end
-			else if(SW_LOC == LOCAL || SW_LOC > SOUTH) begin
-				destport_tmp [NORTH] = goto_north;
-				destport_tmp [SOUTH] = goto_south;
-				destport_tmp [EAST]  = goto_east;
-				destport_tmp [WEST]  = goto_west;
-			end							
+	always @(*) begin 
+		destport_tmp = {DSTPw{1'b0}};
+		destport_tmp[LOCAL]=goto_local[LOCAL];				
+		if     (SW_LOC == SOUTH)begin 
+			destport_tmp [NORTH] = goto_north ;
+			destport_tmp [EAST]  = goto_east;
+			destport_tmp [WEST]  = goto_west;
 		end
+		else if(SW_LOC == NORTH) begin 
+			destport_tmp [SOUTH] = goto_south ;
+			destport_tmp [EAST]  = goto_east;
+			destport_tmp [WEST]  = goto_west;
+		end
+		else if(SW_LOC == WEST)begin 
+			destport_tmp [NORTH] = goto_north ;
+			destport_tmp [SOUTH] = goto_south;
+			destport_tmp [EAST ] = goto_east;					
+		end
+		else if(SW_LOC == EAST) begin 
+			destport_tmp [NORTH] = goto_north;
+			destport_tmp [SOUTH] = goto_south;
+			destport_tmp [WEST ] = goto_west;					
+		end
+		else if(SW_LOC == LOCAL || SW_LOC > SOUTH) begin
+			destport_tmp [NORTH] = goto_north;
+			destport_tmp [SOUTH] = goto_south;
+			destport_tmp [EAST]  = goto_east;
+			destport_tmp [WEST]  = goto_west;
+		end							
+	end
 			
-		localparam MSB_DSTP = (DSTPw-1 < SOUTH)? DSTPw-1: SOUTH;
+	localparam MSB_DSTP = (DSTPw-1 < SOUTH)? DSTPw-1: SOUTH;
 			
-		assign destport [MSB_DSTP : 0] =destport_tmp;
-		for(i=1;i<NL;i++) begin :other_local
-			assign destport[MSB_DSTP+i]=goto_local[i];			
-		end		
-					
+	assign destport [MSB_DSTP : 0] =destport_tmp;
+	for(i=1;i<NL;i++) begin :other_local
+		assign destport[MSB_DSTP+i]=goto_local[i];			
+	end		
 		
 		
 	endgenerate	
@@ -393,15 +376,16 @@ module multicast_routing_fmesh
 endmodule
 
 
-module mcast_dest_list_decode
-		import pronoc_pkg::*;
-		(
-		dest_e_addr,
-		dest_o,
-		row_has_any_dest,
-		is_unicast
-		);
+module mcast_dest_list_decode #(
+	parameter NOC_ID=0
+) (
+	dest_e_addr,
+	dest_o,
+	row_has_any_dest,
+	is_unicast
+);
 	
+	`NOC_CONF
 	
 	input  [DAw-1 :0]  dest_e_addr;
 	output [NE-1 : 0]  dest_o;
@@ -527,26 +511,24 @@ module mcast_dest_list_decode
 		
 	endgenerate		
 	
-	
 endmodule
 
 
 
 
-module multicast_chan_in_process 		
-		import pronoc_pkg::*;
-	#(
-		parameter P = 5,
-		parameter SW_LOC = 0			
-		
-	)
-	(
-		endp_port,
-		current_r_addr,
-		chan_in,
-		chan_out,
-		clk
-	);
+module multicast_chan_in_process #(
+	parameter NOC_ID=0,
+	parameter SW_LOC=0,    
+ 	parameter P=5
+) (
+	endp_port,
+	current_r_addr,
+	chan_in,
+	chan_out,
+	clk
+);  
+
+	`NOC_CONF
 	
 	input endp_port;
 	input   [RAw-1   :   0]  current_r_addr;
@@ -558,19 +540,21 @@ module multicast_chan_in_process
 	wire  [MCASTw-1   :   0]  mcast_dst_coded;
 	wire  [NE-1 : 0] dest_mcast_all_endp;
 	wire [NX-1 : 0] row_has_any_dest,row_has_any_dest_in;	
-	wire  [DSTPw-1  :   0] destport,destport_o;
-	
-	
+	wire  [DSTPw-1  :   0] destport,destport_o;	
 	
 	hdr_flit_t hdr_flit;
-	header_flit_info extract(
-			.flit(chan_in.flit),
-			.hdr_flit(hdr_flit),		
-			.data_o()
-		);
 	
-	mcast_dest_list_decode decoder
-	(
+	header_flit_info #(
+		.NOC_ID (NOC_ID)
+	) extract (
+		.flit(chan_in.flit),
+		.hdr_flit(hdr_flit),		
+		.data_o()
+	);
+	
+	mcast_dest_list_decode #(
+		.NOC_ID(NOC_ID)
+	) decoder (
 		.dest_e_addr(hdr_flit.dest_e_addr),
 		.dest_o(dest_mcast_all_endp),
 		.row_has_any_dest(row_has_any_dest_in),
@@ -579,8 +563,7 @@ module multicast_chan_in_process
 	
 	localparam MCASTw_= (MCASTw < DAw ) ? MCASTw : DAw;
 		
-	assign mcast_dst_coded = hdr_flit.dest_e_addr[MCASTw_-1:0];
-	
+	assign mcast_dst_coded = hdr_flit.dest_e_addr[MCASTw_-1:0];	
 	
 	genvar i;
 	generate 
@@ -677,6 +660,7 @@ module multicast_chan_in_process
 		
 		multicast_routing
 		#(
+			.NOC_ID(NOC_ID),
 			.P(P) ,
 			.SW_LOC(SW_LOC)		
 		)
@@ -697,9 +681,6 @@ module multicast_chan_in_process
 				chan_out.flit [DST_P_MSB : DST_P_LSB] = destport_o;				
 			end
 		end	
-			
-		
-	
 	
 	
 	
@@ -733,16 +714,15 @@ endmodule
 
 
 
+module multicast_dst_sel # (
+	parameter NOC_ID=0
+)(
+	destport_in,
+	destport_out    
+);
 
-
-module multicast_dst_sel 
-		import pronoc_pkg::*;   
-	(
-
-		destport_in,
-		destport_out    
-	);
-
+	`NOC_CONF
+	
 	input  [DSTPw-1 : 0] destport_in;
 	output [DSTPw-1 : 0] destport_out; 
 

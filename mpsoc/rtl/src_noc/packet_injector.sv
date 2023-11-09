@@ -6,20 +6,22 @@
  * *************************/
 
 
-module packet_injector 
-		import pronoc_pkg::*; 
-	(
-		//general
-		current_e_addr,
-		reset,
-		clk,		
-		//noc port
-		chan_in,
-		chan_out,  
-		//control interafce
-		pck_injct_in,
-		pck_injct_out		
-	);
+module packet_injector #(
+	parameter NOC_ID=0
+) (
+	//general
+	current_e_addr,
+	reset,
+	clk,		
+	//noc port
+	chan_in,
+	chan_out,  
+	//control interafce
+	pck_injct_in,
+	pck_injct_out		
+);
+	
+	`NOC_CONF
 	
 	//general
 	input reset,clk;
@@ -51,6 +53,7 @@ module packet_injector
 	generate if(CAST_TYPE == "UNICAST") begin : uni 
 	
 			conventional_routing #(
+					.NOC_ID(NOC_ID),
 					.TOPOLOGY(TOPOLOGY),
 					.ROUTE_NAME(ROUTE_NAME),
 					.ROUTE_TYPE(ROUTE_TYPE),
@@ -85,20 +88,19 @@ module packet_injector
 	wire [Fw-1 : 0] hdr_flit_out;
 	
 	header_flit_generator #(
-			.DATA_w(HDR_DATA_w)				
-		)
-		the_header_flit_generator
-		(
-			.flit_out			(hdr_flit_out),
-			.vc_num_in			(pck_injct_in.vc),
-			.class_in			(pck_injct_in.class_num),
-			.dest_e_addr_in		(pck_injct_in.endp_addr),
-			.src_e_addr_in		(current_e_addr),
-			.weight_in			(pck_injct_in.init_weight),
-			.destport_in		(destport),
-			.data_in			(hdr_data_in),
-			.be_in({BEw{1'b1}} )// Be is not used in simulation as we dont sent real data
-		);
+		.NOC_ID(NOC_ID),
+		.DATA_w(HDR_DATA_w)				
+	) the_header_flit_generator (
+		.flit_out			(hdr_flit_out),
+		.vc_num_in			(pck_injct_in.vc),
+		.class_in			(pck_injct_in.class_num),
+		.dest_e_addr_in		(pck_injct_in.endp_addr),
+		.src_e_addr_in		(current_e_addr),
+		.weight_in			(pck_injct_in.init_weight),
+		.destport_in		(destport),
+		.data_in			(hdr_data_in),
+		.be_in({BEw{1'b1}} )// Be is not used in simulation as we dont sent real data
+	);
 	
 	
 	localparam 
@@ -237,25 +239,19 @@ module packet_injector
 			.empty_vc( ),
 			.clk(clk),
 			.reset(reset)
-		);  
-	
-	
-	
-		
-	
-		
+		);  	
 	
 	wire [HDR_DATA_w-1 : 0]	hdr_data_o;
 	hdr_flit_t hdr_flit_i;
 	
-	header_flit_info
-		#(
-			.DATA_w         (HDR_DATA_w       )
-		) extractor (
-			.flit(chan_in.flit_chanel.flit),
-			.hdr_flit(hdr_flit_i),		
-			.data_o(hdr_data_o)    
-		);
+	header_flit_info  #(
+		.NOC_ID (NOC_ID),	
+		.DATA_w (HDR_DATA_w)
+	) extractor (
+		.flit(chan_in.flit_chanel.flit),
+		.hdr_flit(hdr_flit_i),		
+		.data_o(hdr_data_o)    
+	);
 		
 	wire [PCK_INJ_Dw-1 : 0]  pck_data_o [V-1 : 0];
 	reg  [Fpay-1 : 0] pck_data_o_gen [V-1 : 0][REMAIN_DAT_FLIT : 0];
@@ -265,9 +261,7 @@ module packet_injector
 	reg [PCK_SIZw-1 : 0] rsv_counter [V-1 : 0];
 	reg [EAw-1 : 0] sender_endp_addr_reg [V-1 : 0];
 	logic [15:0] h2t_counter [V-1 : 0];
-	logic [15:0] h2t_counter_next [V-1 : 0];
-	
-	
+	logic [15:0] h2t_counter_next [V-1 : 0];	
 	
 	//synthesis translate_off
 	wire [NEw-1 : 0] current_id; 
@@ -283,12 +277,14 @@ module packet_injector
 	
 	generate 
 		if(CAST_TYPE != "UNICAST") begin
-			mcast_dest_list_decode decode (
-					.dest_e_addr(hdr_flit_i.dest_e_addr),
-					.dest_o(dest_mcast_all_endp),
-					.row_has_any_dest(),
-					.is_unicast()
-				);
+			mcast_dest_list_decode #(
+				.NOC_ID(NOC_ID)
+			) decode (
+				.dest_e_addr(hdr_flit_i.dest_e_addr),
+				.dest_o(dest_mcast_all_endp),
+				.row_has_any_dest(),
+				.is_unicast()
+			);
 		end
 		
 		for(i=0; i<V; i++) begin: V_ 
@@ -316,12 +312,12 @@ module packet_injector
 							//synthesis translate_off
 							if(CAST_TYPE == "UNICAST") begin
 								if(hdr_flit_i.dest_e_addr[EAw-1:0] != current_e_addr) begin 
-									$display("%t: ERROR: packet destination address %d does not match reciver endp address %d. %m",$time,hdr_flit_i.dest_e_addr , current_e_addr );
+									$display("%t: ERROR: packet destination address %d does not match receiver endp address %d. %m",$time,hdr_flit_i.dest_e_addr , current_e_addr );
 									$finish;
 								end//if hdr_flit_i
 							end else begin 
 								if(dest_mcast_all_endp[current_id] !=1'b1 ) begin 
-									$display("%t: ERROR: packet destination address %b does not match reciver endp address %d. %m",$time,hdr_flit_i.dest_e_addr , current_e_addr ,current_id );
+									$display("%t: ERROR: packet destination address %b does not match receiver endp address %d. %m",$time,hdr_flit_i.dest_e_addr , current_e_addr ,current_id );
 									$finish;
 								end
 							end//if hdr_flit_i
@@ -561,42 +557,42 @@ endmodule
 
 
 
-module packet_injector_verilator 
-		import pronoc_pkg::*; 
-	(
-		//general
-		current_e_addr,
-		reset,
-		clk,		
-		//noc port
-		chan_in,
-		chan_out,  
-		//control interafce
-		pck_injct_in_data,         
-		pck_injct_in_size,         
-		pck_injct_in_endp_addr,    
-		pck_injct_in_class_num,    
-		pck_injct_in_init_weight,  
-		pck_injct_in_vc,           
-		pck_injct_in_pck_wr,  	 
-		pck_injct_in_ready,        
-	                            
-		pck_injct_out_data,       
-		pck_injct_out_size,       
-		pck_injct_out_endp_addr,  
-		pck_injct_out_class_num,  
-		pck_injct_out_init_weight,
-		pck_injct_out_vc,         
-		pck_injct_out_pck_wr,  	 
-		pck_injct_out_ready,
-		pck_injct_out_distance,
-		pck_injct_out_h2t_delay,
-		min_pck_size
-	                            
+module packet_injector_verilator #(
+	parameter NOC_ID=0
+) (
+	//general
+	current_e_addr,
+	reset,
+	clk,		
+	//noc port
+	chan_in,
+	chan_out,  
+	//control interafce
+	pck_injct_in_data,         
+	pck_injct_in_size,         
+	pck_injct_in_endp_addr,    
+	pck_injct_in_class_num,    
+	pck_injct_in_init_weight,  
+	pck_injct_in_vc,           
+	pck_injct_in_pck_wr,  	 
+	pck_injct_in_ready,        
+                            
+	pck_injct_out_data,       
+	pck_injct_out_size,       
+	pck_injct_out_endp_addr,  
+	pck_injct_out_class_num,  
+	pck_injct_out_init_weight,
+	pck_injct_out_vc,         
+	pck_injct_out_pck_wr,  	 
+	pck_injct_out_ready,
+	pck_injct_out_distance,
+	pck_injct_out_h2t_delay,
+	min_pck_size
+                 
+);
+
+	`NOC_CONF 
 	
-	);
-
-
 	//general
 	input reset,clk;
 	input [EAw-1 :0 ] current_e_addr;
@@ -652,14 +648,17 @@ module packet_injector_verilator
 	assign pck_injct_out_distance    = pck_injct_out.distance;
 	assign pck_injct_out_h2t_delay   = pck_injct_out.h2t_delay;
  	
-	packet_injector injector (
-			.current_e_addr  (current_e_addr ), 
-			.reset           (reset          ), 
-			.clk             (clk            ), 
-			.chan_in         (chan_in        ), 
-			.chan_out        (chan_out       ), 
-			.pck_injct_in    (pck_injct_in   ), 
-			.pck_injct_out   (pck_injct_out  ));
+	packet_injector #(
+		.NOC_ID(NOC_ID)
+	) injector (
+		.current_e_addr  (current_e_addr ), 
+		.reset           (reset          ), 
+		.clk             (clk            ), 
+		.chan_in         (chan_in        ), 
+		.chan_out        (chan_out       ), 
+		.pck_injct_in    (pck_injct_in   ), 
+		.pck_injct_out   (pck_injct_out  )
+	);
  
  
 	localparam 

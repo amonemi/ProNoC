@@ -756,7 +756,7 @@ sub generate_soc{
 		close(FILE) || die "Error closing file: $!";
 			
 		# Write verilog file
-		my $h=autogen_warning().get_license_header("${name}.sv")."\n`timescale 1ns / 1ps\n";
+		my $h=autogen_warning().get_license_header("${name}.sv")."\n";
 		open(FILE,  ">lib/verilog/$name.sv") || die "Can not open: $!";
 		print FILE $h.$file_v;
 		close(FILE) || die "Error closing file: $!";

@@ -1,4 +1,4 @@
-#This file is created by /home/alireza/work/git/hca_git/ProNoC/mpsoc/intsall.sh
+#This file is created by /home/alireza/work/git/pronoc/mpsoc/intsall.sh
 package Consts;
 
 use constant VERSION  => '2.1.0'; 

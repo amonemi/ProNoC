@@ -8,6 +8,7 @@
 `timescale 1ns / 1ps
 
 module  flit_buffer_reg_base #(
+    parameter NOC_ID = 0,
     parameter V        =   4,
     parameter B        =   4,   // buffer space :flit per VC 
     parameter Fpay     =   32,
@@ -15,7 +16,9 @@ module  flit_buffer_reg_base #(
     parameter DEBUG_EN =   1,
     parameter C=1,
     parameter DSTPw=4,
-    parameter SSA_EN="YES" // "YES" , "NO"       
+    parameter SSA_EN="YES", // "YES" , "NO"  
+    parameter CAST_TYPE="UNI_CAST"
+         
 )(
     din,
     vc_num_wr,
@@ -133,8 +136,13 @@ module  flit_buffer_reg_base #(
     
 
     flit_buffer #(
+		.V(V),
         .B(B),
-        .SSA_EN("NO")// should be "NO" even if SSA is enabled
+        .SSA_EN("NO"),// should be "NO" even if SSA is enabled
+        .Fw(Fw),
+		.PCK_TYPE(PCK_TYPE),
+		.CAST_TYPE(CAST_TYPE),
+		.DEBUG_EN(DEBUG_EN)
     )
     flit_buffer
     (
@@ -176,10 +184,9 @@ module  flit_buffer_reg_base #(
         
         
      extract_header_flit_info #(
+        .NOC_ID(NOC_ID),
         .DATA_w(0)
-     )
-     header_extractor
-     (
+     ) header_extractor (
          .flit_in({flit_reg_mux_out[REGFw-1:REGFw-2],flit_reg_wr_en,flit_reg_mux_out[Fpay-1 : 0]}),
          .flit_in_wr(),         
          .class_o(class_i),

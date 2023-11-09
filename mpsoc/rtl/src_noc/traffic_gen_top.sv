@@ -1,11 +1,10 @@
 `include "pronoc_def.v"
 
-module  traffic_gen_top
-		import pronoc_pkg::*; 
-	#(
-		parameter MAX_RATIO = 1000,
-		parameter ENDP_ID   = 100000
-	)
+module  traffic_gen_top	#(
+	parameter NOC_ID=0,
+	parameter MAX_RATIO = 1000,
+	parameter ENDP_ID   = 100000
+)
 	(
 					
 		//noc port
@@ -45,6 +44,11 @@ module  traffic_gen_top
 		clk
 			
 	);
+	
+	
+	`NOC_CONF
+	
+	
 		
 	localparam
 		RATIOw= $clog2(MAX_RATIO);
@@ -59,11 +63,9 @@ module  traffic_gen_top
    
 	localparam
 		PCK_CNTw = log2(MAX_PCK_NUM+1),
-		CLK_CNTw = log2(MAX_SIM_CLKs+1),
-		PCK_SIZw = log2(MAX_PCK_SIZ+1),
+		CLK_CNTw = log2(MAX_SIM_CLKs+1),		
 		AVG_PCK_SIZw = log2(10*MAX_PCK_SIZ+1),
-		/* verilator lint_off WIDTH */
-		DISTw = (TOPOLOGY=="FATTREE" || TOPOLOGY=="TREE" ) ? log2(2*L+1): log2(NR+1),
+		/* verilator lint_off WIDTH */		
 		W=WEIGHTw,
 		PORT_B = (TOPOLOGY!="FMESH")?  LB :
 		(ENDP_ID < NE_MESH_TORI)? LB :B; // in FMESH, the buffer size of endpoints connected to edge routers non-local ports are B not LB  
@@ -142,6 +144,10 @@ module  traffic_gen_top
 	reg                                 inject_en,cand_wr_vc_en,pck_rd;
 	reg    [PCK_SIZw-1              :0] pck_size;    
 	logic  [DAw-1                   :0] dest_e_addr_reg,dest_e_addr_o;
+
+
+
+
 		
 	// synopsys  translate_off
 	// synthesis translate_off
@@ -151,7 +157,7 @@ module  traffic_gen_top
    
 		reg tt;
 		always @(posedge clk) begin
-			if(reset)begin 
+			if(`pronoc_reset)begin 
 				tt<=1'b0;               
 			end else begin 
 				if(flit_out_wr && tt==1'b0 )begin
@@ -164,11 +170,7 @@ module  traffic_gen_top
     
 	// synthesis translate_on
 	// synopsys  translate_on  
-   
-   
-   
-   
-   
+     
    
 	localparam
 		HDR_DATA_w =  (MIN_PCK_SIZE==1)? CLK_CNTw : 0,
@@ -180,261 +182,212 @@ module  traffic_gen_top
 	  
 	
    
-		wire    [DSTPw-1                :   0] destport;   
-		wire    [V-1                    :   0] ovc_wr_in;
-		wire    [V-1                    :   0] full_vc,empty_vc,nearly_full_vc;
-		reg     [V-1                    :   0] wr_vc,wr_vc_next;
-		wire    [V-1                    :   0] cand_vc;
+	wire    [DSTPw-1                :   0] destport;   
+	wire    [V-1                    :   0] ovc_wr_in;
+	wire    [V-1                    :   0] full_vc,empty_vc,nearly_full_vc;
+	reg     [V-1                    :   0] wr_vc,wr_vc_next;
+	wire    [V-1                    :   0] cand_vc;
     
     
-		wire    [CLK_CNTw-1             :   0] wr_timestamp,pck_timestamp;
-		wire                                   hdr_flit,tail_flit;
-		reg     [PCK_SIZw-1             :   0] flit_counter;
-		reg                                    flit_cnt_rst,flit_cnt_inc;
-		wire                                   rd_hdr_flg,rd_tail_flg;
-		wire    [Cw-1   :   0] rd_class_hdr;
-		//  wire    [P_1-1      :   0] rd_destport_hdr;
-		wire    [DAw-1      :   0] rd_des_e_addr;
-		wire    [EAw-1      :   0] rd_src_e_addr;  
+	wire    [CLK_CNTw-1             :   0] wr_timestamp,pck_timestamp;
+	wire                                   hdr_flit,tail_flit;
+	reg     [PCK_SIZw-1             :   0] flit_counter;
+	reg                                    flit_cnt_rst,flit_cnt_inc;
+	wire                                   rd_hdr_flg,rd_tail_flg;
+	wire    [Cw-1   :   0] rd_class_hdr;
+	//  wire    [P_1-1      :   0] rd_destport_hdr;
+	wire    [DAw-1      :   0] rd_des_e_addr;
+	wire    [EAw-1      :   0] rd_src_e_addr;  
 		
-		reg     [CLK_CNTw-1             :   0] rsv_counter;
-		reg     [CLK_CNTw-1             :   0] clk_counter;
-		wire    [Vw-1                   :   0] rd_vc_bin;//,wr_vc_bin;
-		reg     [CLK_CNTw-1             :   0] rsv_time_stamp[V-1:0];
-		reg     [PCK_SIZw-1             :   0] rsv_pck_size    [V-1:0];
-		wire    [V-1                    :   0] rd_vc; 
-		wire                                   wr_vc_is_full,wr_vc_avb,wr_vc_is_empty;
-		reg     [V-1                    :   0] credit_out_next;
-		reg     [EAw-1     :   0] rsv_pck_src_e_addr        [V-1:0];
-		reg     [Cw-1                   :   0] rsv_pck_class_in     [V-1:0];  
+	reg     [CLK_CNTw-1             :   0] rsv_counter;
+	reg     [CLK_CNTw-1             :   0] clk_counter;
+	wire    [Vw-1                   :   0] rd_vc_bin;//,wr_vc_bin;
+	reg     [CLK_CNTw-1             :   0] rsv_time_stamp[V-1:0];
+	reg     [PCK_SIZw-1             :   0] rsv_pck_size    [V-1:0];
+	wire    [V-1                    :   0] rd_vc; 
+	wire                                   wr_vc_is_full,wr_vc_avb,wr_vc_is_empty;
+	reg     [V-1                    :   0] credit_out_next;
+	reg     [EAw-1     :   0] rsv_pck_src_e_addr        [V-1:0];
+	reg     [Cw-1                   :   0] rsv_pck_class_in     [V-1:0];  
       
-		wire [CLK_CNTw-1             :   0] hdr_flit_timestamp;    
-		wire pck_wr,buffer_full,pck_ready,valid_dst;    
-		wire [CLK_CNTw-1 : 0] rd_timestamp;
-   
+	wire [CLK_CNTw-1             :   0] hdr_flit_timestamp;    
+	wire pck_wr,buffer_full,pck_ready,valid_dst;    
+	wire [CLK_CNTw-1 : 0] rd_timestamp;
+     	    
+		
+	logic [DELAYw-1 : 0] start_delay_counter,start_delay_counter_next;
+	logic  start_en_next , start_en;
+
+	pronoc_register #(.W(1)) streg1 (.reset(reset),.clk(clk), .in(start_en_next), .out(start_en)	);
+	pronoc_register #(.W(DELAYw)) streg2 (.reset(reset),.clk(clk), .in(start_delay_counter_next), .out(start_delay_counter)	);
+			
+	always @(*) begin 
+		start_en_next =start_en;
+		start_delay_counter_next= start_delay_counter;
+		if(start)	begin 
+			start_en_next=1'b1;
+			start_delay_counter_next={DELAYw{1'b0}};
+		end else if(start_en && ~inject_en) begin 
+			start_delay_counter_next= start_delay_counter + 1'b1;
+		end
+		if(stop) begin 
+			start_en_next=1'b0;			
+		end
+	end//always
+		
+	wire start_injection = (start_delay_counter == start_delay);
    	    
-		
-		logic [DELAYw-1 : 0] start_delay_counter,start_delay_counter_next;
-		logic  start_en_next , start_en;
-
-		pronoc_register #(.W(1)) streg1 (.reset(reset),.clk(clk), .in(start_en_next), .out(start_en)	);
-		pronoc_register #(.W(DELAYw)) streg2 (.reset(reset),.clk(clk), .in(start_delay_counter_next), .out(start_delay_counter)	);
-		
-		
-		
-		always @(*) begin 
-			start_en_next =start_en;
-			start_delay_counter_next= start_delay_counter;
-			if(start)	begin 
-				start_en_next=1'b1;
-				start_delay_counter_next={DELAYw{1'b0}};
-			end else if(start_en && ~inject_en) begin 
-				start_delay_counter_next= start_delay_counter + 1'b1;
-			end
-			if(stop) begin 
-				start_en_next=1'b0;			
-			end
-		end//always
-		
-		wire start_injection = (start_delay_counter == start_delay);
-   	    
-   	    
-		
-		
-		check_destination_addr #(
-				.TOPOLOGY(TOPOLOGY),
-				.T1(T1),
-				.T2(T2),
-				.T3(T3),   
-				.EAw(EAw),
-				.SELF_LOOP_EN(SELF_LOOP_EN),
-				.DAw(DAw),
-				.CAST_TYPE(CAST_TYPE),
-				.NE(NE)
-			)
-			check_destination_addr(
-				.dest_e_addr(dest_e_addr),
-				.current_e_addr(current_e_addr),
-				.dest_is_valid(valid_dst)
-			);
-   
-    
-		//assign hdr_flit_sent=pck_rd;
-    
-    
-		injection_ratio_ctrl #
-			(
-				.MAX_PCK_SIZ(MAX_PCK_SIZ),
-				.MAX_RATIO(MAX_RATIO)
-			)
-			pck_inject_ratio_ctrl
-			(
-				.en(inject_en),
-				.pck_size_in(pck_size_tmp),
-				.clk(clk),
-				.reset(reset),
-				.freez(buffer_full),
-				.inject(pck_wr),
-				.ratio(ratio)
-			);
-    
-      
-    
-		output_vc_status #(
-				.CRDTw(CRDTw),
-				.V  (V),
-				.B  (PORT_B)				
-			)
-			nic_ovc_status
-			(
-				.credit_init_val_in         ( chan_in.ctrl_chanel.credit_init_val),
-				.wr_in                      (ovc_wr_in),   
-				.credit_in                  (credit_in),
-				.nearly_full_vc             (nearly_full_vc),
-				.full_vc                    (full_vc),
-				.empty_vc                   (empty_vc),
-				.cand_vc                    (cand_vc),
-				.cand_wr_vc_en              (cand_wr_vc_en),
-				.clk                        (clk),
-				.reset                      (reset)
-			);
-    
-		
-		
-    
-		packet_gen #(
-				.P(MAX_P),	
-				.PCK_TYPE(PCK_TYPE),
-				.ROUTE_TYPE(ROUTE_TYPE),
-				.MAX_PCK_NUM(MAX_PCK_NUM),
-				.MAX_SIM_CLKs(MAX_SIM_CLKs),
-				.TIMSTMP_FIFO_NUM(TIMSTMP_FIFO_NUM),
-				.MIN_PCK_SIZE(MIN_PCK_SIZE),
-				.MAX_PCK_SIZ(MAX_PCK_SIZ)			
-			)
-			packet_buffer
-			(
-				.reset(reset),
-				.clk(clk),
-				.pck_wr(pck_wr),
-				.pck_rd(pck_rd),
-				.current_r_addr(current_r_addr),
-				.current_e_addr(current_e_addr),
-				.clk_counter(clk_counter+1'b1),//in case of zero load latency, the flit will be injected in the next clock cycle
-				.pck_number(pck_number),
-				.dest_e_addr_in(dest_e_addr),  
-				.dest_e_addr_o(dest_e_addr_o),     
-				.pck_timestamp(pck_timestamp),
-				.buffer_full(buffer_full),
-				.pck_ready(pck_ready),
-				.valid_dst(valid_dst),
-				.destport(destport),
-				.pck_size_in(pck_size_tmp),
-				.pck_size_o(pck_size)
-			);
-		
-		
-		
-
-    
-		assign wr_timestamp    =pck_timestamp; 
-    
-		assign  update      = flit_in_wr & flit_in[Fw-2];
-		assign  hdr_flit    = (flit_counter == 0);
-		assign  tail_flit   = (flit_counter ==  pck_size-1'b1);
-    
-   
-    
-		assign  time_stamp_h2h  = hdr_flit_timestamp - rd_timestamp;
-		assign  time_stamp_h2t  = clk_counter - rd_timestamp;
-
-		wire [FPAYw-1    :   0] flit_out_pyload;
-		wire [1         :   0] flit_out_hdr;
-    
-
-		wire [FPAYw-1    :   0] flit_out_header_pyload;
-		wire [Fw-1      :   0] hdr_flit_out;
-   
-   
-   
-   
-   
-		assign hdr_data_in = (MIN_PCK_SIZE==1)? wr_timestamp[HDR_Dw-1 : 0]  : {HDR_Dw{1'b0}};
-    
-		header_flit_generator #(
-				.DATA_w(HDR_DATA_w)				
-			)
-			the_header_flit_generator
-			(
-				.flit_out(hdr_flit_out),
-				.vc_num_in(wr_vc),
-				.class_in(pck_class_in),
-				.dest_e_addr_in(dest_e_addr_o),
-				.src_e_addr_in(current_e_addr),
-				.weight_in(init_weight),
-				.destport_in(destport),
-				.data_in(hdr_data_in),
-				.be_in({BEw{1'b1}} )// Be is not used in simulation as we dont sent real data
-			);
-    
-        assign flit_out_class = pck_class_in;
-   
-		assign flit_out_hdr = {hdr_flit,tail_flit};
-    
-		assign flit_out_header_pyload = hdr_flit_out[FPAYw-1 : 0];
-        
-        
-		/* verilator lint_off WIDTH */ 
-		assign flit_out_pyload = (hdr_flit)  ?    flit_out_header_pyload :
-                                
-			(tail_flit) ?     wr_timestamp:
-			{pck_number,flit_counter};
-		/* verilator lint_on WIDTH */
-    
+   	check_destination_addr #(
+		.NOC_ID(NOC_ID),
+		.TOPOLOGY(TOPOLOGY),
+		.T1(T1),
+		.T2(T2),
+		.T3(T3),   
+		.EAw(EAw),
+		.SELF_LOOP_EN(SELF_LOOP_EN),
+		.DAw(DAw),
+		.CAST_TYPE(CAST_TYPE),
+		.NE(NE)
+	) check_destination_addr (
+		.dest_e_addr(dest_e_addr),
+		.current_e_addr(current_e_addr),
+		.dest_is_valid(valid_dst)
+	);
        
+	//assign hdr_flit_sent=pck_rd;
+      
+	injection_ratio_ctrl # 	(
+		.MAX_PCK_SIZ(MAX_PCK_SIZ),
+		.MAX_RATIO(MAX_RATIO)
+	) pck_inject_ratio_ctrl (
+		.en(inject_en),
+		.pck_size_in(pck_size_tmp),
+		.clk(clk),
+		.reset(reset),
+		.freez(buffer_full),
+		.inject(pck_wr),
+		.ratio(ratio)
+	);
          
-		assign flit_out = {flit_out_hdr, wr_vc, flit_out_pyload };   
-
-
-		//extract header flit info
     
-   
+	output_vc_status #(
+		.CRDTw(CRDTw),
+		.V  (V),
+		.B  (PORT_B)				
+	) nic_ovc_status (
+		.credit_init_val_in         ( chan_in.ctrl_chanel.credit_init_val),
+		.wr_in                      (ovc_wr_in),   
+		.credit_in                  (credit_in),
+		.nearly_full_vc             (nearly_full_vc),
+		.full_vc                    (full_vc),
+		.empty_vc                   (empty_vc),
+		.cand_vc                    (cand_vc),
+		.cand_wr_vc_en              (cand_wr_vc_en),
+		.clk                        (clk),
+		.reset                      (reset)
+	);
+    	
+    
+	packet_gen #(
+		.NOC_ID(NOC_ID),
+		.P(MAX_P)				
+	) 	packet_buffer (
+		.reset(reset),
+		.clk(clk),
+		.pck_wr(pck_wr),
+		.pck_rd(pck_rd),
+		.current_r_addr(current_r_addr),
+		.current_e_addr(current_e_addr),
+		.clk_counter(clk_counter+1'b1),//in case of zero load latency, the flit will be injected in the next clock cycle
+		.pck_number(pck_number),
+		.dest_e_addr_in(dest_e_addr),  
+		.dest_e_addr_o(dest_e_addr_o),     
+		.pck_timestamp(pck_timestamp),
+		.buffer_full(buffer_full),
+		.pck_ready(pck_ready),
+		.valid_dst(valid_dst),
+		.destport(destport),
+		.pck_size_in(pck_size_tmp),
+		.pck_size_o(pck_size)
+	);
+	   
+	assign wr_timestamp    =pck_timestamp; 
+    assign  update      = flit_in_wr & flit_in[Fw-2];
+	assign  hdr_flit    = (flit_counter == 0);
+	assign  tail_flit   = (flit_counter ==  pck_size-1'b1);
+       
+	assign  time_stamp_h2h  = hdr_flit_timestamp - rd_timestamp;
+	assign  time_stamp_h2t  = clk_counter - rd_timestamp;
 
-		extract_header_flit_info #(
-				.DATA_w(HDR_DATA_w)				
-			)
-			header_extractor
-			(
-				.flit_in(flit_in),
-				.flit_in_wr(flit_in_wr),
-				.class_o(rd_class_hdr),
-				.destport_o(),
-				.dest_e_addr_o(rd_des_e_addr),
-				.src_e_addr_o(rd_src_e_addr),
-				.vc_num_o(rd_vc),
-				.hdr_flit_wr_o( ),
-				.hdr_flg_o(rd_hdr_flg),
-				.tail_flg_o(rd_tail_flg),
-				.weight_o( ),
-				.be_o( ),
-				.data_o(rd_hdr_data_out)
-			);   
+	wire [FPAYw-1    :   0] flit_out_pyload;
+	wire [1         :   0] flit_out_hdr;
+   	wire [FPAYw-1    :   0] flit_out_header_pyload;
+	wire [Fw-1      :   0] hdr_flit_out;
+      
+	assign hdr_data_in = (MIN_PCK_SIZE==1)? wr_timestamp[HDR_Dw-1 : 0]  : {HDR_Dw{1'b0}};
+    
+	header_flit_generator #(
+		.NOC_ID(NOC_ID),
+		.DATA_w(HDR_DATA_w)				
+	) the_header_flit_generator (
+		.flit_out(hdr_flit_out),
+		.vc_num_in(wr_vc),
+		.class_in(pck_class_in),
+		.dest_e_addr_in(dest_e_addr_o),
+		.src_e_addr_in(current_e_addr),
+		.weight_in(init_weight),
+		.destport_in(destport),
+		.data_in(hdr_data_in),
+		.be_in({BEw{1'b1}} )// Be is not used in simulation as we dont sent real data
+	);
+    
+    assign flit_out_class = pck_class_in;
+   	assign flit_out_hdr = {hdr_flit,tail_flit};
+    
+	assign flit_out_header_pyload = hdr_flit_out[FPAYw-1 : 0];
+        
+        
+	/* verilator lint_off WIDTH */ 
+	assign flit_out_pyload = (hdr_flit)  ?    flit_out_header_pyload :                
+		(tail_flit) ?     wr_timestamp:
+		{pck_number,flit_counter};
+		/* verilator lint_on WIDTH */
+            
+	assign flit_out = {flit_out_hdr, wr_vc, flit_out_pyload };   
+
+	//extract header flit info
+    extract_header_flit_info #(
+		.NOC_ID(NOC_ID),
+		.DATA_w(HDR_DATA_w)				
+	) header_extractor (
+		.flit_in(flit_in),
+		.flit_in_wr(flit_in_wr),
+		.class_o(rd_class_hdr),
+		.destport_o(),
+		.dest_e_addr_o(rd_des_e_addr),
+		.src_e_addr_o(rd_src_e_addr),
+		.vc_num_o(rd_vc),
+		.hdr_flit_wr_o( ),
+		.hdr_flg_o(rd_hdr_flg),
+		.tail_flg_o(rd_tail_flg),
+		.weight_o( ),
+		.be_o( ),
+		.data_o(rd_hdr_data_out)
+	);   
    
     
-		distance_gen #(
-				.TOPOLOGY(TOPOLOGY),
-				.T1(T1),
-				.T2(T2),
-				.T3(T3),
-				.EAw(EAw),
-				.DISTw(DISTw)
-			)
-			the_distance_gen
-			(
-				.src_e_addr(src_e_addr),
-				.dest_e_addr(current_e_addr),
-				.distance(distance)
-			);
+	distance_gen #(
+		.TOPOLOGY(TOPOLOGY),
+		.T1(T1),
+		.T2(T2),
+		.T3(T3),
+		.EAw(EAw),
+		.DISTw(DISTw)
+	) the_distance_gen (
+		.src_e_addr(src_e_addr),
+		.dest_e_addr(current_e_addr),
+		.distance(distance)
+	);
     
     
 	generate 
@@ -453,7 +406,7 @@ module  traffic_gen_top
 	end
 
 
-		if(V==1) begin : v1
+	if(V==1) begin : v1
 		assign rd_vc_bin=1'b0;
 	// assign wr_vc_bin=1'b0;
 	end else begin :vother  
@@ -477,7 +430,8 @@ module  traffic_gen_top
 	assign  ovc_wr_in   = (flit_out_wr ) ?      wr_vc : {V{1'b0}};
 	
 	/* verilator lint_off WIDTH */
-	assign  wr_vc_is_full           = (SSA_EN=="NO")?  | ( full_vc & wr_vc)  : | (nearly_full_vc & wr_vc);
+	//assign  wr_vc_is_full           = (SSA_EN=="NO")?  | ( full_vc & wr_vc)  : | (nearly_full_vc & wr_vc);
+	assign  wr_vc_is_full           = | ( full_vc & wr_vc);
     /* verilator lint_on WIDTH */ 
     
     
@@ -648,12 +602,14 @@ module  traffic_gen_top
 				wire [NEw-1 : 0] sum_temp;
 				wire is_unicast;
 				
-				mcast_dest_list_decode decode1 (
-						.dest_e_addr(dest_e_addr_o),
-						.dest_o(dest_mcast_all_endp1),
-						.row_has_any_dest(),
-						.is_unicast(is_unicast)
-					);
+				mcast_dest_list_decode #(
+					.NOC_ID(NOC_ID)
+				) decode1 (
+					.dest_e_addr(dest_e_addr_o),
+					.dest_o(dest_mcast_all_endp1),
+					.row_has_any_dest(),
+					.is_unicast(is_unicast)
+				);
 				
 				/* verilator lint_off WIDTH */
 				if (CAST_TYPE == "BROADCAST_FULL") begin :bcastf				
@@ -712,13 +668,16 @@ module  traffic_gen_top
 		wire [NE-1 :0] dest_mcast_all_endp2;	
 		generate 
 		if(CAST_TYPE != "UNICAST") begin :no_unicast		
-			mcast_dest_list_decode decode2 (
-					.dest_e_addr(rd_des_e_addr),
-					.dest_o(dest_mcast_all_endp2),
-					.row_has_any_dest(),
-					.is_unicast()
-				);
-		end endgenerate
+			mcast_dest_list_decode #(
+				.NOC_ID(NOC_ID)
+			) decode2 (
+				.dest_e_addr(rd_des_e_addr),
+				.dest_o(dest_mcast_all_endp2),
+				.row_has_any_dest(),
+				.is_unicast()
+			);
+		end 
+		endgenerate
 		
 		
     
@@ -846,12 +805,8 @@ module  traffic_gen_top
 //						if (chan_out.smart_chanel.requests > {SMART_NUM{1'b0}} ) endp_is_active=1'b1;
 //					end	
 //				`endif
-
 				
 endmodule
-
-
-
 
 
 /*****************************
@@ -984,16 +939,9 @@ endmodule
 
  
 module packet_gen 
-	import pronoc_pkg::*; 		
-	#(   
-	parameter P = 5,
-	parameter PCK_TYPE = "SINGLE_FLIT",
-	parameter ROUTE_TYPE = "DETERMINISTIC",
-	parameter MAX_PCK_NUM   = 10000,
-	parameter MAX_SIM_CLKs  = 100000,
-	parameter TIMSTMP_FIFO_NUM=16,
-	parameter MIN_PCK_SIZE=2,
-	parameter MAX_PCK_SIZ=100
+#(   
+	parameter NOC_ID=0,
+	parameter P = 5
 )(
 	clk_counter,
 	pck_wr,
@@ -1013,21 +961,14 @@ module packet_gen
 	clk,
 	reset 
 );
+	
 
- 
-	function integer log2;
-	input integer number; begin   
-		log2=(number <=1) ? 1: 0;    
-		while(2**log2<number) begin    
-			log2=log2+1;    
-		end       
-	end   
-	endfunction // log2 
+	`NOC_CONF
      
 	localparam 
 	PCK_CNTw    =   log2(MAX_PCK_NUM+1),
-	CLK_CNTw    =   log2(MAX_SIM_CLKs+1),
-	PCK_SIZw    =   log2(MAX_PCK_SIZ);
+	CLK_CNTw    =   log2(MAX_SIM_CLKs+1);
+
  
 	input  reset,clk, pck_wr, pck_rd;
 	input  [RAw-1  :0] current_r_addr;
@@ -1051,6 +992,7 @@ module packet_gen
     
 	generate if(CAST_TYPE == "UNICAST") begin : uni 
 	conventional_routing #(
+		.NOC_ID(NOC_ID),
 		.TOPOLOGY(TOPOLOGY),
 		.ROUTE_NAME(ROUTE_NAME),
 		.ROUTE_TYPE(ROUTE_TYPE),

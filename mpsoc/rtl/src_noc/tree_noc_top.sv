@@ -13,17 +13,18 @@ Description:
  ***************************************/
 
  
-module  tree_noc_top 
-		import pronoc_pkg::*; 
-	(
-		reset,
-		clk,    
-		chan_in_all,
-		chan_out_all,
-		router_event
-	);
+module  tree_noc_top #(
+	parameter NOC_ID=0
+) (
+	reset,
+	clk,    
+	chan_in_all,
+	chan_out_all,
+	router_event
+);
   
-  
+  	`NOC_CONF 
+  	
 	input   clk,reset;
 	//Endpoints ports 
 	input   smartflit_chanel_t chan_in_all  [NE-1 : 0];
@@ -56,8 +57,6 @@ module  tree_noc_top
 	localparam
 		PV = V * MAX_P,		
 		PFw = MAX_P * Fw,
-		NEFw = NE * Fw,
-		NEV = NE * V,
 		CONG_ALw = CONGw * MAX_P,
 		PLKw = MAX_P * LKw,
 		PLw = MAX_P * Lw,       
@@ -86,6 +85,7 @@ module  tree_noc_top
 
  
 	router_top # (
+		.NOC_ID(NOC_ID),
 			.P(K)
 		)
 		root_router
@@ -111,7 +111,8 @@ module  tree_noc_top
 			for( pos=0; pos<NPOS1; pos=pos+1) begin : pos_lp 
                 localparam RID = NRATTOP1+pos;
 				router_top # (
-						.P(K+1)// leaves have K+1 port number						
+					.NOC_ID(NOC_ID),
+					.P(K+1)// leaves have K+1 port number						
 					)
 					the_router
 					(                                  

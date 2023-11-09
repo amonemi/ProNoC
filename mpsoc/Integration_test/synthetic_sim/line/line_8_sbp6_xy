@@ -1,0 +1,6 @@
+$model = bless( {
+		'noc_param'=> {
+						TOPOLOGY=>"\"LINE\"",
+						"SMART_MAX" => "6",		
+						}
+}, 'ProNOC' );

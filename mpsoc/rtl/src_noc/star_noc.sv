@@ -13,9 +13,9 @@ Description:
  ***************************************/
 
  
-module  star_noc_top 
-		import pronoc_pkg::*; 
-	(
+module  star_noc_top #(
+	parameter NOC_ID=0
+) (
 		reset,
 		clk,    
 		chan_in_all,
@@ -23,6 +23,7 @@ module  star_noc_top
 		router_event
 	);
   
+  	`NOC_CONF
   
 	input   clk,reset;
 	//Endpoints ports 
@@ -34,6 +35,7 @@ module  star_noc_top
 		  
  
 	    router_top # (
+			.NOC_ID(NOC_ID),
 			.P(NE)
 		)
 		the_router

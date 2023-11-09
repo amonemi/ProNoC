@@ -1893,7 +1893,7 @@ my @charts = (
 		$chart = gen_multiple_charts  ($simulate,\@pages,\@charts,0.4);
 		$ctrl  = noc_sim_ctrl ($simulate,$info);
 		$main_table->attach ($ctrl,0, 12, 24,25,'fill','fill',2,2);
-        $v1 -> pack1($conf_box, TRUE, TRUE); 	
+		$v1 -> pack1($conf_box, TRUE, TRUE); 	
 		$v1 -> pack2($image, TRUE, TRUE); 		
 		$v2 -> pack2($chart, TRUE, TRUE); 	
 		

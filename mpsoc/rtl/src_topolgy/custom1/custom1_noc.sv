@@ -6,11 +6,11 @@
 
 
 /**********************************************************************
-**	File: /home/alireza/work/git/hca_git/ProNoC/mpsoc/rtl/src_topolgy/custom1/custom1_noc.sv
+**	File: /home/alireza/work/git/pronoc/mpsoc/rtl/src_topolgy/custom1/custom1_noc.sv
 **    
 **	Copyright (C) 2014-2021  Alireza Monemi
 **    
-**	This file is part of ProNoC 2.0.0 
+**	This file is part of ProNoC 2.1.0 
 **
 **	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
 **	you can redistribute it and/or modify it under the terms of the GNU
@@ -29,9 +29,11 @@
 `include "pronoc_def.v"
 
 module   custom1_noc
-	import pronoc_pkg::*; 
-	(
-   	reset,
+#(
+	parameter NOC_ID=0
+)
+(
+		reset,
 	clk,
 	//T0,
 	T0_chan_in,
@@ -99,23 +101,8 @@ module   custom1_noc
 	T15_router_event
 );
 	
-	 function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end 	   
-      end   
-    endfunction // log2 
-
-	localparam 
-		NE = 16,
-		NR = 16,
-		RAw=log2(NR);
-       
-      
-
-    
+	`NOC_CONF
+	 
     input reset,clk;    
        
     
@@ -445,6 +432,7 @@ module   custom1_noc
 	*		R0
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(3)		
 	)
 	R0
@@ -474,6 +462,7 @@ module   custom1_noc
 	*		R1
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(3)		
 	)
 	R1
@@ -503,6 +492,7 @@ module   custom1_noc
 	*		R2
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(3)		
 	)
 	R2
@@ -532,6 +522,7 @@ module   custom1_noc
 	*		R3
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(3)		
 	)
 	R3
@@ -561,6 +552,7 @@ module   custom1_noc
 	*		R4
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(4)		
 	)
 	R4
@@ -592,6 +584,7 @@ module   custom1_noc
 	*		R5
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(4)		
 	)
 	R5
@@ -623,6 +616,7 @@ module   custom1_noc
 	*		R6
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(4)		
 	)
 	R6
@@ -654,6 +648,7 @@ module   custom1_noc
 	*		R7
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(4)		
 	)
 	R7
@@ -685,6 +680,7 @@ module   custom1_noc
 	*		R12
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(4)		
 	)
 	R12
@@ -716,6 +712,7 @@ module   custom1_noc
 	*		R13
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(4)		
 	)
 	R13
@@ -747,6 +744,7 @@ module   custom1_noc
 	*		R14
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(4)		
 	)
 	R14
@@ -778,6 +776,7 @@ module   custom1_noc
 	*		R15
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(4)		
 	)
 	R15
@@ -809,6 +808,7 @@ module   custom1_noc
 	*		R8
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(5)		
 	)
 	R8
@@ -842,6 +842,7 @@ module   custom1_noc
 	*		R9
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(5)		
 	)
 	R9
@@ -875,6 +876,7 @@ module   custom1_noc
 	*		R10
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(5)		
 	)
 	R10
@@ -908,6 +910,7 @@ module   custom1_noc
 	*		R11
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P(5)		
 	)
 	R11

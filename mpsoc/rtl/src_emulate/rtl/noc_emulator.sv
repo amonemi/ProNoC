@@ -5,12 +5,11 @@
 *
 * Description: 
 ***************************************/
+`include "pronoc_def.v"
 
-
-module  noc_emulator
-	import pronoc_pkg::*; 
+module  noc_emulator	
  #(
-       
+    parameter NOC_ID=0,   
     // simulation
     parameter PATTERN_VJTAG_INDEX=125,
     parameter STATISTIC_VJTAG_INDEX=124    
@@ -22,6 +21,7 @@ module  noc_emulator
     done
 );
 
+    `NOC_CONF
 
 	parameter MAX_RATIO = 100;
     parameter RAM_Aw=7;
@@ -30,45 +30,38 @@ module  noc_emulator
 
     input reset,jtag_ctrl_reset,clk;
     output done;
-    output start_o;
- 
-        
-    
-      
+    output start_o;     
 
     localparam
         PCK_CNTw =30,  // 1 G packets
         PCK_SIZw =14,   // 16 K flit
         MAX_EAw  =8,  
-        MAX_Cw   =4;   // 16 message classes  
-               
+        MAX_Cw   =4;   // 16 message classes                 
                
    //localparam  MAX_SIM_CLKs  = 1_000_000_000;
-               
-                        
-
     
     reg start_i;
     reg [10:0] cnt;
     
-   assign start_o=start_i;
+    assign start_o=start_i;
    
    
     //noc connection channels
     smartflit_chanel_t chan_in_all  [NE-1 : 0];
 	smartflit_chanel_t chan_out_all [NE-1 : 0];
 
-	noc_top the_top(
+	noc_top  # ( 
+		.NOC_ID(NOC_ID)
+	) the_top (
 		.reset(reset),
 		.clk(clk),    
 		.chan_in_all(chan_in_all),
 		.chan_out_all(chan_out_all),
 		.router_event()
 	);
-
- 
  
    Jtag_traffic_gen #(
+        .NOC_ID(NOC_ID),
         .PATTERN_VJTAG_INDEX(PATTERN_VJTAG_INDEX),
         .STATISTIC_VJTAG_INDEX(STATISTIC_VJTAG_INDEX),
 		.MAX_RATIO(MAX_RATIO),
@@ -117,8 +110,8 @@ endmodule
 ****************/
 
 module  Jtag_traffic_gen 
-	import pronoc_pkg::*; 
 #(
+    parameter NOC_ID = 0,
     parameter PATTERN_VJTAG_INDEX=125,
     parameter STATISTIC_VJTAG_INDEX=124, 
     parameter RAM_Aw=7,
@@ -140,6 +133,7 @@ module  Jtag_traffic_gen
     clk
 );
 
+`NOC_CONF
 
     
     
@@ -275,6 +269,7 @@ module  Jtag_traffic_gen
         assign jtag_we_sep[i] = (jtag_RAM_select == i) ? jtag_we :1'b0;
             
         traffic_gen_ram #(
+            .NOC_ID(NOC_ID),
           	.RAM_Aw(RAM_Aw),
             .STATISTIC_NUM(STATISTIC_NUM), 
           	.MAX_RATIO(MAX_RATIO),
@@ -318,8 +313,8 @@ endmodule
 *********************/
 
 module  traffic_gen_ram 
-	import pronoc_pkg::*; 
 #(
+    parameter NOC_ID=0,
     parameter RAM_Aw=7,
     parameter STATISTIC_NUM=8,  // the last 8 rows of RAM is reserved for collecting statistic values;   
     parameter MAX_RATIO=100,
@@ -354,15 +349,8 @@ module  traffic_gen_ram
     clk
 );
 
-
-    function integer log2;
-      input integer number; begin   
-         log2=0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end    
-      end   
-    endfunction // log2  
+    `NOC_CONF
+   
 
   
   //  localparam   MAX_PATTERN =  (2**RAM_Aw)-1;   // support up to MAX_PATTERN different injections pattern
@@ -505,6 +493,7 @@ module  traffic_gen_ram
     
        
   traffic_gen_top #(
+        .NOC_ID(NOC_ID),
         .MAX_RATIO(MAX_RATIO)
     )
     the_traffic_gen

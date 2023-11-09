@@ -1,12 +1,5 @@
 
-	function integer log2;
-		input integer number; begin	
-        	log2=0;	
-        	while(2**log2<number) begin	
-      		  	log2=log2+1;	
-       		end	
-      		end	
-   	endfunction // log2 
+	
    	
    	function   [15:0]i2s;   
         input   integer c;  integer i;  integer tmp; begin 
@@ -20,6 +13,16 @@
    endfunction //i2s
 
 /*
+
+function integer log2;
+		input integer number; begin	
+        	log2=0;	
+        	while(2**log2<number) begin	
+      		  	log2=log2+1;	
+       		end	
+      		end	
+   	endfunction // log2 
+
 function   [159:0]f2s;   
           input   real f; reg s;reg b; integer i; integer j;integer a;  real tmp; begin 
               s=0;

@@ -1,6 +1,7 @@
 `timescale 1ns / 1ps
 
 module custom_ni_routing  #(
+    parameter NOC_ID = 0,
     parameter TOPOLOGY = "CUSTOM_NAME",
     parameter ROUTE_NAME = "CUSTOM_NAME",
     parameter ROUTE_TYPE = "DETERMINISTIC",
@@ -21,18 +22,13 @@ module custom_ni_routing  #(
 
    generate 
     
-     
-     
-	
-    
-     
-	
+        
      
 	//do not modify this line ===Tcustom1Rcustom===
     if(TOPOLOGY == "custom1" && ROUTE_NAME== "custom" ) begin : Tcustom1Rcustom
     
         Tcustom1Rcustom_conventional_routing  #(
-            .RAw(RAw),  
+           	.RAw(RAw),  
             .EAw(EAw),   
             .DSTPw(DSTPw)  
         )
@@ -46,6 +42,10 @@ module custom_ni_routing  #(
     end	
     
     endgenerate
+    	
+ 
+    	
+ 
     	
  
     	

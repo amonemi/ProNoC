@@ -6,11 +6,11 @@
 
 
 /**********************************************************************
-**	File: /home/alireza/work/git/hca_git/ProNoC/mpsoc/rtl/src_topolgy/custom1/Tcustom1Rcustom_look_ahead_routing_genvar.v
+**	File: /home/alireza/work/git/pronoc/mpsoc/rtl/src_topolgy/custom1/Tcustom1Rcustom_look_ahead_routing_genvar.v
 **    
 **	Copyright (C) 2014-2021  Alireza Monemi
 **    
-**	This file is part of ProNoC 2.0.0 
+**	This file is part of ProNoC 2.1.0 
 **
 **	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
 **	you can redistribute it and/or modify it under the terms of the GNU

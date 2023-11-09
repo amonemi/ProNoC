@@ -128,7 +128,7 @@ Vpck_inj        *pck_inj[NE]; // for netrace
 
 
 
-
+unsigned char reset_active_high=1;
 
 unsigned int total_rsv_pck_num=0;
 unsigned int total_sent_pck_num=0;
@@ -188,12 +188,13 @@ typedef struct  avg_st_struct {
 
 
 
-#define BYPASS_LSB          5
-#define FLIT_IN_WR_FLG    	(1<<4)
-#define PCK_IN_WR_FLG 		(1<<3)
-#define FLIT_OUT_WR_FLG 	(1<<2)
-#define PCK_OUT_WR_FLG		(1<<1)
-#define FLIT_IN_BYPASSED 	(1<<0)
+#define BYPASS_LSB          6
+#define FLIT_IN_WR_FLG    	(1<<5)
+#define PCK_IN_WR_FLG 		(1<<4)
+#define FLIT_OUT_WR_FLG 	(1<<3)
+#define PCK_OUT_WR_FLG		(1<<2)
+#define FLIT_IN_BYPASSED 	(1<<1)
+#define ACTIVE_HIGH_RST     (1<<0)
 
 
 

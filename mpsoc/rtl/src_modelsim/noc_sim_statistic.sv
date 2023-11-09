@@ -1,15 +1,16 @@
 // synthesis translate_off
 `timescale   1ns/1ns
 `include "pronoc_def.v"
-module routers_statistic_collector 
-		import pronoc_pkg::*; 
-	(
-		reset,
-		clk,		
-		router_event,
-		print
-	);
+module routers_statistic_collector #(
+	parameter NOC_ID=0
+)(
+	reset,
+	clk,		
+	router_event,
+	print
+);
   
+	`NOC_CONF
   	
 	input   clk,reset;
 	input   router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];

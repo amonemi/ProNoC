@@ -126,7 +126,7 @@ void netrace_eval(unsigned int eval_num){
 	int i;
 	unsigned int pronoc_src_id,pronoc_dst_id;
 
-	if((reset==1) || (count_en==0))	return;
+	if((reset==reset_active_high) || (count_en==0))	return;
 
 	if((( nt_cycle > header->num_cycles) || (read_done==1 )) && nt_packets_left==0 )  simulation_done=1;
 

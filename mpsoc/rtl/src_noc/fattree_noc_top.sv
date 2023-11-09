@@ -18,16 +18,17 @@ Description:
 ***************************************/
 
 
-module  fattree_noc_top 
-		import pronoc_pkg::*; 
-	(
-		reset,
-		clk,    
-		chan_in_all,
-		chan_out_all,
-		router_event
-	);
+module  fattree_noc_top #(
+    parameter NOC_ID=0
+) (
+	reset,
+	clk,    
+	chan_in_all,
+	chan_out_all,
+	router_event
+);
   
+     `NOC_CONF
   
 	input   clk,reset;
 	//Endpoints ports 
@@ -46,8 +47,6 @@ module  fattree_noc_top
 			PV = V * MAX_P,
 			PFw = MAX_P * Fw,       
 			NRL= NE/K, //number of router in  each layer       
-			NEFw = NE * Fw,
-			NEV = NE * V,
 			CONG_ALw = CONGw * MAX_P,
 			PLKw = MAX_P * LKw,
 			PLw = MAX_P * Lw,       
@@ -81,18 +80,17 @@ genvar pos,level,port;
 generate 
 for( pos=0; pos<NRL; pos=pos+1) begin : root 
 	  localparam RID = pos;
-	  router_top # (
-               .P(K)               
-      )
-      the_router
-      (              
-      		.current_r_id    (RID),
+        router_top # (
+            .NOC_ID(NOC_ID),
+            .P(K)               
+        ) the_router (              
+            .current_r_id    (RID),
       		.current_r_addr  (current_r_addr [RID]), 
            	.chan_in         (router_chan_in [RID][K-1 : 0]), 
            	.chan_out        (router_chan_out[RID][K-1 : 0]), 
            	.router_event    (router_event[RID][K-1 : 0]),
-           	.clk             (clk            ), 
-           	.reset           (reset          )
+           	.clk             (clk), 
+           	.reset           (reset )
       );  
 end   
 
@@ -103,11 +101,10 @@ for( level=1; level<L; level=level+1) begin :level_lp
     localparam RID = NRL*level+pos;
    	   	
    	router_top # (
-   			.P(2*K)         
-   		)
-   		the_router
-   		(              
-   			.current_r_id    (RID),
+        .NOC_ID(NOC_ID),
+        .P(2*K)         
+    ) the_router (              
+  			.current_r_id    (RID),
    			.current_r_addr  (current_r_addr [RID]), 
    			.chan_in         (router_chan_in [RID]), 
    			.chan_out        (router_chan_out[RID]), 

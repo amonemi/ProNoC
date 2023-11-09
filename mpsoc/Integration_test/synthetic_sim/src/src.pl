@@ -1,7 +1,11 @@
 #!/usr/bin/perl -w
 
+use lib "../perl_lib";
+
+use List::MoreUtils qw(uniq);
 use Proc::Background;
 use File::Path qw( rmtree );
+use Cwd 'abs_path';
 
 my $script_path = dirname(__FILE__);
 my $dirname = "$script_path/..";
@@ -14,7 +18,7 @@ my $src_c = "$root/src_c";
 my $src = "$script_path";
 my $report = "$dirname/report";
 
-require "$root/perl_gui/lib/perl/common.pl";
+#require "$root/perl_gui/lib/perl/common.pl";
 require "$root/perl_gui/lib/perl/topology.pl";
 
 use strict;
@@ -318,6 +322,17 @@ sub get_model_names {
 }
 
 
+sub check_models_are_exsited {
+	my ($mref, $inref) = @_;
+	my @models = get_model_names(@_);
+	foreach my $m (@models){
+		unless (-f $m ){
+			die "Error: no such file $m";
+		}
+	}
+}
+
+
 sub gen_models {
 	my ($mref, $inref) = @_;
 	my @models = get_model_names(@_);
@@ -326,6 +341,9 @@ sub gen_models {
     mkdir("$work", 0700);
 	foreach my $m (@models){
 		print "$m\n";
+		unless (-f $m ){
+			die "Error: no such file $m";
+		}
 		#make noc localparam
 		my $o;
 		$o= do $m;
@@ -605,3 +623,204 @@ sub check_sim_results{
     $self->{'name'}{"$name"}{'traffic'}{$traffic}{'overal_result'}="passed";		
 }
 
+
+sub object_get_attribute_order{
+	my ($self,$attribute)=@_;
+	return unless(defined $self->{parameters_order}{$attribute});
+	my @order=@{$self->{parameters_order}{$attribute}};
+	return uniq(@order)
+}
+
+sub save_file {
+	my  ($file_path,$text)=@_;
+	open my $fd, ">$file_path" or die "could not open $file_path: $!";
+	print $fd $text;
+	close $fd;	
+}
+
+sub object_add_attribute_order{
+	my ($self,$attribute,@param)=@_;
+	my $r = $self->{'parameters_order'}{$attribute};
+	my @a;
+	@a = @{$r} if(defined $r);
+	push (@a,@param);
+	@a=uniq(@a);	
+	$self->{'parameters_order'}{$attribute} =\@a;
+}
+
+sub append_text_to_file {
+	my  ($file_path,$text)=@_;
+	open(my $fd, ">>$file_path") or die "could not open $file_path: $!";
+	print $fd $text;
+	close $fd;
+}
+
+sub object_add_attribute{
+	my ($self,$attribute1,$attribute2,$value)=@_;
+	if(!defined $attribute2){$self->{$attribute1}=$value;}
+	else {$self->{$attribute1}{$attribute2}=$value;}
+
+}
+
+
+
+sub object_get_attribute{
+	my ($self,$attribute1,$attribute2)=@_;
+	if(!defined $attribute2) {return $self->{$attribute1};}
+	return $self->{$attribute1}{$attribute2};
+}
+
+sub powi{ # x^y
+	my ($x,$y)=@_; # compute x to the y
+	my $r=1;
+	for (my $i = 0; $i < $y; ++$i ) {
+    	$r *= $x;
+  	}
+  return $r;
+}
+
+sub sum_powi{ # x^(y-1) + x^(y-2) + ...+ 1;
+	my ($x,$y)=@_; # compute x to the y
+	my $r = 0;
+    for (my $i = 0; $i < $y; $i++){
+    	$r += powi( $x, $i );
+    }
+  	return $r;
+}	
+
+sub log2{
+	my $num=shift;
+	my $log=($num <=1) ? 1: 0;        
+	while( (1<< $log)  < $num) {    
+				$log++;    
+	}
+	return  $log;  
+}
+
+
+sub remove_not_hex {
+	my $s=shift;
+	$s =~ s/[^0-9a-fA-F]//g;
+	return $s;	
+}
+
+sub remove_not_number {
+	my $s=shift;
+	$s =~ s/[^0-9]//g;
+	return $s;		
+	
+}
+
+sub check_file_has_string {
+    my ($file,$string)=@_;
+    my $r;
+    open(FILE,$file);
+    if (grep{/$string/} <FILE>){
+       $r= 1; #print "word  found\n";
+    }else{
+       $r= 0; #print "word not found\n";
+    }
+    close FILE;
+    return $r;
+}
+
+
+sub gen_verilator_makefile{
+	my ($top_ref,$target_dir) =@_;
+	my %tops = %{$top_ref};
+	my $p='';
+	my $q='';
+	my $h='';
+	my $l;
+	my $lib_num=0;
+	my $all_lib="";
+	foreach my $top (sort keys %tops) {
+		$p = "$p ${top}__ALL.a ";
+		$q = $q."lib$lib_num:\n\t\$(MAKE) -f ${top}.mk\n"; 
+		$h = "$h ${top}.h "; 
+		$l = $top;
+		$all_lib=$all_lib." lib$lib_num";
+		$lib_num++;
+	}
+
+	my $make= "
+	
+default: sim
+
+
+
+include $l.mk
+
+lib: $all_lib
+
+$q
+
+
+#######################################################################
+# Compile flags
+
+CPPFLAGS += -DVL_DEBUG=1
+ifeq (\$(CFG_WITH_CCWARN),yes)	# Local... Else don't burden users
+CPPFLAGS += -DVL_THREADED=1
+CPPFLAGS += -W -Werror -Wall
+endif
+
+SLIB = 
+HLIB = 
+ifneq (\$(wildcard synful/synful.a),) 
+SLIB += synful/synful.a
+HLIB += synful/synful.h
+endif 
+
+#######################################################################
+# Linking final exe -- presumes have a sim_main.cpp
+
+
+sim:	testbench.o \$(VK_GLOBAL_OBJS) $p \$(SLIB)
+	\$(LINK) \$(LDFLAGS) -g \$^ \$(LOADLIBES) \$(LDLIBS) -o testbench \$(LIBS) -Wall -O3 -lpthread 2>&1 | c++filt
+
+testbench.o: testbench.cpp $h  \$(HLIB)
+
+clean:
+	rm *.o *.a testbench	
+";
+
+save_file ($target_dir,$make);
+
+}	
+
+
+sub get_project_dir{ #mpsoc directory address
+	my $dir = Cwd::getcwd();
+	my @p=	split('/perl_gui',$dir);
+	@p=	split('/Integration_test',$p[0]);
+    my $d	  = abs_path("$p[0]/../"); 
+     
+	return $d;
+}
+
+#return lines containig pattern in a givn file
+sub unix_grep {
+	my ($file,$pattern)=@_;
+    open(FILE,$file);
+    my @arr = <FILE>;
+    my @lines = grep /$pattern/, @arr;
+	return @lines;	
+}
+
+
+sub regen_object {
+	my $path=shift;
+	$path = get_full_path_addr($path);
+	my $pp= eval { do $path };
+	my $r= ($@ || !defined $pp);
+	return ($pp,$r,$@);
+}
+
+sub get_full_path_addr{
+	my $file=shift;
+	my $dir = Cwd::getcwd();
+	my $full_path = "$dir/$file";	
+	return $full_path  if -f ($full_path );
+	return $file;
+}

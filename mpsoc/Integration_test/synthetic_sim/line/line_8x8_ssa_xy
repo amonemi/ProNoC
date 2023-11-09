@@ -1,0 +1,6 @@
+$model = bless( {
+        'noc_param'=> {
+	TOPOLOGY=>"\"LINE\"",
+						"SSA_EN" => "\"YES\"",				
+						}
+}, 'ProNOC' );

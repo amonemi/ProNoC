@@ -134,28 +134,15 @@ sub generate_topology_top_v {
 	
 	 print $fd "
 module   ${name}_noc
-	import pronoc_pkg::*; 
-	(
-   $ports
+#(
+	parameter NOC_ID=0
+)
+(
+	$ports
 );
 	
-	 function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end 	   
-      end   
-    endfunction // log2 
-
-	localparam 
-		NE = $NE,
-		NR = $NR,
-		RAw=log2(NR);
-       
-      
-
-    
+	`NOC_CONF
+	 
     input reset,clk;    
        
     $wires
@@ -209,6 +196,7 @@ sub get_router_instance_v {
 	*		$instance
 	*******************/
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P($Pnum)		
 	)
 	$instance
@@ -467,6 +455,7 @@ sub generate_topology_top_genvar_v{
 	assign current_r_addr [RID] = RID[RAw-1: 0]; 
 
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P($i)
 	)
 	router_${i}_port
@@ -511,9 +500,10 @@ $routers.="endgenerate\n";
 	
 	
 	 print $fd "
-module   ${name}_noc_genvar 
-   import pronoc_pkg::*; 
-	(
+module   ${name}_noc_genvar    
+#(
+	parameter NOC_ID=0
+)(
 
     reset,
     clk,    
@@ -522,21 +512,7 @@ module   ${name}_noc_genvar
     router_event  
 );
 
-	 function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end 	   
-      end   
-    endfunction // log2 
-
-	localparam 
-		NE = $NE,
-		NR = $NR,
-		RAw=log2(NR),
-		MAX_P=$MAX_P;
-	
+`NOC_CONF
     
 $ports_def
 
@@ -628,6 +604,7 @@ sub get_router_genvar_instance_v{
 	my $router_v="	
 	
 	router_top #(
+		.NOC_ID(NOC_ID),
 		.P($Pnum)
 	)
 	router_${Pnum}_port
@@ -1446,45 +1423,21 @@ print $fd '
 	
 		 print $fd "
 module  ${name}_connection 
-	import pronoc_pkg::*; 
-(
+#(
+	parameter NOC_ID=0
+)(
     $ports
 );
 
-	 function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end 	   
-      end   
-    endfunction // log2 
+	`NOC_CONF
 
-	localparam 
-		NE = $NE,
-		NR = $NR,
-		RAw=log2(NR),
-		MAX_P=$MAX_P;
-	
-	
-	
-	                
-    
-	
-	
-	
 	
 	localparam
 		P= MAX_P,
         PV = V * P,
         PFw = P * Fw,
         CONG_ALw = CONGw * P,
-        PRAw = P * RAw;    
-    	
-		
-       
-      
-
+        PRAw = P * RAw; 
     
 $ports_def
 
@@ -1564,7 +1517,7 @@ sub add_routing_instance_v{
     if(TOPOLOGY == \"$name\" && ROUTE_NAME== \"$rname\" ) begin : $Vname
     
         ${Vname}_conventional_routing  #(
-            .RAw(RAw),  
+           	.RAw(RAw),  
             .EAw(EAw),   
             .DSTPw(DSTPw)  
         )
@@ -1679,8 +1632,9 @@ sub add_noc_instance_v{
 	//do not modify this line ===${name}===
     if(TOPOLOGY == \"$name\" ) begin : T$name
     
-        ${name}_connection  connection
-        (
+        ${name}_connection  #(
+			.NOC_ID(NOC_ID)
+		) connection (
 $ports     
         );    
     
@@ -1725,16 +1679,15 @@ $ports
 	
 	$ports="\t\t.reset(reset),
 \t\t.clk(clk)";
-	
-	
-	
+		
 	
 	$str="
 	//do not modify this line ===${name}===
     if(TOPOLOGY == \"$name\" ) begin : T$name
     
-		${name}_noc_genvar the_noc			
-		(	
+		${name}_noc_genvar #(
+			.NOC_ID(NOC_ID)
+		) the_noc (	
 		    .reset(reset),
 		    .clk(clk),    
 		    .chan_in_all(chan_in_all),

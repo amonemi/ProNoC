@@ -737,6 +737,7 @@ endmodule
 ***************/
 
 module weights_update # (
+    parameter NOC_ID=0,
     parameter ARBITER_TYPE="WRRA",
     parameter V=4,
     parameter P=5,
@@ -799,6 +800,7 @@ module weights_update # (
     for (i=1; i<P; i=i+1) begin : non_local_port
     
         weight_update_per_port #(
+            .NOC_ID(NOC_ID),
             .V(V),
             .C(C),
             .P(P),
@@ -967,6 +969,7 @@ endmodule
 
 
 module weight_update_per_port # (
+    parameter NOC_ID=0,
     parameter V=4,
     parameter C=2,
     parameter P=5,
@@ -985,16 +988,11 @@ module weight_update_per_port # (
     flit_out_wr,
     clk,
     reset
-); 
-
-                  
+);                  
 
     localparam 
-        W=WEIGHTw;
-          
-    
-   
-    localparam WEIGHT_LATCHED = 0;  //(WRRA_CONFIG_INDEX==0 || WRRA_CONFIG_INDEX==1 || WRRA_CONFIG_INDEX==2 || WRRA_CONFIG_INDEX==3 ); //1: no latched  0: latched
+        W=WEIGHTw,  
+        WEIGHT_LATCHED = 0;  //(WRRA_CONFIG_INDEX==0 || WRRA_CONFIG_INDEX==1 || WRRA_CONFIG_INDEX==2 || WRRA_CONFIG_INDEX==3 ); //1: no latched  0: latched
            
     
     input [W-1 : 0] contention_in;
@@ -1047,8 +1045,9 @@ module weight_update_per_port # (
      
     wire [Fw-1 : 0] hdr_flit_new; 
     
-    hdr_flit_weight_update updater
-    (
+    hdr_flit_weight_update #(
+        .NOC_ID(NOC_ID)
+    ) updater (
         .new_weight(contention),
         .flit_in(flit_in),
         .flit_out(hdr_flit_new)    

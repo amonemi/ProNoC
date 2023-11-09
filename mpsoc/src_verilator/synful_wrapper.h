@@ -52,7 +52,7 @@ void synful_eval( ){
 	int i;
 	unsigned int pronoc_src_id,pronoc_dst_id;
 
-	if((reset==1) || (count_en==0))	return;
+	if((reset==reset_active_high) || (count_en==0))	return;
 
 	if((( synful_cycle > sim_end_clk_num) || (total_sent_pck_num>= end_sim_pck_num )) && synful_packets_left==0 )  simulation_done=1;
 

@@ -141,9 +141,9 @@ module debug_mesh_tori_route_ckeck #(
       NX = T1,
       NY = T2,
       RXw = log2(NX),    // number of node in x axis
-      RYw = log2(NY),
+      RYw = (TOPOLOGY=="RING" || TOPOLOGY == "LINE") ? 1 : log2(NY),
       EXw = log2(NX),    // number of node in x axis
-      EYw = log2(NY);   // number of node in y axis
+      EYw = (TOPOLOGY=="RING" || TOPOLOGY == "LINE") ? 1 : log2(NY);   // number of node in y axis
     
     
     wire [RXw-1 : 0] current_x;
@@ -368,6 +368,7 @@ endmodule
  * *****************/
  
  module check_destination_addr #(
+    parameter NOC_ID=0,
     parameter TOPOLOGY = "MESH",
     parameter T1=2,
     parameter T2=2,
@@ -398,7 +399,9 @@ endmodule
            
             wire [NE-1 : 0] dest_mcast_all_endp;            
             
-            mcast_dest_list_decode decode (
+            mcast_dest_list_decode #(
+                .NOC_ID(NOC_ID)        
+            ) decode (
                 .dest_e_addr(dest_e_addr),
                 .dest_o(dest_mcast_all_endp),
                 .row_has_any_dest( ),
@@ -560,6 +563,7 @@ module endp_addr_decoder  #(
     end else if  (TOPOLOGY == "MESH" || TOPOLOGY == "TORUS" || TOPOLOGY == "RING" || TOPOLOGY == "LINE") begin :tori
     /* verilator lint_on WIDTH */      
         mesh_tori_addr_coder #(
+            .TOPOLOGY(TOPOLOGY),
             .NX    (T1   ), 
             .NY    (T2   ), 
             .NL    (T3   ), 
@@ -594,6 +598,7 @@ endmodule
   
 
 module check_pck_size #(
+    parameter NOC_ID=0,
     parameter V=2,
     parameter MIN_PCK_SIZE=2,
     parameter Fw=36,
@@ -625,16 +630,11 @@ module check_pck_size #(
     wire [V-1 : 0] vc_hdr_wr_en;
     wire [V-1 : 0] onehot;
 
-    localparam MIN_B =  (B<LB)? B : LB;
-  
-    
-   
-  
+    localparam MIN_B =  (B<LB)? B : LB;       
         
-        
-   genvar i;
-   generate 
-   for (i=0;i<V;i=i+1) begin 
+    genvar i;
+    generate 
+    for (i=0;i<V;i=i+1) begin 
         
         always @(*) begin 
             pck_size_counter_next [i] = pck_size_counter [i];
@@ -678,7 +678,9 @@ module check_pck_size #(
             );
             
             
-            mcast_dest_list_decode decode (
+            mcast_dest_list_decode #(
+                .NOC_ID(NOC_ID)
+            ) decode (
                 .dest_e_addr(dest_e_addr[i]),
                 .dest_o(dest_mcast_all_endp[i]),
                 .row_has_any_dest(),

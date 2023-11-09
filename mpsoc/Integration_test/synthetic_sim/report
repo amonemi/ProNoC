@@ -1,9 +1,13 @@
 Verification Results:
-****************************mesh_4x4_2cycle_mcast_f : Compile *******************************:
-	 model is generated successfully.
-****************************mesh_4x4_2cycle_mcast_f	: random traffic *******************************:
-	 Passed:   zero load (5,15.2151) saturation (30,357.163)
-****************************mesh_4x4_2cycle_mcast_f	: transposed 1 traffic *******************************:
-	 Error in running simulation:                    0: ERROR: Routing module did not set any destination port for an injected multicast packet TOP.router_top_v.router.router_ref.p_[0].multi.multicast_process.debg 
-                    0: ERROR: The self-loop is not enabled in the router while a packet is injected to the NoC with identical source and destination address in endpoint  9. destination nodes:0X0200. : TOP.traffic_gen_top
- 
+****************************star_6 : Compile *******************************:
+	 model generation is FAILED.
+	 %Error: Unknown warning specified: -Wno-TIMESCALEMOD
+
+	 %Error: Unknown warning specified: -Wno-TIMESCALEMOD
+
+	 %Error: Unknown warning specified: -Wno-TIMESCALEMOD
+
+****************************star_6	: random traffic *******************************:
+	 failed. Simulation model is not avaialable
+****************************star_6	: transposed 1 traffic *******************************:
+	 failed. Simulation model is not avaialable

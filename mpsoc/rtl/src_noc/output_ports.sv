@@ -26,11 +26,10 @@
 **************************************************************/
 
 
-module output_ports 
-    import pronoc_pkg::*;
- #(   
-    parameter P = 5 // router port num       
-)(
+module output_ports #(
+    parameter NOC_ID=0,
+    parameter P=5
+) (
     vsa_ovc_allocated_all,
     flit_is_tail_all,
    
@@ -61,28 +60,17 @@ module output_ports
 );
 
 
- 
-   
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end 	   
-      end   
-    endfunction // log2 
+	`NOC_CONF    
     
-    localparam      PV      =    V        *    P,
-                    VV      =   V       *  V,
-                    PVV     =    PV        *  V,    
-                    P_1     =   ( SELF_LOOP_EN=="NO")?  P-1 : P,
-                    VP_1    =    V        *     P_1,                
-                    PP_1    =    P_1    *    P,
-                    PVP_1    =    PV        *    P_1;
-                   
-
-    localparam  NORTH  =       2,  
-                SOUTH  =       4; 
+    localparam
+        PV      =    V        *    P,
+        VV      =   V       *  V,
+        PVV     =    PV        *  V,    
+        P_1     =   ( SELF_LOOP_EN=="NO")?  P-1 : P,
+        VP_1    =    V        *     P_1,                
+        PP_1    =    P_1    *    P,
+        PVP_1    =    PV        *    P_1;
+    
     localparam [V-1     :   0] ADAPTIVE_VC_MASK = ~ ESCAP_VC_MASK;   
     localparam  CONG_ALw=   CONGw * P;   //  congestion width per router;             
                     
@@ -295,23 +283,20 @@ module output_ports
     	assign assigned_ovc_num_all[(i+1)*V-1 : i*V] = ivc_info[i/V][i%V].assigned_ovc_num;
     	assign ovc_is_assigned_all[i]=ivc_info[i/V][i%V].ovc_is_assigned;
     	    	
-    
-    	
     	credit_monitor_per_ovc	#( 
-    			.SW_LOC(i/V)
-    		)
-    		credit_monitor
-    		(
-    			.credit_init_val_i(credit_init_val_in[i/V][i%V]),
-    			.credit_counter_o (credit_counter[i]),
-    			.credit_increased (credit_increased_all[i]),
-    			.credit_decreased(credit_decreased_all[i]),
-    			.empty_all_next(empty_all_next[i]),
-    			.full_all_next(full_all_next[i]),
-    			.nearly_full_all_next(nearly_full_all_next[i]),   
-    			.reset(reset),
-    			.clk(clk)	
-    		); 
+    		.NOC_ID(NOC_ID),
+            .SW_LOC(i/V)
+    	) 	credit_monitor (
+    		.credit_init_val_i(credit_init_val_in[i/V][i%V]),
+    		.credit_counter_o (credit_counter[i]),
+    		.credit_increased (credit_increased_all[i]),
+    		.credit_decreased(credit_decreased_all[i]),
+    		.empty_all_next(empty_all_next[i]),
+    		.full_all_next(full_all_next[i]),
+    		.nearly_full_all_next(nearly_full_all_next[i]),   
+    		.reset(reset),
+    		.clk(clk)	
+    	); 
     	
     	
     	
@@ -489,26 +474,26 @@ endmodule
  * 	credit_monitor_per_ovc 	
  ********************/
  
-module   credit_monitor_per_ovc  
- 	import pronoc_pkg::*;
-	#( 
-	parameter SW_LOC=0
-	)(
-		credit_init_val_i,
-		credit_increased,
-		credit_decreased,
-		credit_counter_o,
-		empty_all_next,
-		full_all_next,
-		nearly_full_all_next,   
-		reset,
-		clk
-	);
-
+module   credit_monitor_per_ovc  #(
+    parameter NOC_ID=0,
+    parameter SW_LOC=0
+) (
+	credit_init_val_i,
+	credit_increased,
+	credit_decreased,
+	credit_counter_o,
+	empty_all_next,
+	full_all_next,
+	nearly_full_all_next,   
+	reset,
+	clk
+);
+	
+	`NOC_CONF    
 	
 	localparam 
-	PORT_B = port_buffer_size(SW_LOC),	
-	DEPTHw = log2(PORT_B+1);
+    	PORT_B = port_buffer_size(SW_LOC),	
+	    DEPTHw = log2(PORT_B+1);
 		
 	localparam [DEPTHw-1    :    0] Bint    =    PORT_B [DEPTHw-1    :    0];
 	

@@ -130,7 +130,7 @@ sub fattree_addrencode {
 	for (my $i = 0; $i <$l; $i=$i+1 ) {
 		$tmp=int($pos/$pow);
 		$tmp=$tmp % $k;
-		$tmp=$tmp<<($i)*$kw;
+		$tmp=$tmp << ($i)*$kw;
 		$addrencode=$addrencode | $tmp;
 		$pow=$pow * $k;
 	}
@@ -143,7 +143,7 @@ sub fattree_addrdecode{
 	my $mask=0;
 	my $pow; my $tmp;
 	my $pos=0;
-	while((0x1<<$kw) < $k){
+	while((0x1 << $kw) < $k){
 		$kw++;
 		$mask<<=1;
 		$mask|=0x1;
@@ -237,7 +237,7 @@ sub fmesh_addrencode{
 	my $NXw=log2($T1);
 	my $NYw=log2($T2);
     my $addrencode=0;
-    $addrencode = ($p<<($NXw+$NYw)|  ($y << $NXw) | $x);
+    $addrencode = ($p << ($NXw+$NYw)|  ($y << $NXw) | $x);
     return $addrencode;	
 }   
 
@@ -299,8 +299,10 @@ sub endp_addr_encoder{
 	my $T3=$self->object_get_attribute('noc_param','T3');
 	if($topology eq '"FATTREE"' || $topology eq '"TREE"') {
 		return fattree_addrencode($id, $T1, $T2);
-	}elsif ($topology eq '"RING"' || $topology eq '"LINE"'  ||  $topology eq '"MESH"' || $topology eq '"TORUS"'){
+	}elsif ($topology eq '"MESH"' || $topology eq '"TORUS"'){
 		return mesh_tori_addrencode($id,$T1, $T2,$T3);
+	}elsif ($topology eq '"RING"' || $topology eq '"LINE"'){
+		return ring_line_addrencode($id,$T1, $T3);
 	}elsif ($topology eq '"FMESH"' ){
 		return 	fmesh_addrencode($id,$T1, $T2,$T3);
 	}else{#CUSTOM & STAR
@@ -332,7 +334,7 @@ sub mask_gen{
 	my $k=shift;
 	my $kw=0;
 	my $mask=0;
-	while((0x1<<$kw) < $k){
+	while((0x1 << $kw) < $k){
 		$kw++;
 		$mask<<=1;
 		$mask|=0x1;
@@ -360,6 +362,12 @@ sub mesh_tori_addrencode{
     return mesh_tori_addr_join($x,$y,$l,$T1, $T2,$T3);
 }
 
+sub ring_line_addrencode {
+	my ($id,$T1, $T3)=@_;
+	my ($x,$y,$l)=mesh_tori_addrencod_sep($id,$T1,0,$T3);
+	return ring_line_addr_join($x,$y,$l,$T1, $T3);
+}
+
 sub  mesh_tori_addrencod_sep{
 	my ($id,$T1,$T2,$T3)=@_;
 	my ($x,$y,$l);
@@ -375,9 +383,18 @@ sub mesh_tori_addr_join {
 	my $NXw=log2($T1);
 	my $NYw=log2($T2);
     my $addrencode=0;
-    $addrencode =($T3==1)?   ($y << $NXw | $x) : ($l<<($NXw+$NYw)|  ($y << $NXw) | $x);
+    $addrencode =($T3==1)?   ($y << $NXw | $x) : ($l << ($NXw+$NYw)|  ($y << $NXw) | $x);
     return $addrencode;
 }
+
+sub ring_line_addr_join {
+	my ($x, $y, $l,$T1, $T3)=@_;
+	my $NXw=log2($T1);
+	my $addrencode=0;
+    $addrencode =($T3==1)?  $x : ($l << $NXw) |  $x;
+    return $addrencode;
+}
+
 
 
 sub mcast_partial_width {
@@ -424,8 +441,6 @@ sub get_noc_verilator_top_modules_info {
 	
 	my $DAw = ($CAST_TYPE eq '"UNICAST"') ?   $EAw: $MCASTw +  $DAw_OFFSETw;           
 	
-	print "$DAw=$DAw\n";
-
 	my $custom_include="";
 	if($topology eq '"FATTREE"') {
 		my $K =  $T1;
@@ -623,7 +638,8 @@ $st7.="
 		update_router_st(
 			NR${i}_PNUM,
 			router${i}[i]->current_r_id,   
-			router${i}[i]->router_event
+			router${i}[i]->router_event,
+			sizeof(router${i}[i]->router_event[0])
 		); 
 		return;
 	}
@@ -679,16 +695,13 @@ void inline single_router_eval(int i){
 }
 
 #define SMART_NUM  ((SMART_MAX==0)? 1 : SMART_MAX)
-#if SMART_NUM > 8
-	typedef unsigned int EVENT;
-#else
-	typedef unsigned char EVENT;
-#endif
+
 
 extern void update_router_st (
   unsigned int,
   unsigned int, 
-  EVENT *  
+  void * ,
+  size_t
 );
  
 void  single_router_st_update(int i){

@@ -1,10 +1,10 @@
 // synthesis translate_off
-`timescale   1ns/1ns
+`include "pronoc_def.v"
 
 
 module synfull_top;
-    
-    import pronoc_pkg::*; 
+    parameter NOC_ID=0;
+    `NOC_CONF
     import dpi_int_pkg::*; 
     
     reg     reset ,clk;
@@ -33,8 +33,9 @@ module synfull_top;
     req_t     [NE-1 : 0] synfull_pronoc_req_all  ;
     deliver_t [NE-1 : 0] pronoc_synfull_del_all  ;
     
-    noc_top     the_noc
-    (
+    noc_top #( 
+		.NOC_ID(NOC_ID)
+	) the_noc (
         .reset(reset),
         .clk(clk),    
         .chan_in_all(chan_in_all),
@@ -143,7 +144,9 @@ module synfull_top;
         
         endp_addr_encoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) encode1 ( .id(i[NEw-1 :0]), .code(current_e_addr[i]));
         
-        packet_injector pck_inj(
+        packet_injector #(
+			.NOC_ID(NOC_ID)
+		) pck_inj(
             //general
             .current_e_addr(current_e_addr[i]),
             .reset(reset),
@@ -166,7 +169,11 @@ module synfull_top;
        
 
         initial begin 
-            reset = 1'b1;
+`ifdef ACTIVE_LOW_RESET_MODE 
+        reset = 1'b0;
+ `else 
+        reset = 1'b1;
+`endif  
             k=0;
             init_socket[i] = 1'b0;
             wakeup_synfull[i] = 1'b0;
@@ -178,7 +185,7 @@ module synfull_top;
             _pck_injct_in[i].vc=1;
             #100
             @(posedge clk) #1;
-            reset=1'b0;
+            reset=~reset;
             #100
             init_socket[i] = 1'b1;
             @(posedge clk) #1;
@@ -218,7 +225,7 @@ module synfull_top;
     integer k;
      
     always @(posedge clk) begin
-    	if(reset) begin 
+    	if(`pronoc_reset) begin 
     		clk_count =0;
     		total_sent_pck_count =0;
     		total_sent_flit_count=0;
@@ -245,12 +252,14 @@ module synfull_top;
     end
     
     
-    routers_statistic_collector router_stat( 
-    		.reset(reset),
-    		.clk(clk),		
-    		.router_event(router_event),
-    		.print(print_router_st)
-    	);
+    routers_statistic_collector # (
+        .NOC_ID(NOC_ID)
+    ) router_stat ( 
+    	.reset(reset),
+    	.clk(clk),		
+    	.router_event(router_event),
+    	.print(print_router_st)
+    );
     
     
    

@@ -976,7 +976,8 @@ module ${name}_top(
 	
 	noc_emulator #(
 		.STATISTIC_VJTAG_INDEX(STATISTIC_VJTAG_INDEX),  
-		.PATTERN_VJTAG_INDEX(PATTERN_VJTAG_INDEX)		 
+		.PATTERN_VJTAG_INDEX(PATTERN_VJTAG_INDEX),
+		.NOC_ID(0)		 
 	)
 	noc_emulate_top
 	(

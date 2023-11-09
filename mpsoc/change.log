@@ -1,5 +1,10 @@
 All notable changes to this project will be documented in this file.
 
+##[2.2.0] -09-11-2023
+## added
+- Provide two solutions for having multiple physical NoCs with different configurations
+
+
 ##[2.1.0] -26-03-2022
 ## added
 - Multicast/Broadcast support
@@ -22,6 +27,7 @@ All notable changes to this project will be documented in this file.
 
 ## changed
 - NoC codes are changing to systemVerilog. Now it uses struct for router connection interface.
+
 
 
 ##[1.9.1] -24-07-2019

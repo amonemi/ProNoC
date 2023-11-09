@@ -1573,7 +1573,7 @@ sub get_route_info{
 	my %L_num;
 	my @all_endpoints=get_list_of_all_endpoints($self);
 	foreach  my $r  (@all_endpoints ){
-		$R_num{$r} =0;
+		#$R_num{$r} =0;
 	}
 	my @nodes=get_list_of_all_routers($self);
 	foreach my $p (@nodes){
@@ -1582,9 +1582,11 @@ sub get_route_info{
 	foreach  my $src  (@all_endpoints ){	
 		foreach  my $dst  (@all_endpoints ){	
 			my $path = $self->object_get_attribute('Route',"${src}::$dst");
-			if (defined $path){
+			if (defined $path){				
 				#router counting
 				my @p=@{$path};
+				shift @p; #remove source node from the path
+				pop @p; #remove the destination node from the path
 				foreach my $r (@p){				
 					$R_num{$r} ++;					
 				}
@@ -2578,7 +2580,7 @@ sub auto_route {
     }
 	
 	my @acyclic_turns = @{$pp};
-	
+	my %rusage = get_router_usage ($self,\@acyclic_turns);
 	
 	
 	#step 1: calculate all minimal paths between all source and destination pairs
@@ -2613,7 +2615,12 @@ sub auto_route {
         my ($paths_to_dst,$ports_to_dst) = get_all_paths_between_two_endps_using_accyclic_turn($self,$src, $dst,\@acyclic_turns);
         #my @cyle_free_paths=remove_cycle_paths($self,$info,$paths_to_dst, \@forbiden_turn);
         my @cyle_free_paths= @{$paths_to_dst} if (defined $paths_to_dst);
-        my @sort_paths=sort_paths_based_on_link_usage($self,\@cyle_free_paths);
+        my @sort_paths=sort_paths_based_on_router_usage($self,\@cyle_free_paths,\%rusage);
+       
+      # my @sort_paths=sort_paths_based_on_link_usage($self,\@cyle_free_paths);
+      
+
+        
         my $path;
         my $n=0;
         foreach my $p (@sort_paths ){
@@ -2701,6 +2708,51 @@ sub clone_hash{
 	return %copy;
 }
 
+
+sub sort_paths_based_on_router_usage{
+	my ($self,$paths_to_dst,$usage)=@_;
+	my %scored;
+	my %usage_r= %{$usage};
+	#get list of 30% high congested ruters 
+	my @A = sort { $usage_r{$b} <=> $usage_r{$a} } keys %usage_r;
+	#my $t = (scalar @A)*.3; # %30 
+	my %congested;
+	foreach my $a ( @A){		
+		$congested{$a}=$usage_r{$a};# if(scalar(keys %congested)<$t);
+	}
+	
+	my $i=0;
+	foreach my $path (@{$paths_to_dst}) {
+		my $val = 0;
+		my $num=0;			
+		for my $r (@{$path}){
+			if(defined $congested{$r}){
+				$val+=$congested{$r}**1.5;# pow of 3/2 to give higher weight to more congested routers
+				$num++;
+			}			
+		}
+		$scored{$i}=($num==0)? 0 : $val/$num;	#average weight of congested routers
+		$i++;
+	}
+	
+	my @order = sort { $scored{$a} <=> $scored{$b} } keys %scored;
+	my @sorted;
+	
+	
+	
+	$i=0;
+	foreach my $a ( @order){
+		$sorted[$i]=${$paths_to_dst}[$a];
+		$i++;
+		#print "\$max{$a}=$max{$a},"
+	}
+	
+	#print "\n";
+	
+	return @sorted;		
+}	
+
+
 sub sort_paths_based_on_link_usage{
 	my ($self,$paths_to_dst)=@_;
 	
@@ -2714,6 +2766,7 @@ sub sort_paths_based_on_link_usage{
 			if (defined $path){
 				#path counting
 				my @p= 	get_adjacent_router_in_a_path($path);
+				
 				foreach my $r (@p){				
 					$L_num{$r} ++;						
 				}	
@@ -2753,6 +2806,34 @@ sub sort_paths_based_on_link_usage{
 	
 	
 }
+
+
+sub get_router_usage{
+	my ($self,$acycle_turn_ref)=@_;
+	
+	my @all_endpoints=get_list_of_all_endpoints($self);
+	my %router_cnt;
+	#get router counts
+	foreach  my $src  (@all_endpoints ){	
+		foreach  my $dst  (@all_endpoints ){	
+			#get list of all path between a source and destination nodes
+			 my ($paths_to_dst,$ports_to_dst)= get_all_paths_between_two_endps_using_accyclic_turn($self,$src, $dst,$acycle_turn_ref);
+			
+			my @paths = @{$paths_to_dst};					
+			foreach my $path (@paths){
+				shift @{$path}; #remove source node from the path
+				pop @{$path}; #remove the destination node from the path	
+				foreach my $q ( @{$path}){
+				 	$router_cnt{"$q"} = ( defined $router_cnt{"$q"})? $router_cnt{"$q"}+1 : 1;
+				}
+			}		
+		}
+	}
+	
+	return %router_cnt;
+	
+}
+
 
 sub check_cyclick_loop{
 	my ($self,$paths_to_dst)=@_;

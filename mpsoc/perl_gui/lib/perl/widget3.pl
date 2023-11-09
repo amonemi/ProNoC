@@ -2204,21 +2204,11 @@ sub run_cmd_in_back_ground_get_stdout
 	my $cmd=shift;
 	my $exit;
 	my ($stdout, $stderr);	
-	
-	#open(OLDERR, ">&STDERR");
-	#open(STDERR, ">>/tmp/tmp.spderr") or die "Can't dup stdout";
-	#select(STDOUT); $| = 1;     # make unbuffered
-	#print OLDERR "";  #this fixed an error about OLDERR not being used 
-
-## do my stuff here.
-	
 	STDOUT->flush();
 	STDERR->flush();
 	
 	capture { $exit=run_cmd_in_back_ground($cmd) } \$stdout, \$stderr;
 	
-	#close(STDERR);
-	#open(STDERR, ">&OLDERR");
 	return ($stdout,$exit,$stderr);
 	
 }		

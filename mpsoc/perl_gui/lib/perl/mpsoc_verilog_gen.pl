@@ -46,12 +46,11 @@ sub mpsoc_generate_verilog{
 	
 	#functions
 	my $functions=get_functions();
-	
+	$param_as_in_v = (defined $param_as_in_v)? "$param_as_in_v,\nparameter NOC_ID=0\n" : "parameter NOC_ID=0\n";
 	my $global_localparam=get_golal_param_v();	
-	
-	my $mpsoc_v = (defined $param_as_in_v )? "`timescale	 1ns/1ps\nmodule $mpsoc_name\n\t import pronoc_pkg::*;\n\t #(\n $param_as_in_v\n)(\n$io_short\n);\n": "`timescale	 1ns/1ps\nmodule $mpsoc_name\n \t import pronoc_pkg::*;\n\t(\n$io_short\n);\n";
+	my $pdef = "`include \"pronoc_def.v\"";
+	my $mpsoc_v = (defined $param_as_in_v )? " $pdef\nmodule $mpsoc_name\n\t  #(\n $param_as_in_v)(\n$io_short\n);\n\t`NOC_CONF": "$pdef\nmodule $mpsoc_name\n \t (\n$io_short\n);\n\t`NOC_CONF";
 	$mpsoc_v=$mpsoc_v. "
-$functions
 $global_localparam	
 $socs_param
 $io_full
@@ -61,7 +60,7 @@ endmodule
 ";
 	
 	
-	my $top_v = (defined $param_as_in_v )? "`timescale	 1ns/1ps\nmodule ${mpsoc_name}_top #(\n $param_as_in_v\n)(\n$top_io_short\n);\n": "`timescale	 1ns/1ps\nmodule ${mpsoc_name}_top (\n $top_io_short\n);\n";
+	my $top_v = (defined $param_as_in_v )? "$pdef\nmodule ${mpsoc_name}_top #(\n $param_as_in_v\n)(\n$top_io_short\n);\n": "$pdef\nmodule ${mpsoc_name}_top (\n $top_io_short\n);\n";
 
 $top_v=$top_v."
 $global_localparam	
@@ -461,17 +460,15 @@ sub gen_noc_v{
 	wire 					noc_clk_in,noc_reset_in;    
    
     //NoC
- 	noc_top the_noc
-	(
+ 	noc_top # ( 
+		.NOC_ID(NOC_ID)
+	) the_noc (
 		.reset(noc_reset_in),
 		.clk(noc_clk_in),    
 		.chan_in_all(ni_chan_out),
 		.chan_out_all(ni_chan_in),
 		.router_event( )  
-	);
-          
-	
-	
+	);	
 	
 	clk_source  src 	(
 		.clk_in($noc_clk),

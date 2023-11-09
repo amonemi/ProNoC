@@ -1,0 +1,75 @@
+# Generated using ProNoC
+#============================================================
+# Build by Terasic System Builder
+#============================================================
+
+set_global_assignment -name FAMILY "Arria II GX"
+set_global_assignment -name DEVICE EP2AGX45DF29I5
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 12.0
+set_global_assignment -name LAST_QUARTUS_VERSION "18.1.0 Lite Edition"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "16:38:23 JULY 08,2019"
+
+#============================================================
+# CLOCK
+#============================================================
+
+#============================================================
+# LED x 10
+#============================================================
+
+#============================================================
+# BUTTON x 4 and CPU_RESET_n
+#============================================================
+
+#============================================================
+# SWITCH x 4
+#============================================================
+
+#============================================================
+# 7-Segement
+#============================================================
+
+#============================================================
+# Temperature
+#============================================================
+
+#============================================================
+# Fan
+#============================================================
+
+#============================================================
+# RS232
+#============================================================
+
+#============================================================
+# Flash/MAX Address/Data Share Bus
+#============================================================
+
+#============================================================
+# Flash Control
+#============================================================
+
+#============================================================
+# End of pin assignments by Terasic System Builder
+#============================================================
+
+
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+
+
+
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP "-40"
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+
+
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+
+
+
+
+

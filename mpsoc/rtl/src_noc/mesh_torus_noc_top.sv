@@ -33,10 +33,9 @@
 
 
 
-module mesh_torus_noc_top 
-		import pronoc_pkg::*; 
-	(
-
+module mesh_torus_noc_top #(
+	parameter NOC_ID=0
+) (
     reset,
     clk,    
     chan_in_all,
@@ -44,7 +43,7 @@ module mesh_torus_noc_top
     router_event
 );
 
-
+    `NOC_CONF
     
 	input   clk,reset;
 	//Endpoints ports 
@@ -58,19 +57,7 @@ module mesh_torus_noc_top
 	smartflit_chanel_t    router_chan_in   [NR-1 :0][MAX_P-1 : 0];
 	smartflit_chanel_t    router_chan_out  [NR-1 :0][MAX_P-1 : 0];
 
-	wire [RAw-1 : 0] current_r_addr [NR-1 : 0];
-
-	// mesh torus            
-	localparam
-		EAST   =       3'd1, 
-		NORTH  =       3'd2,  
-		WEST   =       3'd3,  
-		SOUTH  =       3'd4;
-	//ring line            
-	localparam 
-		FORWARD =  2'd1,
-		BACKWARD=  2'd2;
-
+	wire [RAw-1 : 0] current_r_addr [NR-1 : 0];	
 
 	genvar x,y,l;
 	generate 
@@ -83,6 +70,7 @@ module mesh_torus_noc_top
 				assign current_r_addr [x] = x[RAw-1: 0];   
 	
 				router_top #(
+					.NOC_ID(NOC_ID),
 					.P               (MAX_P          )
 					) the_router (
 					.current_r_id    (x),
@@ -135,6 +123,7 @@ module mesh_torus_noc_top
 				assign current_r_addr [RID] = R_ADDR[RAw-1 :0];
              	
 					router_top #(
+						.NOC_ID(NOC_ID),
 						.P               (MAX_P          )
 					) the_router (					
 						.current_r_id    (RID),

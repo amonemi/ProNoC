@@ -1,13 +1,17 @@
-import pronoc_pkg::*; 
+`include "pronoc_def.v"
+
 
 
 package dpi_int_pkg;
 
+parameter NOC_ID=0;
+
+`NOC_CONF
 
  typedef struct packed {
-     logic [pronoc_pkg::NEw-1 : 0] dest  ;
-     logic [pronoc_pkg::PCK_SIZw-1 : 0] size  ;
-     logic [pronoc_pkg::NEw-1 : 0] src   ;
+     logic [NEw-1 : 0] dest  ;
+     logic [PCK_SIZw-1 : 0] size  ;
+     logic [NEw-1 : 0] src   ;
      logic [31:0]      id    ;
      logic             valid ;
  } req_t;  

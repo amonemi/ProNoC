@@ -2,6 +2,7 @@
 package ProNOC;
 
 use Getopt::Std;
+use lib perl_lib;
 
 
 # perl verify.pl [model-name] p min max step
@@ -45,23 +46,23 @@ foreach (@ARGV)
 }
 
 
-if (defined $options{h} ) { 
+if (defined $options{h} ) {
 print " Usage: perl verify.pl [options]
-      -h show this help 
+      -h show this help
       -p <int number>  : Enter the number of parallel simulations or
                          compilations. The default value is 4.
       -u <int number>  : Enter the maximum injection ratio in %. Default is 80
       -l <int number>  : Enter the minimum injection ratio in %. Default is 5
-      -s <int number>  : Enter the injection step increase ratio in %. 
+      -s <int number>  : Enter the injection step increase ratio in %.
                          Default value is 25.
       -d <dir name>    : The dir name where the simulation models configuration
-      					 files are located in. The default dir is \"models\"
-      -m <simulation model name1,simulation model name2,...> : Enter the 
+                         files are located in. The default dir is \"models\"
+      -m <simulation model name1,simulation model name2,...> : Enter the
                          simulation model name in simulation dir. If the simulation model name
-                         is not provided, it runs the simulation for all 
+                         is not provided, it runs the simulation for all
                          existing models.
 ";
-exit; 
+exit;
 }
 
 my $paralel_run= 4;
@@ -80,7 +81,7 @@ $STEP = $options{s} if defined $options{s};
 $model_dir = $options{d} if defined $options{d};
 
 if (defined $options{m}){
-	@models = split(",",$options{m});
+    @models = split(",",$options{m});
 }
 
 
@@ -91,7 +92,7 @@ if (defined $options{m}){
 
 
 __PACKAGE__->mk_accessors(qw{
-	models	
+    models
 });
 
 my $app = __PACKAGE__->new();
@@ -108,11 +109,14 @@ my @inputs =($paralel_run,$MIN,$MAX,$STEP,$model_dir);
 print "Maximum number of parallel simulation is $paralel_run.\n The injection ratio is set as MIN=$MIN,MAX=$MAX,STEP=$STEP.\n";
 print "\t The simulation models are taken from $model_dir\n";
 if (defined $options{m}){
-	foreach my $p (@models ){ print "\t\t$p\n";}
+    foreach my $p (@models ){
+        print "\t\t$p\n";
+    }
 }
 
-my @log_report_match =("Error","Warning" ); 
+check_models_are_exsited(\@models,\@inputs);
 
+my @log_report_match =("Error","Warning" );
 
 
 save_file ("$dirname/report","Verification Results:\n");

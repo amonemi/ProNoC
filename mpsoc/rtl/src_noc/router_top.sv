@@ -10,24 +10,23 @@
  * 
  *  add optional bypass links to two stage router.
  */
-module router_top 
-		import pronoc_pkg::*;
-        
-	# (
-		parameter P = 5     // router port num         
-		)(
-			current_r_id,
-			current_r_addr,
+module router_top #(
+	parameter NOC_ID=0,
+	parameter P=5
+)(
+	current_r_id,
+	current_r_addr,
 					
-			chan_in,
-			chan_out,
+	chan_in,
+	chan_out,
         
-			router_event,
-			
-			clk,
-			reset			
-			
-		);
+	router_event,
+					
+	clk,
+	reset						
+);
+
+	`NOC_CONF    
 	
 	
 	localparam DISABLED =P;
@@ -52,19 +51,19 @@ module router_top
 	//synopsys  translate_off
 	/* verilator lint_off WIDTH */
 	initial begin
-		if((SSA_EN=="YES")  && (SMART_EN==1'b1) )begin
+		if((SSA_EN=="YES")  &&(SMART_EN==1'b1))begin
 			$display("ERROR: Only one of the SMART or SAA can be enabled at the same time");
 			$finish;        
 		end
-		if((SMART_EN==1'b1) && COMBINATION_TYPE!="COMB_NONSPEC"  )begin
+		if((SMART_EN==1'b1) && COMBINATION_TYPE!="COMB_NONSPEC")begin
 			$display("ERROR: SMART only works with non-speculative VSA");
 			$finish;        
 		end	
-		if((MIN_PCK_SIZE > 1) && (PCK_TYPE == "SINGLE_FLIT")) begin 
+		if((MIN_PCK_SIZE > 1) &&(PCK_TYPE == "SINGLE_FLIT")) begin 
 			$display("ERROR: The minimum packet size must be set as one for single-flit packet type NoC");
 			$finish;	
 		end
-		if(((SSA_EN=="YES")  || (SMART_EN==1'b1) ) && CAST_TYPE!="UNICAST") begin
+		if(((SSA_EN=="YES")  ||(SMART_EN==1'b1)) && CAST_TYPE!="UNICAST") begin
 			$display("ERROR: SMART or SAA do not support muticast/braodcast packets");
 			$finish;        
 		end
@@ -79,9 +78,9 @@ module router_top
 	logic report_active_ivcs = 0;
 	
 	generate 
-	for (i=0; i<P; i=i+1) begin :P1_
-		for (j=0; j<V; j=j+1) begin :V_		
-			always @ (posedge report_active_ivcs) begin 
+	for(i=0; i<P; i=i+1) begin :P1_
+		for(j=0; j<V; j=j+1) begin :V_		
+			always @(posedge report_active_ivcs) begin 
 				if(ivc_info[i][j].ivc_req) $display("%t : The IVC in router[%h] port[%d] VC [%d] is not empty",$time,current_r_addr,i,j);
 			end
 		end		
@@ -94,20 +93,20 @@ module router_top
 	
 	
 	generate 
-	for (i=0; i<P; i=i+1) begin :P2_
+	for(i=0; i<P; i=i+1) begin :P2_
 		assign router_event[i].flit_wr_i = chan_in[i].flit_chanel.flit_wr;
 		assign router_event[i].bypassed_num = chan_in[i].smart_chanel.bypassed_num;
 		assign router_event[i].pck_wr_i  = chan_in[i].flit_chanel.flit_wr & chan_in[i].flit_chanel.flit.hdr_flag;
 		assign router_event[i].flit_wr_o = chan_out[i].flit_chanel.flit_wr;
 		assign router_event[i].pck_wr_o  = chan_out[i].flit_chanel.flit_wr & chan_out[i].flit_chanel.flit.hdr_flag;
 		assign router_event[i].flit_in_bypassed = chan_out[i].smart_chanel.flit_in_bypassed;
-		
+`ifdef ACTIVE_LOW_RESET_MODE 
+        assign router_event[i].active_high_reset = 1'b0;
+ `else 
+        assign router_event[i].active_high_reset = 1'b1;
+`endif  		
 	end
 	endgenerate
-	
-	
-	
-	
 	
 	
 	flit_chanel_t r2_chan_in  [P-1 : 0];
@@ -127,7 +126,7 @@ module router_top
 	ctrl_chanel_t ctrl_out [P-1 : 0];
 	
 	generate 
-		for (i=0; i<P; i=i+1) begin :Pt_		
+		for(i=0; i<P; i=i+1) begin :Pt_		
 			assign  ctrl_in [i] = chan_in[i].ctrl_chanel;
 			assign  chan_out[i].ctrl_chanel= ctrl_out [i];	
 			
@@ -141,30 +140,30 @@ module router_top
 	hdr_flit_t hdr_flit_o [P-1 : 0]; // the sent packet header flit info 
 		
 	generate 
-		for (i=0; i<P; i=i+1) begin :Port_		
-		
+		for(i=0; i<P; i=i+1) begin :Port_				
 					
+			header_flit_info #(
+				.NOC_ID(NOC_ID)
+			) in_extract(
+				.flit(chan_in[i].flit_chanel.flit),
+				.hdr_flit( hdr_flit_i[i]),		
+				.data_o()
+			);
 		
-			header_flit_info in_extract(
-					.flit(chan_in[i].flit_chanel.flit),
-					.hdr_flit( hdr_flit_i[i]),		
-					.data_o()
-				);
-		
-			header_flit_info out_extract(
-					.flit(chan_out[i].flit_chanel.flit),
-					.hdr_flit( hdr_flit_o[i]),
-					.data_o()
-				);
+			header_flit_info #(
+				.NOC_ID(NOC_ID)
+			) out_extract(
+				.flit(chan_out[i].flit_chanel.flit),
+				.hdr_flit( hdr_flit_o[i]),
+				.data_o()
+			);
 			
 			if(DEBUG_EN) begin :dbg
 				check_flit_chanel_type_is_in_order #(
 					.V(V),
 					.PCK_TYPE(PCK_TYPE),
 					.MIN_PCK_SIZE(MIN_PCK_SIZE)
-				)
-				IVC_flit_type_check
-				(
+				) IVC_flit_type_check(
 					.clk(clk),
 					.reset(reset),
 					.hdr_flg_in(chan_in[i].flit_chanel.flit.hdr_flag),
@@ -174,29 +173,26 @@ module router_top
 				);
 				
 				check_pck_size #(
-						.V(V),
-						.MIN_PCK_SIZE(MIN_PCK_SIZE),
-						.Fw(Fw),
-						.DAw(DAw),
-						.CAST_TYPE(CAST_TYPE),
-						.NE(NE),
-						.B(B),
-						.LB(LB)
-					)
-					check_pck_siz
-					(
-						.clk(clk),
-						.reset(reset),
-						.hdr_flg_in(chan_in[i].flit_chanel.flit.hdr_flag),
-						.tail_flg_in(chan_in[i].flit_chanel.flit.tail_flag),
-						.flit_in_wr(chan_in[i].flit_chanel.flit_wr),
-						.vc_num_in(chan_in[i].flit_chanel.flit.vc),
-						.dest_e_addr_in(chan_in[i].flit_chanel.flit.payload[E_DST_MSB : E_DST_LSB])
-					);
-				
+					.NOC_ID(NOC_ID),
+					.V(V),
+					.MIN_PCK_SIZE(MIN_PCK_SIZE),
+					.Fw(Fw),
+					.DAw(DAw),
+					.CAST_TYPE(CAST_TYPE),
+					.NE(NE),
+					.B(B),
+					.LB(LB)
+				) check_pck_siz(
+					.clk(clk),
+					.reset(reset),
+					.hdr_flg_in(chan_in[i].flit_chanel.flit.hdr_flag),
+					.tail_flg_in(chan_in[i].flit_chanel.flit.tail_flag),
+					.flit_in_wr(chan_in[i].flit_chanel.flit_wr),
+					.vc_num_in(chan_in[i].flit_chanel.flit.vc),
+					.dest_e_addr_in(chan_in[i].flit_chanel.flit.payload[E_DST_MSB : E_DST_LSB])
+				);				
 		
-			end
-		
+			end		
 		
 		end
 	endgenerate
@@ -210,21 +206,22 @@ module router_top
 	flit_chanel_t ss_flit_chanel [P-1 : 0]; //flit  bypass link goes to straight port
 
 	router_two_stage  #(//r2
-			.P (P)
-		)router_ref (
-			.ivc_info (ivc_info),
-			.ovc_info (ovc_info),
-			.iport_info (iport_info),
-			.oport_info (oport_info),
-			.smart_ctrl_in (smart_ctrl),
+			.NOC_ID(NOC_ID),
+			.P(P)
+		)router_ref(
+			.ivc_info(ivc_info),
+			.ovc_info(ovc_info),
+			.iport_info(iport_info),
+			.oport_info(oport_info),
+			.smart_ctrl_in(smart_ctrl),
 			.current_r_addr(current_r_addr),
 			.current_r_id(current_r_id),
-			.chan_in  (r2_chan_in), 
-			.chan_out (r2_chan_out), 
-			.ctrl_in  (ctrl_in),
-			.ctrl_out (ctrl_out),
-			.clk (clk), 
-			.reset (reset)			
+			.chan_in(r2_chan_in), 
+			.chan_out(r2_chan_out), 
+			.ctrl_in(ctrl_in),
+			.ctrl_out(ctrl_out),
+			.clk(clk), 
+			.reset(reset)			
 		);                
 
 	generate 
@@ -232,39 +229,39 @@ module router_top
 		if(SMART_EN) begin :smart
 		
 		
-			smart_forward_ivc_info			
-				#(
-					.P(P)
-				)forward_ivc(			
-					.ivc_info(ivc_info),
-					.iport_info(iport_info),
-					.oport_info(oport_info),
-					.smart_chanel(smart_chanel_new),
-					.ovc_locally_requested(ovc_locally_requested),
-					.reset(reset),
-					.clk(clk)
-				);
+			smart_forward_ivc_info	#(
+				.NOC_ID(NOC_ID),
+				.P(P)
+			) forward_ivc(			
+				.ivc_info(ivc_info),
+				.iport_info(iport_info),
+				.oport_info(oport_info),
+				.smart_chanel(smart_chanel_new),
+				.ovc_locally_requested(ovc_locally_requested),
+				.reset(reset),
+				.clk(clk)
+			);
 		
-			smart_bypass_chanels
-				#(
-					.P(P)
-				)smart_bypass(			
-					.ivc_info(ivc_info),
-					.iport_info(iport_info),
-					.oport_info(oport_info),
-					.smart_chanel_new(smart_chanel_new),
-					.smart_chanel_in(smart_chanel_in),
-					.smart_chanel_out(smart_chanel_out),
-					.smart_req( ),
-					.reset(reset),
-					.clk(clk)			
-				);	
+			smart_bypass_chanels #(
+				.NOC_ID(NOC_ID),
+				.P(P)
+			) smart_bypass(			
+				.ivc_info(ivc_info),
+				.iport_info(iport_info),
+				.oport_info(oport_info),
+				.smart_chanel_new(smart_chanel_new),
+				.smart_chanel_in(smart_chanel_in),
+				.smart_chanel_out(smart_chanel_out),
+				.smart_req(),
+				.reset(reset),
+				.clk(clk)			
+			);	
 		
 			wire  [RAw-1:  0]  neighbors_r_addr [P-1: 0];	
 			wire  [V-1  :  0]  credit_out [P-1 : 0];
 			wire  [V-1  :  0]  ivc_smart_en [P-1 : 0];
-			for (i=0;i<P;i=i+1)begin : Port_
-				localparam SS_PORT = strieght_port (P,i);
+			for(i=0;i<P;i=i+1)begin : Port_
+				localparam SS_PORT = strieght_port(P,i);
 				if(SS_PORT == DISABLED) begin: smart_dis 
 					assign r2_chan_in[i]   =  chan_in[i].flit_chanel;
 					assign chan_out[i].flit_chanel     =  r2_chan_out[i];	
@@ -274,38 +271,39 @@ module router_top
 					assign neighbors_r_addr [i] = chan_in[i].ctrl_chanel.neighbors_r_addr;
 					//smart allocator
 					smart_allocator_per_iport #(
-							.P                         (P                        ), 
-							.SW_LOC                    (i      		             ), 
-							.SS_PORT_LOC               (SS_PORT     	         )
-						) smart_allocator(
-							.clk                       (clk                      ), 
-							.reset                     (reset                    ), 
-							.current_r_addr_i          (current_r_addr   ), 
-							.neighbors_r_addr_i        (neighbors_r_addr         ), 
-							.smart_chanel_i            (chan_in[i].smart_chanel    ), 
-							.flit_chanel_i             (chan_in[i].flit_chanel   ), 
-							.ivc_info                  (ivc_info[i]              ), 
-							.ss_ovc_info               (ovc_info[SS_PORT]        ),
-							.ovc_locally_requested     (ovc_locally_requested[SS_PORT] ),
-							.ss_smart_chanel_new		   (smart_chanel_new[SS_PORT]),
-							.ss_port_link_reg_flit_wr  (r2_chan_out[SS_PORT].flit_wr), 
+						.NOC_ID(NOC_ID),
+						.P(P), 
+						.SW_LOC(i), 
+						.SS_PORT_LOC(SS_PORT)
+					) smart_allocator (
+						.clk(clk), 
+						.reset(reset), 
+						.current_r_addr_i(current_r_addr), 
+						.neighbors_r_addr_i(neighbors_r_addr), 
+						.smart_chanel_i(chan_in[i].smart_chanel), 
+						.flit_chanel_i(chan_in[i].flit_chanel), 
+						.ivc_info (ivc_info[i]), 
+						.ss_ovc_info(ovc_info[SS_PORT]),
+						.ovc_locally_requested(ovc_locally_requested[SS_PORT]),
+						.ss_smart_chanel_new (smart_chanel_new[SS_PORT]),
+						.ss_port_link_reg_flit_wr(r2_chan_out[SS_PORT].flit_wr), 
 							
-							.smart_ivc_single_flit_pck_o   (smart_ctrl[i].ivc_single_flit_pck),
-							.smart_destport_o				 (smart_ctrl[i].destport     ),	
-							.smart_lk_destport_o			 (smart_ctrl[i].lk_destport  ),	
-							.smart_hdr_flit_req_o          (smart_ctrl[i].hdr_flit_req ),
-							.smart_ivc_smart_en_o			 (ivc_smart_en[i]   ),              		
-							.smart_credit_o				 (smart_ctrl[i].credit_out   ),             	
-							.smart_buff_space_decreased_o	 (smart_ctrl[SS_PORT].buff_space_decreased), 
-							.smart_ivc_num_getting_ovc_grant_o(smart_ctrl[i].ivc_num_getting_ovc_grant),
-							.smart_ivc_reset_o             (smart_ctrl[i].ivc_reset),
-							.smart_ivc_granted_ovc_num_o   (smart_ctrl[i].ivc_granted_ovc_num),
-							.smart_ovc_single_flit_pck_o   (smart_ctrl[SS_PORT].ovc_single_flit_pck),
-							.smart_ss_ovc_is_allocated_o	 (smart_ctrl[SS_PORT].ovc_is_allocated),     
-							.smart_ss_ovc_is_released_o	 (smart_ctrl[SS_PORT].ovc_is_released), 
-							.smart_mask_available_ss_ovc_o (smart_ctrl[SS_PORT].mask_available_ovc)	
+						.smart_ivc_single_flit_pck_o(smart_ctrl[i].ivc_single_flit_pck),
+						.smart_destport_o(smart_ctrl[i].destport),	
+						.smart_lk_destport_o(smart_ctrl[i].lk_destport),	
+						.smart_hdr_flit_req_o(smart_ctrl[i].hdr_flit_req),
+						.smart_ivc_smart_en_o(ivc_smart_en[i]),              		
+						.smart_credit_o(smart_ctrl[i].credit_out),             	
+						.smart_buff_space_decreased_o(smart_ctrl[SS_PORT].buff_space_decreased), 
+						.smart_ivc_num_getting_ovc_grant_o(smart_ctrl[i].ivc_num_getting_ovc_grant),
+						.smart_ivc_reset_o(smart_ctrl[i].ivc_reset),
+						.smart_ivc_granted_ovc_num_o(smart_ctrl[i].ivc_granted_ovc_num),
+						.smart_ovc_single_flit_pck_o(smart_ctrl[SS_PORT].ovc_single_flit_pck),
+						.smart_ss_ovc_is_allocated_o(smart_ctrl[SS_PORT].ovc_is_allocated),     
+						.smart_ss_ovc_is_released_o	(smart_ctrl[SS_PORT].ovc_is_released), 
+						.smart_mask_available_ss_ovc_o(smart_ctrl[SS_PORT].mask_available_ovc)	
 					
-						);
+					);
 				    
 					assign smart_ctrl[i].ivc_smart_en = ivc_smart_en[i];
 					assign smart_ctrl[i].smart_en = |ivc_smart_en[i];
@@ -314,13 +312,15 @@ module router_top
 				
 				
 					// synthesis translate_off
-					//assign chan_out[i].smart_chanel = (smart_chanel[i].requests[0]) ? smart_chanel_new[i] : take ss shifted smart;	
-					smart_chanel_check check (
-							.flit_chanel(chan_out[i].flit_chanel),
-							.smart_chanel(chan_out[i].smart_chanel),
-							.reset(reset),
-							.clk(clk)		
-						);
+					//assign chan_out[i].smart_chanel =(smart_chanel[i].requests[0]) ? smart_chanel_new[i] : take ss shifted smart;	
+					smart_chanel_check #(
+						.NOC_ID(NOC_ID)
+					) check(
+						.flit_chanel(chan_out[i].flit_chanel),
+						.smart_chanel(chan_out[i].smart_chanel),
+						.reset(reset),
+						.clk(clk)		
+					);
 					// synthesis translate_on
 					
 					assign smart_chanel_in[i] =   chan_in[i].smart_chanel;
@@ -336,7 +336,7 @@ module router_top
 						//mask only flit_wr if smart_en is asserted 
 						r2_chan_in[i]   =  chan_in[i].flit_chanel;
 						//can replace destport here and remove lk rout from internal router 
-						if (smart_ctrl[i].smart_en) r2_chan_in[i].flit_wr = 1'b0;
+						if(smart_ctrl[i].smart_en) r2_chan_in[i].flit_wr = 1'b0;
 						
 					
 						//send flit_in to straight out port. Replace lk destport in header flit
@@ -356,14 +356,14 @@ module router_top
 					end
 				
 					smart_credit_manage #(
-							.V             (V             ), 
-							.B             (B            )
-						) smart_credit_manage (
-							.credit_in      (r2_chan_out[i].credit     ), 
-							.smart_credit_in  (smart_ctrl[i].credit_out ), 
-							.credit_out     ( credit_out[i]   ), 
-							.reset          (reset         ), 
-							.clk            (clk           ));
+							.V(V), 
+							.B(B)
+						) smart_credit_manage(
+							.credit_in(r2_chan_out[i].credit), 
+							.smart_credit_in(smart_ctrl[i].credit_out), 
+							.credit_out( credit_out[i]), 
+							.reset(reset), 
+							.clk(clk));
 				
 				
 				
@@ -373,7 +373,7 @@ module router_top
 		
 		
 		end else begin :no_smart
-			for (i=0;i<P;i=i+1)begin : Port_
+			for(i=0;i<P;i=i+1)begin : Port_
 				assign r2_chan_in[i]   =  chan_in[i].flit_chanel;
 				assign chan_out[i].flit_chanel     =  r2_chan_out[i];	
 				assign smart_ctrl[i]={SMART_CTRL_w{1'b0}};
@@ -387,16 +387,16 @@ module router_top
 //	logic  router_is_ideal /*verilator public_flat_rd*/ ;
 //	logic  not_ideal_next,not_ideal;
 //	integer ii,jj;
-//	always @ (*) begin 
+//	always @(*) begin 
 //		router_is_ideal = 1'b1;
 //		not_ideal_next  = 1'b0;		
-//		for (ii=0; ii<P; ii=ii+1) begin
+//		for(ii=0; ii<P; ii=ii+1) begin
 //			nb_router_active[ii]= 1'b0;
-//			if (chan_out[ii].flit_chanel.flit_wr) nb_router_active[ii]=1'b1;
-//			if (chan_out[ii].flit_chanel.credit > {V{1'b0}} ) nb_router_active[ii]=1'b1;
-//			if (chan_out[ii].smart_chanel.requests > {SMART_NUM{1'b0}} ) nb_router_active[ii]=1'b1;
+//			if(chan_out[ii].flit_chanel.flit_wr) nb_router_active[ii]=1'b1;
+//			if(chan_out[ii].flit_chanel.credit > {V{1'b0}}) nb_router_active[ii]=1'b1;
+//			if(chan_out[ii].smart_chanel.requests > {SMART_NUM{1'b0}}) nb_router_active[ii]=1'b1;
 //			
-//			for (jj=0; jj<V; jj=jj+1) begin 		
+//			for(jj=0; jj<V; jj=jj+1) begin 		
 //				//no active request is in any input queues
 //				if(ivc_info[ii][jj].ivc_req)begin 
 //					router_is_ideal=1'b0;
@@ -404,11 +404,11 @@ module router_top
 //				end
 //			end
 //			//no output flit wr 
-//			if (r2_chan_out[ii].flit_wr)  router_is_ideal=1'b0;
+//			if(r2_chan_out[ii].flit_wr)  router_is_ideal=1'b0;
 //		end
-//		if (not_ideal) router_is_ideal =1'b0; // delay one clock cycle if the input req exist in last clock cycle bot not on the current one
+//		if(not_ideal) router_is_ideal =1'b0; // delay one clock cycle if the input req exist in last clock cycle bot not on the current one
 //	end
-//	pronoc_register #(	.W(1)) no_ideal_register (.in(not_ideal_next), .reset (reset),  .clk(clk), .out (not_ideal));
+//	pronoc_register #(	.W(1)) no_ideal_register(.in(not_ideal_next), .reset(reset),  .clk(clk), .out(not_ideal));
 //`endif
 	
 	
@@ -418,25 +418,24 @@ endmodule
 
 
 module router_top_v //to be used as top module in veralator
-		import pronoc_pkg::*;
+#(
+	parameter NOC_ID=0,
+	parameter P=5
+)(
+	current_r_addr,
+	current_r_id,
         
-	# (
-		parameter P = 5     // router port num         
-		)(
-			current_r_addr,
-			current_r_id,
+	chan_in,
+	chan_out,
         
-			chan_in,
-			chan_out,
-        
-			router_event,
+	router_event,
 			
-			clk,
-			reset
-
-		);
+	clk,
+	reset
+);
   
-	
+	 
+	`NOC_CONF    	
 
 	input  [RAw-1 : 0] current_r_addr;
 	input [31:0] current_r_id;
@@ -448,19 +447,18 @@ module router_top_v //to be used as top module in veralator
 	output router_event_t router_event [P-1 : 0];
 	
 	
-	router_top # (
-			.P(P)           
-		)
-		router
-		(
-			.current_r_id(current_r_id),
-			.current_r_addr(current_r_addr),
-			.chan_in (chan_in),
-			.chan_out(chan_out), 
-			.router_event(router_event),
-			.clk(clk),
-			.reset(reset)
-		);
+	router_top #(
+		.NOC_ID(NOC_ID),	
+		.P(P)           
+	) router (
+		.current_r_id(current_r_id),
+		.current_r_addr(current_r_addr),
+		.chan_in(chan_in),
+		.chan_out(chan_out), 
+		.router_event(router_event),
+		.clk(clk),
+		.reset(reset)
+	);
 	
 		
 endmodule

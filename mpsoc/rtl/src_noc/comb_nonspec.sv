@@ -29,12 +29,10 @@
 ***********************************************************************/    
 
     
-module comb_nonspec_allocator 
-   import pronoc_pkg::*;
-#(
+module comb_nonspec_allocator # (
+    parameter NOC_ID = 0,
     parameter P = 5 //port number
-)
-(
+)(
     //VC allocator
     //input 
     dest_port_all,         // from input port
@@ -65,6 +63,8 @@ module comb_nonspec_allocator
     reset
 
 );
+
+	`NOC_CONF
        
     localparam
         P_1 = (SELF_LOOP_EN == "NO")? P-1 : P,
@@ -92,28 +92,25 @@ module comb_nonspec_allocator
     output [P-1 : 0] any_ivc_sw_request_granted_all;
     output [P-1 : 0] any_ovc_granted_in_outport_all;
     output [PV-1 : 0] nonspec_first_arbiter_granted_ivc_all;
-  //  input  [PVP_1-1 : 0] lk_destination_all;
+
     input  clk,reset;
     input  [PV-1 : 0] vc_weight_is_consumed_all;
     input  [P-1 : 0] iport_weight_is_consumed_all;
-    output   [P-1 : 0] granted_dst_is_from_a_single_flit_pck;
+    output [P-1 : 0] granted_dst_is_from_a_single_flit_pck;
         
 
 
     //internal wires switch allocator
-    wire   [PV-1 : 0] first_arbiter_granted_ivc_all;
-    wire   [PV-1 : 0] ivc_request_masked_all;
-    wire   [P-1 : 0] any_cand_ovc_exsit;
-    
+    wire  [PV-1 : 0] first_arbiter_granted_ivc_all;
+    wire  [PV-1 : 0] ivc_request_masked_all;
+    wire  [P-1 : 0] any_cand_ovc_exsit;    
     
     wire  [PV-1 : 0] ivc_request_all;
     wire  [PV-1 : 0] ovc_is_assigned_all;
-    wire  [PV-1 : 0] assigned_ovc_not_full_all;
-    
+    wire  [PV-1 : 0] assigned_ovc_not_full_all;    
     
     assign nonspec_first_arbiter_granted_ivc_all = first_arbiter_granted_ivc_all;
-    
-    
+        
     //nonspeculative switch allocator 
     nonspec_sw_alloc #(
         .V(V),
@@ -138,12 +135,9 @@ module comb_nonspec_allocator
         .vc_weight_is_consumed_all(vc_weight_is_consumed_all),
         .iport_weight_is_consumed_all(iport_weight_is_consumed_all),
         .clk (clk),
-        .reset (reset)
-    
+        .reset (reset)    
     );
-    
-    
-    
+        
     wire   [PVV-1 : 0] masked_ovc_request_all;
     wire   [V-1 : 0] masked_non_assigned_request    [PV-1 : 0] ;    
     wire   [PV-1 : 0] masked_assigned_request;
@@ -160,16 +154,12 @@ module comb_nonspec_allocator
     wire   [V : 0] summ_in [PV-1 : 0];
     wire   [V-1 : 0]  vc_pririty [PV-1 : 0] ;
     
-    assign assigned_ovc_request_all      =   ivc_request_all &   ovc_is_assigned_all;
+    assign assigned_ovc_request_all =   ivc_request_all &   ovc_is_assigned_all;
         
-    genvar i,j;
-    
-    
+    genvar i,j;    
     generate 
     // IVC loop
-    for(i=0;i< PV;i=i+1) begin :total_vc_loop   
-    
-    
+    for(i=0;i< PV;i=i+1) begin :total_vc_loop      
     	
     	// mask unavailable ovc from requests
         assign masked_non_assigned_request    [i]  =    masked_ovc_request_all [(i+1)*V-1 : i*V ];
@@ -177,11 +167,10 @@ module comb_nonspec_allocator
         
         // summing assigned and non-assigned VC requests
         assign summ_in[i] ={masked_non_assigned_request    [i],masked_assigned_request        [i]};
-        assign ivc_request_masked_all[i] = | summ_in[i];
-        
+        assign ivc_request_masked_all[i] = | summ_in[i];        
     
         //first level arbiter to candidate only one OVC 
-      //  if(VC_ARBITER_TYPE=="RRA")begin :round_robin
+        //if(VC_ARBITER_TYPE=="RRA")begin :round_robin
         
             arbiter #(
                 .ARBITER_WIDTH(V)

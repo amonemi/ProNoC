@@ -30,15 +30,12 @@
 **
 *******************************************************************/
 
+`include "pronoc_def.v"
 
-// synthesis translate_off
-`timescale 1ns / 1ps
-// synthesis translate_on
 
 module  ni_master 
-		import pronoc_pkg::*; 
-		
-		#(    
+	#(    
+    parameter NOC_ID=0,
     parameter MAX_TRANSACTION_WIDTH=10, // Maximum transaction size will be 2 power of MAX_DMA_TRANSACTION_WIDTH words 
     parameter MAX_BURST_SIZE =256, // in words
     parameter CRC_EN= "NO",// "YES","NO" if CRC is enable then the CRC32 of all packet data is calculated and sent via tail flit. 
@@ -52,8 +49,7 @@ module  ni_master
     parameter S_Aw          =   7,
     parameter M_Aw          =   32,
     parameter TAGw          =   3,
-    parameter SELw          =   4,
-    parameter PCK_TYPE      =  "MULTI_FLIT"
+    parameter SELw          =   4
 )
 (
     //general 
@@ -102,7 +98,7 @@ module  ni_master
 
 );
 
-   
+   `NOC_CONF
 
    
  
@@ -174,14 +170,7 @@ module  ni_master
     assign flit_in_wr=  chan_in.flit_chanel.flit_wr; 
     assign credit_in =  chan_in.flit_chanel.credit;  
     
-    //old ni.v file
-    
-    
-    
-    
-    
-    
-    
+    //old ni.v file    
     
     localparam 
         CTRL_FLGw=14,
@@ -247,8 +236,7 @@ module  ni_master
         OFFSETw= log2(WORLD_SIZE),        
         HDw = Fpay - (2*EAw) -  DSTPw - WEIGHTw,
         PRE_Dw = (HDATA_PRECAPw>0)? HDATA_PRECAPw : 1,
-        MAX_PCK_SIZE_IN_BYTE = MAX_TRANSACTION_WIDTH + log2(Fpay/8),
-        BEw = (BYTE_EN)? log2(Fpay/8) : 1; 
+        MAX_PCK_SIZE_IN_BYTE = MAX_TRANSACTION_WIDTH + log2(Fpay/8);
       
         
  
@@ -481,12 +469,12 @@ module  ni_master
     
         
     //capture data before saving the actual flit in memory
-    if(HDATA_PRECAPw > 0 ) begin : precap
+    if(HDATA_PRECAPw > 0 ) begin : precap      
       
-      
-       wire [EAw-1 : 0] src_endp_addr;
+        wire [EAw-1 : 0] src_endp_addr;
         
         extract_header_flit_info #(
+            .NOC_ID(NOC_ID),
             .DATA_w(HDATA_PRECAPw)           
         )
         data_extractor
@@ -891,6 +879,7 @@ end
    
   
     conventional_routing #(
+        .NOC_ID(NOC_ID),
         .TOPOLOGY(TOPOLOGY),
         .ROUTE_NAME(ROUTE_NAME),
         .ROUTE_TYPE(ROUTE_TYPE),  
@@ -901,9 +890,7 @@ end
         .EAw(EAw),
         .DSTPw(DSTPw),
         .LOCATED_IN_NI(1)
-    )
-    route_compute
-    (
+    ) route_compute (
         .reset(reset),
         .clk(clk),
         .current_r_addr(current_r_addr),
@@ -914,10 +901,9 @@ end
   
         
     header_flit_generator #(
-         .DATA_w(HDw)       
-    )
-    hdr_flit_gen
-    (
+        .NOC_ID(NOC_ID),
+        .DATA_w(HDw)       
+    ) hdr_flit_gen (
         .flit_out(hdr_flit_out),
         .class_in(pck_class),
         .dest_e_addr_in(dest_e_addr),
@@ -926,8 +912,7 @@ end
         .vc_num_in(send_vc_enable),
         .weight_in(weight),
         .be_in(be_in),
-        .data_in(hdr_data )
-        
+        .data_in(hdr_data)        
     );
     
   wire [V-1    :   0] wr_vc_send =  (fifo_wr) ? send_vc_enable : {V{1'b0}};  
@@ -988,8 +973,13 @@ end
     localparam LBw = log2(LB);
     
     flit_buffer #(
+        .V(V),
         .B(LB),
-        .SSA_EN("NO")
+        .SSA_EN("NO"),
+        .Fw(Fw),
+		.PCK_TYPE(PCK_TYPE),
+		.CAST_TYPE(CAST_TYPE),
+		.DEBUG_EN(DEBUG_EN)
      )
      the_ififo
      (
@@ -1008,6 +998,7 @@ end
     ); 
     
    extract_header_flit_info #(
+        .NOC_ID(NOC_ID),
         .DATA_w (HDw)      
     )
     extractor

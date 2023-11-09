@@ -26,12 +26,10 @@
 *************************************/
 
 
-module combined_vc_sw_alloc 
-	import pronoc_pkg::*;
-#(
+module combined_vc_sw_alloc #(
+    parameter NOC_ID=0,
     parameter P = 5 //port number
-)
-(
+)(
     ivc_info,
     dest_port_all,
     masked_ovc_request_all,
@@ -54,20 +52,18 @@ module combined_vc_sw_alloc
     reset
 
 );
-
+	`NOC_CONF
 
     localparam
         PV = V * P,
         PVV = PV * V,    
         P_1 = (SELF_LOOP_EN == "NO")? P-1 : P,
         PP_1 = P_1 * P,
-        PVP_1 = PV * P_1;                    
-    
+        PVP_1 = PV * P_1;   
         
     input  ivc_info_t ivc_info [P-1 : 0][V-1 : 0];     
     input  [PVP_1-1 : 0] dest_port_all;
-    input  [PVV-1 :  0] masked_ovc_request_all;    
-   
+    input  [PVV-1 :  0] masked_ovc_request_all;  
    
      
     output [PV-1 : 0] ovc_allocated_all;
@@ -82,7 +78,7 @@ module combined_vc_sw_alloc
     output [PP_1-1 : 0] nonspec_granted_dest_port_all;
     output [PP_1-1 : 0] spec_granted_dest_port_all; 
     output [PVV-1 : 0] spec_ovc_num_all;
-  //  input  [PVP_1-1 :  0] lk_destination_all;
+   
     input  [PV-1 :  0] vc_weight_is_consumed_all;
     input  [P-1 :  0] iport_weight_is_consumed_all;
   
@@ -259,7 +255,8 @@ module combined_vc_sw_alloc
         end else begin :cmb_v1
         
             comb_nonspec_allocator #(
-               .P(P)
+                .NOC_ID(NOC_ID),
+                .P(P)
             )
             nonspec_comb
             (

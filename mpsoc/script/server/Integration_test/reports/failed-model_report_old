@@ -1,0 +1,35 @@
+Verification Results:
+****************************line2_2cycle_mcast_f : Compile *******************************:
+	 model is generated successfully.
+	 %Error: Exiting due to 1 warning(s)
+
+	 %Error: Exiting due to 1 warning(s)
+
+	 %Error: Exiting due to 2 warning(s)
+
+	 %Warning-WIDTH: /gpfs/home/bsc18/bsc18759/pronoc_verify/mpsoc/Integration_test/synthetic_sim/../../mpsoc_work/verify/rtl/src_noc/multicast.sv:399:43: Operator ASSIGNW expects 8 bits on the Assign RHS, but Assign RHS's VARREF 'dest_e_addr' generates 4 bits.
+
+	 %Warning-WIDTH: /gpfs/home/bsc18/bsc18759/pronoc_verify/mpsoc/Integration_test/synthetic_sim/../../mpsoc_work/verify/rtl/src_noc/multicast.sv:399:43: Operator ASSIGNW expects 8 bits on the Assign RHS, but Assign RHS's VARREF 'dest_e_addr' generates 4 bits.
+
+	 %Warning-WIDTH: /gpfs/home/bsc18/bsc18759/pronoc_verify/mpsoc/Integration_test/synthetic_sim/../../mpsoc_work/verify/rtl/src_noc/multicast.sv:399:43: Operator ASSIGNW expects 8 bits on the Assign RHS, but Assign RHS's VARREF 'dest_e_addr' generates 4 bits.
+
+	 %Warning-WIDTH: /gpfs/home/bsc18/bsc18759/pronoc_verify/mpsoc/Integration_test/synthetic_sim/../../mpsoc_work/verify/rtl/src_noc/multicast.sv:658:32: Operator ASSIGNW expects 4 bits on the Assign RHS, but Assign RHS's REPLICATE generates 8 bits.
+
+****************************mesh_4x4_openpiton_mcast_f : Compile *******************************:
+	 model is generated successfully.
+****************************line2_2cycle_mcast_f	: random traffic *******************************:
+	 Error in running simulation: ERROR: Multicast/Broadcast is not yet supported for LINE Topology
+ ERROR: Multicast/Broadcast is not yet supported for LINE Topology
+ 
+****************************mesh_4x4_openpiton_mcast_f	: random traffic *******************************:
+	 Error in running simulation: ERROR: SMART or SAA do not support muticast/braodcast packets
+ ERROR: SMART or SAA do not support muticast/braodcast packets
+ 
+****************************line2_2cycle_mcast_f	: transposed 1 traffic *******************************:
+	 Error in running simulation: ERROR: Multicast/Broadcast is not yet supported for LINE Topology
+ ERROR: Multicast/Broadcast is not yet supported for LINE Topology
+ 
+****************************mesh_4x4_openpiton_mcast_f	: transposed 1 traffic *******************************:
+	 Error in running simulation: ERROR: SMART or SAA do not support muticast/braodcast packets
+ ERROR: SMART or SAA do not support muticast/braodcast packets
+

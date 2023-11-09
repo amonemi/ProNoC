@@ -29,13 +29,10 @@
 *   header_flit_generator
 ***************/
 
-module header_flit_generator
-import pronoc_pkg::*; 
-#(
-    parameter DATA_w = 9 // header flit can carry Optional data. The data will be placed after control data.  Fpay >= DATA_w + CTRL_BITS_w  
-   
-)(
-    
+module header_flit_generator #(
+    parameter NOC_ID=0,
+    parameter DATA_w=9 // header flit can carry Optional data. The data will be placed after control data.  Fpay >= DATA_w + CTRL_BITS_w  
+)(    
     flit_out,    
     src_e_addr_in,
     dest_e_addr_in,
@@ -45,36 +42,16 @@ import pronoc_pkg::*;
     vc_num_in,
     be_in,
     data_in    
-);
-
+);	
     
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end       
-      end   
-    endfunction // log2 
-   
-/* verilator lint_off WIDTH */ 
-    localparam
-        Cw   =  (C>1)? log2(C): 1,
-        HDR_FLAG  =   2'b10,
-        BEw = (BYTE_EN)? log2(Fpay/8) : 1;
-/* verilator lint_on WIDTH */      
-
-
+	`NOC_CONF   
  
-
+    localparam    HDR_FLAG  =   2'b10;        
 
     localparam 
         Dw = (DATA_w==0)? 1 : DATA_w,      
         DATA_LSB= MSB_BE+1,               DATA_MSB= (DATA_LSB + DATA_w)<FPAYw ? DATA_LSB + Dw-1 : FPAYw-1;
-    
-    
-    
-    
+        
     output   [Fw-1  :   0] flit_out; 
     input    [Cw-1  :   0] class_in;    
     input    [DAw-1 :   0] dest_e_addr_in;
@@ -129,18 +106,15 @@ import pronoc_pkg::*;
         end
     end    
     //synopsys  translate_on
-    //synthesis translate_on 
-    
+    //synthesis translate_on     
 
 endmodule
 
 
-
-module extract_header_flit_info
-		import pronoc_pkg::*; 		
-#(
+module extract_header_flit_info # (
+    parameter NOC_ID=0,
     parameter DATA_w = 0
-)(
+) (
     //inputs
     flit_in,
     flit_in_wr,
@@ -155,36 +129,16 @@ module extract_header_flit_info
     hdr_flg_o,   
     vc_num_o,  
     hdr_flit_wr_o,
-    be_o
+    be_o    
+); 	
     
-);
-
- 
-    
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end       
-      end   
-    endfunction // log2 
-   
+ 	`NOC_CONF
+       
     localparam       
-        Cw = (C>1)? log2(C): 1,
         W = WEIGHTw,
-        BEw = (BYTE_EN)? log2(Fpay/8) : 1;
-     
-    localparam 
-        Dw = (DATA_w==0)? 1 : DATA_w;
-     
-     localparam 
-      
-        DATA_LSB= MSB_BE+1,               DATA_MSB= (DATA_LSB + DATA_w)<FPAYw ? DATA_LSB + Dw-1 : FPAYw-1;
-        
-    
-     
-    localparam OFFSETw = DATA_MSB - DATA_LSB +1; 
+        Dw = (DATA_w==0)? 1 : DATA_w,
+        DATA_LSB= MSB_BE+1,               DATA_MSB= (DATA_LSB + DATA_w)<FPAYw ? DATA_LSB + Dw-1 : FPAYw-1,
+        OFFSETw = DATA_MSB - DATA_LSB +1; 
      
     
     input [Fw-1 : 0] flit_in;
@@ -267,11 +221,11 @@ endmodule
 *  update the header flit look ahead routing and output VC
 **********************************/
 
-module header_flit_update_lk_route_ovc
-		import pronoc_pkg::*;
-#(   
-    parameter P = 5   
-)(
+module header_flit_update_lk_route_ovc #(
+    parameter NOC_ID=0,
+    parameter P = 5
+)
+(
     flit_in ,
     flit_out,
     vc_num_in,
@@ -284,13 +238,11 @@ module header_flit_update_lk_route_ovc
     clk
 );
 
-
+	`NOC_CONF
+	
     localparam  
         VDSTPw = V * DSTPw,
-        VV = V * V;
-                 
-        
-     
+        VV = V * V;        
 
     input [Fw-1 : 0]  flit_in;
     output reg [Fw-1 : 0]  flit_out;
@@ -308,10 +260,7 @@ module header_flit_update_lk_route_ovc
     wire [DSTPw-1 : 0]  lk_dest,dest_coded;
     wire [DSTPw-1 : 0]  lk_mux_out;
 
-    pronoc_register #(.W(V)) reg1 (.in(vc_num_in), .out(vc_num_delayed), .reset(reset), .clk(clk));
-   
- 
-    
+    pronoc_register #(.W(V)) reg1 (.in(vc_num_in), .out(vc_num_delayed), .reset(reset), .clk(clk));   
 
     /* verilator lint_off WIDTH */
     assign hdr_flag = ( PCK_TYPE == "MULTI_FLIT")? flit_in[Fw-1]: 1'b1;
@@ -412,37 +361,21 @@ endmodule
  *  hdr_flit_weight_update
  * ****************/
 
-module hdr_flit_weight_update 
-		import pronoc_pkg::*;
-(
+module hdr_flit_weight_update #(
+    parameter NOC_ID = 0
+) (
     new_weight,
     flit_in,
     flit_out    
 );
 
-    function integer log2;
-      input integer number; begin   
-         log2=(number <=1) ? 1: 0;    
-         while(2**log2<number) begin    
-            log2=log2+1;    
-         end       
-      end   
-    endfunction // log2 
-
-
-     localparam  
-       
-        Cw = (C>1)? log2(C): 1;
-                 
-
+	`NOC_CONF
+    
     input [WEIGHTw-1 : 0] new_weight;
     input [Fw-1 : 0] flit_in;
     output [Fw-1 : 0] flit_out;
-
     
-
-  assign flit_out =  {flit_in[Fw-1 : WEIGHT_LSB+WEIGHTw ] ,new_weight, flit_in[WEIGHT_LSB-1 : 0] };
-
+    assign flit_out =  {flit_in[Fw-1 : WEIGHT_LSB+WEIGHTw ] ,new_weight, flit_in[WEIGHT_LSB-1 : 0] };
 
 endmodule
 

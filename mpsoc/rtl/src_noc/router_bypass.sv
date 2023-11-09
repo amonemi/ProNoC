@@ -86,12 +86,12 @@ endgenerate
 	
 
 	onehot_mux_2D #(
-		.W    (W   ), 
-		.N    (N   )
+		.W    (W), 
+		.N    (N)
 		) onehot_mux_2D (
-		.in   (in_array  ), 
-		.sel  (sel ), 
-		.out  (out ));
+		.in   (in_array), 
+		.sel  (sel), 
+		.out  (out));
 	
     
 endmodule	
@@ -121,30 +121,29 @@ module onehot_mux_1D_reverse #(
 	
 
 	onehot_mux_2D #(
-			.W    (N   ), 
-			.N    (W   )
+			.W    (N), 
+			.N    (W)
 		) onehot_mux_2D (
-			.in   (in_array2  ), 
-			.sel  (sel ), 
-			.out  (out ));
+			.in   (in_array2), 
+			.sel  (sel), 
+			.out  (out));
 	
     
 endmodule	
 
 
 
-
-
-
-module header_flit_info
-	import pronoc_pkg::*;
-#(
-	parameter DATA_w = 0
+module header_flit_info #(
+	parameter NOC_ID = 0,
+	parameter DATA_w = 0	
 )(
 	flit,
 	hdr_flit,		
 	data_o    
-);
+); 	
+ 	
+ 	`NOC_CONF
+ 	
  	localparam 
 	Dw = (DATA_w==0)? 1 : DATA_w;
 	
@@ -179,7 +178,7 @@ module header_flit_info
 			assign hdr_flit.weight = {WEIGHTw{1'bX}};        
 		end 
     
-		if( BYTE_EN ) begin : be_1
+		if( BYTE_EN) begin : be_1
 			assign hdr_flit.be = flit.payload [BE_MSB : BE_LSB];    
 		end else begin : be_0    
 			assign hdr_flit.be = {BEw{1'bX}};
@@ -204,14 +203,16 @@ endmodule
 //synthesis translate_off 
 //synopsys  translate_off
 
-module smart_chanel_check 
-		import pronoc_pkg::*;
-	(
-		flit_chanel,
-		smart_chanel,
-		reset,
-		clk		
-	);
+module smart_chanel_check #(
+	parameter NOC_ID=0
+) (
+	flit_chanel,
+	smart_chanel,
+	reset,
+	clk		
+);
+
+	`NOC_CONF
 
 	input flit_chanel_t  flit_chanel;
 	input smart_chanel_t   smart_chanel; 		
@@ -221,20 +222,22 @@ module smart_chanel_check
 	always @(posedge clk) smart_chanel_delay<=smart_chanel;
 	
 	hdr_flit_t hdr_flit;
-	header_flit_info extract(
-			.flit(flit_chanel.flit),
-			.hdr_flit(hdr_flit),		
-			.data_o()
-		);
+	header_flit_info #(
+		.NOC_ID (NOC_ID)	
+	) extract (
+		.flit(flit_chanel.flit),
+		.hdr_flit(hdr_flit),		
+		.data_o()
+	);
 
 	always @(posedge clk) begin 
 		if(flit_chanel.flit_wr) begin 
 			if(smart_chanel_delay.ovc!=flit_chanel.flit.vc) begin 
-				$display("%t: ERROR: smart ovc %d is not equal with flit ovc %d. %m",$time,smart_chanel_delay.ovc,flit_chanel.flit.vc );
+				$display("%t: ERROR: smart ovc %d is not equal with flit ovc %d. %m",$time,smart_chanel_delay.ovc,flit_chanel.flit.vc);
 				$finish;
 			end
 			if(flit_chanel.flit.hdr_flag==1'b1 &&   hdr_flit.dest_e_addr != smart_chanel_delay.dest_e_addr) begin 
-				$display("%t: ERROR: smart dest_e_addr %d is not equal with flit dest_e_addr %d. %m",$time,smart_chanel_delay.dest_e_addr,hdr_flit.dest_e_addr );
+				$display("%t: ERROR: smart dest_e_addr %d is not equal with flit dest_e_addr %d. %m",$time,smart_chanel_delay.dest_e_addr,hdr_flit.dest_e_addr);
 				$finish;
 			end
 			if(flit_chanel.flit.hdr_flag!=smart_chanel_delay.hdr_flit) begin 
@@ -251,23 +254,19 @@ endmodule
 //synthesis translate_on 
 
 
-
-
-
-module smart_forward_ivc_info
-	import pronoc_pkg::*;
-	#(
+module smart_forward_ivc_info #(
+	parameter NOC_ID=0,
 	parameter P=5
-)(			
-		ivc_info,
-		iport_info,
-		oport_info,
-		smart_chanel,
-		ovc_locally_requested,
-		reset,clk
+) (			
+	ivc_info,
+	iport_info,
+	oport_info,
+	smart_chanel,
+	ovc_locally_requested,
+	reset,clk
 );
 		
-	
+	`NOC_CONF	
 	
 	//ivc info 
 	input reset,clk;
@@ -314,7 +313,7 @@ module smart_forward_ivc_info
 			assign ovc_locally_requested_next[i][j]=|mask_gen[i][j];
 		end//V
 		
-		pronoc_register #(.W(V)) reg1 (.in(ovc_locally_requested_next[i] ), .reset(reset), .clk(clk), .out(ovc_locally_requested[i]));
+		pronoc_register #(.W(V)) reg1 (.in(ovc_locally_requested_next[i]), .reset(reset), .clk(clk), .out(ovc_locally_requested[i]));
 		
 		
 		
@@ -328,11 +327,11 @@ module smart_forward_ivc_info
 		//assign smart_vc_info_o[i] = smart_ivc_info_all_port[i].or; not synthesizable
 		// assign smart_vc_info_o[i] = smart_ivc_info_all_port[i].[0] | smart_ivc_info_all_port[i].[1] | smart_ivc_info_all_port[i].[2]  ... | smart_ivc_info_all_port[i].[p-1];
 		reduction_or #(
-			.W    (SMART_IVC_w   ), 
-			.N    (P   )
+			.W    (SMART_IVC_w), 
+			.N    (P)
 		) _or (
-			.in   (smart_ivc_info_all_port[i]  ), 
-			.out  (smart_vc_info_o[i] )
+			.in   (smart_ivc_info_all_port[i]), 
+			.out  (smart_vc_info_o[i])
 		);
 		/*
 		always_comb begin
@@ -345,10 +344,10 @@ module smart_forward_ivc_info
 		
 		bin_to_one_hot #(
 			.BIN_WIDTH      (Vw), 
-			.ONE_HOT_WIDTH  (V )
+			.ONE_HOT_WIDTH  (V)
 		) conv (
-			.bin_code       (smart_vc_info_o[i].assigned_ovc_bin ), 
-			.one_hot_code   (assigned_ovc[i]  )
+			.bin_code       (smart_vc_info_o[i].assigned_ovc_bin), 
+			.one_hot_code   (assigned_ovc[i])
 		);
 				
 		
@@ -360,21 +359,21 @@ module smart_forward_ivc_info
 		assign smart_chanel_next[i].bypassed_num = {BYPASSw{1'b0}} ;
 		
 		
-		if( ADD_PIPREG_AFTER_CROSSBAR == 1 ) begin :link_reg
+		if( ADD_PIPREG_AFTER_CROSSBAR == 1) begin :link_reg
 			pronoc_register #(
-				.W      ( SMART_CHANEL_w     )
+				.W      ( SMART_CHANEL_w)
 				) register (
-				.in     (smart_chanel_next[i]   ), 
-				.reset  (reset ), 
-				.clk    (clk   ), 
-				.out    (smart_chanel[i]   ));
+				.in     (smart_chanel_next[i]), 
+				.reset  (reset), 
+				.clk    (clk), 
+				.out    (smart_chanel[i]));
 		
 		end else begin :no_link_reg
 				assign smart_chanel[i] = smart_chanel_next[i];		
 		end
 		/*
 		
-			always @ (`pronoc_clk_reset_edge )begin 
+			always @ (`pronoc_clk_reset_edge)begin 
 				if(`pronoc_reset) begin 	
 					smart_chanel[i].dest_e_addr<= {EAw{1'b0}};	
 					smart_chanel[i].ovc<= {V{1'b0}};
@@ -406,11 +405,10 @@ endmodule
  
  
  
-module smart_bypass_chanels
- 	import pronoc_pkg::*;
-#(
-	parameter P=5
-)(			
+module smart_bypass_chanels #(
+	parameter NOC_ID=0,
+	parameter P=5	
+) (			
 	ivc_info,
 	iport_info,
 	oport_info,
@@ -419,9 +417,10 @@ module smart_bypass_chanels
 	smart_chanel_out,
 	smart_req,
 	reset,
-	clk
-	
+	clk	
 );
+		
+	`NOC_CONF	
 
 	input reset,clk;	
 	input smart_chanel_t smart_chanel_new  [P-1 : 0];
@@ -449,7 +448,7 @@ module smart_bypass_chanels
 		/* verilator lint_on WIDTH */
 		
 		
-		if( ADD_PIPREG_AFTER_CROSSBAR == 1 ) begin :link_reg
+		if( ADD_PIPREG_AFTER_CROSSBAR == 1) begin :link_reg
 		always @( posedge clk)begin
 		    outport_is_granted[i] <= oport_info[i].any_ovc_granted;
 		end	
@@ -506,7 +505,7 @@ module check_straight_oport #(
 		
 	generate 
 	/* verilator lint_off WIDTH */ 
-		if(TOPOLOGY == "MESH" || TOPOLOGY == "TORUS" || TOPOLOGY =="FMESH" ) begin :twoD		
+		if(TOPOLOGY == "MESH" || TOPOLOGY == "TORUS" || TOPOLOGY =="FMESH") begin :twoD		
 			/* verilator lint_on WIDTH */ 
 			if (SS_PORT_LOC == 0 || SS_PORT_LOC > 4) begin : local_ports
 				assign goes_straight_o = 1'b0; // There is not a next router in this case at all	
@@ -523,7 +522,7 @@ module check_straight_oport #(
 			end//else
 		end//mesh_tori
 		/* verilator lint_off WIDTH */ 
-		else if(TOPOLOGY ==  "RING" || TOPOLOGY ==  "LINE"  ) begin :oneD		
+		else if(TOPOLOGY ==  "RING" || TOPOLOGY ==  "LINE") begin :oneD		
 			/* verilator lint_on WIDTH */ 
 			if (SS_PORT_LOC == 0 || SS_PORT_LOC > 2) begin : local_ports
 				assign goes_straight_o = 1'b0; // There is not a next router in this case at all	
@@ -551,73 +550,76 @@ endmodule
  
 
 	
-module smart_validity_check_per_ivc  
-	import pronoc_pkg::*;
-#(
+module smart_validity_check_per_ivc  #(
+	parameter NOC_ID=0,
 	parameter IVC_NUM = 0
-)(
-	reset                  ,
-	clk                    ,
+) (
+	reset,
+	clk,
 	//smart channel
-	goes_straight		   ,
-	smart_requests_i         ,
-	smart_ivc_i              ,
-	smart_hdr_flit		   ,		
+	goes_straight ,
+	smart_requests_i,
+	smart_ivc_i,
+	smart_hdr_flit,		
 	//flit		               
-	flit_hdr_flag_i        ,
-	flit_tail_flag_i       ,
-	flit_wr_i              ,
+	flit_hdr_flag_i,
+	flit_tail_flag_i,
+	flit_wr_i,
 	//router ivc status
-	ovc_locally_requested     ,
-	assigned_to_ss_ovc          ,
-	assigned_ovc_not_full       ,
-	ovc_is_assigned             ,
-	ivc_request                 ,
+	ovc_locally_requested,
+	assigned_to_ss_ovc,
+	assigned_ovc_not_full,
+	ovc_is_assigned,
+	ivc_request,
 	//ss port status		                    
-	ss_ovc_avalable_in_ss_port  ,
-	ss_port_link_reg_flit_wr    ,
-	ss_ovc_crossbar_wr          ,
+	ss_ovc_avalable_in_ss_port,
+	ss_port_link_reg_flit_wr,
+	ss_ovc_crossbar_wr,
 	//output                          
-	smart_single_flit_pck_o		,
-	smart_ivc_smart_en_o            ,
-	smart_credit_o             	,
-	smart_buff_space_decreased_o  ,
-	smart_ss_ovc_is_allocated_o   ,
-	smart_ss_ovc_is_released_o    ,
-	smart_mask_available_ss_ovc_o ,
+	smart_single_flit_pck_o,
+	smart_ivc_smart_en_o,
+	smart_credit_o,
+	smart_buff_space_decreased_o,
+	smart_ss_ovc_is_allocated_o,
+	smart_ss_ovc_is_released_o,
+	smart_mask_available_ss_ovc_o, 
 	smart_ivc_num_getting_ovc_grant_o,
 	smart_ivc_reset_o,			
 	smart_ivc_granted_ovc_num_o
 );
 	
-input reset, clk;
-//smart channel
-input goes_straight		   ,
-	smart_requests_i         ,
-	smart_ivc_i              ,
-	smart_hdr_flit		   ,		
+	
+	`NOC_CONF
+
+	
+	input reset, clk;
+	//smart channel
+	input goes_straight,
+	smart_requests_i,
+	smart_ivc_i,
+	smart_hdr_flit,		
 	//flit		               
-	flit_hdr_flag_i        ,
-	flit_tail_flag_i       ,
-	flit_wr_i              ,
+	flit_hdr_flag_i ,
+	flit_tail_flag_i,
+	flit_wr_i,
 	//router ivc status
-	ovc_locally_requested       ,
-	assigned_to_ss_ovc          ,
-	assigned_ovc_not_full       ,
-	ovc_is_assigned             ,
-	ivc_request                 ,
+	ovc_locally_requested,
+	assigned_to_ss_ovc,
+	assigned_ovc_not_full,
+	ovc_is_assigned,
+	ivc_request,
 	//ss port status		                    
-	ss_ovc_avalable_in_ss_port  ,
+	ss_ovc_avalable_in_ss_port,
 	ss_ovc_crossbar_wr,
-	ss_port_link_reg_flit_wr    ;
+	ss_port_link_reg_flit_wr;
 //output                          
 output 
-	smart_single_flit_pck_o			,
-	smart_ivc_smart_en_o         ,
-	smart_credit_o             	,
-	smart_buff_space_decreased_o  ,
-	smart_ss_ovc_is_allocated_o   ,
-	smart_ss_ovc_is_released_o    ,
+	smart_single_flit_pck_o	,
+	smart_ivc_smart_en_o,
+	smart_credit_o,
+	smart_buff_space_decreased_o,
+	smart_ss_ovc_is_allocated_o,
+	smart_ss_ovc_is_released_o,
 	smart_ivc_num_getting_ovc_grant_o,
 	smart_ivc_reset_o,			
 	smart_mask_available_ss_ovc_o;	
@@ -658,7 +660,7 @@ wire non_empty_ivc_condition =(PCK_TYPE == "SINGLE_FLIT")?  1'b0 :ivc_request;
 /* verilator lint_on WIDTH */
 
 	
-if( ADD_PIPREG_AFTER_CROSSBAR == 1 ) begin :link_reg
+if( ADD_PIPREG_AFTER_CROSSBAR == 1) begin :link_reg
 	assign condition2= ~(non_empty_ivc_condition | ss_port_link_reg_flit_wr| ss_ovc_crossbar_wr);
 end else begin : no_link_reg
 	assign condition2= ~(non_empty_ivc_condition | ss_port_link_reg_flit_wr); // ss_port_link_reg_flit_wr are identical with ss_ovc_crossbar_wr when there is no link reg
@@ -695,13 +697,12 @@ endmodule
 	
 	
 	
-module smart_allocator_per_iport 
-	import pronoc_pkg::*;
-#(
+module smart_allocator_per_iport # (
+	parameter NOC_ID=0,
 	parameter P=5,
 	parameter SW_LOC=0,
 	parameter SS_PORT_LOC=1
-	)(
+) (
 	//general
 	clk,
 	reset,
@@ -732,6 +733,9 @@ module smart_allocator_per_iport
 	smart_ivc_single_flit_pck_o,
 	smart_ovc_single_flit_pck_o
 );
+	
+	`NOC_CONF
+
 	//general
  	input clk, reset;
  	input [RAw-1   :0]  current_r_addr_i;
@@ -776,32 +780,33 @@ module smart_allocator_per_iport
 	
 	// does the route computation for the current router
 	conventional_routing #(
-		.TOPOLOGY        (TOPOLOGY       ), 
-		.ROUTE_NAME      (ROUTE_NAME     ), 
-		.ROUTE_TYPE      (ROUTE_TYPE     ), 
-		.T1              (T1             ), 
-		.T2              (T2             ), 
-		.T3              (T3             ), 
-		.RAw             (RAw            ), 
-		.EAw             (EAw            ), 
-		.DSTPw           (DSTPw          ),
-		.LOCATED_IN_NI   (LOCATED_IN_NI  )
+		.NOC_ID          (NOC_ID),
+		.TOPOLOGY        (TOPOLOGY), 
+		.ROUTE_NAME      (ROUTE_NAME), 
+		.ROUTE_TYPE      (ROUTE_TYPE), 
+		.T1              (T1), 
+		.T2              (T2), 
+		.T3              (T3), 
+		.RAw             (RAw), 
+		.EAw             (EAw), 
+		.DSTPw           (DSTPw),
+		.LOCATED_IN_NI   (LOCATED_IN_NI)
 	) routing (
-		.reset           (reset          ), 
-		.clk             (clk            ), 
-		.current_r_addr  (current_r_addr_i ), 
-		.src_e_addr  	 (			     ),// needed only for custom routing
-		.dest_e_addr     (smart_chanel_i.dest_e_addr    ), 
+		.reset           (reset), 
+		.clk             (clk), 
+		.current_r_addr  (current_r_addr_i), 
+		.src_e_addr  	 (			),// needed only for custom routing
+		.dest_e_addr     (smart_chanel_i.dest_e_addr), 
 		.destport        (destport)
 	); 
 	
 	pronoc_register #(.W(DSTPw)) reg1 (.in(destport), .reset(reset), .clk(clk), .out(smart_destport_o));
 	
 	check_straight_oport #(
-		.TOPOLOGY      ( TOPOLOGY     ),
-		.ROUTE_NAME    ( ROUTE_NAME   ),
-		.ROUTE_TYPE    ( ROUTE_TYPE   ),
-		.DSTPw         ( DSTPw        ),
+		.TOPOLOGY      ( TOPOLOGY),
+		.ROUTE_NAME    ( ROUTE_NAME),
+		.ROUTE_TYPE    ( ROUTE_TYPE),
+		.DSTPw         ( DSTPw),
 		.SS_PORT_LOC   ( SS_PORT_LOC)
 	) check_straight (
 		.destport_coded_i (destport),
@@ -810,29 +815,30 @@ module smart_allocator_per_iport
 	
 	//look ahead routing. take straight next router address as input
 	conventional_routing #(
-			.TOPOLOGY        (TOPOLOGY       ), 
-			.ROUTE_NAME      (ROUTE_NAME     ), 
-			.ROUTE_TYPE      (ROUTE_TYPE     ), 
-			.T1              (T1             ), 
-			.T2              (T2             ), 
-			.T3              (T3             ), 
-			.RAw             (RAw            ), 
-			.EAw             (EAw            ), 
-			.DSTPw           (DSTPw          ),
-			.LOCATED_IN_NI   (LOCATED_IN_NI  )
+			.NOC_ID(NOC_ID),
+			.TOPOLOGY        (TOPOLOGY), 
+			.ROUTE_NAME      (ROUTE_NAME), 
+			.ROUTE_TYPE      (ROUTE_TYPE), 
+			.T1              (T1), 
+			.T2              (T2), 
+			.T3              (T3), 
+			.RAw             (RAw), 
+			.EAw             (EAw), 
+			.DSTPw           (DSTPw),
+			.LOCATED_IN_NI   (LOCATED_IN_NI)
 		) lkrouting (
-			.reset           (reset          ), 
-			.clk             (clk            ), 
-			.current_r_addr  (neighbors_r_addr_i[SS_PORT_LOC] ), 
-			.src_e_addr  	 (			     ),// needed only for custom routing
-			.dest_e_addr     (smart_chanel_i.dest_e_addr    ), 
+			.reset           (reset), 
+			.clk             (clk), 
+			.current_r_addr  (neighbors_r_addr_i[SS_PORT_LOC]), 
+			.src_e_addr  	 (			),// needed only for custom routing
+			.dest_e_addr     (smart_chanel_i.dest_e_addr), 
 			.destport        (lkdestport)
 		); 
 	
 	pronoc_register #(.W(DSTPw)) reg2 (.in(lkdestport), .reset(reset), .clk(clk), .out(smart_lk_destport_o));
 	
 	wire [V-1 : 0] ss_ovc_crossbar_wr;//If asserted, a flit will be injected to ovc at next clk cycle 
-	assign ss_ovc_crossbar_wr = (ss_smart_chanel_new.requests[0] ) ? ss_smart_chanel_new.ovc : {V{1'b0}};
+	assign ss_ovc_crossbar_wr = (ss_smart_chanel_new.requests[0]) ? ss_smart_chanel_new.ovc : {V{1'b0}};
 	
 		
 	
@@ -843,18 +849,19 @@ module smart_allocator_per_iport
 	generate
 	for (i=0;i<V; i=i+1) begin : vc
 		smart_validity_check_per_ivc #(
-				.IVC_NUM(i)		
-		)	validity_check (
-			.reset                       (reset                   		), 
-			.clk                         (clk                     		), 
+			.NOC_ID(NOC_ID),
+			.IVC_NUM(i)		
+		) validity_check (
+			.reset                       (reset), 
+			.clk                         (clk), 
 			.goes_straight				 (goes_straight),
 			.smart_requests_i              (smart_chanel_i.requests[0] 		), 
 			.smart_ivc_i                   (smart_chanel_i.ovc  [i]    		),
-			.smart_hdr_flit				 (smart_chanel_i.hdr_flit     ),
+			.smart_hdr_flit				 (smart_chanel_i.hdr_flit),
 						
-			.flit_hdr_flag_i         	(flit_chanel_i.flit.hdr_flag      	),
-			.flit_tail_flag_i        	(flit_chanel_i.flit.tail_flag       ),
-			.flit_wr_i               	(flit_chanel_i.flit_wr         ),
+			.flit_hdr_flag_i         	(flit_chanel_i.flit.hdr_flag),
+			.flit_tail_flag_i        	(flit_chanel_i.flit.tail_flag),
+			.flit_wr_i               	(flit_chanel_i.flit_wr),
 				
 			.ovc_locally_requested      (ovc_locally_requested[i]	), 
 						
@@ -864,16 +871,16 @@ module smart_allocator_per_iport
 			.ivc_request                 (ivc_info[i].ivc_req  	),
 						
 			.ss_ovc_avalable_in_ss_port  (ss_ovc_info[i].avalable), 
-			.ss_port_link_reg_flit_wr    (ss_port_link_reg_flit_wr     ), 
+			.ss_port_link_reg_flit_wr    (ss_port_link_reg_flit_wr), 
 			.ss_ovc_crossbar_wr          (ss_ovc_crossbar_wr[i]),	
 			
-			.smart_single_flit_pck_o       (smart_ivc_single_flit_pck_o[i]  ),
+			.smart_single_flit_pck_o       (smart_ivc_single_flit_pck_o[i]),
 			.smart_ivc_smart_en_o      		 (smart_ivc_smart_en_o[i]	),
-			.smart_credit_o             	 (smart_credit_o[i]   	), 
+			.smart_credit_o             	 (smart_credit_o[i]), 
 			.smart_buff_space_decreased_o  (smart_buff_space_decreased_o[i]), 
-			.smart_ss_ovc_is_allocated_o   (smart_ss_ovc_is_allocated_o[i] ), 
-			.smart_ss_ovc_is_released_o    (smart_ss_ovc_is_released_o[i]  ),
-			.smart_mask_available_ss_ovc_o (smart_mask_available_ss_ovc_o[i] ),
+			.smart_ss_ovc_is_allocated_o   (smart_ss_ovc_is_allocated_o[i]), 
+			.smart_ss_ovc_is_released_o    (smart_ss_ovc_is_released_o[i]),
+			.smart_mask_available_ss_ovc_o (smart_mask_available_ss_ovc_o[i]),
 			.smart_ivc_num_getting_ovc_grant_o(smart_ivc_num_getting_ovc_grant_o[i]),
 			.smart_ivc_reset_o			 (smart_ivc_reset_o[i]),			
 			.smart_ivc_granted_ovc_num_o   (smart_ivc_granted_ovc_num_o[(i+1)*V-1 : i*V])
@@ -940,8 +947,8 @@ module smart_credit_manage_per_vc #(
  	
  	always @(*) begin 
  		counter_next=counter;
- 		if(credit_in & 	smart_credit_in ) counter_next = counter +1'b1;
- 		else if(credit_in |	smart_credit_in ) counter_next=counter;
+ 		if(credit_in & 	smart_credit_in) counter_next = counter +1'b1;
+ 		else if(credit_in |	smart_credit_in) counter_next=counter;
  		else if(counter > 0) counter_next = counter -1'b1;
  	end
 
