@@ -1376,14 +1376,21 @@ sub get_default_screen_size{
 } 
 
 
+my ($Xaxis_max,$Yaxis_max);
 sub get_current_monitor_working_area{
+    return ($Xaxis_max,$Yaxis_max) if(defined $Yaxis_max && defined $Yaxis_max);
     my $screen = get_default_screen();
 	my $hight = $screen->get_height(); 
 	my $active = $screen->get_active_window();
-	my $monitor =	$screen->get_monitor_at_window($active);
-	my $warea = $screen->get_monitor_workarea($monitor);#get_width(); 
-	#print  Data::Dumper->Dump ([$warea],['ttt']);  
-	return ($warea->{'width'},$warea->{'height'});
+    if (defined $active ){
+	    my $monitor =	$screen->get_monitor_at_window($active);
+	    my $warea = $screen->get_monitor_workarea($monitor);#get_width(); 
+	    ($Xaxis_max,$Yaxis_max)=($warea->{'width'},$warea->{'height'});
+	    #print  Data::Dumper->Dump ([$warea],['ttt']);  
+	    return ($Xaxis_max,$Yaxis_max);
+	}	
+	($Xaxis_max, $Yaxis_max)=get_default_screen_size();
+    return ($Xaxis_max,$Yaxis_max);	
 }
 
 
