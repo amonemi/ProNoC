@@ -64,14 +64,14 @@ def remove_cycle_edges_by_mfas(graph_file):
 	degree_dict = get_nodes_degree_dict(g,scc_nodes)
 	sccs = get_big_sccs(g)
 	if len(sccs) == 0:
-		print("After removal of self loop edgs: %s" % nx.is_directed_acyclic_graph(g))
+		print(("After removal of self loop edgs: %s" % nx.is_directed_acyclic_graph(g)))
 		return self_loops
 	edges_to_be_removed = []
 	import timeit
 	t1 = timeit.default_timer()
 	greedy_local_heuristic(sccs,degree_dict,edges_to_be_removed)
 	t2 = timeit.default_timer()
-	print("mfas time usage: %0.4f s" % (t2 - t1))
+	print(("mfas time usage: %0.4f s" % (t2 - t1)))
 	edges_to_be_removed = list(set(edges_to_be_removed))
 	g.remove_edges_from(edges_to_be_removed)
 	edges_to_be_removed += self_loops

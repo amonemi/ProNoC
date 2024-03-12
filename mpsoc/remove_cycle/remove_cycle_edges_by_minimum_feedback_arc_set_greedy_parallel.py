@@ -76,7 +76,7 @@ def remove_cycle_edges_by_mfas(graph_file,nodetype = int):
 		p.join()
 		edges_to_be_removed += list(q.get())
 	t2 = timeit.default_timer()
-	print("mfas time usage: %0.4f s" % (t2 - t1))
+	print(("mfas time usage: %0.4f s" % (t2 - t1)))
 	#greedy_local_heuristic(sccs,degree_dict,edges_to_be_removed)
 	edges_to_be_removed = list(set(edges_to_be_removed))
 	g.remove_edges_from(edges_to_be_removed)

@@ -21,19 +21,19 @@ def compute_trueskill(pairs,players):
 		players[v],players[u] = rate_1vs1(players[v],players[u])
 
 	end = time.time()
-	print("time used in computing true skill (per iteration): %0.4f s" % (end - start))
+	print(("time used in computing true skill (per iteration): %0.4f s" % (end - start)))
 	return players
 
 def get_players_score(players,n_sigma):
 	relative_score = {}
-	for k,v in players.iteritems():
+	for k,v in players.items():
 		relative_score[k] = players[k].mu - n_sigma * players[k].sigma
 	return relative_score
 
 def trueskill_ratings(pairs,iter_times = 15,n_sigma = 3,threshold = 0.85):
 	start = datetime.now()
 	players = {}
-	for i in xrange(iter_times):
+	for i in range(iter_times):
 		#print("========= Trueskill iteration times: %d =========" % (i + 1))
 		players = compute_trueskill(pairs,players)
 		relative_scores = get_players_score(players,n_sigma = n_sigma)
@@ -43,7 +43,7 @@ def trueskill_ratings(pairs,iter_times = 15,n_sigma = 3,threshold = 0.85):
 			return relative_scores
 	end = datetime.now()
 	time_used = end - start
-	print("time used in computing true skill: %0.4f s, iteration time is: %i" % ((time_used.seconds),(i+1)))
+	print(("time used in computing true skill: %0.4f s, iteration time is: %i" % ((time_used.seconds),(i+1))))
 	return relative_scores
 
 def graphbased_trueskill(g,iter_times = 15,n_sigma = 3,threshold = 0.95):
@@ -55,7 +55,7 @@ def graphbased_trueskill(g,iter_times = 15,n_sigma = 3,threshold = 0.95):
 	scc_accu = measure_pairs_agreement(scc_edges,relative_scores)
 	print("----non-scc---")
 	nonscc_accu = measure_pairs_agreement(nonscc_edges,relative_scores)
-	print("scc accu: %0.4f, nonscc accu: %0.4f" % (scc_accu,nonscc_accu))
+	print(("scc accu: %0.4f, nonscc accu: %0.4f" % (scc_accu,nonscc_accu)))
 	return relative_scores
 
 

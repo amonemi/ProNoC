@@ -36,9 +36,12 @@ def remove_cycle_edges_by_ranking_score_iterately(sccs,players,edges_to_be_remov
 		'''
 
 		edges_to_be_removed += target_edges
-		graph.remove_edges_from(target_edges)
+		# Create a new graph by removing edges from the original graph
+		new_graph = graph.copy()
+		new_graph.remove_edges_from(target_edges)
+		
 
-		sub_graphs = filter_big_scc(graph,target_edges)
+		sub_graphs = filter_big_scc(new_graph,target_edges)
 		if sub_graphs:
 			sccs += sub_graphs
 		if not sccs:
@@ -57,7 +60,7 @@ def scores_of_nodes_in_scc(sccs,players):
 def scc_based_to_remove_cycle_edges_iterately(g,nodes_score,is_Forward):
 	big_sccs = get_big_sccs(g)
 	if len(big_sccs) == 0:
-		print("After removal of self loop edgs: %s" % nx.is_directed_acyclic_graph(g))
+		print(("After removal of self loop edgs: %s" % nx.is_directed_acyclic_graph(g)))
 		return []
 	scc_nodes_score_dict = scores_of_nodes_in_scc(big_sccs,nodes_score)
 	edges_to_be_removed = []

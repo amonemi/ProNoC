@@ -2,15 +2,15 @@ import pickle
 def read_from_pickle(pickle_file):
 	try:
 		with open(pickle_file,"rb") as f:
-			print("File loaded from: %s" % pickle_file)
+			print(("File loaded from: %s" % pickle_file))
 			output = pickle.load(f)
 		return output
 	except Exception as e:
-		print("******Exception: %s" % e)
+		print(("******Exception: %s" % e))
 		return {}
 
 def write_dict_to_file(data_dict,output_file):
-	tuple_list = [(k,v) for k,v in data_dict.iteritems()]
+	tuple_list = [(k,v) for k,v in list(data_dict.items())]
 	write_pairs_to_file(tuple_list,output_file)
 
 def write_pairs_to_file(edges_list,edges_list_file):
@@ -30,13 +30,13 @@ def write_set_to_txt(output,output_file):
 
 def write_dict_to_txt(output,output_file):
 	with open(output_file,"w") as f:
-		for k,v in output.iteritems():
+		for k,v in list(output.items()):
 			f.write(str(k) + " " + str(v) + " \n")
 
 
 def write_to_pickle(output_pickle,output_file):
 	with open(output_file,"wb") as f:
-		print("File saved to: %s" % output_file)
+		print(("File saved to: %s" % output_file))
 		pickle.dump(output_pickle,f)
 
 def read_pairs_from_file(edges_list_file,first_type = int, second_type = int):
@@ -79,7 +79,7 @@ def read_dict_from_file(file_name,key_type = int, value_type = int):
 				v=value_type(v)
 				d[k] = v
 			except Exception as e:
-				print e 
+				print(e) 
 	return d
 
 
@@ -113,7 +113,7 @@ def read_dict_list_from_csv(file_name,key_type = int, value_type = int, key_inde
 
 def switch_key_value_dict_list(d):
 	new_d = {}
-	for k,v in d.iteritems():
+	for k,v in list(d.items()):
 		if v in new_d:
 			new_d[v] += [k]
 		else:
@@ -122,7 +122,7 @@ def switch_key_value_dict_list(d):
 
 def switch_key_value_dict_value(d):
 	new_d = {}
-	for k,v in d.iteritems():
+	for k,v in list(d.items()):
 		new_d[v] = k
 	return new_d
 
@@ -139,7 +139,7 @@ def read_dict_pair_from_csv(file_name,key_type = int, value_type = int):
 			d[k].append((v,days))
 		else:
 			d[k] = [(v,days)]
-	for k,v in d.iteritems():
+	for k,v in list(d.items()):
 		v = sorted(v,key = lambda x: x[1])
 		d[k] =v
 	return d 
@@ -155,7 +155,7 @@ def read_dict_pair_from_csv_2(file_name,key_type = int, value_type = int):
 			d[k] = d[k] + [(v,simi)]
 		else:
 			d[k] = [(v,simi)]
-	for k,v in d.iteritems():
+	for k,v in list(d.items()):
 		v = sorted(v,key = lambda x: x[1],reverse = True)
 		d[k] =v
 	return d 

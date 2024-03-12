@@ -12,7 +12,7 @@ def get_edges_voting_scores(set_edges_list):
 		total_edges = total_edges | edges
 	edges_score = {}
 	for e in total_edges:
-		edges_score[e] = len(filter(lambda x: e in x, set_edges_list))
+		edges_score[e] = len([x for x in set_edges_list if e in x])
 	return edges_score
 
 
@@ -51,13 +51,13 @@ def computing_hierarchy(graph_file,players_score_func_name, nodetype = int):
 		#players = compute_social_agony(graph_file,agony_path = "agony/agony ")		
 		if False:
 		#if os.path.isfile(agony_file):
-			print("load pre-computed socialagony from: %s" % agony_file)
+			print(("load pre-computed socialagony from: %s" % agony_file))
 			players = read_dict_from_file(agony_file)
 		else:
 			print("start computing socialagony...")
 			from compute_social_agony import compute_social_agony
 			players = compute_social_agony(graph_file,agony_path = "agony/agony ")
-			print("write socialagony to file: %s" % agony_file)
+			print(("write socialagony to file: %s" % agony_file))
 		return players
 	g = nx.read_edgelist(graph_file,create_using = nx.DiGraph(),nodetype = nodetype)
 	if players_score_func_name == "pagerank":
@@ -85,7 +85,7 @@ def computing_hierarchy(graph_file,players_score_func_name, nodetype = int):
 			from true_skill import graphbased_trueskill
 			players = graphbased_trueskill(g)
 			from file_io import write_dict_to_file
-			print("write trueskill to file: %s" % output_file)
+			print(("write trueskill to file: %s" % output_file))
 			write_dict_to_file(players,output_file)
 		
 		return players

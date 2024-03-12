@@ -9,7 +9,7 @@ sys.setrecursionlimit(5500000)
 def dfs_visit_recursively(g,node,nodes_color,edges_to_be_removed):
 
 	nodes_color[node] = 1
-	nodes_order = list(g.successors_iter(node))
+	nodes_order = list(g.successors(node))
 	nodes_order = np.random.permutation(nodes_order)
 	for child in nodes_order:
 		if nodes_color[child] == 0:
@@ -44,7 +44,7 @@ def dfs_remove_back_edges(graph_file,nodetype = int):
 	#print("number of nodes to start dfs: %d" % num_dfs)
 	#print("number of back edges: %d" % len(edges_to_be_removed))
 	edges_to_be_removed_file = graph_file[:len(graph_file)-6] + "_removed_by_dfs.edges"
-	print("edges to be removed, saved in file: %s" % edges_to_be_removed_file)
+	print(("edges to be removed, saved in file: %s" % edges_to_be_removed_file))
 	from file_io import write_pairs_to_file
 	write_pairs_to_file(edges_to_be_removed,edges_to_be_removed_file)
 	return edges_to_be_removed
@@ -67,5 +67,5 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 	graph_file = args.graph_file
 	
-	print("graph_file %s " % graph_file)	
+	print(("graph_file %s " % graph_file))	
 	dfs_performance(graph_file,args.gt_edges_file)

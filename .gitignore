@@ -1,4 +1,3 @@
-**/my_password.sh
 *.bak
 
 **/transcript
@@ -29,7 +28,8 @@ mpsoc/src_c/synfull/traffic-generator/src/synful.a
 mpsoc/src_c/synfull/traffic-generator/src/tgen
 mpsoc/src_c/synfull/traffic-generator/src/obj/*.o
 
-
+mpsoc/src_c/ihex2bin/bin2ihex
+mpsoc/src_c/ihex2bin/ihex2bin
 mpsoc/src_c/bin2mem/bin2mem
 mpsoc/src_c/bin2mif/bin2mif
 mpsoc/src_c/bin2str/bin2str
@@ -37,7 +37,18 @@ mpsoc/src_c/ihex2mif/ihex2mif
 mpsoc/src_c/jtag/jtag_libusb/list_usb_dev
 mpsoc/src_c/jtag/jtag_quartus_stp/jtag_quartus_stp
 mpsoc/src_c/jtag/jtag_xilinx_xsct/jtag_xilinx_xsct
+mpsoc/src_c/jtag/jtag_libusb/jinfo
+mpsoc/src_c/jtag/jtag_libusb/jtag_libusb
+mpsoc/src_c/ihex2bin/libkk_ihex.a
+
+
 mpsoc/src_c/plot/plot
+
+mpsoc/perl_gui/lib/Paths
+mpsoc/src_c/**/*.o
+mpsoc/remove_cycle/__pycache__
+
+mpsoc_work/
 
 
 
