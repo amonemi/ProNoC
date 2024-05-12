@@ -4,7 +4,7 @@
 
 Prototype-network-on-chip (ProNoC) is an EDA tool that facilitates prototyping of custom heterogeneous NoC-based many-core-SoC (MCSoC). ProNoC is enhanced using a parameterizable virtual channel based low-latency NoC that is optimized for FPGA implementation. Moreover, ProNoC can also be used as a custom Wishbone bus based SoC generator (SoC without NoC) using available Intellectual Properties (IPs) in ProNoC library. The ProNoC IP library can be easily extended to support more IPs.
 
-![abstract](https://opencores.org/usercontent/img/1483515008)
+![abstract](./doc/fig/pronoc_overview.jpg)
 
 ## ProNoC GUI MCSoC Generator
 
@@ -15,7 +15,7 @@ Writing the whole RTL code of a complex heterogeneous MCSoC manually can be time
 3.  **Processing Tile Generator:** The processing tile (PT) generator contains the list of all IPs that can be connected to each other using available defined interfaces. This integration tool provides some facilities such as automatic generation of interconnect logic and automatic Wishbone address setting. It also provides graphical interface for setting different IP parameters. 
 4.  **NoC-based MCSoC Generator:** The MCSoC generator facilitates the generation of a heterogeneous NoC-based MCSoC by providing GUI interface for setting the NoC’s and PTs’ parameters. It checks all processing tiles which have been previously generated using the PT generator and lists all the tiles containing the NI to connect to the NoC
 
-![mpsoc generator snapshot](https://opencores.org/usercontent/img/1483518851)
+![mpsoc generator snapshot](./doc/fig/mpsoc_generator.png)
 
 ## NoC Specification
 
@@ -36,7 +36,7 @@ The ProNoC NoC is developed in RTL using SystemVerilog HDL and it can be simulat
 - Synthetic
 - Task-based
 - Trace-based
-![](https://cdn.opencores.org/usercontent/eb8278cdf63a64a7079342e277966f5346576e6107c28fa954e0fd744617d1de.png)
+![NoC Simulator](./doc/fig/NoC_Simulator.png)
 
 ## How to Cite
 If you found ProNoC useful please cite some of the following references in your publications:

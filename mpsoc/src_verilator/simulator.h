@@ -173,28 +173,14 @@ typedef struct  avg_st_struct {
 
 } avg_st_t;
 
-/*
- typedef struct packed {
-    	bit flit_wr_i;
-    	bit pck_wr_i;
-    	bit flit_wr_o;
-    	bit pck_wr_o;
-    	bit flit_in_bypassed;
-    	logic [BYPASSw-1 : 0] bypassed_num;
-    } router_event_t;
-
-    localparam BYPASSw = log2(SMART_NUM);
-*/
-
-
-
-#define BYPASS_LSB          6
-#define FLIT_IN_WR_FLG    	(1<<5)
-#define PCK_IN_WR_FLG 		(1<<4)
-#define FLIT_OUT_WR_FLG 	(1<<3)
-#define PCK_OUT_WR_FLG		(1<<2)
-#define FLIT_IN_BYPASSED 	(1<<1)
-#define ACTIVE_HIGH_RST     (1<<0)
+#define BYPASS_LSB          7
+#define FLIT_IN_WR_FLG    	(1<<6)
+#define PCK_IN_WR_FLG 		(1<<5)
+#define FLIT_OUT_WR_FLG 	(1<<4)
+#define PCK_OUT_WR_FLG		(1<<3)
+#define FLIT_IN_BYPASSED 	(1<<2)
+#define ACTIVE_HIGH_RST     (1<<1)
+#define EMPTY_FLG           (1<<0)
 
 
 

@@ -105,6 +105,7 @@ module router_top #(
  `else 
         assign router_event[i].active_high_reset = 1'b1;
 `endif  		
+        assign router_event[i].empty = ~(|iport_info[i].ivc_req) && (chan_out[i].flit_chanel.flit_wr==1'b0);        
 	end
 	endgenerate
 	

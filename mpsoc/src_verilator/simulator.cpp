@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
 
     while (!Verilated::gotFinish()) {
         if(main_time - saved_time < 50) {//set reset and start
-            reset_active_high = ((router1[0]->router_event[0] & ACTIVE_HIGH_RST)==1)? 1 : 0;
+            reset_active_high = ((router1[0]->router_event[0] & ACTIVE_HIGH_RST)!=0) ? 1 : 0;
             if (main_time-saved_time >= 10 ) reset = (reset_active_high)? 0 :1;           
             else reset = reset_active_high;     ;//keep system in reset
 
