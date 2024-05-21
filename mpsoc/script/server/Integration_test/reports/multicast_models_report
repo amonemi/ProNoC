@@ -11,6 +11,8 @@ Verification Results:
 	 model is generated successfully.
 ****************************mesh_4x4x2_mcast_p : Compile *******************************:
 	 model is generated successfully.
+****************************star6_2cycle_mcast_par : Compile *******************************:
+	 model is generated successfully.
 ****************************mesh_4x4_2cycle_mcast_f	: random traffic *******************************:
 	 Passed:   zero load (2,14.4623) saturation (22,261.684)
 ****************************mesh_4x4_LB5_B4	: random traffic *******************************:
@@ -23,10 +25,12 @@ Verification Results:
 	 Passed:   zero load (2,16.3674) saturation (6,317.19)
 ****************************mesh_4x4x2_mcast_p	: random traffic *******************************:
 	 Passed:   zero load (2,13.544) saturation (14,177.748)
+****************************star6_2cycle_mcast_par	: random traffic *******************************:
+	 Passed:   zero load (2,6.531) saturation (42,82.0855)
 ****************************mesh_4x4_2cycle_mcast_f	: transposed 1 traffic *******************************:
 	 Passed:   zero load (2,14.8953) saturation (26,146.747)
 ****************************mesh_4x4_LB5_B4	: transposed 1 traffic *******************************:
-	 Passed:   zero load (2,13.3738) saturation (26,142.848)
+	 Passed:   zero load (2,13.3738) saturation (22,78.0417)
 ****************************mesh_4x4_selflp_mcast_f	: transposed 1 traffic *******************************:
 	 Passed:   zero load (2,14.6488) saturation (22,166.723)
 ****************************mesh_4x4x2_bcast_f	: transposed 1 traffic *******************************:
@@ -34,4 +38,6 @@ Verification Results:
 ****************************mesh_4x4x2_bcast_p	: transposed 1 traffic *******************************:
 	 Passed:   zero load (2,16.3766) saturation (6,371.293)
 ****************************mesh_4x4x2_mcast_p	: transposed 1 traffic *******************************:
-	 Passed:   zero load (2,13.6081) saturation (10,79.3782)
+	 Passed:   zero load (2,13.6081) saturation (10,78.461)
+****************************star6_2cycle_mcast_par	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,6.53488) saturation (42,35.6578)

@@ -1,0 +1,13 @@
+$model = bless( {
+		
+        'noc_param'=> {
+						TOPOLOGY=>"\"STAR\"",
+						"ROUTE_NAME" =>"\"UNKNOWN\"",
+						"T1" => "6",
+						"CAST_TYPE" => "\"MULTICAST_PARTIAL\"",
+						"Fpay" => "32",
+						"MCAST_ENDP_LIST" => "'b001011",
+						"SELF_LOOP_EN" => "\"YES\""
+
+						}
+}, 'ProNOC' );

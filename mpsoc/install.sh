@@ -104,6 +104,9 @@ echo "install python3 dependencies"
 pip3 install networkx
 pip3 install trueskill
 
+echo "Compile ProNoC Tools"
+cd $SCRPT_DIR_PATH/src_c; make
+
 #make pronoc application/executable file
 cd $SCRPT_DIR_PATH/src_c/app_executable
 make

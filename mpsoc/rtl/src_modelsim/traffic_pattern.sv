@@ -196,8 +196,7 @@ module  pck_dst_gen
 		
 		
 		pck_size_gen #(
-			.NOC_ID(NOC_ID),
-			.PCK_SIZw(PCK_SIZw),
+			.NOC_ID(NOC_ID),			
 			.MIN(MCAST_PCK_SIZ_MIN),
 			.MAX(MCAST_PCK_SIZ_MAX),
 			.PCK_SIZ_SEL("random-range"),

@@ -198,7 +198,7 @@ localparam
     NR_STAR = 1,  // total number of routers  
     RAw_STAR = 1,
     EAw_STAR  =  log2(NE_STAR),
-    DSTPw_STAR = EAw_STAR,
+    DSTPw_STAR = (CAST_TYPE!= "UNICAST")? NE_STAR :EAw_STAR,
     MAX_P_STAR = NE_STAR,
     DAw_MCAST_STAR= NE_STAR;            
  

@@ -399,17 +399,35 @@ sub ring_line_addr_join {
 
 sub mcast_partial_width {
         my ($p,$NE)=@_;
-        my $m=0;
-        $p=remove_not_hex($p);
-        my @arr=split (//, $p);
-        foreach my $i (@arr) {        	
-        	my $n=hex($i);
-        	$m++ if($n & 0x1);
-        	$m++ if($n & 0x2);
-        	$m++ if($n & 0x4);
-        	$m++ if($n & 0x8);
-        }
-       return $m;
+		my @temp = split ("'h",$p);
+		if (defined $temp[1]){
+			#its hex format
+			my $m=0;
+			$p=remove_not_hex($temp[1]);
+			my @arr=split (//, $p);
+			foreach my $i (@arr) {        	
+				my $n=hex($i);
+				$m++ if($n & 0x1);
+				$m++ if($n & 0x2);
+				$m++ if($n & 0x4);
+				$m++ if($n & 0x8);
+			}
+		return $m;
+		}
+		#its bin format
+		my @temp = split ("'b",$p);
+		if (defined $temp[1]){
+			my $m=0;
+			$p=remove_not_hex($temp[1]);
+			my @arr=split (//, $p);
+			foreach my $i (@arr) {        	
+				my $n=hex($i);
+				$m++ if($i);			
+			}
+		return $m;
+		}
+		return 0;#Error
+
 }
 
 
@@ -421,7 +439,7 @@ sub get_noc_verilator_top_modules_info {
 	my $T1=$self->object_get_attribute('noc_param','T1');
 	my $T2=$self->object_get_attribute('noc_param','T2');
 	my $T3=$self->object_get_attribute('noc_param','T3');
-	my $cast = $self->object_get_attribute('noc_param','MCAST_ENDP_LIST');	
+	my $cast = $self->object_get_attribute('noc_param','MCAST_ENDP_LIST');		
 	my $CAST_TYPE= $self->object_get_attribute('noc_param','CAST_TYPE');	
 	my $DAw_OFFSETw  =  ($topology eq '"MESH"' || $topology eq '"TORUS"' || $topology eq '"FMESH"')?  $T1 : 0; 
 	

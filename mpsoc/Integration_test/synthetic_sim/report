@@ -1,13 +1,7 @@
 Verification Results:
-****************************star_6 : Compile *******************************:
-	 model generation is FAILED.
-	 %Error: Unknown warning specified: -Wno-TIMESCALEMOD
-
-	 %Error: Unknown warning specified: -Wno-TIMESCALEMOD
-
-	 %Error: Unknown warning specified: -Wno-TIMESCALEMOD
-
-****************************star_6	: random traffic *******************************:
-	 failed. Simulation model is not avaialable
-****************************star_6	: transposed 1 traffic *******************************:
-	 failed. Simulation model is not avaialable
+****************************star6_2cycle_mcast_par : Compile *******************************:
+	 model is generated successfully.
+****************************star6_2cycle_mcast_par	: random traffic *******************************:
+	 Passed:   zero load (5,6.67897) saturation (55,151.076)
+****************************star6_2cycle_mcast_par	: transposed 1 traffic *******************************:
+	 Passed:   zero load (5,6.59404) saturation (55,125.016)

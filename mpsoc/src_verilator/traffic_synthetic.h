@@ -315,8 +315,10 @@ void mcast_init(){
 
 	char * t = strstr(temp_str, "\'h");
 	if(t) hex=1;
-	else  t = strstr(temp_str, "\'b");
-	if(t) bin=1;
+	else {
+	    t = strstr(temp_str, "\'b");
+	    if(t) bin=1;
+	}
 	if(hex==0 && bin == 0){
 		fprintf (stderr,"ERROR: MCAST_ENDP_LIST (%s) is given in wrong format. Only hex ('h) and bin ('b) format is accepted. \n",MCAST_ENDP_LIST);
 		exit(1);

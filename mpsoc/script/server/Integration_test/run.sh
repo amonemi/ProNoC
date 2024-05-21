@@ -1,6 +1,6 @@
 #!/bin/bash
 
-servers=( 'mn3' 'mn2' 'mn1' )
+servers=( 'mn5')
 #servers' shorthand name. They should be defined in ~/.ssh/config :
 # 
 #	Host your_short_name
