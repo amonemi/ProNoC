@@ -41,14 +41,14 @@
          `uselib lib=`USE_LIB    
     `endif
     
-   
+
    
    `ifdef IMPORT_PRONOC_PCK
       `define NOC_CONF  import pronoc_pkg::*;  
       `define PRONOC_PKG  
    `else
-      `define NOC_CONF  ```define PRONOC_PKG \
-        ```include "pronoc_pkg.sv"
+      `define NOC_CONF  `define PRONOC_PKG \
+                        `include "pronoc_pkg.sv" 
    `endif
    
    

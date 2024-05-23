@@ -34,7 +34,6 @@ module  noc_emulator
 
     localparam
         PCK_CNTw =30,  // 1 G packets
-        PCK_SIZw =14,   // 16 K flit
         MAX_EAw  =8,  
         MAX_Cw   =4;   // 16 message classes                 
                

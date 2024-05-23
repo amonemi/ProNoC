@@ -634,7 +634,7 @@ module check_pck_size #(
         
     genvar i;
     generate 
-    for (i=0;i<V;i=i+1) begin 
+    for (i=0;i<V;i=i+1) begin :V_
         
         always @(*) begin 
             pck_size_counter_next [i] = pck_size_counter [i];

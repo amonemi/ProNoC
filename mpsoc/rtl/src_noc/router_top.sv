@@ -92,22 +92,7 @@ module router_top #(
 	
 	
 	
-	generate 
-	for(i=0; i<P; i=i+1) begin :P2_
-		assign router_event[i].flit_wr_i = chan_in[i].flit_chanel.flit_wr;
-		assign router_event[i].bypassed_num = chan_in[i].smart_chanel.bypassed_num;
-		assign router_event[i].pck_wr_i  = chan_in[i].flit_chanel.flit_wr & chan_in[i].flit_chanel.flit.hdr_flag;
-		assign router_event[i].flit_wr_o = chan_out[i].flit_chanel.flit_wr;
-		assign router_event[i].pck_wr_o  = chan_out[i].flit_chanel.flit_wr & chan_out[i].flit_chanel.flit.hdr_flag;
-		assign router_event[i].flit_in_bypassed = chan_out[i].smart_chanel.flit_in_bypassed;
-`ifdef ACTIVE_LOW_RESET_MODE 
-        assign router_event[i].active_high_reset = 1'b0;
- `else 
-        assign router_event[i].active_high_reset = 1'b1;
-`endif  		
-        assign router_event[i].empty = ~(|iport_info[i].ivc_req) && (chan_out[i].flit_chanel.flit_wr==1'b0);        
-	end
-	endgenerate
+	
 	
 	
 	flit_chanel_t r2_chan_in  [P-1 : 0];
@@ -127,12 +112,30 @@ module router_top #(
 	ctrl_chanel_t ctrl_out [P-1 : 0];
 	
 	generate 
-		for(i=0; i<P; i=i+1) begin :Pt_		
-			assign  ctrl_in [i] = chan_in[i].ctrl_chanel;
-			assign  chan_out[i].ctrl_chanel= ctrl_out [i];	
-			
-		end
-	endgenerate 
+	for(i=0; i<P; i=i+1) begin :Pt_		
+		assign  ctrl_in [i] = chan_in[i].ctrl_chanel;
+		assign  chan_out[i].ctrl_chanel= ctrl_out [i];	
+	end
+	 
+	for(i=0; i<P; i=i+1) begin :P2_
+		assign router_event[i].flit_wr_i = chan_in[i].flit_chanel.flit_wr;
+		assign router_event[i].bypassed_num = chan_in[i].smart_chanel.bypassed_num;
+		assign router_event[i].pck_wr_i  = chan_in[i].flit_chanel.flit_wr & chan_in[i].flit_chanel.flit.hdr_flag;
+		assign router_event[i].flit_wr_o = chan_out[i].flit_chanel.flit_wr;
+		assign router_event[i].pck_wr_o  = chan_out[i].flit_chanel.flit_wr & chan_out[i].flit_chanel.flit.hdr_flag;
+		assign router_event[i].flit_in_bypassed = chan_out[i].smart_chanel.flit_in_bypassed;
+`ifdef ACTIVE_LOW_RESET_MODE 
+        assign router_event[i].active_high_reset = 1'b0;
+ `else 
+        assign router_event[i].active_high_reset = 1'b1;
+`endif  		
+        assign router_event[i].empty = ~(|iport_info[i].ivc_req) && (chan_out[i].flit_chanel.flit_wr==1'b0);        
+	end
+	endgenerate
+
+
+
+
 	
 	// synthesis translate_off
 	

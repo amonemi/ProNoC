@@ -542,5 +542,6 @@ set_location_assignment PIN_H14 -to EXT_IO[3]
 set_location_assignment PIN_F14 -to EXT_IO[4]
 set_location_assignment PIN_E10 -to EXT_IO[5]
 set_location_assignment PIN_D9 -to EXT_IO[6]
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 
 
