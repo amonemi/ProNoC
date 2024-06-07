@@ -15,8 +15,9 @@ export LM_FILE_LIST="$SCRPT_DIR_PATH/modelsim_filelist.f"
 
 #"$SCRPT_DIR_PATH/../rtl/src_noc/noc_filelist.f $SCRPT_DIR_PATH/../rtl/src_modelsim/filelist.f"
 
+rm -rf $LM_WORK_PLACE/rtl_work
 
-echo "Start simulation" >&3
+echo "Start simulation"  
 $VSIM_BIN  -quiet -64 -do model.tcl
 wait 
-echo "End of Simulation" >&3
+echo "End of Simulation"  

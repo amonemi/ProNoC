@@ -11,14 +11,24 @@ module pck_injector_test;
 		clk = 1'b0;
 		forever clk = #10 ~clk;
 	end 
+
+	initial begin 
+`ifdef ACTIVE_LOW_RESET_MODE 
+        	reset = 1'b0;
+ `else 
+        	reset = 1'b1;
+`endif  
+		#110;
+        	@(posedge clk) #1;
+		reset=~reset;
+	end
 	
-	smartflit_chanel_t chan_in_all  [NE-1 : 0];
+	
+       smartflit_chanel_t chan_in_all  [NE-1 : 0];
 	smartflit_chanel_t chan_out_all [NE-1 : 0];
 	
 	pck_injct_t pck_injct_in [NE-1 : 0];
-	pck_injct_t pck_injct_out[NE-1 : 0];
-	
-	
+	pck_injct_t pck_injct_out[NE-1 : 0];	
 	noc_top  # ( 
 		.NOC_ID(NOC_ID)
 	) the_noc (
@@ -61,11 +71,6 @@ module pck_injector_test;
 	   reg [31:0]k;
 
 		initial begin 
-`ifdef ACTIVE_LOW_RESET_MODE 
-        reset = 1'b0;
- `else 
-        reset = 1'b1;
-`endif  
 			k=0;
 			pck_injct_in[i].data =0;
 			#10
@@ -73,10 +78,9 @@ module pck_injector_test;
 			pck_injct_in[i].init_weight=1;
 			pck_injct_in[i].vc=1;
 			pck_injct_in[i].pck_wr=1'b0; 
-			#100
+			#100;
 			@(posedge clk) #1;
-			reset=~reset;
-			#100
+			#100;
 			@(posedge clk) #1;
 			if(i==1) begin 
 				repeat(10) begin 

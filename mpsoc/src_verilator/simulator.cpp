@@ -1219,7 +1219,7 @@ void update_statistic_at_ejection (
         }
     }
 
-    if(verbosity==0 && ( TRAFFIC_TYPE == NETRACE || TRAFFIC_TYPE ==SYNFUL)) if((total_rsv_pck_num & 0X1FFFF )==0 ) printf(" packet sent total=%d\n",total_rsv_pck_num);
+    if(verbosity==0 && ( TRAFFIC_TYPE == NETRACE || TRAFFIC_TYPE ==SYNFUL)) if((total_rsv_pck_num & 0X1FFFF )==0 ) printf(" Packets recived total=%u\n",total_rsv_pck_num);
     unsigned int latency = (strcmp (AVG_LATENCY_METRIC,"HEAD_2_TAIL")==0)? clk_num_h2t :  clk_num_h2h;
     #if(C>1)
         update_rsvd_st ( &rsvd_stat[core_num][class_num],      clk_num_h2h,   clk_num_h2t,     latency,    distance,pck_size);

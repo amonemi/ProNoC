@@ -301,6 +301,7 @@ void netrace_eval(unsigned int eval_num){
 				*/
 
 				pronoc_src_id=traffic_model_mapping[packet->src];
+				total_rsv_pck_num++;
 				update_statistic_at_ejection (
 					i,//	core_num
 					clk_num_h2h, // clk_num_h2h,
