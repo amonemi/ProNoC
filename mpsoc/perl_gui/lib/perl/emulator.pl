@@ -1201,9 +1201,10 @@ sub gen_noc_sim_param {
 
 
 sub gen_noc_localparam_v_file {
-	my ($self,$dst_path,$sample)=@_;
+	my ($self,$dst_path,$sample,$noc_id)=@_;
+	$noc_id="" if(!defined $noc_id);	
 	# generate NoC parameter file
-	my ($noc_param,$pass_param)=gen_noc_param_v($self,$sample);
+	my ($noc_param,$pass_param)=gen_noc_param_v($self,$sample,$noc_id);
 	my $header=autogen_warning().get_license_header("noc_localparam.v");
 	open(FILE,  ">${dst_path}/noc_localparam.v") || die "Can not open: $!";
 	my $sim =gen_noc_sim_param($self);

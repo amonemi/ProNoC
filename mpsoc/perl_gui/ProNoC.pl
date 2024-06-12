@@ -51,6 +51,7 @@ require "network_maker.pl";
 require "uart.pl";
 require "run_time_jtag_debug.pl";
 require "gdown.pl"; # google drive downlouder
+require "phy_noc_gen.pl";
 
 use File::Basename;
 
@@ -867,7 +868,10 @@ sub generate_main_notebook {
 		my $label5=def_image_label("icons/trace.png"," Network Maker ");	
 		$notebook->append_page ($networkgen,$label5);
 		$label5->show_all;	
-	
+		my $phy_noc = phy_noc_maker_main();
+		$label5=def_image_label("icons/phy_noc.png"," Multiple Physical NoCs");	
+		$notebook->append_page ($phy_noc,$label5);
+	    $label5->show_all;	
 	
 	}else{
 			

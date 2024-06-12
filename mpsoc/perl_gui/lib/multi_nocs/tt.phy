@@ -1,0 +1,371 @@
+#######################################################################
+##	File: tt.phy
+##    
+##	Copyright (C) 2014-2022  Alireza Monemi
+##    
+##	This file is part of ProNoC 2.2.0 
+##
+## 	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT 
+##	MAY CAUSE UNEXPECTED BEHAVIOR.
+################################################################################
+
+$phy = bless( {
+                'noc_param1' => {
+                                  'FIRST_ARBITER_EXT_P_EN' => 1,
+                                  'C' => 0,
+                                  'DEBUG_EN' => '0',
+                                  'V' => '2',
+                                  'VC_REALLOCATION_TYPE' => '"NONATOMIC"',
+                                  'PCK_TYPE' => '"MULTI_FLIT"',
+                                  'ADD_PIPREG_AFTER_CROSSBAR' => '1\'b0',
+                                  'SWA_ARBITER_TYPE' => '"RRA"',
+                                  'SELF_LOOP_EN' => '"NO"',
+                                  'B' => '4',
+                                  'T3' => '1',
+                                  'AVC_ATOMIC_EN' => 0,
+                                  'SSA_EN' => '"NO"',
+                                  'T1' => '2',
+                                  'MCAST_ENDP_LIST' => '\'hf',
+                                  'COMBINATION_TYPE' => '"COMB_NONSPEC"',
+                                  'WEIGHTw' => '4',
+                                  'TOPOLOGY' => '"MESH"',
+                                  'BYTE_EN' => 0,
+                                  'ESCAP_VC_MASK' => '2\'b01',
+                                  'CONGESTION_INDEX' => 3,
+                                  'CAST_TYPE' => '"UNICAST"',
+                                  'SMART_MAX' => '0',
+                                  'LB' => '4',
+                                  'T2' => '2',
+                                  'MIN_PCK_SIZE' => '2',
+                                  'ROUTE_NAME' => '"XY"',
+                                  'Fpay' => '32',
+                                  'MUX_TYPE' => '"BINARY"'
+                                },
+                'setting' => {
+                               'show_noc_setting' => 1
+                             },
+                'Verilog' => {
+                               'Router_ports' => [
+                                                   {
+                                                     'pname' => 'flit_in',
+                                                     'name' => 'flit_in_all',
+                                                     'type' => 'input',
+                                                     'connect' => 'flit_out_all',
+                                                     'endp' => 'yes',
+                                                     'width' => 'PFw',
+                                                     'pwidth' => 'Fw',
+                                                     'pconnect' => 'flit_out'
+                                                   },
+                                                   {
+                                                     'pname' => 'flit_in_wr',
+                                                     'name' => 'flit_in_wr_all',
+                                                     'type' => 'input',
+                                                     'endp' => 'yes',
+                                                     'connect' => 'flit_out_wr_all',
+                                                     'pwidth' => 1,
+                                                     'pconnect' => 'flit_out_wr',
+                                                     'width' => 'P'
+                                                   },
+                                                   {
+                                                     'type' => 'input',
+                                                     'name' => 'congestion_in_all',
+                                                     'pname' => 'congestion_in',
+                                                     'width' => 'CONG_ALw',
+                                                     'pconnect' => 'congestion_out',
+                                                     'pwidth' => 'CONGw',
+                                                     'connect' => 'congestion_out_all',
+                                                     'endp' => 'no'
+                                                   },
+                                                   {
+                                                     'connect' => 'credit_in_all',
+                                                     'endp' => 'yes',
+                                                     'width' => 'PV',
+                                                     'pwidth' => 'V',
+                                                     'pconnect' => 'credit_in',
+                                                     'pname' => 'credit_out',
+                                                     'name' => 'credit_out_all',
+                                                     'type' => 'output'
+                                                   }
+                                                 ],
+                               'Router_param' => [
+                                                   {
+                                                     'param_name' => 'V ',
+                                                     'value' => 2
+                                                   },
+                                                   {
+                                                     'param_name' => 'B ',
+                                                     'value' => 4
+                                                   },
+                                                   {
+                                                     'param_name' => 'C ',
+                                                     'value' => 2
+                                                   },
+                                                   {
+                                                     'param_name' => 'Fpay ',
+                                                     'value' => 32
+                                                   },
+                                                   {
+                                                     'value' => '"ONE_HOT"',
+                                                     'param_name' => 'MUX_TYPE'
+                                                   },
+                                                   {
+                                                     'param_name' => 'VC_REALLOCATION_TYPE ',
+                                                     'value' => '"NONATOMIC"'
+                                                   },
+                                                   {
+                                                     'param_name' => 'COMBINATION_TYPE',
+                                                     'value' => '"COMB_NONSPEC"'
+                                                   },
+                                                   {
+                                                     'param_name' => 'FIRST_ARBITER_EXT_P_EN ',
+                                                     'value' => 1
+                                                   },
+                                                   {
+                                                     'param_name' => 'CONGESTION_INDEX ',
+                                                     'value' => 7
+                                                   },
+                                                   {
+                                                     'param_name' => 'DEBUG_EN',
+                                                     'value' => 0
+                                                   },
+                                                   {
+                                                     'param_name' => 'AVC_ATOMIC_EN',
+                                                     'value' => 0
+                                                   },
+                                                   {
+                                                     'param_name' => 'ADD_PIPREG_AFTER_CROSSBAR',
+                                                     'value' => 0
+                                                   },
+                                                   {
+                                                     'param_name' => 'CVw',
+                                                     'value' => '(C==0)? V : C * V'
+                                                   },
+                                                   {
+                                                     'value' => '{CVw{1\'b1}}',
+                                                     'param_name' => 'CLASS_SETTING '
+                                                   },
+                                                   {
+                                                     'value' => '"NO"',
+                                                     'param_name' => 'SSA_EN'
+                                                   },
+                                                   {
+                                                     'value' => '"RRA"',
+                                                     'param_name' => 'SWA_ARBITER_TYPE '
+                                                   },
+                                                   {
+                                                     'value' => 7,
+                                                     'param_name' => 'WEIGHTw '
+                                                   },
+                                                   {
+                                                     'value' => 2,
+                                                     'param_name' => 'MIN_PCK_SIZE'
+                                                   },
+                                                   {
+                                                     'param_name' => 'BYTE_EN',
+                                                     'value' => 0
+                                                   }
+                                                 ]
+                             },
+                'save_as' => 'tt',
+                'noc2_setting_gui' => {},
+                'noc_type2' => {
+                                 'ROUTER_TYPE' => '"VC_BASED"'
+                               },
+                'active_setting' => undef,
+                'phy_num' => 3,
+                'gui_status' => {
+                                  'status' => 'ideal',
+                                  'timeout' => 0
+                                },
+                'noc0_setting_gui' => {
+                                        'va' => '0',
+                                        'ha' => '0'
+                                      },
+                'process_notebook' => {
+                                        'currentpage' => 0
+                                      },
+                'id' => 1,
+                'noc1_setting_gui' => {},
+                'sample0' => {
+                               'color' => 1
+                             },
+                'noc_param2' => {
+                                  'CONGESTION_INDEX' => 3,
+                                  'BYTE_EN' => 0,
+                                  'ESCAP_VC_MASK' => '2\'b01',
+                                  'SMART_MAX' => '0',
+                                  'LB' => '4',
+                                  'CAST_TYPE' => '"UNICAST"',
+                                  'ROUTE_NAME' => '"XY"',
+                                  'MIN_PCK_SIZE' => '2',
+                                  'T2' => '2',
+                                  'Fpay' => '32',
+                                  'MUX_TYPE' => '"BINARY"',
+                                  'V' => '2',
+                                  'DEBUG_EN' => '0',
+                                  'FIRST_ARBITER_EXT_P_EN' => 1,
+                                  'C' => 0,
+                                  'VC_REALLOCATION_TYPE' => '"NONATOMIC"',
+                                  'PCK_TYPE' => '"MULTI_FLIT"',
+                                  'SELF_LOOP_EN' => '"NO"',
+                                  'ADD_PIPREG_AFTER_CROSSBAR' => '1\'b0',
+                                  'SWA_ARBITER_TYPE' => '"RRA"',
+                                  'T3' => '1',
+                                  'AVC_ATOMIC_EN' => 0,
+                                  'SSA_EN' => '"NO"',
+                                  'B' => '4',
+                                  'WEIGHTw' => '4',
+                                  'COMBINATION_TYPE' => '"COMB_NONSPEC"',
+                                  'TOPOLOGY' => '"MESH"',
+                                  'T1' => '2',
+                                  'MCAST_ENDP_LIST' => '\'hf'
+                                },
+                'phy_name' => 'tt',
+                'parameters_order' => {
+                                        'noc_type1' => [
+                                                         'ROUTER_TYPE'
+                                                       ],
+                                        'noc_type0' => [
+                                                         'ROUTER_TYPE'
+                                                       ],
+                                        'noc_param0' => [
+                                                          'TOPOLOGY',
+                                                          'T1',
+                                                          'T2',
+                                                          'T3',
+                                                          'V',
+                                                          'B',
+                                                          'LB',
+                                                          'Fpay',
+                                                          'ROUTE_NAME',
+                                                          'PCK_TYPE',
+                                                          'MIN_PCK_SIZE',
+                                                          'BYTE_EN',
+                                                          'CAST_TYPE',
+                                                          'MCAST_ENDP_LIST',
+                                                          'SSA_EN',
+                                                          'SMART_MAX',
+                                                          'CONGESTION_INDEX',
+                                                          'ESCAP_VC_MASK',
+                                                          'VC_REALLOCATION_TYPE',
+                                                          'COMBINATION_TYPE',
+                                                          'MUX_TYPE',
+                                                          'C',
+                                                          'DEBUG_EN',
+                                                          'ADD_PIPREG_AFTER_CROSSBAR',
+                                                          'FIRST_ARBITER_EXT_P_EN',
+                                                          'SWA_ARBITER_TYPE',
+                                                          'WEIGHTw',
+                                                          'SELF_LOOP_EN',
+                                                          'AVC_ATOMIC_EN'
+                                                        ],
+                                        'phy_num' => [
+                                                       undef
+                                                     ],
+                                        'samples' => [
+                                                       'sample0'
+                                                     ],
+                                        'noc_param2' => [
+                                                          'TOPOLOGY',
+                                                          'T1',
+                                                          'T2',
+                                                          'T3',
+                                                          'V',
+                                                          'B',
+                                                          'LB',
+                                                          'Fpay',
+                                                          'ROUTE_NAME',
+                                                          'PCK_TYPE',
+                                                          'MIN_PCK_SIZE',
+                                                          'BYTE_EN',
+                                                          'CAST_TYPE',
+                                                          'MCAST_ENDP_LIST',
+                                                          'SSA_EN',
+                                                          'SMART_MAX',
+                                                          'CONGESTION_INDEX',
+                                                          'ESCAP_VC_MASK',
+                                                          'VC_REALLOCATION_TYPE',
+                                                          'COMBINATION_TYPE',
+                                                          'MUX_TYPE',
+                                                          'C',
+                                                          'DEBUG_EN',
+                                                          'ADD_PIPREG_AFTER_CROSSBAR',
+                                                          'FIRST_ARBITER_EXT_P_EN',
+                                                          'SWA_ARBITER_TYPE',
+                                                          'WEIGHTw',
+                                                          'SELF_LOOP_EN',
+                                                          'AVC_ATOMIC_EN'
+                                                        ],
+                                        'noc_type2' => [
+                                                         'ROUTER_TYPE'
+                                                       ],
+                                        'noc_param1' => [
+                                                          'TOPOLOGY',
+                                                          'T1',
+                                                          'T2',
+                                                          'T3',
+                                                          'V',
+                                                          'B',
+                                                          'LB',
+                                                          'Fpay',
+                                                          'ROUTE_NAME',
+                                                          'PCK_TYPE',
+                                                          'MIN_PCK_SIZE',
+                                                          'BYTE_EN',
+                                                          'CAST_TYPE',
+                                                          'MCAST_ENDP_LIST',
+                                                          'SSA_EN',
+                                                          'SMART_MAX',
+                                                          'CONGESTION_INDEX',
+                                                          'ESCAP_VC_MASK',
+                                                          'VC_REALLOCATION_TYPE',
+                                                          'COMBINATION_TYPE',
+                                                          'MUX_TYPE',
+                                                          'C',
+                                                          'DEBUG_EN',
+                                                          'ADD_PIPREG_AFTER_CROSSBAR',
+                                                          'FIRST_ARBITER_EXT_P_EN',
+                                                          'SWA_ARBITER_TYPE',
+                                                          'WEIGHTw',
+                                                          'SELF_LOOP_EN',
+                                                          'AVC_ATOMIC_EN'
+                                                        ]
+                                      },
+                'noc_type0' => {
+                                 'ROUTER_TYPE' => '"INPUT_QUEUED"'
+                               },
+                'noc_param0' => {
+                                  'MUX_TYPE' => '"BINARY"',
+                                  'T2' => '2',
+                                  'ROUTE_NAME' => '"XY"',
+                                  'MIN_PCK_SIZE' => '2',
+                                  'Fpay' => '32',
+                                  'BYTE_EN' => 0,
+                                  'ESCAP_VC_MASK' => '1\'b1',
+                                  'CONGESTION_INDEX' => 3,
+                                  'CAST_TYPE' => '"UNICAST"',
+                                  'SMART_MAX' => '0',
+                                  'LB' => '4',
+                                  'T1' => '2',
+                                  'MCAST_ENDP_LIST' => '\'hf',
+                                  'COMBINATION_TYPE' => '"COMB_NONSPEC"',
+                                  'WEIGHTw' => '4',
+                                  'TOPOLOGY' => '"MESH"',
+                                  'ADD_PIPREG_AFTER_CROSSBAR' => '1\'b0',
+                                  'SWA_ARBITER_TYPE' => '"RRA"',
+                                  'SELF_LOOP_EN' => '"NO"',
+                                  'B' => '4',
+                                  'AVC_ATOMIC_EN' => 0,
+                                  'SSA_EN' => '"NO"',
+                                  'T3' => '1',
+                                  'VC_REALLOCATION_TYPE' => '"NONATOMIC"',
+                                  'PCK_TYPE' => '"MULTI_FLIT"',
+                                  'C' => 0,
+                                  'FIRST_ARBITER_EXT_P_EN' => 1,
+                                  'DEBUG_EN' => '0',
+                                  'V' => 1
+                                },
+                'noc_type1' => {
+                                 'ROUTER_TYPE' => '"VC_BASED"'
+                               }
+              }, 'ProNOC' );
