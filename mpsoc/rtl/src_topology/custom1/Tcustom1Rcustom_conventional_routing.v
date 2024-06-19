@@ -6,7 +6,7 @@
 
 
 /**********************************************************************
-**	File: /home/alireza/work/git/pronoc/mpsoc/rtl/src_topolgy/custom1/Tcustom1Rcustom_conventional_routing.v
+**	File: /home/alireza/work/git/pronoc/mpsoc/rtl/src_topology/custom1/Tcustom1Rcustom_conventional_routing.v
 **    
 **	Copyright (C) 2014-2021  Alireza Monemi
 **    

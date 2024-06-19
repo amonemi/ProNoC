@@ -112,8 +112,8 @@ sub generate_sim_bin_file {
 	if ($topology eq '"CUSTOM"'){ 
 		my $name=$simulate->object_get_attribute('noc_param','CUSTOM_TOPOLOGY_NAME');
 		$name=~s/["]//gs;     
-		my $dir1=  get_project_dir()."/mpsoc/rtl/src_topolgy/$name";
-		my $dir2=  get_project_dir()."/mpsoc/rtl/src_topolgy/common";
+		my $dir1=  get_project_dir()."/mpsoc/rtl/src_topology/$name";
+		my $dir2=  get_project_dir()."/mpsoc/rtl/src_topology/common";
 		my @files = File::Find::Rule->file()
                             ->name( '*.v','*.V','*.sv' )
                             ->in( "$dir1" );

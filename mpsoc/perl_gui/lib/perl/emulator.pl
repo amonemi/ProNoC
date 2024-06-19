@@ -887,7 +887,7 @@ sub generate_sof_file {
 '/mpsoc/rtl/main_comp.v',
 '/mpsoc/rtl/arbiter.v',
 '/mpsoc/rtl/pronoc_def.v',
-'/mpsoc/rtl/src_topolgy/',
+'/mpsoc/rtl/src_topology/',
 '/mpsoc/rtl/src_noc/');
 
 	my $dir = Cwd::getcwd();

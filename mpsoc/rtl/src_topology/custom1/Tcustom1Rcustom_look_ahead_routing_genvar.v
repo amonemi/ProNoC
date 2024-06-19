@@ -6,7 +6,7 @@
 
 
 /**********************************************************************
-**	File: /home/alireza/work/git/pronoc/mpsoc/rtl/src_topolgy/custom1/Tcustom1Rcustom_look_ahead_routing.v
+**	File: /home/alireza/work/git/pronoc/mpsoc/rtl/src_topology/custom1/Tcustom1Rcustom_look_ahead_routing_genvar.v
 **    
 **	Copyright (C) 2014-2021  Alireza Monemi
 **    
@@ -26,36 +26,35 @@
 ** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
 ******************************************************************************/ 
 
- 
  `include "pronoc_def.v"
-/*******************
-*  Tcustom1Rcustom_look_ahead_routing
-*******************/  
-module Tcustom1Rcustom_look_ahead_routing  #(
+ 
+/*****************************
+*	Tcustom1Rcustom_look_ahead_routing_genvar
+******************************/ 
+module Tcustom1Rcustom_look_ahead_routing_genvar  #(
 	parameter RAw = 3,  
 	parameter EAw = 3,   
-	parameter DSTPw=4  
+	parameter DSTPw=4,
+	parameter CURRENT_R_ADDR=0
 )
 (
-	reset,
-	clk,
-	current_r_addr,
 	dest_e_addr,
 	src_e_addr,
-	destport        
+	destport,
+	reset,
+	clk        
 );
-    
-	input   [RAw-1   :0] current_r_addr;
+
 	input   [EAw-1   :0] dest_e_addr;
 	input   [EAw-1   :0] src_e_addr;
-	output  [DSTPw-1 :0] destport;	
+	output  [DSTPw-1 :0] destport;
 	input reset,clk;
 
 	reg [EAw-1   :0] dest_e_addr_delay;
 	reg [EAw-1   :0] src_e_addr_delay;
 
-	always @ (`pronoc_clk_reset_edge )begin 
-        if(`pronoc_reset)begin 
+	 always @ (`pronoc_clk_reset_edge )begin 
+        if(`pronoc_reset) begin 
 			dest_e_addr_delay<={EAw{1'b0}};
 			src_e_addr_delay<={EAw{1'b0}};			
 		end else begin 
@@ -64,14 +63,15 @@ module Tcustom1Rcustom_look_ahead_routing  #(
 		end 	
 	end
 
-	Tcustom1Rcustom_look_ahead_routing_comb  #(
+	custom1_look_ahead_routing_genvar_comb  #(
 		.RAw(RAw),  
 		.EAw(EAw),   
-		.DSTPw(DSTPw)  
+		.DSTPw(DSTPw),
+		.CURRENT_R_ADDR(CURRENT_R_ADDR)  
 	)
 	lkp_cmb
 	(
-		.current_r_addr(current_r_addr),
+		
 		.dest_e_addr(dest_e_addr_delay),
 		.src_e_addr(src_e_addr_delay),
 		.destport(destport)        
@@ -79,28 +79,28 @@ module Tcustom1Rcustom_look_ahead_routing  #(
 
 
 	
-endmodule  
+endmodule   
  
 /*******************
-*  Tcustom1Rcustom_look_ahead_routing_comb
-*******************/ 
+* Tcustom1Rcustom_look_ahead_routing_genvar_comb
+********************/ 
   
- module Tcustom1Rcustom_look_ahead_routing_comb  #(
+ 
+ module Tcustom1Rcustom_look_ahead_routing_genvar_comb  #(
 	parameter RAw = 3,  
 	parameter EAw = 3,   
-	parameter DSTPw=4  
+	parameter DSTPw=4,
+	parameter CURRENT_R_ADDR=0
 )
 (
-	current_r_addr,
 	dest_e_addr,
 	src_e_addr,
 	destport        
 );
-    
-	input   [RAw-1   :0] current_r_addr;
+
 	input   [EAw-1   :0] dest_e_addr;
 	input   [EAw-1   :0] src_e_addr;
-	output reg [DSTPw-1 :0] destport;	
+	output  reg [DSTPw-1 :0] destport;
 
 localparam [EAw-1 : 0]	E0=0;
 localparam [EAw-1 : 0]	E1=1;
@@ -120,10 +120,10 @@ localparam [EAw-1 : 0]	E14=14;
 localparam [EAw-1 : 0]	E15=15;
 
         
-	always@(*)begin
-		destport=0;
-		case(current_r_addr) //current_r_addr of each individual router is fixed. So this CASE will be optimized by the synthesizer for each router. 
-		0: begin
+	generate
+	if(CURRENT_R_ADDR == 0) begin :R0
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E0,E9},{E0,E10}: begin 
 				destport= 0; 
@@ -134,12 +134,13 @@ localparam [EAw-1 : 0]	E15=15;
 			{E0,E1},{E0,E4},{E0,E5},{E0,E6},{E0,E7},{E0,E13},{E0,E14},{E0,E15}: begin 
 				destport= 2; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//0
-		1: begin
+		end
+	end//R0
+
+	if(CURRENT_R_ADDR == 1) begin :R1
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E1,E2},{E1,E7},{E2,E7}: begin 
 				destport= 0; 
@@ -150,12 +151,13 @@ localparam [EAw-1 : 0]	E15=15;
 			{E1,E0},{E1,E10},{E2,E0},{E2,E10}: begin 
 				destport= 2; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//1
-		2: begin
+		end
+	end//R1
+
+	if(CURRENT_R_ADDR == 2) begin :R2
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E1,E11},{E2,E1},{E2,E11}: begin 
 				destport= 0; 
@@ -166,12 +168,13 @@ localparam [EAw-1 : 0]	E15=15;
 			{E1,E3},{E2,E3}: begin 
 				destport= 3; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//2
-		3: begin
+		end
+	end//R2
+
+	if(CURRENT_R_ADDR == 3) begin :R3
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E3,E4},{E3,E11}: begin 
 				destport= 0; 
@@ -185,12 +188,13 @@ localparam [EAw-1 : 0]	E15=15;
 			{E3,E0},{E3,E5},{E3,E9},{E3,E15}: begin 
 				destport= 3; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//3
-		4: begin
+		end
+	end//R3
+
+	if(CURRENT_R_ADDR == 4) begin :R4
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E3,E13},{E4,E3},{E4,E13},{E5,E3},{E6,E3},{E7,E3},{E8,E3},{E9,E3},{E10,E3},{E12,E3},{E13,E3},{E14,E3},{E15,E3}: begin 
 				destport= 0; 
@@ -207,12 +211,13 @@ localparam [EAw-1 : 0]	E15=15;
 			{E3,E1},{E3,E7},{E3,E8},{E3,E14},{E4,E1},{E4,E7},{E4,E8},{E4,E10}: begin 
 				destport= 4; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//4
-		5: begin
+		end
+	end//R4
+
+	if(CURRENT_R_ADDR == 5) begin :R5
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E0,E6},{E0,E15},{E3,E9},{E3,E15},{E4,E9},{E4,E15},{E5,E6},{E5,E9},{E5,E15},{E6,E9},{E6,E15},{E9,E6},{E9,E15},{E13,E9},{E14,E9},{E15,E9}: begin 
 				destport= 0; 
@@ -226,12 +231,13 @@ localparam [EAw-1 : 0]	E15=15;
 			{E3,E0},{E4,E0},{E5,E0},{E6,E0},{E11,E0},{E13,E0},{E15,E0}: begin 
 				destport= 3; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//5
-		6: begin
+		end
+	end//R5
+
+	if(CURRENT_R_ADDR == 6) begin :R6
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E0,E13},{E3,E5},{E4,E5},{E5,E13},{E6,E5},{E6,E13},{E9,E13}: begin 
 				destport= 0; 
@@ -248,12 +254,13 @@ localparam [EAw-1 : 0]	E15=15;
 			{E4,E2},{E4,E11},{E4,E14},{E5,E2},{E5,E14},{E9,E14}: begin 
 				destport= 4; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//6
-		7: begin
+		end
+	end//R6
+
+	if(CURRENT_R_ADDR == 7) begin :R7
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E0,E1},{E1,E8},{E1,E10},{E2,E10},{E3,E1},{E3,E10},{E4,E1},{E4,E10},{E5,E1},{E6,E1},{E7,E1},{E7,E8},{E7,E10},{E8,E1},{E9,E1},{E10,E1},{E11,E1},{E11,E10},{E12,E1},{E13,E1},{E13,E10},{E14,E1},{E14,E10},{E15,E1}: begin 
 				destport= 0; 
@@ -267,12 +274,13 @@ localparam [EAw-1 : 0]	E15=15;
 			{E1,E0},{E2,E0},{E7,E0},{E14,E0}: begin 
 				destport= 3; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//7
-		8: begin
+		end
+	end//R7
+
+	if(CURRENT_R_ADDR == 8) begin :R8
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E1,E12},{E2,E12},{E3,E7},{E4,E7},{E7,E12},{E7,E14},{E8,E7},{E8,E12},{E8,E14},{E9,E7},{E11,E7},{E13,E7},{E14,E7}: begin 
 				destport= 0; 
@@ -289,12 +297,13 @@ localparam [EAw-1 : 0]	E15=15;
 			{E7,E2},{E7,E11},{E8,E2},{E8,E11}: begin 
 				destport= 4; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//8
-		9: begin
+		end
+	end//R8
+
+	if(CURRENT_R_ADDR == 9) begin :R9
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E0,E5},{E0,E12},{E3,E0},{E4,E0},{E5,E0},{E6,E0},{E8,E0},{E9,E0},{E9,E5},{E9,E12},{E11,E0},{E12,E0},{E13,E0},{E15,E0}: begin 
 				destport= 0; 
@@ -311,12 +320,13 @@ localparam [EAw-1 : 0]	E15=15;
 			{E0,E8},{E9,E1},{E9,E7},{E9,E8}: begin 
 				destport= 4; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//9
-		10: begin
+		end
+	end//R9
+
+	if(CURRENT_R_ADDR == 10) begin :R10
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E0,E7},{E1,E0},{E2,E0},{E5,E7},{E6,E7},{E7,E0},{E10,E0},{E10,E7},{E10,E12},{E12,E7},{E14,E0},{E15,E7}: begin 
 				destport= 0; 
@@ -333,12 +343,13 @@ localparam [EAw-1 : 0]	E15=15;
 			{E10,E8}: begin 
 				destport= 4; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//10
-		11: begin
+		end
+	end//R10
+
+	if(CURRENT_R_ADDR == 11) begin :R11
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E0,E2},{E0,E3},{E1,E3},{E1,E14},{E2,E3},{E2,E14},{E3,E2},{E4,E2},{E5,E2},{E6,E2},{E7,E2},{E8,E2},{E9,E2},{E10,E2},{E11,E2},{E11,E3},{E11,E14},{E12,E2},{E13,E2},{E14,E2},{E15,E2}: begin 
 				destport= 0; 
@@ -352,12 +363,13 @@ localparam [EAw-1 : 0]	E15=15;
 			{E2,E8},{E3,E10},{E11,E1},{E11,E7},{E11,E8},{E11,E10}: begin 
 				destport= 3; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//11
-		12: begin
+		end
+	end//R11
+
+	if(CURRENT_R_ADDR == 12) begin :R12
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E0,E8},{E1,E9},{E1,E15},{E2,E9},{E5,E8},{E5,E10},{E6,E8},{E6,E10},{E7,E9},{E8,E9},{E8,E10},{E9,E8},{E9,E10},{E10,E8},{E10,E9},{E10,E15},{E11,E9},{E12,E8},{E12,E9},{E12,E10},{E12,E15},{E15,E8},{E15,E10}: begin 
 				destport= 0; 
@@ -371,12 +383,13 @@ localparam [EAw-1 : 0]	E15=15;
 			{E8,E5},{E10,E5},{E12,E5}: begin 
 				destport= 4; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//12
-		13: begin
+		end
+	end//R12
+
+	if(CURRENT_R_ADDR == 13) begin :R13
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E0,E4},{E1,E4},{E1,E6},{E2,E4},{E2,E6},{E3,E6},{E3,E14},{E4,E6},{E4,E14},{E5,E4},{E5,E14},{E6,E4},{E7,E4},{E7,E6},{E8,E4},{E8,E6},{E9,E4},{E9,E14},{E10,E4},{E10,E6},{E11,E4},{E11,E6},{E12,E4},{E12,E6},{E13,E4},{E13,E6},{E13,E14},{E14,E4},{E14,E6},{E15,E4},{E15,E6}: begin 
 				destport= 0; 
@@ -393,12 +406,13 @@ localparam [EAw-1 : 0]	E15=15;
 			{E4,E2},{E4,E11},{E5,E2},{E13,E2},{E13,E11}: begin 
 				destport= 4; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//13
-		14: begin
+		end
+	end//R13
+
+	if(CURRENT_R_ADDR == 14) begin :R14
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E0,E11},{E2,E8},{E2,E13},{E2,E15},{E3,E8},{E4,E8},{E4,E11},{E5,E11},{E6,E11},{E7,E11},{E7,E13},{E7,E15},{E8,E11},{E8,E13},{E8,E15},{E9,E11},{E10,E11},{E11,E8},{E11,E13},{E11,E15},{E12,E11},{E13,E8},{E13,E11},{E13,E15},{E14,E8},{E14,E11},{E14,E13},{E14,E15},{E15,E11}: begin 
 				destport= 0; 
@@ -415,12 +429,13 @@ localparam [EAw-1 : 0]	E15=15;
 			{E1,E5},{E2,E5},{E7,E5},{E11,E0},{E11,E5},{E13,E0},{E13,E5},{E13,E9},{E14,E5},{E14,E9}: begin 
 				destport= 4; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//14
-		15: begin
+		end
+	end//R14
+
+	if(CURRENT_R_ADDR == 15) begin :R15
+		always@(*)begin	
+			destport= 0; 
 			case({src_e_addr,dest_e_addr})
 			{E0,E14},{E1,E5},{E1,E13},{E2,E5},{E3,E12},{E4,E12},{E5,E12},{E6,E12},{E6,E14},{E7,E5},{E8,E5},{E10,E5},{E10,E13},{E10,E14},{E11,E5},{E11,E12},{E12,E5},{E12,E13},{E12,E14},{E13,E5},{E13,E12},{E14,E5},{E14,E12},{E15,E5},{E15,E12},{E15,E13},{E15,E14}: begin 
 				destport= 0; 
@@ -434,16 +449,11 @@ localparam [EAw-1 : 0]	E15=15;
 			{E0,E2},{E0,E3},{E0,E11},{E5,E8},{E5,E11},{E6,E2},{E6,E8},{E6,E11},{E9,E2},{E9,E11},{E10,E2},{E10,E11},{E12,E2},{E12,E11},{E15,E2},{E15,E8},{E15,E11}: begin 
 				destport= 4; 
 			end
-			default: begin 
-				destport= {DSTPw{1'bX}};
-			end
 			endcase
-		end//15
-		default: begin 
-			destport= {DSTPw{1'bX}};
 		end
-		endcase
-	end
+	end//R15
+
+	endgenerate
   
 
 	

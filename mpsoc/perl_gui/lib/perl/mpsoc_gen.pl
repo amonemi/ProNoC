@@ -1251,7 +1251,7 @@ sub config_custom_topology_gui{
 my $noc_param="noc_param$noc_id";
 my $coltmp=0;
 #read param.obj file to load cutom topology info
-	my $dir =get_project_dir()."/mpsoc/rtl/src_topolgy";
+	my $dir =get_project_dir()."/mpsoc/rtl/src_topology";
 	my $file="$dir/param.obj";
 	unless (-f $file){
 		 add_colored_info($txview,"No Custom topology find in $dir. You can define a Custom Topology using ProNoC Topology maker.\n",'red');
@@ -1598,8 +1598,8 @@ sub generate_mpsoc{
 	if ($topology eq '"CUSTOM"'){ 
 		my $Tname=$mpsoc->object_get_attribute('noc_param','CUSTOM_TOPOLOGY_NAME');
 		$Tname=~s/["]//gs;     
-		my $dir1=  get_project_dir()."/mpsoc/rtl/src_topolgy/$Tname";
-		my $dir2=  get_project_dir()."/mpsoc/rtl/src_topolgy/common";
+		my $dir1=  get_project_dir()."/mpsoc/rtl/src_topology/$Tname";
+		my $dir2=  get_project_dir()."/mpsoc/rtl/src_topology/common";
 		my @files = File::Find::Rule->file()
                             ->name( '*.v','*.V')
                             ->in( "$dir1" );
@@ -3120,24 +3120,29 @@ sub add_mpsoc_to_device{
 sub ctrl_box{
 	my ($mpsoc,$info)=@_;
 	my $table = def_table (1, 12, FALSE);	 
-	my $generate = def_image_button('icons/gen.png','_Generate RTL',FALSE,1);
-    my $open = def_image_button('icons/browse.png','_Load MPSoC',FALSE,1);
+	my $generate = def_image_button('icons/gen.png','_Generate RTL',FALSE,1);  
     my $compile  = def_image_button('icons/gate.png','_Compile RTL',FALSE,1);
-    my $software = def_image_button('icons/binary.png','_Software',FALSE,1);
-    my $entry=gen_entry_object($mpsoc,'mpsoc_name',undef,undef,undef,undef);
-    my $entrybox=gen_label_info(" MPSoC name:",$entry);
-    my $save      = def_image_button('icons/save.png');	
-    my $open_dir  = def_image_button('icons/open-folder.png');
-    set_tip($save, "Save current MPSoC configuration setting");
-	set_tip($open_dir, "Open target MPSoC folder");
-    	
-	$entrybox->pack_start( $save, FALSE, FALSE, 0);
-	$entrybox->pack_start( $open_dir , FALSE, FALSE, 0);
+    my $software = def_image_button('icons/binary.png','_Software',FALSE,1);   
     my $diagram  = def_image_button('icons/diagram.png','Diagram');
     my $clk=  def_image_button('icons/clk.png','CLK setting');	
 
 	my $row=0;
-    $table->attach ($open,$row, $row+2, 0,1,'expand','shrink',2,2);$row+=2;
+
+
+	my $target_dir= "$ENV{'PRONOC_WORK'}/MPSOC";    
+	my ($entrybox,$entry ) =gen_save_load_widget (
+        $mpsoc, #the object 
+        "MPSoC name",#the label shown for setting configuration
+        'mpsoc_name',#the key name for saveing the setting configuration in object 
+        'MPSoC',#the label full name show in tool tips
+        $target_dir,#Where the generted RTL files are loacted. Undef if not aplicaple
+        'mpsoc',#check the given name match the SoC or mpsoc name rules
+        'lib/mpsoc',#where the current configuration seting file is saved
+        'MPSOC',#the extenstion given for configuration seting file
+		\&load_mpsoc,#refrence to load function
+		$info
+        );
+  
     $table->attach ($entrybox,$row, $row+2, 0,1,'expand','shrink',2,2);$row+=2;
     $table->attach ($diagram, $row, $row+1, 0,1,'expand','shrink',2,2);$row++;
     $table->attach ($clk, $row, $row+1, 0,1,'expand','shrink',2,2);$row++;    
@@ -3149,21 +3154,6 @@ sub ctrl_box{
         generate_mpsoc($mpsoc,$info,1);
         set_gui_status($mpsoc,"refresh_soc",1);
     });
-    
-    $save-> signal_connect("clicked" => sub{ 
-    	my $name=$mpsoc->object_get_attribute('mpsoc_name');
-    	return  if (check_mpsoc_name($name,$info));
-    	generate_mpsoc_lib_file($mpsoc,$info);
-    	message_dialog("MPSOC  \"$name\" is saved as lib/mpsoc/$name.MPSOC.");
-    
-    });
-
-
-    $open-> signal_connect("clicked" => sub{ 
-        set_gui_status($mpsoc,"ref",5);
-        load_mpsoc($mpsoc,$info);    
-    });
-
 
     $compile -> signal_connect("clicked" => sub{ 
         $mpsoc->object_add_attribute('compile','compilers',"QuartusII,Vivado,Verilator,Modelsim");
@@ -3211,24 +3201,81 @@ sub ctrl_box{
 			clk_setting_win1($mpsoc,$info,'mpsoc');	
 	});
 	
-	$open_dir-> signal_connect("clicked" => sub{ 
-		my $name=$mpsoc->object_get_attribute('mpsoc_name');
-    	$name="" if (!defined $name);
-    	if (length($name)==0){
-            message_dialog("Please define the MPSoC name!");
+	return $table;	
+}
+
+
+sub gen_save_load_widget {
+    my (
+        $self, #the object 
+        $label,#the label shown for setting configuration
+        $param_name,#the key name for saveing the setting configuration in object 
+        $full_name,#the label full name show in tool tips
+        $target_dir,#Where the generted RTL files are loacted. Undef if not aplicaple
+        $check,#check the given name match the SoC or mpsoc name rules
+        $config_dir,#where the current configuration seting file is saved
+        $extention,#the extenstion given for configuration seting file
+        $load_func,
+        $info
+        )=@_;
+    my $load = def_image_button('icons/load2.png');
+    my $entry=gen_entry_object($self,$param_name,undef,undef,undef,undef);
+    my $entrybox=gen_label_info("$label:",$entry);
+    my $save      = def_image_button('icons/save.png');	
+    my $open_dir  = def_image_button('icons/open-folder.png') if (defined $target_dir);
+    set_tip($save, "Save current $full_name configuration setting");
+	set_tip($load, "Load a saved $full_name configuration setting");
+	set_tip($open_dir, "Open target $full_name folder") if (defined $target_dir);
+    	
+	$entrybox->pack_start( $save, FALSE, FALSE, 0);
+	$entrybox->pack_start( $load, FALSE, FALSE, 0);
+	$entrybox->pack_start( $open_dir , FALSE, FALSE, 0) if (defined $target_dir);
+
+    $open_dir-> signal_connect("clicked" => sub{     	
+		my $name=$self->object_get_attribute($param_name);
+        $name="" if (!defined $name);
+        if (length($name)==0){
+            message_dialog("Please define the $label!");
             return ;
         }
-    	my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$name";
-		unless (-d $target_dir){
-			message_dialog("Cannot find $target_dir.\n Please run RTL Generator first!",'error');
+        return if(check_mpsoc_name($name,$label) && $check=='mpsoc') ;
+		return if(check_soc_name($name,$label) && $check=='soc') ;	
+        unless (-d "$target_dir/$name"){
+			message_dialog("Cannot find $target_dir/$name.\n Please run RTL Generator first!",'error');
 			return;
 		}
-		system "xdg-open   $target_dir";
-		
+		system "xdg-open   $target_dir/$name";
+	})  if (defined $target_dir);
+
+    $save-> signal_connect("clicked" => sub{ 
+    	my $name=$self->object_get_attribute($param_name);	
+         if (length($name)==0){
+            message_dialog("Please define the $label!");
+            return ;
+        }	
+		return if(check_mpsoc_name($name,$label) && $check=='mpsoc') ;
+		return if(check_soc_name($name,$label) && $check=='soc') ;	
+		# Write object file
+        my $config_file = "${config_dir}/${name}.$extention";
+		open(FILE,  ">$config_file") || die "Can not open $config_file: $!";
+		print FILE perl_file_header("${name}.$extention");
+		print FILE Data::Dumper->Dump([\%$self],[$extention]);
+		close(FILE) || die "Error closing file: $!";
+		message_dialog("Current configuration  \"$name\" is saved as $config_file.");		
+    
+    });
+
+    $entry->signal_connect( 'changed'=> sub{
+		my $name=$entry->get_text();
+		$self->object_add_attribute ("save_as",undef,$name);	
 	});	
-	
-	
-	return $table;	
+
+    $load-> signal_connect("clicked" => sub{ 
+        set_gui_status($self,"ref",5);
+        &$load_func($self,$info);    
+    });
+
+    return ($entrybox,$entry);
 }
 
 ############

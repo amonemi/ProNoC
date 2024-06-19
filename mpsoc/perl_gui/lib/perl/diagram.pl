@@ -227,7 +227,7 @@ sub gen_show_diagram{
 		
 		 my $name=$self->object_get_attribute('noc_param','CUSTOM_TOPOLOGY_NAME');
 		 $name=~s/["]//gs;        		
-		 my $image=  get_project_dir()."/mpsoc/rtl/src_topolgy/$name/$name.png";
+		 my $image=  get_project_dir()."/mpsoc/rtl/src_topology/$name/$name.png";
 		 my $tmp  = "$ENV{'PRONOC_WORK'}/tmp/diagram.png";
 		
 		 unlink $tmp; 
@@ -389,7 +389,7 @@ sub gen_diagram {
 		
 		 my $name=$self->object_get_attribute('noc_param','CUSTOM_TOPOLOGY_NAME');
 		 $name=~s/["]//gs;        		
-		 my $image=  get_project_dir()."/mpsoc/rtl/src_topolgy/$name/$name.png";
+		 my $image=  get_project_dir()."/mpsoc/rtl/src_topology/$name/$name.png";
 		 my $tmp  = "$ENV{'PRONOC_WORK'}/tmp/diagram.png";
 		
 		 unlink $tmp; 

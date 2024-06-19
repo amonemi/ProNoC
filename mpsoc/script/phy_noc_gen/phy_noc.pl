@@ -13,6 +13,7 @@ use constant::boolean;
 
 use strict;
 use warnings;
+use List::MoreUtils qw(uniq);
 
 
 my $noc_id = $ARGV[0];
@@ -41,6 +42,11 @@ $replace{"noc_localparam.v"} = "noc_localparam_${noc_id}.v";
 $replace{"topology_localparam.v"} = "topology_localparam_${noc_id}.v";
 $replace{"pronoc_pkg"} = "pronoc_pkg_${noc_id}";
 
+#variable for capturing parameters/localparams
+my $before = qr/[,=><\/\n\s\[\{\}\(\+\-\*\\\.]/;
+my $after  = qr/[,=><\/\s;\]\)\{\}\+\-\*\\\^]/;
+
+
 #create out dir
 
 system("mkdir -p $out_dir");
@@ -64,16 +70,47 @@ foreach my $file (@files) {
          while ($line =~ /^\s*module\s+(\w+)[\s#;\(]/g) {
           push @module_names, $1;
         }
-    } 
-   
-   
+    }   
 }
 
+#get the list of all parameters/localparam 
+# Read the entire file content
+my @param_list;
 
- # Print the module names
-foreach my $module (@module_names) {
-    print "$module\n";
+my @param_files=("noc_localparam.v","pronoc_pkg.sv","topology_localparam.v");
+
+for my $filename (@param_files){
+
+    open my $fh, '<', "$noc_dir/$filename" or die "Cannot open file '$filename': $!\n";
+    my $file_content = do { local $/; <$fh> };
+    close $fh;
+
+    # Remove single-line and multi-line comments
+    $file_content =~ s{//.*$}{}mg;  # Remove single-line comments
+    $file_content =~ s{/\*.*?\*/}{}sg;  # Remove multi-line comments
+
+    # Remove content within quotes
+    $file_content =~ s/"(?:[^"\\]|\\.)*"//g;
+
+    # Find all parameters and localparams
+    while ($file_content =~ /\b(parameter|localparam)\s+(.*?);/sg) {
+        my $declaration = $2;
+
+        # Split the declaration into individual parameter assignments
+        my @params = split /,\s*/, $declaration;
+
+        foreach my $param (@params) {
+            # Extract the parameter name
+            if ($param =~ /^\s*(\w+)/) {
+               
+                push @param_list ,$1;
+            }
+        }
+    }
 }
+
+my @unique_params = uniq @param_list;
+
 
 foreach my $file (@files) {
     print "$file\n";    
@@ -105,6 +142,11 @@ foreach my $file (@files) {
             my ($file_name, $extension) = $file =~ /^(.+)\.(\w+)$/;
             my $replacement="${file_name}_${noc_id}.$extension";
             $line =~ s/\Q$file\E/$replacement/g;  
+       }
+       foreach my $key (@unique_params){
+            my $replacement="${key}_${noc_id}";
+            # Replace key with replacment based on the conditions
+            while ($line =~ s/($before)($key)($after)/$1$replacement$3/g) {}   
        }
           
         # Write the modified line to the output file

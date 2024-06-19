@@ -108,7 +108,12 @@ sub generate_phynocs{
 	my $pronoc_dir	  = get_project_dir(); #mpsoc dir addr
 	my $target_dir= "$pronoc_dir/mpsoc/rtl/src_phy_nocs/$name";
     my $phys= $self->object_get_attribute('phy_num');
-		
+   
+	
+	my $ports1="";
+    my $ports2="";
+    my $imports="";
+	#create a unique verilog modules for each NoC	
 	for (my $i=0;$i<$phys;$i++){
 		 add_info($info,"Generating NoC$i Rtl code ...\n");
 		 mkpath("$target_dir/noc$i",1,0755); 
@@ -117,11 +122,35 @@ sub generate_phynocs{
 		 gen_noc_localparam_v_file($self,"$target_dir/noc$i",undef,$i);
 		 $cmd = "mv $target_dir/noc$i/noc_localparam.v $target_dir/noc$i/noc_localparam_${i}.v";
 		 run_cmd_textview_errors ($cmd,$info);
+		 $ports1.=",\n" if($i!=0);
+		 $ports1.= "\tchan_in_$i,\n\tchan_out_$i";
+		 $ports2.= "\tinput  smartflit_chanel_t_$i chan_in;\n";
+		 $ports2.= "\toutput smartflit_chanel_t_$i chan_out;\n";
+		 $imports.= "\timport pronoc_pkg_${i}::smartflit_chanel_t as smartflit_chanel_t_$i;\n"
 	}
+    #copy common rtl modules
+    my $cmd = "cp $pronoc_dir/mpsoc/rtl/*.v  $target_dir/";
+	run_cmd_textview_errors ($cmd,$info);
 
+
+	my $top=autogen_warning().get_license_header("${name}_top.v");
+    $top.="module ${name}_top(
+		 $ports1
+	);
+	$imports
+	$ports2
+	
+	endmodule
+	";
+	open(FILE,  ">$target_dir/${name}_top.v") || die "Can not open: $!";
+	print FILE "$top";
+    close(FILE) || die "Error closing file: $!";  
     message_dialog("Multiple physical NoCs \"$name\" has been created successfully at $target_dir/ " );
 	return 1;
 }
+
+
+
 
 sub build_phy_noc_gui {
 	my ($self) = @_;
@@ -130,105 +159,33 @@ sub build_phy_noc_gui {
 	my $main_table= def_table(2,10,FALSE);
     add_param_widget ($self,"Phy NoCs #:" , undef, 3, 'Spin-button', "1,20,1","Specify the number of independent phisical NoCs. each NoC can have its unique set of parameter configuration.", $main_table,24,0,1, 'phy_num', 1,'ref_nocs','vertical');
 	
-    
-
-
     my ($infobox,$info)= create_txview();
-	
-	
 	my $notebook = gen_notebook_phy($self,$info);		
-	
-	
 	my $v2=gen_vpaned($notebook,.65,$infobox);
 	
-
-
-    my $load = def_image_button('icons/load2.png');
-    my $entry=gen_entry_object($self,'phy_name',undef,undef,undef,undef);
-    my $entrybox=gen_label_info("Name:",$entry);
-    my $save      = def_image_button('icons/save.png');	
-    my $open_dir  = def_image_button('icons/open-folder.png');
-    set_tip($save, "Save current multiple physical NoCs configuration setting");
-	set_tip($load, "Load a saved multiple physical NoCs configuration setting");
-	set_tip($open_dir, "Open target multiple physical NoCs folder");
-    	
-	$entrybox->pack_start( $save, FALSE, FALSE, 0);
-	$entrybox->pack_start( $load, FALSE, FALSE, 0);
-	$entrybox->pack_start( $open_dir , FALSE, FALSE, 0);
+	
+    my $pronoc_dir	  = get_project_dir(); #mpsoc dir addr
+	my $target_dir= "$pronoc_dir/mpsoc/rtl/src_phy_nocs/";
+    
+	my ($entrybox,$entry ) =gen_save_load_widget (
+        $self, #the object 
+        "Phy Name",#the label shown for setting configuration
+        'phy_name',#the key name for saveing the setting configuration in object 
+        'multiple physical NoCs',#the label full name show in tool tips
+        $target_dir,#Where the generted RTL files are loacted. Undef if not aplicaple
+        'soc',#check the given name match the SoC or mpsoc name rules
+        'lib/multi_nocs',#where the current configuration seting file is saved
+        'phy',#the extenstion given for configuration seting file
+		\&load_phy,#refrence to load function
+		$info
+        );
 	my $generate = def_image_button('icons/gen.png','Generate');
-	
-	$open_dir-> signal_connect("clicked" => sub{ 
-    	my $name=$self->object_get_attribute('phy_name');
-    	my $pronoc_dir	  = get_project_dir(); #mpsoc dir addr
-		my $target_dir= "$pronoc_dir/mpsoc/rtl/src_phy_nocs/$name";
-		unless (-d $target_dir){
-			message_dialog("Cannot find $target_dir.\n Please run RTL Generator first!",'error');
-			return;
-		}
-		system "xdg-open   $target_dir";
-	});
-	
-	$save-> signal_connect("clicked" => sub{ 
-    	my $name=$self->object_get_attribute('phy_name');		
-		return if(check_mpsoc_name($name,"phy_NoCs")) ;
-			
-		# Write object file
-		open(FILE,  ">lib/multi_nocs/$name.phy") || die "Can not open $name.phy: $!";
-		print FILE perl_file_header("$name.phy");
-		print FILE Data::Dumper->Dump([\%$self],['phy']);
-		close(FILE) || die "Error closing file: $!";
-		message_dialog("Processing Tile  \"$name\" is saved as lib/multi_nocs/$name.phy.");		
-    
-    });
-
-
-    $load-> signal_connect("clicked" => sub{ 
-        set_gui_status($self,"ref",5);
-        load_phy($self,$info);    
-    });
-
-	
-	
-	
-	$entry->signal_connect( 'changed'=> sub{
-		my $name=$entry->get_text();
-		$self->object_add_attribute ("save_as",undef,$name);	
-	});	
-	
-	my ($entrybox2,$entry2) = def_h_labeled_entry('Routing Alg. name:',undef);
-	
-	$entry2->signal_connect( 'changed'=> sub{
-		my $name=$entry2->get_text();
-		$self->object_add_attribute ("routing_name",undef,$name);	
-	});	
-	
-	
-	$main_table->attach_defaults ($v2  , 0, 12, 0,24);
    
-
-	
-	#$main_table->attach ($save,1, 2, 24,25,'expand','shrink',2,2);
-	
+	$main_table->attach_defaults ($v2  , 0, 12, 0,24);
 	$main_table->attach ($entrybox,3, 4, 24,25,'expand','shrink',2,2);
-#	$main_table->attach ($entrybox2,4, 6, 24,25,'expand','shrink',2,2);
-    
 	$main_table->attach ($generate, 6, 9, 24,25,'expand','shrink',2,2);
-	
-
 	my $sc_win = add_widget_to_scrolled_win($main_table);
-	
-	
-	#setting for graphs
-	my $n=0;
-    my $sample="sample$n";
-	$n++;
-	$self->object_add_attribute("id",undef,$n);
-	$self->object_add_attribute("active_setting",undef,undef);
-	$self->object_add_attribute_order("samples",$sample);
-	$self->object_add_attribute($sample,"color",1);
-	add_color_to_gd($self);
-	
-	
+		
 	$generate->signal_connect("clicked" => sub{ 
 		my $load= show_gif("icons/load.gif");
 		$main_table->attach ($load, 9, 10, 24,25,'expand','shrink',2,2);
@@ -270,8 +227,8 @@ sub build_phy_noc_gui {
 		my $saved_name=$self->object_get_attribute('save_as');
 		$entry->set_text($saved_name)if(defined $saved_name);
 		    
-		$saved_name = $self->object_get_attribute('routing_name');
-		$entry2->set_text($saved_name) if(defined $saved_name);
+		
+		
 		    
 		set_gui_status($self,"ideal",0);
 		$main_table->show_all();	

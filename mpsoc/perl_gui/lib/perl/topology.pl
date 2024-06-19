@@ -540,7 +540,7 @@ sub get_noc_verilator_top_modules_info {
         
 	}else {#custom
 		
-		my $dir =get_project_dir()."/mpsoc/rtl/src_topolgy";
+		my $dir =get_project_dir()."/mpsoc/rtl/src_topology";
 		my $file="$dir/param.obj";	
 		my %param;
 		if(-f $file){

@@ -424,7 +424,7 @@ The NI releases the wishbone bus  each time one burst is completed or when the V
                                    '/mpsoc/rtl/main_comp.v',
                                    '/mpsoc/rtl/arbiter.v',
 								   '/mpsoc/rtl/pronoc_def.v',
-                                   '/mpsoc/rtl/src_topolgy/',
+                                   '/mpsoc/rtl/src_topology/',
                                    '/mpsoc/rtl/src_noc/'
                                  ],
                   'file_name' => 'mpsoc/rtl/src_peripheral/ni/ni_master.v',
