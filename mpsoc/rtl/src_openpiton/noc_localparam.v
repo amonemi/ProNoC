@@ -2,6 +2,7 @@
 
 `include "define.tmp.h"
 
+    localparam NOC_ID=0;   
 
 //NoC parameters
 	localparam TOPOLOGY="FMESH";

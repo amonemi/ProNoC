@@ -16,6 +16,8 @@ use warnings;
 use List::MoreUtils qw(uniq);
 
 use File::Basename;
+use File::Copy;
+
 my $dirname = dirname(__FILE__);
 my $noc_dir = "$dirname/../../rtl/src_noc";
 
@@ -45,6 +47,8 @@ $replace{"`NOC_CONF"} = "import pronoc_pkg_${noc_id}::*;";
 $replace{"noc_localparam.v"} = "noc_localparam_${noc_id}.v";
 $replace{"topology_localparam.v"} = "topology_localparam_${noc_id}.v";
 $replace{"pronoc_pkg"} = "pronoc_pkg_${noc_id}";
+$replace{"NOC_ID=0"} = "NOC_ID=$ARGV[0]";
+
 
 
 #create out dir
@@ -57,6 +61,13 @@ my @files = readdir($dir);
 closedir($dir);
 # Filter out '.' and '..' special entries
 @files = grep { $_ ne '.' && $_ ne '..' } @files;
+
+#get list of common files in all phy nocs
+opendir($dir, "$noc_dir/..") or die "Could not open $noc_dir for reading: $!\n";
+my @common_file=  readdir($dir);
+@common_file = grep { $_ ne '.' && $_ ne '..' &&  -f "$noc_dir/../$_" } @common_file;
+closedir($dir);
+
 
 
 #get list of all modules
@@ -161,7 +172,7 @@ my $replace_regex = join '|', map { quotemeta } keys %replace;
 
 
 foreach my $file (@files) {
-    print "$file\n";    
+    #print "$file\n";    
     my ($file_name, $extension) = $file =~ /^(.+)\.(\w+)$/;
     my $output_filename = "$out_dir/${file_name}_${noc_id}.$extension";
     
@@ -199,7 +210,12 @@ close($input_fh);
 close($output_fh);
 }
 
+foreach my $f (@common_file){
+    copy ("$noc_dir/../$f" , "$out_dir/../$f");
 
+}
+
+print "A Phy NoC is created in: $out_dir\n";
 
 
 #save each file with apending noc_id

@@ -49,6 +49,7 @@ mpsoc/src_c/**/*.o
 mpsoc/remove_cycle/__pycache__
 
 mpsoc_work/
+mpsoc/rtl/src_openpiton/nocs
 
 
 
