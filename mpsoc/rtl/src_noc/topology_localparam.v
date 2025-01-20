@@ -401,7 +401,22 @@ localparam
     endfunction // addrencode    
      
     
+     function automatic  integer fmesh_router_id; 
+        input integer x,y;
+        begin
+        fmesh_router_id=((y * NX) +  x);
+        end
+     endfunction
+     
+      function automatic  integer fmesh_endp_id; 
+        input integer x,y,l;
+        begin
+        fmesh_endp_id=((y * NX) + x) * NL + l ;
+        end
+     endfunction
+     
     
+                        
     // synthesis translate_off
     /* verilator lint_off WIDTH */
    task display_noc_parameters;  

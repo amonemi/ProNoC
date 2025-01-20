@@ -34,6 +34,10 @@
 * 
 *
 ******************************************/
+
+`ifndef PRONOC_ARBITER
+`define PRONOC_ARBITER
+
 `include "pronoc_def.v"
 
 
@@ -898,9 +902,5 @@ endmodule
     
     
 endmodule
-    
 
-
- 
- 
- 
+`endif

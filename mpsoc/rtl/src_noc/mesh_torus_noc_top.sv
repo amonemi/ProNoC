@@ -28,8 +28,8 @@
 **************************************************************/
 
 
-`define router_id(x,y)                         ((y * NX) +    x)
-`define endp_id(x,y,l)                         ((y * NX) +    x) * NL + l 
+//`define router_id(x,y)                         ((y * NX) +    x)
+//`define endp_id(x,y,l)                         ((y * NX) +    x) * NL + l 
 
 
 
@@ -107,7 +107,7 @@ module mesh_torus_noc_top #(
             
 				// connect other local ports
 				for  (l=0;   l<NL; l=l+1) begin :locals
-					localparam ENDPID = `endp_id(x,0,l); 
+					localparam ENDPID = fmesh_endp_id(x,0,l); 
 					localparam LOCALP = (l==0) ? l : l + R2R_CHANELS_MESH_TORI; // first local port is connected to router port 0. The rest are connected at the end  
 					assign router_chan_in[x][LOCALP]= chan_in_all [ENDPID];
 					assign chan_out_all [ENDPID] = router_chan_out[x][LOCALP];
@@ -144,84 +144,84 @@ module mesh_torus_noc_top #(
         
         
 				if(x    <    NX-1) begin: not_last_x
-					assign router_chan_in[`router_id(x,y)][EAST]= router_chan_out [`router_id(x+1,y)][WEST];
+					assign router_chan_in[fmesh_router_id(x,y)][EAST]= router_chan_out [fmesh_router_id(x+1,y)][WEST];
 					//assign    router_credit_in_all [`SELECT_WIRE(x,y,EAST,V)] = router_credit_out_all [`SELECT_WIRE((x+1),y,WEST,V)];					
 				end else begin :last_x
 					/* verilator lint_off WIDTH */ 
 					if(TOPOLOGY == "MESH") begin :last_x_mesh
 					/* verilator lint_on WIDTH */ 
-						assign router_chan_in[`router_id(x,y)][EAST] = {SMARTFLIT_CHANEL_w{1'b0}};					
+						assign router_chan_in[fmesh_router_id(x,y)][EAST] = {SMARTFLIT_CHANEL_w{1'b0}};					
 					/* verilator lint_off WIDTH */ 
 					end else if(TOPOLOGY == "TORUS") begin : last_x_torus
 					/* verilator lint_on WIDTH */ 
-						assign router_chan_in[`router_id(x,y)][EAST] = router_chan_out [`router_id(0,y)][WEST];						
+						assign router_chan_in[fmesh_router_id(x,y)][EAST] = router_chan_out [fmesh_router_id(0,y)][WEST];						
 					/* verilator lint_off WIDTH */ 
 					end else if(TOPOLOGY == "FMESH") begin : last_x_fmesh //connect to endp
 					/* verilator lint_on WIDTH */ 
 						localparam EAST_ID = NX*NY*NL + 2*NX + NY +y; 
-						assign router_chan_in [`router_id(x,y)][EAST] =    chan_in_all [EAST_ID];
-						assign chan_out_all [EAST_ID] = router_chan_out [`router_id(x,y)][EAST];						 
+						assign router_chan_in [fmesh_router_id(x,y)][EAST] =    chan_in_all [EAST_ID];
+						assign chan_out_all [EAST_ID] = router_chan_out [fmesh_router_id(x,y)][EAST];						 
 					end //topology
 				end 
             
         
 				if(y>0) begin : not_first_y
-					assign router_chan_in[`router_id(x,y)][NORTH] =  router_chan_out [`router_id(x,(y-1))][SOUTH];					
+					assign router_chan_in[fmesh_router_id(x,y)][NORTH] =  router_chan_out [fmesh_router_id(x,(y-1))][SOUTH];					
 				end else begin :first_y
 					/* verilator lint_off WIDTH */ 
 					if(TOPOLOGY == "MESH") begin : first_y_mesh
 					/* verilator lint_on WIDTH */ 
-						assign router_chan_in[`router_id(x,y)][NORTH] =  {SMARTFLIT_CHANEL_w{1'b0}};												
+						assign router_chan_in[fmesh_router_id(x,y)][NORTH] =  {SMARTFLIT_CHANEL_w{1'b0}};												
 					/* verilator lint_off WIDTH */ 
 					end else if(TOPOLOGY == "TORUS") begin :first_y_torus
 					/* verilator lint_on WIDTH */ 
-						assign router_chan_in[`router_id(x,y)][NORTH] =  router_chan_out [`router_id(x,(NY-1))][SOUTH];						
+						assign router_chan_in[fmesh_router_id(x,y)][NORTH] =  router_chan_out [fmesh_router_id(x,(NY-1))][SOUTH];						
 					/* verilator lint_off WIDTH */ 
 					end else if(TOPOLOGY == "FMESH") begin : first_y_fmesh //connect to endp
 					/* verilator lint_on WIDTH */ 	
 						localparam NORTH_ID = NX*NY*NL + x; 
-						assign router_chan_in [`router_id(x,y)][NORTH] =    chan_in_all [NORTH_ID];
-						assign chan_out_all [NORTH_ID] = router_chan_out [`router_id(x,y)][NORTH];
+						assign router_chan_in [fmesh_router_id(x,y)][NORTH] =    chan_in_all [NORTH_ID];
+						assign chan_out_all [NORTH_ID] = router_chan_out [fmesh_router_id(x,y)][NORTH];
 					end//topology
 				end//y>0
             
             
 				if(x>0)begin :not_first_x
-					assign    router_chan_in[`router_id(x,y)][WEST] =  router_chan_out [`router_id((x-1),y)][EAST];					
+					assign    router_chan_in[fmesh_router_id(x,y)][WEST] =  router_chan_out [fmesh_router_id((x-1),y)][EAST];					
 				end else begin :first_x
 					/* verilator lint_off WIDTH */ 
 					if(TOPOLOGY == "MESH") begin :first_x_mesh
 					/* verilator lint_on WIDTH */ 
-						assign    router_chan_in[`router_id(x,y)][WEST] =   {SMARTFLIT_CHANEL_w{1'b0}};						
+						assign    router_chan_in[fmesh_router_id(x,y)][WEST] =   {SMARTFLIT_CHANEL_w{1'b0}};						
 					/* verilator lint_off WIDTH */                
 					end else if(TOPOLOGY == "TORUS") begin :first_x_torus
 					/* verilator lint_on WIDTH */ 
-						assign    router_chan_in[`router_id(x,y)][WEST] =   router_chan_out [`router_id((NX-1),y)][EAST] ;						
+						assign    router_chan_in[fmesh_router_id(x,y)][WEST] =   router_chan_out [fmesh_router_id((NX-1),y)][EAST] ;						
 					/* verilator lint_off WIDTH */ 
 					end else if(TOPOLOGY == "FMESH") begin : first_x_fmesh //connect to endp
 					/* verilator lint_on WIDTH */ 	
 						localparam WEST_ID = NX*NY*NL +2*NX + y; 
-						assign router_chan_in [`router_id(x,y)][WEST] =    chan_in_all [WEST_ID];
-						assign chan_out_all [WEST_ID] = router_chan_out [`router_id(x,y)][WEST];						
+						assign router_chan_in [fmesh_router_id(x,y)][WEST] =    chan_in_all [WEST_ID];
+						assign chan_out_all [WEST_ID] = router_chan_out [fmesh_router_id(x,y)][WEST];						
 					end//topology
 				end    
             
 				if(y    <    NY-1) begin : firsty
-					assign  router_chan_in[`router_id(x,y)][SOUTH] =    router_chan_out [`router_id(x,(y+1))][NORTH];					
+					assign  router_chan_in[fmesh_router_id(x,y)][SOUTH] =    router_chan_out [fmesh_router_id(x,(y+1))][NORTH];					
 				end else     begin : lasty
 					/* verilator lint_off WIDTH */ 
 					if(TOPOLOGY == "MESH") begin :ly_mesh
 						/* verilator lint_on WIDTH */ 
-						assign  router_chan_in[`router_id(x,y)][SOUTH]=  {SMARTFLIT_CHANEL_w{1'b0}};						
+						assign  router_chan_in[fmesh_router_id(x,y)][SOUTH]=  {SMARTFLIT_CHANEL_w{1'b0}};						
 						/* verilator lint_off WIDTH */ 
 					end else if(TOPOLOGY == "TORUS") begin :ly_torus
 						/* verilator lint_on WIDTH */ 
-						assign  router_chan_in[`router_id(x,y)][SOUTH]=    router_chan_out [`router_id(x,0)][NORTH];						
+						assign  router_chan_in[fmesh_router_id(x,y)][SOUTH]=    router_chan_out [fmesh_router_id(x,0)][NORTH];						
 					end else if(TOPOLOGY == "FMESH") begin : ly_fmesh //connect to endp
 						/* verilator lint_on WIDTH */ 	
 						localparam SOUTH_ID = NX*NY*NL + NX + x; 
-						assign router_chan_in [`router_id(x,y)][SOUTH] =    chan_in_all [SOUTH_ID];
-						assign chan_out_all [SOUTH_ID] = router_chan_out [`router_id(x,y)][SOUTH];
+						assign router_chan_in [fmesh_router_id(x,y)][SOUTH] =    chan_in_all [SOUTH_ID];
+						assign chan_out_all [SOUTH_ID] = router_chan_out [fmesh_router_id(x,y)][SOUTH];
 					end//topology
 				end          
         
@@ -229,11 +229,11 @@ module mesh_torus_noc_top #(
 				// endpoint(s) connection
 				// connect other local ports
 				for  (l=0;   l<NL; l=l+1) begin :locals
-					localparam ENDPID = `endp_id(x,y,l); 
+					localparam ENDPID = fmesh_endp_id(x,y,l); 
 					localparam LOCALP = (l==0) ? l : l + R2R_CHANELS_MESH_TORI; // first local port is connected to router port 0. The rest are connected at the end  
                 
-					assign router_chan_in [`router_id(x,y)][LOCALP] =    chan_in_all [ENDPID];
-					assign chan_out_all [ENDPID] = router_chan_out [`router_id(x,y)][LOCALP];			
+					assign router_chan_in [fmesh_router_id(x,y)][LOCALP] =    chan_in_all [ENDPID];
+					assign chan_out_all [ENDPID] = router_chan_out [fmesh_router_id(x,y)][LOCALP];			
                               
 				end// locals                 
     

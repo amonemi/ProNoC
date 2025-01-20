@@ -131,7 +131,7 @@ my @replaces = uniq @param_list;
 
 
 #get list of functions
-    open $fh, '<', "$noc_dir/topology_localparam.v" or die "Cannot open file pronoc_pkg.sv: $!\n";
+    open $fh, '<', "$noc_dir/topology_localparam.v" or die "Cannot open file topology_localparam.v: $!\n";
     $file_content = do { local $/; <$fh> };
     close $fh;
     # Remove single-line and multi-line comments
