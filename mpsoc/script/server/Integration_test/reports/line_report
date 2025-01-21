@@ -38,6 +38,8 @@ Verification Results:
 ****************************line_8_b2	: random traffic *******************************:
 	 Passed:   zero load (6,17.8996) saturation (34,105.723)
 ****************************line_8_sbp6_xy	: random traffic *******************************:
+	 Error in running simulation:                 8000: ERROR: The destination port is not set for an active IVC request: d[R	
+ 
 ****************************line_8_single_flit	: random traffic *******************************:
 	 Passed:   zero load (6,7.98062) saturation (38,41.7814)
 ****************************line_8x8_ssa_xy	: random traffic *******************************:

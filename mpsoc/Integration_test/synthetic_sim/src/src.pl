@@ -5,11 +5,17 @@ use lib "../perl_lib";
 use List::MoreUtils qw(uniq);
 use Proc::Background;
 use File::Path qw( rmtree );
+use File::Path qw( make_path );
+use Cwd qw(realpath);
 use Cwd 'abs_path';
 
 my $script_path = dirname(__FILE__);
-my $dirname = "$script_path/..";
-my $root = "$dirname/../..";
+my $dirname = realpath("$script_path/..");
+my $root = realpath("$dirname/../..");
+
+print "Script Path: $script_path\n";
+print "Dirname: $dirname\n";
+print "Root: $root\n";
 
 my $rtl_dir = "$ENV{PRONOC_WORK}/verify/rtl";
 my $work    = "$ENV{PRONOC_WORK}/verify/work";
@@ -38,17 +44,23 @@ my $pp;
 
 
 sub recompile_synful {
+    # Define the command to recompile Synful
+    my $cmd = "cd $src_c/synfull/traffic-generator/src && make; wait;";
 
-#recmpile synful
-my 	$cmd ="cd $src_c/synfull/traffic-generator/src; make; wait;\n";
-		#run command in terminal
-		print "*******************compile synful******************\n$cmd\n";
-		my $proc1 = Proc::Background->new($cmd);
-		$proc1->alive;
-		$proc1->wait;
-		$proc1->die;
-		
-}		
+    print "******************* Compile Synful *******************\n";
+    print "Executing command: $cmd\n";
+
+    # Run the command and capture its exit status
+    my $output = `$cmd 2>&1`; # Capture both stdout and stderr
+    my $exit_status = $? >> 8; # Extract exit code
+
+    # Check for errors
+    if ($exit_status != 0) {
+        die "Error: Compilation of Synful failed with exit code $exit_status. Output:\n$output\n";
+    } else {
+        print "Synful compiled successfully.\n";
+    }
+}
 
 sub gen_noc_param_h{
 	my $mpsoc=shift;
@@ -196,31 +208,43 @@ sub gen_noc_localparam_v {
 }
 
 
-sub copy_src_files{
-	
-	if(defined $ENV{PRONOC_WORK}){
-		rmtree("$rtl_dir");
-	 	unless (-d "$rtl_dir"){
-			print "make a working directory inside $rtl_dir\n"; 
-			mkdir("$rtl_dir", 0700);
+sub copy_src_files {
+    # Check if PRONOC_WORK environment variable is set
+    unless (defined $ENV{PRONOC_WORK}) {
+        die "Error: Please set the PRONOC_WORK environment variable first!\n";
+    }
+    print "\n******************* copy source files *******************\n";
+    # Ensure working directory exists, creating it recursively if necessary
+    print "Creating working directory: $rtl_dir\n";
+    make_path($rtl_dir, { mode => 0700 }) or die "Error: Cannot create directory $rtl_dir: $!\n";
+    $rtl_dir=realpath ($rtl_dir);
 
-		}
-	}else{
-			print  "Please set PRONOC_WORK variable first!";
-			exit;
-	}
-	
-	dircopy("$root/rtl/src_noc"    , "$rtl_dir/src_noc"    ) or die("$!\n") unless (-d "$rtl_dir/src_noc"    );
-    dircopy("$root/rtl/src_topolgy", "$rtl_dir/src_topolgy") or die("$!\n") unless (-d "$rtl_dir/src_topolgy");
+    # Define source directories
+    my %src_dirs = (
+        "$root/rtl/src_noc"    => "$rtl_dir/src_noc",
+        "$root/rtl/src_topology" => "$rtl_dir/src_topology",
+    );
 
-    unlink "$rtl_dir/src_noc/noc_localparam.v";
+    # Copy source directories
+    for my $src (keys %src_dirs) {
+        my $dest = $src_dirs{$src};
+        unless (-d $dest) {
+            dircopy($src, $dest) or die "Error: Cannot copy $src to $dest: $!\n";
+        }
+    }
+
+    # Remove specific file if it exists in the destination
+    my $noc_localparam_file = "$rtl_dir/src_noc/noc_localparam.v";
+    unlink $noc_localparam_file if -e $noc_localparam_file;
+
+    # Copy individual Verilog files from root RTL directory
     for my $file (glob "$root/rtl/*.v") {
-   		 copy $file, "$rtl_dir" or die $! ; 
-	}
+        copy($file, $rtl_dir) or die "Error: Cannot copy $file to $rtl_dir: $!\n";
+    }
 
-	
-
+    print "Source files copied successfully.\n";
 }
+
 
 
 
@@ -335,10 +359,11 @@ sub check_models_are_exsited {
 
 sub gen_models {
 	my ($mref, $inref) = @_;
-	my @models = get_model_names(@_);
-	
+	my @models = get_model_names(@_);	
 
     mkdir("$work", 0700);
+    $work=realpath($work);
+    
 	foreach my $m (@models){
 		print "$m\n";
 		unless (-f $m ){
@@ -366,8 +391,6 @@ sub gen_models {
 		#generate file list		
 		gen_file_list("$work/$name");
 		gen_verilator_sh($tops,"$work/$name/verilator.sh");
-		
-
 
 		#copy C files
 		my @files = File::Find::Rule->file()
@@ -381,9 +404,6 @@ sub gen_models {
 		#copy nettrace & synful
 	    dircopy("$src_c/netrace-1.0","$work/$name/obj_dir/netrace-1.0");
 	    dircopy("$src_c/synfull","$work/$name/obj_dir/synful");
-		
-		
-
 
 		#generate make file
 		gen_verilator_makefile($tops,"$work/$name/obj_dir/Makefile");

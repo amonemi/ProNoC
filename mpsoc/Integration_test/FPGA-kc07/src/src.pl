@@ -165,7 +165,7 @@ sub copy_src_files{
 	}
 	
 	dircopy("$root/rtl/src_noc"    , "$rtl_dir/src_noc"    ) or die("$!\n") unless (-d "$rtl_dir/src_noc"    );
-    dircopy("$root/rtl/src_topolgy", "$rtl_dir/src_topolgy") or die("$!\n") unless (-d "$rtl_dir/src_topolgy");
+    dircopy("$root/rtl/src_topology", "$rtl_dir/src_topology") or die("$!\n") unless (-d "$rtl_dir/src_topology");
 
     unlink "$rtl_dir/src_noc/noc_localparam.v";
     for my $file (glob "$root/rtl/*.v") {

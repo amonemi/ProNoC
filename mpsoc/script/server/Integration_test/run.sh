@@ -189,6 +189,7 @@ select_a_server
 copy_sources
 #3 run the test
 
+echo "source \"/etc/profile\"; bash server_run.sh $args"
 ssh  -o "StrictHostKeyChecking no" $my_server  "cd ${SERVER_ROOT_DIR}/mpsoc/Integration_test/synthetic_sim;  source \"/etc/profile\";  bash   server_run.sh $args;"
 
 #collect the report
