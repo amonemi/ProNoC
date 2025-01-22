@@ -40,14 +40,14 @@ if ($noc_id =~ /[^a-zA-Z0-9_\$]+/){
 		 die "NOC_ID ($noc_id) contains the illegal character of \"$w[1]\" after $w[0]. Identifiers may contain alphabetic characters, numeric characters, the underscore, and the dollar sign (a-z A-Z 0-9 _ \$ )\n";
 
 }
-$noc_id="N$noc_id";
+
 
 my %replace;
 $replace{"`NOC_CONF"} = "import pronoc_pkg_${noc_id}::*;";
 $replace{"noc_localparam.v"} = "noc_localparam_${noc_id}.v";
 $replace{"topology_localparam.v"} = "topology_localparam_${noc_id}.v";
 $replace{"pronoc_pkg"} = "pronoc_pkg_${noc_id}";
-$replace{"NOC_ID=0"} = "NOC_ID=$ARGV[0]";
+$replace{"NOC_ID=0"} = "NOC_ID=\"$ARGV[0]\"";
 
 
 

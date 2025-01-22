@@ -106,30 +106,42 @@ sub generate_phynocs{
     return 0 if (check_mpsoc_name($name,$info,"Phy NoCs"));
     #make target dir
     my $pronoc_dir      = get_project_dir(); #mpsoc dir addr
-    my $target_dir= "$pronoc_dir/mpsoc/rtl/src_phy_nocs/$name";
+    my $target_dir= "$ENV{PRONOC_WORK}/src_phy_nocs/$name";
     my $phys= $self->object_get_attribute('phy_num');
 
 
     my $ports1="";
     my $ports2="";
     my $imports="";
-    my $filelist=perl_file_header("phy_nocs.flist");
-    $filelist.="+incdir+./\n";
+    my $nocs="";
+    my $flist1=perl_file_header("phy_nocs.flist");
+    my $flist2="";
     #create a unique verilog modules for each NoC    
     for (my $i=0;$i<$phys;$i++){
+        my $append="N$i";
         add_info($info,"Generating NoC$i Rtl code ...\n");
         mkpath("$target_dir/noc$i",1,0755); 
-        my $cmd = "perl $pronoc_dir/mpsoc/script/phy_noc_gen/phy_noc.pl $i $target_dir/noc$i";
+        my $cmd = "perl $pronoc_dir/mpsoc/script/phy_noc_gen/phy_noc.pl $append $target_dir/noc$i";
         run_cmd_textview_errors ($cmd,$info);
         gen_noc_localparam_v_file($self,"$target_dir/noc$i",undef,$i);
-        $cmd = "mv $target_dir/noc$i/noc_localparam.v $target_dir/noc$i/noc_localparam_${i}.v";
+        $cmd = "mv $target_dir/noc$i/noc_localparam.v $target_dir/noc$i/noc_localparam_${append}.v";
         run_cmd_textview_errors ($cmd,$info);
         $ports1.=",\n" if($i!=0);
-        $ports1.= "\tchan_in_$i,\n\tchan_out_$i";
-        $ports2.= "\tinput  smartflit_chanel_t_$i chan_in;\n";
-        $ports2.= "\toutput smartflit_chanel_t_$i chan_out;\n";
-        $imports.= "\timport pronoc_pkg_${i}::smartflit_chanel_t as smartflit_chanel_t_$i;\n";
-        $filelist.="-F  noc$i/noc_filelist_N$i.f\n";
+        $ports1.= "\tchan_in_$append,\n\tchan_out_$append";
+        $ports2.= "\tinput  smartflit_chanel_t_$append chan_in_$append;\n";
+        $ports2.= "\toutput smartflit_chanel_t_$append chan_out_$append;\n";
+        $imports.= "\timport pronoc_pkg_${append}::*;\n";
+        $flist1.="+incdir+./noc$i\n";
+        $flist2.="-F  noc$i/noc_filelist_${append}.f\n";
+        $nocs.="
+    noc_top_${append} noc_${append} (
+	    .reset(reset),
+	    .clk(clk),    
+	    .chan_in_all(chan_in_$append),
+	    .chan_out_all(chan_out_$append),
+	    .router_event()
+    );
+"
     }
     #copy common rtl modules
     my $cmd = "cp $pronoc_dir/mpsoc/rtl/*.v  $target_dir/";
@@ -138,16 +150,22 @@ sub generate_phynocs{
 
     my $top=autogen_warning().get_license_header("${name}_top.v");
     $top.="module ${name}_top(
-        $ports1
+    reset,
+    clk,    
+$ports1
     );
-    $imports
-    $ports2
-    
-    endmodule
-    ";
+   
+$imports
 
+    input reset,clk;
+$ports2
+
+$nocs    
+endmodule
+    ";
+    
     save_file ("$target_dir/${name}_top.v",$top);
-    save_file ("$target_dir/phy_nocs.flist",$filelist);
+    save_file ("$target_dir/${name}.flist",$flist1.$flist2."./${name}_top.v");
 
 
     message_dialog("Multiple physical NoCs \"$name\" has been created successfully at $target_dir/ " );
@@ -170,7 +188,7 @@ sub build_phy_noc_gui {
     
     
     my $pronoc_dir      = get_project_dir(); #mpsoc dir addr
-    my $target_dir= "$pronoc_dir/mpsoc/rtl/src_phy_nocs/";
+    my $target_dir= "$ENV{PRONOC_WORK}/src_phy_nocs/";
     
     my ($entrybox,$entry ) =gen_save_load_widget (
         $self, #the object 

@@ -17,25 +17,24 @@ pronoc_dir="$SCRIPT_DIR_PATH/../../rtl/src_noc"
 # Script to create physical NoCs
 phy_noc_gen="$SCRIPT_DIR_PATH/phy_noc.pl"
 
-cp  $op_nocs_dir/wrapper.sv   $pronoc_dir/wrapper.sv
-mv  $pronoc_dir/noc_localparam.v  $pronoc_dir/noc_localparam.v.tmp
-cp  $op_nocs_dir/noc_localparam.v $pronoc_dir/noc_localparam.v
+cp "$op_nocs_dir/wrapper.sv" "$pronoc_dir/wrapper.sv"
+mv "$pronoc_dir/noc_localparam.v" "$pronoc_dir/noc_localparam.v.tmp"
+cp "$op_nocs_dir/noc_localparam.v" "$pronoc_dir/noc_localparam.v"
+
 # Loop to generate three physical NoCs
 IN=""
 LIST=""
 for i in {1..3}; do
     mkdir -p "$op_nocs_dir/nocs/noc$i"
-    perl "$phy_noc_gen" "$i" "$op_nocs_dir/nocs/noc$i"
+    perl "$phy_noc_gen" "N$i" "$op_nocs_dir/nocs/noc$i"
     IN+="+incdir+./noc${i}\n"
     LIST+="-F ./noc${i}/noc_filelist_N${i}.f\n"
     LIST+="./noc${i}/wrapper_N${i}.sv\n"
-    
 done
-rm $pronoc_dir/wrapper.sv
-mv $pronoc_dir/noc_localparam.v.tmp  $pronoc_dir/noc_localparam.v
 
-#generate the file list
+# Clean up and restore the original file
+rm "$pronoc_dir/wrapper.sv"
+mv "$pronoc_dir/noc_localparam.v.tmp" "$pronoc_dir/noc_localparam.v"
+
 # Generate the file list for physical NoCs
 printf "${IN}$LIST" > "$op_nocs_dir/nocs/Flist.pronoc"
-
-
