@@ -12,7 +12,7 @@ servers=( 'mn5')
 
 
 #the max server load that is permited for runing the parallel test
-max_allowed_server_load=24
+max_allowed_server_load_percentage=24
 
 
 SCRPT_FULL_PATH=$(realpath ${BASH_SOURCE[0]})
@@ -113,10 +113,27 @@ done
 shift $((OPTIND-1))
 
 [ "${1:-}" = "--" ] && shift
+Leftovers="$@"
 
-echo "paralel_run=$paralel_run, MAX=$MAX, MIN=$MIN, STEP=$STEP, dir=$dir models=$model Leftovers: $@"
-
-
+# Display information
+echo "---------------------------------------------"
+echo "Simulation Script Information"
+echo "---------------------------------------------"
+echo "  Parallel Runs       : $paralel_run (Maximum number of parallel simulations"
+echo "                        that can be run at the same time on the server)"
+echo "  Max Injection Ratio : $MAX (Maximum packet injection ratio)"
+echo "  Min Injection Ratio : $MIN (Minimum packet injection ratio)"
+echo "  Step Size           : $STEP (Simulation starts at MIN and increments by"
+echo "                        STEP to reach MAX)"
+echo "  Target Directory    : $dir (The model target directory where simulation"
+echo "                        is running)"
+if [ -n "$model" ]; then
+    echo "  Model Under Test    : $model (The model name under test)"
+fi
+if [ -n "$Leftovers" ]; then
+    echo "  Leftover Arguments  : $Leftovers (Additional arguments passed to the script)"
+fi
+echo "---------------------------------------------"
 
 args="-p $paralel_run -u $MAX -l $MIN -s $STEP -d $dir $model"
 
@@ -125,7 +142,9 @@ args="-p $paralel_run -u $MAX -l $MIN -s $STEP -d $dir $model"
 report="${SCRPT_DIR_PATH}/reports/${dir}_report"
 
 
-rm $report
+if [ -f "$report" ]; then
+    rm "$report"
+fi
 
 
 
@@ -133,32 +152,39 @@ rm $report
 #copy_sources
 #login_in_server
 
-#step one login in tje server and read the load 
-function get_server_avg_load {
-	out=$(ssh -t -o "StrictHostKeyChecking no" $1  "uptime")
-	load_avg=$(grep -oP '(?<=load average: )[0-9]+' <<< $out)		
+#step one login in the server and find how much is bussy 
+function get_server_load_percentage {
+	 # Retrieve uptime and core information from the server
+    out=$(ssh -t -o "StrictHostKeyChecking no" "$1" "uptime")
+    load_avg=$(echo "$out" | grep -oP '(?<=load average: )[\d.]+' | head -n 1)  # Extract 1-minute load average
+    nproc=$(ssh -t -o "StrictHostKeyChecking no" "$1" "nproc" | tr -d '\r')  # Remove any extra characters (e.g., carriage return)
+
+    # Calculate load as a percentage
+    load_percentage=$(echo "scale=0; $load_avg * 100 / $nproc" | bc )
+
+    # Display results
+    echo "[INFO] The load average on $1 is $load_avg on $nproc cores, making it $load_percentage% busy."
 }
 
 
+
 function select_a_server {
-	min_load="100"
-	
+	min_load="100"	
 	for i in "${servers[@]}"; do
 	 		echo "get load average on $i server"        
-			get_server_avg_load $i
-			echo $load_avg
-			if [ $min_load  -gt $load_avg ]
+			get_server_load_percentage $i			
+			if [ $min_load  -gt $load_percentage ]
 			then
-				min_load=$load_avg
+				min_load=$load_percentage
 				my_server=$i
 			fi		
 	done
-	if [ $min_load -gt $max_allowed_server_load ] 
+	if [ $min_load -gt $max_allowed_server_load_percentage ] 
 	then
-		echo "All servers are busy. Cannot continue"		
+		echo "[INFO] All servers are busy. Cannot continue"		
 		exit
 	fi
-	echo "server $my_server is selected for running the test"
+	echo "[INFO] Server $my_server is selected for running the integration test."
 }
 
 
@@ -193,7 +219,10 @@ echo "source \"/etc/profile\"; bash server_run.sh $args"
 ssh  -o "StrictHostKeyChecking no" $my_server  "cd ${SERVER_ROOT_DIR}/mpsoc/Integration_test/synthetic_sim;  source \"/etc/profile\";  bash   server_run.sh $args;"
 
 #collect the report
-rm "$report"
+if [ -f "$report" ]; then
+    rm "$report"
+fi
+
 scp  -o "StrictHostKeyChecking no" -r   "$my_server:${SERVER_ROOT_DIR}/mpsoc/Integration_test/synthetic_sim/report"  "$report"
 wait
 meld "$report" "${report}_old" &

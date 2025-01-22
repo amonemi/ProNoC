@@ -12,13 +12,19 @@ use Cwd 'abs_path';
 my $script_path = dirname(__FILE__);
 my $dirname = realpath("$script_path/..");
 my $root = realpath("$dirname/../..");
+my $confs_dir="$dirname/configurations";
 
 print "Script Path: $script_path\n";
-print "Dirname: $dirname\n";
+print "confs_dir: $confs_dir\n";
 print "Root: $root\n";
+
 
 my $rtl_dir = "$ENV{PRONOC_WORK}/verify/rtl";
 my $work    = "$ENV{PRONOC_WORK}/verify/work";
+my $verify  = "$ENV{PRONOC_WORK}/verify";
+
+
+
 my $src_verilator = "$root/src_verilator";
 my $src_c = "$root/src_c";
 my $src = "$script_path";
@@ -213,6 +219,7 @@ sub copy_src_files {
     unless (defined $ENV{PRONOC_WORK}) {
         die "Error: Please set the PRONOC_WORK environment variable first!\n";
     }
+    rmtree("$verify");
     print "\n******************* copy source files *******************\n";
     # Ensure working directory exists, creating it recursively if necessary
     print "Creating working directory: $rtl_dir\n";
@@ -330,9 +337,9 @@ sub get_model_names {
 	my ($paralel_run,$MIN,$MAX,$STEP,$model_dir)=@{$inref};
 	my $full_path;
 	$full_path = "$model_dir" if (-d "$model_dir");
-	$full_path = "$dirname/$model_dir" if (-d "$dirname/$model_dir");
+	$full_path = "$confs_dir/$model_dir" if (-d "$confs_dir/$model_dir");
 	if (!defined  $full_path){
-		 die "Error the model directory  $model_dir or $dirname/$model_dir is not found\n";	
+		 die "Error the model directory  $model_dir or $confs_dir/$model_dir is not found\n";	
 	}
 	my @m;
 	if(scalar @models == 0){
@@ -515,7 +522,7 @@ sub run_traffic {
 	
     append_text_to_file($report,"****************************$name	: $traffic traffic *******************************:\n");
 	unless (-f "$work/$name/obj_dir/testbench"){
-		append_text_to_file($report,"\t failed. Simulation model is not avaialable\n");
+		append_text_to_file($report,"\t Failed. Simulation model is not avaialable\n");
 		return;
 	}
 
@@ -537,7 +544,7 @@ sub run_traffic {
 	}
 	$cmd.="wait\n" if(($i % $paralel_run)!=0) ;
 	#run command in terminal
-	print "*******************run models******************\n$cmd\n";
+	print "*******************Run simulation for $name******************\n$cmd\n";
 	my $proc1 = Proc::Background->new($cmd);
 	$proc1->alive;
 	$proc1->wait;

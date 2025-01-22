@@ -100,7 +100,7 @@ my $app = __PACKAGE__->new();
 
 
 my $dirname = dirname(__FILE__);
-require "$dirname/src/src.pl";
+require "$dirname/src.pl";
 
 
 my @inputs =($paralel_run,$MIN,$MAX,$STEP,$model_dir);
@@ -119,7 +119,7 @@ check_models_are_exsited(\@models,\@inputs);
 my @log_report_match =("Error","Warning" );
 
 
-save_file ("$dirname/report","Verification Results:\n");
+save_file ("$dirname/../report","Verification Results:\n");
 
 recompile_synful();
 

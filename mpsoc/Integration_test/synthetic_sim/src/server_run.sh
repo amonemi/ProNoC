@@ -5,9 +5,8 @@ source "/etc/profile"
 SCRPT_FULL_PATH=$(realpath ${BASH_SOURCE[0]})
 SCRPT_DIR_PATH=$(dirname $SCRPT_FULL_PATH)
 
-echo "\$SCRPT_DIR_PATH is $SCRPT_DIR_PATH"
 
-export PRONOC_WORK=$SCRPT_DIR_PATH/../../../mpsoc_work
+export PRONOC_WORK=$(realpath "$SCRPT_DIR_PATH/../../../../mpsoc_work")
 export VERILATOR_ROOT=~/scratch/`whoami`/verilator_4_104
 export PATH=$PATH:$VERILATOR_ROOT/bin
 export C_INCLUDE_PATH=$VERILATOR_ROOT/include
@@ -19,7 +18,7 @@ source "/eda/env.sh"
 
 #module load gcc/10.1.0
 
-
+echo "\$PRONOC_WORK is $PRONOC_WORK"
 
 home=$(eval echo ~$USER)
 source "$home/.bash_profile"

@@ -13,6 +13,8 @@ Verification Results:
 	 model is generated successfully.
 ****************************line_8_b2 : Compile *******************************:
 	 model is generated successfully.
+****************************line_8_sbp6_xy : Compile *******************************:
+	 model is generated successfully.
 ****************************line_8_single_flit : Compile *******************************:
 	 model is generated successfully.
 ****************************line_8x8_ssa_xy : Compile *******************************:
@@ -35,6 +37,7 @@ Verification Results:
 	 Passed:   zero load (2,13.2248) saturation (38,122.456)
 ****************************line_8_b2	: random traffic *******************************:
 	 Passed:   zero load (6,17.8996) saturation (34,105.723)
+****************************line_8_sbp6_xy	: random traffic *******************************:
 ****************************line_8_single_flit	: random traffic *******************************:
 	 Passed:   zero load (6,7.98062) saturation (38,41.7814)
 ****************************line_8x8_ssa_xy	: random traffic *******************************:
@@ -57,6 +60,7 @@ Verification Results:
 	 Passed:   zero load (2,15.1871) saturation (26,126.551)
 ****************************line_8_b2	: transposed 1 traffic *******************************:
 	 Passed:   zero load (2,19.2832) saturation (26,144.49)
+****************************line_8_sbp6_xy	: transposed 1 traffic *******************************:
 ****************************line_8_single_flit	: transposed 1 traffic *******************************:
 	 Passed:   zero load (2,9.99617) saturation (26,65.1642)
 ****************************line_8x8_ssa_xy	: transposed 1 traffic *******************************:
