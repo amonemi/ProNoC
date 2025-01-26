@@ -1366,7 +1366,8 @@ sub check_entered_address{
 #############
 
 sub load_soc{
-	my ($soc,$info,$ip)=@_;
+	my ($soc,$info)=@_;
+	my $ip = ip->lib_new ();
 	my $file;
 	my $dialog =  gen_file_dialog (undef, 'SOC');	
 	my $dir = Cwd::getcwd();
@@ -1745,20 +1746,39 @@ sub soc_ctrl_tab {
 	
 	my $ram      = def_image_button('icons/RAM.png','Memory');	
 	my $wb = def_image_button('icons/setting.png','WB addr');	
-	my $open = def_image_button('icons/browse.png',"_Load Tile",FALSE,1);
-	my $entry=gen_entry_object($soc,'soc_name',undef,undef,undef,undef);
-	my $entrybox=gen_label_info(" Tile name:",$entry);
-	my $save      = def_image_button('icons/save.png');	
-	my $open_dir  = def_image_button('icons/open-folder.png');
-	set_tip($save, "Save current tile configuration setting");
-	set_tip($open_dir, "Open target tile folder");
+	#my $open = def_image_button('icons/browse.png',"_Load Tile",FALSE,1);
+	#my $entry=gen_entry_object($soc,'soc_name',undef,undef,undef,undef);
+	#my $entrybox=gen_label_info(" Tile name:",$entry);
+	#my $save      = def_image_button('icons/save.png');	
+	#my $open_dir  = def_image_button('icons/open-folder.png');
+	#set_tip($save, "Save current tile configuration setting");
+	#set_tip($open_dir, "Open target tile folder");
 		
-	$entrybox->pack_start( $save, FALSE, FALSE, 0);
-	$entrybox->pack_start( $open_dir, FALSE, FALSE, 0);
+	#$entrybox->pack_start( $save, FALSE, FALSE, 0);
+	#$entrybox->pack_start( $open_dir, FALSE, FALSE, 0);
 	
 	my $main_table = def_table (1, 12, FALSE);
+
+
+    my $target_dir= "$ENV{'PRONOC_WORK'}/SOC";    
+	my ($entrybox,$entry ) =gen_save_load_widget (
+        $soc, #the object 
+        "Tile name",#the label shown for setting configuration
+        'soc_name',#the key name for saveing the setting configuration in object 
+        'Tile',#the label full name show in tool tips
+        $target_dir,#Where the generted RTL files are loacted. Undef if not aplicaple
+        'soc',#check the given name match the SoC or mpsoc name rules
+        'lib/soc',#where the current configuration seting file is saved
+        'SOC',#the extenstion given for configuration seting file
+		\&load_soc,#refrence to load function
+		$info
+        );
+
+
+
+
 	
-	$main_table->attach ($open		, 0, 1, 0,1,'expand','shrink',2,2);
+	#$main_table->attach ($open		, 0, 1, 0,1,'expand','shrink',2,2);
 	$main_table->attach ($entrybox	, 1, 3, 0,1,'expand','shrink',2,2);
 	$main_table->attach ($unset		, 3, 4, 0,1,'expand','shrink',2,2);
 	$main_table->attach ($wb		, 4, 5, 0,1,'expand','shrink',2,2);
@@ -1778,18 +1798,18 @@ sub soc_ctrl_tab {
 	});
 	
 
-	$save-> signal_connect("clicked" => sub{ 
-		my $name=$soc->object_get_attribute('soc_name');		
-		return if(check_soc_name($name)) ;
+	#$save-> signal_connect("clicked" => sub{ 
+	#	my $name=$soc->object_get_attribute('soc_name');		
+	#	return if(check_soc_name($name)) ;
 			
-		# Write object file
-		open(FILE,  ">lib/soc/$name.SOC") || die "Can not open: $!";
-		print FILE perl_file_header("$name.SOC");
-		print FILE Data::Dumper->Dump([\%$soc],['soc']);
-		close(FILE) || die "Error closing file: $!";
-		message_dialog("Processing Tile  \"$name\" is saved as lib/soc/$name.SOC.");		
+	#	# Write object file
+	#	open(FILE,  ">lib/soc/$name.SOC") || die "Can not open: $!";
+	#	print FILE perl_file_header("$name.SOC");
+	#	print FILE Data::Dumper->Dump([\%$soc],['soc']);
+	#	close(FILE) || die "Error closing file: $!";
+	#	message_dialog("Processing Tile  \"$name\" is saved as lib/soc/$name.SOC.");		
 			
-	});
+	#});
 	
 	
 	$generate-> signal_connect("clicked" => sub{ 
@@ -1863,26 +1883,26 @@ sub soc_ctrl_tab {
 	
 	});
 
-	$open-> signal_connect("clicked" => sub{ 
-		load_soc($soc,$info,$ip);
+	#$open-> signal_connect("clicked" => sub{ 
+	#	load_soc($soc,$info);
 	
-	});	
+	#});	
 	
-	$open_dir-> signal_connect("clicked" => sub{ 
-		my $name=$soc->object_get_attribute('soc_name');
-		$name="" if (!defined $name);
-		if (length($name)==0){
-			message_dialog("Please define the Tile name!");
-			return ;
-		}
-		my $target_dir  = "$ENV{'PRONOC_WORK'}/SOC/$name";
-		unless (-d $target_dir){
-			message_dialog("Cannot find $target_dir.\n Please run RTL Generator first!",'error');
-			return;
-		}
-		system "xdg-open   $target_dir";
+	#$open_dir-> signal_connect("clicked" => sub{ 
+	#	my $name=$soc->object_get_attribute('soc_name');
+	#	$name="" if (!defined $name);
+	#	if (length($name)==0){
+	#		message_dialog("Please define the Tile name!");
+	#		return ;
+	#	}
+	#	my $target_dir  = "$ENV{'PRONOC_WORK'}/SOC/$name";
+	#	unless (-d $target_dir){
+	#		message_dialog("Cannot find $target_dir.\n Please run RTL Generator first!",'error');
+	#		return;
+	#	}
+	#	system "xdg-open   $target_dir";
 		
-	});	
+	#});	
 	
 	return $main_table;
 	

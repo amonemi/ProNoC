@@ -2,6 +2,7 @@
 
 `include "define.tmp.h"
 
+    localparam NOC_ID=0;   
 
 //NoC parameters
 	localparam TOPOLOGY="FMESH";
@@ -37,8 +38,8 @@
  	localparam  CVw=(C==0)? V : C * V;
 
 	localparam Fpay= 
-        (NOC_ID==1) ? `PITON_NOC1_WIDTH : 
-        (NOC_ID==2) ? `PITON_NOC2_WIDTH : 
+        (NOC_ID=="N1") ? `PITON_NOC1_WIDTH : 
+        (NOC_ID=="N2") ? `PITON_NOC2_WIDTH : 
 		`PITON_NOC3_WIDTH;
 
  //simulation parameter  

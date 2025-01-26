@@ -316,12 +316,14 @@ sub  gen_soc_param {
 
 
 sub gen_noc_param_v{
-	my ($mpsoc,$sample)=@_;
+	my ($mpsoc,$sample,$noc_id)=@_;
+	$noc_id="" if(!defined $noc_id);
+	my $noc_param = "noc_param$noc_id";	
 	my $param_v="\n\n//NoC parameters\n";
 	my $pass_param="";
-	my @params=$mpsoc->object_get_attribute_order('noc_param');
-	my $custom_topology = $mpsoc->object_get_attribute('noc_param','CUSTOM_TOPOLOGY_NAME');
-	my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info($mpsoc);
+	my @params=$mpsoc->object_get_attribute_order($noc_param);
+	my $custom_topology = $mpsoc->object_get_attribute($noc_param,'CUSTOM_TOPOLOGY_NAME');
+	my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info($mpsoc,$noc_id);
 	my %noc_info;
 	if(defined $sample ){
 		my $ref=$mpsoc->object_get_attribute($sample,"noc_info"); 
@@ -331,7 +333,7 @@ sub gen_noc_param_v{
 	
 	foreach my $p (@params){
 		
-		my $val= (defined $sample) ? $noc_info{$p} :$mpsoc->object_get_attribute('noc_param',$p);
+		my $val= (defined $sample) ? $noc_info{$p} :$mpsoc->object_get_attribute($noc_param,$p);
 		next if($p eq "CUSTOM_TOPOLOGY_NAME");
 		$val=$custom_topology if($p eq "TOPOLOGY" && $val eq "\"CUSTOM\"");
 		if($p eq 'MCAST_ENDP_LIST'){
@@ -343,7 +345,7 @@ sub gen_noc_param_v{
 		#print "$p:$val\n";
 		
 	}
-	my $class=$mpsoc->object_get_attribute('noc_param',"C");
+	my $class=$mpsoc->object_get_attribute($noc_param,"C");
 	my $str;
 	if( $class > 1){
 		for (my $i=0; $i<=$class-1; $i++){
@@ -360,8 +362,8 @@ sub gen_noc_param_v{
 	}	
 	$param_v=$param_v."\tlocalparam $str";
 	$pass_param=$pass_param."\t\t.CLASS_SETTING(CLASS_SETTING),\n";
-	my $v=$mpsoc->object_get_attribute('noc_param',"V")-1;
-	my $escape=$mpsoc->object_get_attribute('noc_param',"ESCAP_VC_MASK");
+	my $v=$mpsoc->object_get_attribute($noc_param,"V")-1;
+	my $escape=$mpsoc->object_get_attribute($noc_param,"ESCAP_VC_MASK");
 	if (! defined $escape){
 		$param_v=$param_v."\tlocalparam [$v	:0] ESCAP_VC_MASK=1;\n";
 		$pass_param=$pass_param.".\t\tESCAP_VC_MASK(ESCAP_VC_MASK),\n"; 

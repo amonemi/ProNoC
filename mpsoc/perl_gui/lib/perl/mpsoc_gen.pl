@@ -535,7 +535,8 @@ you can add individual numbers or ranges as follow
 
 
 sub noc_topology_setting_gui {
-	my ($mpsoc,$table,$txview,$row,$show_noc)=@_;
+	my ($mpsoc,$table,$txview,$row,$show_noc,$noc_id)=@_;
+    my $noc_param="noc_param$noc_id";
 	my $coltmp=0;
 	#  topology
 	my  $label='Topology';
@@ -544,9 +545,9 @@ sub noc_topology_setting_gui {
 	my  $content='"MESH","FMESH","TORUS","RING","LINE","FATTREE","TREE","STAR","CUSTOM"';
 	my  $type='Combo-box';
 	my  $info="NoC topology"; 
-	($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,'noc_param',1);
+	($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
             
-    my $topology=$mpsoc->object_get_attribute('noc_param','TOPOLOGY');
+    my $topology=$mpsoc->object_get_attribute($noc_param,'TOPOLOGY');
 
 	if($topology ne '"CUSTOM"' ){
     #topology T1 parameter
@@ -561,7 +562,7 @@ sub noc_topology_setting_gui {
 		($topology eq '"FATTREE"' || $topology eq '"TREE"' )? '2,6,1':'2,64,1';
 	    $info= ($topology eq '"FATTREE"' || $topology eq '"TREE"' )? 'number of last level individual router`s endpoints.' :'Number of NoC routers in row (X dimension)';
 	    $type= 'Spin-button';             
-	    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,'noc_param',1);
+	    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
 
     
     #Topology T2 parameter
@@ -572,9 +573,9 @@ sub noc_topology_setting_gui {
         $content=  ($topology eq '"FMESH"')? '1,16,1': '2,16,1';
         $info= ($topology eq '"FATTREE"' || $topology eq '"TREE"')? 'Fattree layer number (The height of FT)':'Number of NoC routers in column (Y dimension)';
         $type= 'Spin-button';             
-        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,'noc_param',1);
+        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
     } else {
-        $mpsoc->object_add_attribute('noc_param','T2',1);        
+        $mpsoc->object_add_attribute($noc_param,'T2',1);        
     }
     
     #Topology T3 parameter
@@ -585,14 +586,14 @@ sub noc_topology_setting_gui {
         $content='1,4,1';
         $info= "In $topology topology, each router can have up to 4 endpoint processing tile.";
         $type= 'Spin-button';             
-        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,'noc_param',1);
+        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
     }
     
        
     
     
 	}else{#its a custom Topology
-		($row,$coltmp)=config_custom_topology_gui($mpsoc,$table,$txview,$row);
+		($row,$coltmp)=config_custom_topology_gui($mpsoc,$table,$txview,$row,$noc_id);
 	}
 	return ($row,$coltmp);
 
@@ -601,8 +602,11 @@ sub noc_topology_setting_gui {
 
 
 sub noc_config{
-    my ($mpsoc,$table,$txview)=@_;
-    
+    my ($mpsoc,$table,$txview,$noc_id)=@_;   
+    $noc_id = "" if(!defined $noc_id);    
+    my $noc_param="noc_param$noc_id";
+    my $noc_type="noc_type$noc_id"; 
+
     #title    
     my $row=0;
     my $title=gen_label_in_center("NoC Configuration");
@@ -643,27 +647,27 @@ sub noc_config{
     $type='Combo-box';
     $info="    Input-queued: simple router with low performance and does not support fully adaptive routing.
     VC-based routers offer higher performance, fully adaptive routing  and traffic isolation for different packet classes."; 
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,'noc_type',1);
-    my $router_type=$mpsoc->object_get_attribute('noc_type',"ROUTER_TYPE");
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_type,1);
+    my $router_type=$mpsoc->object_get_attribute($noc_type,"ROUTER_TYPE");
     
     
-    ($row,$coltmp) =noc_topology_setting_gui($mpsoc,$table,$txview,$row,$show_noc);
-     my $topology=$mpsoc->object_get_attribute('noc_param','TOPOLOGY');  
+    ($row,$coltmp) =noc_topology_setting_gui($mpsoc,$table,$txview,$row,$show_noc,$noc_id);
+     my $topology=$mpsoc->object_get_attribute($noc_param,'TOPOLOGY');  
   
     #VC number per port
     if($router_type eq '"VC_BASED"'){    
-        my $v=$mpsoc->object_get_attribute('noc_param','V');
-        if(defined $v){ $mpsoc->object_add_attribute('noc_param','V',2) if($v eq 1);}
+        my $v=$mpsoc->object_get_attribute($noc_param,'V');
+        if(defined $v){ $mpsoc->object_add_attribute($noc_param,'V',2) if($v eq 1);}
         $label='VC number per port';
         $param='V';
         $default='2';
         $type='Spin-button';
         $content='2,16,1';
         $info='Number of Virtual chanel per each router port';
-        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,'noc_param',1);
+        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
     } else {
-        $mpsoc->object_add_attribute('noc_param','V',1);
-        $mpsoc->object_add_attribute('noc_param','C',0);        
+        $mpsoc->object_add_attribute($noc_param,'V',1);
+        $mpsoc->object_add_attribute($noc_param,'C',0);        
     }
     
     #buffer width per VC
@@ -673,7 +677,7 @@ sub noc_config{
     $content='2,256,1';
     $type='Spin-button';
     $info=($router_type eq '"VC_BASED"')?  'Buffer queue size per VC in flits' : 'Buffer queue size in flits';
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,'noc_param',undef);
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,undef);
     
     
     #Local port buffer width per VC
@@ -685,9 +689,9 @@ sub noc_config{
     $info = "The Local router ports buffer width (LB) is the width of the ports connected to the endpoints and can take different buffer sizes than other routers ports buffer width (B) connected to neighboring routers .It is valid only for MESH,FMESH, TORUS,LINE and RING topologies. In FMESH topology, this parameter does not affect the  width of extra endpoints connected to edge routers.";
     
     if ($topology eq '"MESH"' || $topology eq '"FMESH"' || $topology eq '"TORUS"' || $topology eq '"RING"' || $topology eq '"LINE"'){
-   		($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,'noc_param',undef);
+   		($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,undef);
     }else{
-    	$mpsoc->object_add_attribute('noc_param','LB','B');
+    	$mpsoc->object_add_attribute($noc_param,'LB','B');
     }
     
     
@@ -700,7 +704,7 @@ sub noc_config{
     $content='32,256,32';
     $type='Spin-button';
     $info="The packet payload width in bits"; 
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info,$table,$row,undef,$show_noc,'noc_param',undef);
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info,$table,$row,undef,$show_noc,$noc_param,undef);
 
 if($topology ne '"CUSTOM"' ){
     #routing algorithm
@@ -734,7 +738,7 @@ if($topology ne '"CUSTOM"' ){
     $info=($topology eq '"FATTREE"')? $info_fat : 
     	  ($topology eq '"TREE"') ? "Nearest common ancestor": $info_mesh;
     my $show_routing =($topology eq '"STAR"' )? 0 : $show_noc;
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_routing,'noc_param',1);
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_routing,$noc_param,1);
 
 }
 
@@ -752,9 +756,9 @@ if($topology ne '"CUSTOM"' ){
     	For MULTI-FLIT packet you need to defin ethe minum size of a paket that can be injecte to the NoC.
     ";
      
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,'noc_param',1);
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
 	
-	 my $pck_type=$mpsoc->object_get_attribute('noc_param','PCK_TYPE');  
+	 my $pck_type=$mpsoc->object_get_attribute($noc_param,'PCK_TYPE');  
   
 	if($pck_type eq '"MULTI_FLIT"'){
 
@@ -766,9 +770,9 @@ if($topology ne '"CUSTOM"' ){
 	    $content='1,65535,1';
 	    $type='Spin-button';
 	    $info="The minimum packet size in flits. In atomic VC re-allocation, it is just important to define if the single-flit sized packets are allowed to be injected to the NoC by defining this parameter value as one.  Setting any larger value than one results in the same architecture and the NoC works correctly even if it receives smaller packets size as while as they are not single flit -sized packets.  However, for non-atomic VC reallocation NoCs, you have to define the exact value as it defines the NoC control registers' internal buffers. The NoC may crash once it receives  packets having smaler size than the defined  minimum packet size."; 
-	    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,'noc_param',undef);
+	    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,undef);
 	}else{
-		 $mpsoc->object_add_attribute('noc_param','MIN_PCK_SIZE',1);   
+		 $mpsoc->object_add_attribute($noc_param,'MIN_PCK_SIZE',1);   
 	}
 
     # BYTE_EN
@@ -778,7 +782,7 @@ if($topology ne '"CUSTOM"' ){
     $info='0:disable, 1: enable. Add byte enable (BE) filed to header flit which shows the location of last valid byte in tail flit. It is needed once the send data unit is smaller than Fpay.'; 
     $content='0,1';
     $type="Combo-box";
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,'noc_param');
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param);
     
     
   
@@ -791,13 +795,13 @@ if($topology ne '"CUSTOM"' ){
     $info='Configure a NoC as Unicast, Multicast, or Broadcast NoC. In Unicast NoC, a packet can be sent to only one destination. In  Multicast, a single packet can have multiple target destination nodes, whereas,  Broadcast packets are sent to all other destination nodes. For Multicast and Broadcast NoC, only one copy of a packet must be injected into the source router. The routers in the path then fork the packets to different output ports when necessary. Multicast and Broadcast can be selected as FULL, where all destinations can be included in packet destination list, or as PARTIAL where a user-defined subset of nodes (defined with MCAST_ENDP_LIST parameter) can be targeted in destination lists. The other nodes not marked in MCAST_ENDP_LIST can only receive unicast packets. '; 
     $content='"UNICAST","MULTICAST_PARTIAL","MULTICAST_FULL","BROADCAST_PARTIAL","BROADCAST_FULL"';
     $type="Combo-box";
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,'noc_param',1);
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
     
    
-    my $cast_type=$mpsoc->object_get_attribute('noc_param','CAST_TYPE');  
-    my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info($mpsoc);
+    my $cast_type=$mpsoc->object_get_attribute($noc_param,'CAST_TYPE');  
+    my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info($mpsoc,$noc_id);
     
-    my $cast = $mpsoc->object_get_attribute('noc_param',"MCAST_ENDP_LIST");	
+    my $cast = $mpsoc->object_get_attribute($noc_param,"MCAST_ENDP_LIST");	
     if(!defined $cast){
 	    my $h=0;
 	    my $n="";
@@ -811,10 +815,10 @@ if($topology ne '"CUSTOM"' ){
 		}	
 		$n="$h".$n if($h!=0);
 		$n="'h".$n;  
-		$mpsoc->object_add_attribute('noc_param',"MCAST_ENDP_LIST",$n);
-		$mpsoc->object_add_attribute_order('noc_param',"MCAST_ENDP_LIST");
-	#	$mpsoc->object_add_attribute('noc_param',"MCAST_PRTLw",$NE);
-	#	$mpsoc->object_add_attribute_order('noc_param',"MCAST_PRTLw");
+		$mpsoc->object_add_attribute($noc_param,"MCAST_ENDP_LIST",$n);
+		$mpsoc->object_add_attribute_order($noc_param,"MCAST_ENDP_LIST");
+	#	$mpsoc->object_add_attribute($noc_param,"MCAST_PRTLw",$NE);
+	#	$mpsoc->object_add_attribute_order($noc_param,"MCAST_PRTLw");
 		$cast=$n;
     }
     
@@ -833,7 +837,7 @@ if($topology ne '"CUSTOM"' ){
         $row++;  
         
          $b1->signal_connect("clicked" => sub{ 
-      		set_multicast_list($mpsoc);
+      		set_multicast_list($mpsoc,$noc_id);
    		
    		 });    	
     }
@@ -858,7 +862,7 @@ if($topology ne '"CUSTOM"' ){
     $content='"YES","NO"';
     $type='Combo-box';
     $info="Enable single cycle latency on packets traversing in the same direction using static straight allocator (SSA)"; 
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,'noc_param',undef);
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,undef);
     
     #SMART
     $label='Max Straight Bypass'; 
@@ -867,12 +871,12 @@ if($topology ne '"CUSTOM"' ){
     $content="0,1,2,3,4,5,6,7,8,9";
     $type='Combo-box';
     $info="If Max Straight Bypass (SMART_MAX) is defined as n>0 then packets are allowed to bypass Maximum of n routers in Straight direction in single cycle."; 
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,'noc_param',undef);
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,undef);
    
     
     
     #Fully and partially adaptive routing setting
-    my $route=$mpsoc->object_get_attribute('noc_param',"ROUTE_NAME");
+    my $route=$mpsoc->object_get_attribute($noc_param,"ROUTE_NAME");
     $label="Congestion index";    
     $param="CONGESTION_INDEX";
     $type="Spin-button";
@@ -880,13 +884,13 @@ if($topology ne '"CUSTOM"' ){
     $info="Congestion index determines how congestion information is collected from neighboring routers. Please refer to the usere manual for more information";
     $default=3;
     if($topology ne '"CUSTOM"' && $route ne '"XY"' && $route ne '"TRANC_XY"' ){
-           ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,'noc_param',undef);
+           ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,undef);
     } else {
-        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,'noc_param',undef);
+        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,$noc_param,undef);
     }
     
     #Fully adaptive routing setting
-    my $v=$mpsoc->object_get_attribute('noc_param',"V");
+    my $v=$mpsoc->object_get_attribute($noc_param,"V");
     $label="Select Escap VC";    
     $param="ESCAP_VC_MASK";
     $type="Check-box";
@@ -896,10 +900,10 @@ if($topology ne '"CUSTOM"' ){
     $default=  "${default}1";
     $info="Select the escap VC for fully adaptive routing.";
     if( $route eq '"TRANC_DUATO"' or $route eq '"DUATO"'  ){
-           ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set, 'noc_param',undef);
+           ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set, $noc_param,undef);
      }
     else{
-         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0, 'noc_param',undef);
+         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0, $noc_param,undef);
     }
         
     # VC reallocation type
@@ -909,7 +913,7 @@ if($topology ne '"CUSTOM"' ){
     $default='"NONATOMIC"';  
     $content='"ATOMIC","NONATOMIC"';
     $type='Combo-box';
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,'noc_param',undef);                                           
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,undef);                                           
 
 
     #vc/sw allocator type
@@ -920,9 +924,9 @@ if($topology ne '"CUSTOM"' ){
     $type='Combo-box';
     $info="The joint VC/ switch allocator type. using canonical combination is not recommended";   
     if ($router_type eq '"VC_BASED"'){                 
-        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,'noc_param',undef);                   
+        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,undef);                   
     } else{
-         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,'noc_param',undef);  
+         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,$noc_param,undef);  
     }
     
     # Crossbar mux type 
@@ -932,7 +936,7 @@ if($topology ne '"CUSTOM"' ){
     $content='"ONE_HOT","BINARY"';
     $type='Combo-box';
     $info="Crossbar multiplexer type";
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,'noc_param',undef);             
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,undef);             
     
     #class   
     if($router_type eq '"VC_BASED"'){
@@ -942,11 +946,11 @@ if($topology ne '"CUSTOM"' ){
         $info='Number of message classes. Each specific class can use different set of VC'; 
         $content='0,16,1';
         $type='Spin-button';
-        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,'noc_param',5);                             
+        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,5);                             
         
 
-        my $class=$mpsoc->object_get_attribute('noc_param',"C");
-        my $v=$mpsoc->object_get_attribute('noc_param',"V");
+        my $class=$mpsoc->object_get_attribute($noc_param,"C");
+        my $v=$mpsoc->object_get_attribute($noc_param,"V");
         $default= "$v\'b";
         for (my $i=1; $i<=$v; $i++){
             $default=  "${default}1";
@@ -973,7 +977,7 @@ if($topology ne '"CUSTOM"' ){
     $default='0';
     $content='0,1';
     $type='Combo-box';
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,'noc_param');  
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param);  
 
     
     #pipeline reg    
@@ -983,7 +987,7 @@ if($topology ne '"CUSTOM"' ){
     $content=1;
     $default="1\'b0";
     $info="If is enabled it adds a pipeline register at the output port of the router.";
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,'noc_param');
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param);
     
     
     #MAX_SMART_NUM = 4 // 
@@ -993,7 +997,7 @@ if($topology ne '"CUSTOM"' ){
     $content='0,1,1';
     $default=0;
     $info="maximum number of routers which a packet can by pass during one clock cycle. Define it as zero will disable bypassing.";
-    #($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,'noc_param');
+    #($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,$noc_param);
     
      
     #FIRST_ARBITER_EXT_P_EN
@@ -1004,7 +1008,7 @@ arbiters external priority enable';
     $info='If set as 1 then the switch allocator\'s input (first) arbiters\' priority registers are enabled only when a request get both input and output arbiters\' grants'; 
     $content='0,1';
     $type="Combo-box";
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info,$table,$row,undef,$adv_set,'noc_param');     
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info,$table,$row,undef,$adv_set,$noc_param);     
           
     
     #Arbiter type
@@ -1017,11 +1021,11 @@ arbiters external priority enable';
     RRA: Round robin arbiter. Only local fairness in a router. 
     WRRA: Weighted round robin arbiter. Results in global fairness in the NoC. 
           Switch allocation requests are grated according to their weight which increases due to contention"; 
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,'noc_param',1);
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,1);
     
           
     
-    my $arbiter=$mpsoc->object_get_attribute('noc_param',"SWA_ARBITER_TYPE");
+    my $arbiter=$mpsoc->object_get_attribute($noc_param,"SWA_ARBITER_TYPE");
     my $wrra_show = ($arbiter ne  '"RRA"' && $adv_set == 1 )? 1 : 0;
     # weight width
     $label='Weight width';
@@ -1030,7 +1034,7 @@ arbiters external priority enable';
     $content='2,7,1';
     $info= 'Maximum weight width';
     $type= 'Spin-button';  
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$wrra_show,'noc_param',undef);  
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$wrra_show,$noc_param,undef);  
     
     
     
@@ -1040,7 +1044,7 @@ arbiters external priority enable';
     $content='"NO","YES"';
     $type='Combo-box';
     $info="If the self loop is enabled, it allows a router input port sends packet to its own output port. Enabling it allows a tile to be able to sent packet to itself too."; 
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,'noc_param',1);
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,1);
     
     
     
@@ -1053,7 +1057,7 @@ arbiters external priority enable';
 
 ';
     $type= 'Spin-button';  
-    #($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$wrra_show,'noc_param',undef);  
+    #($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$wrra_show,$noc_param,undef);  
     
     
     if($show_noc == 1){    
@@ -1092,7 +1096,7 @@ arbiters external priority enable';
     $info='AVC_ATOMIC_EN'; 
     $content='0,1';
     $type="Combo-box";
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,'noc_param');
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,$noc_param);
     
     
     #ROUTE_SUBFUNC
@@ -1102,7 +1106,7 @@ arbiters external priority enable';
     #$info='ROUTE_SUBFUNC'; 
     #$content='"XY"';
     #$type="Combo-box";
-    #($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,'noc_param');
+    #($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,$noc_param);
     
     return $row;
 }
@@ -1111,13 +1115,14 @@ arbiters external priority enable';
 
 
 sub set_multicast_list{
-	my($mpsoc)=@_;	
+	my($mpsoc,$noc_id)=@_;	
+    my $noc_param="noc_param$noc_id";
 	my $window = def_popwin_size(50,40,"Select nodes invlove in multicasting ",'percent');
 	my $table= def_table(10,10,FALSE);
 	my $row=0;
 	my $col=0;
 	
-	my $init = $mpsoc->object_get_attribute('noc_param',"MCAST_ENDP_LIST");
+	my $init = $mpsoc->object_get_attribute($noc_param,"MCAST_ENDP_LIST");
 	$init =~ s/'h//g;
 	my @arr= reverse split (//, $init);
 		
@@ -1130,7 +1135,7 @@ sub set_multicast_list{
 	my $combo= gen_combo(\@sel_options, 0);
 	$table->attach ($combo , 0, 1, $row,$row+1,'fill','shrink',2,2);
 	#get the number of endpoints
-	my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info($mpsoc);
+	my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info($mpsoc,$noc_id);
 	my @check;
 	
 	
@@ -1202,8 +1207,8 @@ sub set_multicast_list{
 	$ok->signal_connect('clicked', sub {
 		my $s=get_multicast_val ($mpsoc,$entry,$NE,@check);
 		my $n=$entry->get_text( );
-		$mpsoc->object_add_attribute('noc_param',"MCAST_ENDP_LIST",$n);	
-	#	$mpsoc->object_add_attribute('noc_param',"MCAST_PRTLw",$s);
+		$mpsoc->object_add_attribute($noc_param,"MCAST_ENDP_LIST",$n);	
+	#	$mpsoc->object_add_attribute($noc_param,"MCAST_PRTLw",$s);
 		set_gui_status($mpsoc,"ref",1);	
 		$window->destroy;
 	});
@@ -1242,11 +1247,11 @@ sub get_multicast_val {
 ############
 
 sub config_custom_topology_gui{
-	my($mpsoc,$table,$txview,$row)=@_;
-
+	my($mpsoc,$table,$txview,$row,$noc_id)=@_;
+my $noc_param="noc_param$noc_id";
 my $coltmp=0;
 #read param.obj file to load cutom topology info
-	my $dir =get_project_dir()."/mpsoc/rtl/src_topolgy";
+	my $dir =get_project_dir()."/mpsoc/rtl/src_topology";
 	my $file="$dir/param.obj";
 	unless (-f $file){
 		 add_colored_info($txview,"No Custom topology find in $dir. You can define a Custom Topology using ProNoC Topology maker.\n",'red');
@@ -1269,9 +1274,9 @@ my $coltmp=0;
     my $content= join(",", @topologies);  
     my $type='Combo-box';
     my $info="Custom topology name"; 
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,1,'noc_param',1);
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,1,$noc_param,1);
     
-    my $topology_name=$mpsoc->object_get_attribute('noc_param','CUSTOM_TOPOLOGY_NAME');        		
+    my $topology_name=$mpsoc->object_get_attribute($noc_param,'CUSTOM_TOPOLOGY_NAME');        		
 	
 	
 	$label='Routing Algorithm';
@@ -1281,11 +1286,11 @@ my $coltmp=0;
     my @rr=split(/\s*,\s*/,$content);
     $default=$rr[0];
     $info="Select the routing algorithm";
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,1,'noc_param',1);
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,1,$noc_param,1);
   
-	$mpsoc->object_add_attribute('noc_param','T1',$param{$topology_name}{'T1'});    
-	$mpsoc->object_add_attribute('noc_param','T2',$param{$topology_name}{'T2'}); 
-	$mpsoc->object_add_attribute('noc_param','T3',$param{$topology_name}{'T3'});     
+	$mpsoc->object_add_attribute($noc_param,'T1',$param{$topology_name}{'T1'});    
+	$mpsoc->object_add_attribute($noc_param,'T2',$param{$topology_name}{'T2'}); 
+	$mpsoc->object_add_attribute($noc_param,'T3',$param{$topology_name}{'T3'});     
   	$mpsoc->object_add_attribute('noc_connection','er_addr',$param{$topology_name}{'er_addr'});  		
 			
             	
@@ -1511,17 +1516,18 @@ sub generate_mpsoc_lib_file {
 }    
 
 sub check_mpsoc_name {
-	my ($name,$info)= @_;
+	my ($name,$info,$label)= @_;
+    $label="MPSoC" if (!defined $label);
     my $error = check_verilog_identifier_syntax($name);
     if ( defined $error ){
         #message_dialog("The \"$name\" is given with an unacceptable formatting. The mpsoc name will be used as top level verilog module name so it must follow Verilog identifier declaration formatting:\n $error");
-        my $message = "The \"$name\" is given with an unacceptable formatting. The mpsoc name will be used as top level Verilog module name so it must follow Verilog identifier declaration formatting:\n $error";
+        my $message = "The \"$name\" is given with an unacceptable formatting. The $label name will be used as top level Verilog module name so it must follow Verilog identifier declaration formatting:\n $error";
         add_colored_info($info, $message,'red' );
         return 1;
     }
     my $size= (defined $name)? length($name) :0;
     if ($size ==0) {
-        message_dialog("Please define the MPSoC name!");
+        message_dialog("Please define the $label filed!");
         return 1;
     }
 	return 0;	
@@ -1592,8 +1598,8 @@ sub generate_mpsoc{
 	if ($topology eq '"CUSTOM"'){ 
 		my $Tname=$mpsoc->object_get_attribute('noc_param','CUSTOM_TOPOLOGY_NAME');
 		$Tname=~s/["]//gs;     
-		my $dir1=  get_project_dir()."/mpsoc/rtl/src_topolgy/$Tname";
-		my $dir2=  get_project_dir()."/mpsoc/rtl/src_topolgy/common";
+		my $dir1=  get_project_dir()."/mpsoc/rtl/src_topology/$Tname";
+		my $dir2=  get_project_dir()."/mpsoc/rtl/src_topology/common";
 		my @files = File::Find::Rule->file()
                             ->name( '*.v','*.V')
                             ->in( "$dir1" );
@@ -3114,24 +3120,29 @@ sub add_mpsoc_to_device{
 sub ctrl_box{
 	my ($mpsoc,$info)=@_;
 	my $table = def_table (1, 12, FALSE);	 
-	my $generate = def_image_button('icons/gen.png','_Generate RTL',FALSE,1);
-    my $open = def_image_button('icons/browse.png','_Load MPSoC',FALSE,1);
+	my $generate = def_image_button('icons/gen.png','_Generate RTL',FALSE,1);  
     my $compile  = def_image_button('icons/gate.png','_Compile RTL',FALSE,1);
-    my $software = def_image_button('icons/binary.png','_Software',FALSE,1);
-    my $entry=gen_entry_object($mpsoc,'mpsoc_name',undef,undef,undef,undef);
-    my $entrybox=gen_label_info(" MPSoC name:",$entry);
-    my $save      = def_image_button('icons/save.png');	
-    my $open_dir  = def_image_button('icons/open-folder.png');
-    set_tip($save, "Save current MPSoC configuration setting");
-	set_tip($open_dir, "Open target MPSoC folder");
-    	
-	$entrybox->pack_start( $save, FALSE, FALSE, 0);
-	$entrybox->pack_start( $open_dir , FALSE, FALSE, 0);
+    my $software = def_image_button('icons/binary.png','_Software',FALSE,1);   
     my $diagram  = def_image_button('icons/diagram.png','Diagram');
     my $clk=  def_image_button('icons/clk.png','CLK setting');	
 
 	my $row=0;
-    $table->attach ($open,$row, $row+2, 0,1,'expand','shrink',2,2);$row+=2;
+
+
+	my $target_dir= "$ENV{'PRONOC_WORK'}/MPSOC";    
+	my ($entrybox,$entry ) =gen_save_load_widget (
+        $mpsoc, #the object 
+        "MPSoC name",#the label shown for setting configuration
+        'mpsoc_name',#the key name for saveing the setting configuration in object 
+        'MPSoC',#the label full name show in tool tips
+        $target_dir,#Where the generted RTL files are loacted. Undef if not aplicaple
+        'mpsoc',#check the given name match the SoC or mpsoc name rules
+        'lib/mpsoc',#where the current configuration seting file is saved
+        'MPSOC',#the extenstion given for configuration seting file
+		\&load_mpsoc,#refrence to load function
+		$info
+        );
+  
     $table->attach ($entrybox,$row, $row+2, 0,1,'expand','shrink',2,2);$row+=2;
     $table->attach ($diagram, $row, $row+1, 0,1,'expand','shrink',2,2);$row++;
     $table->attach ($clk, $row, $row+1, 0,1,'expand','shrink',2,2);$row++;    
@@ -3143,21 +3154,6 @@ sub ctrl_box{
         generate_mpsoc($mpsoc,$info,1);
         set_gui_status($mpsoc,"refresh_soc",1);
     });
-    
-    $save-> signal_connect("clicked" => sub{ 
-    	my $name=$mpsoc->object_get_attribute('mpsoc_name');
-    	return  if (check_mpsoc_name($name,$info));
-    	generate_mpsoc_lib_file($mpsoc,$info);
-    	message_dialog("MPSOC  \"$name\" is saved as lib/mpsoc/$name.MPSOC.");
-    
-    });
-
-
-    $open-> signal_connect("clicked" => sub{ 
-        set_gui_status($mpsoc,"ref",5);
-        load_mpsoc($mpsoc,$info);    
-    });
-
 
     $compile -> signal_connect("clicked" => sub{ 
         $mpsoc->object_add_attribute('compile','compilers',"QuartusII,Vivado,Verilator,Modelsim");
@@ -3205,24 +3201,81 @@ sub ctrl_box{
 			clk_setting_win1($mpsoc,$info,'mpsoc');	
 	});
 	
-	$open_dir-> signal_connect("clicked" => sub{ 
-		my $name=$mpsoc->object_get_attribute('mpsoc_name');
-    	$name="" if (!defined $name);
-    	if (length($name)==0){
-            message_dialog("Please define the MPSoC name!");
+	return $table;	
+}
+
+
+sub gen_save_load_widget {
+    my (
+        $self, #the object 
+        $label,#the label shown for setting configuration
+        $param_name,#the key name for saveing the setting configuration in object 
+        $full_name,#the label full name show in tool tips
+        $target_dir,#Where the generted RTL files are loacted. Undef if not aplicaple
+        $check,#check the given name match the SoC or mpsoc name rules
+        $config_dir,#where the current configuration seting file is saved
+        $extention,#the extenstion given for configuration seting file
+        $load_func,
+        $info
+        )=@_;
+    my $load = def_image_button('icons/load2.png');
+    my $entry=gen_entry_object($self,$param_name,undef,undef,undef,undef);
+    my $entrybox=gen_label_info("$label:",$entry);
+    my $save      = def_image_button('icons/save.png');	
+    my $open_dir  = def_image_button('icons/open-folder.png') if (defined $target_dir);
+    set_tip($save, "Save current $full_name configuration setting");
+	set_tip($load, "Load a saved $full_name configuration setting");
+	set_tip($open_dir, "Open target $full_name folder") if (defined $target_dir);
+    	
+	$entrybox->pack_start( $save, FALSE, FALSE, 0);
+	$entrybox->pack_start( $load, FALSE, FALSE, 0);
+	$entrybox->pack_start( $open_dir , FALSE, FALSE, 0) if (defined $target_dir);
+
+    $open_dir-> signal_connect("clicked" => sub{     	
+		my $name=$self->object_get_attribute($param_name);
+        $name="" if (!defined $name);
+        if (length($name)==0){
+            message_dialog("Please define the $label!");
             return ;
         }
-    	my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$name";
-		unless (-d $target_dir){
-			message_dialog("Cannot find $target_dir.\n Please run RTL Generator first!",'error');
+        return if(check_mpsoc_name($name,$label) && $check=='mpsoc') ;
+		return if(check_soc_name($name,$label) && $check=='soc') ;	
+        unless (-d "$target_dir/$name"){
+			message_dialog("Cannot find $target_dir/$name.\n Please run RTL Generator first!",'error');
 			return;
 		}
-		system "xdg-open   $target_dir";
-		
+		system "xdg-open   $target_dir/$name";
+	})  if (defined $target_dir);
+
+    $save-> signal_connect("clicked" => sub{ 
+    	my $name=$self->object_get_attribute($param_name);	
+         if (length($name)==0){
+            message_dialog("Please define the $label!");
+            return ;
+        }	
+		return if(check_mpsoc_name($name,$label) && $check=='mpsoc') ;
+		return if(check_soc_name($name,$label) && $check=='soc') ;	
+		# Write object file
+        my $config_file = "${config_dir}/${name}.$extention";
+		open(FILE,  ">$config_file") || die "Can not open $config_file: $!";
+		print FILE perl_file_header("${name}.$extention");
+		print FILE Data::Dumper->Dump([\%$self],[$extention]);
+		close(FILE) || die "Error closing file: $!";
+		message_dialog("Current configuration  \"$name\" is saved as $config_file.");		
+    
+    });
+
+    $entry->signal_connect( 'changed'=> sub{
+		my $name=$entry->get_text();
+		$self->object_add_attribute ("save_as",undef,$name);	
 	});	
-	
-	
-	return $table;	
+
+    $load-> signal_connect("clicked" => sub{ 
+        set_gui_status($self,"ref",5);
+        &$load_func($self,$info);    
+    });
+
+    return ($entrybox,$entry);
 }
 
 ############

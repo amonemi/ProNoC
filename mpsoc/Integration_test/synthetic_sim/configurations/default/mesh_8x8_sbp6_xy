@@ -1,0 +1,5 @@
+$model = bless( {
+		'noc_param'=> {
+						"SMART_MAX" => "6",		
+						}
+}, 'ProNOC' );

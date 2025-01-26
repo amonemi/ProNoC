@@ -2898,7 +2898,7 @@ sub generate_topology{
     
     
 	#make destination dir
-	my $dir =get_project_dir()."/mpsoc/rtl/src_topolgy/$name";
+	my $dir =get_project_dir()."/mpsoc/rtl/src_topology/$name";
 	mkpath("$dir",1,01777) unless (-d $dir) ;  
     mkpath("$dir/../common",1,01777) unless (-d "$dir/../common") ;  
     
@@ -2941,7 +2941,7 @@ sub save_topology_parameter_object_file{
 	my ($self,$info)=@_;	
 	my $name=$self->object_get_attribute('save_as');
 	my $rname=$self->object_get_attribute('routing_name');
-	my $dir =get_project_dir()."/mpsoc/rtl/src_topolgy";
+	my $dir =get_project_dir()."/mpsoc/rtl/src_topology";
 	my $file="$dir/param.obj";
 	
 	my %param;
@@ -3022,6 +3022,19 @@ sub get_path_route_widgets {
 }
 
 
+sub load_nwm{
+	my ($self,$info)=@_;
+	load_net_maker($self,$info);
+	my $n=0;
+    my $sample="sample$n";
+	$n++;
+	$self->object_add_attribute("id",undef,$n);
+	$self->object_add_attribute("active_setting",undef,undef);
+	$self->object_add_attribute_order("samples",$sample);
+	$self->object_add_attribute($sample,"color",1);
+	add_color_to_gd($self);	
+}
+
 sub build_network_maker_gui {
 	my ($self) = @_;
 	set_gui_status($self,"ideal",0);
@@ -3068,41 +3081,36 @@ sub build_network_maker_gui {
 	
 	
 	my $v2=gen_vpaned($h1,.65,$infobox);
-	
+	my $pronoc_dir	  = get_project_dir(); #mpsoc dir addr
+	my $target_dir= "$pronoc_dir/mpsoc/rtl/src_topology/";
+    my ($entrybox,$entry ) =gen_save_load_widget (
+        $self, #the object 
+        "Topology name",#the label shown for setting configuration
+        'save_as',#the key name for saveing the setting configuration in object 
+        'Custom NoC Topology',#the label full name show in tool tips
+        $target_dir,#Where the generted RTL files are loacted. Undef if not aplicaple
+        'soc',#check the given name match the SoC or mpsoc name rules
+        'lib/netwmaker',#where the current configuration seting file is saved
+        'NWM',#the extenstion given for configuration seting file
+		\&load_nwm,#refrence to load function
+		$info
+        );
+
 
 	my $generate = def_image_button('icons/gen.png','Generate');
-	my $open = def_image_button('icons/browse.png','Load');	
-	
-	
-	my ($entrybox,$entry) = def_h_labeled_entry('Topology name:',undef);
-	
-	$entry->signal_connect( 'changed'=> sub{
-		my $name=$entry->get_text();
-		$self->object_add_attribute ("save_as",undef,$name);	
-	});	
-	
 	my ($entrybox2,$entry2) = def_h_labeled_entry('Routing Alg. name:',undef);
 	
 	$entry2->signal_connect( 'changed'=> sub{
 		my $name=$entry2->get_text();
 		$self->object_add_attribute ("routing_name",undef,$name);	
 	});	
-	
-	my $save = def_image_button('icons/save.png','Save');
-	#$entrybox->pack_end($save,   FALSE, FALSE,0);
 
-	$main_table->attach_defaults ($v2  , 0, 12, 0,24);
-	$main_table->attach ($open,0, 1, 24,25,'expand','shrink',2,2);
-	$main_table->attach ($save,1, 2, 24,25,'expand','shrink',2,2);
-	
+	$main_table->attach_defaults ($v2  , 0, 12, 0,24);	
 	$main_table->attach ($entrybox,2, 4, 24,25,'expand','shrink',2,2);
-	$main_table->attach ($entrybox2,4, 6, 24,25,'expand','shrink',2,2);
-	
+	$main_table->attach ($entrybox2,4, 6, 24,25,'expand','shrink',2,2);	
 	$main_table->attach ($generate, 6, 9, 24,25,'expand','shrink',2,2);
-	
 
-	my $sc_win = add_widget_to_scrolled_win($main_table);
-	
+	my $sc_win = add_widget_to_scrolled_win($main_table);	
 	
 	#setting for graphs
 	my $n=0;
@@ -3113,34 +3121,6 @@ sub build_network_maker_gui {
 	$self->object_add_attribute_order("samples",$sample);
 	$self->object_add_attribute($sample,"color",1);
 	add_color_to_gd($self);
-	
-	
-	$open-> signal_connect("clicked" => sub{ 
-		
-		
-		
-	load_net_maker($self,$info);
-	my $n=0;
-    my $sample="sample$n";
-	$n++;
-	$self->object_add_attribute("id",undef,$n);
-	$self->object_add_attribute("active_setting",undef,undef);
-	$self->object_add_attribute_order("samples",$sample);
-	$self->object_add_attribute($sample,"color",1);
-	add_color_to_gd($self);	
-		
-		
-		set_gui_status($self,"ref",5);
-	
-	});	
-
-	$save-> signal_connect("clicked" => sub{ 		
-			
-		save_network($self);		
-		set_gui_status($self,"ref",5);
-			
-	
-	});	
 	
 	$generate->signal_connect("clicked" => sub{ 
 		generate_topology($self,$info);
@@ -3201,10 +3181,7 @@ sub build_network_maker_gui {
 					$page4_win->show_all;
 				}
 						
-			}
-			
-			
-			
+			}			
 			
 			if($page_num==4  ){
 				$draw->destroy;
@@ -3229,25 +3206,17 @@ sub build_network_maker_gui {
 			
 			return TRUE;
 			 
-		}
-		
+		}	
 		
 		#refresh GUI
-		
-											
-		
+			
 		
 		$main_table->show_all();			
 		set_gui_status($self,"ideal",0);
 		
 		return TRUE;
 		
-	} );	
+	} );
 
-
-
-	return $sc_win;
-
-	
-	
+	return $sc_win;	
 }

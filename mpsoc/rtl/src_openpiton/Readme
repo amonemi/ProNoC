@@ -1,0 +1,12 @@
+### Generating Physical NoCs for OpenPiton  
+
+To create 3 physical NoCs for OpenPiton from the ProNoC RTL code, follow these steps:  
+
+1. Open a terminal.  
+2. Run the following command:  
+
+   ```bash  
+   bash [ProNoC_dir]/mpsoc/script/phy_noc_gen/OpenPiton_nocs_gen.sh  
+   ```  
+
+   Replace `[ProNoC_dir]` with the path to your ProNoC installation directory.

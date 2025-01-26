@@ -1,7 +1,0 @@
-Verification Results:
-****************************star6_2cycle_mcast_par : Compile *******************************:
-	 model is generated successfully.
-****************************star6_2cycle_mcast_par	: random traffic *******************************:
-	 Passed:   zero load (5,6.67897) saturation (55,151.076)
-****************************star6_2cycle_mcast_par	: transposed 1 traffic *******************************:
-	 Passed:   zero load (5,6.59404) saturation (55,125.016)

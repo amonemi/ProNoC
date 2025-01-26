@@ -1,0 +1,14 @@
+$model = bless( {
+		
+        'noc_param'=> {
+						"T1" => "4",
+						"T2" => "4",	
+						"B"  => "4",
+						"LB" => "5",					    					
+						"CAST_TYPE" => "\"MULTICAST_PARTIAL\"",
+						"MCAST_ENDP_LIST" => "16'b110011000111101",						
+						"Fpay" => "64",
+						"SELF_LOOP_EN" => "\"YES\""
+
+						}
+}, 'ProNOC' );

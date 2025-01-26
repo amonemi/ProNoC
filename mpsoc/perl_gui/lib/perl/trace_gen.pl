@@ -236,7 +236,7 @@ sub trace_map_ctrl{
 	
 	
 	if($mode eq 'task'){
-		($row,$col) =noc_topology_setting_gui($self,$table,$tview,$row,1);
+		($row,$col) =noc_topology_setting_gui($self,$table,$tview,$row,1,"");
 		
 		$diagram-> signal_connect("clicked" => sub{ 
         	show_topology_diagram ($self) ;

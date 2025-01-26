@@ -112,8 +112,8 @@ sub generate_sim_bin_file {
 	if ($topology eq '"CUSTOM"'){ 
 		my $name=$simulate->object_get_attribute('noc_param','CUSTOM_TOPOLOGY_NAME');
 		$name=~s/["]//gs;     
-		my $dir1=  get_project_dir()."/mpsoc/rtl/src_topolgy/$name";
-		my $dir2=  get_project_dir()."/mpsoc/rtl/src_topolgy/common";
+		my $dir1=  get_project_dir()."/mpsoc/rtl/src_topology/$name";
+		my $dir2=  get_project_dir()."/mpsoc/rtl/src_topology/common";
 		my @files = File::Find::Rule->file()
                             ->name( '*.v','*.V','*.sv' )
                             ->in( "$dir1" );
@@ -130,9 +130,7 @@ sub generate_sim_bin_file {
 		
 	
 	}
-	# generate NoC parameter file
-	#my ($noc_param,$pass_param)=gen_noc_param_v($simulate);
-	#open(FILE,  ">$target_verilog_dr/parameter.v") || die "Can not open: $!";
+	# generate NoC parameter file	
 	my $fifow=$simulate->object_get_attribute('fpga_param','TIMSTMP_FIFO_NUM');
 	gen_noc_localparam_v_file($simulate,"$target_verilog_dr/src_noc");
 

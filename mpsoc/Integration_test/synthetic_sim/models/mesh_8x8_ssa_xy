@@ -1,6 +1,0 @@
-$model = bless( {
-		'compile' => "verilate_mesh.sh",
-        'noc_param'=> {
-						"SSA_EN" => "\"YES\"",				
-						}
-}, 'ProNOC' );

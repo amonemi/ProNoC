@@ -27,6 +27,8 @@
 **	different types of multiplexors, converters and counters ...
 **
 **************************************************************/
+`ifndef PRONOC_COMMON
+`define PRONOC_COMMON
 `include "pronoc_def.v"
 
 module pronoc_register 
@@ -1043,6 +1045,4 @@ endgenerate
 
 endmodule
 
-
-
-
+`endif

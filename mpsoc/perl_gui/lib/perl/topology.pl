@@ -10,13 +10,15 @@ use FindBin;
 use lib $FindBin::Bin;
 
 sub get_topology_info {
-	my ($self) =@_;
-	my $topology=$self->object_get_attribute('noc_param','TOPOLOGY');
-	my $T1=$self->object_get_attribute('noc_param','T1');
-	my $T2=$self->object_get_attribute('noc_param','T2');
-	my $T3=$self->object_get_attribute('noc_param','T3');
-	my $V = $self->object_get_attribute('noc_param','V');
-	my $Fpay = $self->object_get_attribute('noc_param','Fpay');
+	my ($self,$noc_id) =@_;
+	$noc_id="" if (!defined $noc_id);
+	my $noc_param="noc_param$noc_id";
+	my $topology=$self->object_get_attribute($noc_param,'TOPOLOGY');
+	my $T1=$self->object_get_attribute($noc_param,'T1');
+	my $T2=$self->object_get_attribute($noc_param,'T2');
+	my $T3=$self->object_get_attribute($noc_param,'T3');
+	my $V = $self->object_get_attribute($noc_param,'V');
+	my $Fpay = $self->object_get_attribute($noc_param,'Fpay');
 	
 	return get_topology_info_sub($topology, $T1, $T2, $T3,$V, $Fpay);	
 }	
@@ -32,6 +34,7 @@ sub get_topology_info_from_parameters {
 	my $T3  =$param{'T3'};
 	my $V   =$param{'V'};
 	my $Fpay=$param{'Fpay'};	
+	print "lllllllllllllll\n";
 	return get_topology_info_sub($topology, $T1, $T2, $T3,$V, $Fpay);	
 }
 
@@ -415,7 +418,7 @@ sub mcast_partial_width {
 		return $m;
 		}
 		#its bin format
-		my @temp = split ("'b",$p);
+		@temp = split ("'b",$p);
 		if (defined $temp[1]){
 			my $m=0;
 			$p=remove_not_hex($temp[1]);
@@ -537,7 +540,7 @@ sub get_noc_verilator_top_modules_info {
         
 	}else {#custom
 		
-		my $dir =get_project_dir()."/mpsoc/rtl/src_topolgy";
+		my $dir =get_project_dir()."/mpsoc/rtl/src_topology";
 		my $file="$dir/param.obj";	
 		my %param;
 		if(-f $file){
