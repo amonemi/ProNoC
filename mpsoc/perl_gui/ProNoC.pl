@@ -279,17 +279,17 @@ sub show_setting{
 	my @f3=("/bin/or1k-elf-gcc","/bin/or1k-elf-ld","/bin/or1k-elf-objcopy","/bin/or1k-elf-objdump","/lib/gcc/or1k-elf/5.2.0");
 	
 	my @tool = (
-	{ label=>"aeMB", tooldir=>"aemb", files=>\@f1, size=>'21 MB', path=>'https://drive.google.com/file/d/1PT7lliPzhqsVl2Xq2bJsFuKu83Vk1ee4/view?usp=sharing' },
-	{ label=>"lm32", tooldir=>"lm32", files=>\@f2, size=>'57 MB', path=>'https://drive.google.com/file/d/1ly32nItfQwBNxhTjDd5xoi7kXPPQjZz7/view?usp=sharing' },
-	{ label=>"or1k-elf", tooldir=>"or1k-elf", files=>\@f3, size=>'219 MB', path=>'https://drive.google.com/file/d/1AeV3oeSltZ_aEqHcd419kfeI8EtHmUwr/view?usp=sharing' },
+	{ label=>"aeMB", tooldir=>"aemb", files=>\@f1, size=>'21 MB', path=>'https://figshare.com/ndownloader/files/51939968?private_link=eb3ef0ec6456f8c3f0ad' },
+	{ label=>"lm32", tooldir=>"lm32", files=>\@f2, size=>'57 MB', path=>'https://figshare.com/ndownloader/files/51939971?private_link=eb3ef0ec6456f8c3f0ad' },
+	{ label=>"or1k-elf", tooldir=>"or1k-elf", files=>\@f3, size=>'219 MB', path=>'https://figshare.com/ndownloader/files/51939974?private_link=eb3ef0ec6456f8c3f0ad' },
 	);
 
 	my @f4=("/dropins","/plugins");
     my @f5=("/AddArray", "/Communication", "/HelloWorld", "/README.md","/StreamBlocks");
 
 	my @tool2 = (
-	{ label=>"eclipse-orcc", tooldir=>"eclipse-orcc", files=>\@f4, size=>'208 MB', path=>'https://drive.google.com/file/d/1YAOAyAk8PA6LXwIPz3aIy-Mongh__WBW/view?usp=sharing' },
-	{ label=>"orcc-apps", tooldir=>"orc-apps", files=>\@f5, size=>'28 MB', path=>'https://drive.google.com/file/d/1Qs4rxcSr-E5H4lYaxawqczTHfCPPCo4V/view?usp=sharing' },
+	{ label=>"eclipse-orcc", tooldir=>"eclipse-orcc", files=>\@f4, size=>'208 MB', path=>'https://figshare.com/ndownloader/files/51939977?private_link=eb3ef0ec6456f8c3f0ad' },
+	{ label=>"orcc-apps", tooldir=>"orc-apps-master", files=>\@f5, size=>'48 MB', path=>'https://github.com/orcc/orc-apps/archive/refs/heads/master.zip' },
 	#{ label=>"or1k-elf", tooldir=>"or1k-elf", files=>\@f3, size=>'219 MB', path=>'https://drive.google.com/file/d/1AeV3oeSltZ_aEqHcd419kfeI8EtHmUwr/view?usp=sharing' },
 	);
 
@@ -503,9 +503,12 @@ sub check_toolchains{
 				my $filename="$pronoc_work/$root/$d->{label}.zip";
 				my $target="$pronoc_work/$root/$d->{label}";
 				#download the file from google drive
-				download_from_google_drive("$d->{path}" ,"$filename"  );
+				#download_from_google_drive("$d->{path}" ,"$filename"  );
+				my $cmd= "wget -q -O $pronoc_work/$root/$d->{label}.zip $d->{path}";				
+				return if(run_cmd_message_dialog_errors($cmd));
+				
 				#unzip the file
-				my $cmd= "unzip $pronoc_work/$root/$d->{label}.zip -d $pronoc_work/$root/";				
+				$cmd= "unzip $pronoc_work/$root/$d->{label}.zip -d $pronoc_work/$root/";				
 				return if(run_cmd_message_dialog_errors($cmd));
 				$load->destroy;
 				#remove zip file
