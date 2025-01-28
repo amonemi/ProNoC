@@ -25,6 +25,7 @@ require "topology.pl";
 require "diagram.pl";
 require "orcc.pl";
 
+my %noc_param_comment;
 
 sub initial_default_param{
     my $mpsoc=shift;
@@ -90,14 +91,14 @@ sub get_soc_list {
 }
 
 sub copy_back_custom_soc_param{
-	my ($new,$old)=@_;
-	my @tiles = $old->top_get_custom_tile_list();
-	foreach my $tile (@tiles){
-		my %l =$old->top_get_custom_soc_param($tile);
-		$new->top_add_custom_soc_param (\%l,$tile);
-	}
-	 
-}	
+    my ($new,$old)=@_;
+    my @tiles = $old->top_get_custom_tile_list();
+    foreach my $tile (@tiles){
+        my %l =$old->top_get_custom_soc_param($tile);
+        $new->top_add_custom_soc_param (\%l,$tile);
+    }
+     
+}    
 
 sub get_NI_instance_list {
     my $top=shift;
@@ -236,12 +237,12 @@ sub check_inserted_ip_nums{
     }else {
         #save the entered ips
         if( scalar @all_num>0){ 
-        	$mpsoc->mpsoc_add_soc_tiles_num($name,\@all_num);
-        	return \@all_num;
+            $mpsoc->mpsoc_add_soc_tiles_num($name,\@all_num);
+            return \@all_num;
         }
         else {
-        	$mpsoc->mpsoc_add_soc_tiles_num($name,undef);
-        	return undef;
+            $mpsoc->mpsoc_add_soc_tiles_num($name,undef);
+            return undef;
         }
         #set_gui_status($mpsoc,"ref",1);
     }
@@ -262,8 +263,8 @@ sub get_soc_parameter_setting{
     my $string = join (',',@tiles );
     my $window =  def_popwin_size(40,40,"Parameter setting for $soc_name mapped to tile( $string ) ",'percent');
     my $table = get_soc_parameter_setting_table($mpsoc,$soc_name,$window,$tiles_ref);
-	$window->add($table);
-	$window->show_all;
+    $window->add($table);
+    $window->show_all;
 }
 
 
@@ -291,9 +292,9 @@ sub get_soc_parameter_setting_table{
         foreach my $p (@params){    
             my  ($default,$type,$content,$info,$global_param,$redefine)=$top->top_get_parameter($inst,$p);
             my $show = ($type ne "Fixed");
-			$default= $param_value{$p} if(defined $param_value{$p});
-			($row,$column)=add_param_widget($mpsoc,$p,$p, $default,$type,$content,$info, $table,$row,$column,$show,'current_tile_param',undef,undef,'vertical');
-		}
+            $default= $param_value{$p} if(defined $param_value{$p});
+            ($row,$column)=add_param_widget($mpsoc,$p,$p, $default,$type,$content,$info, $table,$row,$column,$show,'current_tile_param',undef,undef,'vertical');
+        }
            
             
   #          if ($type eq "Entry"){
@@ -355,14 +356,14 @@ sub get_soc_parameter_setting_table{
         $window->destroy if(defined $window);
         #save new values 
         my $ref=$mpsoc->object_get_attribute('current_tile_param');
-		%param_value=%{$ref};
+        %param_value=%{$ref};
              
        # if(!defined $tile ) {
         #    $top->top_add_default_soc_param(\%param_value);
         #    $mpsoc->object_add_attribute('soc_param',"default",\%param_value);      
        # }
        # else {
-       	foreach my $tile (@tiles){
+           foreach my $tile (@tiles){
             $top->top_add_custom_soc_param(\%param_value,$tile);
             $mpsoc->object_add_attribute('soc_param',"custom_${soc_name}",\%param_value);            
         }
@@ -401,8 +402,8 @@ sub tile_set_widget{
         my $data=$entry->get_text();
         my $r=check_inserted_ip_nums($mpsoc,$soc_name,$data);
         if(defined $r){
-        	my @all_num = @{$r};
-        	get_soc_parameter_setting($mpsoc,$soc_name,\@all_num);
+            my @all_num = @{$r};
+            get_soc_parameter_setting($mpsoc,$soc_name,\@all_num);
         }        
     });
     
@@ -456,19 +457,19 @@ sub defualt_tilles_setting {
     if(defined $file){$entry->set_text($file);}
     
     
-	$browse->signal_connect("clicked"=> sub{
-		my $entry_ref=$_[1];
-		my $file;
-		my $dialog = gen_folder_dialog('Select tile directory');
-		if ( "ok" eq $dialog->run ) {
-			$file = $dialog->get_filename;
+    $browse->signal_connect("clicked"=> sub{
+        my $entry_ref=$_[1];
+        my $file;
+        my $dialog = gen_folder_dialog('Select tile directory');
+        if ( "ok" eq $dialog->run ) {
+            $file = $dialog->get_filename;
             $$entry_ref->set_text($file);
             $mpsoc->object_add_attribute('setting','soc_path',$file);
             $mpsoc->mpsoc_remove_all_soc();
             set_gui_status($mpsoc,"ref",1);            
             #check_input_file($file,$socgen,$info);
                     #print "file = $file\n";
-		}
+        }
         $dialog->destroy;
 
     } , \$entry);
@@ -535,34 +536,37 @@ you can add individual numbers or ranges as follow
 
 
 sub noc_topology_setting_gui {
-	my ($mpsoc,$table,$txview,$row,$show_noc,$noc_id)=@_;
+    my ($mpsoc,$table,$txview,$row,$show_noc,$noc_id)=@_;
     my $noc_param="noc_param$noc_id";
-	my $coltmp=0;
-	#  topology
-	my  $label='Topology';
-	my  $param='TOPOLOGY';
-	my  $default='"MESH"';
-	my  $content='"MESH","FMESH","TORUS","RING","LINE","FATTREE","TREE","STAR","CUSTOM"';
-	my  $type='Combo-box';
-	my  $info="NoC topology"; 
-	($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
+    my $coltmp=0;
+    #  topology
+    my  $label='Topology';
+    my  $param='TOPOLOGY';
+    my  $default='"MESH"';
+    my  $content='"MESH","FMESH","TORUS","RING","LINE","FATTREE","TREE","STAR","CUSTOM"';
+    my  $type='Combo-box';
+    my  $info="Specifies the NoC topology. 
+    Options include $content"; 
+    $noc_param_comment{$param}="$info";
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
             
     my $topology=$mpsoc->object_get_attribute($noc_param,'TOPOLOGY');
 
-	if($topology ne '"CUSTOM"' ){
+    if($topology ne '"CUSTOM"' ){
     #topology T1 parameter
-	    $label= 
-	    	($topology eq '"FATTREE"' || $topology eq '"TREE"')? 'K' :
-	     	($topology eq '"STAR"')? "Total Endpoint number" : 'Routers per row';
-	    $param= 'T1';
-		$default= '2';
-	    $content=
-	    ($topology eq '"MESH"'  || $topology eq '"TORUS"') ? '2,16,1':
-	    ($topology eq '"FMESH"')? '1,16,1':
-		($topology eq '"FATTREE"' || $topology eq '"TREE"' )? '2,6,1':'2,64,1';
-	    $info= ($topology eq '"FATTREE"' || $topology eq '"TREE"' )? 'number of last level individual router`s endpoints.' :'Number of NoC routers in row (X dimension)';
-	    $type= 'Spin-button';             
-	    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
+        $label= 
+            ($topology eq '"FATTREE"' || $topology eq '"TREE"')? 'K' :
+            ($topology eq '"STAR"')? "Total Endpoint number" : 'Routers per row';
+        $param= 'T1';
+        $default= '2';
+        $content=
+        ($topology eq '"MESH"'  || $topology eq '"TORUS"') ? '2,16,1':
+        ($topology eq '"FMESH"')? '1,16,1':
+        ($topology eq '"FATTREE"' || $topology eq '"TREE"' )? '2,6,1':'2,64,1';
+        $info= ($topology eq '"FATTREE"' || $topology eq '"TREE"' )? 'number of last level individual router`s endpoints.' :'Number of NoC routers in row (X dimension)';
+        $type= 'Spin-button'; 
+        $noc_param_comment{$param}="$info";            
+        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
 
     
     #Topology T2 parameter
@@ -572,7 +576,8 @@ sub noc_topology_setting_gui {
         $default='2';
         $content=  ($topology eq '"FMESH"')? '1,16,1': '2,16,1';
         $info= ($topology eq '"FATTREE"' || $topology eq '"TREE"')? 'Fattree layer number (The height of FT)':'Number of NoC routers in column (Y dimension)';
-        $type= 'Spin-button';             
+        $type= 'Spin-button'; 
+        $noc_param_comment{$param}="$info";            
         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
     } else {
         $mpsoc->object_add_attribute($noc_param,'T2',1);        
@@ -580,22 +585,22 @@ sub noc_topology_setting_gui {
     
     #Topology T3 parameter
     if($topology eq '"MESH"' || $topology eq '"FMESH"' || $topology eq '"TORUS"' || $topology eq '"RING"' || $topology eq '"LINE"') {
-    	$label="Router's endpoint number";
-		$param= 'T3';
+        $label="Router's endpoint number";
+        $param= 'T3';
         $default='1';
         $content='1,4,1';
-        $info= "In $topology topology, each router can have up to 4 endpoint processing tile.";
-        $type= 'Spin-button';             
+        $info= "Number of endpoints per router. In $topology topology, each router
+        can have up to 4 endpoint processing tile.";
+        $type= 'Spin-button'; 
+        $noc_param_comment{$param}="$info";            
         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
     }
     
-       
     
-    
-	}else{#its a custom Topology
-		($row,$coltmp)=config_custom_topology_gui($mpsoc,$table,$txview,$row,$noc_id);
-	}
-	return ($row,$coltmp);
+    }else{#its a custom Topology
+        ($row,$coltmp)=config_custom_topology_gui($mpsoc,$table,$txview,$row,$noc_id);
+    }
+    return ($row,$coltmp);
 
 }
 
@@ -611,16 +616,17 @@ sub noc_config{
     my $row=0;
     my $title=gen_label_in_center("NoC Configuration");
     $table->attach ($title , 0, 4,  $row, $row+1,'expand','shrink',2,2); $row++;
-	add_Hsep_to_table ($table,0,4,$row); $row++;
-   
+    add_Hsep_to_table ($table,0,4,$row); $row++;
+
     my $label;
     my $param;
     my $default;
     my $type;
     my $content;
     my $info;
+
     
-    
+
     #parameter start
     my $b1;
     my $show_noc=$mpsoc->object_get_attribute('setting','show_noc_setting');
@@ -652,8 +658,8 @@ sub noc_config{
     
     
     ($row,$coltmp) =noc_topology_setting_gui($mpsoc,$table,$txview,$row,$show_noc,$noc_id);
-     my $topology=$mpsoc->object_get_attribute($noc_param,'TOPOLOGY');  
-  
+    my $topology=$mpsoc->object_get_attribute($noc_param,'TOPOLOGY');  
+    
     #VC number per port
     if($router_type eq '"VC_BASED"'){    
         my $v=$mpsoc->object_get_attribute($noc_param,'V');
@@ -664,8 +670,10 @@ sub noc_config{
         $type='Spin-button';
         $content='2,16,1';
         $info='Number of Virtual chanel per each router port';
+        $noc_param_comment{$param}="$info";
         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
     } else {
+        $noc_param_comment{'V'}="Number of Virtual chanel per each router port. V is equal to 1 means there is no VC.";
         $mpsoc->object_add_attribute($noc_param,'V',1);
         $mpsoc->object_add_attribute($noc_param,'C',0);        
     }
@@ -677,6 +685,7 @@ sub noc_config{
     $content='2,256,1';
     $type='Spin-button';
     $info=($router_type eq '"VC_BASED"')?  'Buffer queue size per VC in flits' : 'Buffer queue size in flits';
+    $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,undef);
     
     
@@ -686,16 +695,16 @@ sub noc_config{
     $default='4';                                  
     $content='2,256,1';
     $type='Spin-button';
-    $info = "The Local router ports buffer width (LB) is the width of the ports connected to the endpoints and can take different buffer sizes than other routers ports buffer width (B) connected to neighboring routers .It is valid only for MESH,FMESH, TORUS,LINE and RING topologies. In FMESH topology, this parameter does not affect the  width of extra endpoints connected to edge routers.";
-    
+    $info = "Buffer width for local router ports connected to endpoints. 
+    May differ from B, which is for neighboring router ports. 
+    Applicable to MESH, FMESH, TORUS, LINE, and RING topologies. 
+    In FMESH, LB does not affect extra endpoints on edge routers.";
+    $noc_param_comment{$param}="$info";
     if ($topology eq '"MESH"' || $topology eq '"FMESH"' || $topology eq '"TORUS"' || $topology eq '"RING"' || $topology eq '"LINE"'){
-   		($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,undef);
+        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,undef);
     }else{
-    	$mpsoc->object_add_attribute($noc_param,'LB','B');
-    }
-    
-    
-    
+        $mpsoc->object_add_attribute($noc_param,'LB','B');
+    }    
     
     #packet payload width
     $label='Payload width';
@@ -704,6 +713,7 @@ sub noc_config{
     $content='32,256,32';
     $type='Spin-button';
     $info="The packet payload width in bits"; 
+    $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info,$table,$row,undef,$show_noc,$noc_param,undef);
 
 if($topology ne '"CUSTOM"' ){
@@ -722,137 +732,137 @@ if($topology ne '"CUSTOM"' ){
         $content=($topology eq '"MESH"' || $topology eq '"FMESH"')?  '"XY","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","ODD_EVEN"' :
                  ($topology eq '"TORUS"')? '"TRANC_XY","TRANC_WEST_FIRST","TRANC_NORTH_LAST","TRANC_NEGETIVE_FIRST"':
                  ($topology eq '"RING"')? '"TRANC_XY"' : 
-				 ($topology eq '"LINE"')?  '"XY"':
+                 ($topology eq '"LINE"')?  '"XY"':
                  ($topology eq '"FATTREE"')? '"NCA_RND_UP","NCA_STRAIGHT_UP","NCA_DST_UP"' : 
-				 ($topology eq '"TREE"')? '"NCA"' : '"UNKNOWN"';    
-        
+                 ($topology eq '"TREE"')? '"NCA"' : '"UNKNOWN"';    
     }
     $default=($topology eq '"MESH"' || $topology eq '"FMESH"' || $topology eq '"LINE"' )? '"XY"':
-    		 ($topology eq '"TORUS"'|| $topology eq '"RING"')?  '"TRANC_XY"' : 
-    		 ($topology eq '"FATTREE"')? '"NCA_STRAIGHT_UP"' :
-    		 ($topology eq '"TREE"')? '"NCA"' : '"UNKNOWN"';
-    		 
+             ($topology eq '"TORUS"'|| $topology eq '"RING"')?  '"TRANC_XY"' : 
+             ($topology eq '"FATTREE"')? '"NCA_STRAIGHT_UP"' :
+             ($topology eq '"TREE"')? '"NCA"' : '"UNKNOWN"';
+
     my $info_mesh="Select the routing algorithm: XY(DoR) , partially adaptive (Turn models). Fully adaptive (Duato) "; 
-    my $info_fat="Nearest common ancestor (NCA) where the up port is selected randomly (RND), based on destination endpoint address (DST) or it is the top port that is located in front of the port which has received the packet (STRAIGHT) "; 
+    my $info_fat="Nearest common ancestor (NCA) where the up port is selected randomly (RND), 
+    based on destination endpoint address (DST) or it is the top port that is located in front 
+    of the port which has received the packet (STRAIGHT) "; 
     
     $info=($topology eq '"FATTREE"')? $info_fat : 
-    	  ($topology eq '"TREE"') ? "Nearest common ancestor": $info_mesh;
+          ($topology eq '"TREE"') ? "Nearest common ancestor": $info_mesh;
+    $noc_param_comment{$param}="$info
+    options are $content";
     my $show_routing =($topology eq '"STAR"' )? 0 : $show_noc;
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_routing,$noc_param,1);
-
 }
 
-	#PCK_TYPE
-	$label='Packet type'; 
+    #PCK_TYPE
+    $label='Packet type'; 
     $param='PCK_TYPE';
     $default='"MULTI_FLIT"';
     $content='"MULTI_FLIT","SINGLE_FLIT"';
     $type="Combo-box";
-    $info="Define packet type: SINGLE_FLIT: all packets send to NoC are single-flit sized. 
-    Multi-flit: packets can be consists of one or several flits. A multi-flit packet can be 
-    	a)single-flit sized : both headr and tail flag must be asserted for this flit, 
-    	b)two-flit sized: a header flit and a tail flit, or 
-    	c)more than 2 fits: start with a headr flit, continued with one or more body flits and end up with a tail flit
-    	For MULTI-FLIT packet you need to defin ethe minum size of a paket that can be injecte to the NoC.
-    ";
-     
-    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
-	
-	 my $pck_type=$mpsoc->object_get_attribute($noc_param,'PCK_TYPE');  
-  
-	if($pck_type eq '"MULTI_FLIT"'){
+    $info="Packet type.
+    - SINGLE_FLIT: All packets are single-flit sized.
+    - MULTI_FLIT: Packets can be single-flit, two-flit, or multi-flit sized:
+        a) Single-flit: Head and tail flags set on one flit.
+        b) Two-flit: Separate header and tail flits.
+        c) Multi-flit: Header, one or more body flits, and a tail flit.";
+    $noc_param_comment{$param}="$info";
 
-		#MIN_PCK_SIZE 
-		# 2 //minimum packet size in flits. The minimum value is 1. 
-		$label='Minimum packet size'; 
-	    $param='MIN_PCK_SIZE';
-	    $default='2';
-	    $content='1,65535,1';
-	    $type='Spin-button';
-	    $info="The minimum packet size in flits. In atomic VC re-allocation, it is just important to define if the single-flit sized packets are allowed to be injected to the NoC by defining this parameter value as one.  Setting any larger value than one results in the same architecture and the NoC works correctly even if it receives smaller packets size as while as they are not single flit -sized packets.  However, for non-atomic VC reallocation NoCs, you have to define the exact value as it defines the NoC control registers' internal buffers. The NoC may crash once it receives  packets having smaler size than the defined  minimum packet size."; 
-	    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,undef);
-	}else{
-		 $mpsoc->object_add_attribute($noc_param,'MIN_PCK_SIZE',1);   
-	}
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
+    
+    my $pck_type=$mpsoc->object_get_attribute($noc_param,'PCK_TYPE');  
+
+    if($pck_type eq '"MULTI_FLIT"'){
+
+        #MIN_PCK_SIZE 
+        # 2 //minimum packet size in flits. The minimum value is 1. 
+        $label='Minimum packet size'; 
+        $param='MIN_PCK_SIZE';
+        $default='2';
+        $content='1,65535,1';
+        $type='Spin-button';
+        $info="Minimum packet size in flits.
+    - For atomic VC reallocation, any value ≥1 is valid.
+    - For non-atomic VC reallocation, this value defines buffer behavior.
+    Note: Setting a value smaller than received packet size may cause crashes."; 
+        $noc_param_comment{$param}="$info";
+        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,undef);
+    }else{
+        $mpsoc->object_add_attribute($noc_param,'MIN_PCK_SIZE',1);   
+    }
 
     # BYTE_EN
     $label='Byte Enable';
     $param='BYTE_EN';
     $default= 0;
-    $info='0:disable, 1: enable. Add byte enable (BE) filed to header flit which shows the location of last valid byte in tail flit. It is needed once the send data unit is smaller than Fpay.'; 
+    $info='0 - Disable, 1 - Enable. 
+    Adds a Byte Enable (BE) field to the header flit, indicating the location of 
+    the last valid byte in the tail flit. This is required when the data unit being 
+    sent is smaller than the Fpay value.'; 
     $content='0,1';
     $type="Combo-box";
+    $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param);
-    
-    
-  
-    
     
     #CAST_TYPE
     $label='Casting Type';
     $param='CAST_TYPE';
     $default= '"UNICAST"';
-    $info='Configure a NoC as Unicast, Multicast, or Broadcast NoC. In Unicast NoC, a packet can be sent to only one destination. In  Multicast, a single packet can have multiple target destination nodes, whereas,  Broadcast packets are sent to all other destination nodes. For Multicast and Broadcast NoC, only one copy of a packet must be injected into the source router. The routers in the path then fork the packets to different output ports when necessary. Multicast and Broadcast can be selected as FULL, where all destinations can be included in packet destination list, or as PARTIAL where a user-defined subset of nodes (defined with MCAST_ENDP_LIST parameter) can be targeted in destination lists. The other nodes not marked in MCAST_ENDP_LIST can only receive unicast packets. '; 
     $content='"UNICAST","MULTICAST_PARTIAL","MULTICAST_FULL","BROADCAST_PARTIAL","BROADCAST_FULL"';
+    $info="Specifies NoC communication type.
+    - UNICAST: A packet targets a single destination.
+    - MULTICAST/BROADCAST: A single packet targets multiple/all destinations.
+    Options: FULL (all nodes) or PARTIAL (defined by MCAST_ENDP_LIST).
+    Select one of $content"; 
+    
     $type="Combo-box";
+    $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
     
-   
     my $cast_type=$mpsoc->object_get_attribute($noc_param,'CAST_TYPE');  
     my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info($mpsoc,$noc_id);
     
-    my $cast = $mpsoc->object_get_attribute($noc_param,"MCAST_ENDP_LIST");	
+    my $cast = $mpsoc->object_get_attribute($noc_param,"MCAST_ENDP_LIST");    
     if(!defined $cast){
-	    my $h=0;
-	    my $n="";
-	    for (my $i=0; $i<$NE; $i++){
-			$h+= (1<<$i%4); 	
-			if(($i+1) % 4==0){
-				$n="$h".$n if($h<10);
-				$n=chr($h-10+97).$n if($h>9);
-				$h=0;
-			}
-		}	
-		$n="$h".$n if($h!=0);
-		$n="'h".$n;  
-		$mpsoc->object_add_attribute($noc_param,"MCAST_ENDP_LIST",$n);
-		$mpsoc->object_add_attribute_order($noc_param,"MCAST_ENDP_LIST");
-	#	$mpsoc->object_add_attribute($noc_param,"MCAST_PRTLw",$NE);
-	#	$mpsoc->object_add_attribute_order($noc_param,"MCAST_PRTLw");
-		$cast=$n;
+        my $h=0;
+        my $n="";
+        for (my $i=0; $i<$NE; $i++){
+            $h+= (1<<$i%4);     
+            if(($i+1) % 4==0){
+                $n="$h".$n if($h<10);
+                $n=chr($h-10+97).$n if($h>9);
+                $h=0;
+            }
+        }    
+        $n="$h".$n if($h!=0);
+        $n="'h".$n;  
+        $mpsoc->object_add_attribute($noc_param,"MCAST_ENDP_LIST",$n);
+        $mpsoc->object_add_attribute_order($noc_param,"MCAST_ENDP_LIST");
+    #    $mpsoc->object_add_attribute($noc_param,"MCAST_PRTLw",$NE);
+    #    $mpsoc->object_add_attribute_order($noc_param,"MCAST_PRTLw");
+        $cast=$n;
     }
     
     if($cast_type eq '"MULTICAST_PARTIAL"' || $cast_type eq '"BROADCAST_PARTIAL"') {
-    	#$table->attach  ( gen_label_help($info,"Muticast Node list"),0 , 2, $row,$row+1,'fill','shrink',2,2);    
-    	$info='MCAST_ENDP_LIST is a one-hot coded number where the asserted bit indicates that the corresponding destination ID can be targeted in multicast/broadcast packets. The corresponding destinations with zero bit can only receive unicast packets.'; 
-  
-    	my $b1= def_image_button("icons/setting.png","Set");
-    	my $bb= def_pack_hbox(FALSE,0,gen_label_in_left("$cast"),$b1);
-    	my $label=gen_label_in_left("Muticast Node list");
-    	my $inf_bt= (defined $info)? gen_button_message ($info,"icons/help.png"):gen_label_in_left(" ");
-		attach_widget_to_table ($table,$row,$label,$inf_bt,$bb,0);
-    	
-    	
-       # $table->attach  ( $bb , 2, 3, $row,$row+1,'fill','shrink',2,2);
+        #$table->attach  ( gen_label_help($info,"Muticast Node list"),0 , 2, $row,$row+1,'fill','shrink',2,2);    
+        $info='A one-hot encoded value where each asserted bit indicates that the corresponding destination ID 
+    can be targeted in multicast or broadcast packets. Destinations represented by bits set to zero are restricted 
+    to receiving only unicast packets.'; 
+        $noc_param_comment{$param}="$info";
+        my $b1= def_image_button("icons/setting.png","Set");
+        my $bb= def_pack_hbox(FALSE,0,gen_label_in_left("$cast"),$b1);
+        my $label=gen_label_in_left("Muticast Node list");
+        my $inf_bt= (defined $info)? gen_button_message ($info,"icons/help.png"):gen_label_in_left(" ");
+        attach_widget_to_table ($table,$row,$label,$inf_bt,$bb,0);
+        
+        
+        # $table->attach  ( $bb , 2, 3, $row,$row+1,'fill','shrink',2,2);
         $row++;  
         
-         $b1->signal_connect("clicked" => sub{ 
-      		set_multicast_list($mpsoc,$noc_id);
-   		
-   		 });    	
-    }
-    
-    
-    
-    #advance parameter start
-   # my $advc;
-   # my $adv_set=$mpsoc->object_get_attribute('setting','show_adv_setting');
-   #
-   # if($adv_set == 0){    
-   #     $advc= def_image_button("icons/down.png","Advance Parameters");
-   #     $table->attach ( $advc , 0, 2, $row,$row+1,'fill','shrink',2,2);
-   #     $row++;    
-   # }
+        $b1->signal_connect("clicked" => sub{ 
+            set_multicast_list($mpsoc,$noc_id);        
+        });        
+    }    
     
     my $adv_set= $show_noc;
     #SSA
@@ -861,7 +871,9 @@ if($topology ne '"CUSTOM"' ){
     $default='"NO"';
     $content='"YES","NO"';
     $type='Combo-box';
-    $info="Enable single cycle latency on packets traversing in the same direction using static straight allocator (SSA)"; 
+    $info="Enable single cycle latency on packets traversing in the same direction using 
+    static straight allocator (SSA)"; 
+    $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,undef);
     
     #SMART
@@ -870,21 +882,23 @@ if($topology ne '"CUSTOM"' ){
     $default='0';
     $content="0,1,2,3,4,5,6,7,8,9";
     $type='Combo-box';
-    $info="If Max Straight Bypass (SMART_MAX) is defined as n>0 then packets are allowed to bypass Maximum of n routers in Straight direction in single cycle."; 
+    $info="Maximum number of routers a packet can bypass in a straight direction
+    in a single cycle (0 = no bypass)"; 
+    $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,undef);
-   
-    
-    
+
     #Fully and partially adaptive routing setting
     my $route=$mpsoc->object_get_attribute($noc_param,"ROUTE_NAME");
     $label="Congestion index";    
     $param="CONGESTION_INDEX";
     $type="Spin-button";
     $content="0,12,1";
-    $info="Congestion index determines how congestion information is collected from neighboring routers. Please refer to the usere manual for more information";
+    $info="Congestion index determines how congestion information is collected 
+    from neighboring routers. Please refer to the usere manual for more information";
+    $noc_param_comment{$param}="$info";
     $default=3;
     if($topology ne '"CUSTOM"' && $route ne '"XY"' && $route ne '"TRANC_XY"' ){
-           ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,undef);
+        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,undef);
     } else {
         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,$noc_param,undef);
     }
@@ -899,20 +913,24 @@ if($topology ne '"CUSTOM"' ){
     for (my $i=1; $i<=$v-1; $i++){$default=  "${default}0";}
     $default=  "${default}1";
     $info="Select the escap VC for fully adaptive routing.";
+    $noc_param_comment{$param}="$info";
     if( $route eq '"TRANC_DUATO"' or $route eq '"DUATO"'  ){
-           ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set, $noc_param,undef);
-     }
+        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set, $noc_param,undef);
+    }
     else{
-         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0, $noc_param,undef);
+        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0, $noc_param,undef);
     }
         
     # VC reallocation type
     $label=($router_type eq '"VC_BASED"')? 'VC reallocation type': 'Queue reallocation type';    
     $param='VC_REALLOCATION_TYPE';
-    $info="VC reallocation type: If set as atomic only empty VCs can be allocated for new packets. Whereas, in non-atomic a non-empty VC which has received the last packet tail flit can accept a new  packet"; 
+    $info="VC reallocation policy.
+    - ATOMIC: Only empty VCs can be reallocated.
+    - NONATOMIC: Non-empty VCs with completed packets can accept new packets.";
     $default='"NONATOMIC"';  
     $content='"ATOMIC","NONATOMIC"';
     $type='Combo-box';
+    $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,undef);                                           
 
 
@@ -920,13 +938,17 @@ if($topology ne '"CUSTOM"' ){
     $label = 'VC/SW combination type';
     $param='COMBINATION_TYPE';
     $default='"COMB_NONSPEC"';
-    $content='"BASELINE","COMB_SPEC1","COMB_SPEC2","COMB_NONSPEC"';
+    $content='"COMB_SPEC1","COMB_SPEC2","COMB_NONSPEC"';
     $type='Combo-box';
-    $info="The joint VC/ switch allocator type. using canonical combination is not recommended";   
+    $info="Specifies the joint VC/Switch allocator type as either speculative or non-speculative. 
+Options are: 
+    - SPEC: Speculative allocation.
+    - NONSPEC: Non-speculative allocation.";   
+    $noc_param_comment{$param}="$info";
     if ($router_type eq '"VC_BASED"'){                 
         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,undef);                   
     } else{
-         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,$noc_param,undef);  
+        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,$noc_param,undef);  
     }
     
     # Crossbar mux type 
@@ -936,6 +958,7 @@ if($topology ne '"CUSTOM"' ){
     $content='"ONE_HOT","BINARY"';
     $type='Combo-box';
     $info="Crossbar multiplexer type";
+    $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,undef);             
     
     #class   
@@ -957,19 +980,17 @@ if($topology ne '"CUSTOM"' ){
         }    
         #print "\$default=$default\n";
         for (my $i=0; $i<=$class-1; $i++){
-            
-             $label="Class $i Permitted VCs";    
-               $param="Cn_$i";
-               $type="Check-box";
-               $content=$v;
-               $info="Select the permitted VCs which the message class $i can be sent via them.";
-               ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,'class_param',undef);
+        
+            $label="Class $i Permitted VCs";    
+            $param="Cn_$i";
+            $type="Check-box";
+            $content=$v;
+            $info="Select the permitted VCs which the message class $i can be sent via them.";
+            ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,'class_param',undef);
         }
     
     }#($router_type eq '"VC_BASED"')
-     
-     
-
+    
     #simulation debuge enable     
     $label='Debug enable';
     $param='DEBUG_EN';
@@ -977,8 +998,8 @@ if($topology ne '"CUSTOM"' ){
     $default='0';
     $content='0,1';
     $type='Combo-box';
+    $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param);  
-
     
     #pipeline reg    
     $label="Add pipeline reg after crossbar";    
@@ -987,43 +1008,33 @@ if($topology ne '"CUSTOM"' ){
     $content=1;
     $default="1\'b0";
     $info="If is enabled it adds a pipeline register at the output port of the router.";
+    $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param);
-    
-    
-    #MAX_SMART_NUM = 4 // 
-    $label="Number of multiple router bypassing ";    
-    $param="MAX_SMART_NUM ";
-    $type='Spin-button';
-    $content='0,1,1';
-    $default=0;
-    $info="maximum number of routers which a packet can by pass during one clock cycle. Define it as zero will disable bypassing.";
-    #($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$adv_set,$noc_param);
-    
-     
+
     #FIRST_ARBITER_EXT_P_EN
     $label='Swich allocator first level 
 arbiters external priority enable';
     $param='FIRST_ARBITER_EXT_P_EN';
     $default= 1;
-    $info='If set as 1 then the switch allocator\'s input (first) arbiters\' priority registers are enabled only when a request get both input and output arbiters\' grants'; 
+    $info='Enables switch allocator\'s input priority registers 
+    only when a request gets grants from both input and output arbiters.'; 
     $content='0,1';
     $type="Combo-box";
+    $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info,$table,$row,undef,$adv_set,$noc_param);     
-          
     
     #Arbiter type
     $label='SW allocator arbitration type'; 
     $param='SWA_ARBITER_TYPE';
     $default='"RRA"';
-    $content='"RRA","WRRA"'; #,"WRRA_CLASSIC"';
+    $content='"RRA","WRRA"'; 
     $type='Combo-box';
-    $info="Switch allocator arbiter type: 
-    RRA: Round robin arbiter. Only local fairness in a router. 
-    WRRA: Weighted round robin arbiter. Results in global fairness in the NoC. 
-          Switch allocation requests are grated according to their weight which increases due to contention"; 
+    $info="Switch allocator arbitration type.
+    - RRA: Round Robin Arbiter (local fairness only).
+    - WRRA: Weighted Round Robin Arbiter (global fairness based on contention).
+"; 
+    $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,1);
-    
-          
     
     my $arbiter=$mpsoc->object_get_attribute($noc_param,"SWA_ARBITER_TYPE");
     my $wrra_show = ($arbiter ne  '"RRA"' && $adv_set == 1 )? 1 : 0;
@@ -1033,6 +1044,7 @@ arbiters external priority enable';
     $default='4';
     $content='2,7,1';
     $info= 'Maximum weight width';
+    $noc_param_comment{$param}="$info";
     $type= 'Spin-button';  
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$wrra_show,$noc_param,undef);  
     
@@ -1043,10 +1055,10 @@ arbiters external priority enable';
     $default='"NO"';
     $content='"NO","YES"';
     $type='Combo-box';
-    $info="If the self loop is enabled, it allows a router input port sends packet to its own output port. Enabling it allows a tile to be able to sent packet to itself too."; 
+    $info="Allows a router input port to send packets to its own output port, 
+    enabling self-communication for tiles."; 
+    $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,1);
-    
-    
     
     #WRRA_CONFIG_INDEX
     $label='Weight configuration index';
@@ -1087,7 +1099,6 @@ arbiters external priority enable';
     
     
     #other fixed parameters       
-       
     
     # AVC_ATOMIC_EN
     $label='AVC_ATOMIC_EN';
@@ -1096,6 +1107,7 @@ arbiters external priority enable';
     $info='AVC_ATOMIC_EN'; 
     $content='0,1';
     $type="Combo-box";
+    $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,$noc_param);
     
     
@@ -1107,6 +1119,7 @@ arbiters external priority enable';
     #$content='"XY"';
     #$type="Combo-box";
     #($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,$noc_param);
+    $mpsoc->object_add_attribute('noc_param_comments',undef,\%noc_param_comment);
     
     return $row;
 }
@@ -1115,160 +1128,160 @@ arbiters external priority enable';
 
 
 sub set_multicast_list{
-	my($mpsoc,$noc_id)=@_;	
+    my($mpsoc,$noc_id)=@_;    
     my $noc_param="noc_param$noc_id";
-	my $window = def_popwin_size(50,40,"Select nodes invlove in multicasting ",'percent');
-	my $table= def_table(10,10,FALSE);
-	my $row=0;
-	my $col=0;
-	
-	my $init = $mpsoc->object_get_attribute($noc_param,"MCAST_ENDP_LIST");
-	$init =~ s/'h//g;
-	my @arr= reverse split (//, $init);
-		
-	
-	my $label = "Multicast Node list (hex fromat)";    
-    my ($Ebox,$entry) = def_h_labeled_entry ($label);	
-	$entry->set_sensitive (FALSE);
-		
-	my @sel_options= ("Select","All","None","2n","3n","4n","2n+1","3n+1","3n+2","4n+1","4n+2","4n+3");
-	my $combo= gen_combo(\@sel_options, 0);
-	$table->attach ($combo , 0, 1, $row,$row+1,'fill','shrink',2,2);
-	#get the number of endpoints
-	my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info($mpsoc,$noc_id);
-	my @check;
-	
-	
-	
-	my $sel_val="Init";
-	for (my $i=0; $i<$NE; $i++){
-		if($i%10 == 0){	$row++;$col=0;}		
-		my $box;
-		my $l=$NE -$i-1;
-		
-		my $char = $arr[$l/4];
-		$char=0 if (!defined $char);
-		my $hex = hex($char);		
-		my $bit = ($hex >> ($l%4)) & 1;
-		($box,$check[$l])=def_h_labeled_checkbutton("$l");
-		$table->attach ($box , $col, $col+1, $row,$row+1,'fill','shrink',2,2);
-		$col++;	
-		
-		if($bit==1){
-			$check[$l]->set_active(TRUE);
-		}
-		
-		$check[$l]-> signal_connect("toggled" => sub{						
-			get_multicast_val ($mpsoc,$entry,$NE,@check)if($sel_val eq "Select");
-		});	
-	}	
-	$row++;
-	$col=0;
-	
-	$sel_val="Select";
-	get_multicast_val ($mpsoc,$entry,$NE,@check);
-	
-	$combo-> signal_connect("changed" => sub{
-		$sel_val=$combo->get_active_text();		
-		my $n=1;
-		my $r=0;
-		return if ($sel_val eq "Select");		
-		if ($sel_val eq "None"){		
-			for (my $i=0; $i<$NE; $i++){$check[$i]->set_active(FALSE)};
-			get_multicast_val ($mpsoc,$entry,$NE,@check);
-			$combo->set_active(0);
-			return;
-		}
-		($n,$r)=sscanf("%dn+%d",$sel_val);
-		if(!defined $r){
-			($n,$r)=sscanf("%dn",$sel_val);
-			$r=0;
-			$n=1 if(!defined $n);
-		}
-		
-		for (my $i=0; $i<$NE; $i++){
-			if($i % $n == $r){  $check[$i]->set_active(TRUE);}
-		}
-		$combo->set_active(0);
-		get_multicast_val ($mpsoc,$entry,$NE,@check);
-		
-	 });
-	
-	
-	
-	$table->attach ($Ebox , 0, 10, $row,$row+1,'fill','shrink',2,2);$row++;
-	
-	my $main_table=def_table(10,10,FALSE);
-	  
-	my $ok = def_image_button('icons/select.png','OK');	
-	$main_table->attach_defaults ($table  , 0, 12, 0,11);
+    my $window = def_popwin_size(50,40,"Select nodes invlove in multicasting ",'percent');
+    my $table= def_table(10,10,FALSE);
+    my $row=0;
+    my $col=0;
+    
+    my $init = $mpsoc->object_get_attribute($noc_param,"MCAST_ENDP_LIST");
+    $init =~ s/'h//g;
+    my @arr= reverse split (//, $init);
+        
+    
+    my $label = "Multicast Node list (hex fromat)";    
+    my ($Ebox,$entry) = def_h_labeled_entry ($label);    
+    $entry->set_sensitive (FALSE);
+        
+    my @sel_options= ("Select","All","None","2n","3n","4n","2n+1","3n+1","3n+2","4n+1","4n+2","4n+3");
+    my $combo= gen_combo(\@sel_options, 0);
+    $table->attach ($combo , 0, 1, $row,$row+1,'fill','shrink',2,2);
+    #get the number of endpoints
+    my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info($mpsoc,$noc_id);
+    my @check;
+    
+    
+    
+    my $sel_val="Init";
+    for (my $i=0; $i<$NE; $i++){
+        if($i%10 == 0){    $row++;$col=0;}        
+        my $box;
+        my $l=$NE -$i-1;
+        
+        my $char = $arr[$l/4];
+        $char=0 if (!defined $char);
+        my $hex = hex($char);        
+        my $bit = ($hex >> ($l%4)) & 1;
+        ($box,$check[$l])=def_h_labeled_checkbutton("$l");
+        $table->attach ($box , $col, $col+1, $row,$row+1,'fill','shrink',2,2);
+        $col++;    
+        
+        if($bit==1){
+            $check[$l]->set_active(TRUE);
+        }
+        
+        $check[$l]-> signal_connect("toggled" => sub{                        
+            get_multicast_val ($mpsoc,$entry,$NE,@check)if($sel_val eq "Select");
+        });    
+    }    
+    $row++;
+    $col=0;
+    
+    $sel_val="Select";
+    get_multicast_val ($mpsoc,$entry,$NE,@check);
+    
+    $combo-> signal_connect("changed" => sub{
+        $sel_val=$combo->get_active_text();        
+        my $n=1;
+        my $r=0;
+        return if ($sel_val eq "Select");        
+        if ($sel_val eq "None"){        
+            for (my $i=0; $i<$NE; $i++){$check[$i]->set_active(FALSE)};
+            get_multicast_val ($mpsoc,$entry,$NE,@check);
+            $combo->set_active(0);
+            return;
+        }
+        ($n,$r)=sscanf("%dn+%d",$sel_val);
+        if(!defined $r){
+            ($n,$r)=sscanf("%dn",$sel_val);
+            $r=0;
+            $n=1 if(!defined $n);
+        }
+        
+        for (my $i=0; $i<$NE; $i++){
+            if($i % $n == $r){  $check[$i]->set_active(TRUE);}
+        }
+        $combo->set_active(0);
+        get_multicast_val ($mpsoc,$entry,$NE,@check);
+        
+     });
+    
+    
+    
+    $table->attach ($Ebox , 0, 10, $row,$row+1,'fill','shrink',2,2);$row++;
+    
+    my $main_table=def_table(10,10,FALSE);
+      
+    my $ok = def_image_button('icons/select.png','OK');    
+    $main_table->attach_defaults ($table  , 0, 12, 0,11);
     $main_table->attach ($ok,5, 6, 11,12,'shrink','shrink',0,0);
-	
-	$ok->signal_connect('clicked', sub {
-		my $s=get_multicast_val ($mpsoc,$entry,$NE,@check);
-		my $n=$entry->get_text( );
-		$mpsoc->object_add_attribute($noc_param,"MCAST_ENDP_LIST",$n);	
-	#	$mpsoc->object_add_attribute($noc_param,"MCAST_PRTLw",$s);
-		set_gui_status($mpsoc,"ref",1);	
-		$window->destroy;
-	});
-	
-	
-	
-	
-	my $scrolled_win = gen_scr_win_with_adjst($mpsoc,'gen_multicast');
-	add_widget_to_scrolled_win($main_table,$scrolled_win);
-	$window->add($scrolled_win);
-	$window->show_all();
+    
+    $ok->signal_connect('clicked', sub {
+        my $s=get_multicast_val ($mpsoc,$entry,$NE,@check);
+        my $n=$entry->get_text( );
+        $mpsoc->object_add_attribute($noc_param,"MCAST_ENDP_LIST",$n);    
+    #    $mpsoc->object_add_attribute($noc_param,"MCAST_PRTLw",$s);
+        set_gui_status($mpsoc,"ref",1);    
+        $window->destroy;
+    });
+    
+    
+    
+    
+    my $scrolled_win = gen_scr_win_with_adjst($mpsoc,'gen_multicast');
+    add_widget_to_scrolled_win($main_table,$scrolled_win);
+    $window->add($scrolled_win);
+    $window->show_all();
 }
 
 sub get_multicast_val {
-	my ($mpsoc,$entry,$NE,@check)=@_;
-	my $n="";
-	my $h=0;
-	my $s=0;
-	for (my $i=0; $i<$NE; $i++){
-			if($check[$i]->get_active()){$h+= (1<<$i%4);$s++;} 
-		if(($i+1) % 4==0){
-			$n="$h".$n if($h<10);
-			$n=chr($h-10+97).$n if($h>9);
-			$h=0;
-		}
-	}
-	
-	$n="$h".$n if($NE%4!=0);
-	$n="'h".$n;
-	$entry->set_text("$n");
-	return $s;
-	
+    my ($mpsoc,$entry,$NE,@check)=@_;
+    my $n="";
+    my $h=0;
+    my $s=0;
+    for (my $i=0; $i<$NE; $i++){
+            if($check[$i]->get_active()){$h+= (1<<$i%4);$s++;} 
+        if(($i+1) % 4==0){
+            $n="$h".$n if($h<10);
+            $n=chr($h-10+97).$n if($h>9);
+            $h=0;
+        }
+    }
+    
+    $n="$h".$n if($NE%4!=0);
+    $n="'h".$n;
+    $entry->set_text("$n");
+    return $s;
+    
 }
 #############
 # config_custom_topology_gui
 ############
 
 sub config_custom_topology_gui{
-	my($mpsoc,$table,$txview,$row,$noc_id)=@_;
+    my($mpsoc,$table,$txview,$row,$noc_id)=@_;
 my $noc_param="noc_param$noc_id";
 my $coltmp=0;
 #read param.obj file to load cutom topology info
-	my $dir =get_project_dir()."/mpsoc/rtl/src_topology";
-	my $file="$dir/param.obj";
-	unless (-f $file){
-		 add_colored_info($txview,"No Custom topology find in $dir. You can define a Custom Topology using ProNoC Topology maker.\n",'red');
-		 return;		
-	}	
-	
-	my %param;	
+    my $dir =get_project_dir()."/mpsoc/rtl/src_topology";
+    my $file="$dir/param.obj";
+    unless (-f $file){
+         add_colored_info($txview,"No Custom topology find in $dir. You can define a Custom Topology using ProNoC Topology maker.\n",'red');
+         return;        
+    }    
+    
+    my %param;    
     my ($pp,$r,$err) = regen_object($file );
     if ($r){        
          add_colored_info($txview,"Error: cannot open $file file: $err\n",'red');
          return;  
-    } 		
-	
-	%param=%{$pp};
-	my @topologies=sort keys %param;
-			
-	my $label='Topology_name';
+    }         
+    
+    %param=%{$pp};
+    my @topologies=sort keys %param;
+            
+    my $label='Topology_name';
     my $param='CUSTOM_TOPOLOGY_NAME';
     my $default=$topologies[0];
     my $content= join(",", @topologies);  
@@ -1276,25 +1289,25 @@ my $coltmp=0;
     my $info="Custom topology name"; 
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,1,$noc_param,1);
     
-    my $topology_name=$mpsoc->object_get_attribute($noc_param,'CUSTOM_TOPOLOGY_NAME');        		
-	
-	
-	$label='Routing Algorithm';
+    my $topology_name=$mpsoc->object_get_attribute($noc_param,'CUSTOM_TOPOLOGY_NAME');                
+    
+    
+    $label='Routing Algorithm';
     $param="ROUTE_NAME";
     $type="Combo-box";
-    $content=$param{$topology_name}{'ROUTE_NAME'};    		 
+    $content=$param{$topology_name}{'ROUTE_NAME'};             
     my @rr=split(/\s*,\s*/,$content);
     $default=$rr[0];
     $info="Select the routing algorithm";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,1,$noc_param,1);
   
-	$mpsoc->object_add_attribute($noc_param,'T1',$param{$topology_name}{'T1'});    
-	$mpsoc->object_add_attribute($noc_param,'T2',$param{$topology_name}{'T2'}); 
-	$mpsoc->object_add_attribute($noc_param,'T3',$param{$topology_name}{'T3'});     
-  	$mpsoc->object_add_attribute('noc_connection','er_addr',$param{$topology_name}{'er_addr'});  		
-			
-            	
-	return ($row,$coltmp);
+    $mpsoc->object_add_attribute($noc_param,'T1',$param{$topology_name}{'T1'});    
+    $mpsoc->object_add_attribute($noc_param,'T2',$param{$topology_name}{'T2'}); 
+    $mpsoc->object_add_attribute($noc_param,'T3',$param{$topology_name}{'T3'});     
+      $mpsoc->object_add_attribute('noc_connection','er_addr',$param{$topology_name}{'er_addr'});          
+            
+                
+    return ($row,$coltmp);
 
 }
 
@@ -1343,8 +1356,8 @@ sub get_config{
     });
 
     my $scrolled_win = gen_scr_win_with_adjst($mpsoc,'get_config_adj');
-	add_widget_to_scrolled_win($table,$scrolled_win);
-	return $scrolled_win;
+    add_widget_to_scrolled_win($table,$scrolled_win);
+    return $scrolled_win;
 }
 
 
@@ -1354,7 +1367,7 @@ sub get_config{
 
 sub gen_all_tiles{
     my ($mpsoc,$info, $hw_dir,$sw_dir)=@_;
-    my ($NE, $NR, $RAw, $EAw, $Fw)=get_topology_info($mpsoc);	
+    my ($NE, $NR, $RAw, $EAw, $Fw)=get_topology_info($mpsoc);    
     my $mpsoc_name=$mpsoc->object_get_attribute('mpsoc_name');
     my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name";   
     my @generated_tiles;
@@ -1367,7 +1380,7 @@ sub gen_all_tiles{
         my $path=$mpsoc->object_get_attribute('setting','soc_path');    
         $path=~ s/ /\\ /g;
         my $p = "$path/$soc_name.SOC";
-	    my ($soc,$r,$err) = regen_object($p);
+        my ($soc,$r,$err) = regen_object($p);
         if ($r){        
             show_info($info,"**Error reading  $p file: $err\n");
             next; 
@@ -1383,9 +1396,9 @@ sub gen_all_tiles{
         $soc->soc_add_instance_param($nis[0] ,$nocparam );
         my %z;
         foreach my $p (sort keys %{$nocparam}){
-			$z{$p}="Parameter";
-		}		
-		$soc->soc_add_instance_param_type($nis[0] ,\%z);
+            $z{$p}="Parameter";
+        }        
+        $soc->soc_add_instance_param_type($nis[0] ,\%z);
         #foreach my $p ( sort keys %nocparam ) {
             
         #    print "$p = $nocparam{$p} \n";
@@ -1444,10 +1457,10 @@ sub generate_soc_files{
     #copy hdl codes in src_verilog         
     my ($hdl_ref,$warnings)= get_all_files_list($soc,"hdl_files");
     my ($sim_ref,$warnings2)= get_all_files_list($soc,"hdl_files_ticked");
-	#hdl_ref-sim_ref
-	my @n= get_diff_array($hdl_ref,$sim_ref);
-	$hdl_ref=\@n;
-			
+    #hdl_ref-sim_ref
+    my @n= get_diff_array($hdl_ref,$sim_ref);
+    $hdl_ref=\@n;
+            
     foreach my $f(@{$hdl_ref}){    
         my $n="$project_dir$f";
          if (-f "$n") {
@@ -1460,7 +1473,7 @@ sub generate_soc_files{
     
     
     
-	foreach my $f(@{$sim_ref}){    
+    foreach my $f(@{$sim_ref}){    
          my $n="$project_dir$f";
          if (-f "$n") {
                  copy ("$n","$target_dir/src_sim");         
@@ -1488,16 +1501,16 @@ sub generate_soc_files{
             
             
             
-	move ("$dir/lib/verilog/$soc_name.sv","$target_dir/src_verilog/tiles/");     
-	copy_noc_files($project_dir,"$target_dir/src_verilog/lib");
+    move ("$dir/lib/verilog/$soc_name.sv","$target_dir/src_verilog/tiles/");     
+    copy_noc_files($project_dir,"$target_dir/src_verilog/lib");
             
             
-	# Write header file
-	generate_header_file($soc,$project_dir,$target_dir,$target_dir,$dir);
-	#use File::Copy::Recursive qw(dircopy);
-	#dircopy("$dir/../src_processor/aeMB/compiler","$target_dir/sw/") or die("$!\n");
-	my $msg="SoC \"$soc_name\" has been created successfully at $target_dir/ ";
-	return $msg;    
+    # Write header file
+    generate_header_file($soc,$project_dir,$target_dir,$target_dir,$dir);
+    #use File::Copy::Recursive qw(dircopy);
+    #dircopy("$dir/../src_processor/aeMB/compiler","$target_dir/sw/") or die("$!\n");
+    my $msg="SoC \"$soc_name\" has been created successfully at $target_dir/ ";
+    return $msg;    
 }    
 
 
@@ -1516,7 +1529,7 @@ sub generate_mpsoc_lib_file {
 }    
 
 sub check_mpsoc_name {
-	my ($name,$info,$label)= @_;
+    my ($name,$info,$label)= @_;
     $label="MPSoC" if (!defined $label);
     my $error = check_verilog_identifier_syntax($name);
     if ( defined $error ){
@@ -1530,7 +1543,7 @@ sub check_mpsoc_name {
         message_dialog("Please define the $label filed!");
         return 1;
     }
-	return 0;	
+    return 0;    
 }
 
 
@@ -1550,7 +1563,7 @@ sub generate_mpsoc{
     my $sw_dir     = "$target_dir/sw";
     
     # rmtree ($hw_dir);
-	mkpath("$hw_dir",1,01777);    
+    mkpath("$hw_dir",1,01777);    
     mkpath("$hw_dir/lib/",1,0755);
     mkpath("$hw_dir/tiles",1,0755);
     mkpath("$sw_dir",1,0755);
@@ -1566,23 +1579,23 @@ sub generate_mpsoc{
     gen_all_tiles($mpsoc,$info, $hw_dir,$sw_dir );
     
     #copy clk setting hdl codes in src_verilog
-	my $project_dir	  = abs_path("$dir/../../"); 		 
+    my $project_dir      = abs_path("$dir/../../");          
     my $sc_soc =get_source_set_top($mpsoc,'mpsoc');  
-  	my ($file_ref,$warnings)= get_all_files_list($sc_soc,"hdl_files");	
-  	my ($sim_ref,$warnings2)= get_all_files_list($sc_soc,"hdl_files_ticked");
-	#file_ref-sim_ref
-	my @n= get_diff_array($file_ref,$sim_ref);
-	$file_ref=\@n;
-  	
-	copy_file_and_folders($file_ref,$project_dir,"$hw_dir/lib");
-	show_colored_info($info,$warnings,'green')     		if(defined $warnings);			
-	add_to_project_file_list($file_ref,"$hw_dir/lib/",$hw_dir);
-		 	
-	copy_file_and_folders($sim_ref,$project_dir,"$hw_dir/../src_sim");
-	show_colored_info($info,$warnings2,'green')     if(defined $warnings2);			
-	add_to_project_file_list($sim_ref,"$hw_dir/../src_sim",$hw_dir);
-    	  	
-	
+      my ($file_ref,$warnings)= get_all_files_list($sc_soc,"hdl_files");    
+      my ($sim_ref,$warnings2)= get_all_files_list($sc_soc,"hdl_files_ticked");
+    #file_ref-sim_ref
+    my @n= get_diff_array($file_ref,$sim_ref);
+    $file_ref=\@n;
+      
+    copy_file_and_folders($file_ref,$project_dir,"$hw_dir/lib");
+    show_colored_info($info,$warnings,'green')             if(defined $warnings);            
+    add_to_project_file_list($file_ref,"$hw_dir/lib/",$hw_dir);
+             
+    copy_file_and_folders($sim_ref,$project_dir,"$hw_dir/../src_sim");
+    show_colored_info($info,$warnings2,'green')     if(defined $warnings2);            
+    add_to_project_file_list($sim_ref,"$hw_dir/../src_sim",$hw_dir);
+              
+    
      
     #generate header file containig the tiles physical addresses
     gen_tiles_physical_addrsses_header_file($mpsoc,"$sw_dir/phy_addr.h");
@@ -1595,22 +1608,22 @@ sub generate_mpsoc{
     
     #if Topology is custom copy custom topology files
     my $topology=$mpsoc->object_get_attribute('noc_param','TOPOLOGY');
-	if ($topology eq '"CUSTOM"'){ 
-		my $Tname=$mpsoc->object_get_attribute('noc_param','CUSTOM_TOPOLOGY_NAME');
-		$Tname=~s/["]//gs;     
-		my $dir1=  get_project_dir()."/mpsoc/rtl/src_topology/$Tname";
-		my $dir2=  get_project_dir()."/mpsoc/rtl/src_topology/common";
-		my @files = File::Find::Rule->file()
+    if ($topology eq '"CUSTOM"'){ 
+        my $Tname=$mpsoc->object_get_attribute('noc_param','CUSTOM_TOPOLOGY_NAME');
+        $Tname=~s/["]//gs;     
+        my $dir1=  get_project_dir()."/mpsoc/rtl/src_topology/$Tname";
+        my $dir2=  get_project_dir()."/mpsoc/rtl/src_topology/common";
+        my @files = File::Find::Rule->file()
                             ->name( '*.v','*.V')
                             ->in( "$dir1" );
-		copy_file_and_folders (\@files,$project_dir,"$hw_dir/lib/");
-		
-		@files = File::Find::Rule->file()
+        copy_file_and_folders (\@files,$project_dir,"$hw_dir/lib/");
+        
+        @files = File::Find::Rule->file()
                             ->name( '*.v','*.V')
                             ->in( "$dir2" );
                          
-		copy_file_and_folders (\@files,$project_dir,"$hw_dir/lib/");	
-	}
+        copy_file_and_folders (\@files,$project_dir,"$hw_dir/lib/");    
+    }
      
         
     # Write object file
@@ -1655,17 +1668,17 @@ sub generate_mpsoc{
     add_to_project_file_list(\@ff,"$hw_dir/lib/",$hw_dir);   
     
     #write perl_object_file 
-	mkpath("$target_dir/perl_lib/",1,01777);
-	open(FILE,  ">$target_dir/perl_lib/$name.MPSOC") || die "Can not open: $!";
-	print FILE perl_file_header("$name.MPSOC");
-	print FILE Data::Dumper->Dump([\%$mpsoc],['mpsoc']);                 
+    mkpath("$target_dir/perl_lib/",1,01777);
+    open(FILE,  ">$target_dir/perl_lib/$name.MPSOC") || die "Can not open: $!";
+    print FILE perl_file_header("$name.MPSOC");
+    print FILE Data::Dumper->Dump([\%$mpsoc],['mpsoc']);                 
     
     #regenerate linker var file
     create_linker_var_file($mpsoc);
       
-   	  
+         
     message_dialog("MPSoC \"$name\" has been created successfully at $target_dir/ " ) if($show_sucess_msg);
-	return 1;    
+    return 1;    
 }    
 
 sub mpsoc_sw_make {
@@ -1677,7 +1690,7 @@ SUBDIRS := \$(wildcard */.)
 
 .PHONY: \$(TOPTARGETS) \$(SUBDIRS)    
 ";
-	return $make;
+    return $make;
 }
 
 
@@ -1722,7 +1735,7 @@ done
 # D:2:0 load jtag_enable data register with 0x0 reset=0 disable=0
 # I:0  set jtag_enable  in bypass mode
 ";
-	return $string;
+    return $string;
 }
 
 
@@ -1779,8 +1792,8 @@ sub get_tile{
 }
 
 sub define_empty_param_setting {
-	my ($mpsoc,$window)=@_;
-	my $ok = def_image_button('icons/select.png','OK');
+    my ($mpsoc,$window)=@_;
+    my $ok = def_image_button('icons/select.png','OK');
     my $okbox=def_hbox(TRUE,0);
     $okbox->pack_start($ok, FALSE, FALSE,0);
     $ok-> signal_connect("clicked" => sub{ 
@@ -1789,15 +1802,15 @@ sub define_empty_param_setting {
         
      });
      my $param_table = def_table(1, 1, TRUE);
-	 $param_table->attach_defaults($okbox,0,1,3,4);
-	 return $param_table;
-	
-	
+     $param_table->attach_defaults($okbox,0,1,3,4);
+     return $param_table;
+    
+    
 }
 
 sub get_tile_setting {
-		my($mpsoc,$tile)=@_;
-		my $window = def_popwin_size(50,40,"Parameter setting for Tile $tile ",'percent');
+        my($mpsoc,$tile)=@_;
+        my $window = def_popwin_size(50,40,"Parameter setting for Tile $tile ",'percent');
         my $table = def_table(6, 2, FALSE);
     
         my $scrolled_win = add_widget_to_scrolled_win($table);
@@ -1811,15 +1824,15 @@ sub get_tile_setting {
         my $label=gen_label_in_left("  Processing tile name:");
         $table->attach($label,0,2,$row,$row+1,'shrink','shrink',2,2);
         $table->attach($combo,2,3,$row,$row+1,'shrink','shrink',2,2);$row++;
-		add_Hsep_to_table($table,0,3,$row);$row++;
-		$soc_name = ' ' if (!defined $soc_name);
+        add_Hsep_to_table($table,0,3,$row);$row++;
+        $soc_name = ' ' if (!defined $soc_name);
         my $param_table =  ($soc_name eq ' ')? define_empty_param_setting($mpsoc,$window) :
-     		  get_soc_parameter_setting_table($mpsoc,$soc_name,$window,[$tile]); 
+               get_soc_parameter_setting_table($mpsoc,$soc_name,$window,[$tile]); 
      
-     	$table->attach_defaults($param_table,0,3,2,3);
-     	
-     	
-     	$combo->signal_connect('changed'=>sub{
+         $table->attach_defaults($param_table,0,3,2,3);
+         
+         
+         $combo->signal_connect('changed'=>sub{
             my $new_soc=$combo->get_active_text();
             if ($new_soc eq ' '){
                 #unconnect tile
@@ -1846,511 +1859,511 @@ sub get_tile_setting {
 #########
 sub gen_tiles{
     my ($mpsoc)=@_;
-	my ($NE, $NR, $RAw, $EAw, $Fw)=get_topology_info($mpsoc);
+    my ($NE, $NR, $RAw, $EAw, $Fw)=get_topology_info($mpsoc);
     my $table;
     my $dim_y = floor(sqrt($NE));
-   	$table=def_table($NE%8,$NE/8,FALSE);#    my ($row,$col,$homogeneous)=@_;
-   	for (my $i=0; $i<$NE;$i++){
-   		my $tile=get_tile($mpsoc,$i);
-   		my $y= int($i/$dim_y);
-   		my $x= $i % $dim_y;    		
+       $table=def_table($NE%8,$NE/8,FALSE);#    my ($row,$col,$homogeneous)=@_;
+       for (my $i=0; $i<$NE;$i++){
+           my $tile=get_tile($mpsoc,$i);
+           my $y= int($i/$dim_y);
+           my $x= $i % $dim_y;            
         $table->attach_defaults ($tile, $x, $x+1 , $y, $y+1);
-   	}
-   	
-   	my $scrolled_win = gen_scr_win_with_adjst($mpsoc,'gen_tiles_adj');
-	add_widget_to_scrolled_win($table,$scrolled_win);
-	return $scrolled_win;   
+       }
+       
+       my $scrolled_win = gen_scr_win_with_adjst($mpsoc,'gen_tiles_adj');
+    add_widget_to_scrolled_win($table,$scrolled_win);
+    return $scrolled_win;   
 }
 
 
 sub get_elf_file_addr_range {
-	my ($file,$tview)=@_;	
-	#my $command=  "size  -A $file";
-	my $command=  "nm  $file";
-	#add_info($tview,"$command\n");
-	my	($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($command);
-	if(length $stderr>1){			
-		add_colored_info($tview,"$stderr\n",'red');
-		add_colored_info($tview,"$command was not run successfully!\n",'red');
-		return ("Err","Err");
-	}	
-	if($exit){
-		add_colored_info($tview,"$stdout\n",'red');
-		add_colored_info($tview,"$command was not run successfully!\n",'red');
-		return ("Err","Err");
-	}
-							
-	my @lines = split ("\n" ,$stdout);
-	my $max_addr=0;
-	my $sec_name;	
+    my ($file,$tview)=@_;    
+    #my $command=  "size  -A $file";
+    my $command=  "nm  $file";
+    #add_info($tview,"$command\n");
+    my    ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($command);
+    if(length $stderr>1){            
+        add_colored_info($tview,"$stderr\n",'red');
+        add_colored_info($tview,"$command was not run successfully!\n",'red');
+        return ("Err","Err");
+    }    
+    if($exit){
+        add_colored_info($tview,"$stdout\n",'red');
+        add_colored_info($tview,"$command was not run successfully!\n",'red');
+        return ("Err","Err");
+    }
+                            
+    my @lines = split ("\n" ,$stdout);
+    my $max_addr=0;
+    my $sec_name;    
 
-	foreach my $p (@lines ){
-		$p =~ s/\s+/ /g; # remove extra spaces
-	    $p =~ s/^\s+//; #ltrim
-		my ($addr,$type,$name)= sscanf("%x %s %s","$p");
-		if(defined $addr && defined $name){
-			if($max_addr < $addr) {
-				$max_addr = $addr;
-				$sec_name = $name;		
-			}
-		} 
-	}
-	return ($max_addr,$sec_name);	
+    foreach my $p (@lines ){
+        $p =~ s/\s+/ /g; # remove extra spaces
+        $p =~ s/^\s+//; #ltrim
+        my ($addr,$type,$name)= sscanf("%x %s %s","$p");
+        if(defined $addr && defined $name){
+            if($max_addr < $addr) {
+                $max_addr = $addr;
+                $sec_name = $name;        
+            }
+        } 
+    }
+    return ($max_addr,$sec_name);    
 }
 
 
 sub show_reqired_brams{
-	my ($self,$tview)=@_;
-	my $win=def_popwin_size (50,50,"BRAM info", 'percent');
-	my $sc_win = gen_scr_win_with_adjst($self,'liststore');
-	my $table= def_table(10,10,FALSE);
-	add_widget_to_scrolled_win($table,$sc_win);	
-	my $row=0;
-	my $col=0;		
-	
-	my  @clmns =('Tile#', 'Section located in Upper Bound Address (UBA) ','UBA in Bytes','UBA in Words','Minimum Memory Address Width');	
-	my $target_dir;
-	my @data;
+    my ($self,$tview)=@_;
+    my $win=def_popwin_size (50,50,"BRAM info", 'percent');
+    my $sc_win = gen_scr_win_with_adjst($self,'liststore');
+    my $table= def_table(10,10,FALSE);
+    add_widget_to_scrolled_win($table,$sc_win);    
+    my $row=0;
+    my $col=0;        
+    
+    my  @clmns =('Tile#', 'Section located in Upper Bound Address (UBA) ','UBA in Bytes','UBA in Words','Minimum Memory Address Width');    
+    my $target_dir;
+    my @data;
     
     my $mpsoc_name=$self->object_get_attribute('mpsoc_name');
-	if(defined $mpsoc_name){#it is an soc
+    if(defined $mpsoc_name){#it is an soc
 
-		my ($NE, $NR, $RAw, $EAw, $Fw)=get_topology_info($self);	
+        my ($NE, $NR, $RAw, $EAw, $Fw)=get_topology_info($self);    
    
-	    $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name"; 	  
-	   
-	    for (my $tile_num=0;$tile_num<$NE;$tile_num++){           
-			my $ram_file     = "$target_dir/sw/tile$tile_num/image";	        
-	        my ($size,$sec) = get_elf_file_addr_range($ram_file,$tview);
-	        my %clmn;
-	        $clmn{0}="tile$tile_num";
-	        $clmn{1}= "$sec";
-	        $clmn{2}="$size";
-	        my $w=$size/4;
-	        $clmn{3}="$w";
-	        $clmn{4}=ceil(log($w)/log(2));
-	        push(@data,\%clmn);
-	        
-	    }#$tile_num	
-	} 
-	else 
-	{
-		my $soc_name=$self->object_get_attribute('soc_name');
-		$target_dir  = "$ENV{'PRONOC_WORK'}/SOC/$soc_name";
-		my $ram_file     = "$target_dir/sw/image";	    	        
-	    my ($size,$sec) = get_elf_file_addr_range($ram_file,$tview);	        
-	    my %clmn;
-	    $clmn{0}="$soc_name";
-	    $clmn{1}= "$sec";
-	    $clmn{2}="$size";
-	    my $w=$size/4;
-	    $clmn{3}="$w";
-	    $clmn{4}=ceil(log($w)/log(2));
-	    push(@data,\%clmn);		
-	}	
+        $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name";       
+       
+        for (my $tile_num=0;$tile_num<$NE;$tile_num++){           
+            my $ram_file     = "$target_dir/sw/tile$tile_num/image";            
+            my ($size,$sec) = get_elf_file_addr_range($ram_file,$tview);
+            my %clmn;
+            $clmn{0}="tile$tile_num";
+            $clmn{1}= "$sec";
+            $clmn{2}="$size";
+            my $w=$size/4;
+            $clmn{3}="$w";
+            $clmn{4}=ceil(log($w)/log(2));
+            push(@data,\%clmn);
+            
+        }#$tile_num    
+    } 
+    else 
+    {
+        my $soc_name=$self->object_get_attribute('soc_name');
+        $target_dir  = "$ENV{'PRONOC_WORK'}/SOC/$soc_name";
+        my $ram_file     = "$target_dir/sw/image";                    
+        my ($size,$sec) = get_elf_file_addr_range($ram_file,$tview);            
+        my %clmn;
+        $clmn{0}="$soc_name";
+        $clmn{1}= "$sec";
+        $clmn{2}="$size";
+        my $w=$size/4;
+        $clmn{3}="$w";
+        $clmn{4}=ceil(log($w)/log(2));
+        push(@data,\%clmn);        
+    }    
 
-	my @clmn_type = (#'Glib::Boolean', # => G_TYPE_BOOLEAN
+    my @clmn_type = (#'Glib::Boolean', # => G_TYPE_BOOLEAN
                                     #'Glib::Uint',    # => G_TYPE_UINT
                                     'Glib::String',  # => G_TYPE_STRING
                                   'Glib::String',
                                    'Glib::String',
                                    'Glib::String',
                                    'Glib::String'); # you get the idea
-	
-	my $list=	gen_list_store (\@data,\@clmn_type,\@clmns);
-	$table-> attach  ($list, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $row++; 
-	
-	$win->add($sc_win);
-	$win->show_all();	
+    
+    my $list=    gen_list_store (\@data,\@clmn_type,\@clmns);
+    $table-> attach  ($list, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $row++; 
+    
+    $win->add($sc_win);
+    $win->show_all();    
 }
 
 sub check_conflict {
-	my ($self,$tile_num,$label)=@_;	
-	
-	my $r1 =$self->object_get_attribute("ROM$tile_num",'end'); 
-	my $r2 =$self->object_get_attribute("RAM$tile_num",'start');
-	
-	if(defined $r1 && defined $r2){
-		if(hex($r1)> hex($r2)){
-			$label->set_markup("<span  foreground= 'red' ><b>RAM-ROM range Conflict</b></span>");
-			
-		}else {	 
-			$label->set_label(" ");
-		
-		}
-	}else {
-		$label->set_label(" ");
-	
-	} 	
+    my ($self,$tile_num,$label)=@_;    
+    
+    my $r1 =$self->object_get_attribute("ROM$tile_num",'end'); 
+    my $r2 =$self->object_get_attribute("RAM$tile_num",'start');
+    
+    if(defined $r1 && defined $r2){
+        if(hex($r1)> hex($r2)){
+            $label->set_markup("<span  foreground= 'red' ><b>RAM-ROM range Conflict</b></span>");
+            
+        }else {     
+            $label->set_label(" ");
+        
+        }
+    }else {
+        $label->set_label(" ");
+    
+    }     
 }
 
 
 sub update_ram_rom_size {
-	my ($self,$tile_num,$name,$label,$start,$end,$conflict)=@_;	
-	my $s = $start->get_value();
-	my $e = $end->get_value();
+    my ($self,$tile_num,$name,$label,$start,$end,$conflict)=@_;    
+    my $s = $start->get_value();
+    my $e = $end->get_value();
 
-	$self->object_add_attribute($name.$tile_num,'start',$start->get_value());
-	$self->object_add_attribute($name.$tile_num,'end',$end->get_value());
-	if($e <= $s){
-		#$label->set_label("Invalid range" );
-		$label->set_markup("<span  foreground= 'red' ><b>Invalid range</b></span>");
-		
-	}else {
-		$label->set_label( metric_conversion($e - $s) . "B");
-	
-	}
-	
-	check_conflict($self,$tile_num,$conflict);
-	
-	
-	
+    $self->object_add_attribute($name.$tile_num,'start',$start->get_value());
+    $self->object_add_attribute($name.$tile_num,'end',$end->get_value());
+    if($e <= $s){
+        #$label->set_label("Invalid range" );
+        $label->set_markup("<span  foreground= 'red' ><b>Invalid range</b></span>");
+        
+    }else {
+        $label->set_label( metric_conversion($e - $s) . "B");
+    
+    }
+    
+    check_conflict($self,$tile_num,$conflict);
+    
+    
+    
 }
 
 sub get_tile_peripheral_patameter {
-	my ($mpsoc,$tile_num,$peripheral,$param_name)=@_;  
-	my ($soc_name,$n,$soc_num)=$mpsoc->mpsoc_get_tile_soc_name($tile_num);
-	if(defined $soc_name) {
-		my $top=$mpsoc->mpsoc_get_soc($soc_name);
-		my @insts=$top->top_get_all_instances();
-		foreach my $id (@insts){					
-			if ($id =~/$peripheral[0-9]/){
-				my $name=$top->top_get_def_of_instance($id,'instance');
-				
-				my  %params;
-				my $setting=$mpsoc->mpsoc_get_tile_param_setting($tile_num);
-				#if ($setting eq 'Custom'){
-					%params= $top->top_get_custom_soc_param($tile_num);
-				#}else{
-				#	%params=$top->top_get_default_soc_param();
-				#}
-				return $params{"${name}_$param_name"};
-			}	
-		}
-	}
-	return undef;		
-							
+    my ($mpsoc,$tile_num,$peripheral,$param_name)=@_;  
+    my ($soc_name,$n,$soc_num)=$mpsoc->mpsoc_get_tile_soc_name($tile_num);
+    if(defined $soc_name) {
+        my $top=$mpsoc->mpsoc_get_soc($soc_name);
+        my @insts=$top->top_get_all_instances();
+        foreach my $id (@insts){                    
+            if ($id =~/$peripheral[0-9]/){
+                my $name=$top->top_get_def_of_instance($id,'instance');
+                
+                my  %params;
+                my $setting=$mpsoc->mpsoc_get_tile_param_setting($tile_num);
+                #if ($setting eq 'Custom'){
+                    %params= $top->top_get_custom_soc_param($tile_num);
+                #}else{
+                #    %params=$top->top_get_default_soc_param();
+                #}
+                return $params{"${name}_$param_name"};
+            }    
+        }
+    }
+    return undef;        
+                            
 }
 
 sub get_soc_peripheral_parameter {
-	my ($soc,$peripheral,$param_nam)=@_;	
-	my @instances=$soc->soc_get_all_instances();
-	foreach my $id (@instances){
-		if ($id =~/$peripheral[0-9]/){	
-			return $soc->soc_get_module_param_value ($id,$param_nam) if (defined $param_nam);		
-		}
-	}	
-	return undef;
+    my ($soc,$peripheral,$param_nam)=@_;    
+    my @instances=$soc->soc_get_all_instances();
+    foreach my $id (@instances){
+        if ($id =~/$peripheral[0-9]/){    
+            return $soc->soc_get_module_param_value ($id,$param_nam) if (defined $param_nam);        
+        }
+    }    
+    return undef;
 }
 
 
 sub linker_initial_setting {
-	my ($self,$tview)=@_;	
-	my $mpsoc_name=$self->object_get_attribute('mpsoc_name');
+    my ($self,$tview)=@_;    
+    my $mpsoc_name=$self->object_get_attribute('mpsoc_name');
     my $tnum;
     my $target_dir;
-	if(defined $mpsoc_name){#it is an mpsoc
+    if(defined $mpsoc_name){#it is an mpsoc
 
-		my ($NE, $NR, $RAw, $EAw, $Fw)=get_topology_info($self);	
-   	
-	    $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name";
-	    for (my $tile_num=0;$tile_num<$NE;$tile_num++){      
-	    	
-	    	my $v=get_tile_peripheral_patameter($self,$tile_num,"_ram","Aw");
-	    	$v = 13 if (!defined $v);
-	    	$self->object_add_attribute('MEM'.$tile_num,'width',$v);
-	    	$self->object_add_attribute('MEM'.$tile_num,'percent',75);
-	    	
-	    	my $s =(1 << ($v+2)) ;
-			my $p = 75;
-			
-			my $rom_start = 0;
-			my $rom_end= int ( ($s*$p)/100);
-			my $ram_start= int (($s*$p)/100);
-			my $ram_end= $s;
-			
-			$self->object_add_attribute('ROM'.$tile_num,'start',$rom_start);
-			$self->object_add_attribute('ROM'.$tile_num,'end',$rom_end);
-			$self->object_add_attribute('RAM'.$tile_num,'start',$ram_start);
-			$self->object_add_attribute('RAM'.$tile_num,'end',$ram_end);
-	    	
-	    
-	    }	
-	    
-	     	  
-	}
-	else 
-	{
-		my $v=get_soc_peripheral_parameter ($self,"_ram","Aw");
-		$v = 13 if (!defined $v);
-		$self->object_add_attribute('MEM0','width',$v);
-		$self->object_add_attribute('MEM0','percent',75);
-		my $s =(1 << ($v+2)) ;
-		my $p = 75;
-			
-		my $rom_start = 0;
-		my $rom_end= int ( ($s*$p)/100);
-		my $ram_start= int (($s*$p)/100);
-		my $ram_end= $s;
-			
-		$self->object_add_attribute('ROM0','start',$rom_start);
-		$self->object_add_attribute('ROM0','end',$rom_end);
-		$self->object_add_attribute('RAM0','start',$ram_start);
-		$self->object_add_attribute('RAM0','end',$ram_end);
-	}  
-	
-	
+        my ($NE, $NR, $RAw, $EAw, $Fw)=get_topology_info($self);    
+       
+        $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name";
+        for (my $tile_num=0;$tile_num<$NE;$tile_num++){      
+            
+            my $v=get_tile_peripheral_patameter($self,$tile_num,"_ram","Aw");
+            $v = 13 if (!defined $v);
+            $self->object_add_attribute('MEM'.$tile_num,'width',$v);
+            $self->object_add_attribute('MEM'.$tile_num,'percent',75);
+            
+            my $s =(1 << ($v+2)) ;
+            my $p = 75;
+            
+            my $rom_start = 0;
+            my $rom_end= int ( ($s*$p)/100);
+            my $ram_start= int (($s*$p)/100);
+            my $ram_end= $s;
+            
+            $self->object_add_attribute('ROM'.$tile_num,'start',$rom_start);
+            $self->object_add_attribute('ROM'.$tile_num,'end',$rom_end);
+            $self->object_add_attribute('RAM'.$tile_num,'start',$ram_start);
+            $self->object_add_attribute('RAM'.$tile_num,'end',$ram_end);
+            
+        
+        }    
+        
+               
+    }
+    else 
+    {
+        my $v=get_soc_peripheral_parameter ($self,"_ram","Aw");
+        $v = 13 if (!defined $v);
+        $self->object_add_attribute('MEM0','width',$v);
+        $self->object_add_attribute('MEM0','percent',75);
+        my $s =(1 << ($v+2)) ;
+        my $p = 75;
+            
+        my $rom_start = 0;
+        my $rom_end= int ( ($s*$p)/100);
+        my $ram_start= int (($s*$p)/100);
+        my $ram_end= $s;
+            
+        $self->object_add_attribute('ROM0','start',$rom_start);
+        $self->object_add_attribute('ROM0','end',$rom_end);
+        $self->object_add_attribute('RAM0','start',$ram_start);
+        $self->object_add_attribute('RAM0','end',$ram_end);
+    }  
+    
+    
 }
 
 
 
 sub linker_setting{
-	my ($self,$tview)=@_;
-	my $win=def_popwin_size (80,50,"BRAM info", 'percent');
-	my $sc_win = gen_scr_win_with_adjst($self,'liststore');
-	my $table= def_table(10,10,FALSE);
-	
-	
-	my $row=0;
-	my $col=0;		
-	
-	$table-> attach  (gen_label_in_center("Tile"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col+=1;
-	$table-> attach  (gen_label_in_center("Memory Addr"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col+=1;
-	$table-> attach  (gen_label_in_center("ROM/(ROM+RAM)"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col+=1;
-	
-	$table-> attach  (gen_label_in_center("ROM index addr (hex)"), $col, $col+2,  $row, $row+1,'shrink','shrink',2,2); $col+=3;
-	$table-> attach  (gen_label_in_center("RAM index addr (hex)"), $col, $col+2,  $row, $row+1,'shrink','shrink',2,2); $col+=3;
+    my ($self,$tview)=@_;
+    my $win=def_popwin_size (80,50,"BRAM info", 'percent');
+    my $sc_win = gen_scr_win_with_adjst($self,'liststore');
+    my $table= def_table(10,10,FALSE);
+    
+    
+    my $row=0;
+    my $col=0;        
+    
+    $table-> attach  (gen_label_in_center("Tile"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col+=1;
+    $table-> attach  (gen_label_in_center("Memory Addr"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col+=1;
+    $table-> attach  (gen_label_in_center("ROM/(ROM+RAM)"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col+=1;
+    
+    $table-> attach  (gen_label_in_center("ROM index addr (hex)"), $col, $col+2,  $row, $row+1,'shrink','shrink',2,2); $col+=3;
+    $table-> attach  (gen_label_in_center("RAM index addr (hex)"), $col, $col+2,  $row, $row+1,'shrink','shrink',2,2); $col+=3;
 
-	
-	$col=0;$row++; 
-	$table-> attach  (gen_label_in_center("#"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++;
-	$table-> attach  (gen_label_in_center("Width"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++;
-	$table-> attach  (gen_label_in_center("(%)"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++;
-	
-	$table-> attach  (gen_label_in_center("Beginning"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col+=1;
-	$table-> attach  (gen_label_in_center("End"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++;
-	$table-> attach  (gen_label_in_center("Size"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++;
-	
-	$table-> attach  (gen_label_in_center("Beginning"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col+=1;
-	$table-> attach  (gen_label_in_center("End"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++;
-	$table-> attach  (gen_label_in_center("Size"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++;
-	
-		
-	$col=0;$row++; 	
-	
-	my $target_dir;
-	my @data;
+    
+    $col=0;$row++; 
+    $table-> attach  (gen_label_in_center("#"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++;
+    $table-> attach  (gen_label_in_center("Width"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++;
+    $table-> attach  (gen_label_in_center("(%)"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++;
+    
+    $table-> attach  (gen_label_in_center("Beginning"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col+=1;
+    $table-> attach  (gen_label_in_center("End"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++;
+    $table-> attach  (gen_label_in_center("Size"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++;
+    
+    $table-> attach  (gen_label_in_center("Beginning"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col+=1;
+    $table-> attach  (gen_label_in_center("End"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++;
+    $table-> attach  (gen_label_in_center("Size"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++;
+    
+        
+    $col=0;$row++;     
+    
+    my $target_dir;
+    my @data;
     
     my $mpsoc_name=$self->object_get_attribute('mpsoc_name');
     my $tnum;
-	if(defined $mpsoc_name){#it is an mpsoc
+    if(defined $mpsoc_name){#it is an mpsoc
 
-		my ($NE, $NR, $RAw, $EAw, $Fw)=get_topology_info($self);	
-   		$tnum=$NE;
-	    $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name"; 	  
-	}
-	else 
-	{
-		my $soc_name=$self->object_get_attribute('soc_name');
-		$target_dir  = "$ENV{'PRONOC_WORK'}/SOC/$soc_name";
-		$tnum=1;
-	}   
-	for (my $j=0;$j<$tnum;$j++){           
-			my $tile_num=$j;
-			my $conflict =gen_label_in_center(" ") ;
-			
-			$table-> attach  (gen_label_in_center("$tile_num"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2);$col++; 
-			my $ram_width = gen_spin(2,64,1);
-			my $width = $self->object_get_attribute('MEM'.$tile_num,'width');
-			if(!defined $width){
-				linker_initial_setting ($self,$tview);
-				$width = $self->object_get_attribute('MEM'.$tile_num,'width');
-			}
-			$ram_width->set_value($width);	
-			my $size =gen_label_in_center(metric_conversion(1 << 15). "B") ;
-			
-			
-			$table-> attach  (def_pack_hbox('FALSE',0,$ram_width,$size), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
-			
-			
-			
-			
-			my $percent = gen_spin_float(6.25,93.75,6.25,2);
-			my $p=$self->object_get_attribute('MEM'.$tile_num,'percent');
-			$percent->set_value($p);
-			
-			my $enter= def_image_button("icons/enter.png"); 
-			$table-> attach  (def_pack_hbox('FALSE',0,$percent,$enter), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
-			
-			my $rom_start_v =$self->object_get_attribute('ROM'.$tile_num,'start');
-			my $rom_end_v = $self->object_get_attribute('ROM'.$tile_num,'end');
-			my $ram_start_v = $self->object_get_attribute('RAM'.$tile_num,'start');
-			my $ram_end_v = $self->object_get_attribute('RAM'.$tile_num,'end');
-			
-			
-			
-			my $rom_start = HexSpin->new ( $rom_start_v, 0, 0xffffffff ,4);
-			$rom_start->set_digits(8);
-			$table-> attach  ($rom_start, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
-			
-			
-			
-			my $rom_end = HexSpin->new ( $rom_end_v, 0, 0xffffffff ,4);
-			$rom_end->set_digits(8);
-			$table-> attach  ($rom_end, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
-			
-			my $rom_size =gen_label_in_center(" ") ;
-			$table-> attach  ($rom_size, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
-			update_ram_rom_size($self,$tile_num,'ROM',$rom_size,$rom_start,$rom_end,$conflict);
-			$rom_start->signal_connect ( 'changed', sub {update_ram_rom_size($self,$tile_num,'ROM',$rom_size,$rom_start,$rom_end,$conflict);});
-			$rom_end->signal_connect ( 'changed', sub {update_ram_rom_size($self,$tile_num,'ROM',$rom_size,$rom_start,$rom_end,$conflict);});
-		
-			my $ram_start = HexSpin->new ( $ram_start_v, 0, 0xffffffff ,4);
-			$ram_start->set_digits(8);
-			$table-> attach  ($ram_start, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
-			
-			
-			my $ram_end = HexSpin->new ( $ram_end_v, 0, 0xffffffff ,4);
-			$ram_end->set_digits(8);
-			$table-> attach  ($ram_end, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
-		
-			my $ram_size =gen_label_in_center(" ") ;
-			$table-> attach  ($ram_size, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
-			
-			
-			
-			
-			update_ram_rom_size($self,$tile_num,'RAM',$ram_size,$ram_start,$ram_end,$conflict);
-			
-			$ram_start->signal_connect ( 'changed', sub {update_ram_rom_size($self,$tile_num,'RAM',$ram_size,$ram_start,$ram_end,$conflict);});
-			$ram_end->signal_connect ( 'changed', sub {update_ram_rom_size($self,$tile_num,'RAM',$ram_size,$ram_start,$ram_end,$conflict);});
-		
-		    $ram_width->signal_connect("value_changed" => sub{
-				my $w=$ram_width->get_value();
-				$self->object_add_attribute('MEM'.$tile_num,'width',$w);
-				$size->set_label (metric_conversion(1 << ($w+2)). "B") ;
-				$size->show_all;
-				$enter->clicked; 
-			});	
-		    $percent->signal_connect("value_changed" => sub{
-		    	$self->object_add_attribute('MEM'.$tile_num,'percent',$percent->get_value());
-		    });
-		    
-		    $table-> attach  ($conflict, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
-		
-		   
-		
-			
-			$enter-> signal_connect ( 'clicked' , sub {
-				my $w=$ram_width->get_value();
-				my $s =(1 << ($w+2));
-				my $p = $percent->get_value();
-				
-				my $rom_start_v = 0;
-				my $rom_end_v= int ( ($s*$p)/100);
-				my $ram_start_v= int (($s*$p)/100);
-				my $ram_end_v= $s;
-				
-				$rom_start->set_value($rom_start_v);
-				$rom_end->set_value($rom_end_v);
-				$ram_start->set_value($ram_start_v);
-				$ram_end->set_value($ram_end_v);
-				update_ram_rom_size($self,$tile_num,'ROM',$rom_size,$rom_start,$rom_end,$conflict);
-				update_ram_rom_size($self,$tile_num,'RAM',$ram_size,$ram_start,$ram_end,$conflict);
-				
-			});
-			
-			$col=0; $row++; 
-	        
-	}#$tile_num	
-	 
-	my $main_table=def_table(10,10,FALSE);
-	  
-	my $ok = def_image_button('icons/select.png','OK');	
-	$main_table->attach_defaults ($table  , 0, 12, 0,11);
+        my ($NE, $NR, $RAw, $EAw, $Fw)=get_topology_info($self);    
+           $tnum=$NE;
+        $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name";       
+    }
+    else 
+    {
+        my $soc_name=$self->object_get_attribute('soc_name');
+        $target_dir  = "$ENV{'PRONOC_WORK'}/SOC/$soc_name";
+        $tnum=1;
+    }   
+    for (my $j=0;$j<$tnum;$j++){           
+            my $tile_num=$j;
+            my $conflict =gen_label_in_center(" ") ;
+            
+            $table-> attach  (gen_label_in_center("$tile_num"), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2);$col++; 
+            my $ram_width = gen_spin(2,64,1);
+            my $width = $self->object_get_attribute('MEM'.$tile_num,'width');
+            if(!defined $width){
+                linker_initial_setting ($self,$tview);
+                $width = $self->object_get_attribute('MEM'.$tile_num,'width');
+            }
+            $ram_width->set_value($width);    
+            my $size =gen_label_in_center(metric_conversion(1 << 15). "B") ;
+            
+            
+            $table-> attach  (def_pack_hbox('FALSE',0,$ram_width,$size), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
+            
+            
+            
+            
+            my $percent = gen_spin_float(6.25,93.75,6.25,2);
+            my $p=$self->object_get_attribute('MEM'.$tile_num,'percent');
+            $percent->set_value($p);
+            
+            my $enter= def_image_button("icons/enter.png"); 
+            $table-> attach  (def_pack_hbox('FALSE',0,$percent,$enter), $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
+            
+            my $rom_start_v =$self->object_get_attribute('ROM'.$tile_num,'start');
+            my $rom_end_v = $self->object_get_attribute('ROM'.$tile_num,'end');
+            my $ram_start_v = $self->object_get_attribute('RAM'.$tile_num,'start');
+            my $ram_end_v = $self->object_get_attribute('RAM'.$tile_num,'end');
+            
+            
+            
+            my $rom_start = HexSpin->new ( $rom_start_v, 0, 0xffffffff ,4);
+            $rom_start->set_digits(8);
+            $table-> attach  ($rom_start, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
+            
+            
+            
+            my $rom_end = HexSpin->new ( $rom_end_v, 0, 0xffffffff ,4);
+            $rom_end->set_digits(8);
+            $table-> attach  ($rom_end, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
+            
+            my $rom_size =gen_label_in_center(" ") ;
+            $table-> attach  ($rom_size, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
+            update_ram_rom_size($self,$tile_num,'ROM',$rom_size,$rom_start,$rom_end,$conflict);
+            $rom_start->signal_connect ( 'changed', sub {update_ram_rom_size($self,$tile_num,'ROM',$rom_size,$rom_start,$rom_end,$conflict);});
+            $rom_end->signal_connect ( 'changed', sub {update_ram_rom_size($self,$tile_num,'ROM',$rom_size,$rom_start,$rom_end,$conflict);});
+        
+            my $ram_start = HexSpin->new ( $ram_start_v, 0, 0xffffffff ,4);
+            $ram_start->set_digits(8);
+            $table-> attach  ($ram_start, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
+            
+            
+            my $ram_end = HexSpin->new ( $ram_end_v, 0, 0xffffffff ,4);
+            $ram_end->set_digits(8);
+            $table-> attach  ($ram_end, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
+        
+            my $ram_size =gen_label_in_center(" ") ;
+            $table-> attach  ($ram_size, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
+            
+            
+            
+            
+            update_ram_rom_size($self,$tile_num,'RAM',$ram_size,$ram_start,$ram_end,$conflict);
+            
+            $ram_start->signal_connect ( 'changed', sub {update_ram_rom_size($self,$tile_num,'RAM',$ram_size,$ram_start,$ram_end,$conflict);});
+            $ram_end->signal_connect ( 'changed', sub {update_ram_rom_size($self,$tile_num,'RAM',$ram_size,$ram_start,$ram_end,$conflict);});
+        
+            $ram_width->signal_connect("value_changed" => sub{
+                my $w=$ram_width->get_value();
+                $self->object_add_attribute('MEM'.$tile_num,'width',$w);
+                $size->set_label (metric_conversion(1 << ($w+2)). "B") ;
+                $size->show_all;
+                $enter->clicked; 
+            });    
+            $percent->signal_connect("value_changed" => sub{
+                $self->object_add_attribute('MEM'.$tile_num,'percent',$percent->get_value());
+            });
+            
+            $table-> attach  ($conflict, $col, $col+1,  $row, $row+1,'shrink','shrink',2,2); $col++; 
+        
+           
+        
+            
+            $enter-> signal_connect ( 'clicked' , sub {
+                my $w=$ram_width->get_value();
+                my $s =(1 << ($w+2));
+                my $p = $percent->get_value();
+                
+                my $rom_start_v = 0;
+                my $rom_end_v= int ( ($s*$p)/100);
+                my $ram_start_v= int (($s*$p)/100);
+                my $ram_end_v= $s;
+                
+                $rom_start->set_value($rom_start_v);
+                $rom_end->set_value($rom_end_v);
+                $ram_start->set_value($ram_start_v);
+                $ram_end->set_value($ram_end_v);
+                update_ram_rom_size($self,$tile_num,'ROM',$rom_size,$rom_start,$rom_end,$conflict);
+                update_ram_rom_size($self,$tile_num,'RAM',$ram_size,$ram_start,$ram_end,$conflict);
+                
+            });
+            
+            $col=0; $row++; 
+            
+    }#$tile_num    
+     
+    my $main_table=def_table(10,10,FALSE);
+      
+    my $ok = def_image_button('icons/select.png','OK');    
+    $main_table->attach_defaults ($table  , 0, 12, 0,11);
     $main_table->attach ($ok,5, 6, 11,12,'shrink','shrink',0,0);
-	
-	$ok->signal_connect('clicked', sub {
-		for (my $t=0;$t<$tnum;$t++){      
-			my $r0 =$self->object_get_attribute("ROM$t",'start');
-			my $r1 =$self->object_get_attribute("ROM$t",'end'); 
-			my $r2 =$self->object_get_attribute("RAM$t",'start');
-			my $r3 =$self->object_get_attribute("RAM$t",'end'); 
-			if(hex($r1) <hex($r0)  || hex($r3) <hex($r2)   ){
-				 message_dialog("Please fix tile $t invalid range !");
-				 return ;
-				
-			}
-			
-			if(hex($r1) > hex($r2)  ){
-				 message_dialog("Please fix tile $t conflict range !");
-				 return ;
-				
-			}
-			
-			
-			
-		}
-		create_linker_var_file($self);	
-		$win->destroy();
-	
-	
-	});
-	
-	
-	add_widget_to_scrolled_win($main_table,$sc_win);
-	$win->add($sc_win);
-	$win->show_all();	
-	
+    
+    $ok->signal_connect('clicked', sub {
+        for (my $t=0;$t<$tnum;$t++){      
+            my $r0 =$self->object_get_attribute("ROM$t",'start');
+            my $r1 =$self->object_get_attribute("ROM$t",'end'); 
+            my $r2 =$self->object_get_attribute("RAM$t",'start');
+            my $r3 =$self->object_get_attribute("RAM$t",'end'); 
+            if(hex($r1) <hex($r0)  || hex($r3) <hex($r2)   ){
+                 message_dialog("Please fix tile $t invalid range !");
+                 return ;
+                
+            }
+            
+            if(hex($r1) > hex($r2)  ){
+                 message_dialog("Please fix tile $t conflict range !");
+                 return ;
+                
+            }
+            
+            
+            
+        }
+        create_linker_var_file($self);    
+        $win->destroy();
+    
+    
+    });
+    
+    
+    add_widget_to_scrolled_win($main_table,$sc_win);
+    $win->add($sc_win);
+    $win->show_all();    
+    
 }
 
 
 sub create_linker_var_file{
-	my ($self)=@_;
-	my $mpsoc_name=$self->object_get_attribute('mpsoc_name');
+    my ($self)=@_;
+    my $mpsoc_name=$self->object_get_attribute('mpsoc_name');
     my $tnum;
     
     my $width = $self->object_get_attribute('MEM0','width');
-	if(!defined $width){
+    if(!defined $width){
         linker_initial_setting ($self);
-	}
+    }
     
-	if(defined $mpsoc_name){#it is an mpsoc
-		my ($NE, $NR, $RAw, $EAw, $Fw)=get_topology_info($self);	
-   		$tnum=$NE;	   
-	}
-	else 
-	{
-		
-		$tnum=1;		
-	}   
-	
-	for (my $t=0;$t<$tnum;$t++){       
-		my $r0 =$self->object_get_attribute("ROM$t",'start');
-		my $r1 =$self->object_get_attribute("ROM$t",'end'); 
-		my $r2 =$self->object_get_attribute("RAM$t",'start');
-		my $r3 =$self->object_get_attribute("RAM$t",'end'); 
-						
-		my $file=sprintf("		
-	
+    if(defined $mpsoc_name){#it is an mpsoc
+        my ($NE, $NR, $RAw, $EAw, $Fw)=get_topology_info($self);    
+           $tnum=$NE;       
+    }
+    else 
+    {
+        
+        $tnum=1;        
+    }   
+    
+    for (my $t=0;$t<$tnum;$t++){       
+        my $r0 =$self->object_get_attribute("ROM$t",'start');
+        my $r1 =$self->object_get_attribute("ROM$t",'end'); 
+        my $r2 =$self->object_get_attribute("RAM$t",'start');
+        my $r3 =$self->object_get_attribute("RAM$t",'end'); 
+                        
+        my $file=sprintf("        
+    
 MEMORY
-{	
-	rom (rx)    : ORIGIN = 0x%x , LENGTH = 0x%x  /* %s B- Rom space  */
-	ram (wrx)   : ORIGIN = 0x%x , LENGTH = 0x%x  /* %s B- Ram space  */
-}		
+{    
+    rom (rx)    : ORIGIN = 0x%x , LENGTH = 0x%x  /* %s B- Rom space  */
+    ram (wrx)   : ORIGIN = 0x%x , LENGTH = 0x%x  /* %s B- Ram space  */
+}        
 
-			",$r0,$r1 - $r0, metric_conversion($r1 - $r0),$r2,$r3- $r2,metric_conversion($r3 - $r2));
-			
-		if(defined $mpsoc_name){			
-			save_file ("$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name/sw/tile$t/linkvar.ld",$file) if(-d "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name/sw/tile$t/"); 
-		}else{
-			my $soc_name=$self->object_get_attribute('soc_name');
-			my $p1="$ENV{'PRONOC_WORK'}/SOC/$soc_name/sw/";
-			mkpath("$p1",1,0755) unless (-d "$p1");		
-			save_file ("$p1/linkvar.ld",$file) 
-		}
-	}
-	
+            ",$r0,$r1 - $r0, metric_conversion($r1 - $r0),$r2,$r3- $r2,metric_conversion($r3 - $r2));
+            
+        if(defined $mpsoc_name){            
+            save_file ("$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name/sw/tile$t/linkvar.ld",$file) if(-d "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name/sw/tile$t/"); 
+        }else{
+            my $soc_name=$self->object_get_attribute('soc_name');
+            my $p1="$ENV{'PRONOC_WORK'}/SOC/$soc_name/sw/";
+            mkpath("$p1",1,0755) unless (-d "$p1");        
+            save_file ("$p1/linkvar.ld",$file) 
+        }
+    }
+    
 }
 
 
@@ -2370,7 +2383,7 @@ sub software_edit_mpsoc {
     my @pages_lables=($orcc_lable);
     my ($app,$table,$tview) = software_main($sw,undef,\@pages,\@pages_lables);    
     
-	my $prog= def_image_button('icons/write.png','Program FPGA\'s BRAMs');
+    my $prog= def_image_button('icons/write.png','Program FPGA\'s BRAMs');
     my $linker = def_image_button('icons/setting.png','LD Linker',FALSE,1);
     my $make = def_image_button('icons/gen.png','_Compile',FALSE,1);
     my $ram = def_image_button('icons/info.png',"Required BRAMs\' size",FALSE,1);
@@ -2380,12 +2393,12 @@ sub software_edit_mpsoc {
     $table->attach ($make,5, 6, 1,2,'shrink','shrink',0,0);
     $table->attach ($prog,9, 10, 1,2,'shrink','shrink',0,0); 
     
-	$ram -> signal_connect("clicked" => sub{
-		show_reqired_brams($self,$tview);
-	});
-	 
-	  my $load;
-	 
+    $ram -> signal_connect("clicked" => sub{
+        show_reqired_brams($self,$tview);
+    });
+     
+      my $load;
+     
     $make -> signal_connect("clicked" => sub{
         $load->destroy   if(defined $load);
         $load= show_gif("icons/load.gif");
@@ -2394,18 +2407,18 @@ sub software_edit_mpsoc {
         $app->ask_to_save_changes();
         add_info($tview,' ');
         unless (run_make_file($sw,$tview,'clean')){
-        	$load->destroy;    
-        	$load=def_icon("icons/cancel.png");
-        	$table->attach ($load,7, 8, 1,2,'shrink','shrink',0,0); 
-        	$load->show_all; 
-        	return;
+            $load->destroy;    
+            $load=def_icon("icons/cancel.png");
+            $table->attach ($load,7, 8, 1,2,'shrink','shrink',0,0); 
+            $load->show_all; 
+            return;
         };
          unless (run_make_file($sw,$tview)){
-         	$load->destroy;    
-         	$load=def_icon("icons/cancel.png");
-         	$table->attach ($load,7, 8, 1,2,'shrink','shrink',0,0); 
-         	$load->show_all; 
-         	return;
+             $load->destroy;    
+             $load=def_icon("icons/cancel.png");
+             $table->attach ($load,7, 8, 1,2,'shrink','shrink',0,0); 
+             $load->show_all; 
+             return;
          }
         $load->destroy; 
         $load=def_icon("icons/button_ok.png");
@@ -2456,8 +2469,8 @@ sub software_edit_mpsoc {
     
     
     $linker -> signal_connect("clicked" => sub{
-		linker_setting($self,$tview);
-	});
+        linker_setting($self,$tview);
+    });
 
 }
 
@@ -2470,7 +2483,7 @@ sub software_edit_mpsoc {
 sub load_mpsoc{
     my ($mpsoc,$info)=@_;
     my $file;
-    my $dialog =  gen_file_dialog (undef, 'MPSOC');	
+    my $dialog =  gen_file_dialog (undef, 'MPSOC');    
     my $dir = Cwd::getcwd();
     $dialog->set_current_folder ("$dir/lib/mpsoc")    ;
     my @newsocs=$mpsoc->mpsoc_get_soc_list();
@@ -2516,389 +2529,389 @@ sub load_mpsoc{
 }
 
 #######
-#	CLK setting
+#    CLK setting
 #######
 
 sub clk_setting_win1{
-	my ($self,$info,$type)=@_;
+    my ($self,$info,$type)=@_;
 
-	my $window = def_popwin_size(80,80,"CLK setting",'percent');
+    my $window = def_popwin_size(80,80,"CLK setting",'percent');
    
-    my $next=def_image_button('icons/right.png','Next'); 	
-	my $mtable = def_table(10, 1, FALSE);
-	#get the list of all tiles clk sources
-	
-	my @sources=('clk','reset');
-	
-	my $table = def_table(10, 7, FALSE);
-	my $notebook = gen_notebook();
-	$notebook->set_scrollable(TRUE);
-	#$notebook->can_focus(FALSE);
-	$notebook->set_tab_pos ('left'); 
-	
-	
-	
-	my($row,$column)=(0,0);
-	
-	my %all = ($type eq 'mpsoc') ? get_all_tiles_clk_sources_list($self): get_soc_clk_source_list($self) ;
-	foreach my $s (@sources){
-		 my $spin;	
-		 ($row,$column,$spin)=  add_param_widget($self,"$s number","${s}_number", 1,'Spin-button',"1,1024,1","Define total number of ${s} input ports  mpsoc", $table,$row,$column,1,'SOURCE_SET',undef,undef,'horizontal');
-		 
-		 my $w=get_source_assignment_win($self,$s,$all{$s},$type);
-		 my $box=def_hbox(FALSE,0);
-		 $box->pack_start($w, TRUE, TRUE, 0);
-		 $notebook->append_page ($box,gen_label_in_center ($s)); 
-		 $spin->signal_connect("value_changed" => sub{
-		 	$self->object_add_attribute('SOURCE_SET',"REDEFINE_TOP",1);    
-		 	$w->destroy;
-		 	$w=get_source_assignment_win($self,$s,$all{$s},$type);
-		 	$box->pack_start($w, TRUE, TRUE, 0);
-		 	$box->show_all; 
-		 	
-		 });
-		
-	}	
+    my $next=def_image_button('icons/right.png','Next');     
+    my $mtable = def_table(10, 1, FALSE);
+    #get the list of all tiles clk sources
+    
+    my @sources=('clk','reset');
+    
+    my $table = def_table(10, 7, FALSE);
+    my $notebook = gen_notebook();
+    $notebook->set_scrollable(TRUE);
+    #$notebook->can_focus(FALSE);
+    $notebook->set_tab_pos ('left'); 
+    
+    
+    
+    my($row,$column)=(0,0);
+    
+    my %all = ($type eq 'mpsoc') ? get_all_tiles_clk_sources_list($self): get_soc_clk_source_list($self) ;
+    foreach my $s (@sources){
+         my $spin;    
+         ($row,$column,$spin)=  add_param_widget($self,"$s number","${s}_number", 1,'Spin-button',"1,1024,1","Define total number of ${s} input ports  mpsoc", $table,$row,$column,1,'SOURCE_SET',undef,undef,'horizontal');
+         
+         my $w=get_source_assignment_win($self,$s,$all{$s},$type);
+         my $box=def_hbox(FALSE,0);
+         $box->pack_start($w, TRUE, TRUE, 0);
+         $notebook->append_page ($box,gen_label_in_center ($s)); 
+         $spin->signal_connect("value_changed" => sub{
+             $self->object_add_attribute('SOURCE_SET',"REDEFINE_TOP",1);    
+             $w->destroy;
+             $w=get_source_assignment_win($self,$s,$all{$s},$type);
+             $box->pack_start($w, TRUE, TRUE, 0);
+             $box->show_all; 
+             
+         });
+        
+    }    
 
-	$mtable->attach_defaults($table,0,1,0,1);
-	$mtable->attach_defaults( $notebook,0,1,1,20);
-	$mtable->attach($next,0,1,20,21,'expand','fill',2,2);	
-	$window->add ($mtable);
-	$window->show_all();	
-	$next-> signal_connect("clicked" => sub{ 			
-		clk_setting_win2($self,$info,$type);
-		$window->destroy;	
-					
-	});	
+    $mtable->attach_defaults($table,0,1,0,1);
+    $mtable->attach_defaults( $notebook,0,1,1,20);
+    $mtable->attach($next,0,1,20,21,'expand','fill',2,2);    
+    $window->add ($mtable);
+    $window->show_all();    
+    $next-> signal_connect("clicked" => sub{             
+        clk_setting_win2($self,$info,$type);
+        $window->destroy;    
+                    
+    });    
 
 }
 
 
 sub update_wave_form {
-	my ($period,$rise,$fall,$r_lab,$f_lab)=@_;
-	my $p =$period->get_value();
-	my $n =$rise->get_value();
-	my $v= ($p * $n)/100;
-	$r_lab->set_text("=$v ns");			 
-	$n =$fall->get_value();
-	$v= ($p * $n)/100;
-	$f_lab->set_text("=$v ns");	
+    my ($period,$rise,$fall,$r_lab,$f_lab)=@_;
+    my $p =$period->get_value();
+    my $n =$rise->get_value();
+    my $v= ($p * $n)/100;
+    $r_lab->set_text("=$v ns");             
+    $n =$fall->get_value();
+    $v= ($p * $n)/100;
+    $f_lab->set_text("=$v ns");    
 }
 
 sub get_source_assignment_win{
-	my ($mpsoc,$s,$ports_ref,$type)=@_;
-	my$row=0;
-	my $column=0;
-	my $num = $mpsoc->object_get_attribute('SOURCE_SET',"${s}_number");	
-	my $table1 = def_table(20, 20, FALSE);
-	my $win1=add_widget_to_scrolled_win($table1);
-	my $win2;
-	my $v2;
-	
-	#if($s eq 'clk'){
-	#	my @labels=("clk name", 'Frequency MHz', 'Period ns', 'rise edge times ns', 'fall edge times ns');
-	#	foreach my $l (@labels){
-			#  $table1->attach  (gen_label_in_center($l),$column,$column+1,$row,$row+1,'fill','shrink',2,2);$column+=5;
-	#	}
-		#$row++;
-		#$column=0;
-	#}
-	
-	#get source signal names	
-	my $loc =  'vertical';
-	for(my $n=0;$n<$num; $n++ ){
-		my $entry;
-		my $enter= def_image_button("icons/enter.png");
-		my $box=def_hbox(FALSE,0);
-		$box->pack_start( $enter, FALSE, FALSE, 0);	
+    my ($mpsoc,$s,$ports_ref,$type)=@_;
+    my$row=0;
+    my $column=0;
+    my $num = $mpsoc->object_get_attribute('SOURCE_SET',"${s}_number");    
+    my $table1 = def_table(20, 20, FALSE);
+    my $win1=add_widget_to_scrolled_win($table1);
+    my $win2;
+    my $v2;
+    
+    #if($s eq 'clk'){
+    #    my @labels=("clk name", 'Frequency MHz', 'Period ns', 'rise edge times ns', 'fall edge times ns');
+    #    foreach my $l (@labels){
+            #  $table1->attach  (gen_label_in_center($l),$column,$column+1,$row,$row+1,'fill','shrink',2,2);$column+=5;
+    #    }
+        #$row++;
+        #$column=0;
+    #}
+    
+    #get source signal names    
+    my $loc =  'vertical';
+    for(my $n=0;$n<$num; $n++ ){
+        my $entry;
+        my $enter= def_image_button("icons/enter.png");
+        my $box=def_hbox(FALSE,0);
+        $box->pack_start( $enter, FALSE, FALSE, 0);    
 
-		($row,$column,$entry)=  add_param_widget($mpsoc,"$n-","${s}_${n}_name", "${s}$n",'Entry',undef,undef, $table1,$row,$column,1,'SOURCE_SET',undef,undef,'horizontal');
-	    $table1->attach  ($box,$column,$column+1,$row,$row+1,'fill','shrink',2,2);$column++;
-	       
-		$enter->signal_connect ("clicked"  => sub{
-			$mpsoc->object_add_attribute('SOURCE_SET',"REDEFINE_TOP",1); 
-			$win2->destroy;
-			$win2= get_source_assignment_win2($mpsoc,$s,$ports_ref,$type);
-			$v2-> pack2($win2, TRUE, TRUE);  
-			$v2->show_all;			
-		});
-		
-		
-		if($s eq 'clk'){
-			($column,$row)=get_clk_constrain_widget($mpsoc,$table1,$column,$row, $s,$n);		 		
-		}
-		
-			
-	    
-	   # if((($n+1) % 4)==0){
-		  	$column=0;
-		  	$row++;
-	   #}		  
-	}	
-     	
-   	#source assigmnmet
+        ($row,$column,$entry)=  add_param_widget($mpsoc,"$n-","${s}_${n}_name", "${s}$n",'Entry',undef,undef, $table1,$row,$column,1,'SOURCE_SET',undef,undef,'horizontal');
+        $table1->attach  ($box,$column,$column+1,$row,$row+1,'fill','shrink',2,2);$column++;
+           
+        $enter->signal_connect ("clicked"  => sub{
+            $mpsoc->object_add_attribute('SOURCE_SET',"REDEFINE_TOP",1); 
+            $win2->destroy;
+            $win2= get_source_assignment_win2($mpsoc,$s,$ports_ref,$type);
+            $v2-> pack2($win2, TRUE, TRUE);  
+            $v2->show_all;            
+        });
+        
+        
+        if($s eq 'clk'){
+            ($column,$row)=get_clk_constrain_widget($mpsoc,$table1,$column,$row, $s,$n);                 
+        }
+        
+            
+        
+       # if((($n+1) % 4)==0){
+              $column=0;
+              $row++;
+       #}          
+    }    
+         
+       #source assigmnmet
     $win2= get_source_assignment_win2($mpsoc,$s,$ports_ref,$type);
-	$v2=gen_vpaned($win1,.2,$win2);	
-   	return $v2;	
+    $v2=gen_vpaned($win1,.2,$win2);    
+       return $v2;    
 }
 
 
 sub get_clk_constrain_widget {
-	my ($self,$table,$column,$row, $s,$n)=@_;
-	$table->attach (gen_Vsep() , $column,$column+1,$row,$row+1,'fill','fill',2,2);$column+=1;
-	return ($column,$row);
-	my $frequency;	
-	($row,$column,$frequency)=  add_param_widget($self,"Frequency(MHz)","${s}_${n}_mhz", 100,'Spin-button',"1,1024,0.01",undef, $table,$row,$column,1,'SOURCE_SET',undef,undef,'horizontal');
-	$table->attach (gen_Vsep() , $column,$column+1,$row,$row+1,'fill','fill',2,2);$column+=1;
-	my $period;
-	($row,$column,$period)=  add_param_widget($self,"Period(ns)","${s}_${n}_period", 10,'Spin-button',"0,1024,0.01",undef, $table,$row,$column,1,'SOURCE_SET',undef,undef,'horizontal');
-	$table->attach (gen_Vsep() , $column,$column+1,$row,$row+1,'fill','fill',2,2);$column+=1;
-	my $rise;	
-	($row,$column,$rise)=  add_param_widget($self,"rising edge(%)","${s}_${n}_rise", 0,'Spin-button',"0,100,0.1",undef, $table,$row,$column,1,'SOURCE_SET',undef,undef,'horizontal');
-	my $r_lab=gen_label_in_center('=0 ns');
-	$table->attach  ($r_lab,$column,$column+1,$row,$row+1,'fill','shrink',2,2);$column+=1;
-	$table->attach (gen_Vsep() , $column,$column+1,$row,$row+1,'fill','fill',2,2);$column+=1;
-	my $fall;	
-	($row,$column,$fall)=  add_param_widget($self,"falling edge(%)","${s}_${n}_fall", 50,'Spin-button',"0,100,0.1",undef, $table,$row,$column,1,'SOURCE_SET',undef,undef,'horizontal');
-	my $f_lab=gen_label_in_center('=5 ns');
-	$table->attach  ($f_lab,$column,$column+1,$row,$row+1,'fill','shrink',2,2);$column+=1;
-	update_wave_form($period,$rise,$fall,$r_lab,$f_lab);
-	$frequency-> signal_connect("value_changed" => sub{
-	 	my $fr =$frequency->get_value();
-		my $p = 1000/$fr;
-	 	$period->set_value($p);
-	 	update_wave_form($period,$rise,$fall,$r_lab,$f_lab);
-	});	
-	$period-> signal_connect("value_changed" => sub{
-		my $p =$period->get_value();
-		my $fr = 1000/$p;
-		$frequency->set_value($fr);
-		update_wave_form($period,$rise,$fall,$r_lab,$f_lab);
-	});	
-	$rise-> signal_connect("value_changed" => sub{
-	 	update_wave_form($period,$rise,$fall,$r_lab,$f_lab);		 	
-	});	
-	$fall-> signal_connect("value_changed" => sub{
-	   update_wave_form($period,$rise,$fall,$r_lab,$f_lab);
-	});	
-	return ($column,$row);
+    my ($self,$table,$column,$row, $s,$n)=@_;
+    $table->attach (gen_Vsep() , $column,$column+1,$row,$row+1,'fill','fill',2,2);$column+=1;
+    return ($column,$row);
+    my $frequency;    
+    ($row,$column,$frequency)=  add_param_widget($self,"Frequency(MHz)","${s}_${n}_mhz", 100,'Spin-button',"1,1024,0.01",undef, $table,$row,$column,1,'SOURCE_SET',undef,undef,'horizontal');
+    $table->attach (gen_Vsep() , $column,$column+1,$row,$row+1,'fill','fill',2,2);$column+=1;
+    my $period;
+    ($row,$column,$period)=  add_param_widget($self,"Period(ns)","${s}_${n}_period", 10,'Spin-button',"0,1024,0.01",undef, $table,$row,$column,1,'SOURCE_SET',undef,undef,'horizontal');
+    $table->attach (gen_Vsep() , $column,$column+1,$row,$row+1,'fill','fill',2,2);$column+=1;
+    my $rise;    
+    ($row,$column,$rise)=  add_param_widget($self,"rising edge(%)","${s}_${n}_rise", 0,'Spin-button',"0,100,0.1",undef, $table,$row,$column,1,'SOURCE_SET',undef,undef,'horizontal');
+    my $r_lab=gen_label_in_center('=0 ns');
+    $table->attach  ($r_lab,$column,$column+1,$row,$row+1,'fill','shrink',2,2);$column+=1;
+    $table->attach (gen_Vsep() , $column,$column+1,$row,$row+1,'fill','fill',2,2);$column+=1;
+    my $fall;    
+    ($row,$column,$fall)=  add_param_widget($self,"falling edge(%)","${s}_${n}_fall", 50,'Spin-button',"0,100,0.1",undef, $table,$row,$column,1,'SOURCE_SET',undef,undef,'horizontal');
+    my $f_lab=gen_label_in_center('=5 ns');
+    $table->attach  ($f_lab,$column,$column+1,$row,$row+1,'fill','shrink',2,2);$column+=1;
+    update_wave_form($period,$rise,$fall,$r_lab,$f_lab);
+    $frequency-> signal_connect("value_changed" => sub{
+         my $fr =$frequency->get_value();
+        my $p = 1000/$fr;
+         $period->set_value($p);
+         update_wave_form($period,$rise,$fall,$r_lab,$f_lab);
+    });    
+    $period-> signal_connect("value_changed" => sub{
+        my $p =$period->get_value();
+        my $fr = 1000/$p;
+        $frequency->set_value($fr);
+        update_wave_form($period,$rise,$fall,$r_lab,$f_lab);
+    });    
+    $rise-> signal_connect("value_changed" => sub{
+         update_wave_form($period,$rise,$fall,$r_lab,$f_lab);             
+    });    
+    $fall-> signal_connect("value_changed" => sub{
+       update_wave_form($period,$rise,$fall,$r_lab,$f_lab);
+    });    
+    return ($column,$row);
 }
 
 
 
 sub get_source_assignment_win2{
-	my ($mpsoc,$s,$ports_ref,$type)=@_;
-	my $num = $mpsoc->object_get_attribute('SOURCE_SET',"${s}_number");
-	my $table2 = def_table(10, 7, FALSE);
-   	my $win2=add_widget_to_scrolled_win($table2);
-   	my %ports = %{$ports_ref} if(defined $ports_ref);   
+    my ($mpsoc,$s,$ports_ref,$type)=@_;
+    my $num = $mpsoc->object_get_attribute('SOURCE_SET',"${s}_number");
+    my $table2 = def_table(10, 7, FALSE);
+       my $win2=add_widget_to_scrolled_win($table2);
+       my %ports = %{$ports_ref} if(defined $ports_ref);   
    
-	my $contents;
-	for(my $n=0;$n<$num; $n++ ){
-   		my $m=$mpsoc->object_get_attribute('SOURCE_SET',"${s}_${n}_name");
-   		$contents=(defined $contents)? "$contents,$m":$m;   
-	}
-	my $default=$mpsoc->object_get_attribute('SOURCE_SET',"${s}_0_name");	
-	my $n=0;
-	my($row,$column)=(0,0);
-	if($type eq 'mpsoc' ) {
-		add_param_widget($mpsoc,"    NoC $s","NoC_${s}", $default,'Combo-box',$contents,undef, $table2,$row,$column,1,'SOURCE_SET_CONNECT',undef,undef,'horizontal');
-		($row,$column)=(1,0);
-	}	
+    my $contents;
+    for(my $n=0;$n<$num; $n++ ){
+           my $m=$mpsoc->object_get_attribute('SOURCE_SET',"${s}_${n}_name");
+           $contents=(defined $contents)? "$contents,$m":$m;   
+    }
+    my $default=$mpsoc->object_get_attribute('SOURCE_SET',"${s}_0_name");    
+    my $n=0;
+    my($row,$column)=(0,0);
+    if($type eq 'mpsoc' ) {
+        add_param_widget($mpsoc,"    NoC $s","NoC_${s}", $default,'Combo-box',$contents,undef, $table2,$row,$column,1,'SOURCE_SET_CONNECT',undef,undef,'horizontal');
+        ($row,$column)=(1,0);
+    }    
 
-	foreach my $p (sort keys %ports){
-   		my @array=@{$ports{$p}};
-   		foreach my $q (@array){
-   			my $param="${p}_$q"; 
-   			my $label="  ${p}_$q";    			  			
-   			($row,$column)=  add_param_widget($mpsoc,$label,$param, $default,'Combo-box',$contents,undef, $table2,$row,$column,1,'SOURCE_SET_CONNECT',undef,undef,'horizontal');
-   			if((($n+1) % 4)==0){$column=0;$row++;}$n++;
-   		}		
-	}
-	return $win2;
-	
+    foreach my $p (sort keys %ports){
+           my @array=@{$ports{$p}};
+           foreach my $q (@array){
+               my $param="${p}_$q"; 
+               my $label="  ${p}_$q";                              
+               ($row,$column)=  add_param_widget($mpsoc,$label,$param, $default,'Combo-box',$contents,undef, $table2,$row,$column,1,'SOURCE_SET_CONNECT',undef,undef,'horizontal');
+               if((($n+1) % 4)==0){$column=0;$row++;}$n++;
+           }        
+    }
+    return $win2;
+    
 }
 
 
 sub get_all_tiles_clk_sources_list{
-	my $mpsoc=shift;
-	my ($NE, $NR, $RAw, $EAw, $Fw)= get_topology_info ($mpsoc); 
-    my %all_sources;	
-	for (my $tile_num=0;$tile_num<$NE;$tile_num++){
-		my ($soc_name,$n,$soc_num)=$mpsoc->mpsoc_get_tile_soc_name($tile_num);
-		next if(!defined $soc_name); 	
-		my $top=$mpsoc->mpsoc_get_soc($soc_name);
-		my @intfcs=$top->top_get_intfc_list();
-		
-		my @sources=('clk','reset');
-			
-		foreach my $intfc (@intfcs){
-			my($type,$name,$num)= split("[:\[ \\]]", $intfc);
-			foreach my $s (@sources){
-				if ($intfc =~ /plug:$s/){ 
-					my @ports=$top->top_get_intfc_ports_list($intfc);				
-					$all_sources{$s}{"T$tile_num"}=\@ports;
-				}	
-			}
-		
-		}
-	}
-		return  %all_sources;	
+    my $mpsoc=shift;
+    my ($NE, $NR, $RAw, $EAw, $Fw)= get_topology_info ($mpsoc); 
+    my %all_sources;    
+    for (my $tile_num=0;$tile_num<$NE;$tile_num++){
+        my ($soc_name,$n,$soc_num)=$mpsoc->mpsoc_get_tile_soc_name($tile_num);
+        next if(!defined $soc_name);     
+        my $top=$mpsoc->mpsoc_get_soc($soc_name);
+        my @intfcs=$top->top_get_intfc_list();
+        
+        my @sources=('clk','reset');
+            
+        foreach my $intfc (@intfcs){
+            my($type,$name,$num)= split("[:\[ \\]]", $intfc);
+            foreach my $s (@sources){
+                if ($intfc =~ /plug:$s/){ 
+                    my @ports=$top->top_get_intfc_ports_list($intfc);                
+                    $all_sources{$s}{"T$tile_num"}=\@ports;
+                }    
+            }
+        
+        }
+    }
+        return  %all_sources;    
 }
 
 
 
 sub clk_setting_win2{
-	my ($self,$info,$type)=@_;
-		
-	my $window = def_popwin_size(70,70,"CLK setting",'percent');
+    my ($self,$info,$type)=@_;
+        
+    my $window = def_popwin_size(70,70,"CLK setting",'percent');
     my $table = def_table(10, 7, FALSE);
     my $scrolled_win=add_widget_to_scrolled_win($table);
-    my $ok = def_image_button('icons/select.png','OK');	
+    my $ok = def_image_button('icons/select.png','OK');    
     my $back = def_image_button('icons/left.png',undef);
-    my $diagram  = def_image_button('icons/diagram.png','Diagram');	
+    my $diagram  = def_image_button('icons/diagram.png','Diagram');    
     my $ip = ip->lib_new ();
     #print "get_top_ip(\$self,$type);\n";
     my $mpsoc_ip=get_top_ip($self,$type);
   
-	$ip->add_ip($mpsoc_ip);			
+    $ip->add_ip($mpsoc_ip);            
     my $soc =get_source_set_top($self,$type);    
     my $infc = interface->interface_new(); 
            
     
     set_gui_status($soc,"ideal",0);
     # A tree view for holding a library
-	my %tree_text;
-	my @categories= ('Source');
+    my %tree_text;
+    my @categories= ('Source');
     foreach my $p (@categories)
     {
-   		my @modules= $ip->get_modules($p);
-   		$tree_text{$p}=\@modules;	
+           my @modules= $ip->get_modules($p);
+           $tree_text{$p}=\@modules;    
     }
    
-	my $tree_box = create_tree ($soc,'IP list', $info,\%tree_text,\&tmp,\&add_module_to_mpsoc);
+    my $tree_box = create_tree ($soc,'IP list', $info,\%tree_text,\&tmp,\&add_module_to_mpsoc);
     my  $device_win=show_active_dev($soc,$ip,$infc,$info); 
     my $h1=gen_hpaned($tree_box,.15,$device_win);
     $table->attach_defaults ($h1,0, 10, 0, 10);
-	
+    
     my $event =Event->timer (after => 1, interval => 1, cb => sub { 
 
 my ($state,$timeout)= get_gui_status($soc);
-	        
-	
-	        if ($timeout>0){
-	            $timeout--;
-	            set_gui_status($soc,$state,$timeout);                        
-	        }
-	        elsif( $state ne "ideal" ){
-	          
-	           #check if top is removed add it
-				my @instances=$soc->soc_get_all_instances();
-				my $redefine =1;
-				foreach my $inst (@instances){
-					$redefine = 0 if ($inst eq 'TOP');
-				}
-				if($redefine == 1){
-					my $ip = ip->lib_new ();
-					#print "get_top_ip(\$self,$type);\n";
-			    	my $mpsoc_ip=get_top_ip($self,$type);
-			    	
-					$ip->add_ip($mpsoc_ip);	
-			    	$soc ->object_add_attribute('SOURCE_SET',"IP",$mpsoc_ip);    	
-			    	$self->object_add_attribute('SOURCE_SET',"REDEFINE_TOP",0);  
-			    	add_mpsoc_to_device($soc,$ip); 
-			    	$self->object_add_attribute('SOURCE_SET',"SOC",$soc);					
-				}
-				
-	            $device_win->destroy;
-	           
-	            $device_win=show_active_dev($soc,$ip,$infc,$info); 
-	            $h1 -> pack2($device_win, TRUE, TRUE);  
-				$h1 -> show_all; 
-	            $table->show_all();	
-	            $device_win->show_all();
-	             
-	            $self->object_add_attribute('SOURCE_SET',"SOC",$soc);       
-	            set_gui_status($soc,"ideal",0);
-	             
-	        }    
-	        return TRUE;
+            
+    
+            if ($timeout>0){
+                $timeout--;
+                set_gui_status($soc,$state,$timeout);                        
+            }
+            elsif( $state ne "ideal" ){
+              
+               #check if top is removed add it
+                my @instances=$soc->soc_get_all_instances();
+                my $redefine =1;
+                foreach my $inst (@instances){
+                    $redefine = 0 if ($inst eq 'TOP');
+                }
+                if($redefine == 1){
+                    my $ip = ip->lib_new ();
+                    #print "get_top_ip(\$self,$type);\n";
+                    my $mpsoc_ip=get_top_ip($self,$type);
+                    
+                    $ip->add_ip($mpsoc_ip);    
+                    $soc ->object_add_attribute('SOURCE_SET',"IP",$mpsoc_ip);        
+                    $self->object_add_attribute('SOURCE_SET',"REDEFINE_TOP",0);  
+                    add_mpsoc_to_device($soc,$ip); 
+                    $self->object_add_attribute('SOURCE_SET',"SOC",$soc);                    
+                }
+                
+                $device_win->destroy;
+               
+                $device_win=show_active_dev($soc,$ip,$infc,$info); 
+                $h1 -> pack2($device_win, TRUE, TRUE);  
+                $h1 -> show_all; 
+                $table->show_all();    
+                $device_win->show_all();
+                 
+                $self->object_add_attribute('SOURCE_SET',"SOC",$soc);       
+                set_gui_status($soc,"ideal",0);
+                 
+            }    
+            return TRUE;
 
 
  });
   
- 	my $mtable = def_table(10, 5, FALSE);
-	$mtable->attach_defaults($scrolled_win,0,5,0,9);
-	$mtable->attach($back,0,1,9,10,'expand','fill',2,2) if($type ne 'soc');
-	$mtable->attach($diagram,2,4,9,10,'expand','fill',2,2);
-	$mtable->attach($ok,4,5,9,10,'expand','fill',2,2);
-	
-	$window->add ($mtable);
-	$window->show_all();
-	$self->object_add_attribute('SOURCE_SET',"SOC",$soc);
-	$back-> signal_connect("clicked" => sub{ 			
-		$self->object_add_attribute('SOURCE_SET',"SOC",$soc);		
-		clk_setting_win1($self,$info,$type);
-		$window->destroy;
-		$event->cancel;				
-	});	
-	
-	$diagram-> signal_connect("clicked" => sub{ 
-		show_tile_diagram ($soc);
-	});
-	
-	$ok-> signal_connect("clicked" => sub{ 	
-		set_gui_status($self,"ref",1); 			
-		$window->destroy;
-        $event->cancel;						
-	});	
-	
-	  
+     my $mtable = def_table(10, 5, FALSE);
+    $mtable->attach_defaults($scrolled_win,0,5,0,9);
+    $mtable->attach($back,0,1,9,10,'expand','fill',2,2) if($type ne 'soc');
+    $mtable->attach($diagram,2,4,9,10,'expand','fill',2,2);
+    $mtable->attach($ok,4,5,9,10,'expand','fill',2,2);
+    
+    $window->add ($mtable);
+    $window->show_all();
+    $self->object_add_attribute('SOURCE_SET',"SOC",$soc);
+    $back-> signal_connect("clicked" => sub{             
+        $self->object_add_attribute('SOURCE_SET',"SOC",$soc);        
+        clk_setting_win1($self,$info,$type);
+        $window->destroy;
+        $event->cancel;                
+    });    
+    
+    $diagram-> signal_connect("clicked" => sub{ 
+        show_tile_diagram ($soc);
+    });
+    
+    $ok-> signal_connect("clicked" => sub{     
+        set_gui_status($self,"ref",1);             
+        $window->destroy;
+        $event->cancel;                        
+    });    
+    
+      
  
-	
-	
-	
+    
+    
+    
 }
 
 sub tmp{
-	
+    
 }
 
 sub add_module_to_mpsoc{
-	my ($soc,$category,$module,$info)=@_;
-	my $ip = ip->lib_new ();
-	
-	my ($instance_id,$id)= get_instance_id($soc,$category,$module);
-	
-	#add module instance
-	my $result=$soc->soc_add_instance($instance_id,$category,$module,$ip);
-	
-	if($result == 0){
-		my $info_text= "Failed to add \"$instance_id\" to SoC. $instance_id is already exist.";	 
-		show_info($info,$info_text); 
-		return;
-	}
-	$soc->soc_add_instance_order($instance_id);
-	# Add IP version 
-	my $v=$ip->ip_get($category,$module,"version"); 
-	$v = 0 if(!defined $v);
-	#print "$v\n";
-	$soc->object_add_attribute($instance_id,"version",$v);
-	# Read default parameter from lib and add them to soc
-	my %param_default= $ip->get_param_default($category,$module);
-	
-	my $rr=$soc->soc_add_instance_param($instance_id,\%param_default);
-	if($rr == 0){
-		my $info_text= "Failed to add default parameter to \"$instance_id\".  $instance_id does not exist.";	 
-		show_info($info,$info_text); 
-		return;
-	}
-	my @r=$ip->ip_get_param_order($category,$module);
-	$soc->soc_add_instance_param_order($instance_id,\@r);
-	
-	get_module_parameter($soc,$ip,$instance_id);
-	undef $ip;
-	set_gui_status($soc,"refresh_soc",0);	
+    my ($soc,$category,$module,$info)=@_;
+    my $ip = ip->lib_new ();
+    
+    my ($instance_id,$id)= get_instance_id($soc,$category,$module);
+    
+    #add module instance
+    my $result=$soc->soc_add_instance($instance_id,$category,$module,$ip);
+    
+    if($result == 0){
+        my $info_text= "Failed to add \"$instance_id\" to SoC. $instance_id is already exist.";     
+        show_info($info,$info_text); 
+        return;
+    }
+    $soc->soc_add_instance_order($instance_id);
+    # Add IP version 
+    my $v=$ip->ip_get($category,$module,"version"); 
+    $v = 0 if(!defined $v);
+    #print "$v\n";
+    $soc->object_add_attribute($instance_id,"version",$v);
+    # Read default parameter from lib and add them to soc
+    my %param_default= $ip->get_param_default($category,$module);
+    
+    my $rr=$soc->soc_add_instance_param($instance_id,\%param_default);
+    if($rr == 0){
+        my $info_text= "Failed to add default parameter to \"$instance_id\".  $instance_id does not exist.";     
+        show_info($info,$info_text); 
+        return;
+    }
+    my @r=$ip->ip_get_param_order($category,$module);
+    $soc->soc_add_instance_param_order($instance_id,\@r);
+    
+    get_module_parameter($soc,$ip,$instance_id);
+    undef $ip;
+    set_gui_status($soc,"refresh_soc",0);    
 } 
 
 
@@ -2906,211 +2919,211 @@ sub add_module_to_mpsoc{
 
 #$mpsoc,$top_ip,$sw_dir,$soc_name,$id,$soc_num,$txview
 sub get_top_ip{
-	my ($self,$type)=@_;	
-	
-	my $mpsoc_ip=ip_gen->ip_gen_new();
-	$mpsoc_ip->ipgen_add("module_name",'TOP');
-	$mpsoc_ip->ipgen_add("ip_name",'TOP');
-	$mpsoc_ip->ipgen_add("category",'TOP');
-	$mpsoc_ip->ipgen_add('GUI_REMOVE_SET','DISABLE');
-	if($type eq 'mpsoc'){
-		my @sources=('clk','reset');
-		foreach my $s (@sources){
-			my $num = $self->object_get_attribute('SOURCE_SET',"${s}_number");
-			$num=1 if(!defined $num);
-			$mpsoc_ip->ipgen_add_plug("$s",'num',$num);
-			for (my $n=0; $n<$num; $n++ ){
-				
-				my $name=$self->object_get_attribute('SOURCE_SET',"${s}_${n}_name");
-				$mpsoc_ip->ipgen_set_plug_name($s,$n,$name);			
-				$mpsoc_ip->ipgen_add_port($name,undef,'input',"plug:${s}\[$n\]","${s}_i");	
-								
-			}	
-		}
-	# add_mpsoc_ip_other_interfaces($mpsoc,$mpsoc_ip);	
-	}
-	else{
-		my %sources = get_soc_clk_source_list($self);
-		foreach my $s (sort keys %sources){
-			my @ports = @{$sources{$s}} if (defined $sources{$s});
-			my $num=scalar @ports;
-			$mpsoc_ip->ipgen_add_plug("$s",'num',$num);
-			my $n=0;	
-			foreach my $p (@ports){
-				$mpsoc_ip->ipgen_set_plug_name($s,$n,$p);
-				$mpsoc_ip->ipgen_add_port($p,undef,'input',"plug:${s}\[$n\]","${s}_i");
-				$n++;
-			} 
-		}
-	}
-	return $mpsoc_ip;			
+    my ($self,$type)=@_;    
+    
+    my $mpsoc_ip=ip_gen->ip_gen_new();
+    $mpsoc_ip->ipgen_add("module_name",'TOP');
+    $mpsoc_ip->ipgen_add("ip_name",'TOP');
+    $mpsoc_ip->ipgen_add("category",'TOP');
+    $mpsoc_ip->ipgen_add('GUI_REMOVE_SET','DISABLE');
+    if($type eq 'mpsoc'){
+        my @sources=('clk','reset');
+        foreach my $s (@sources){
+            my $num = $self->object_get_attribute('SOURCE_SET',"${s}_number");
+            $num=1 if(!defined $num);
+            $mpsoc_ip->ipgen_add_plug("$s",'num',$num);
+            for (my $n=0; $n<$num; $n++ ){
+                
+                my $name=$self->object_get_attribute('SOURCE_SET',"${s}_${n}_name");
+                $mpsoc_ip->ipgen_set_plug_name($s,$n,$name);            
+                $mpsoc_ip->ipgen_add_port($name,undef,'input',"plug:${s}\[$n\]","${s}_i");    
+                                
+            }    
+        }
+    # add_mpsoc_ip_other_interfaces($mpsoc,$mpsoc_ip);    
+    }
+    else{
+        my %sources = get_soc_clk_source_list($self);
+        foreach my $s (sort keys %sources){
+            my @ports = @{$sources{$s}} if (defined $sources{$s});
+            my $num=scalar @ports;
+            $mpsoc_ip->ipgen_add_plug("$s",'num',$num);
+            my $n=0;    
+            foreach my $p (@ports){
+                $mpsoc_ip->ipgen_set_plug_name($s,$n,$p);
+                $mpsoc_ip->ipgen_add_port($p,undef,'input',"plug:${s}\[$n\]","${s}_i");
+                $n++;
+            } 
+        }
+    }
+    return $mpsoc_ip;            
 }
 
 
 sub add_mpsoc_ip_other_interfaces{
-	my ($mpsoc,$mpsoc_ip)=@_;	
+    my ($mpsoc,$mpsoc_ip)=@_;    
 my ($NE, $NR, $RAw, $EAw, $Fw)= get_topology_info ($mpsoc); 
     my $processors_en=0;
     my %intfc_num;
     my @parameters_order;
-	for (my $tile_num=0;$tile_num<$NE;$tile_num++){
-			my ($soc_name,$n,$soc_num)=$mpsoc->mpsoc_get_tile_soc_name($tile_num);	
-	
-	
-			my $top=$mpsoc->mpsoc_get_soc($soc_name);
-			my @nis=get_NI_instance_list($top);
-			my @noc_param=$top->top_get_parameter_list($nis[0]);
-			my $inst_name=$top->top_get_def_of_instance($nis[0],'instance');
-	
-			#other parameters
-			my %params=$top->top_get_default_soc_param();
-	
-			my @intfcs=$top->top_get_intfc_list();
-			
-			my $i=0;
-		
-			my $dir = Cwd::getcwd();
-			my $mpsoc_name=$mpsoc->object_get_attribute('mpsoc_name');
-			my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name";
-			my $soc_file="$target_dir/src_verilog/tiles/$soc_name.sv";
-					
-			my $vdb =read_verilog_file($soc_file);
-				
-			my %soc_localparam = $vdb->get_modules_parameters($soc_name);
-		
-			
-			foreach my $intfc (@intfcs){
-		
-				# Auto connected/not connected interface	
-				if( $intfc eq 'socket:ni[0]' || ($intfc =~ /plug:clk\[/) ||  ( $intfc =~ /plug:reset\[/)|| ($intfc =~ /socket:RxD_sim\[/ )  || $intfc =~ /plug:enable\[/){
-					#do nothing
-				}
-				elsif( $intfc eq 'IO' ){
-					my @ports=$top->top_get_intfc_ports_list($intfc);
-					foreach my $p (@ports){
-						my ($io_port,$type,$new_range,$intfc_name,$intfc_port)=	get_top_port_io_info($top,$p,$tile_num,\%params,\%soc_localparam);
-						$mpsoc_ip->ipgen_add_port($io_port,$new_range,$type,'IO','IO');	
-						
-								
-					}			
-					
-				}
-	
-				else {
-				#other interface
-				    my($if_type,$if_name,$if_num)= split("[:\[ \\]]", $intfc); 
-				    print "my($if_type,$if_name,$if_num)= split(, $intfc); \n";
-				    my $num = (defined $intfc_num{"$if_type:$if_name"})? $intfc_num{"$if_type:$if_name"}+1:0;
-				    $intfc_num{"$if_type:$if_name"}=$num;
-				    $mpsoc_ip->ipgen_add_plug("$if_name",'num',$num) if ($if_type eq 'plug');
-				    $mpsoc_ip->ipgen_add_soket("$if_name",'num',$num) if ($if_type eq 'socket');
-				   				    
-					my @ports=$top->top_get_intfc_ports_list($intfc);
-					foreach my $p (@ports){
-						my ($io_port,$type,$new_range,$intfc_name,$intfc_port)=	get_top_port_io_info($top,$p,$tile_num,\%params,\%soc_localparam);
-						$mpsoc_ip->ipgen_add_port($io_port,$new_range,$type,"$if_type:$if_name\[$num\]",$intfc_port);	
-									
-					}			
-				}			
-			}
-			
-			
-		my $setting=$mpsoc->mpsoc_get_tile_param_setting($tile_num);
-		#if ($setting eq 'Custom'){
-			 %params= $top->top_get_custom_soc_param($tile_num);
-		#}else{
-		#	 %params=$top->top_get_default_soc_param();
-		#}
-		
-		foreach my $p (sort keys %params){
-			$params{$p}=add_instantc_name_to_parameters(\%params,"T$tile_num",$params{$p});	
-			$params{$p}=add_instantc_name_to_parameters(\%soc_localparam,"T$tile_num",$params{$p});	
-			my $pname="T${tile_num}_$p";
-			$mpsoc_ip->	ipgen_add_parameter ($pname,$params{$p},'Fixed',undef,undef,'Localparam',1);	
-			push (@parameters_order,$pname);
-		
-		}		
-		foreach my $p (sort keys %soc_localparam){
-			$soc_localparam{$p}=add_instantc_name_to_parameters(\%params,"T$tile_num",$soc_localparam{$p});		
-			$soc_localparam{$p}=add_instantc_name_to_parameters(\%soc_localparam,"T$tile_num",$soc_localparam{$p});		
-			my $pname="T${tile_num}_$p";
-			$mpsoc_ip->	ipgen_add_parameter ($pname,$soc_localparam{$p},'Fixed',undef,undef,'Localparam',0);	
-			push (@parameters_order,$pname);
-			
-		}
-			
-	
-	
-	}	
-	#TODO get parameter order
-	$mpsoc_ip->ipgen_add("parameters_order",\@parameters_order); 	
-	
+    for (my $tile_num=0;$tile_num<$NE;$tile_num++){
+            my ($soc_name,$n,$soc_num)=$mpsoc->mpsoc_get_tile_soc_name($tile_num);    
+    
+    
+            my $top=$mpsoc->mpsoc_get_soc($soc_name);
+            my @nis=get_NI_instance_list($top);
+            my @noc_param=$top->top_get_parameter_list($nis[0]);
+            my $inst_name=$top->top_get_def_of_instance($nis[0],'instance');
+    
+            #other parameters
+            my %params=$top->top_get_default_soc_param();
+    
+            my @intfcs=$top->top_get_intfc_list();
+            
+            my $i=0;
+        
+            my $dir = Cwd::getcwd();
+            my $mpsoc_name=$mpsoc->object_get_attribute('mpsoc_name');
+            my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$mpsoc_name";
+            my $soc_file="$target_dir/src_verilog/tiles/$soc_name.sv";
+                    
+            my $vdb =read_verilog_file($soc_file);
+                
+            my %soc_localparam = $vdb->get_modules_parameters($soc_name);
+        
+            
+            foreach my $intfc (@intfcs){
+        
+                # Auto connected/not connected interface    
+                if( $intfc eq 'socket:ni[0]' || ($intfc =~ /plug:clk\[/) ||  ( $intfc =~ /plug:reset\[/)|| ($intfc =~ /socket:RxD_sim\[/ )  || $intfc =~ /plug:enable\[/){
+                    #do nothing
+                }
+                elsif( $intfc eq 'IO' ){
+                    my @ports=$top->top_get_intfc_ports_list($intfc);
+                    foreach my $p (@ports){
+                        my ($io_port,$type,$new_range,$intfc_name,$intfc_port)=    get_top_port_io_info($top,$p,$tile_num,\%params,\%soc_localparam);
+                        $mpsoc_ip->ipgen_add_port($io_port,$new_range,$type,'IO','IO');    
+                        
+                                
+                    }            
+                    
+                }
+    
+                else {
+                #other interface
+                    my($if_type,$if_name,$if_num)= split("[:\[ \\]]", $intfc); 
+                    print "my($if_type,$if_name,$if_num)= split(, $intfc); \n";
+                    my $num = (defined $intfc_num{"$if_type:$if_name"})? $intfc_num{"$if_type:$if_name"}+1:0;
+                    $intfc_num{"$if_type:$if_name"}=$num;
+                    $mpsoc_ip->ipgen_add_plug("$if_name",'num',$num) if ($if_type eq 'plug');
+                    $mpsoc_ip->ipgen_add_soket("$if_name",'num',$num) if ($if_type eq 'socket');
+                                       
+                    my @ports=$top->top_get_intfc_ports_list($intfc);
+                    foreach my $p (@ports){
+                        my ($io_port,$type,$new_range,$intfc_name,$intfc_port)=    get_top_port_io_info($top,$p,$tile_num,\%params,\%soc_localparam);
+                        $mpsoc_ip->ipgen_add_port($io_port,$new_range,$type,"$if_type:$if_name\[$num\]",$intfc_port);    
+                                    
+                    }            
+                }            
+            }
+            
+            
+        my $setting=$mpsoc->mpsoc_get_tile_param_setting($tile_num);
+        #if ($setting eq 'Custom'){
+             %params= $top->top_get_custom_soc_param($tile_num);
+        #}else{
+        #     %params=$top->top_get_default_soc_param();
+        #}
+        
+        foreach my $p (sort keys %params){
+            $params{$p}=add_instantc_name_to_parameters(\%params,"T$tile_num",$params{$p});    
+            $params{$p}=add_instantc_name_to_parameters(\%soc_localparam,"T$tile_num",$params{$p});    
+            my $pname="T${tile_num}_$p";
+            $mpsoc_ip->    ipgen_add_parameter ($pname,$params{$p},'Fixed',undef,undef,'Localparam',1);    
+            push (@parameters_order,$pname);
+        
+        }        
+        foreach my $p (sort keys %soc_localparam){
+            $soc_localparam{$p}=add_instantc_name_to_parameters(\%params,"T$tile_num",$soc_localparam{$p});        
+            $soc_localparam{$p}=add_instantc_name_to_parameters(\%soc_localparam,"T$tile_num",$soc_localparam{$p});        
+            my $pname="T${tile_num}_$p";
+            $mpsoc_ip->    ipgen_add_parameter ($pname,$soc_localparam{$p},'Fixed',undef,undef,'Localparam',0);    
+            push (@parameters_order,$pname);
+            
+        }
+            
+    
+    
+    }    
+    #TODO get parameter order
+    $mpsoc_ip->ipgen_add("parameters_order",\@parameters_order);     
+    
 }
 
 sub get_source_set_top{
-	my ($self,$type)=@_;
-	my $soc =$self->object_get_attribute('SOURCE_SET',"SOC");
+    my ($self,$type)=@_;
+    my $soc =$self->object_get_attribute('SOURCE_SET',"SOC");
     my $redefine =$self->object_get_attribute('SOURCE_SET',"REDEFINE_TOP");
     $redefine=1 if(!defined $redefine);
     if(!defined $soc){
-    	$soc = soc->soc_new();     	
-    	$soc->object_add_attribute('soc_name','TOP'); 
-    	$redefine=1;    	
+        $soc = soc->soc_new();         
+        $soc->object_add_attribute('soc_name','TOP'); 
+        $redefine=1;        
     }
     if($redefine==1){
-    	my $ip = ip->lib_new ();
-    	#print "get_top_ip(\$self,$type);\n";
-    	my $mpsoc_ip=get_top_ip($self,$type);
-    	
-		$ip->add_ip($mpsoc_ip);	
-    	$soc ->object_add_attribute('SOURCE_SET',"IP",$mpsoc_ip);    	
-    	$self->object_add_attribute('SOURCE_SET',"REDEFINE_TOP",0);  
-    	add_mpsoc_to_device($soc,$ip); 
-    	$self->object_add_attribute('SOURCE_SET',"SOC",$soc);
-    }		
-	return $soc;	
+        my $ip = ip->lib_new ();
+        #print "get_top_ip(\$self,$type);\n";
+        my $mpsoc_ip=get_top_ip($self,$type);
+        
+        $ip->add_ip($mpsoc_ip);    
+        $soc ->object_add_attribute('SOURCE_SET',"IP",$mpsoc_ip);        
+        $self->object_add_attribute('SOURCE_SET',"REDEFINE_TOP",0);  
+        add_mpsoc_to_device($soc,$ip); 
+        $self->object_add_attribute('SOURCE_SET',"SOC",$soc);
+    }        
+    return $soc;    
 }
 
 
 sub add_mpsoc_to_device{
-	my ($soc,$ip)=@_;
-	my $category='TOP';
-	my $module='TOP';
-	my ($instance_id,$id) =('TOP',1);
-	
-	#my ($instance_id,$id)= get_instance_id($soc,$category,$module);
-	
-	remove_instance_from_soc($soc,$instance_id);
-	
-	#add module instanance
-	my $result=$soc->soc_add_instance($instance_id,$category,$module,$ip);
-	
-	if($result == 0){
-		my $info_text= "Failed to add \"$instance_id\" to SoC. $instance_id is already exist.";	 
-	#	show_info($info,$info_text); 
-		return;
-	}
-	$soc->soc_add_instance_order($instance_id);
-	# Add IP version 
-	my $v=$ip->ip_get($category,$module,"version"); 
-	$v = 0 if(!defined $v);
-	#print "$v\n";
-	$soc->object_add_attribute($instance_id,"version",$v);
-	# Read default parameter from lib and add them to soc
-	my %param_default= $ip->get_param_default($category,$module);
-	
-	my $rr=$soc->soc_add_instance_param($instance_id,\%param_default);
-	if($rr == 0){
-		my $info_text= "Failed to add default parameter to \"$instance_id\".  $instance_id does not exist.";	 
-	#	show_info($info,$info_text); 
-		return;
-	}
-	my @r=$ip->ip_get_param_order($category,$module);
-	$soc->soc_add_instance_param_order($instance_id,\@r);
-	
-	#get_module_parameter($soc,$ip,$instance_id);
-	undef $ip;
-	set_gui_status($soc,"refresh_soc",0);	
+    my ($soc,$ip)=@_;
+    my $category='TOP';
+    my $module='TOP';
+    my ($instance_id,$id) =('TOP',1);
+    
+    #my ($instance_id,$id)= get_instance_id($soc,$category,$module);
+    
+    remove_instance_from_soc($soc,$instance_id);
+    
+    #add module instanance
+    my $result=$soc->soc_add_instance($instance_id,$category,$module,$ip);
+    
+    if($result == 0){
+        my $info_text= "Failed to add \"$instance_id\" to SoC. $instance_id is already exist.";     
+    #    show_info($info,$info_text); 
+        return;
+    }
+    $soc->soc_add_instance_order($instance_id);
+    # Add IP version 
+    my $v=$ip->ip_get($category,$module,"version"); 
+    $v = 0 if(!defined $v);
+    #print "$v\n";
+    $soc->object_add_attribute($instance_id,"version",$v);
+    # Read default parameter from lib and add them to soc
+    my %param_default= $ip->get_param_default($category,$module);
+    
+    my $rr=$soc->soc_add_instance_param($instance_id,\%param_default);
+    if($rr == 0){
+        my $info_text= "Failed to add default parameter to \"$instance_id\".  $instance_id does not exist.";     
+    #    show_info($info,$info_text); 
+        return;
+    }
+    my @r=$ip->ip_get_param_order($category,$module);
+    $soc->soc_add_instance_param_order($instance_id,\@r);
+    
+    #get_module_parameter($soc,$ip,$instance_id);
+    undef $ip;
+    set_gui_status($soc,"refresh_soc",0);    
 } 
 
 ######
@@ -3118,19 +3131,19 @@ sub add_mpsoc_to_device{
 ######
 
 sub ctrl_box{
-	my ($mpsoc,$info)=@_;
-	my $table = def_table (1, 12, FALSE);	 
-	my $generate = def_image_button('icons/gen.png','_Generate RTL',FALSE,1);  
+    my ($mpsoc,$info)=@_;
+    my $table = def_table (1, 12, FALSE);     
+    my $generate = def_image_button('icons/gen.png','_Generate RTL',FALSE,1);  
     my $compile  = def_image_button('icons/gate.png','_Compile RTL',FALSE,1);
     my $software = def_image_button('icons/binary.png','_Software',FALSE,1);   
     my $diagram  = def_image_button('icons/diagram.png','Diagram');
-    my $clk=  def_image_button('icons/clk.png','CLK setting');	
+    my $clk=  def_image_button('icons/clk.png','CLK setting');    
 
-	my $row=0;
+    my $row=0;
 
 
-	my $target_dir= "$ENV{'PRONOC_WORK'}/MPSOC";    
-	my ($entrybox,$entry ) =gen_save_load_widget (
+    my $target_dir= "$ENV{'PRONOC_WORK'}/MPSOC";    
+    my ($entrybox,$entry ) =gen_save_load_widget (
         $mpsoc, #the object 
         "MPSoC name",#the label shown for setting configuration
         'mpsoc_name',#the key name for saveing the setting configuration in object 
@@ -3139,8 +3152,8 @@ sub ctrl_box{
         'mpsoc',#check the given name match the SoC or mpsoc name rules
         'lib/mpsoc',#where the current configuration seting file is saved
         'MPSOC',#the extenstion given for configuration seting file
-		\&load_mpsoc,#refrence to load function
-		$info
+        \&load_mpsoc,#refrence to load function
+        $info
         );
   
     $table->attach ($entrybox,$row, $row+2, 0,1,'expand','shrink',2,2);$row+=2;
@@ -3149,8 +3162,8 @@ sub ctrl_box{
     $table->attach ($generate, $row, $row+1, 0,1,'expand','shrink',2,2);$row++;
     $table->attach ($software, $row, $row+1, 0,1,'expand','shrink',2,2);$row++;    
     $table->attach ($compile, $row, $row+1, 0,1,'expand','shrink',2,2);$row++;
-	
-	$generate-> signal_connect("clicked" => sub{ 
+    
+    $generate-> signal_connect("clicked" => sub{ 
         generate_mpsoc($mpsoc,$info,1);
         set_gui_status($mpsoc,"refresh_soc",1);
     });
@@ -3166,7 +3179,7 @@ sub ctrl_box{
         my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$name";
         my $top_file     = "$target_dir/src_verilog/${name}_top.v";
         if (-f $top_file){  
-        	my $answer = yes_no_dialog ("Do you want to Regenearte the MPSoC RTL code too?");  
+            my $answer = yes_no_dialog ("Do you want to Regenearte the MPSoC RTL code too?");  
             generate_mpsoc($mpsoc,$info,0) if ($answer eq 'yes');
             select_compiler($mpsoc,$name,$top_file,$target_dir);
         } else {
@@ -3176,18 +3189,18 @@ sub ctrl_box{
     });    
     
     $software -> signal_connect("clicked" => sub{
-    	my $name=$mpsoc->object_get_attribute('mpsoc_name');
-    	$name="" if (!defined $name);
-    	if (length($name)==0){
+        my $name=$mpsoc->object_get_attribute('mpsoc_name');
+        $name="" if (!defined $name);
+        if (length($name)==0){
             message_dialog("Please define the MPSoC name!");
             return ;
         }
-    	my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$name";
-    	my $sw_folder = "$target_dir/sw";
-    	unless (-d $sw_folder){  
-    		message_dialog("Cannot find $sw_folder. Please run RTL Generator first!");
-    		return;
-    	}
+        my $target_dir  = "$ENV{'PRONOC_WORK'}/MPSOC/$name";
+        my $sw_folder = "$target_dir/sw";
+        unless (-d $sw_folder){  
+            message_dialog("Cannot find $sw_folder. Please run RTL Generator first!");
+            return;
+        }
         software_edit_mpsoc($mpsoc);
 
     });
@@ -3196,12 +3209,12 @@ sub ctrl_box{
         show_topology_diagram ($mpsoc);
     });
     
-	
-	$clk-> signal_connect("clicked" => sub{ 
-			clk_setting_win1($mpsoc,$info,'mpsoc');	
-	});
-	
-	return $table;	
+    
+    $clk-> signal_connect("clicked" => sub{ 
+            clk_setting_win1($mpsoc,$info,'mpsoc');    
+    });
+    
+    return $table;    
 }
 
 
@@ -3221,54 +3234,54 @@ sub gen_save_load_widget {
     my $load = def_image_button('icons/load2.png');
     my $entry=gen_entry_object($self,$param_name,undef,undef,undef,undef);
     my $entrybox=gen_label_info("$label:",$entry);
-    my $save      = def_image_button('icons/save.png');	
+    my $save      = def_image_button('icons/save.png');    
     my $open_dir  = def_image_button('icons/open-folder.png') if (defined $target_dir);
     set_tip($save, "Save current $full_name configuration setting");
-	set_tip($load, "Load a saved $full_name configuration setting");
-	set_tip($open_dir, "Open target $full_name folder") if (defined $target_dir);
-    	
-	$entrybox->pack_start( $save, FALSE, FALSE, 0);
-	$entrybox->pack_start( $load, FALSE, FALSE, 0);
-	$entrybox->pack_start( $open_dir , FALSE, FALSE, 0) if (defined $target_dir);
+    set_tip($load, "Load a saved $full_name configuration setting");
+    set_tip($open_dir, "Open target $full_name folder") if (defined $target_dir);
+        
+    $entrybox->pack_start( $save, FALSE, FALSE, 0);
+    $entrybox->pack_start( $load, FALSE, FALSE, 0);
+    $entrybox->pack_start( $open_dir , FALSE, FALSE, 0) if (defined $target_dir);
 
-    $open_dir-> signal_connect("clicked" => sub{     	
-		my $name=$self->object_get_attribute($param_name);
+    $open_dir-> signal_connect("clicked" => sub{         
+        my $name=$self->object_get_attribute($param_name);
         $name="" if (!defined $name);
         if (length($name)==0){
             message_dialog("Please define the $label!");
             return ;
         }
         return if(check_mpsoc_name($name,$label) && $check=='mpsoc') ;
-		return if(check_soc_name($name,$label) && $check=='soc') ;	
+        return if(check_soc_name($name,$label) && $check=='soc') ;    
         unless (-d "$target_dir/$name"){
-			message_dialog("Cannot find $target_dir/$name.\n Please run RTL Generator first!",'error');
-			return;
-		}
-		system "xdg-open   $target_dir/$name";
-	})  if (defined $target_dir);
+            message_dialog("Cannot find $target_dir/$name.\n Please run RTL Generator first!",'error');
+            return;
+        }
+        system "xdg-open   $target_dir/$name";
+    })  if (defined $target_dir);
 
     $save-> signal_connect("clicked" => sub{ 
-    	my $name=$self->object_get_attribute($param_name);	
+        my $name=$self->object_get_attribute($param_name);    
          if (length($name)==0){
             message_dialog("Please define the $label!");
             return ;
-        }	
-		return if(check_mpsoc_name($name,$label) && $check=='mpsoc') ;
-		return if(check_soc_name($name,$label) && $check=='soc') ;	
-		# Write object file
+        }    
+        return if(check_mpsoc_name($name,$label) && $check=='mpsoc') ;
+        return if(check_soc_name($name,$label) && $check=='soc') ;    
+        # Write object file
         my $config_file = "${config_dir}/${name}.$extention";
-		open(FILE,  ">$config_file") || die "Can not open $config_file: $!";
-		print FILE perl_file_header("${name}.$extention");
-		print FILE Data::Dumper->Dump([\%$self],[$extention]);
-		close(FILE) || die "Error closing file: $!";
-		message_dialog("Current configuration  \"$name\" is saved as $config_file.");		
+        open(FILE,  ">$config_file") || die "Can not open $config_file: $!";
+        print FILE perl_file_header("${name}.$extention");
+        print FILE Data::Dumper->Dump([\%$self],[$extention]);
+        close(FILE) || die "Error closing file: $!";
+        message_dialog("Current configuration  \"$name\" is saved as $config_file.");        
     
     });
 
     $entry->signal_connect( 'changed'=> sub{
-		my $name=$entry->get_text();
-		$self->object_add_attribute ("save_as",undef,$name);	
-	});	
+        my $name=$entry->get_text();
+        $self->object_add_attribute ("save_as",undef,$name);    
+    });    
 
     $load-> signal_connect("clicked" => sub{ 
         set_gui_status($self,"ref",5);
@@ -3301,7 +3314,7 @@ sub mpsocgen_main{
     my $ctrl=ctrl_box($mpsoc,$info);    
     my $h1=gen_hpaned($noc_conf_box,.3,$noc_tiles);
     my $v2=gen_vpaned($h1,.55,$infobox);
-	my $row=0;
+    my $row=0;
     $main_table->attach_defaults ($v2  , 0, 12, 0,24);
     #$main_table->attach_defaults ($ctrl,0, 12, 24,25);
     $main_table->attach ($ctrl,0, 12, 24,25, 'fill','fill',2,2);
@@ -3349,4 +3362,4 @@ sub mpsocgen_main{
     return $sc_win;
 }
 
-
+1

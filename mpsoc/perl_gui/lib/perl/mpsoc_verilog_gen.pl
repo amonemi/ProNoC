@@ -325,6 +325,9 @@ sub gen_noc_param_v{
 	my $custom_topology = $mpsoc->object_get_attribute($noc_param,'CUSTOM_TOPOLOGY_NAME');
 	my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info($mpsoc,$noc_id);
 	my %noc_info;
+	my $hashref= $mpsoc->object_get_attribute('noc_param_comments');
+	my %comments = %{$hashref} if defined $hashref;
+
 	if(defined $sample ){
 		my $ref=$mpsoc->object_get_attribute($sample,"noc_info"); 
 		%noc_info= %$ref;	
@@ -340,7 +343,13 @@ sub gen_noc_param_v{
 			
 			$val="$NE".$val;
 		}
+		
 		$param_v= $param_v."\tlocalparam $p=$val;\n";
+		my $comment=$comments{$p};
+		if(defined $comment){
+			$comment=~ s/\n/\n            \/\//g;
+			$param_v.="            //$p : $comment\n\n";
+		}
 		$pass_param=$pass_param."\t\t.$p($p),\n";
 		#print "$p:$val\n";
 		
