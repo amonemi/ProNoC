@@ -1,8 +1,8 @@
 $model = bless( {
-        'noc_param'=> {
-						TOPOLOGY=>"\"LINE\"",
-						"ROUTE_NAME" => "\"XY\"", 
-						"B"=> "2",
-						"LB"=> 2   					
-						}
+    'noc_param'=> {
+        TOPOLOGY=>"\"LINE\"",
+        "ROUTE_NAME" => "\"XY\"",
+        "B"=> "2",
+        "LB"=> 2
+    }
 }, 'ProNOC' );

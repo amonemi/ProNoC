@@ -106,9 +106,9 @@ module combined_vc_sw_alloc #(
     	
     	
     	
-    /* verilator lint_off WIDTH */
+    /* 
     if(COMBINATION_TYPE    ==    "BASELINE") begin : canonical_comb_gen
-    /* verilator lint_on WIDTH */
+
         baseline_allocator #(
             .V(V),    
             .P(P),                        
@@ -141,8 +141,10 @@ module combined_vc_sw_alloc #(
             .reset(reset)
         
         );
+         end else
+    */    
     /* verilator lint_off WIDTH */
-    end else if(COMBINATION_TYPE    ==    "COMB_SPEC1") begin : spec1
+    if(COMBINATION_TYPE    ==    "COMB_SPEC1") begin : spec1
     /* verilator lint_on WIDTH */
         comb_spec1_allocator #(
             .V(V),    

@@ -19,9 +19,7 @@
 ./comb-spec1.v
 ./combined_vc_sw_alloc.sv
 ./mesh_torus_routting.v
-./baseline.v
 ./comb_spec2.v
-./flit_buffer_reg_bas.v
 ./route_mesh.v
 ./router_bypass.sv
 ./traffic_gen_top.sv
@@ -30,7 +28,6 @@
 ./routing.v
 ./router_two_stage.sv
 ./crossbar.v
-./iport_reg_base.sv
 ./flit_buffer.sv
 ./mesh_torus.sv
 ./debug.v
@@ -40,6 +37,3 @@
 ./fmesh.sv
 ./packet_injector.sv
 ./multicast.sv
-
-
-

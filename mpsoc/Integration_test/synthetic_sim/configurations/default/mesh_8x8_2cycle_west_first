@@ -1,6 +1,5 @@
 $model = bless( {
-		'compile' => "verilate_mesh.sh",
-        'noc_param'=> {
-						"ROUTE_NAME" => "\"WEST_FIRST\"",    					
-						}
+    'noc_param'=> {
+        "ROUTE_NAME" => "\"WEST_FIRST\"",
+    }
 }, 'ProNOC' );
