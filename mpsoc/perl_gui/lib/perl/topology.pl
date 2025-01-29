@@ -34,7 +34,6 @@ sub get_topology_info_from_parameters {
 	my $T3  =$param{'T3'};
 	my $V   =$param{'V'};
 	my $Fpay=$param{'Fpay'};	
-	print "lllllllllllllll\n";
 	return get_topology_info_sub($topology, $T1, $T2, $T3,$V, $Fpay);	
 }
 
@@ -44,11 +43,11 @@ sub get_topology_info_sub {
 
 	my ($topology, $T1, $T2, $T3,$V, $Fpay)=@_;
 	
-	my $NE; # number of end points
-	my $NR; # number of routers
-	my $RAw; # routers address width
-	my $EAw; # Endpoints address width
-	
+	my $NE;    # Total number of end points (local ports) in the NoC
+	my $NR;    # Total number of routers in NoC
+	my $RAw;   # Routers address width
+	my $EAw;   # Endpoints address width
+	my $MAX_P; # Maximum number of ports in any router in the NoC
 	
 	my $Fw = 2+$V+$Fpay; 
 	if($topology eq '"TREE"') {
@@ -60,7 +59,8 @@ sub get_topology_info_sub {
         my $LKw=$L*$Kw;
         my $Lw=log2($L);  
         $RAw=$LKw + $Lw;   
-        $EAw = $LKw;          
+        $EAw = $LKw;  
+		$MAX_P = $K + 1;       
 	
 	}elsif($topology eq '"FATTREE"') {
 		my $K =  $T1;
@@ -72,6 +72,7 @@ sub get_topology_info_sub {
         my $Lw=log2($L);  
         $RAw=$LKw + $Lw;   
         $EAw = $LKw;      
+		$MAX_P = 2 * $K;
 		
 	}elsif ($topology eq '"RING"' || $topology eq '"LINE"'){
 		my $NX=$T1;
@@ -83,8 +84,9 @@ sub get_topology_info_sub {
         my $Yw=log2($NY); 
         my $Lw=log2($NL);               
         $RAw = $Xw; 
-        $EAw = ($NL==1) ? $RAw : $RAw + $Lw;		
-       
+        $EAw = ($NL==1) ? $RAw : $RAw + $Lw;	
+		$MAX_P =  2 + $NL;
+        
 	}elsif ($topology eq '"MESH"' || $topology eq '"TORUS"' ) {
 		my $NX=$T1;
 		my $NY=$T2;
@@ -96,6 +98,8 @@ sub get_topology_info_sub {
         my $Lw=log2($NL);         
         $RAw = $Xw + $Yw;
         $EAw = ($NL==1) ? $RAw : $RAw + $Lw;
+		$MAX_P =  4 + $NL;
+		
 	}elsif ($topology eq '"FMESH"'){
 		my $NX=$T1;
 		my $NY=$T2;
@@ -106,21 +110,24 @@ sub get_topology_info_sub {
         my $Yw=log2($NY); 
         my $Lw=log2($NL);         
         $RAw = $Xw + $Yw;
-        $EAw = $RAw + log2(4+$NL);		
+        $EAw = $RAw + log2(4+$NL);	
+		$MAX_P =  4 + $NL;
 		
 	}elsif ($topology eq '"STAR"' ) {	
 		$NE= $T1; 
 		$NR= 1;
 		$RAw=log2($NR);
-		$EAw=log2($NE);		
+		$EAw=log2($NE);
+		$MAX_P = $NE;		
 	
 	}else{ #custom
 		$NE= $T1; 
 		$NR= $T2;
 		$RAw=log2($NR);
 		$EAw=log2($NE);		
+		$MAX_P = $T3;		
 	}		
-	return ($NE, $NR, $RAw, $EAw, $Fw); 	
+	return ($NE, $NR, $RAw, $EAw, $Fw,$MAX_P); 	
 }
 
 

@@ -402,6 +402,7 @@ sub gen_noc_param_h{
 	foreach my $p (@params){
 		my $val=$mpsoc->object_get_attribute('noc_param',$p);
 		next if($p eq "CUSTOM_TOPOLOGY_NAME");
+		next if($p eq "int VC_CONFIG_TABLE [MAX_ROUTER][MAX_PORT]");
 		$val=$custom_topology if($p eq "TOPOLOGY" && $val eq "\"CUSTOM\"");
 		if($p eq "MCAST_ENDP_LIST" || $p eq "ESCAP_VC_MASK"){
 			$val="$NE".$val if($p eq 'MCAST_ENDP_LIST');

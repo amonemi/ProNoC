@@ -820,7 +820,7 @@ if($topology ne '"CUSTOM"' ){
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
     
     my $cast_type=$mpsoc->object_get_attribute($noc_param,'CAST_TYPE');  
-    my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info($mpsoc,$noc_id);
+    my ($NE, $NR, $RAw, $EAw, $Fw, $MAX_P) = get_topology_info($mpsoc,$noc_id);
     
     my $cast = $mpsoc->object_get_attribute($noc_param,"MCAST_ENDP_LIST");    
     if(!defined $cast){
@@ -1071,7 +1071,59 @@ arbiters external priority enable';
     $type= 'Spin-button';  
     #($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$wrra_show,$noc_param,undef);  
     
-    
+    #HETRO_VC
+    $label='Heterogeneous VC En'; 
+    $param='HETRO_VC';
+    $default='0';
+    $content='0,1,2';
+    $type='Combo-box';
+    $info="Configures the VC (Virtual Channel) distribution across routers and ports in the NoC.
+    0 : Uniform VC distribution. All routers in the NoC have an equal number of VCs.
+    1 : Router-specific VC distribution. All ports in a specific router have the same number of VCs, 
+    but different routers in the NoC can have different numbers of VCs.
+    2 : Fully heterogeneous VC distribution. Each port in any router can have a unique number of VCs."; 
+    $noc_param_comment{$param}="$info";
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,1);
+    $noc_param_comment{$param}="$info";
+
+
+    #VC_CONFIG_TABLE
+    my $hetro_en=$mpsoc->object_get_attribute($noc_param,'HETRO_VC');
+    $label='Heterogeneous VC setting'; 
+    $param='int VC_CONFIG_TABLE [MAX_ROUTER][MAX_PORT]';
+    $default='\'{0}';
+    $content='0,1,2';
+    $type='Combo-box';
+    $info='Defines how a heterogeneous number of VCs are distributed in the NoC.
+    - HETRO_VC= 0: Uniform VC configuration. All routers and ports have 
+        the same number of VCs, and this parameter is not used.
+    - HETRO_VC= 1,2 : Specifies the VC count in a 2D parameter array, where:
+        * The first dimension represents the router ID.
+        * The second dimension represents the port number.
+    - For HETRO_VC = 1: All ports within a router have the same number of VCs, 
+        so only the first element of each row is considered valid.
+    - For HETRO_VC = 2: Each port in every router can have a unique VC count.';
+    $noc_param_comment{$param}="$info";
+    if($hetro_en eq '0'){
+        $mpsoc->object_add_attribute($noc_param,"MAX_ROUTER",1);
+        $mpsoc->object_add_attribute($noc_param,"MAX_PORT",1);
+        $mpsoc->object_add_attribute($noc_param,$param,$default);
+        
+    }elsif($hetro_en eq '1'){
+        $mpsoc->object_add_attribute($noc_param,"MAX_ROUTER",$NR);
+        $mpsoc->object_add_attribute($noc_param,"MAX_PORT",1);        
+        $row=hetro_vc_widget($mpsoc,$row,$NR,1,$label,$info,$table,$noc_id,$param,$v);
+    }else{
+        $mpsoc->object_add_attribute($noc_param,"MAX_ROUTER",$NR);
+        $mpsoc->object_add_attribute($noc_param,"MAX_PORT",$MAX_P);
+        $row=hetro_vc_widget($mpsoc,$row,$NR,$MAX_P,$label,$info,$table,$noc_id,$param,$v);
+    }
+
+
+    $mpsoc->object_add_attribute_order($noc_param,"MAX_ROUTER");
+    $mpsoc->object_add_attribute_order($noc_param,"MAX_PORT");
+    $mpsoc->object_add_attribute_order($noc_param,$param);
+
     if($show_noc == 1){    
         $b1= def_image_button("icons/up.png","NoC Parameters");
         $table->attach  ( $b1 , 0, 2, $row,$row+1,'fill','shrink',2,2);
@@ -1083,21 +1135,7 @@ arbiters external priority enable';
         set_gui_status($mpsoc,"ref",1);
     });
     
-    
-    
-    
-  #  if($adv_set == 1){    
-  #      $advc= def_image_button("icons/up.png","Advance Parameters");
-  #      $table->attach ( $advc , 0, 2, $row,$row+1,'fill','shrink',2,2);
-  #      $row++;
-  #  }
-  #  $advc->signal_connect("clicked" => sub{ 
-  #      $adv_set=($adv_set==1)?0:1;
-  #      $mpsoc->object_add_attribute('setting','show_adv_setting',$adv_set);
-   #     set_gui_status($mpsoc,"ref",1);
-  #  });
-    
-    
+
     #other fixed parameters       
     
     # AVC_ATOMIC_EN
@@ -1111,21 +1149,98 @@ arbiters external priority enable';
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,$noc_param);
     
     
-    #ROUTE_SUBFUNC
-    #$label='ROUTE_SUBFUNC';
-    #$param='ROUTE_SUBFUNC';
-    #$default= '"XY"';
-    #$info='ROUTE_SUBFUNC'; 
-    #$content='"XY"';
-    #$type="Combo-box";
-    #($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,$noc_param);
     $mpsoc->object_add_attribute('noc_param_comments',undef,\%noc_param_comment);
     
     return $row;
 }
 
+sub hetro_vc_widget{
+    my ($mpsoc,$row,$nr,$np,$label_text,$info,$table,$noc_id,$param,$v)=@_;
+    my $b1= def_image_button("icons/setting.png","Set");
+    my $label=gen_label_in_left($label_text);
+    my $inf_bt= (defined $info)? gen_button_message ($info,"icons/help.png"):gen_label_in_left(" ");
+    attach_widget_to_table ($table,$row,$label,$inf_bt,$b1,0);
+    $row++;  
+    update_vc_list($mpsoc,$noc_id,$nr,$np,$v,$param,$info);
+    $b1->signal_connect("clicked" => sub{ 
+            set_hetro_vc_list($mpsoc,$noc_id,$nr,$np,$param,$v,$info);        
+    });
+    return $row;
+}
 
+sub set_hetro_vc_list{
+    my($mpsoc,$noc_id,$nr,$np,$param,$v,$info)=@_;    
+    my $noc_param="noc_param$noc_id";
+    my $vc_param="vc_param$noc_id";
+    my $title=($np==1)? "Specify number of VCs in each router" : "Specify number of VCs in each router port";
+    my $window = def_popwin_size(50,40,$title,'percent');
+    my $table= def_table(10,10,FALSE);
+    my $row=0;
+    my $col=0;
+    my $init = $mpsoc->object_get_attribute($noc_param,$param);
 
+    my $label = "$param=";
+    my ($Ebox,$entry) = def_h_labeled_entry ($label);    
+    $entry->set_sensitive (FALSE);
+    $entry->set_text("$init");
+    my $content="1";
+    for(my $r=2;$r<=$v;$r++){ $content.=",$r" }
+    for(my $p=0;$p<$np;$p++){
+        if  ($p==0){
+            my $label= gen_label_in_center("R/P");
+            $table->attach ($label , $col, $col+4, $row,$row+1,'fill','shrink',2,2);$col+=4;	
+        }
+        my $label= gen_label_in_center("P$p");
+        $table->attach ($label , $col, $col+4, $row,$row+1,'fill','shrink',2,2);$col+=4;    
+    }
+    $row++;$col=0;
+    for(my $r=0;$r<$nr;$r++){
+        my $label= gen_label_in_center("R$r");
+        $table->attach ($label , $col, $col+4, $row,$row+1,'fill','shrink',2,2);$col+=4;
+
+        for(my $p=0;$p<$np;$p++){
+            my $w;
+            ($row,$col,$w)=add_param_widget ($mpsoc,undef,"R$r-P$p", $v,"Combo-box",$content,undef, $table,$row,$col,1,$vc_param,undef,undef,"horizental");
+            set_tip($w,"R$r-P$p");
+        } 
+        $row++;
+        $col=0;
+    }
+    #$table->attach ($Ebox , $row, 10, $row,$row+1,'fill','shrink',2,2);$row++;
+    
+    my $main_table=def_table(10,10,FALSE);
+    my $ok = def_image_button('icons/select.png','OK');    
+    $main_table->attach_defaults ($table  , 0, 12, 0,11);
+    $main_table->attach ($ok,5, 6, 11,12,'shrink','shrink',0,0);
+    $ok->signal_connect('clicked', sub {
+        update_vc_list($mpsoc,$noc_id,$nr,$np,$v,$param,$info);
+        set_gui_status($mpsoc,"ref",1);    
+        $window->destroy;
+    });   
+    my $scrolled_win = gen_scr_win_with_adjst($mpsoc,'gen_multicast');
+    add_widget_to_scrolled_win($main_table,$scrolled_win);
+    $window->add($scrolled_win);
+    $window->show_all();
+}
+
+sub update_vc_list{
+    my ($mpsoc,$noc_id,$nr,$np,$v,$param_in)=@_;
+    my $noc_param="noc_param$noc_id";
+    my $vc_param="vc_param$noc_id";
+    my $out="'{\n\t//";
+    for(my $p=0;$p<$np;$p++){$out.="P$p ";};
+    for(my $r=0;$r<$nr;$r++){
+        $out.="\n\t\'{";
+        for(my $p=0;$p<$np;$p++){
+            my $param   ="R$r-P$p";
+            my $val=$mpsoc->object_get_attribute($vc_param,$param) //$v;
+            $out.=($p <$np-1 )? "$val, " : "$val";           
+        }
+         $out.=($r<$nr-1)? "}, // R$r" : "}  // R$r"
+    }
+    $out.="\n\t}";
+    $mpsoc->object_add_attribute($noc_param,$param_in,$out)
+}
 
 sub set_multicast_list{
     my($mpsoc,$noc_id)=@_;    
@@ -1205,14 +1320,14 @@ sub set_multicast_list{
         $combo->set_active(0);
         get_multicast_val ($mpsoc,$entry,$NE,@check);
         
-     });
+    });
     
     
     
     $table->attach ($Ebox , 0, 10, $row,$row+1,'fill','shrink',2,2);$row++;
     
     my $main_table=def_table(10,10,FALSE);
-      
+    
     my $ok = def_image_button('icons/select.png','OK');    
     $main_table->attach_defaults ($table  , 0, 12, 0,11);
     $main_table->attach ($ok,5, 6, 11,12,'shrink','shrink',0,0);
@@ -1267,15 +1382,15 @@ my $coltmp=0;
     my $dir =get_project_dir()."/mpsoc/rtl/src_topology";
     my $file="$dir/param.obj";
     unless (-f $file){
-         add_colored_info($txview,"No Custom topology find in $dir. You can define a Custom Topology using ProNoC Topology maker.\n",'red');
-         return;        
+        add_colored_info($txview,"No Custom topology find in $dir. You can define a Custom Topology using ProNoC Topology maker.\n",'red');
+        return;        
     }    
     
     my %param;    
     my ($pp,$r,$err) = regen_object($file );
     if ($r){        
-         add_colored_info($txview,"Error: cannot open $file file: $err\n",'red');
-         return;  
+        add_colored_info($txview,"Error: cannot open $file file: $err\n",'red');
+        return;  
     }         
     
     %param=%{$pp};
@@ -1300,11 +1415,11 @@ my $coltmp=0;
     $default=$rr[0];
     $info="Select the routing algorithm";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,1,$noc_param,1);
-  
+    
     $mpsoc->object_add_attribute($noc_param,'T1',$param{$topology_name}{'T1'});    
     $mpsoc->object_add_attribute($noc_param,'T2',$param{$topology_name}{'T2'}); 
     $mpsoc->object_add_attribute($noc_param,'T3',$param{$topology_name}{'T3'});     
-      $mpsoc->object_add_attribute('noc_connection','er_addr',$param{$topology_name}{'er_addr'});          
+    $mpsoc->object_add_attribute('noc_connection','er_addr',$param{$topology_name}{'er_addr'});          
             
                 
     return ($row,$coltmp);
