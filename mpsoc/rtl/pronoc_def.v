@@ -1,74 +1,96 @@
 `ifndef PRONOC_DEF
 `define PRONOC_DEF
-
-    `timescale      1ns/1ps
-
-   //`define SYNC_RESET_MODE       /* Reset is asynchronous by default. Uncomment this line for having synchronous reset*/
-   //`define ACTIVE_LOW_RESET_MODE /* Reset is active high by deafult. Uncomment this line for having active low reset*/
-
     
-  `define IMPORT_PRONOC_PCK   
-  								 /* pronoc.sv is imported by default. Inorder to support Multiple physical NoCs with different 
-                                  you need to compile each NoC as a separate library (passing USE_LIB in compilationtime).
-                                  Comment IMPORT_PRONOC_PCK macro to include pronoc_pck.sv as a file instead of importing.
-                                  Including pronoc.sv allows having Multiple physical NoCs with different configurations 
-                                  where configuration can be set via parameter redefinition at NoC_Top module  */
-   
-   
-
-   `ifdef SYNC_RESET_MODE 
-         `define pronoc_clk_reset_edge  posedge clk
-   `else 
-      `ifdef ACTIVE_LOW_RESET_MODE 
-             `define pronoc_clk_reset_edge  posedge clk or negedge reset
-      `else 
-         `define pronoc_clk_reset_edge  posedge clk or posedge reset      
-      `endif  
-   `endif   
-      
-
-
-
-   `ifdef ACTIVE_LOW_RESET_MODE 
-             `define pronoc_reset !reset
-      `else 
-         `define pronoc_reset  reset
-   `endif  
-
-
-
-    `ifdef USE_LIB
-         `uselib lib=`USE_LIB    
+    // Reset Configurations
+    // `define SYNC_RESET_MODE
+    /*
+     *  Reset is asynchronous by default.
+     *  Uncomment this line to enable synchronous reset.
+     */
+    
+    // `define ACTIVE_LOW_RESET_MODE
+    /*
+     *  Reset is active-high by default.
+     *  Uncomment this line to enable an active-low reset.
+     */
+    
+    // ProNoC Package Import
+    `define IMPORT_PRONOC_PCK
+    /*
+     *  `pronoc_pkg.sv` is imported by default.
+     *  Commenting out this macro includes all parameters,
+     *  functions, and structs directly from `pronoc_pkg.sv`.
+     */
+    
+    /******************
+     * Define SIMULATION for supported RTL simulators
+     *******************/
+    
+    `ifdef VERILATOR
+        `define SIMULATION
     `endif
     
-
-   
-   `ifdef IMPORT_PRONOC_PCK
-      `define NOC_CONF  import pronoc_pkg::*;  
-      `define PRONOC_PKG  
-   `else
-      `define NOC_CONF  `define PRONOC_PKG \
-                        `include "pronoc_pkg.sv" 
-   `endif
-   
-   
-   
-   
-
-
-/****************
-   TRACE dump 
-*****************/    
-   //uncomment following define to enable TRACE dumping
-   
-   
-   // `define TRACE_DUMP_PER_NoC       // dump all in/out traces to the NoC in single file
-   // `define TRACE_DUMP_PER_ROUTER       // dump each router in/out traces in a seprate file
-  // `define TRACE_DUMP_PER_PORT       // dump each router port in/out in a single file
- 
-
-
-
-
-`endif
-
+    `ifdef MODEL_TECH  // ModelSim/Questa
+        `define SIMULATION  
+    `endif  
+    
+    `ifdef VCS  // Synopsys VCS
+        `define SIMULATION
+    `endif  
+    
+    `ifdef XCELIUM  // Cadence Xcelium
+        `define SIMULATION
+    `endif
+    
+    `ifdef RIVIERA  // Aldec Riviera-PRO
+        `define SIMULATION
+    `endif
+    
+    `ifdef SIMULATION
+        `timescale 1ns/1ps
+    `endif
+    
+    /****************
+     * Enable TRACE Dump
+     ****************/
+    
+    `ifdef SIMULATION
+        // Uncomment the following defines to enable TRACE dumping  
+        // `define TRACE_DUMP_PER_NoC        // Dump all in/out traces of the NoC into a single file  
+        // `define TRACE_DUMP_PER_ROUTER     // Dump in/out traces of each router into a separate file  
+        // `define TRACE_DUMP_PER_PORT       // Dump in/out traces of each router port into a separate file  
+    `endif
+    
+    // Clock and Reset Edge Definitions
+    `ifdef SYNC_RESET_MODE
+        `define pronoc_clk_reset_edge posedge clk
+    `else
+        `ifdef ACTIVE_LOW_RESET_MODE
+            `define pronoc_clk_reset_edge posedge clk or negedge reset
+        `else
+            `define pronoc_clk_reset_edge posedge clk or posedge reset
+        `endif
+    `endif
+    
+    // Reset Signal Definition
+    `ifdef ACTIVE_LOW_RESET_MODE
+        `define pronoc_reset !reset
+    `else
+        `define pronoc_reset reset
+    `endif
+    
+    // Library Usage
+    `ifdef USE_LIB
+        `uselib lib=`USE_LIB
+    `endif
+    
+    // NoC Configuration
+    `ifdef IMPORT_PRONOC_PCK
+        `define NOC_CONF import pronoc_pkg::*;
+        `define PRONOC_PKG
+    `else
+        `define NOC_CONF  `define PRONOC_PKG \
+        `include "pronoc_pkg.sv"
+    `endif  
+    
+`endif // PRONOC_DEF
