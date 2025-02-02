@@ -135,7 +135,7 @@ module input_ports #(
             .ROUTER_ID(ROUTER_ID),
             .SW_LOC(i),
             .P(P)       
-        ) the_input_queue_per_port     (
+        ) the_input_queue_per_port (
             .credit_out(credit_out_all [(i+1)*V-1 : i*V]),
             .current_r_addr(current_r_addr),    
             .neighbors_r_addr(neighbors_r_addr),
@@ -223,7 +223,9 @@ module input_queue_per_port #(
     
     localparam 
         PORT_B = port_buffer_size(SW_LOC),
-        PORT_Bw= log2(PORT_B);    
+        PORT_Bw= log2(PORT_B),
+        PORT_V = port_hetro_vc_num(ROUTER_ID, SW_LOC),
+        V = PORT_V;    //Replace default V with the port specefied  VC num if hetro_vc is enabled
     
     localparam
         VV = V * V,
@@ -864,70 +866,29 @@ module input_queue_per_port #(
         assign iport_weight_is_consumed=1'bX;
         assign oports_weight = {WP{1'bX}};          
     end   
-    
     /* verilator lint_off WIDTH */
-    if(COMBINATION_TYPE == "COMB_NONSPEC") begin  : nonspec  
-    /* verilator lint_on WIDTH */        
+    wire [V-1 : 0] flit_buffer_vc_num_rd = (COMBINATION_TYPE == "COMB_NONSPEC")?
+    /* verilator lint_on WIDTH */
+        nonspec_first_arbiter_granted_ivc:
+        ivc_num_getting_sw_grant;
         
-        /* 
-        always @(posedge clk) 
-            if ((ivc_not_empty & flit_is_tail2) != (ivc_not_empty & flit_is_tail))begin 
-                $display("ERROR:    %b !=%b",flit_is_tail2 , flit_is_tail ) ;
-                $finish;
-            end
-        */       
-        
-        flit_buffer #(
-            .V(V),
-            .B(PORT_B),   // buffer space :flit per VC 
-            .SSA_EN(SSA_EN),
-            .Fw(Fw),
-            .PCK_TYPE(PCK_TYPE),
-            .CAST_TYPE(CAST_TYPE),
-            .DEBUG_EN(DEBUG_EN)
-        ) the_flit_buffer (            
-            .din(flit_in),     // Data in
-            .vc_num_wr(vc_num_in),//write virtual channel   
-            .vc_num_rd(nonspec_first_arbiter_granted_ivc),//read virtual channel     
-            .wr_en(flit_in_wr),   // Write enable
-            .rd_en(any_ivc_sw_request_granted),     // Read the next word
-            .dout(buffer_out),    // Data out
-            .vc_not_empty(ivc_not_empty),
-            .reset(reset),
-            .clk(clk),
-            .ssa_rd(ssa_ctrl_in.ivc_num_getting_sw_grant),
-            .multiple_dest( multiple_dest ),
-            .sub_rd_ptr_ld(reset_ivc) ,
-            .flit_is_tail(flit_is_tail)
-        );
-        
-    end else begin :spec//not nonspec comb
-        
-        flit_buffer #(
-            .V(V),
-            .B(PORT_B),   // buffer space :flit per VC 
-            .SSA_EN(SSA_EN),
-            .Fw(Fw),
-            .PCK_TYPE(PCK_TYPE),
-            .CAST_TYPE(CAST_TYPE),
-            .DEBUG_EN(DEBUG_EN)
-        ) the_flit_buffer (
-            .din(flit_in),     // Data in
-            .vc_num_wr(vc_num_in),//write virtual channel   
-            .vc_num_rd(ivc_num_getting_sw_grant),//read virtual channel     
-            .wr_en(flit_in_wr),   // Write enable
-            .rd_en(any_ivc_sw_request_granted),     // Read the next word
-            .dout(buffer_out),    // Data out
-            .vc_not_empty(ivc_not_empty),
-            .reset(reset),
-            .clk(clk),
-            .ssa_rd(ssa_ctrl_in.ivc_num_getting_sw_grant),
-            .multiple_dest(  multiple_dest ),
-            .sub_rd_ptr_ld(reset_ivc) ,
-            .flit_is_tail(flit_is_tail)        
-        );  
-        
-    end  //:spec
+    flit_buffer #(
+        .B(PORT_B)   // buffer space :flit per VC 
+    ) the_flit_buffer (            
+        .din(flit_in),     // Data in
+        .vc_num_wr(vc_num_in),//write virtual channel   
+        .vc_num_rd(flit_buffer_vc_num_rd),//read virtual channel     
+        .wr_en(flit_in_wr),   // Write enable
+        .rd_en(any_ivc_sw_request_granted),     // Read the next word
+        .dout(buffer_out),    // Data out
+        .vc_not_empty(ivc_not_empty),
+        .reset(reset),
+        .clk(clk),
+        .ssa_rd(ssa_ctrl_in.ivc_num_getting_sw_grant),
+        .multiple_dest( multiple_dest ),
+        .sub_rd_ptr_ld(reset_ivc) ,
+        .flit_is_tail(flit_is_tail)
+    );   
     
     /* verilator lint_off WIDTH */    
     if(CAST_TYPE== "UNICAST") begin : unicast

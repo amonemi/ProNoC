@@ -5,4 +5,5 @@ $model = bless( {
         "T2" => "3",
         "B"  => "5",
         "ROUTE_NAME" => "\"NCA_STRAIGHT_UP\"",
+    }
 }, 'ProNOC' );
