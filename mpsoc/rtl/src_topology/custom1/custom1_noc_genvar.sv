@@ -6,11 +6,11 @@
 
 
 /**********************************************************************
-**	File: /home/alireza/work/git/pronoc/mpsoc/rtl/src_topology/custom1/custom1_noc_genvar.sv
+**	File: /home/alireza/work/git/hca_git/git-hub/ProNoC/mpsoc/rtl/src_topology/custom1/custom1_noc_genvar.sv
 **    
-**	Copyright (C) 2014-2021  Alireza Monemi
+**	Copyright (C) 2014-2022  Alireza Monemi
 **    
-**	This file is part of ProNoC 2.1.0 
+**	This file is part of ProNoC 2.2.0 
 **
 **	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
 **	you can redistribute it and/or modify it under the terms of the GNU
@@ -30,7 +30,7 @@
 
 module   custom1_noc_genvar    
 #(
-	parameter NOC_ID=0
+    parameter NOC_ID=0
 )(
 
     reset,
@@ -66,78 +66,75 @@ module   custom1_noc_genvar
 
    
 
-	genvar i;
-	generate	
-	
+    genvar i;
+    generate    
+    
 	for( i=0; i<4; i=i+1) begin : router_3_port_lp
-	localparam RID = i;
-	assign current_r_addr [RID] = RID[RAw-1: 0]; 
+    localparam RID = i;
+    assign current_r_addr [RID] = RID[RAw-1: 0]; 
 
-	router_top #(
-		.NOC_ID(NOC_ID),
-		.P(3)
-	)
-	router_3_port
-	(	
-		.clk(clk), 
-		.reset(reset),
-		.current_r_id(RID),
-		.current_r_addr(current_r_addr[RID]),	
-		.chan_in  (router_chan_in [RID] [2 : 0]), 
-		.chan_out (router_chan_out[RID] [2 : 0]),
-		.router_event(router_event[RID] [2 : 0])	
-	);
+    router_top #(
+        .NOC_ID(NOC_ID),
+        .ROUTER_ID(RID),
+        .P(3)
+    ) router_3_port (
+        .clk(clk), 
+        .reset(reset),
+        .current_r_id(RID),
+        .current_r_addr(current_r_addr[RID]),    
+        .chan_in  (router_chan_in [RID] [2 : 0]), 
+        .chan_out (router_chan_out[RID] [2 : 0]),
+        .router_event(router_event[RID] [2 : 0])    
+    );
     
     
     
-	end    
-			
+	end
+            
 	for( i=0; i<8; i=i+1) begin : router_4_port_lp
-	localparam RID = i+4;
-	assign current_r_addr [RID] = RID[RAw-1: 0]; 
+    localparam RID = i+4;
+    assign current_r_addr [RID] = RID[RAw-1: 0]; 
 
-	router_top #(
-		.NOC_ID(NOC_ID),
-		.P(4)
-	)
-	router_4_port
-	(	
-		.clk(clk), 
-		.reset(reset),
-		.current_r_id(RID),
-		.current_r_addr(current_r_addr[RID]),	
-		.chan_in  (router_chan_in [RID] [3 : 0]), 
-		.chan_out (router_chan_out[RID] [3 : 0]),
-		.router_event(router_event[RID] [3 : 0])	
-	);
+    router_top #(
+        .NOC_ID(NOC_ID),
+        .ROUTER_ID(RID),
+        .P(4)
+    ) router_4_port (
+        .clk(clk), 
+        .reset(reset),
+        .current_r_id(RID),
+        .current_r_addr(current_r_addr[RID]),    
+        .chan_in  (router_chan_in [RID] [3 : 0]), 
+        .chan_out (router_chan_out[RID] [3 : 0]),
+        .router_event(router_event[RID] [3 : 0])    
+    );
     
     
     
-	end    
-			
+	end
+            
 	for( i=0; i<4; i=i+1) begin : router_5_port_lp
-	localparam RID = i+12;
-	assign current_r_addr [RID] = RID[RAw-1: 0]; 
+    localparam RID = i+12;
+    assign current_r_addr [RID] = RID[RAw-1: 0]; 
 
-	router_top #(
-		.NOC_ID(NOC_ID),
-		.P(5)
-	)
-	router_5_port
-	(	
-		.clk(clk), 
-		.reset(reset),
-		.current_r_id(RID),
-		.current_r_addr(current_r_addr[RID]),	
-		.chan_in  (router_chan_in [RID] [4 : 0]), 
-		.chan_out (router_chan_out[RID] [4 : 0]),
-		.router_event(router_event[RID] [4 : 0])	
-	);
+    router_top #(
+        .NOC_ID(NOC_ID),
+        .ROUTER_ID(RID),
+        .P(5)
+    ) router_5_port (
+        .clk(clk), 
+        .reset(reset),
+        .current_r_id(RID),
+        .current_r_addr(current_r_addr[RID]),    
+        .chan_in  (router_chan_in [RID] [4 : 0]), 
+        .chan_out (router_chan_out[RID] [4 : 0]),
+        .router_event(router_event[RID] [4 : 0])    
+    );
     
     
     
-	end    
-			endgenerate
+	end
+            endgenerate
 
 
 //Connect R0 input ports 0 to  T0 output ports 0

@@ -145,17 +145,17 @@ single_r2e0,single_r2e1,single_r2e2,single_r2e3,single_r2e4,single_r2e5,single_r
 ,single_r2e10,single_r2e11,single_r2e12,single_r2e13,single_r2e14,single_r2e15};
 
 void topology_connect_r2r (int n){
-	 (*r2r_func_ptr[n])();
+     (*r2r_func_ptr[n])();
 }
 
 void topology_connect_r2e (int n){
-	 (*r2e_func_ptr[n])();
+     (*r2e_func_ptr[n])();
 }
 
 
 
 void topology_init(void){
-	router1[0]->current_r_addr=0;
+    router1[0]->current_r_addr=0;
 router1[0]->current_r_id=0;
 router1[1]->current_r_addr=1;
 router1[1]->current_r_id=1;
@@ -236,6 +236,6 @@ router3[3]->current_r_id=15;
 	r2r_cnt_all[46] =(r2r_cnt_table_t){.id1=15, .t1=3, .r1=3, .p1=3,.id2=13, .t2=3, .r2=1, .p2=1 };
 	r2r_cnt_all[47] =(r2r_cnt_table_t){.id1=15, .t1=3, .r1=3, .p1=4,.id2=5, .t2=2, .r2=1, .p2=1 };
 
-	R2R_TABLE_SIZ=48;
-	 	 
+    R2R_TABLE_SIZ=48;
+          
 }

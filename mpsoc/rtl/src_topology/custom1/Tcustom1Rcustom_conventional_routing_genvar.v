@@ -6,11 +6,11 @@
 
 
 /**********************************************************************
-**	File: /home/alireza/work/git/pronoc/mpsoc/rtl/src_topology/custom1/Tcustom1Rcustom_conventional_routing_genvar.v
+**	File: /home/alireza/work/git/hca_git/git-hub/ProNoC/mpsoc/rtl/src_topology/custom1/Tcustom1Rcustom_conventional_routing_genvar.v
 **    
-**	Copyright (C) 2014-2021  Alireza Monemi
+**	Copyright (C) 2014-2022  Alireza Monemi
 **    
-**	This file is part of ProNoC 2.1.0 
+**	This file is part of ProNoC 2.2.0 
 **
 **	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
 **	you can redistribute it and/or modify it under the terms of the GNU
@@ -37,13 +37,13 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 );
     
 	input   [EAw-1   :0] dest_e_addr;
-	output reg [DSTPw-1 :0] destport;	
+	output reg [DSTPw-1 :0] destport;    
         
     
 	generate
 
 	if(SRC_E_ADDR == 0) begin : SRC0
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			1,2,3,7,10: begin 
@@ -61,7 +61,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 	end//SRC0
 
 	if(SRC_E_ADDR == 1) begin : SRC1
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			0,4,7,8,9,10,12,15: begin 
@@ -79,7 +79,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 	end//SRC1
 
 	if(SRC_E_ADDR == 2) begin : SRC2
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			3,4,5,6,8,11,13,14,15: begin 
@@ -97,7 +97,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 	end//SRC2
 
 	if(SRC_E_ADDR == 3) begin : SRC3
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			2,10,11,12: begin 
@@ -115,7 +115,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 	end//SRC3
 
 	if(SRC_E_ADDR == 4) begin : SRC4
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			1,6,7,8,10,13: begin 
@@ -136,7 +136,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 	end//SRC4
 
 	if(SRC_E_ADDR == 5) begin : SRC5
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			1,7,8,10,11,12,15: begin 
@@ -157,7 +157,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 	end//SRC5
 
 	if(SRC_E_ADDR == 6) begin : SRC6
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			3,4,13: begin 
@@ -175,7 +175,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 	end//SRC6
 
 	if(SRC_E_ADDR == 7) begin : SRC7
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			2,3,4,5,6,8,9,11,12,13,14,15: begin 
@@ -196,7 +196,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 	end//SRC7
 
 	if(SRC_E_ADDR == 8) begin : SRC8
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			0,4,5,9,10,12: begin 
@@ -217,7 +217,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 	end//SRC8
 
 	if(SRC_E_ADDR == 9) begin : SRC9
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			1,7,8,10,12: begin 
@@ -238,7 +238,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 	end//SRC9
 
 	if(SRC_E_ADDR == 10) begin : SRC10
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			2,3,4,5,6,8,9,11,12,13,14,15: begin 
@@ -259,7 +259,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 	end//SRC10
 
 	if(SRC_E_ADDR == 11) begin : SRC11
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			0,1,4,5,6,7,8,9,10,12,13,14,15: begin 
@@ -280,7 +280,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 	end//SRC11
 
 	if(SRC_E_ADDR == 12) begin : SRC12
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			2,3,4,5,6,11,13,14,15: begin 
@@ -304,7 +304,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 	end//SRC12
 
 	if(SRC_E_ADDR == 13) begin : SRC13
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			3,4: begin 
@@ -325,7 +325,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 	end//SRC13
 
 	if(SRC_E_ADDR == 14) begin : SRC14
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			5,9,12,15: begin 
@@ -349,7 +349,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 	end//SRC14
 
 	if(SRC_E_ADDR == 15) begin : SRC15
-		always@(*)begin	
+		always@(*)begin    
 			destport= 0; 
 			case(dest_e_addr)
 			1,7,8,10,12: begin 
@@ -374,7 +374,7 @@ module Tcustom1Rcustom_conventional_routing_genvar  #(
 
 	endgenerate
 
-		
-	
+        
+    
 endmodule  
     

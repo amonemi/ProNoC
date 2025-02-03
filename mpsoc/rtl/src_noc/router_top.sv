@@ -263,11 +263,10 @@ module router_top #(
     end //:no_smart
     endgenerate
     
-/*********************************************
-*
-*        Validating Parameters/Simulation
-*
-*********************************************/
+/**************************************
+*        Validating Parameters 
+*        /Simulation
+***************************************/
 `ifdef SIMULATION
     /* verilator lint_off WIDTH */
     initial begin

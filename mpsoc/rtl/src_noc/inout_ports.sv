@@ -483,18 +483,19 @@ module  vc_alloc_request_gen #(
     wire   [PVV-1      :   0]  candidate_ovc_all; 
     wire   [PV-1       :   0]  ovc_is_assigned_all;
     
-    wire [PV-1 : 0] ovc_avalable_all_masked;
+    wire [PV-1 : 0] ovc_avalable_all_masked,hetero_ovc_peresence_all;
     wire [PV-1 : 0] non_vsa_ivc_num_getting_ovc_grant_all;   
     wire [PVDSTPw-1 : 0] destport_clear_all;
     
     genvar i,j;
-    generate    
+    generate
     
     for(i=0;i< P;i=i+1) begin :p_
+        assign hetero_ovc_peresence_all [(i+1)*V-1 : i*V] = (HETERO_VC >0 )?  ctrl_in[i].hetero_ovc_presence : {V{1'b1}};
         assign ovc_avalable_all_masked [(i+1)*V-1 : i*V] = (SMART_EN)? 
             //TODO for smart, we need to make sure, the hetrro ovc presence in all down stream routers 
-            ovc_avalable_all [(i+1)*V-1 : i*V] & ~smart_ctrl_in[i].mask_available_ovc & ctrl_in[i].hetero_ovc_presence : 
-            ovc_avalable_all [(i+1)*V-1 : i*V] & ctrl_in[i].hetero_ovc_presence;
+            ovc_avalable_all [(i+1)*V-1 : i*V] & ~smart_ctrl_in[i].mask_available_ovc & hetero_ovc_peresence_all[(i+1)*V-1 : i*V] : 
+            ovc_avalable_all [(i+1)*V-1 : i*V] & hetero_ovc_peresence_all[(i+1)*V-1 : i*V];
         assign non_vsa_ivc_num_getting_ovc_grant_all [(i+1)*V-1 : i*V] = ssa_ctrl_in[i].ivc_num_getting_ovc_grant | smart_ctrl_in[i].ivc_num_getting_ovc_grant;
         for(j=0;j< V;j=j+1) begin :V_
             assign ivc_request_all[i*V+j] = ivc_info[i][j].ivc_req;

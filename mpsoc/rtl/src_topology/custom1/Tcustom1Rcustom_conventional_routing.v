@@ -6,11 +6,11 @@
 
 
 /**********************************************************************
-**	File: /home/alireza/work/git/pronoc/mpsoc/rtl/src_topology/custom1/Tcustom1Rcustom_conventional_routing.v
+**	File: /home/alireza/work/git/hca_git/git-hub/ProNoC/mpsoc/rtl/src_topology/custom1/Tcustom1Rcustom_conventional_routing.v
 **    
-**	Copyright (C) 2014-2021  Alireza Monemi
+**	Copyright (C) 2014-2022  Alireza Monemi
 **    
-**	This file is part of ProNoC 2.1.0 
+**	This file is part of ProNoC 2.2.0 
 **
 **	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
 **	you can redistribute it and/or modify it under the terms of the GNU
@@ -38,7 +38,7 @@ module Tcustom1Rcustom_conventional_routing  #(
     
 	input   [EAw-1   :0] dest_e_addr;
 	input   [EAw-1   :0] src_e_addr;
-	output reg [DSTPw-1 :0] destport;	
+	output reg [DSTPw-1 :0] destport;    
         
     
 	always@(*)begin
@@ -317,7 +317,7 @@ module Tcustom1Rcustom_conventional_routing  #(
 		endcase
 	end
 
-		
-	
+        
+    
 endmodule  
     

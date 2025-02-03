@@ -1091,7 +1091,7 @@ arbiters external priority enable';
     my $hetero_en=$mpsoc->object_get_attribute($noc_param,'HETERO_VC');
     $label='Heterogeneous VC setting'; 
     $param='int VC_CONFIG_TABLE [MAX_ROUTER][MAX_PORT]';
-    $default='\'{0}';
+    $default='\'{\'{0}}';
     $content='0,1,2';
     $type='Combo-box';
     $info='Defines how a heterogeneous number of VCs are distributed in the NoC.

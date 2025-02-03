@@ -6,11 +6,11 @@
 
 
 /**********************************************************************
-**	File: /home/alireza/work/git/pronoc/mpsoc/rtl/src_topology/custom1/Tcustom1Rcustom_look_ahead_routing.v
+**	File: /home/alireza/work/git/hca_git/git-hub/ProNoC/mpsoc/rtl/src_topology/custom1/Tcustom1Rcustom_look_ahead_routing.v
 **    
-**	Copyright (C) 2014-2021  Alireza Monemi
+**	Copyright (C) 2014-2022  Alireza Monemi
 **    
-**	This file is part of ProNoC 2.1.0 
+**	This file is part of ProNoC 2.2.0 
 **
 **	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
 **	you can redistribute it and/or modify it under the terms of the GNU
@@ -48,37 +48,37 @@ module Tcustom1Rcustom_look_ahead_routing  #(
 	input   [RAw-1   :0] current_r_addr;
 	input   [EAw-1   :0] dest_e_addr;
 	input   [EAw-1   :0] src_e_addr;
-	output  [DSTPw-1 :0] destport;	
+	output  [DSTPw-1 :0] destport;    
 	input reset,clk;
 
-	reg [EAw-1   :0] dest_e_addr_delay;
-	reg [EAw-1   :0] src_e_addr_delay;
+    reg [EAw-1   :0] dest_e_addr_delay;
+    reg [EAw-1   :0] src_e_addr_delay;
 
-	always @ (`pronoc_clk_reset_edge )begin 
+    always @ (`pronoc_clk_reset_edge )begin 
         if(`pronoc_reset)begin 
-			dest_e_addr_delay<={EAw{1'b0}};
-			src_e_addr_delay<={EAw{1'b0}};			
-		end else begin 
-			dest_e_addr_delay<=dest_e_addr;
-			src_e_addr_delay<=src_e_addr;					
-		end 	
-	end
+            dest_e_addr_delay<={EAw{1'b0}};
+            src_e_addr_delay<={EAw{1'b0}};            
+        end else begin 
+            dest_e_addr_delay<=dest_e_addr;
+            src_e_addr_delay<=src_e_addr;                    
+        end     
+    end
 
-	Tcustom1Rcustom_look_ahead_routing_comb  #(
-		.RAw(RAw),  
-		.EAw(EAw),   
-		.DSTPw(DSTPw)  
-	)
-	lkp_cmb
-	(
-		.current_r_addr(current_r_addr),
-		.dest_e_addr(dest_e_addr_delay),
-		.src_e_addr(src_e_addr_delay),
-		.destport(destport)        
-	);
+    Tcustom1Rcustom_look_ahead_routing_comb  #(
+        .RAw(RAw),  
+        .EAw(EAw),   
+        .DSTPw(DSTPw)  
+    )
+    lkp_cmb
+    (
+        .current_r_addr(current_r_addr),
+        .dest_e_addr(dest_e_addr_delay),
+        .src_e_addr(src_e_addr_delay),
+        .destport(destport)        
+    );
 
 
-	
+    
 endmodule  
  
 /*******************
@@ -100,7 +100,7 @@ endmodule
 	input   [RAw-1   :0] current_r_addr;
 	input   [EAw-1   :0] dest_e_addr;
 	input   [EAw-1   :0] src_e_addr;
-	output reg [DSTPw-1 :0] destport;	
+	output reg [DSTPw-1 :0] destport;    
 
 localparam [EAw-1 : 0]	E0=0;
 localparam [EAw-1 : 0]	E1=1;
@@ -446,7 +446,7 @@ localparam [EAw-1 : 0]	E15=15;
 	end
   
 
-	
+    
 endmodule  
 
 
