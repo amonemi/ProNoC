@@ -1305,7 +1305,7 @@ quit
 					
 					my @errors = unix_grep("$out_path/sim_out$r","ERROR:");
 					if (scalar @errors  ){
-						add_colored_info($info, "Error in running simulation: @errors \n",'red');
+						add_colored_info($info, "Error in running simulation:\n @errors \n",'red');
 						$simulate->object_add_attribute ($sample,"status","failed");	
 						$simulate->object_add_attribute('status',undef,'ideal');
 						return;						
@@ -1482,7 +1482,7 @@ sub run_task_simulation{
 				my $stdout = load_file("$out_path/sim_out$r");
 				my @errors = unix_grep("$out_path/sim_out$r","ERROR:");
 				if (scalar @errors  ){
-						add_colored_info($info, "Error in running simulation: @errors \n",'red');
+						add_colored_info($info, "Error in running simulation:\n @errors \n",'red');
 						$simulate->object_add_attribute ($sample,"status","failed");	
 						$simulate->object_add_attribute('status',undef,'ideal');
 						return;						
@@ -1583,7 +1583,7 @@ sub run_trace_simulation{
 	$stdout = load_file("$out_path/sim_out");
 	my @errors = unix_grep("$out_path/sim_out","ERROR:");
 	if (scalar @errors  ){
-		add_colored_info($info, "Error in running simulation: @errors \n",'red');
+		add_colored_info($info, "Error in running simulation:\n @errors \n",'red');
 		$simulate->object_add_attribute ($sample,"status","failed");	
 		$simulate->object_add_attribute('status',undef,'ideal');
 		return;						

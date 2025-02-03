@@ -1071,9 +1071,9 @@ arbiters external priority enable';
     $type= 'Spin-button';  
     #($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,$wrra_show,$noc_param,undef);  
     
-    #HETRO_VC
+    #HETERO_VC
     $label='Heterogeneous VC En'; 
-    $param='HETRO_VC';
+    $param='HETERO_VC';
     $default='0';
     $content='0,1,2';
     $type='Combo-box';
@@ -1088,35 +1088,35 @@ arbiters external priority enable';
 
 
     #VC_CONFIG_TABLE
-    my $hetro_en=$mpsoc->object_get_attribute($noc_param,'HETRO_VC');
+    my $hetero_en=$mpsoc->object_get_attribute($noc_param,'HETERO_VC');
     $label='Heterogeneous VC setting'; 
     $param='int VC_CONFIG_TABLE [MAX_ROUTER][MAX_PORT]';
     $default='\'{0}';
     $content='0,1,2';
     $type='Combo-box';
     $info='Defines how a heterogeneous number of VCs are distributed in the NoC.
-    - HETRO_VC= 0: Uniform VC configuration. All routers and ports have 
+    - HETERO_VC= 0: Uniform VC configuration. All routers and ports have 
         the same number of VCs, and this parameter is not used.
-    - HETRO_VC= 1,2 : Specifies the VC count in a 2D parameter array, where:
+    - HETERO_VC= 1,2 : Specifies the VC count in a 2D parameter array, where:
         * The first dimension represents the router ID.
         * The second dimension represents the port number.
-    - For HETRO_VC = 1: All ports within a router have the same number of VCs, 
+    - For HETERO_VC = 1: All ports within a router have the same number of VCs, 
         so only the first element of each row is considered valid.
-    - For HETRO_VC = 2: Each port in every router can have a unique VC count.';
+    - For HETERO_VC = 2: Each port in every router can have a unique VC count.';
     $noc_param_comment{$param}="$info";
-    if($hetro_en eq '0'){
+    if($hetero_en eq '0'){
         $mpsoc->object_add_attribute($noc_param,"MAX_ROUTER",1);
         $mpsoc->object_add_attribute($noc_param,"MAX_PORT",1);
         $mpsoc->object_add_attribute($noc_param,$param,$default);
         
-    }elsif($hetro_en eq '1'){
+    }elsif($hetero_en eq '1'){
         $mpsoc->object_add_attribute($noc_param,"MAX_ROUTER",$NR);
         $mpsoc->object_add_attribute($noc_param,"MAX_PORT",1);        
-        $row=hetro_vc_widget($mpsoc,$row,$NR,1,$label,$info,$table,$noc_id,$param,$v);
+        $row=hetero_vc_widget($mpsoc,$row,$NR,1,$label,$info,$table,$noc_id,$param,$v);
     }else{
         $mpsoc->object_add_attribute($noc_param,"MAX_ROUTER",$NR);
         $mpsoc->object_add_attribute($noc_param,"MAX_PORT",$MAX_P);
-        $row=hetro_vc_widget($mpsoc,$row,$NR,$MAX_P,$label,$info,$table,$noc_id,$param,$v);
+        $row=hetero_vc_widget($mpsoc,$row,$NR,$MAX_P,$label,$info,$table,$noc_id,$param,$v);
     }
 
 
@@ -1154,7 +1154,7 @@ arbiters external priority enable';
     return $row;
 }
 
-sub hetro_vc_widget{
+sub hetero_vc_widget{
     my ($mpsoc,$row,$nr,$np,$label_text,$info,$table,$noc_id,$param,$v)=@_;
     my $b1= def_image_button("icons/setting.png","Set");
     my $label=gen_label_in_left($label_text);
@@ -1163,12 +1163,12 @@ sub hetro_vc_widget{
     $row++;  
     update_vc_list($mpsoc,$noc_id,$nr,$np,$v,$param,$info);
     $b1->signal_connect("clicked" => sub{ 
-            set_hetro_vc_list($mpsoc,$noc_id,$nr,$np,$param,$v,$info);        
+            set_hetero_vc_list($mpsoc,$noc_id,$nr,$np,$param,$v,$info);        
     });
     return $row;
 }
 
-sub set_hetro_vc_list{
+sub set_hetero_vc_list{
     my($mpsoc,$noc_id,$nr,$np,$param,$v,$info)=@_;    
     my $noc_param="noc_param$noc_id";
     my $vc_param="vc_param$noc_id";

@@ -224,8 +224,8 @@ module input_queue_per_port #(
     localparam 
         PORT_B = port_buffer_size(SW_LOC),
         PORT_Bw= log2(PORT_B),
-        PORT_V = port_hetro_vc_num(ROUTER_ID, SW_LOC),
-        V = PORT_V;    //Replace default V with the port specefied  VC num if hetro_vc is enabled
+        //PORT_IVC is equal to V if HETERO_VC=0
+        PORT_IVC = port_hetero_vc_num(ROUTER_ID, SW_LOC);
     
     localparam
         VV = V * V,
@@ -842,7 +842,7 @@ module input_queue_per_port #(
             .out(granted_flit_is_tail),
             .sel(ivc_num_getting_sw_grant)
         );
-            
+        
         weight_control#(
             .ARBITER_TYPE(SWA_ARBITER_TYPE),
             .SW_LOC(SW_LOC),
@@ -873,22 +873,28 @@ module input_queue_per_port #(
         ivc_num_getting_sw_grant;
         
     flit_buffer #(
-        .B(PORT_B)   // buffer space :flit per VC 
+        .B(PORT_B),   // buffer space :flit per VC,
+        .V(PORT_IVC) 
     ) the_flit_buffer (            
         .din(flit_in),     // Data in
-        .vc_num_wr(vc_num_in),//write virtual channel   
-        .vc_num_rd(flit_buffer_vc_num_rd),//read virtual channel     
+        .vc_num_wr(vc_num_in [PORT_IVC-1 : 0]),//write virtual channel   
+        .vc_num_rd(flit_buffer_vc_num_rd [PORT_IVC-1 : 0]),//read virtual channel     
         .wr_en(flit_in_wr),   // Write enable
         .rd_en(any_ivc_sw_request_granted),     // Read the next word
         .dout(buffer_out),    // Data out
-        .vc_not_empty(ivc_not_empty),
+        .vc_not_empty(ivc_not_empty [PORT_IVC-1 : 0]),
         .reset(reset),
         .clk(clk),
-        .ssa_rd(ssa_ctrl_in.ivc_num_getting_sw_grant),
-        .multiple_dest( multiple_dest ),
-        .sub_rd_ptr_ld(reset_ivc) ,
-        .flit_is_tail(flit_is_tail)
+        .ssa_rd(ssa_ctrl_in.ivc_num_getting_sw_grant[PORT_IVC-1 : 0]),
+        .multiple_dest( multiple_dest [PORT_IVC-1 : 0]),
+        .sub_rd_ptr_ld(reset_ivc [PORT_IVC-1 : 0]) ,
+        .flit_is_tail(flit_is_tail [PORT_IVC-1 : 0])
     );   
+    
+    if(PORT_IVC != V) begin : hetero
+        assign ivc_not_empty [V-1 : PORT_IVC]={(V-PORT_IVC){1'b0}};
+        assign flit_is_tail [V-1 : PORT_IVC]={(V-PORT_IVC){1'b0}};
+    end
     
     /* verilator lint_off WIDTH */    
     if(CAST_TYPE== "UNICAST") begin : unicast
@@ -922,8 +928,6 @@ module input_queue_per_port #(
     
     endgenerate    
     
-    
-    
     header_flit_update_lk_route_ovc #(
         .NOC_ID(NOC_ID),
         .P(P)    
@@ -938,8 +942,7 @@ module input_queue_per_port #(
         .sel (sel),
         .reset (reset),
         .clk (clk)
-    );
-    
+    );    
     
     `ifdef SIMULATION
     generate 
@@ -977,7 +980,7 @@ module input_queue_per_port #(
         /* verilator lint_off WIDTH */  
         if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && CAST_TYPE== "UNICAST") begin : mesh_based
         /* verilator lint_on WIDTH */  
-        
+            
             debug_mesh_tori_route_ckeck #(
                 .T1(T1),
                 .T2(T2),
@@ -1004,7 +1007,16 @@ module input_queue_per_port #(
                 .src_e_addr_in(src_e_addr_in),
                 .destport_in(destport_in)      
             );   
-        end//mesh  
+        end//mesh 
+        if (PORT_IVC != V) begin : hetero
+            always @(posedge clk) begin
+                if ((flit_in_wr & (|vc_num_in[V-1 : PORT_IVC]))) begin
+                    $display("%t: ERROR: Input port supports %0d VCs, but received a flit targeting an out-of-bound VC: %b. Module: %m\n", 
+                    $time, PORT_IVC, vc_num_in[V-1 : PORT_IVC]);
+                    $finish;
+                end
+            end
+        end // hetero
     end//DEBUG_EN    
     
     `ifdef MONITORE_PATH     

@@ -621,7 +621,7 @@ sub check_sim_results{
 	
 		my @errors = unix_grep("$file","ERROR:");
 		if (scalar @errors  ){
-			append_text_to_file($report,"\t Error in running simulation: @errors \n");	
+			append_text_to_file($report,"\t Error in running simulation:\n @errors \n");	
 			$self->{'name'}{"$name"}{'traffic'}{$traffic}{'overal_result'}="Failed";
 			$self->{'name'}{"$name"}{'traffic'}{$traffic}{'message'}="@errors";
 			return;						

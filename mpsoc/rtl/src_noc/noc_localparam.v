@@ -147,8 +147,8 @@
             //SELF_LOOP_EN : Allows a router input port to send packets to its own output port, 
             //    enabling self-communication for tiles.
 
-	localparam HETRO_VC=0;
-            //HETRO_VC : Configures the VC (Virtual Channel) distribution across routers and ports in the NoC.
+	localparam HETERO_VC=0;
+            //HETERO_VC : Configures the VC (Virtual Channel) distribution across routers and ports in the NoC.
             //    0 : Uniform VC distribution. All routers in the NoC have an equal number of VCs.
             //    1 : Router-specific VC distribution. All ports in a specific router have the same number of VCs, 
             //    but different routers in the NoC can have different numbers of VCs.
@@ -158,14 +158,14 @@
 	localparam MAX_PORT=1;
 	localparam int VC_CONFIG_TABLE [MAX_ROUTER][MAX_PORT]='{0};
             //int VC_CONFIG_TABLE [MAX_ROUTER][MAX_PORT] : Defines how a heterogeneous number of VCs are distributed in the NoC.
-            //    - HETRO_VC= 0: Uniform VC configuration. All routers and ports have 
+            //    - HETERO_VC= 0: Uniform VC configuration. All routers and ports have 
             //        the same number of VCs, and this parameter is not used.
-            //    - HETRO_VC= 1,2 : Specifies the VC count in a 2D parameter array, where:
+            //    - HETERO_VC= 1,2 : Specifies the VC count in a 2D parameter array, where:
             //        * The first dimension represents the router ID.
             //        * The second dimension represents the port number.
-            //    - For HETRO_VC = 1: All ports within a router have the same number of VCs, 
+            //    - For HETERO_VC = 1: All ports within a router have the same number of VCs, 
             //        so only the first element of each row is considered valid.
-            //    - For HETRO_VC = 2: Each port in every router can have a unique VC count.
+            //    - For HETERO_VC = 2: Each port in every router can have a unique VC count.
 
 	localparam AVC_ATOMIC_EN=0;
             //AVC_ATOMIC_EN : AVC_ATOMIC_EN

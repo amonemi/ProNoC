@@ -182,7 +182,8 @@ module router_two_stage #(
             assign  congestion_in_all [(i+1)*CONGw-1:  i*CONGw] = chan_in_tmp[i].congestion; 
             
             assign  ctrl_out[i].neighbors_r_addr = current_r_addr;
-            assign  ctrl_out[i].endp_port =1'b0;        
+            assign  ctrl_out[i].endp_port =1'b0; 
+            assign  ctrl_out[i].hetero_ovc_presence= port_hetero_vc_presence(current_r_id,i);     
             
             assign  chan_out[i].flit=          flit_out_all       [(i+1)*Fw-1:  i*Fw];       
             assign  chan_out[i].flit_wr=       flit_out_wr_all    [i];                       
@@ -280,6 +281,7 @@ module router_two_stage #(
         .ovc_info(ovc_info),
         .oport_info(oport_info),
         .smart_ctrl_in(smart_ctrl_in),
+        .ctrl_in(ctrl_in),
         .vsa_ctrl_in(vsa_ctrl),
         .credit_init_val_in (credit_init_val_in),
         .credit_init_val_out (credit_init_val_out),

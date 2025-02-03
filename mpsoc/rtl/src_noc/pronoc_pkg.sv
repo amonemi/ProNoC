@@ -240,7 +240,8 @@ package pronoc_pkg;
         bit    endp_port;  // if it is one, it means the corresponding port is connected o an endpoint
         logic [RAw-1:   0]  neighbors_r_addr;
         logic [V-1  :0] [CRDTw-1: 0] credit_init_val; // the connected port initial credit value. It is taken at reset time    
-        logic [V-1  :0] credit_release_en;        
+        logic [V-1  :0] credit_release_en;     
+        logic [V-1  :0] hetero_ovc_presence;   // Indicates the presence of active output VCs for neighboring routers when heterogeneous VC support is enabled.
     } ctrl_chanel_t; 
     localparam CTRL_CHANEL_w = $bits(ctrl_chanel_t);    
     
@@ -251,14 +252,25 @@ package pronoc_pkg;
     } smartflit_chanel_t;
     localparam SMARTFLIT_CHANEL_w = $bits(smartflit_chanel_t); 
     
-    function automatic integer port_hetro_vc_num;
+    function automatic integer port_hetero_vc_num;
         input integer router_id;
         input integer router_port_num;  //router port num
         begin
-        port_hetro_vc_num = 
-            (HETRO_VC == 0) ? V :
-            (HETRO_VC == 1) ? VC_CONFIG_TABLE [router_id][0] :
+        port_hetero_vc_num = 
+            (HETERO_VC == 0) ? V :
+            (HETERO_VC == 1) ? VC_CONFIG_TABLE [router_id][0] :
             VC_CONFIG_TABLE [router_id][router_port_num];        
+        end
+    endfunction
+    
+    function automatic logic [V-1 : 0] port_hetero_vc_presence;
+        input integer router_id;
+        input integer router_port_num;  //router port num
+        begin
+        port_hetero_vc_presence = 
+            (HETERO_VC == 0) ? {V{1'b1}} :
+            (HETERO_VC == 1) ? (1 << VC_CONFIG_TABLE [router_id][0]) - 1 :
+            (1 << VC_CONFIG_TABLE [router_id][router_port_num]) -1;        
         end
     endfunction
     

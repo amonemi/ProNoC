@@ -44,6 +44,7 @@ module inout_ports #(
     congestion_out_all,
     credit_init_val_in,
     credit_init_val_out,
+    ctrl_in,
     
     // from vsa: local vc/sw allocator
     vsa_ovc_allocated_all,
@@ -68,7 +69,7 @@ module inout_ports #(
     vc_weight_is_consumed_all, 
     iport_weight_is_consumed_all, 
     flit_is_tail_all,
-        
+    
     // to crossbar
     flit_out_all,
     ssa_flit_wr_all,
@@ -112,6 +113,7 @@ module inout_ports #(
     input [PV-1 : 0] credit_in_all;
     input [PV-1 : 0] vsa_ovc_allocated_all;
     input [PVV-1 : 0] granted_ovc_num_all;
+    input ctrl_chanel_t ctrl_in  [P-1 : 0];
     
     input [PV-1 : 0] ivc_num_getting_ovc_grant;
     input [PVV-1 : 0] spec_ovc_num_all;
@@ -204,7 +206,7 @@ module inout_ports #(
         .smart_ctrl_in(smart_ctrl_in),
         .vsa_ctrl_in(vsa_ctrl_in),
         .ssa_ctrl_in(ssa_ctrl),
-        .credit_init_val_out(credit_init_val_out),        
+        .credit_init_val_out(credit_init_val_out),
         .reset (reset),
         .clk (clk)
     );   
@@ -250,7 +252,7 @@ module inout_ports #(
         .ovc_avalable_all(ovc_avalable_all),        
         .dest_port_decoded_all(dest_port_all),
         .masked_ovc_request_all(masked_ovc_request_all),
-        
+        .ctrl_in(ctrl_in),   
         .port_pre_sel(port_pre_sel),
         .swap_port_presel(swap_port_presel),
         .sel(sel),
@@ -446,7 +448,8 @@ module  vc_alloc_request_gen #(
     destport_clear,
     ivc_num_getting_ovc_grant, 
     smart_ctrl_in,
-    ssa_ctrl_in
+    ssa_ctrl_in,
+    ctrl_in
 );
     
     `NOC_CONF
@@ -473,6 +476,7 @@ module  vc_alloc_request_gen #(
     input   ssa_ctrl_t  ssa_ctrl_in [P-1: 0];
     input   smart_ctrl_t  smart_ctrl_in [P-1: 0];
     input   ivc_info_t   ivc_info    [P-1 : 0][V-1 : 0];
+    input   ctrl_chanel_t ctrl_in  [P-1 : 0];
     
     wire   [PV-1       :   0]  ivc_request_all;
     wire   [PVDSTPw-1  :   0]  dest_port_encoded_all;
@@ -484,10 +488,13 @@ module  vc_alloc_request_gen #(
     wire [PVDSTPw-1 : 0] destport_clear_all;
     
     genvar i,j;
-    generate 
+    generate    
     
     for(i=0;i< P;i=i+1) begin :p_
-        assign ovc_avalable_all_masked [(i+1)*V-1 : i*V] = (SMART_EN)?  ovc_avalable_all [(i+1)*V-1 : i*V] & ~smart_ctrl_in[i].mask_available_ovc : ovc_avalable_all [(i+1)*V-1 : i*V];
+        assign ovc_avalable_all_masked [(i+1)*V-1 : i*V] = (SMART_EN)? 
+            //TODO for smart, we need to make sure, the hetrro ovc presence in all down stream routers 
+            ovc_avalable_all [(i+1)*V-1 : i*V] & ~smart_ctrl_in[i].mask_available_ovc & ctrl_in[i].hetero_ovc_presence : 
+            ovc_avalable_all [(i+1)*V-1 : i*V] & ctrl_in[i].hetero_ovc_presence;
         assign non_vsa_ivc_num_getting_ovc_grant_all [(i+1)*V-1 : i*V] = ssa_ctrl_in[i].ivc_num_getting_ovc_grant | smart_ctrl_in[i].ivc_num_getting_ovc_grant;
         for(j=0;j< V;j=j+1) begin :V_
             assign ivc_request_all[i*V+j] = ivc_info[i][j].ivc_req;

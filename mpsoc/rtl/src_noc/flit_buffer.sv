@@ -29,8 +29,7 @@
 
 module flit_buffer
 #(
-    parameter ROUTER_ID = 0,
-    parameter SW_LOC = 0,
+    parameter V=  1,
     parameter B = 4    
 )(
     din,     // Data in
@@ -320,8 +319,7 @@ module flit_buffer
                 assign  flit_is_tail[i] = (PCK_TYPE == "MULTI_FLIT")?  tail_fifo[i][rd_ptr[i]-(B*i)] : 1'b1;
                 /* verilator lint_on WIDTH */ 
             end
-        end//FOR
-        
+        end// for V_       
         
         onehot_mux_1D #(
             .W(BVw),
@@ -375,7 +373,7 @@ module flit_buffer
         end
     end //DEBUG_EN
     
-    for(i=0;i<V;i=i+1) begin :V_
+    for(i=0;i<V;i=i+1) begin :VC_
         
         /* verilator lint_off WIDTH */ 
         if (CAST_TYPE != "UNICAST") begin :multicast
