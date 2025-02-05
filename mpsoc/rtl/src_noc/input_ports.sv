@@ -225,7 +225,7 @@ module input_queue_per_port #(
         PORT_B = port_buffer_size(SW_LOC),
         PORT_Bw= log2(PORT_B),
         //PORT_IVC is equal to V if HETERO_VC=0
-        PORT_IVC = port_hetero_vc_num(ROUTER_ID, SW_LOC);
+        PORT_IVC = hetero_ivc_decimal(ROUTER_ID, SW_LOC);
     
     localparam
         VV = V * V,

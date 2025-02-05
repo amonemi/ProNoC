@@ -252,22 +252,31 @@ package pronoc_pkg;
     } smartflit_chanel_t;
     localparam SMARTFLIT_CHANEL_w = $bits(smartflit_chanel_t); 
     
-    function automatic integer port_hetero_vc_num;
+    function automatic integer hetero_ivc_decimal;
         input integer router_id;
         input integer router_port_num;  //router port num
         begin
-        port_hetero_vc_num = 
+        `ifdef NO_HETRO_IVC
+        // This macro (`NO_HETRO_IVC) generates identical router RTL code for a NoC.
+        // All input ports will have the maximum number of virtual channels (VCs),
+        // but the redundant VCs are not utilized.
+        // This is useful for simulations with long compilation times (e.g., using Verilator).
+        // Not recommended for synthesis; intended for simulation purposes only. 
+        hetero_ivc_decimal = V; 
+        `else
+        hetero_ivc_decimal = 
             (HETERO_VC == 0) ? V :
             (HETERO_VC == 1) ? VC_CONFIG_TABLE [router_id][0] :
-            VC_CONFIG_TABLE [router_id][router_port_num];        
+            VC_CONFIG_TABLE [router_id][router_port_num];   
+        `endif     
         end
     endfunction
     
-    function automatic logic [V-1 : 0] port_hetero_vc_presence;
+    function automatic logic [V-1 : 0] hetero_ovc_unary;
         input integer router_id;
         input integer router_port_num;  //router port num
         begin
-        port_hetero_vc_presence = 
+        hetero_ovc_unary = 
             (HETERO_VC == 0) ? {V{1'b1}} :
             (HETERO_VC == 1) ? (1 << VC_CONFIG_TABLE [router_id][0]) - 1 :
             (1 << VC_CONFIG_TABLE [router_id][router_port_num]) -1;        

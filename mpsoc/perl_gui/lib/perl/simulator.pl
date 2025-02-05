@@ -1246,7 +1246,6 @@ quit
                             
                     extract_and_update_noc_sim_statistic ($simulate,$sample,$r,$stdout);
                         
-           
                 } 
                 
                 $cmds="";
@@ -1262,12 +1261,13 @@ quit
     
 }
 
-
 sub extract_st_by_name{
-    my($st_name, $stdout)=@_;
-    
+    my($st_name, $stdout)=@_;    
     my @results = split($st_name,$stdout);
     my %statistcs;
+    if (!defined $results[1]){
+        print " Warning: was not able to capture $st_name results in simulation output\n";
+    }
     my @lines = split("\n",$results[1]);    
     my @names;
     my $i=0;
@@ -1306,14 +1306,9 @@ sub extract_st_by_name{
 
 
 sub extract_and_update_noc_sim_statistic {
-    my ($simulate,$sample,$ratio_in,$stdout)=@_;
-        
-    
-    
+    my ($simulate,$sample,$ratio_in,$stdout)=@_;    
     my $total_time =capture_number_after("Simulation clock cycles:",$stdout);
-
     my %statistcs = extract_st_by_name("Endpoints Statistics:",$stdout);
-            
     return if (!defined $statistcs{"total"}{'avg_latency_pck'});
     update_result($simulate,$sample,"latency_result",$ratio_in,$statistcs{"total"}{'avg_latency_pck'});
     update_result($simulate,$sample,"latency_flit_result",$ratio_in,$statistcs{"total"}{'avg_latency_flit'});
@@ -1341,7 +1336,7 @@ sub extract_and_update_noc_sim_statistic {
     my %st2 = extract_st_by_name("Endp_to_Endp pck_num:",$stdout);
     update_result($simulate,$sample,"endp-endp-pck_result",$ratio_in,\%st2);
     
-    my %st3 = extract_st_by_name("Routers' statistics:",$stdout);
+    my %st3 = extract_st_by_name("Routers Statistics:",$stdout);
     foreach my $p (sort keys %st3){
         update_result($simulate,$sample,"flit_per_router_result",$ratio_in,$p,$st3{$p}{'flit_in'});
         update_result($simulate,$sample,"packet_per_router_result",$ratio_in,$p,$st3{$p}{'pck_in'});
@@ -1354,9 +1349,8 @@ sub extract_and_update_noc_sim_statistic {
     }
     
     #my $p= $simulate->object_get_attribute ($sample,"noc_info");    
-   # my $TOPOLOGY=$p->{"TOPOLOGY"};
+    # my $TOPOLOGY=$p->{"TOPOLOGY"};
     #print "$TOPOLOGY\n";
-    
     
 }
 
@@ -1384,15 +1378,15 @@ sub run_task_simulation{
     my $out_path ="$ENV{PRONOC_WORK}/simulate/"; 
     
     for (my $i=0; $i<$num; $i++){
-         my $f=$simulate->object_get_attribute($sample,"traffic_file$i");
-         add_info($info, "Run $bin for $f  file \n");    
-         my $cmd="$bin -c $SIM_CLOCK_LIMIT -f  \"$f\" > $out_path/sim_out$i & ";
-         $cmds .=$cmd;
-         add_info($info, "$cmd \n");
-         $jobs++;
-         push (@paralel_ratio,$i);
-         $c++;
-         if($jobs % $cpu_num ==0 || $jobs == $total){
+        my $f=$simulate->object_get_attribute($sample,"traffic_file$i");
+        add_info($info, "Run $bin for $f  file \n");    
+        my $cmd="$bin -c $SIM_CLOCK_LIMIT -f  \"$f\" > $out_path/sim_out$i & ";
+        $cmds .=$cmd;
+        add_info($info, "$cmd \n");
+        $jobs++;
+        push (@paralel_ratio,$i);
+        $c++;
+        if($jobs % $cpu_num ==0 || $jobs == $total){
             #run paralle simulation
             my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout("$cmds\n wait\n");
             #print "($stdout,$exit,$stderr)\n";
@@ -1401,11 +1395,8 @@ sub run_task_simulation{
                 $simulate->object_add_attribute ($sample,"status","failed");    
                 $simulate->object_add_attribute('status',undef,'ideal');
                 return;
-             } 
-             
+            } 
             
-             
-             
             #save results
             for (my $j=0; $j<$c; $j++){
                 my $r      = $paralel_ratio[$j];
@@ -1426,7 +1417,7 @@ sub run_task_simulation{
             $c=0;
             set_gui_status($simulate,"ref",2);    
         }          
-                 
+    
     }#for i
     
     $simulate->object_add_attribute ($sample,"status","done");    
@@ -1506,10 +1497,8 @@ sub run_trace_simulation{
         $simulate->object_add_attribute ($sample,"status","failed");    
         $simulate->object_add_attribute('status',undef,'ideal');
         return;
-     } 
-        
+    } 
     
-         
     $stdout = load_file("$out_path/sim_out");
     my @errors = unix_grep("$out_path/sim_out","ERROR:");
     if (scalar @errors  ){
@@ -1518,12 +1507,12 @@ sub run_trace_simulation{
         $simulate->object_add_attribute('status',undef,'ideal');
         return;                        
     }        
-            
+    
     extract_and_update_noc_sim_statistic ($simulate,$sample,0,$stdout);
     
-            
+    
     set_gui_status($simulate,"ref",2);    
-        
+    
     
     $simulate->object_add_attribute ($sample,"status","done");    
 }    
@@ -1590,7 +1579,7 @@ sub check_sim_sample{
     my $HW_PCK_TYPE=$p->{"PCK_TYPE"};
     my $SIM_MIN_PCK_SIZE=$self->object_get_attribute ($sample,"MIN_PCK_SIZE");
     my $SIM_MAX_PCK_SIZE=$self->object_get_attribute ($sample,"MAX_PCK_SIZE");
-   if(!defined $HW_MIN_PCK_SIZE){
+    if(!defined $HW_MIN_PCK_SIZE){
         $HW_MIN_PCK_SIZE= 2;   
         #print "undef\n";     
     }
