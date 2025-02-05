@@ -899,7 +899,7 @@ module input_queue_per_port #(
             assign class_out[i]={Cw{1'b0}};
             assign dest_port_multi[i]={DSTPw{1'b0}};
             assign dest_port_encoded[i]={DSTPw{1'b0}};
-            assign lk_destination_encoded[i]={DSTPw{1'b0}};
+            assign lk_destination_encoded [(i+1)*DSTPw-1 : i*DSTPw]={DSTPw{1'b0}};
             assign endp_localp_num[(i+1)*PLw-1 : i*PLw]={PLw{1'b0}};
             assign vc_weight_is_consumed[i]=1'b0;
         end
