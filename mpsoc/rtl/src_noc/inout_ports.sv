@@ -30,10 +30,9 @@ module inout_ports #(
     parameter ROUTER_ID=0,
     parameter P=5    
 )(
-    current_r_addr,
-    neighbors_r_addr,
     clk,
-    reset,    
+    reset,
+    router_info,
     
     // to/from neighboring router
     flit_in_all,
@@ -76,7 +75,7 @@ module inout_ports #(
     iport_weight_all,
     oports_weight_all,
     refresh_w_counter,
-    crossbar_flit_out_wr_all,    
+    crossbar_flit_out_wr_all,
     
     // status
     vsa_credit_decreased_all,
@@ -103,10 +102,8 @@ module inout_ports #(
         WPP = WP * P,
         PVDSTPw= PV * DSTPw,
         PRAw= P * RAw;
-        
-    input [RAw-1 : 0] current_r_addr;
-    input [PRAw-1: 0] neighbors_r_addr;    
     
+    input router_info_t router_info;
     input [PFw-1 : 0] flit_in_all;
     input [P-1 : 0] flit_in_wr_all;
     output[PV-1 : 0] credit_out_all;
@@ -174,10 +171,9 @@ module inout_ports #(
     input_ports #(
         .NOC_ID(NOC_ID),
         .ROUTER_ID(ROUTER_ID),
-        .P(P)        
+        .P(P)
     ) the_input_port (
-        .current_r_addr (current_r_addr),    
-        .neighbors_r_addr(neighbors_r_addr),
+        .router_info(router_info),
         .ivc_num_getting_sw_grant (ivc_num_getting_sw_grant ),
         .any_ivc_sw_request_granted_all (any_ivc_sw_request_granted_all),    
         .flit_in_all (flit_in_all),
@@ -194,7 +190,7 @@ module inout_ports #(
         .swap_port_presel(swap_port_presel),
         .credit_out_all(credit_out_all),
         // .lk_destination_encoded_all (lk_destination_encoded_all),
-        .nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all),       
+        .nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all),
         .destport_clear (destport_clear),
         .vc_weight_is_consumed_all (vc_weight_is_consumed_all),
         .iport_weight_is_consumed_all (iport_weight_is_consumed_all),
@@ -337,9 +333,11 @@ module output_vc_status #(
     parameter V =  4,
     parameter B =  16,
     parameter CAND_VC_SEL_MODE = 0,   // 0: use arbiteration between not full vcs, 1: select the vc with most availble free space
-    parameter CRDTw = 4
+    parameter CRDTw = 4,
+    parameter HETERO_VC=0
 )(
     credit_init_val_in,
+    ovc_presence,
     wr_in,
     credit_in,
     nearly_full_vc,
@@ -352,24 +350,24 @@ module output_vc_status #(
 );
     
     input   [V-1 : 0] [CRDTw-1 : 0 ] credit_init_val_in ;
-    input   [V-1 :0] wr_in;
-    input   [V-1 :0] credit_in;
-    output  [V-1 :0] nearly_full_vc;
+    input   [V-1 : 0] ovc_presence;
+    input   [V-1 : 0] wr_in;
+    input   [V-1 : 0] credit_in;
+    output  [V-1 : 0] nearly_full_vc;
     output  [V-1 : 0] full_vc;
-    output  [V-1 :0] empty_vc;
-    output  [V-1 :0] cand_vc;
+    output  [V-1 : 0] empty_vc;
+    output  [V-1 : 0] cand_vc;
     input   cand_wr_vc_en;
     input   clk;
     input   reset;
     
-    
     function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
+    input integer number; begin
+        log2=(number <=1) ? 1: 0;
+        while(2**log2<number) begin
+            log2=log2+1;
+        end
+    end
     endfunction // log2 
     
     localparam  DEPTH_WIDTH =   log2(B+1);
@@ -384,11 +382,11 @@ module output_vc_status #(
     for(i=0;i<V;i=i+1) begin : vc_loop
         
         pronoc_register_reset_init #(
-            .W(DEPTH_WIDTH)            
+            .W(DEPTH_WIDTH)
         )reg1( 
             .in(credit_next[i]),
-            .reset(reset),    
-            .clk(clk),        
+            .reset(reset),
+            .clk(clk),
             .out(credit[i]),
             .reset_to(credit_init_val_in[i][DEPTH_WIDTH-1:0])
         );
@@ -396,26 +394,26 @@ module output_vc_status #(
         always @ ( * )begin 
             credit_next[i] = credit [i];
             if(  wr_in[i]  && ~credit_in[i])   credit_next[i] = credit[i]-1'b1;
-            if( ~wr_in[i]  &&  credit_in[i])   credit_next[i] = credit[i]+1'b1;                 
+            if( ~wr_in[i]  &&  credit_in[i])   credit_next[i] = credit[i]+1'b1;
         end//always
         
         assign  full_vc[i]   = (credit[i] == {DEPTH_WIDTH{1'b0}});
         assign  nearly_full_vc[i]=  (credit[i] == 1) |  full_vc[i];
         assign  empty_vc[i]  = (credit[i] == credit_init_val_in[i][DEPTH_WIDTH-1:0]);
-        
-        assign  request[i]   = ~ nearly_full_vc[i] & cand_wr_vc_en;
+        assign  request[i]   = (HETERO_VC>0)?
+                    ~ nearly_full_vc[i] & cand_wr_vc_en & ovc_presence[i]:
+                    ~ nearly_full_vc[i] & cand_wr_vc_en;
     end//for
-    
     endgenerate
     
     arbiter #(
-        .ARBITER_WIDTH      (V)
+        .ARBITER_WIDTH (V)
     ) the_nic_arbiter (
-        .clk                (clk),
-        .reset          (reset),
-        .request            (request),
-        .grant          (cand_vc_next),
-        .any_grant       ()
+        .clk (clk),
+        .reset (reset),
+        .request (request),
+        .grant (cand_vc_next),
+        .any_grant()
     );
     
     logic [V-1 : 0] cand_vc_ld_next;  
@@ -425,7 +423,6 @@ module output_vc_status #(
         cand_vc_ld_next = cand_vc;
         if(cand_wr_vc_en)    cand_vc_ld_next  =  cand_vc_next;
     end
-    
 endmodule
 
 

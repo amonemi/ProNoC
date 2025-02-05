@@ -243,11 +243,13 @@ module  traffic_gen_top    #(
     
     output_vc_status #(
         .CRDTw(CRDTw),
-        .V  (V),
-        .B  (PORT_B)
+        .V(V),
+        .B(PORT_B),
+        .HETERO_VC(HETERO_VC)
     ) nic_ovc_status (
         .credit_init_val_in( chan_in.ctrl_chanel.credit_init_val),
-        .wr_in(ovc_wr_in),   
+        .ovc_presence(chan_in.ctrl_chanel.hetero_ovc_presence),
+        .wr_in(ovc_wr_in),
         .credit_in(credit_in),
         .nearly_full_vc(nearly_full_vc),
         .full_vc(full_vc),
@@ -270,8 +272,8 @@ module  traffic_gen_top    #(
         .current_e_addr(current_e_addr),
         .clk_counter(clk_counter+1'b1),//in case of zero load latency, the flit will be injected in the next clock cycle
         .pck_number(pck_number),
-        .dest_e_addr_in(dest_e_addr),  
-        .dest_e_addr_o(dest_e_addr_o),     
+        .dest_e_addr_in(dest_e_addr),
+        .dest_e_addr_o(dest_e_addr_o), 
         .pck_timestamp(pck_timestamp),
         .buffer_full(buffer_full),
         .pck_ready(pck_ready),
@@ -298,7 +300,7 @@ module  traffic_gen_top    #(
     
     header_flit_generator #(
         .NOC_ID(NOC_ID),
-        .DATA_w(HDR_DATA_w)                
+        .DATA_w(HDR_DATA_w)
     ) the_header_flit_generator (
         .flit_out(hdr_flit_out),
         .vc_num_in(wr_vc),
@@ -422,9 +424,9 @@ module  traffic_gen_top    #(
         hdr_flit_sent       =1'b0;
         ns                  = ps;
         pck_rd              =1'b0;
-        not_yet_sent_aflit_next =not_yet_sent_aflit;            
+        not_yet_sent_aflit_next =not_yet_sent_aflit;
         case (ps) 
-            IDEAL: begin                 
+            IDEAL: begin
                 if(pck_ready ) begin 
                     if(wr_vc_avb && valid_dst)begin
                         
@@ -440,10 +442,10 @@ module  traffic_gen_top    #(
                             sent_done       =1'b1;
                             cand_wr_vc_en   =1'b1;
                             if(cand_vc>0) begin 
-                                wr_vc_next  = cand_vc;                                  
-                            end  else ns = WAIT;                
-                        end  //else                         
-                    end//wr_vc                        
+                                wr_vc_next  = cand_vc;
+                            end  else ns = WAIT;
+                        end  //else
+                    end//wr_vc
                 end 
                 
             end //IDEAL
@@ -469,18 +471,18 @@ module  traffic_gen_top    #(
                 cand_wr_vc_en   =1'b1;
                 if(cand_vc>0) begin 
                     wr_vc_next  = cand_vc;
-                    ns                  =IDEAL;
+                    ns = IDEAL;
                 end  
             end
             default: begin 
-                ns                  =IDEAL;
+                ns = IDEAL;
             end
         endcase
         // packet sink
         if(flit_in_wr) begin 
             credit_out_next = rd_vc;
         end else credit_out_next = {V{1'd0}};
-    end //always    
+    end //always
     
     always @ (`pronoc_clk_reset_edge )begin 
         if(`pronoc_reset) begin 
@@ -588,9 +590,9 @@ module  traffic_gen_top    #(
     endp_addr_decoder  #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) decod2 ( .id(dst_id), .code(rd_des_e_addr[EAw-1 : 0]));// only for unicast
     endp_addr_decoder  #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) decod3 ( .id(src_id), .code(rd_src_e_addr));
     
-    wire [NE-1 :0] dest_mcast_all_endp2;    
+    wire [NE-1 :0] dest_mcast_all_endp2;
     generate 
-    if(CAST_TYPE != "UNICAST") begin :no_unicast        
+    if(CAST_TYPE != "UNICAST") begin :no_unicast
         mcast_dest_list_decode #(
             .NOC_ID(NOC_ID)
         ) decode2 (
@@ -602,14 +604,14 @@ module  traffic_gen_top    #(
     end 
     endgenerate
     
-    always @(posedge clk) begin     
+    always @(posedge clk) begin
         /* verilator lint_off WIDTH */
         if(CAST_TYPE == "UNICAST") begin
-        /* verilator lint_on WIDTH */    
+        /* verilator lint_on WIDTH */
             if(flit_out_wr && hdr_flit && dest_e_addr_o [EAw-1 : 0]  == current_e_addr  && SELF_LOOP_EN == "NO") begin 
                 $display("%t: ERROR: The self-loop is not enabled in the router while a packet is injected to the NoC with identical source and destination address in endpoint (%h).: %m",$time, dest_e_addr_o );
                 $finish;
-            end                
+            end
             if(flit_in_wr && rd_hdr_flg && (rd_des_e_addr[EAw-1 : 0]  != current_e_addr )) begin 
                 $display("%t: ERROR: packet with destination %d (code %h) which is sent by source %d (code %h) has been recieved in wrong destination %d (code %h).  %m",$time,dst_id,rd_des_e_addr, src_id,rd_src_e_addr, current_id,current_e_addr);
                 $finish;
@@ -665,7 +667,7 @@ module  traffic_gen_top    #(
     
     assign {rsv_pck_number,rsv_flit_counter}=statistics;
     
-    integer ii;    
+    integer ii;
     always @ (`pronoc_clk_reset_edge )begin 
         if(`pronoc_reset) begin
             for(ii=0;ii<V;ii=ii+1'b1)begin
@@ -812,11 +814,9 @@ module injection_ratio_ctrl #
     
 endmodule
 
-
 /*************************************
         packet_buffer
 **************************************/
-
 module packet_gen 
 #(   
     parameter NOC_ID=0,

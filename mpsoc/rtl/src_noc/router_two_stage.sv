@@ -38,7 +38,7 @@ module router_two_stage #(
         current_r_addr,// connected to constant parameter  
         
         chan_in,
-        chan_out,    
+        chan_out,
         
         ctrl_in,
         ctrl_out,
@@ -55,7 +55,7 @@ module router_two_stage #(
         reset
 );
     
-    `NOC_CONF  
+    `NOC_CONF
     
     // The current/neighbor routers addresses/port. These values are fixed in each router and they are supposed to be given as parameter. 
     // However, in order to give an identical RTL code to each router, they are given as input ports. The identical RTL code reduces the
@@ -75,7 +75,7 @@ module router_two_stage #(
     output  iport_info_t iport_info  [P-1 : 0];
     output  oport_info_t oport_info  [P-1 : 0]; 
     
-    input   smart_ctrl_t   smart_ctrl_in [P-1 : 0];    
+    input   smart_ctrl_t   smart_ctrl_in [P-1 : 0];
     
     vsa_ctrl_t   vsa_ctrl    [P-1 : 0];   
     
@@ -85,7 +85,7 @@ module router_two_stage #(
         PVV = PV * V,    
         P_1 = ( SELF_LOOP_EN=="NO")?  P-1 : P,
         PP_1 = P_1 * P,
-        PVP_1 = PV * P_1,          
+        PVP_1 = PV * P_1,
         PFw = P*Fw,
         CONG_ALw = CONGw* P,    //  congestion width per router
         W = WEIGHTw,
@@ -131,7 +131,7 @@ module router_two_stage #(
     wire  [PV-1 : 0] assigned_ovc_not_full_all;
     wire  [PVV-1: 0] masked_ovc_request_all;    
     wire  [PV-1 : 0] vc_weight_is_consumed_all;
-    wire  [P-1  : 0] iport_weight_is_consumed_all;       
+    wire  [P-1  : 0] iport_weight_is_consumed_all;
     wire  [PV-1 : 0] vsa_ovc_released_all;  
     wire  [PV-1 : 0] vsa_credit_decreased_all;
     
@@ -155,27 +155,32 @@ module router_two_stage #(
     wire [CRDTw-1 : 0 ] credit_init_val_in  [P-1 : 0][V-1 : 0];
     wire [CRDTw-1 : 0 ] credit_init_val_out [P-1 : 0][V-1 : 0];    
     
+    router_info_t router_info;
+    assign router_info.current_r_id=current_r_id;
+    assign router_info.current_r_addr=current_r_addr;
+    assign router_info.neighbors_r_addr[PRAw-1  :  0] = neighbors_r_addr;
+    
     genvar i,j;
-    generate         
+    generate
         for (i=0; i<P; i=i+1 ) begin :p_
             
             if(CAST_TYPE == "UNICAST") begin : uni 
-                assign chan_in_tmp[i] = chan_in[i];            
+                assign chan_in_tmp[i] = chan_in[i];
             end else begin : multi
                 multicast_chan_in_process #(
                     .NOC_ID(NOC_ID),
-                    .P(P), 
-                    .SW_LOC  (i)
+                    .P(P),
+                    .SW_LOC(i)
                 ) multicast_process (
-                    .endp_port       (ctrl_in[i].endp_port),
-                    .current_r_addr  (current_r_addr ), 
-                    .chan_in         (chan_in[i]     ), 
-                    .chan_out        (chan_in_tmp[i] ),
-                    .clk             (clk)
-                );            
-            end            
+                    .endp_port(ctrl_in[i].endp_port),
+                    .current_r_addr(current_r_addr),
+                    .chan_in(chan_in[i]),
+                    .chan_out(chan_in_tmp[i]),
+                    .clk(clk)
+                );
+            end
             
-            assign  neighbors_r_addr  [(i+1)*RAw-1:  i*RAw] = ctrl_in[i].neighbors_r_addr;            
+            assign  neighbors_r_addr  [(i+1)*RAw-1:  i*RAw] = ctrl_in[i].neighbors_r_addr;
             assign  flit_in_all       [(i+1)*Fw-1:  i*Fw] = chan_in_tmp[i].flit;
             assign  flit_in_wr_all    [i] = chan_in_tmp[i].flit_wr;   
             assign  credit_in_all     [(i+1)*V-1:  i*V] = chan_in_tmp[i].credit;
@@ -183,15 +188,15 @@ module router_two_stage #(
             
             assign  ctrl_out[i].neighbors_r_addr = current_r_addr;
             assign  ctrl_out[i].endp_port =1'b0; 
-            assign  ctrl_out[i].hetero_ovc_presence= hetero_ovc_unary(current_r_id,i);     
+            assign  ctrl_out[i].hetero_ovc_presence= hetero_ovc_unary(current_r_id,i);
             
-            assign  chan_out[i].flit=          flit_out_all       [(i+1)*Fw-1:  i*Fw];       
-            assign  chan_out[i].flit_wr=       flit_out_wr_all    [i];                       
+            assign  chan_out[i].flit=          flit_out_all       [(i+1)*Fw-1:  i*Fw];
+            assign  chan_out[i].flit_wr=       flit_out_wr_all    [i];
             assign  chan_out[i].credit=        credit_out_all     [(i+1)*V-1:  i*V] | credit_release_out [(i+1)*V-1:  i*V];         
             assign  chan_out[i].congestion=    congestion_out_all [(i+1)*CONGw-1:  i*CONGw];
             
             assign  iport_info[i].swa_first_level_grant =nonspec_first_arbiter_granted_ivc_all[(i+1)*V-1:  i*V]; 
-            assign  iport_info[i].swa_grant = ivc_num_getting_sw_grant[(i+1)*V-1:  i*V];             
+            assign  iport_info[i].swa_grant = ivc_num_getting_sw_grant[(i+1)*V-1:  i*V];
             assign  iport_info[i].any_ivc_get_swa_grant=    any_ivc_sw_request_granted_all[i]; 
             assign  iport_info[i].ivc_req = ivc_request_all [(i+1)*V-1:  i*V]; 
             
@@ -206,7 +211,7 @@ module router_two_stage #(
             if(SELF_LOOP_EN == "NO") begin :nslp
                 add_sw_loc_one_hot #(
                     .P(P),
-                    .SW_LOC(i)    
+                    .SW_LOC(i)
                 )add(
                     .destport_in(granted_dest_port_all[(i+1)*P_1-1:  i*P_1]),
                     .destport_out(iport_info[i].granted_oport_one_hot[P-1 : 0])
@@ -226,24 +231,21 @@ module router_two_stage #(
                     .reset(reset), 
                     .en (ctrl_in[i].credit_release_en[j]), 
                     .credit_out(credit_release_out[i*V+j])
-                );                
+                );
                 
                 assign ctrl_out[i].credit_release_en[j] =1'b0;
                 assign credit_init_val_in[i][j]       = ctrl_in[i].credit_init_val[j];
                 assign ctrl_out[i].credit_init_val[j] = credit_init_val_out [i][j];        
-                
-            end            
-            
-        end        
+            end
+        end
     endgenerate
     
-    inout_ports #(        
+    inout_ports #(
         .NOC_ID(NOC_ID),
         .ROUTER_ID(ROUTER_ID),
         .P(P)
     ) the_inout_ports (
-        .current_r_addr(current_r_addr),
-        .neighbors_r_addr(neighbors_r_addr),
+        .router_info(router_info),
         .flit_in_all(flit_in_all),
         .flit_in_wr_all(flit_in_wr_all),
         .credit_out_all(credit_out_all),
@@ -289,11 +291,11 @@ module router_two_stage #(
         .crossbar_flit_out_wr_all(crossbar_flit_out_wr_all),
         .vsa_ovc_released_all(vsa_ovc_released_all),
         .vsa_credit_decreased_all(vsa_credit_decreased_all)
-    );    
+    );
     
     combined_vc_sw_alloc #(
         .NOC_ID(NOC_ID),
-        .P(P)            
+        .P(P)
     ) vsa (
         .dest_port_all(dest_port_all), 
         .masked_ovc_request_all(masked_ovc_request_all),            
@@ -409,7 +411,7 @@ module router_two_stage #(
     else begin : rra_    
         assign flit_out_all  =  link_flit_out_all;   
         assign refresh_w_counter = 1'b0;
-    end        
+    end
     endgenerate 
     
     assign  flit_out_wr_all = link_flit_out_wr_all;
@@ -473,7 +475,7 @@ module router_two_stage #(
         end else begin 
             if(flit_in_wr_all>0 )begin 
                 counter <=0;
-                flit_counter<=flit_counter+1'b1;                
+                flit_counter<=flit_counter+1'b1;
             end else begin 
                 counter <= counter+1'b1;
                 if( counter == 512 ) $display("%t : total flits received in (x=%d,Y=%d) is %d ",$time,current_r_addr,current_y,flit_counter);

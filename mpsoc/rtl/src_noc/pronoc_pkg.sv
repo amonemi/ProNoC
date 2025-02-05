@@ -184,8 +184,18 @@ package pronoc_pkg;
         bit nearly_full;
         bit empty;
     }ovc_info_t;
-    localparam  OVC_INFO_w = $bits( ovc_info_t);    
-    
+    localparam  OVC_INFO_w = $bits( ovc_info_t);
+
+/**************
+*   router id
+**************/
+    typedef struct packed {
+        logic [31:0] current_r_id;
+        logic [RAw-1 :  0] current_r_addr;
+        logic [MAX_P*RAw-1:  0] neighbors_r_addr;
+    } router_info_t;
+    localparam  ROUTER_INFO_w = $bits(router_info_t);
+
 /*********************
 * router_chanels
 *********************/
@@ -227,7 +237,7 @@ package pronoc_pkg;
     localparam BYPASSw = log2(SMART_NUM+1);
     typedef struct packed {
         logic [SMART_NUM-1: 0] requests;
-        logic [V-1       : 0] ovc;        
+        logic [V-1       : 0] ovc;
         logic [EAw-1     : 0] dest_e_addr;
         bit   hdr_flit;
         bit   flit_in_bypassed; 
@@ -251,7 +261,10 @@ package pronoc_pkg;
         ctrl_chanel_t    ctrl_chanel;
     } smartflit_chanel_t;
     localparam SMARTFLIT_CHANEL_w = $bits(smartflit_chanel_t); 
-    
+
+/****************
+*   functions
+'***************/ 
     function automatic integer hetero_ivc_decimal;
         input integer router_id;
         input integer router_port_num;  //router port num

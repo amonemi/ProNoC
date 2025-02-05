@@ -33,8 +33,7 @@ module input_ports #(
     parameter ROUTER_ID=0,
     parameter P=5
 )(
-    current_r_addr,
-    neighbors_r_addr,
+    router_info,
     ivc_num_getting_sw_grant,// for non spec ivc_num_getting_first_sw_grant,
     any_ivc_sw_request_granted_all,
     flit_in_all,
@@ -42,7 +41,7 @@ module input_ports #(
     reset_ivc_all,
     flit_is_tail_all,
     ivc_request_all,
-    dest_port_all,            
+    dest_port_all,
     flit_out_all,
     
     assigned_ovc_not_full_all,
@@ -87,8 +86,7 @@ module input_ports #(
         PRAw= P * RAw;    
     
     input   reset,clk;
-    input   [RAw-1 : 0] current_r_addr;
-    input   [PRAw-1:  0]  neighbors_r_addr;
+    input   router_info_t router_info;
     output  [PV-1 : 0] ivc_num_getting_sw_grant;
     input   [P-1 : 0] any_ivc_sw_request_granted_all;
     input   [PFw-1 : 0] flit_in_all;
@@ -126,7 +124,7 @@ module input_ports #(
     
     genvar i;
     generate 
-    for(i=0;i<P;i=i+1)begin : Port_             
+    for(i=0;i<P;i=i+1)begin : Port_
         
         input_queue_per_port
         // iport_reg_base
@@ -134,13 +132,12 @@ module input_ports #(
             .NOC_ID(NOC_ID),
             .ROUTER_ID(ROUTER_ID),
             .SW_LOC(i),
-            .P(P)       
+            .P(P)
         ) the_input_queue_per_port (
+            .router_info(router_info),
             .credit_out(credit_out_all [(i+1)*V-1 : i*V]),
-            .current_r_addr(current_r_addr),    
-            .neighbors_r_addr(neighbors_r_addr),
             .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant  [(i+1)*V-1 : i*V]),// for non spec ivc_num_getting_first_sw_grant,
-            .any_ivc_sw_request_granted(any_ivc_sw_request_granted_all  [i]),    
+            .any_ivc_sw_request_granted(any_ivc_sw_request_granted_all  [i]),
             .flit_in(flit_in_all[(i+1)*Fw-1 : i*Fw]),
             .flit_in_wr(flit_in_wr_all[i]),
             .reset_ivc(reset_ivc_all [(i+1)*V-1 : i*V]),
@@ -169,8 +166,7 @@ module input_ports #(
             .ssa_ctrl_in(ssa_ctrl_in [i]),
             .credit_init_val_out(credit_init_val_out[i])
         );
-        
-    end//for      
+    end//for
     endgenerate
     
 endmodule 
@@ -185,9 +181,8 @@ module input_queue_per_port #(
     parameter P = 5,     // router port num
     parameter SW_LOC = 0
 ) (
-    current_r_addr,
+    router_info,
     credit_out,
-    neighbors_r_addr,
     ivc_num_getting_sw_grant,// for non spec ivc_num_getting_first_sw_grant,
     any_ivc_sw_request_granted,
     flit_in,
@@ -196,7 +191,7 @@ module input_queue_per_port #(
     flit_is_tail,
     ivc_request,
     dest_port,
-    flit_out,            
+    flit_out,
     assigned_ovc_not_full,
     ovc_is_assigned,
     sel,
@@ -205,9 +200,9 @@ module input_queue_per_port #(
     reset,
     clk,
     nonspec_first_arbiter_granted_ivc,
-    destport_clear,    
+    destport_clear,
     iport_weight,
-    oports_weight,  
+    oports_weight,
     vc_weight_is_consumed,
     iport_weight_is_consumed,
     refresh_w_counter,
@@ -252,13 +247,12 @@ module input_queue_per_port #(
     /* verilator lint_on WIDTH */   
     
     input reset, clk;
+    input   router_info_t router_info;
     output  [V-1 : 0] credit_out;
-    input   [RAw-1 : 0] current_r_addr;
-    input   [PRAw-1:  0]  neighbors_r_addr;
     output  [V-1 : 0] ivc_num_getting_sw_grant;
-    input                      any_ivc_sw_request_granted;
+    input   any_ivc_sw_request_granted;
     input   [Fw-1 : 0] flit_in;
-    input                       flit_in_wr;
+    input   flit_in_wr;
     output  [V-1 : 0] reset_ivc;
     output  [V-1 : 0] flit_is_tail;
     output  [V-1 : 0] ivc_request;
@@ -269,7 +263,7 @@ module input_queue_per_port #(
     input   [V-1 : 0] sel;    
     input   [V-1 : 0] nonspec_first_arbiter_granted_ivc;
     
-    input   [DSTPw-1 : 0] destport_clear [V-1 : 0];            
+    input   [DSTPw-1 : 0] destport_clear [V-1 : 0];
     output  [WEIGHTw-1 : 0] iport_weight;
     output  [V-1 : 0] vc_weight_is_consumed;
     output  iport_weight_is_consumed;
@@ -284,6 +278,9 @@ module input_queue_per_port #(
     input   vsa_ctrl_t  vsa_ctrl_in;
     input   ssa_ctrl_t  ssa_ctrl_in;
     output  [CRDTw-1 : 0 ] credit_init_val_out [V-1 : 0];
+
+    wire   [RAw-1 : 0] current_r_addr = router_info.current_r_addr;
+    wire   [PRAw-1: 0] neighbors_r_addr = router_info.neighbors_r_addr[PRAw-1: 0];
     
     wire  [DSTPw-1 : 0] dest_port_encoded [V-1 : 0];
     //for multicast
@@ -321,7 +318,7 @@ module input_queue_per_port #(
     logic [VV-1 : 0] assigned_ovc_num_next;
     
     wire odd_column = current_r_addr[0]; 
-    wire [P-1 : 0] destport_one_hot [V-1 :0];        
+    wire [P-1 : 0] destport_one_hot [V-1 :0];
     wire [V-1 : 0] mux_out[V-1 : 0];
     
     wire [V-1 : 0] dstport_fifo_not_empty;
@@ -383,10 +380,10 @@ module input_queue_per_port #(
     //extract header flit info
     extract_header_flit_info #(
         .NOC_ID(NOC_ID),
-        .DATA_w(0)            
+        .DATA_w(0)
     ) header_extractor (
         .flit_in(flit_in),
-        .flit_in_wr(flit_in_wr),         
+        .flit_in_wr(flit_in_wr),
         .class_o(class_in),
         .destport_o(destport_in),
         .dest_e_addr_o(dest_e_addr_in),
@@ -691,8 +688,8 @@ module input_queue_per_port #(
                 .recieve_more_than_0 (),
                 .recieve_more_than_1 (),
                 .reset (reset),
-                .clk (clk)                
-            );          
+                .clk (clk)
+            );
             
             /* verilator lint_off WIDTH */    
             if( ROUTE_TYPE=="DETERMINISTIC") begin : dtrmn_dest
@@ -713,7 +710,7 @@ module input_queue_per_port #(
                     .recieve_more_than_1(),
                     .reset(reset),
                     .clk(clk) 
-                );               
+                );
                 
             end else begin : adptv_dest   
                 
@@ -733,9 +730,9 @@ module input_queue_per_port #(
                     .reset(reset),
                     .clk(clk),
                     .clear(destport_clear[i])   // clear other destination ports once one of them is selected
-                );                  
+                );
                 
-            end//   : adptv_dest            
+            end//   : adptv_dest
         end//unicast
         
         destp_generator #(
@@ -753,8 +750,8 @@ module input_queue_per_port #(
             .CAST_TYPE(CAST_TYPE)
         ) decoder (
             .destport_one_hot (destport_one_hot[i]),
-            .dest_port_encoded(dest_port_encoded[i]),             
-            .dest_port_out(dest_port[(i+1)*P_1-1 : i*P_1]),   
+            .dest_port_encoded(dest_port_encoded[i]),
+            .dest_port_out(dest_port[(i+1)*P_1-1 : i*P_1]),
             .endp_localp_num(endp_localp_num[(i+1)*PLw-1 : i*PLw]),
             .swap_port_presel(swap_port_presel[i]),
             .port_pre_sel(port_pre_sel),
@@ -764,7 +761,7 @@ module input_queue_per_port #(
         /* verilator lint_off WIDTH */  
         if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && (T3>1) && (CAST_TYPE== "UNICAST")) begin : multi_local
         /* verilator lint_on WIDTH */  
-            // the router has multiple local ports. Save the destination local port           
+            // the router has multiple local ports. Save the destination local port
             
             fwft_fifo #(
                 .DATA_WIDTH(ELw),
@@ -781,10 +778,10 @@ module input_queue_per_port #(
                 .recieve_more_than_1(),
                 .reset(reset),
                 .clk(clk) 
-            );       
-        /* verilator lint_off WIDTH */  
+            );
+        /* verilator lint_off WIDTH */
         end else if ( TOPOLOGY == "FMESH" && CAST_TYPE== "UNICAST") begin : fmesh
-        /* verilator lint_on WIDTH */  
+        /* verilator lint_on WIDTH */
             
             fwft_fifo #(
                 .DATA_WIDTH(Pw),
@@ -807,7 +804,7 @@ module input_queue_per_port #(
             assign endp_localp_num[(i+1)*PLw-1 : i*PLw] = {PLw{1'bx}}; 
         end
         
-        /* verilator lint_off WIDTH */    
+        /* verilator lint_off WIDTH */
         if(SWA_ARBITER_TYPE != "RRA")begin  : wrra
         /* verilator lint_on WIDTH */
             /*
@@ -815,21 +812,21 @@ module input_queue_per_port #(
                 .WEIGHTw(WEIGHTw)
             )  wctrl_per_vc (   
                 .sw_is_granted(ivc_num_getting_sw_grant[i]),
-                .flit_is_tail(flit_is_tail[i]),               
-                .weight_is_consumed_o(vc_weight_is_consumed[i]),    
-                .iport_weight(1),  //(iport_weight),               
+                .flit_is_tail(flit_is_tail[i]),
+                .weight_is_consumed_o(vc_weight_is_consumed[i]),
+                .iport_weight(1),  //(iport_weight),
                 .clk(clk),
-                .reset(reset)           
+                .reset(reset)
             );
-             */     
+             */
             assign vc_weight_is_consumed[i] = 1'b1;
         end else begin :no_wrra
-            assign vc_weight_is_consumed[i] = 1'bX;        
-        end                  
+            assign vc_weight_is_consumed[i] = 1'bX;
+        end
         
-    end//for i    
+    end//for i
     
-    /* verilator lint_off WIDTH */    
+    /* verilator lint_off WIDTH */
     if(SWA_ARBITER_TYPE != "RRA")begin  : wrra
     /* verilator lint_on WIDTH */
         wire granted_flit_is_tail;
@@ -850,22 +847,22 @@ module input_queue_per_port #(
             .WRRA_CONFIG_INDEX(WRRA_CONFIG_INDEX),
             .P(P),
             .SELF_LOOP_EN(SELF_LOOP_EN)
-        ) wctrl_iport (   
+        ) wctrl_iport (
             .sw_is_granted(any_ivc_sw_request_granted),
-            .flit_is_tail(granted_flit_is_tail),               
-            .weight_is_consumed_o(iport_weight_is_consumed),    
+            .flit_is_tail(granted_flit_is_tail),
+            .weight_is_consumed_o(iport_weight_is_consumed),
             .iport_weight(iport_weight),
             .oports_weight(oports_weight),
-            .granted_dest_port(granted_dest_port), 
-            .refresh_w_counter(refresh_w_counter),              
+            .granted_dest_port(granted_dest_port),
+            .refresh_w_counter(refresh_w_counter),
             .clk(clk),
-            .reset(reset)           
+            .reset(reset)
         );     
         
     end else begin :no_wrra
         assign iport_weight_is_consumed=1'bX;
-        assign oports_weight = {WP{1'bX}};          
-    end   
+        assign oports_weight = {WP{1'bX}};
+    end
     /* verilator lint_off WIDTH */
     wire [V-1 : 0] flit_buffer_vc_num_rd = (COMBINATION_TYPE == "COMB_NONSPEC")?
     /* verilator lint_on WIDTH */
@@ -874,11 +871,11 @@ module input_queue_per_port #(
         
     flit_buffer #(
         .B(PORT_B),   // buffer space :flit per VC,
-        .V(PORT_IVC) 
-    ) the_flit_buffer (            
+        .V(PORT_IVC)
+    ) the_flit_buffer (
         .din(flit_in),     // Data in
-        .vc_num_wr(vc_num_in [PORT_IVC-1 : 0]),//write virtual channel   
-        .vc_num_rd(flit_buffer_vc_num_rd [PORT_IVC-1 : 0]),//read virtual channel     
+        .vc_num_wr(vc_num_in [PORT_IVC-1 : 0]),//write virtual channel
+        .vc_num_rd(flit_buffer_vc_num_rd [PORT_IVC-1 : 0]),//read virtual channel
         .wr_en(flit_in_wr),   // Write enable
         .rd_en(any_ivc_sw_request_granted),     // Read the next word
         .dout(buffer_out),    // Data out
@@ -889,14 +886,14 @@ module input_queue_per_port #(
         .multiple_dest( multiple_dest [PORT_IVC-1 : 0]),
         .sub_rd_ptr_ld(reset_ivc [PORT_IVC-1 : 0]) ,
         .flit_is_tail(flit_is_tail [PORT_IVC-1 : 0])
-    );   
+    );
     
     if(PORT_IVC != V) begin : hetero
         assign ivc_not_empty [V-1 : PORT_IVC]={(V-PORT_IVC){1'b0}};
         assign flit_is_tail [V-1 : PORT_IVC]={(V-PORT_IVC){1'b0}};
     end
     
-    /* verilator lint_off WIDTH */    
+    /* verilator lint_off WIDTH */
     if(CAST_TYPE== "UNICAST") begin : unicast
     /* verilator lint_on WIDTH */
         look_ahead_routing #(
@@ -904,10 +901,10 @@ module input_queue_per_port #(
             .T1(T1),
             .T2(T2),
             .T3(T3),
-            .T4(T4), 
-            .P(P),       
-            .RAw(RAw),  
-            .EAw(EAw), 
+            .T4(T4),
+            .P(P),
+            .RAw(RAw),
+            .EAw(EAw),
             .DAw(DAw),
             .DSTPw(DSTPw),
             .SW_LOC(SW_LOC),
@@ -924,13 +921,11 @@ module input_queue_per_port #(
             .reset(reset),
             .clk(clk)
         );
-    end // unicast                
-    
-    endgenerate    
-    
+    end // unicast
+    endgenerate
     header_flit_update_lk_route_ovc #(
         .NOC_ID(NOC_ID),
-        .P(P)    
+        .P(P)
     ) the_flit_update (
         .flit_in (buffer_out),
         .flit_out (flit_out),
@@ -942,32 +937,32 @@ module input_queue_per_port #(
         .sel (sel),
         .reset (reset),
         .clk (clk)
-    );    
+    );
     
     `ifdef SIMULATION
-    generate 
-    if(DEBUG_EN) begin :debg    
+    generate
+    if(DEBUG_EN) begin :debg
         
-        always @ (posedge clk) begin            
-            if((|vsa_ctrl_in.ivc_num_getting_sw_grant)  & (|ssa_ctrl_in.ivc_num_getting_sw_grant))begin 
+        always @ (posedge clk) begin
+            if((|vsa_ctrl_in.ivc_num_getting_sw_grant)  & (|ssa_ctrl_in.ivc_num_getting_sw_grant))begin
                 $display("%t: ERROR: VSA/SSA conflict: an input port cannot get both sva and ssa grant at the same time %m",$time);
                 $finish;
-            end            
+            end
         end//always
         
-        for (i=0;i<V;i=i+1)begin : V_       
+        for (i=0;i<V;i=i+1)begin : V_
             always @ (posedge clk) begin
                 if(vsa_ctrl_in.ivc_num_getting_ovc_grant[i] | ssa_ctrl_in.ivc_num_getting_ovc_grant[i] | (smart_ctrl_in.ivc_num_getting_ovc_grant[i] & (PCK_TYPE == "MULTI_FLIT"))  )begin 
                     if( ~ $onehot (mux_out[i])) begin 
                         $display("%t: ERROR: granted OVC num is not onehot coded %b: %m",$time,mux_out[i]);
                         $finish;
                     end
-                end                    
+                end
                 if( ~ $onehot0( {vsa_ctrl_in.ivc_num_getting_ovc_grant[i],ssa_ctrl_in.ivc_num_getting_ovc_grant[i],(smart_ctrl_in.ivc_num_getting_ovc_grant[i]&& (PCK_TYPE == "MULTI_FLIT"))})) begin 
                     $display("%t: ERROR: ivc num %d getting more than one ovc grant from VSA,SSA,SMART: %m",$time,i);
                     $finish;
                 end
-            end//always     
+            end//always
             
             always @(posedge clk) begin
                 if((dest_port [(i+1)*P_1-1 : i*P_1] == {P_1{1'b0}})  && (ivc_request[i]==1'b1)) begin 
@@ -977,9 +972,9 @@ module input_queue_per_port #(
             end
         end//for
         
-        /* verilator lint_off WIDTH */  
+        /* verilator lint_off WIDTH */
         if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && CAST_TYPE== "UNICAST") begin : mesh_based
-        /* verilator lint_on WIDTH */  
+        /* verilator lint_on WIDTH */
             
             debug_mesh_tori_route_ckeck #(
                 .T1(T1),
@@ -1005,37 +1000,37 @@ module input_queue_per_port #(
                 .current_r_addr(current_r_addr),
                 .dest_e_addr_in(dest_e_addr_in),
                 .src_e_addr_in(src_e_addr_in),
-                .destport_in(destport_in)      
-            );   
-        end//mesh 
+                .destport_in(destport_in)
+            );
+        end//mesh
         if (PORT_IVC != V) begin : hetero
             always @(posedge clk) begin
-                if ((flit_in_wr & (|vc_num_in[V-1 : PORT_IVC]))) begin
+                if (flit_in_wr &  (|(vc_num_in & ~hetero_ovc_unary(router_info.current_r_id , SW_LOC)))) begin
                     $display("%t: ERROR: Input port supports %0d VCs, but received a flit targeting an out-of-bound VC: %b. Module: %m\n", 
                     $time, PORT_IVC, vc_num_in[V-1 : PORT_IVC]);
                     $finish;
                 end
             end
         end // hetero
-    end//DEBUG_EN    
+    end//DEBUG_EN
     
-    `ifdef MONITORE_PATH     
+    `ifdef MONITORE_PATH
     genvar j;
     reg[V-1 :0] t1;
-    for (j=0;j<V;j=j+1)begin : lp        
+    for (j=0;j<V;j=j+1)begin : lp
         always @(posedge clk) begin
-            if(`pronoc_reset)begin 
-                t1[j]<=1'b0;               
-            end else begin 
-                if(flit_in_wr >0 && vc_num_in[j] && t1[j]==0)begin 
+            if(`pronoc_reset)begin
+                t1[j]<=1'b0;
+            end else begin
+                if(flit_in_wr >0 && vc_num_in[j] && t1[j]==0)begin
                     $display("%t : Parser:current_r=%h, class_in=%h, destport_in=%h, dest_e_addr_in=%h, src_e_addr_in=%h, vc_num_in=%h,hdr_flit_wr=%h, hdr_flg_in=%h,tail_flg_in=%h ",$time,current_r_addr, class_in, destport_in, dest_e_addr_in, src_e_addr_in, vc_num_in,hdr_flit_wr, hdr_flg_in,tail_flg_in);
                     t1[j]<=1;
-                end           
+                end
             end
         end
     end
     `endif//MONITORE_PATH
-    endgenerate 
+    endgenerate
 `endif// SIMULATION
 endmodule
 
@@ -1056,8 +1051,8 @@ module destp_generator #(
     parameter CAST_TYPE = "UNICAST"
 )(
     destport_one_hot,
-    dest_port_encoded,             
-    dest_port_out,   
+    dest_port_encoded,
+    dest_port_out,
     endp_localp_num,
     swap_port_presel,
     port_pre_sel,
@@ -1065,16 +1060,16 @@ module destp_generator #(
 );
     
     localparam P_1= ( SELF_LOOP_EN=="NO")?  P-1 : P;
-    input [DSTPw-1 : 0]  dest_port_encoded;             
+    input [DSTPw-1 : 0]  dest_port_encoded;
     input [PLw-1 : 0] endp_localp_num;
-    output [P_1-1: 0] dest_port_out;  
+    output [P_1-1: 0] dest_port_out;
     output [P-1 : 0] destport_one_hot;
     input             swap_port_presel;
     input  [PPSw-1 : 0] port_pre_sel;
     input odd_column;
     
-    generate    
-    /* verilator lint_off WIDTH */    
+    generate
+    /* verilator lint_off WIDTH */
     if(CAST_TYPE!= "UNICAST") begin : muticast
     /* verilator lint_on WIDTH */
         // destination port is not coded for multicast/broadcast
@@ -1086,7 +1081,7 @@ module destp_generator #(
                 .destport_in(dest_port_encoded),
                 .destport_out(dest_port_out)
             );
-        end else begin : slp        
+        end else begin : slp
             assign dest_port_out = dest_port_encoded;
         end
     /* verilator lint_off WIDTH */
@@ -1104,7 +1099,7 @@ module destp_generator #(
             .dest_port_in_encoded(dest_port_encoded),
             .dest_port_out(dest_port_out)
         );
-    /* verilator lint_off WIDTH */ 
+    /* verilator lint_off WIDTH */
     end else  if (TOPOLOGY == "TREE") begin :tree
     /* verilator lint_on WIDTH */
         tree_destp_generator #(
@@ -1116,7 +1111,7 @@ module destp_generator #(
         ) destp_generator (
             .dest_port_in_encoded(dest_port_encoded),
             .dest_port_out(dest_port_out)
-        );    
+        );
     /* verilator lint_off WIDTH */
     end else if(TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH"|| TOPOLOGY == "TORUS") begin : mesh
     /* verilator lint_on WIDTH */
@@ -1171,22 +1166,22 @@ module destp_generator #(
         ) destp_generator (
             .dest_port_in_encoded(dest_port_encoded),
             .dest_port_out(dest_port_out)
-        );    
+        );
     end
     /* verilator lint_off WIDTH */
     if(SELF_LOOP_EN=="NO") begin : nslp
     /* verilator lint_on WIDTH */
         add_sw_loc_one_hot #(
             .P(P),
-            .SW_LOC(SW_LOC)    
+            .SW_LOC(SW_LOC)
         )add (
             .destport_in(dest_port_out),
             .destport_out(destport_one_hot)
         );
         
     end else begin : slp
-        assign destport_one_hot = dest_port_out;        
-    end    
+        assign destport_one_hot = dest_port_out;
+    end
     endgenerate
     
 endmodule
@@ -1233,16 +1228,16 @@ module custom_topology_destp_decoder #(
             .destport_in(dest_port_one_hot[P-1 : 0]),
             .destport_out(dest_port_out)
         );
-    end else begin : slp        
+    end else begin : slp
         assign dest_port_out = dest_port_one_hot;
     end
     endgenerate
     
-    `ifdef SIMULATION    
+    `ifdef SIMULATION
     initial begin
         if( ROUTE_TYPE != "DETERMINISTIC") begin
             $display("%t: ERROR: Custom topologies can only support deterministic routing in the current version of ProNoC",$time);
-            $finish; 
+            $finish;
         end
     end
     `endif
