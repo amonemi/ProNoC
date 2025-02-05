@@ -450,7 +450,7 @@ module input_queue_per_port #(
         assign destport_in_encoded = destport_in;    
     end
     
-    for (i=0;i<V; i=i+1) begin: V_
+    for (i=0;i<PORT_IVC; i=i+1) begin: V_
         
         assign credit_init_val_out [i] = PORT_B [CRDTw-1 : 0 ];
         
@@ -505,16 +505,16 @@ module input_queue_per_port #(
         if(PCK_TYPE == "MULTI_FLIT") begin : multi_flit 
             
             always @ (*) begin
-                ovc_is_assigned_next[i] = ovc_is_assigned[i];        
+                ovc_is_assigned_next[i] = ovc_is_assigned[i];
                 if( vsa_ctrl_in.ivc_reset[i] |
                         ssa_ctrl_in.ivc_reset[i] |
                         smart_ctrl_in.ivc_reset[i] 
-                    )      ovc_is_assigned_next[i] = 1'b0;                
+                    )      ovc_is_assigned_next[i] = 1'b0;
                 else if( vsa_ctrl_in.ivc_num_getting_ovc_grant[i] |
                         (ssa_ctrl_in.ivc_num_getting_ovc_grant[i] & ~  ssa_ctrl_in.ivc_single_flit_pck[i])|
                         (smart_ctrl_in.ivc_num_getting_ovc_grant[i] & ~  smart_ctrl_in.ivc_single_flit_pck[i])
-                    )       ovc_is_assigned_next[i] = 1'b1;        
-            end//always            
+                    )       ovc_is_assigned_next[i] = 1'b1;
+            end//always 
             
             always @(*) begin
                 assigned_ovc_num_next[(i+1)*V-1 : i*V] = assigned_ovc_num[(i+1)*V-1 : i*V] ;
@@ -658,7 +658,7 @@ module input_queue_per_port #(
                 .NOC_ID(NOC_ID)
             ) sel_arb(
                 .destport_in(dest_port_multi[i]),
-                .destport_out(dest_port_encoded[i])                        
+                .destport_out(dest_port_encoded[i])
             );
             
             //check if we have multiple port to send a packet to 
@@ -668,10 +668,10 @@ module input_queue_per_port #(
                 .in(dest_port_multi[i]),
                 .result(dst_onhot0[i])
             );
-            assign multiple_dest[i]=~dst_onhot0[i];            
+            assign multiple_dest[i]=~dst_onhot0[i];
             
         end else begin : unicast
-            assign multiple_dest[i] = 1'b0;       
+            assign multiple_dest[i] = 1'b0;
             
             //lk_dst_fifo
             fwft_fifo #(
@@ -891,6 +891,18 @@ module input_queue_per_port #(
     if(PORT_IVC != V) begin : hetero
         assign ivc_not_empty [V-1 : PORT_IVC]={(V-PORT_IVC){1'b0}};
         assign flit_is_tail [V-1 : PORT_IVC]={(V-PORT_IVC){1'b0}};
+        for (i=PORT_IVC;i<V; i=i+1) begin: V_
+            assign credit_init_val_out [i] = {CRDTw{1'b0}};
+            assign ivc_info[i] = {IVC_INFO_w{1'b0}};
+            assign candidate_ovcs [(i+1)*V-1 : i*V]={V{1'b0}};
+            assign ovc_is_assigned_next[i] =1'b0;
+            assign class_out[i]={Cw{1'b0}};
+            assign dest_port_multi[i]={DSTPw{1'b0}};
+            assign dest_port_encoded[i]={DSTPw{1'b0}};
+            assign lk_destination_encoded[i]={DSTPw{1'b0}};
+            assign endp_localp_num[(i+1)*PLw-1 : i*PLw]={PLw{1'b0}};
+            assign vc_weight_is_consumed[i]=1'b0;
+        end
     end
     
     /* verilator lint_off WIDTH */
