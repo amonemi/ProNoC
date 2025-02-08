@@ -731,7 +731,7 @@ module multicast_chan_in_process #(
 	
 	
 	
-	//synthesis translate_off	
+	`ifdef SIMULATION	
 	if(DEBUG_EN) begin :debg
 		always @(posedge clk) begin 
 			/* verilator lint_off WIDTH */ 
@@ -754,8 +754,8 @@ module multicast_chan_in_process #(
 			
 		end
 	end//debug
-	//synthesis translate_on
-		
+	`endif
+	
 	endgenerate
 endmodule
 

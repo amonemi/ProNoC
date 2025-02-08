@@ -1,28 +1,27 @@
 `include "pronoc_def.v"
-
 /**********************************************************************
-**	File:  mesh_torus.v
+**    File:  mesh_torus.v
 **    
-**	Copyright (C) 2014-2017  Alireza Monemi
+**    Copyright (C) 2014-2017  Alireza Monemi
 **    
-**	This file is part of ProNoC 
+**    This file is part of ProNoC 
 **
-**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
-**	you can redistribute it and/or modify it under the terms of the GNU
-**	Lesser General Public License as published by the Free Software Foundation,
-**	either version 2 of the License, or (at your option) any later version.
+**    ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**    you can redistribute it and/or modify it under the terms of the GNU
+**    Lesser General Public License as published by the Free Software Foundation,
+**    either version 2 of the License, or (at your option) any later version.
 **
-** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
-** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
-** 	Public License for more details.
+**     ProNoC is distributed in the hope that it will be useful, but WITHOUT
+**     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+**     or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+**     Public License for more details.
 **
-** 	You should have received a copy of the GNU Lesser General Public
-** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**     You should have received a copy of the GNU Lesser General Public
+**     License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
 **
 **
-**	Description: 
-**		
+**    Description: 
+**        
 **
 ***************************************/
 
@@ -49,7 +48,6 @@ module  mesh_torus_vc_alloc_request_gen_adaptive #(
     parameter SSA_EN ="NO",
     parameter PPSw=4,
     parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000   // mask scape vc, valid only for full adaptive       
-   
 )(
     ovc_avalable_all,
     dest_port_coded_all,
@@ -75,7 +73,7 @@ module  mesh_torus_vc_alloc_request_gen_adaptive #(
                 VP_1    =   V       *   P_1,
                 PVDSTPw = PV * DSTPw;
                 
-     localparam LOCAL   =   3'd0,  
+    localparam LOCAL   =   3'd0,  
                 EAST    =   3'd1, 
                 NORTH   =   3'd2,  
                 WEST    =   3'd3,  
@@ -132,48 +130,48 @@ module  mesh_torus_vc_alloc_request_gen_adaptive #(
     for(i=0;i< PV;i=i+1) begin :all_vc_loop
         
        mesh_torus_adaptive_avb_ovc_mux #(
-       	.V(V)       	
+           .V(V)           
        )
        the_adaptive_avb_ovc_mux
        (
-       	.ovc_avalable               (ovc_avalable_perport   [i/V]),
-       	.sel                        (sel                    [i]),
-       	.candidate_ovc_x            (candidate_ovc_x_all    [((i+1)*V)-1 : i*V]),
-       	.candidate_ovc_y            (candidate_ovc_y_all    [((i+1)*V)-1 : i*V]),
-       	.non_assigned_ovc_request   (non_assigned_ovc_request_all[i]),
-       	.xydir                      (dest_port_coded_all     [((i+1)*DSTPw)-1 : ((i+1)*DSTPw)-2]),
-       	.masked_ovc_request         (masked_ovc_request_all [((i+1)*V)-1 : i*V])
+           .ovc_avalable               (ovc_avalable_perport   [i/V]),
+           .sel                        (sel                    [i]),
+           .candidate_ovc_x            (candidate_ovc_x_all    [((i+1)*V)-1 : i*V]),
+           .candidate_ovc_y            (candidate_ovc_y_all    [((i+1)*V)-1 : i*V]),
+           .non_assigned_ovc_request   (non_assigned_ovc_request_all[i]),
+           .xydir                      (dest_port_coded_all     [((i+1)*DSTPw)-1 : ((i+1)*DSTPw)-2]),
+           .masked_ovc_request         (masked_ovc_request_all [((i+1)*V)-1 : i*V])
        );
               
         mesh_torus_port_selector #(
-	       .SW_LOC     (i/V),
-	       .PPSw(PPSw)
+           .SW_LOC     (i/V),
+           .PPSw(PPSw)
         )
         the_portsel
         (
-	       .port_pre_sel       (port_pre_sel_perport[i/V]),
-	       .swap_port_presel   (swap_port_presel[i]),
-	       .sel                (sel[i]),
-	       .dest_port_in       (dest_port_coded_all[((i+1)*DSTPw)-1 : i*DSTPw]),
-	       .y_evc_forbiden     (y_evc_forbiden[i]),
+           .port_pre_sel       (port_pre_sel_perport[i/V]),
+           .swap_port_presel   (swap_port_presel[i]),
+           .sel                (sel[i]),
+           .dest_port_in       (dest_port_coded_all[((i+1)*DSTPw)-1 : i*DSTPw]),
+           .y_evc_forbiden     (y_evc_forbiden[i]),
            .x_evc_forbiden     (x_evc_forbiden[i])
-	      );
+          );
 
         mesh_tori_dspt_clear_gen #(
-        	.SSA_EN(SSA_EN),
-        	.DSTPw(DSTPw),
-        	.SW_LOC(i/V)
+            .SSA_EN(SSA_EN),
+            .DSTPw(DSTPw),
+            .SW_LOC(i/V)
         )
         dspt_clear_gen
         (
-        	.destport_clear(destport_clear_all[((i+1)*DSTPw)-1 : i*DSTPw]),
-        	.ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant[i]),
-        	.sel(sel[i]),
-        	.ssa_ivc_num_getting_ovc_grant(ssa_ivc_num_getting_ovc_grant_all[i])
-        );             	             
-	      	             
-	      
-	    /* verilator lint_off WIDTH */   
+            .destport_clear(destport_clear_all[((i+1)*DSTPw)-1 : i*DSTPw]),
+            .ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant[i]),
+            .sel(sel[i]),
+            .ssa_ivc_num_getting_ovc_grant(ssa_ivc_num_getting_ovc_grant_all[i])
+        );                              
+        
+        
+        /* verilator lint_off WIDTH */   
         if(ROUTE_TYPE ==  "FULL_ADAPTIVE") begin: full_adpt
         /* verilator lint_on WIDTH */ 
             assign candidate_ovc_y_all[((i+1)*V)-1 : i*V] =  (y_evc_forbiden[i]) ? candidate_ovc_all[((i+1)*V)-1 : i*V] & (~ESCAP_VC_MASK) :  candidate_ovc_all[((i+1)*V)-1 : i*V];
@@ -188,14 +186,14 @@ module  mesh_torus_vc_alloc_request_gen_adaptive #(
             )           
             the_swap_port_presel
             (
-            	.avc_unavailable(avc_unavailable[i]),
-            	.y_evc_forbiden(y_evc_forbiden[i]),
-            	.x_evc_forbiden(x_evc_forbiden[i]),
-            	.non_assigned_ovc_request(non_assigned_ovc_request_all[i]),
-            	.sel(sel[i]),
-            	.clk(clk),
-            	.reset(reset),
-            	.swap_port_presel(swap_port_presel[i])
+                .avc_unavailable(avc_unavailable[i]),
+                .y_evc_forbiden(y_evc_forbiden[i]),
+                .x_evc_forbiden(x_evc_forbiden[i]),
+                .non_assigned_ovc_request(non_assigned_ovc_request_all[i]),
+                .sel(sel[i]),
+                .clk(clk),
+                .reset(reset),
+                .swap_port_presel(swap_port_presel[i])
             );
                        
             
@@ -290,8 +288,8 @@ module   mesh_torus_mask_non_assignable_destport #(
         )
         remove_sw_loc
         (
-        	.destport_in(dest_port_in),
-        	.destport_out(dest_port_in_tmp)
+            .destport_in(dest_port_in),
+            .destport_out(dest_port_in_tmp)
         );
         //currently loop-back only can happen in local ports. 
         //Current supported routing algorithms does not results in loop-back in other ports
@@ -321,9 +319,9 @@ module   mesh_torus_mask_non_assignable_destport #(
     )   
     mask_no_self_loop
     (
-    	.dest_port_in(dest_port_in_tmp),
-    	.dest_port_out(dest_port_out_tmp),
-    	.odd_column(odd_column)
+        .dest_port_in(dest_port_in_tmp),
+        .dest_port_out(dest_port_out_tmp),
+        .odd_column(odd_column)
     );
 
 
@@ -866,19 +864,19 @@ module mesh_torus_distance_gen #(
     wire [Yw-1 :   0]src_y,dest_y;
    
     mesh_tori_endp_addr_decode #(
-    	.TOPOLOGY(TOPOLOGY),
-    	.T1(T1),
-    	.T2(T2),
-    	.T3(T3),
-    	.EAw(EAw)
+        .TOPOLOGY(TOPOLOGY),
+        .T1(T1),
+        .T2(T2),
+        .T3(T3),
+        .EAw(EAw)
     )
     src_addr_decode
     (
-    	.e_addr(src_e_addr),
-    	.ex(src_x),
-    	.ey(src_y),
-    	.el(),
-    	.valid()
+        .e_addr(src_e_addr),
+        .ex(src_x),
+        .ey(src_y),
+        .el(),
+        .valid()
     );
     
      mesh_tori_endp_addr_decode #(
@@ -988,24 +986,20 @@ module mesh_torus_ssa_check_destport #(
     destport_encoded, //exsited packet dest port
     destport_in_encoded, // incomming packet dest port
     ss_port_hdr_flit,
-    ss_port_nonhdr_flit 
-//synthesis translate_off 
-//synopsys  translate_off
+    ss_port_nonhdr_flit     
+    `ifdef SIMULATION 
     ,clk,
     ivc_num_getting_sw_grant,
     hdr_flg
-//synopsys  translate_on
-//synthesis translate_on    
+    `endif
     
 );
 
     input [DSTPw-1 : 0] destport_encoded, destport_in_encoded; 
     output ss_port_hdr_flit, ss_port_nonhdr_flit;
-//synthesis translate_off 
-//synopsys  translate_off
-    input clk,   ivc_num_getting_sw_grant,hdr_flg;
-//synopsys  translate_on
-//synthesis translate_on    
+    `ifdef SIMULATION 
+    input clk, ivc_num_getting_sw_grant,hdr_flg;
+    `endif
 
 //MESH, TORUS Topology p=5           
     localparam   LOCAL   =   0,  
@@ -1043,24 +1037,18 @@ generate
         assign ss_port_nonhdr_flit =   bb;
     end
 
-//synthesis translate_off 
-//synopsys  translate_off
-
-if(DEBUG_EN) begin :dbg
-    always @(posedge clk) begin
-       //if(!reset)begin 
-            if(ivc_num_getting_sw_grant & aa & bb & ~hdr_flg) begin 
-                $display("%t: SSA ERROR: There are two output ports that a non-header flit can be sent to. %m",$time);
-                $finish;
-            end
-       //end
-    end 
-end //dbg
-
-//synopsys  translate_on
-//synthesis translate_on
-
-
+    `ifdef SIMULATION 
+    if(DEBUG_EN) begin :dbg
+        always @(posedge clk) begin
+           //if(!reset)begin 
+                if(ivc_num_getting_sw_grant & aa & bb & ~hdr_flg) begin 
+                    $display("%t: SSA ERROR: There are two output ports that a non-header flit can be sent to. %m",$time);
+                    $finish;
+                end
+           //end
+        end 
+    end //dbg
+    `endif
 endgenerate
 endmodule
 
@@ -1077,7 +1065,6 @@ module line_ring_ssa_check_destport #(
     destport_in_encoded, // incomming packet dest port
     ss_port_hdr_flit,
     ss_port_nonhdr_flit 
-
 );
 
     input [DSTPw-1 : 0] destport_encoded, destport_in_encoded; 
@@ -1090,13 +1077,13 @@ wire [P-1   :   0] dest_port_num,assigned_dest_port_num;
   
 
   line_ring_decode_dstport cnv1(
-  	.dstport_one_hot(dest_port_num),
-  	.dstport_encoded(destport_in_encoded)
+      .dstport_one_hot(dest_port_num),
+      .dstport_encoded(destport_in_encoded)
   );
   
    line_ring_decode_dstport cnv2(
-   	.dstport_one_hot(assigned_dest_port_num),
-   	.dstport_encoded(destport_encoded)
+       .dstport_one_hot(assigned_dest_port_num),
+       .dstport_encoded(destport_encoded)
    );
    
      assign ss_port_hdr_flit = dest_port_num [SS_PORT];
@@ -1592,19 +1579,19 @@ module mesh_torus_destp_decoder #(
      end else begin :mlp
 
             wire [P-1 : 0] destport_onehot;
-	
+    
             bin_to_one_hot #(
-            	.BIN_WIDTH(ELw),
-            	.ONE_HOT_WIDTH(NL)
+                .BIN_WIDTH(ELw),
+                .ONE_HOT_WIDTH(NL)
             )
             conv
             (
-            	.bin_code(endp_localp_num),
-            	.one_hot_code(endp_localp_onehot)
+                .bin_code(endp_localp_num),
+                .one_hot_code(endp_localp_onehot)
             );
             
            assign destport_onehot =(portout[0])?  { endp_localp_onehot[NL-1 : 1] ,{(P-NL){1'b0}},endp_localp_onehot[0]}: /*select local destination*/ 
-			                                      { {(NL-1){1'b0}} ,portout};
+                                                  { {(NL-1){1'b0}} ,portout};
            if(SELF_LOOP_EN == "NO") begin :nslp
                 remove_sw_loc_one_hot #(
                     .P(P),
@@ -1655,8 +1642,8 @@ module line_ring_destp_decoder #(
    
           
       line_ring_decode_dstport decoder(
-      	.dstport_one_hot(portout),
-      	.dstport_encoded(dest_port_coded)
+          .dstport_one_hot(portout),
+          .dstport_encoded(dest_port_coded)
       );
           
        

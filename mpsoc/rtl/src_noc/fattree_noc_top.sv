@@ -189,7 +189,3 @@ module  fattree_noc_top #(
     end
     endgenerate
 endmodule
-
-
-
-
