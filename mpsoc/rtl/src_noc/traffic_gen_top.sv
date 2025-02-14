@@ -980,11 +980,11 @@ module distance_gen #(
     generate 
     /* verilator lint_off WIDTH */ 
     if (TOPOLOGY ==    "MESH" || TOPOLOGY ==  "TORUS" || TOPOLOGY == "RING" || TOPOLOGY == "LINE")begin : tori_noc 
+        localparam NY =(TOPOLOGY == "RING" || TOPOLOGY == "LINE")? 1 : T2;
     /* verilator lint_on WIDTH */ 
-    
         mesh_torus_distance_gen #(
             .T1(T1),
-            .T2(T2),
+            .T2(NY),
             .T3(T3),
             .TOPOLOGY(TOPOLOGY),
             .DISTw(DISTw),
