@@ -83,9 +83,10 @@
                     (router_port_num/2)+ current_port : 
                     current_port - (router_port_num/2);
             end else begin 
-                strieght_port = (current_port == (router_port_num-1)/2) ?  router_port_num: //DISABLED;
-                                (current_port < ((router_port_num+1)/2))? ((router_port_num+1)/2)+ current_port : 
-                                                                            current_port - ((router_port_num+1)/2);
+                strieght_port = 
+                    (current_port == (router_port_num-1)/2) ?  router_port_num: //DISABLED;
+                    (current_port < ((router_port_num+1)/2))? ((router_port_num+1)/2)+ current_port : 
+                    current_port - ((router_port_num+1)/2);
             end
         end else begin 
             strieght_port = router_port_num; //DISABLED;
@@ -104,7 +105,7 @@
         end        
     end
     endfunction
-
+    
     /*******************
     *   "RING"  "LINE"  "MESH" TORUS" "FMESH"
     ******************/
@@ -119,8 +120,9 @@
         NLw= log2(NL),
         PPSw_MESH_TORI =4, //port presel width for adaptive routing
         /* verilator lint_off WIDTH */     
-        ROUTE_TYPE_MESH_TORI = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
-                                (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE",
+        ROUTE_TYPE_MESH_TORI = 
+            (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
+            (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE",
         R2R_CHANELS_MESH_TORI=  (TOPOLOGY=="RING" || TOPOLOGY=="LINE")? 2 : 4,   
         R2E_CHANELS_MESH_TORI= NL,    
         RAw_MESH_TORI = ( TOPOLOGY == "RING" || TOPOLOGY == "LINE")? NXw : NXw + NYw,

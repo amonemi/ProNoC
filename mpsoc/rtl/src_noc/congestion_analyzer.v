@@ -76,15 +76,6 @@ module   port_presel_based_dst_ports_vc #(
             .in_all(ovc_status_per_port[i]),
             .out(vc_counter[i])
         );
-        
-        /*
-        parallel_counter #(
-            .IN_WIDTH(V)
-        )counter (
-            .in    (ovc_status_per_port[i]),
-            .out   (vc_counter[i])
-        );
-        */
     end//for
     endgenerate
     /******************* 
@@ -510,16 +501,6 @@ module congestion_out_based_ivc_notgrant #(
         .in_all(ivc_request_not_granted),
         .out(ivc_req_num)
     );
-    /*
-    parallel_counter #(
-        .IN_WIDTH(PV)
-    )
-    ivc_req_counter
-    (
-        .in(ivc_request_not_granted),
-        .out(ivc_req_num)
-    );
-    */
     
     generate 
     if(CONGw==2)begin :w2
@@ -844,14 +825,6 @@ module congestion_out_based_avb_ovc_not_granted_ivc #(
     genvar i;
     generate 
     for (i=0;i<4;i=i+1) begin :lp
-    /*
-        parallel_counter #(
-            .IN_WIDTH(CNT_Iw)
-        ) ovc_counter     (
-            .in(counter_in[i]),
-            .out(counter_o[i])
-        );
-   */
         accumulator #(
             .INw(CNT_Iw),
             .OUTw(CNT_Ow),
@@ -860,15 +833,6 @@ module congestion_out_based_avb_ovc_not_granted_ivc #(
             .in_all(counter_in[i]),
             .out(counter_o[i])
         );
-    /*
-        parallel_counter #(
-            .IN_WIDTH(V)
-            
-        ) ivc_counter  (
-            .in(ivc_not_grnt[i]),
-            .out(ivc_not_grnt_num[i])
-        );
-    */      
         accumulator #(
             .INw(V),
             .OUTw(CNT_Vw),
@@ -915,17 +879,6 @@ module parallel_count_normalize #(
     output [OUTw-1 : 0] out;
     localparam CNTw = log2(INw+1);
     wire [CNTw-1 : 0] counter;
-/*
-    parallel_counter #(
-        .IN_WIDTH(INw)
-    )
-    ovc_avb_cnt
-    (
-        .in(in),
-        .out(counter)
-    );  
-  */
-    
     accumulator #(
         .INw(INw),
         .OUTw(CNTw),

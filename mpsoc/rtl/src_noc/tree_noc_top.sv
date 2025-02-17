@@ -179,5 +179,4 @@ module  tree_noc_top #(
         assign chan_out_all [pos] = router_chan_out [RID][RPORT];
     end
     endgenerate
-
 endmodule

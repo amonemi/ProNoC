@@ -40,15 +40,14 @@
 module  star_noc_top #(
     parameter NOC_ID=0
 ) (
-        reset,
-        clk,    
-        chan_in_all,
-        chan_out_all,
-        router_event
-    );
+    reset,
+    clk,    
+    chan_in_all,
+    chan_out_all,
+    router_event
+);
     
     `NOC_CONF
-    
     input   clk,reset;
     //Endpoints ports 
     input   smartflit_chanel_t chan_in_all  [NE-1 : 0];

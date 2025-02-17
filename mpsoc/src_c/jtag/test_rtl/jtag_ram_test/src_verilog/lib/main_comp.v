@@ -426,14 +426,17 @@ module check_single_bit_assertation #(
     localparam OUT_WIDTH = log2(IN_WIDTH+1);
     
     wire [OUT_WIDTH-1   :   0]  sum;
-    
-    parallel_counter #(
-        .IN_WIDTH (IN_WIDTH)
-    )counter
-    (
-        .in(in),
+
+    accumulator #(
+        .INw(IN_WIDTH),
+        .OUTw(OUT_WIDTH),
+        .NUM(IN_WIDTH)
+    ) counter (
+        .in_all(in),
         .out(sum)
     );
+    
+   
 
     assign result = (sum <=1)? 1'b1: 1'b0;
     
