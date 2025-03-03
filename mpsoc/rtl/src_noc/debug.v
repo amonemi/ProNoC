@@ -550,7 +550,7 @@ module check_pck_size #(
     wire [V-1 : 0] vc_hdr_wr_en;
     wire [V-1 : 0] onehot;
     localparam MIN_B =  (B<LB)? B : LB;       
-    
+    `ifdef SIMULATION
     genvar i;
     generate 
     for (i=0;i<V;i=i+1) begin :V_
@@ -622,4 +622,5 @@ module check_pck_size #(
         end//multicast
     end  //for
     endgenerate
+    `endif
 endmodule

@@ -37,6 +37,7 @@ module conventional_routing #(
     parameter T3                = 4,
     parameter RAw               = 3,
     parameter EAw               = 3,
+    parameter DAw               = EAw,
     parameter DSTPw             = 4,
     parameter LOCATED_IN_NI     = 1 // only needed for mesh and odd-even routing
 )(
@@ -60,7 +61,7 @@ module conventional_routing #(
     input  reset,clk;
     input   [RAw-1   :0] current_r_addr;
     input   [EAw-1   :0] src_e_addr;
-    input   [EAw-1   :0] dest_e_addr;
+    input   [DAw-1   :0] dest_e_addr;
     output  [DSTPw-1 :0] destport;
     
     generate

@@ -380,6 +380,7 @@ module piton_to_pronoc_wrapper  #(
         .T3(T3),
         .RAw(RAw),
         .EAw(EAw),
+        .DAw(DAw),
         .DSTPw(DSTPw),
         .LOCATED_IN_NI(1)
     ) routing_module (

@@ -3248,16 +3248,13 @@ sub add_mpsoc_to_device{
 sub ctrl_box{
     my ($mpsoc,$info)=@_;
     my $table = def_table (1, 12, FALSE);     
-    my $generate = def_image_button('icons/gen.png','_Generate RTL',FALSE,1);  
+    my $generate = def_image_button('icons/gen.png','_Generate RTL',FALSE,1);
     my $compile  = def_image_button('icons/gate.png','_Compile RTL',FALSE,1);
-    my $software = def_image_button('icons/binary.png','_Software',FALSE,1);   
+    my $software = def_image_button('icons/binary.png','_Software',FALSE,1);
     my $diagram  = def_image_button('icons/diagram.png','Diagram');
-    my $clk=  def_image_button('icons/clk.png','CLK setting');    
-
+    my $clk=  def_image_button('icons/clk.png','CLK setting');
     my $row=0;
-
-
-    my $target_dir= "$ENV{'PRONOC_WORK'}/MPSOC";    
+    my $target_dir= "$ENV{'PRONOC_WORK'}/MPSOC";
     my ($entrybox,$entry ) =gen_save_load_widget (
         $mpsoc, #the object 
         "MPSoC name",#the label shown for setting configuration
@@ -3270,19 +3267,16 @@ sub ctrl_box{
         \&load_mpsoc,#refrence to load function
         $info
         );
-  
     $table->attach ($entrybox,$row, $row+2, 0,1,'expand','shrink',2,2);$row+=2;
     $table->attach ($diagram, $row, $row+1, 0,1,'expand','shrink',2,2);$row++;
     $table->attach ($clk, $row, $row+1, 0,1,'expand','shrink',2,2);$row++;    
     $table->attach ($generate, $row, $row+1, 0,1,'expand','shrink',2,2);$row++;
     $table->attach ($software, $row, $row+1, 0,1,'expand','shrink',2,2);$row++;    
     $table->attach ($compile, $row, $row+1, 0,1,'expand','shrink',2,2);$row++;
-    
     $generate-> signal_connect("clicked" => sub{ 
         generate_mpsoc($mpsoc,$info,1);
         set_gui_status($mpsoc,"refresh_soc",1);
     });
-
     $compile -> signal_connect("clicked" => sub{ 
         $mpsoc->object_add_attribute('compile','compilers',"QuartusII,Vivado,Verilator,Modelsim");
         my $name=$mpsoc->object_get_attribute('mpsoc_name');
@@ -3301,8 +3295,7 @@ sub ctrl_box{
             message_dialog("Cannot find $top_file file. Please run RTL Generator first!");
             return;
         }
-    });    
-    
+    });
     $software -> signal_connect("clicked" => sub{
         my $name=$mpsoc->object_get_attribute('mpsoc_name');
         $name="" if (!defined $name);
@@ -3317,21 +3310,16 @@ sub ctrl_box{
             return;
         }
         software_edit_mpsoc($mpsoc);
-
     });
-
     $diagram-> signal_connect("clicked" => sub{ 
         show_topology_diagram ($mpsoc);
     });
     
-    
     $clk-> signal_connect("clicked" => sub{ 
-            clk_setting_win1($mpsoc,$info,'mpsoc');    
+        clk_setting_win1($mpsoc,$info,'mpsoc');    
     });
-    
-    return $table;    
+    return $table;
 }
-
 
 sub gen_save_load_widget {
     my (
@@ -3345,20 +3333,18 @@ sub gen_save_load_widget {
         $extention,#the extenstion given for configuration seting file
         $load_func,
         $info
-        )=@_;
+    )=@_;
     my $load = def_image_button('icons/load2.png');
     my $entry=gen_entry_object($self,$param_name,undef,undef,undef,undef);
     my $entrybox=gen_label_info("$label:",$entry);
-    my $save      = def_image_button('icons/save.png');    
+    my $save  = def_image_button('icons/save.png');    
     my $open_dir  = def_image_button('icons/open-folder.png') if (defined $target_dir);
     set_tip($save, "Save current $full_name configuration setting");
     set_tip($load, "Load a saved $full_name configuration setting");
     set_tip($open_dir, "Open target $full_name folder") if (defined $target_dir);
-        
     $entrybox->pack_start( $save, FALSE, FALSE, 0);
     $entrybox->pack_start( $load, FALSE, FALSE, 0);
     $entrybox->pack_start( $open_dir , FALSE, FALSE, 0) if (defined $target_dir);
-
     $open_dir-> signal_connect("clicked" => sub{         
         my $name=$self->object_get_attribute($param_name);
         $name="" if (!defined $name);
@@ -3374,13 +3360,12 @@ sub gen_save_load_widget {
         }
         system "xdg-open   $target_dir/$name";
     })  if (defined $target_dir);
-
     $save-> signal_connect("clicked" => sub{ 
         my $name=$self->object_get_attribute($param_name);    
-         if (length($name)==0){
+        if (length($name)==0){
             message_dialog("Please define the $label!");
             return ;
-        }    
+        }
         return if(check_mpsoc_name($name,$label) && $check=='mpsoc') ;
         return if(check_soc_name($name,$label) && $check=='soc') ;    
         # Write object file
@@ -3389,20 +3374,16 @@ sub gen_save_load_widget {
         print FILE perl_file_header("${name}.$extention");
         print FILE Data::Dumper->Dump([\%$self],[$extention]);
         close(FILE) || die "Error closing file: $!";
-        message_dialog("Current configuration  \"$name\" is saved as $config_file.");        
-    
+        message_dialog("Current configuration  \"$name\" is saved as $config_file.");
     });
-
     $entry->signal_connect( 'changed'=> sub{
         my $name=$entry->get_text();
-        $self->object_add_attribute ("save_as",undef,$name);    
-    });    
-
-    $load-> signal_connect("clicked" => sub{ 
-        set_gui_status($self,"ref",5);
-        &$load_func($self,$info);    
+        $self->object_add_attribute ("save_as",undef,$name);
     });
-
+    $load-> signal_connect("clicked" => sub{
+        &$load_func($self,$info);
+        set_gui_status($self,"ref",5);
+    });
     return ($entrybox,$entry);
 }
 
@@ -3413,67 +3394,54 @@ sub mpsocgen_main{
     my $infc = interface->interface_new(); 
     my $soc = ip->lib_new ();
     my $mpsoc= mpsoc->mpsoc_new();
-       
     set_gui_status($mpsoc,"ideal",0);
     my $main_table = def_table (25, 12, FALSE);
-    
     # The box which holds the info, warning, error ...  messages
-    my ($infobox,$info)= create_txview();    
-        
+    my ($infobox,$info)= create_txview();
     my $noc_conf_box=get_config ($mpsoc,$info);
     my $noc_tiles=gen_tiles($mpsoc);
-   
-
     $main_table->set_row_spacings (4);
     $main_table->set_col_spacings (1);
-    my $ctrl=ctrl_box($mpsoc,$info);    
+    my $ctrl=ctrl_box($mpsoc,$info);
     my $h1=gen_hpaned($noc_conf_box,.3,$noc_tiles);
     my $v2=gen_vpaned($h1,.55,$infobox);
     my $row=0;
     $main_table->attach_defaults ($v2  , 0, 12, 0,24);
     #$main_table->attach_defaults ($ctrl,0, 12, 24,25);
     $main_table->attach ($ctrl,0, 12, 24,25, 'fill','fill',2,2);
-
     #check soc status every 0.5 second. refresh device table if there is any changes 
     Glib::Timeout->add (100, sub{ 
         my ($state,$timeout)= get_gui_status($mpsoc);
         if ($timeout>0){
             $timeout--;
-            set_gui_status($mpsoc,$state,$timeout);                        
+            set_gui_status($mpsoc,$state,$timeout); 
         }elsif ($state eq 'save_project'){
             # Write object file
             my $name=$mpsoc->object_get_attribute('mpsoc_name');
             open(FILE,  ">lib/mpsoc/$name.MPSOC") || die "Can not open: $!";
             print FILE perl_file_header("$name.MPSOC");
             print FILE Data::Dumper->Dump([\%$mpsoc],[$name]);
-            close(FILE) || die "Error closing file: $!";           
-            set_gui_status($mpsoc,"ideal",0);    
+            close(FILE) || die "Error closing file: $!";
+            set_gui_status($mpsoc,"ideal",0);
         }
         elsif( $state ne "ideal" ){
             $noc_conf_box->destroy();
             $noc_conf_box=get_config ($mpsoc,$info);
             $noc_tiles->destroy();
-            $noc_tiles=gen_tiles($mpsoc);            
-            $h1 -> pack1($noc_conf_box, TRUE, TRUE);     
-            $h1 -> pack2($noc_tiles, TRUE, TRUE);         
-            $v2-> pack1($h1, TRUE, TRUE);     
+            $noc_tiles=gen_tiles($mpsoc);
+            $h1 -> pack1($noc_conf_box, TRUE, TRUE);
+            $h1 -> pack2($noc_tiles, TRUE, TRUE);
+            $v2-> pack1($h1, TRUE, TRUE);
             $h1->show_all;
             $ctrl->destroy;
             $ctrl=ctrl_box($mpsoc,$info);
             $main_table->attach ($ctrl,0, 12, 24,25,'fill','fill',2,2);
             $main_table->show_all();
-                   
-            
             set_gui_status($mpsoc,"ideal",0);
-            
-            
-        }    
+        }
         return TRUE;
-        
     } );
-    
-    my $sc_win = add_widget_to_scrolled_win($main_table);    
-
+    my $sc_win = add_widget_to_scrolled_win($main_table);
     return $sc_win;
 }
 

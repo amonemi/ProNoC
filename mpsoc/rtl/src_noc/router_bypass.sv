@@ -642,6 +642,7 @@ module smart_allocator_per_iport # (
         .T3              (T3), 
         .RAw             (RAw), 
         .EAw             (EAw), 
+        .DAw             (DAw), 
         .DSTPw           (DSTPw),
         .LOCATED_IN_NI   (LOCATED_IN_NI)
     ) routing (
@@ -677,6 +678,7 @@ module smart_allocator_per_iport # (
         .T3              (T3), 
         .RAw             (RAw), 
         .EAw             (EAw), 
+        .DAw             (DAw),
         .DSTPw           (DSTPw),
         .LOCATED_IN_NI   (LOCATED_IN_NI)
     ) lkrouting (

@@ -291,11 +291,11 @@ sub select_parallel_process_num {
         }
     }
     ($row,$col)= add_param_widget ($self,"Paralle run:" , "cpu_num", 1, 'Spin-button', "1,$cpu_num,1","specify the number of processors the Verilator can use at once to run parallel compilations/simulations", $table,$row,$col,1, 'compile', undef,undef,'vertical');
-    return $table;    
+    return $table;
 }
 
 sub select_parallel_thread_num {
-    my ($self,$name,$top,$target_dir)=@_;    
+    my ($self,$name,$top,$target_dir)=@_;
     my $table = def_table(2, 2, FALSE);
     my $col=0;
     my $row=0;
@@ -303,7 +303,7 @@ sub select_parallel_thread_num {
     my $cmd = "nproc\n";
     if(!defined $cpu_num){
         my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($cmd);
-        if(length $stderr>1){            
+        if(length $stderr>1){
             #nproc command has failed. set default 4 paralel processor
         }else {
             my ($number ) = $stdout =~ /(\d+)/;
@@ -313,7 +313,7 @@ sub select_parallel_thread_num {
         }
     }
     ($row,$col)= add_param_widget ($self,"Thread run:" , "thread_num", 1, 'Spin-button', "1,$cpu_num,1","specify the number of threads the Verilator can use at once in one simulation", $table,$row,$col,1, 'compile', undef,undef,'vertical');
-    return $table;    
+    return $table;
 }
 
 sub remove_pin_assignment{
@@ -2621,11 +2621,10 @@ sub verilator_testbench{
                 add_colored_info($tview,"$stderr\n",'red');
             }else {
                 add_info($tview,"$stdout\n");
-            }            
+            }
         }else{
             add_colored_info($tview,"Cannot find $bin executable binary file! make sure you have compiled the testbench successfully\n", 'red')
-        }    
+        }
     });
 }
-
 1;
