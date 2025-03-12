@@ -489,18 +489,18 @@ module input_queue_per_port #(
                 $display ("ERROR: assigned OVC is not ont-hot coded %d,%m",ivc_info[i].assigned_ovc_num);
                 $finish;
             end
-        end    
+        end
         `endif
         
-        class_ovc_table #(
-            .CVw(CVw),
-            .CLASS_SETTING(CLASS_SETTING),   
-            .C(C),
-            .V(V)
-        ) class_table (
+        ovc_list #(
+            .SW_LOC(SW_LOC),
+            .IVC_NUM(i),
+            .P(P)
+        )OvcList(
             .class_in(class_out[i]),
-            .candidate_ovcs(candidate_ovcs [(i+1)*V-1 : i*V])
-        );    
+            .destport_one_hot(destport_one_hot[i]),
+            .ovcs_out(candidate_ovcs [(i+1)*V-1 : i*V])
+        );
         
         if(PCK_TYPE == "MULTI_FLIT") begin : multi_flit 
             

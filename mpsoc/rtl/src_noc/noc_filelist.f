@@ -3,7 +3,7 @@
 ./pronoc_pkg.sv
 ./../main_comp.v
 ./../arbiter.v
-./class_table.v
+./ovc_list.sv
 ./ss_allocator.sv
 ./route_torus.v
 ./header_flit.sv
