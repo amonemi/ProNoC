@@ -12,17 +12,9 @@ BEGIN {
     $module->import;
 }
 
-
-
 if(Consts::GTK_VERSION==2){
-	require "widget2.pl"; 
+    require "widget2.pl"; 
 }else{
-	require "widget3.pl";
+    require "widget3.pl";
 }
-
-
-
-
-
-
 1;

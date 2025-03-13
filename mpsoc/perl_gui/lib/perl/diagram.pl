@@ -2,15 +2,12 @@
 use constant::boolean;
 use strict;
 use warnings;
-
 use FindBin;
 use lib $FindBin::Bin;
-
 use soc;
 require "widget.pl"; 
 require "emulator.pl";
 use File::Copy;
-
 use Chart::Gnuplot;
 
 
@@ -20,13 +17,11 @@ sub get_dot_file{
     my $remove_clk = $self->object_get_attribute("tile_diagram","show_clk");
     my $remove_reset = $self->object_get_attribute("tile_diagram","show_reset");
     my $remove_unused = $self->object_get_attribute("tile_diagram","show_unused");
-
     my $dotfile=
 "digraph G {
     graph [rankdir = LR , splines=polyline, overlap = false]; 
     node[shape=record];
 ";
-
     my @all_instances=$self->soc_get_all_instances();
     #print "@all_instances\n";
     my $graph_connect= '';
@@ -40,10 +35,7 @@ sub get_dot_file{
         my @sockets= $self->soc_get_all_sockets_of_an_instance($instance_id);
         @sockets = remove_scolar_from_array(\@sockets,'clk') if ($remove_clk);
         @sockets = remove_scolar_from_array(\@sockets,'reset') if ($remove_reset);
-        
-
         foreach my $socket (@sockets){
-
             my @nums=$self->soc_list_socket_nums($instance_id,$socket);
             foreach my $num (@nums){
                 my $name= $self->soc_get_socket_name ($instance_id,$socket,$num);
@@ -66,21 +58,17 @@ sub get_dot_file{
             }
         }    
         
-        
         $dotfile=($first)? "$dotfile $instance_name"  : "$dotfile}|$instance_name";
         $first=1;
         my @plugs= $self->soc_get_all_plugs_of_an_instance($instance_id);
         @plugs = remove_scolar_from_array(\@plugs,'clk') if ($remove_clk);
         @plugs = remove_scolar_from_array(\@plugs,'reset') if ($remove_reset);
-
         my %plug_order;
         my @noconnect;
         foreach my $plug (@plugs){
-            
             my @nums=$self->soc_list_plug_nums($instance_id,$plug);
             foreach my $num (@nums){
                 my ($addr,$base,$end,$name,$connect_id,$connect_socket,$connect_socket_num)=$self->soc_get_plug($instance_id,$plug,$num);
-                
                 if(defined $connect_socket || $remove_unused==0){ 
                     #$dotfile= ($first)?  "$dotfile |{<plug_${plug}_${num}>$name" :  "$dotfile|<plug_${plug}_${num}>$name";
                     if(defined $connect_id && defined $connect_socket){
@@ -92,57 +80,35 @@ sub get_dot_file{
                         $plug_order{$order_val}=  "<plug_${plug}_${num}>$name";
                     }else {push (@noconnect,"<plug_${plug}_${num}>$name");}
                 }
-                
-
                 #my $connect_name=$self->soc_get_instance_name($connect_id);
                 #my $color = get_color_hex_string($n);
                 #$n = ($n<30)? $n+1 : 0;
-                
                 $graph_connect="$graph_connect $instance_id:plug_${plug}_${num} ->  $connect_id:socket_${connect_socket}_${connect_socket_num} [  dir=none]\n" if(defined $connect_socket);
-                
             }
         }
         foreach my $p (sort {$a<=>$b} keys %plug_order){
-                    my $k=$plug_order{$p};
-                    #print "$instance_name   : $k=\$plug_order{$p}\n";
-                    $dotfile= ($first) ?   "$dotfile |{ ${k}": "$dotfile |${k}";
-                    $first=0;
-
-                }
-
+            my $k=$plug_order{$p};
+            #print "$instance_name   : $k=\$plug_order{$p}\n";
+            $dotfile= ($first) ?   "$dotfile |{ ${k}": "$dotfile |${k}";
+            $first=0;
+        }
         foreach my $k (@noconnect){
             $dotfile= ($first) ?   "$dotfile |{ ${k}": "$dotfile |${k}";
             $first=0;
         }
-
         $dotfile=  "$dotfile} }\"];";
-
-        
-    
     }
     $dotfile="$dotfile\n\n$graph_connect";
     $dotfile="$dotfile\n\n}\n";
-
-
     return $dotfile;
-
-
 }
-
-
-
-
 
 sub show_tile_diagram {
     my $self= shift;
-
     my $table=def_table(20,20,FALSE);
-    
     my $window=def_popwin_size(80,80,"Processing Tile functional block diagram",'percent');    
     my $scrolled_win = add_widget_to_scrolled_win();
-    
     $window->add ($table);
-    
     my $plus = def_image_button('icons/plus.png',undef,TRUE);
     my $minues = def_image_button('icons/minus.png',undef,TRUE);
     my $unused = gen_check_box_object ($self,"tile_diagram","show_unused",0,undef,undef);
@@ -152,13 +118,8 @@ sub show_tile_diagram {
     my $dot_file = def_image_button('icons/add-notes.png',undef,TRUE);    
     set_tip($dot_file, "Show dot file.");
     #my $save = def_image_button('icons/save.png',undef,TRUE);
-
     my $scale=$self->object_get_attribute("tile_diagram","scale");
     $scale= 1 if (!defined $scale);
-        
-        
-        
-    
     my $col=0;
     $table->attach ($plus ,  $col, $col+1,0,1,'shrink','shrink',2,2); $col++;
     $table->attach ($minues,  $col, $col+1,0,1,'shrink','shrink',2,2); $col++;
@@ -170,15 +131,11 @@ sub show_tile_diagram {
     $table->attach (gen_label_in_left("     Remove Reset Interfaces"),  $col,  $col+1,0,1,'shrink','shrink',2,2); $col++;
     $table->attach ($reset,  $col,  $col+1,0,1,'shrink','shrink',2,2); $col++;
     $table->attach ($dot_file,  $col,  $col+1,0,1,'shrink','shrink',2,2); $col++;
-    
     while ($col<20){
-        
         my $tmp=gen_label_in_left('');
         $table->attach_defaults ($tmp, $col,  $col+1,0,1);$col++;
     }
-    
     $table->attach_defaults ($scrolled_win, 0, 20, 1, 20); #,'fill','shrink',2,2);    
-    
     $plus  -> signal_connect("clicked" => sub{ 
         $scale*=1.1 if ($scale <10);
         $self->object_add_attribute("tile_diagram","scale", $scale );
@@ -196,24 +153,18 @@ sub show_tile_diagram {
         });    
     $unused-> signal_connect("toggled" => sub{
         gen_show_diagram($self,$scrolled_win,'tile',"tile_diagram");    
-
     });
     $clk-> signal_connect("toggled" => sub{
         gen_show_diagram($self,$scrolled_win,'tile',"tile_diagram");    
-
     });
     $reset-> signal_connect("toggled" => sub{
         
         gen_show_diagram($self,$scrolled_win,'tile',"tile_diagram");        
-
     });
-    
     $dot_file-> signal_connect("clicked" => sub{ 
             my $dotfile = get_dot_file_text($self,'tile');    
             show_text_in_scrolled_win($self,$scrolled_win, $dotfile);            
     });
-    
-    
     gen_show_diagram($self,$scrolled_win,'tile',"tile_diagram");    
     $window->show_all();
 }
@@ -325,7 +276,6 @@ sub show_topology_diagram {
             show_topology_diagram($self);
             $window->destroy;            
     });    
-    
     gen_show_diagram($self,$scrolled_win,'topology',"topology_diagram");    
     $window->show_all();
     $notebook->set_current_page (0);

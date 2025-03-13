@@ -82,7 +82,7 @@ sub generate_topology_top_v {
             my ($cname,$pnode)=split(/\s*,\s*/,$connect);
             my $cinstance= $self->object_get_attribute("$cname","NAME");
             my ($cp)= sscanf("Port[%u]","$pnode");
-            #$assign = $assign."//Connect $instance output ports 0 to  $cinstance input ports $cp\n";
+            #$assign = $assign."    //Connect $instance output ports 0 to  $cinstance input ports $cp\n";
             my $cpplus=$cp+1;
             foreach my $p (@ports){    
                 my $w=$p->{pwidth};
@@ -174,13 +174,13 @@ for (my $i=0;$i<$Pnum; $i++){
         my $cinstance= $self->object_get_attribute("$cname","NAME");
         my $ctype = $self->object_get_attribute("$cname",'TYPE');         
         my ($cp)= sscanf("Port[%u]","$pnode");
-        $router_v = $router_v."//Connect $instance port $i to  $cinstance port $cp\n";
+        $router_v = $router_v."    //Connect $instance port $i to  $cinstance port $cp\n";
         if($ctype ne 'ENDP'){
-            $router_v.="         assign ${instance}_chan_in [$i]   = ${cinstance}_chan_out [$cp];\n";            
+            $router_v.="    assign ${instance}_chan_in [$i]   = ${cinstance}_chan_out [$cp];\n";            
         }else{
-            $router_v.="         assign ${instance}_chan_in [$i]  = ${cinstance}_chan_in;\n";
-            $router_v.="         assign ${cinstance}_chan_out = ${instance}_chan_out [$i];\n";
-            $router_v.="         assign ${cinstance}_router_event = ${instance}_router_event [$i];\n";
+            $router_v.="    assign ${instance}_chan_in [$i]  = ${cinstance}_chan_in;\n";
+            $router_v.="    assign ${cinstance}_chan_out = ${instance}_chan_out [$i];\n";
+            $router_v.="    assign ${cinstance}_router_event = ${instance}_router_event [$i];\n";
             
         }
         my $cpplus=$cp+1;
@@ -203,8 +203,8 @@ for (my $i=0;$i<$Pnum; $i++){
             }
         }    #@port
     }else {
-            $router_v = $router_v."//Connect $instance port $i to  ground
-        assign  ${instance}_chan_in [$i]= {SMARTFLIT_CHANEL_w{1'b0}};\n";
+            $router_v = $router_v."    //Connect $instance port $i to  ground
+    assign  ${instance}_chan_in [$i]= {SMARTFLIT_CHANEL_w{1'b0}};\n";
             foreach my $p (@ports){    
                 my $w=$p->{pwidth};
                 my $range = ($w eq 1)?     "[$i]" : "[($iplus*$w)-1 :          $i*$w ]";
@@ -266,10 +266,10 @@ sub generate_topology_top_genvar_v{
     input  clk;
     input  smartflit_chanel_t chan_in_all  [NE-1 : 0];
     output smartflit_chanel_t chan_out_all [NE-1 : 0];
-
-//Events
+    
+    //Events
     output  router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];
-//all routers port 
+    //all routers port 
     smartflit_chanel_t    router_chan_in   [NR-1 :0][MAX_P-1 : 0];
     smartflit_chanel_t    router_chan_out  [NR-1 :0][MAX_P-1 : 0];
     wire [RAw-1 : 0] current_r_addr [NR-1 : 0];
@@ -381,7 +381,7 @@ sub generate_topology_top_genvar_v{
     }
     $routers.="endgenerate\n";    
     print $fd "
-module   ${name}_noc_genvar    
+module   ${name}_noc_genvar
 #(
     parameter NOC_ID=0
 )(
@@ -391,19 +391,12 @@ module   ${name}_noc_genvar
     chan_out_all,
     router_event  
 );
-
 `NOC_CONF
-
 $ports_def
-
 $router_wires
-
 $endps_wires
-
 $routers
-
 $assign  
-
 endmodule
 ";
     close $fd;
@@ -511,7 +504,7 @@ sub get_wires_assignment_genvar_v{
             my $cinstance= $self->object_get_attribute("$cname","NAME");
             my $ctype = $self->object_get_attribute("$cname",'TYPE');         
             my ($cp)= sscanf("Port[%u]","$pnode");
-            $assign.="//Connect $instance input ports $i to  $cinstance output ports $cp\n";
+            $assign.="    //Connect $instance input ports $i to  $cinstance output ports $cp\n";
             my $cpos =($ctype eq 'ENDP')?  get_scolar_pos($cname,@ends) :  get_scolar_pos($cname,@routers);
             my $cpplus=$cp+1;
             my $cposplus = $cpos+1;
@@ -523,16 +516,16 @@ sub get_wires_assignment_genvar_v{
             my $RNUM_cpos = $rinfo{"RNUM_${cpos}"};
             #$assign = $assign."//connet  $instance input port $i to  $cinstance output port $cp\n";
             if($type  ne 'ENDP'  &&  $ctype eq 'ENDP'){
-                $assign=  $assign."        assign  router_chan_in \[$pos\]\[$i\] = chan_in_all \[$cpos\];\n" if($reverse==0);
-                $assign=  $assign."        assign  chan_in_all \[$cpos\] = router_chan_in \[$pos\]\[$i\];\n" if($reverse==1);
-                $assign=  $assign."        assign  chan_out_all \[$cpos\] = router_chan_out \[$pos\]\[$i\];\n" if($reverse==0);
-                $assign=  $assign."        assign  router_chan_out \[$pos\]\[$i\] = chan_out_all \[$cpos\];\n" if($reverse==1);
-                $r2e_h.="//Connect $instance input ports $i to  $cinstance output ports $cp\n";            
+                $assign=  $assign."    assign  router_chan_in \[$pos\]\[$i\] = chan_in_all \[$cpos\];\n" if($reverse==0);
+                $assign=  $assign."    assign  chan_in_all \[$cpos\] = router_chan_in \[$pos\]\[$i\];\n" if($reverse==1);
+                $assign=  $assign."    assign  chan_out_all \[$cpos\] = router_chan_out \[$pos\]\[$i\];\n" if($reverse==0);
+                $assign=  $assign."    assign  router_chan_out \[$pos\]\[$i\] = chan_out_all \[$cpos\];\n" if($reverse==1);
+                $r2e_h.="    //Connect $instance input ports $i to  $cinstance output ports $cp\n";            
                 $r2e_h.=  "void single_r2e$cpos(void) {connect_r2e($TNUM_pos,$RNUM_pos,$i,$cpos);}\n"    if (defined $TNUM_pos);    
             }elsif ($type  ne 'ENDP'  &&  $ctype ne 'ENDP'){
-                $assign=  $assign."        assign  router_chan_in \[$pos\]\[$i\] = router_chan_out \[$cpos\]\[$cp\];\n" if($reverse==0);
-                $assign=  $assign."        assign  router_chan_out \[$cpos\]\[$cp\] = router_chan_in \[$pos\]\[$i\];\n" if($reverse==1);            
-                $r2r_h.="//Connect $instance input ports $i to  $cinstance output ports $cp\n";
+                $assign=  $assign."    assign  router_chan_in \[$pos\]\[$i\] = router_chan_out \[$cpos\]\[$cp\];\n" if($reverse==0);
+                $assign=  $assign."    assign  router_chan_out \[$cpos\]\[$cp\] = router_chan_in \[$pos\]\[$i\];\n" if($reverse==1);            
+                $r2r_h.="    //Connect $instance input ports $i to  $cinstance output ports $cp\n";
                 $r2r_h.=  "void single_r2r$R_num(void){conect_r2r($TNUM_pos,$RNUM_pos,$i,$TNUM_cpos,$RNUM_cpos,$cp);}\n" if (defined $TNUM_pos);    
                 $init_h.="    r2r_cnt_all[$R_num] =(r2r_cnt_table_t){.id1=$pos, .t1=$TNUM_pos, .r1=$RNUM_pos, .p1=$i,.id2=$cpos, .t2=$TNUM_cpos, .r2=$RNUM_cpos, .p2=$cp };\n";
                 $R_num++;
@@ -540,10 +533,10 @@ sub get_wires_assignment_genvar_v{
         }else {
                 my $TNUM_pos  = $rinfo{"TNUM_${pos}" };  
                 my $RNUM_pos  = $rinfo{"RNUM_${pos}" };  
-                $assign = $assign."//Connect $instance port $i to  ground\n";        
-                $assign=  $assign."        assign  router_chan_in  \[$pos\]\[$i\] ={SMARTFLIT_CHANEL_w{1'b0}};\n    " if($reverse==0);
-                $assign=  $assign."        assign  router_chan_out \[$pos\]\[$i\] ={SMARTFLIT_CHANEL_w{1'b0}};\n    " if($reverse==1);    
-                $gnd_h.="//Connect $instance port $i to  ground\n";
+                $assign = $assign."    //Connect $instance port $i to  ground\n";        
+                $assign=  $assign."    assign  router_chan_in  \[$pos\]\[$i\] ={SMARTFLIT_CHANEL_w{1'b0}};\n    " if($reverse==0);
+                $assign=  $assign."    assign  router_chan_out \[$pos\]\[$i\] ={SMARTFLIT_CHANEL_w{1'b0}};\n    " if($reverse==1);    
+                $gnd_h.="    //Connect $instance port $i to  ground\n";
                 $gnd_h.=  "    connect_r2gnd($TNUM_pos,$RNUM_pos,$i);\n" if (defined $TNUM_pos);            
         }
     }

@@ -2564,7 +2564,6 @@ sub verilator_testbench{
         $window->destroy;
         verilator_compilation_win($self,$name,$top,$target_dir,$vendor);
     });
-
     $regen-> signal_connect("clicked" => sub{
         my $response = yes_no_dialog("Are you sure you want to regenerate the testbench.cpp file? Note that any changes you have made will be lost");
         if ($response eq 'yes') {

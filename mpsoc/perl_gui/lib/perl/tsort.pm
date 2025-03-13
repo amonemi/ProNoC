@@ -1,30 +1,23 @@
 #!/usr/bin/perl
- 
- 
-
 package Algorithm::TSort;
 use 5.007003;
 use strict;
 use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
-
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
-
-# This allows declaration	use Algorithm::TSort ':all';
+# This allows declaration    use Algorithm::TSort ':all';
 # If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
 # will save memory.
 our %EXPORT_TAGS = ( 'all' => [ qw(
-	tsort
-	Graph	
+    tsort
+    Graph    
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
-
 our @EXPORT = qw( tsort );
-
 our $VERSION = '0.05';
 {
     package Algorithm::TSort::ADJ;
@@ -36,7 +29,6 @@ our $VERSION = '0.05';
         }
         return ();
     }
-
     sub nodes {
         return keys %{ $_[0] };
     }
@@ -48,12 +40,12 @@ our $VERSION = '0.05';
     }
     package Algorithm::TSort::ADJSUB_ARRAYREF;
     sub adj_nodes {
-	my $array = $_[0]->( $_[1] );
-	return $array ? @$array : ();
+    my $array = $_[0]->( $_[1] );
+    return $array ? @$array : ();
     }
     package Algorithm::TSort::Guard;
     sub new{
-	return bless $_[1], $_[0];
+    return bless $_[1], $_[0];
     }
     sub DESTROY { $_[0]->() };
 }
@@ -116,10 +108,8 @@ sub tsort($;@) {
         }
     }
     $guard = Algorithm::TSort::Guard->new(sub {
-	$req_sub = undef; # remove circular dependency;
+    $req_sub = undef; # remove circular dependency;
     });
-
-
     $req_sub = sub {
         my $node = shift;
         if ( $seen{$node} ) {
@@ -133,16 +123,12 @@ sub tsort($;@) {
         $seen{$node} = 2;
         push @sorted, $node;
     };
-
     for (@nodes) {
         next if $seen{$_};
         $req_sub->($_);
     }
     return reverse @sorted;
 }
-
-
-
 
 sub  cicle_detect($;@) {
     my $object = shift;
@@ -162,16 +148,14 @@ sub  cicle_detect($;@) {
         }
     }
     $guard = Algorithm::TSort::Guard->new(sub {
-	$req_sub = undef; # remove circular dependency;
+    $req_sub = undef; # remove circular dependency;
     });
-
-
     $req_sub = sub {
         my $node = shift;
         if ( $seen{$node} ) {
             #die "Algorithm::TSort - can't tsort cicle detected" if ( $seen{$node} == 1 );
-	     $cyclic=1 if ( $seen{$node} == 1 );          
-		return;
+        $cyclic=1 if ( $seen{$node} == 1 );          
+        return;
         }
         $seen{$node} = 1;
         for ( $object->adj_nodes($node) ) {
@@ -180,25 +164,12 @@ sub  cicle_detect($;@) {
         $seen{$node} = 2;
         push @sorted, $node;
     };
-
     for (@nodes) {
         next if $seen{$_};
         $req_sub->($_);
     }
     return $cyclic;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 1;
 __END__
@@ -218,12 +189,12 @@ Algorithm::TSort - Perl extension for topological sort
   say for @sorted; 
 
   # -- OR --
-	
+    
   # $adj_sub = sub { return unless $adj->{ $_[0] } ; return @{$adj->{$_[0]}}; };
   my (@sorted) = tsort( Graph( ADJSUB => $adj_sub ), @nodes_for_sort );
 
   # -- OR --
-	
+    
   # $sub_arrayref = sub { $adj->{ $_[0] } };
   my (@sorted) = tsort( Graph( ADJSUB_ARRAYREF => $adj_sub ), @nodes_for_sort );
 
