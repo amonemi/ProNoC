@@ -494,7 +494,7 @@ module pronoc_to_piton_wrapper #(
     input  smartflit_chanel_t chan_in; 
     input reset,clk;
     
-    assign current_r_addr_o = chan_in.ctrl_chanel.neighbors_r_addr;
+    assign current_r_addr_o = chan_in.ctrl_chanel.router_addr;
     
     localparam        
         Xw = log2(NX),    // number of node in x axis

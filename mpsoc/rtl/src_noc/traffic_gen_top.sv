@@ -110,7 +110,7 @@ module  traffic_gen_top    #(
     assign flit_in   =  chan_in.flit_chanel.flit;   
     assign flit_in_wr=  chan_in.flit_chanel.flit_wr; 
     assign credit_in =  chan_in.flit_chanel.credit;  
-    assign current_r_addr = chan_in.ctrl_chanel.neighbors_r_addr;
+    assign current_r_addr = chan_in.ctrl_chanel.router_addr;
     
     genvar i;
     generate

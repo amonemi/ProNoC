@@ -66,7 +66,7 @@ module packet_injector #(
     wire  [DSTPw-1 : 0 ] destport;
     reg flit_wr;
     
-    assign current_r_addr = chan_in.ctrl_chanel.neighbors_r_addr;
+    assign current_r_addr = chan_in.ctrl_chanel.router_addr;
     
     generate 
     if(CAST_TYPE == "UNICAST") begin : uni    
@@ -350,7 +350,7 @@ module packet_injector #(
             end
         end
         `endif
-
+    
     end//for i
     endgenerate
     
@@ -448,7 +448,6 @@ endmodule
 /******************
  *   ovc_status
  *******************/
-
 module injector_ovc_status #(
     parameter V = 4,
     parameter B = 16,

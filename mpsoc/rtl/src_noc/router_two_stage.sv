@@ -70,7 +70,7 @@ module router_two_stage #(
     output  ctrl_chanel_t ctrl_out [P-1 : 0];
     input   clk,reset;    
     
-    output  ivc_info_t      ivc_info    [P-1 : 0][V-1 : 0];
+    output  ivc_info_t   ivc_info    [P-1 : 0][V-1 : 0];
     output  ovc_info_t   ovc_info    [P-1 : 0][V-1 : 0];
     output  iport_info_t iport_info  [P-1 : 0];
     output  oport_info_t oport_info  [P-1 : 0]; 
@@ -180,13 +180,13 @@ module router_two_stage #(
                 );
             end
             
-            assign  neighbors_r_addr  [(i+1)*RAw-1:  i*RAw] = ctrl_in[i].neighbors_r_addr;
+            assign  neighbors_r_addr  [(i+1)*RAw-1:  i*RAw] = ctrl_in[i].router_addr;
             assign  flit_in_all       [(i+1)*Fw-1:  i*Fw] = chan_in_tmp[i].flit;
             assign  flit_in_wr_all    [i] = chan_in_tmp[i].flit_wr;   
             assign  credit_in_all     [(i+1)*V-1:  i*V] = chan_in_tmp[i].credit;
             assign  congestion_in_all [(i+1)*CONGw-1:  i*CONGw] = chan_in_tmp[i].congestion; 
             
-            assign  ctrl_out[i].neighbors_r_addr = current_r_addr;
+            assign  ctrl_out[i].router_addr = current_r_addr;
             assign  ctrl_out[i].endp_port =1'b0; 
             assign  ctrl_out[i].hetero_ovc_presence= hetero_ovc_unary(current_r_id,i);
             

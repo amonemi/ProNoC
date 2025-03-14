@@ -50,7 +50,7 @@ module   custom1_noc_genvar
     //all routers port 
     smartflit_chanel_t    router_chan_in   [NR-1 :0][MAX_P-1 : 0];
     smartflit_chanel_t    router_chan_out  [NR-1 :0][MAX_P-1 : 0];
-    wire [RAw-1 : 0] current_r_addr [NR-1 : 0];
+    router_config_t router_config [NR-1 : 0];
 
 
 
@@ -60,7 +60,8 @@ module   custom1_noc_genvar
     
     for( i=0; i<4; i=i+1) begin : router_3_port_lp
         localparam RID = i;
-        assign current_r_addr [RID] = RID[RAw-1: 0]; 
+        assign router_config [RID].router_id = RID[RAw-1: 0];
+        assign router_config [RID].router_addr = RID[RAw-1: 0];
         router_top #(
             .NOC_ID(NOC_ID),
             .ROUTER_ID(RID),
@@ -68,8 +69,7 @@ module   custom1_noc_genvar
         ) router_3_port (
             .clk(clk), 
             .reset(reset),
-            .current_r_id(RID),
-            .current_r_addr(current_r_addr[RID]),    
+            .router_config_in(router_config[RID]),
             .chan_in  (router_chan_in [RID] [2 : 0]), 
             .chan_out (router_chan_out[RID] [2 : 0]),
             .router_event(router_event[RID] [2 : 0])    
@@ -78,7 +78,8 @@ module   custom1_noc_genvar
 
     for( i=0; i<8; i=i+1) begin : router_4_port_lp
         localparam RID = i+4;
-        assign current_r_addr [RID] = RID[RAw-1: 0]; 
+        assign router_config [RID].router_id = RID[RAw-1: 0];
+        assign router_config [RID].router_addr = RID[RAw-1: 0];
         router_top #(
             .NOC_ID(NOC_ID),
             .ROUTER_ID(RID),
@@ -86,8 +87,7 @@ module   custom1_noc_genvar
         ) router_4_port (
             .clk(clk), 
             .reset(reset),
-            .current_r_id(RID),
-            .current_r_addr(current_r_addr[RID]),    
+            .router_config_in(router_config[RID]),
             .chan_in  (router_chan_in [RID] [3 : 0]), 
             .chan_out (router_chan_out[RID] [3 : 0]),
             .router_event(router_event[RID] [3 : 0])    
@@ -96,7 +96,8 @@ module   custom1_noc_genvar
 
     for( i=0; i<4; i=i+1) begin : router_5_port_lp
         localparam RID = i+12;
-        assign current_r_addr [RID] = RID[RAw-1: 0]; 
+        assign router_config [RID].router_id = RID[RAw-1: 0];
+        assign router_config [RID].router_addr = RID[RAw-1: 0];
         router_top #(
             .NOC_ID(NOC_ID),
             .ROUTER_ID(RID),
@@ -104,8 +105,7 @@ module   custom1_noc_genvar
         ) router_5_port (
             .clk(clk), 
             .reset(reset),
-            .current_r_id(RID),
-            .current_r_addr(current_r_addr[RID]),    
+            .router_config_in(router_config[RID]),
             .chan_in  (router_chan_in [RID] [4 : 0]), 
             .chan_out (router_chan_out[RID] [4 : 0]),
             .router_event(router_event[RID] [4 : 0])    

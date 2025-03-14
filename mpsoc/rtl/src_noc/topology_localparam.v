@@ -131,7 +131,8 @@
         NR_MESH_TORI = (IS_RING || IS_LINE)? NX : NX*NY,
         NE_MESH_TORI = NR_MESH_TORI * NL,
         MAX_P_MESH_TORI = R2R_CHANELS_MESH_TORI + R2E_CHANELS_MESH_TORI,
-        DSTPw_MESH_TORI = R2R_CHANELS_MESH_TORI; // P-1
+        DSTPw_MESH_TORI = R2R_CHANELS_MESH_TORI, // P-1
+        NE_PER_R_MESH_TORI = NL;
         /* verilator lint_on WIDTH */    
     
     /****************
@@ -143,8 +144,8 @@
         MAX_P_FMESH = 4 + NL, 
         EAw_FMESH = RAw_MESH_TORI + log2(MAX_P_FMESH);
     /******************
-     *     FATTREE
-     * *****************/
+    *     FATTREE
+    ******************/
     localparam 
         K=T1,
         L=T2, 
@@ -158,7 +159,8 @@
         ROUTE_TYPE_FATTREE = "DETERMINISTIC",
         DSTPw_FATTREE = K+1,
         MAX_P_FATTREE = 2*K,
-        DAw_MCAST_FATTREE= powi( K,L); 
+        DAw_MCAST_FATTREE= powi( K,L),
+        NE_PER_R_FATTREE = K; 
     /**********************
     *      TREE
     *********************/
@@ -170,7 +172,8 @@
         EAw_TREE  =  LKw,
         DSTPw_TREE = log2(K+1),
         MAX_P_TREE = K+1,
-        DAw_MCAST_TREE= DAw_MCAST_FATTREE; 
+        DAw_MCAST_TREE= DAw_MCAST_FATTREE,
+        NE_PER_R_TREE = K;
     /*********************
     *  STAR
     *******************/
@@ -182,7 +185,8 @@
         EAw_STAR  =  log2(NE_STAR),
         DSTPw_STAR = (CAST_TYPE!= "UNICAST")? NE_STAR :EAw_STAR,
         MAX_P_STAR = NE_STAR,
-        DAw_MCAST_STAR= NE_STAR;            
+        DAw_MCAST_STAR= NE_STAR,
+        NE_PER_R_STAR = NE_STAR;            
     /************************
     *  CUSTOM - made by netmaker
     ***********************/
@@ -193,7 +197,8 @@
         EAw_CUSTOM = log2(NE_CUSTOM),
         RAw_CUSTOM = log2(NR_CUSTOM),
         MAX_P_CUSTOM = T3,
-        DSTPw_CUSTOM = log2(MAX_P_CUSTOM);
+        DSTPw_CUSTOM = log2(MAX_P_CUSTOM),
+        NE_PER_R_CUSTOM=MAX_P_CUSTOM;//just take the max possible value as it can be variable per router
     /* verilator lint_off WIDTH */ 
     localparam
         PPSw = PPSw_MESH_TORI,
@@ -239,7 +244,14 @@
             (IS_FMESH)? NE_FMESH: 
             (IS_STAR)? NE_STAR:
             NE_CUSTOM,
-            
+        // total number of endpoint per router
+        NE_PER_R =
+            (IS_FATTREE)? NE_PER_R_FATTREE:
+            (IS_TREE)?  NE_PER_R_TREE:
+            (IS_RING || IS_LINE || IS_MESH || IS_TORUS)? NE_PER_R_MESH_TORI:
+            (IS_FMESH)? NE_PER_R_MESH_TORI: 
+            (IS_STAR)? NE_PER_R_STAR:
+            NE_PER_R_CUSTOM,    
        //Destination endpoint(s) address width
         DAw_OFFSETw  =  (IS_MESH || IS_TORUS ||  IS_FMESH)?  NX : 0, 
         MCAST_PRTLw = mcast_partial_width( MCAST_ENDP_LIST),
@@ -258,7 +270,7 @@
             (IS_RING || IS_LINE || IS_MESH || IS_TORUS)? NR_MESH_TORI:  
             (IS_FMESH)? NR_FMESH: 
             (IS_STAR) ? NR_STAR:
-            NR_CUSTOM, 
+            NR_CUSTOM,
         //routing algorithm type
         ROUTE_TYPE =
             (IS_FATTREE)? ROUTE_TYPE_FATTREE:

@@ -61,14 +61,14 @@ module  fattree_noc_top #(
     smartflit_chanel_t    router_chan_in   [NR-1 :0][MAX_P-1 : 0];
     smartflit_chanel_t    router_chan_out  [NR-1 :0][MAX_P-1 : 0];
     
-        localparam
-            PV = V * MAX_P,
-            PFw = MAX_P * Fw,       
-            NRL= NE/K, //number of router in  each layer
-            CONG_ALw = CONGw * MAX_P,
-            PLKw = MAX_P * LKw,
-            PLw = MAX_P * Lw,       
-            PRAw = MAX_P * RAw; // {layer , Pos} width
+    localparam
+        PV = V * MAX_P,
+        PFw = MAX_P * Fw,       
+        NRL= NE/K, //number of router in  each layer
+        CONG_ALw = CONGw * MAX_P,
+        PLKw = MAX_P * LKw,
+        PLw = MAX_P * Lw,       
+        PRAw = MAX_P * RAw; // {layer , Pos} width
         
     function integer addrencode;
         input integer pos,k,n,kw;
@@ -88,6 +88,7 @@ module  fattree_noc_top #(
     wire [LKw-1 : 0] current_pos_addr [NR-1 :0];
     wire [Lw-1  : 0] current_layer_addr [NR-1 :0];
     wire [RAw-1 : 0] current_r_addr [NR-1 : 0];
+    router_config_t router_config_in [NR-1 :0];
     
     /****************
     *    add roots
@@ -96,13 +97,14 @@ module  fattree_noc_top #(
     generate 
     for( pos=0; pos<NRL; pos=pos+1) begin : root 
         localparam RID = pos;
+        assign router_config_in[RID].router_id = RID [NRw-1 : 0];
+        assign router_config_in[RID].router_addr = current_r_addr [RID];
         router_top # (
             .NOC_ID(NOC_ID),
             .ROUTER_ID(RID),
             .P(K)
         ) the_router (
-            .current_r_id    (RID),
-            .current_r_addr  (current_r_addr [RID]), 
+            .router_config_in(router_config_in[RID]),
             .chan_in         (router_chan_in [RID][K-1 : 0]), 
             .chan_out        (router_chan_out[RID][K-1 : 0]), 
             .router_event    (router_event[RID][K-1 : 0]),
@@ -118,18 +120,20 @@ module  fattree_noc_top #(
         for( pos=0; pos<NRL; pos=pos+1) begin : pos_lp 
             
             localparam RID = NRL*level+pos;
+            assign router_config_in[RID].router_id = RID [NRw-1 : 0];
+            assign router_config_in[RID].router_addr = current_r_addr [RID];
+            
             router_top # (
                 .NOC_ID(NOC_ID),
                 .ROUTER_ID(RID),
                 .P(2*K)
             ) the_router (
-                .current_r_id    (RID),
-                .current_r_addr  (current_r_addr [RID]),
+                .router_config_in(router_config_in[RID]),
                 .chan_in         (router_chan_in [RID]),
                 .chan_out        (router_chan_out[RID]),
                 .router_event    (router_event[RID]),
-                .clk             (clk            ),
-                .reset           (reset          )
+                .clk             (clk),
+                .reset           (reset)
             );
             
         end

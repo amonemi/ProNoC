@@ -356,7 +356,7 @@ module thermo_arbiter #(
     reg       [ARBITER_WIDTH-1 : 0] termo1,termo2;
     integer i;
     always @(*) begin 
-        for(int i=0;i<ARBITER_WIDTH; i=i+1) begin 
+        for(i=0;i<ARBITER_WIDTH; i=i+1) begin 
             termo1[i] = |(request << (ARBITER_WIDTH - 1 - i));
             termo2[i] = |(masked_request << (ARBITER_WIDTH - 1 - i));
         end
@@ -400,7 +400,7 @@ module thermo_arbiter_priority_en #(
     reg   [ARBITER_WIDTH-1 : 0] termo1,termo2;
     integer i;
     always @(*) begin 
-        for(int i=0;i<ARBITER_WIDTH; i=i+1) begin 
+        for(i=0;i<ARBITER_WIDTH; i=i+1) begin 
             termo1[i] = |(request << (ARBITER_WIDTH - 1 - i));
             termo2[i] = |(masked_request << (ARBITER_WIDTH - 1 - i));
         end
@@ -439,7 +439,7 @@ module thermo_arbiter_ext_priority #(
     
     integer i;
     always @(*) begin 
-        for(int i=0;i<ARBITER_WIDTH; i=i+1) begin 
+        for(i=0;i<ARBITER_WIDTH; i=i+1) begin 
             termo1[i] = |(request << (ARBITER_WIDTH - 1 - i));
             termo2[i] = |(masked_request << (ARBITER_WIDTH - 1 - i));
             pr[i] = |(priority_in << (ARBITER_WIDTH - 1 - i));

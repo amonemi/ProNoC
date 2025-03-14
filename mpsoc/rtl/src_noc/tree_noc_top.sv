@@ -92,6 +92,7 @@ module  tree_noc_top #(
     wire [LKw-1 : 0] current_pos_addr [NR-1 :0];
     wire [Lw-1  : 0] current_layer_addr [NR-1 :0];   
     wire [RAw-1 : 0] current_r_addr [NR-1 : 0];
+    router_config_t router_config_in [NR-1 :0];
     
     /****************
     *    add roots
@@ -102,14 +103,14 @@ module  tree_noc_top #(
     assign current_layer_addr [ROOT_ID] = ROOT_L;
     assign current_pos_addr [ROOT_ID] = {LKw{1'b0}};
     assign current_r_addr[ROOT_ID] = {current_layer_addr [ROOT_ID],current_pos_addr[ROOT_ID]};
-    
+    assign router_config_in[ROOT_ID].router_id = ROOT_ID [NRw-1:0];
+    assign router_config_in[ROOT_ID].router_addr = {current_layer_addr [ROOT_ID],current_pos_addr[ROOT_ID]};
     router_top # (
         .NOC_ID(NOC_ID),
         .ROUTER_ID(ROOT_ID),
         .P(K)
     ) root_router (
-        .current_r_id    (ROOT_ID),
-        .current_r_addr  (current_r_addr [ROOT_ID]), 
+        .router_config_in(router_config_in[ROOT_ID]),
         .chan_in         (router_chan_in [ROOT_ID][K-1:0]), 
         .chan_out        (router_chan_out[ROOT_ID][K-1:0]), 
         .router_event    (router_event[ROOT_ID][K-1 : 0]),
@@ -128,13 +129,13 @@ module  tree_noc_top #(
         localparam NRATTOP1 = sum_powi ( K,level); // number of routers at top levels : from root until last level
         for( pos=0; pos<NPOS1; pos=pos+1) begin : pos_lp 
             localparam RID = NRATTOP1+pos;
+            assign router_config_in[RID].router_id = RID[NRw-1 : 0];
             router_top # (
                 .NOC_ID(NOC_ID),
                 .ROUTER_ID(RID),
                 .P(K+1)// leaves have K+1 port number 
             ) the_router (
-                .current_r_id    (RID),
-                .current_r_addr  (current_r_addr [RID]), 
+                .router_config_in(router_config_in[RID]),
                 .chan_in         (router_chan_in [RID]), 
                 .chan_out        (router_chan_out[RID]), 
                 .router_event    (router_event[RID]),
@@ -165,7 +166,7 @@ module  tree_noc_top #(
             
             assign current_layer_addr [ID1] = L1[Lw-1 : 0];
             assign current_pos_addr [ID1] = ADR_CODE1 [LKw-1 : 0];
-            assign current_r_addr [ID1] = {current_layer_addr [ID1],current_pos_addr[ID1]};
+            assign router_config_in[ID1].router_addr =  {current_layer_addr [ID1],current_pos_addr[ID1]};
         end// pos
     end //level
     

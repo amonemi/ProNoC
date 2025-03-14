@@ -136,7 +136,6 @@ sub get_router_instance_v {
     *******************/
     wire ${instance}_clk;
     wire ${instance}_reset;
-    wire [RAw-1 :  0] ${instance}_current_r_addr;
     smartflit_chanel_t    ${instance}_chan_in   [$Pnum-1 : 0];
     smartflit_chanel_t    ${instance}_chan_out  [$Pnum-1 : 0]; 
     router_event_t ${instance}_router_event [$Pnum-1 : 0]; 
@@ -145,6 +144,7 @@ sub get_router_instance_v {
     /*******************
     *        $instance
     *******************/
+    router_config_t ${instance}_router_config_in;
     router_top #(
         .NOC_ID(NOC_ID),
         .ROUTER_ID($current_r),
@@ -152,8 +152,7 @@ sub get_router_instance_v {
     ) $instance (
         .clk(${instance}_clk), 
         .reset(${instance}_reset),
-        .current_r_id($current_r),
-        .current_r_addr  (${instance}_current_r_addr), 
+        .router_config_in(${instance}_router_config_in),
         .chan_in   (${instance}_chan_in), 
         .chan_out  (${instance}_chan_out),
         .router_event (${instance}_router_event)
@@ -162,7 +161,8 @@ sub get_router_instance_v {
     $router_v= $router_v."
         assign ${instance}_clk = clk;
         assign ${instance}_reset = reset;
-        assign ${instance}_current_r_addr = $current_r;
+        assign ${instance}_router_config_in.router_addr = $current_r;
+        assign ${instance}_router_config_in.router_id = $current_r;
 "; 
 
 for (my $i=0;$i<$Pnum; $i++){ 
@@ -272,7 +272,7 @@ sub generate_topology_top_genvar_v{
     //all routers port 
     smartflit_chanel_t    router_chan_in   [NR-1 :0][MAX_P-1 : 0];
     smartflit_chanel_t    router_chan_out  [NR-1 :0][MAX_P-1 : 0];
-    wire [RAw-1 : 0] current_r_addr [NR-1 : 0];
+    router_config_t router_config [NR-1 : 0];
 ";
 
     my $router_wires="";
@@ -350,7 +350,8 @@ sub generate_topology_top_genvar_v{
             $routers=$routers."
     for( i=0; i<$n; i=i+1) begin : router_${i}_port_lp
         localparam RID = $router_pos;
-        assign current_r_addr [RID] = RID[RAw-1: 0]; 
+        assign router_config [RID].router_id = RID[RAw-1: 0];
+        assign router_config [RID].router_addr = RID[RAw-1: 0];
         router_top #(
             .NOC_ID(NOC_ID),
             .ROUTER_ID(RID),
@@ -358,8 +359,7 @@ sub generate_topology_top_genvar_v{
         ) router_${i}_port (
             .clk(clk), 
             .reset(reset),
-            .current_r_id(RID),
-            .current_r_addr(current_r_addr\[RID\]),    
+            .router_config_in(router_config\[RID\]),
             .chan_in  (router_chan_in \[RID\] \[$p : 0\]), 
             .chan_out (router_chan_out\[RID\] \[$p : 0\]),
             .router_event(router_event\[RID\] \[$p : 0\])    
@@ -454,6 +454,8 @@ sub get_router_genvar_instance_v{
     my @parameters=@{$self->object_get_attribute ('Verilog','Router_param')};
     my @ports= @{$self->object_get_attribute('Verilog','Router_ports')}; 
     my $router_v="
+    assign router_config[$router_pos].router_id = $router_pos;
+    assign router_config[$router_pos].router_addr = $router_pos;
     router_top #(
         .NOC_ID(NOC_ID),
         .ROUTER_ID($router_pos),
@@ -461,8 +463,7 @@ sub get_router_genvar_instance_v{
     ) router_${Pnum}_port (
         .clk(clk), 
         .reset(reset),
-        .current_r_addr($router_pos),
-        .current_r_id($router_pos),
+        .router_config_in(router_config\[$router_pos\]),
         .chan_in (router_chan_in\[$router_pos\]), 
         .chan_out(router_chan_out\[$router_pos\]),
         .router_event(router_event\[$router_pos\])    

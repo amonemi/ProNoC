@@ -31,8 +31,7 @@ module router_top #(
     parameter ROUTER_ID=0,
     parameter P=5
 )(
-    current_r_id,
-    current_r_addr,
+    router_config_in,
     
     chan_in,
     chan_out,
@@ -42,16 +41,13 @@ module router_top #(
     clk,
     reset
 );
-    
     `NOC_CONF
     
     localparam DISABLED =P;
+    input router_config_t router_config_in;
     
-    input [RAw-1 :  0]  current_r_addr;
-    input [31 : 0] current_r_id;
-    
-    input   smartflit_chanel_t chan_in [P-1 : 0];
-    output  smartflit_chanel_t chan_out [P-1 : 0];
+    input smartflit_chanel_t chan_in [P-1 : 0];
+    output smartflit_chanel_t chan_out [P-1 : 0];
     
     output router_event_t router_event [P-1 : 0];
     input   clk,reset;
@@ -72,6 +68,15 @@ module router_top #(
     
     ctrl_chanel_t ctrl_in  [P-1 : 0];
     ctrl_chanel_t ctrl_out [P-1 : 0];
+    
+    logic [RAw-1 :  0]  current_r_addr;
+    logic [31 : 0] current_r_id;
+    
+    always_comb begin 
+        current_r_addr = router_config_in.router_addr;
+        current_r_id = 0;
+        current_r_id [NRw-1 : 0] = router_config_in.router_id;
+    end
     
     generate
     for(i=0; i<P; i=i+1) begin :Pt_
@@ -160,7 +165,7 @@ module router_top #(
                 assign smart_ctrl[i]={SMART_CTRL_w{1'b0}};
             end
             else begin :smart_en
-                assign neighbors_r_addr [i] = chan_in[i].ctrl_chanel.neighbors_r_addr;
+                assign neighbors_r_addr [i] = chan_in[i].ctrl_chanel.router_addr;
                 //smart allocator
                 smart_allocator_per_iport #(
                     .NOC_ID(NOC_ID),
@@ -419,24 +424,26 @@ module router_top_v
     reset
 );
     
-    `NOC_CONF
+    `NOC_CONF 
     
     input  [RAw-1 : 0] current_r_addr;
     input [31:0] current_r_id;
-    
     input   smartflit_chanel_t chan_in [P-1 : 0];
     output  smartflit_chanel_t chan_out [P-1 : 0];
     input   reset,clk;
     
     output router_event_t router_event [P-1 : 0];
     
+    router_config_t router_config_in;
+    assign router_config_in.router_id= current_r_id [NRw-1 : 0];
+    assign router_config_in.router_addr=current_r_addr;
+    
     router_top #(
         .NOC_ID(NOC_ID),
         .ROUTER_ID(ROUTER_ID),
         .P(P)
     ) router (
-        .current_r_id(current_r_id),
-        .current_r_addr(current_r_addr),
+        .router_config_in(router_config_in),
         .chan_in(chan_in),
         .chan_out(chan_out),
         .router_event(router_event),

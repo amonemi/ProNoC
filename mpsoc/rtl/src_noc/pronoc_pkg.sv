@@ -19,6 +19,7 @@ package pronoc_pkg;
     localparam
         Vw=  log2(V),
         Cw=  (C==0)? 1 : log2(C),
+        NRw = log2(NR),
         NEw = log2(NE),
         Bw  = log2(B),    
         WRRA_CONFIG_INDEX=0,
@@ -111,7 +112,7 @@ package pronoc_pkg;
     typedef struct packed {
         bit        smart_en;
         bit     hdr_flit_req;
-        logic     [V-1 : 0]        ivc_smart_en;
+        logic   [V-1 : 0]        ivc_smart_en;
         logic   [DSTPw-1  :   0] lk_destport;
         logic   [DSTPw-1  :   0] destport;
         logic   [V-1 : 0] credit_out;
@@ -195,6 +196,14 @@ package pronoc_pkg;
         logic [MAX_P*RAw-1:  0] neighbors_r_addr;
     } router_info_t;
     localparam  ROUTER_INFO_w = $bits(router_info_t);
+    
+    typedef struct packed {
+        logic [NRw-1 : 0] router_id;
+        logic [RAw-1 : 0] router_addr;
+        logic [NE_PER_R*EAw-1 : 0]  endp_addrs;
+        logic [NE_PER_R*NEw-1 : 0]  endp_ids;
+    } router_config_t;
+    localparam  ROUTER_CONFIG_w = $bits(router_config_t);
 
 /*********************
 * router_chanels
@@ -247,12 +256,22 @@ package pronoc_pkg;
     
     localparam CRDTw = (B>LB) ? log2(B+1) : log2(LB+1);
     typedef struct packed {
-        bit    endp_port;  // if it is one, it means the corresponding port is connected o an endpoint
-        logic [RAw-1:   0]  neighbors_r_addr;
-        logic [V-1  :0] [CRDTw-1: 0] credit_init_val; // the connected port initial credit value. It is taken at reset time    
-        logic [V-1  :0] credit_release_en;     
-        logic [V-1  :0] hetero_ovc_presence;   // Indicates the presence of active output VCs for neighboring routers when heterogeneous VC support is enabled.
-    } ctrl_chanel_t; 
+        bit endp_port;  
+            // If set to 1, the corresponding port is connected to an endpoint.
+        logic [EAw-1 : 0] endp_addr; 
+            // If endp_port is 1, this field represents the address of the connected endpoint. 
+            // This address must be set in the header flit for packets to be received by this port.
+        logic [RAw-1 : 0] router_addr; 
+            // The router address sent to the neighboring router.
+        logic [V-1 : 0] [CRDTw-1: 0] credit_init_val; 
+            // Initial credit value for the connected port, captured at reset.
+        logic [V-1 : 0] credit_release_en; 
+            // If credit_init_val is zero, a rising edge on this signal triggers credit release to the other side.
+        logic [V-1 : 0] hetero_ovc_presence; 
+            // Indicates the presence of active output virtual channels (VCs) in neighboring routers 
+            // when heterogeneous VC support is enabled.
+    } ctrl_chanel_t;
+    
     localparam CTRL_CHANEL_w = $bits(ctrl_chanel_t);    
     
     typedef struct packed {

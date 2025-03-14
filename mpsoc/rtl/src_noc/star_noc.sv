@@ -55,14 +55,15 @@ module  star_noc_top #(
     
     //Events
     output  router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];
-    
+    router_config_t router_config_in;
+    assign router_config_in.router_addr = '0;
+    assign router_config_in.router_id ='0;
     router_top # (
         .NOC_ID(NOC_ID),
         .ROUTER_ID(0),
         .P(NE)
     ) the_router (
-        .current_r_id    (0),
-        .current_r_addr  (1'b0), 
+        .router_config_in(router_config_in),
         .chan_in         (chan_in_all), 
         .chan_out        (chan_out_all), 
         .router_event    (router_event[0]),
