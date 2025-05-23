@@ -1,0 +1,52 @@
+name: Verilator Test Suite
+
+on:
+  push:
+    branches: [ main, master, ft/ci ]  # Target specific branches instead of all
+
+jobs:
+  verilate:
+    runs-on: ubuntu-latest
+    container:
+      image: verilator/verilator:v4.210  # Pinned version for stability
+    env:
+      ROOT: ${{ github.workspace }}/mpsoc
+      PRONOC_WORK: ${{ github.workspace }}/mpsoc_work
+      REPORTS: ${{ github.workspace }}/mpsoc/Integration_test/synthetic_sim/reports
+      CONF_NAME: failed-model
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Create required directories
+      run: |
+        mkdir -p "$PRONOC_WORK" "$REPORTS"
+
+    - name: Run NoC simulation
+      run: |
+        set -ex  # Enable exit on error and command tracing
+        verilator --version
+        echo "Workspace structure:"
+        ls -lR $ROOT/Integration_test/synthetic_sim/src
+        
+        cd $ROOT/Integration_test/synthetic_sim/src
+        perl ./verify.perl -p 1 -u 80 -l 2 -s 4 -d ${CONF_NAME} -m line2_2cycle_mcast_f
+        perl ./check.pl -o $REPORTS/${CONF_NAME}_report_old -n $REPORTS/${CONF_NAME}_report
+
+    - name: Upload failures artifact
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: simulation-failures
+        path: |
+          ${{ env.PRONOC_WORK }}/failures.txt
+          ${{ env.REPORTS }}/**/*.log
+
+    - name: Upload simulation reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: simulation-reports-${{ github.run_id }}
+        path: ${{ env.REPORTS }}
+        retention-days: 7
+
+  # Optional cleanup or notification jobs could be added here
