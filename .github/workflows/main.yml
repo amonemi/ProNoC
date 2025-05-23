@@ -8,7 +8,7 @@ jobs:
   verilate:
     runs-on: ubuntu-latest
     container:
-      image: verilator/verilator:v4.210  # Pinned version for stability
+      image: verilator/verilator:latest
     env:
       ROOT: ${{ github.workspace }}/mpsoc
       PRONOC_WORK: ${{ github.workspace }}/mpsoc_work
