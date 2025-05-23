@@ -113,7 +113,7 @@ sub percent_decrease {
 
 
 
-open my $fh, ">$fail_report" or die "could not open $fail_report: $!";
+open my $fh, ">>$fail_report" or die "could not open $fail_report: $!";
 
 foreach my $fail (@failures) {
     print "$fail\n";

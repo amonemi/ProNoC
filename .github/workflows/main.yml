@@ -5,46 +5,47 @@ on:
     branches: [ "**" ]
 
 jobs:
-  verilate:
+  synthetic-sim:
     runs-on: ubuntu-latest
     container:
       image: verilator/verilator:latest
       #options: --volume ${{ github.workspace }}/mpsoc_work:/mpsoc_work --volume ${{ github.workspace }}/mpsoc:/mpsoc
+    strategy:
+      matrix:
+        conf_name: [default, line-ring, failed-model, multicast, vc_alloc]  
     env:
       ROOT: ${{ github.workspace }}/mpsoc
       PRONOC_WORK: ${{ github.workspace }}/mpsoc_work
       REPORTS: ${{ github.workspace }}/mpsoc/Integration_test/synthetic_sim/reports
       CONF_NAME: default
-    
     steps:
     - uses: actions/checkout@v4
-    - name: Run NoC simulation
+    - name: Run NoC simulation - ${{ matrix.conf_name }}
       run: |
         set -ex  # Enable exit on error and command tracing
         verilator --version
+        echo "Running simulation for config: ${{ matrix.conf_name }}"
         echo "Workspace structure:"
         ls -lR $ROOT/Integration_test/synthetic_sim/src
         cd $ROOT/Integration_test/synthetic_sim/src
-        perl ./verify.perl -p 15 -u 80 -l 2 -s 4 -d ${CONF_NAME}   
-        perl ./check.pl -o $REPORTS/${CONF_NAME}_report_old -n $REPORTS/${CONF_NAME}_report || {
+        perl ./verify.perl -p 15 -u 80 -l 2 -s 4 -d ${{ matrix.conf_name }}   
+        perl ./check.pl -o $REPORTS/${{ matrix.conf_name }}_report_old -n $REPORTS/${{ matrix.conf_name }}_report || {
           echo "❌ Verification check failed. Please inspect the simulation logs."
           # failures.txt is created inside $PRONOC_WORK already (shared volume)
           # no need to copy it anywhere else
           exit 1
         }
-
-    - name: Upload failures artifact
+    - name: Upload failures artifact - ${{ matrix.conf_name }}
       if: failure()  # Only upload if previous step failed
       uses: actions/upload-artifact@v4
       with:
-        name: simulation-failures
+        name: simulation-failures-${{ matrix.conf_name }}
         path: |
-          ${{ env.PRONOC_WORK }}/failures.txt          
-    - name: Upload simulation reports
+          ${{ env.PRONOC_WORK }}/failures.txt 
+          ${{ env.REPORTS }}/*       
+    - name: Upload simulation reports - ${{ matrix.conf_name }}
       uses: actions/upload-artifact@v4
       with:
-        name: simulation-reports-${{ github.run_id }}
+        name: simulation-reports-${{ matrix.conf_name }}-${{ github.run_id }}
         path: ${{ env.REPORTS }}
         retention-days: 7
-
-    
