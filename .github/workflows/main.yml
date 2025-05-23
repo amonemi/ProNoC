@@ -16,7 +16,7 @@ jobs:
       CONF_NAME: failed-model
 
     steps:
-    - uses: actions/checkout@v3  
+    - uses: actions/checkout@v4  
 
     - name: Create required directories
       run: |
@@ -35,7 +35,7 @@ jobs:
 
     - name: Upload failures artifact
       if: failure()
-      uses: actions/upload-artifact@v3.1.3
+      uses: actions/upload-artifact@v4
       with:
         name: simulation-failures
         path: |
@@ -43,7 +43,7 @@ jobs:
           ${{ env.REPORTS }}/**/*.log
 
     - name: Upload simulation reports
-      uses: actions/upload-artifact@v3.1.3
+      uses: actions/upload-artifact@v4
       with:
         name: simulation-reports-${{ github.run_id }}
         path: ${{ env.REPORTS }}
