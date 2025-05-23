@@ -1,0 +1,54 @@
+name: Test
+
+on: [push]
+
+jobs:
+  verilate:
+    runs-on: ubuntu-latest
+    container:
+      image: verilator/verilator:latest
+      #options: --volume ${{ github.workspace }}/mpsoc_work:/mpsoc_work --volume ${{ github.workspace }}/mpsoc:/mpsoc
+    env:
+      ROOT: ${{ github.workspace }}/mpsoc
+      PRONOC_WORK: ${{ github.workspace }}/mpsoc_work
+      REPORTS: ${{ github.workspace }}/mpsoc/Integration_test/synthetic_sim/reports
+      CONF_NAME: failed-model
+    
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run NoC simulation
+      run: |
+        set -x  # Enable command tracing
+        verilator --version
+        echo "PRONOC_WORK = $PRONOC_WORK"
+        cd $ROOT/Integration_test/synthetic_sim/src
+        perl ./verify.perl -p 1 -u 80 -l 2 -s 4 -d ${CONF_NAME} -m line2_2cycle_mcast_f  
+        perl ./check.pl -o $REPORTS/${CONF_NAME}_report_old -n $REPORTS/${CONF_NAME}_report || {
+          echo "❌ Verification check failed. Please inspect the simulation logs."
+          # failures.txt is created inside $PRONOC_WORK already (shared volume)
+          # no need to copy it anywhere else
+          exit 1
+        }
+
+    - name: Upload failures artifact (if exists)
+      if: failure()  # Only upload if previous step failed
+      uses: actions/upload-artifact@v3
+      with:
+        name: failures
+        path: ${{ env.PRONOC_WORK }}/failures.txt
+
+  upload-artifact:
+    needs: verilate
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Download failures artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: failures
+        path: ./  # download to current workspace
+
+    - name: Display failures.txt
+      run: cat failures.txt || echo "No failures.txt found"
