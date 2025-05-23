@@ -800,12 +800,7 @@ Shared registers for all VCs
     localparam LBw = log2(LB);
     flit_buffer #(
         .V(V),
-        .B(LB),
-        .SSA_EN("NO"),
-        .Fw(Fw),
-        .PCK_TYPE(PCK_TYPE),
-        .CAST_TYPE(CAST_TYPE),
-        .DEBUG_EN(DEBUG_EN)
+        .B(LB)
     ) the_ififo  (
         .din(flit_in),     // Data in
         .vc_num_wr(flit_in_vc_num),//write virtual chanel    
@@ -818,7 +813,7 @@ Shared registers for all VCs
         .clk(clk),
         .ssa_rd({V{1'b0}}),
         .multiple_dest(),
-        .sub_rd_ptr_ld()  
+        .sub_rd_ptr_ld()
     ); 
     
     extract_header_flit_info #(
