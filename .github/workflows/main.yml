@@ -12,13 +12,12 @@ jobs:
       #options: --volume ${{ github.workspace }}/mpsoc_work:/mpsoc_work --volume ${{ github.workspace }}/mpsoc:/mpsoc
     strategy:
       matrix:
-        conf_name: [default, line-ring, failed-model, multicast, vc_alloc]  
+        conf_name: [general, line-ring, failed-model, multicast, vc_alloc]  
     env:
       ROOT: ${{ github.workspace }}/mpsoc
       PRONOC_WORK: ${{ github.workspace }}/mpsoc_work
       GOLDEN_REF: ${{ github.workspace }}/mpsoc/Integration_test/synthetic_sim/golden_ref
       LOG_DIR: ${{ github.workspace }}/mpsoc/Integration_test/synthetic_sim/result_logs
-      CONF_NAME: default
     steps:
     - uses: actions/checkout@v4
     - name: Run NoC simulation - ${{ matrix.conf_name }}
