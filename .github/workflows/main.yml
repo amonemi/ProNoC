@@ -31,8 +31,6 @@ jobs:
         perl ./verify.perl -p 15 -u 80 -l 2 -s 4 -d ${{ matrix.conf_name }}   
         perl ./check.pl -o $GOLDEN_REF/${{ matrix.conf_name }} -n $LOG_DIR/${{ matrix.conf_name }} || {
           echo "❌ Verification check failed. Please inspect the simulation logs."
-          # failures.txt is created inside $PRONOC_WORK already (shared volume)
-          # no need to copy it anywhere else
           exit 1
         }
     - name: Upload failures artifact - ${{ matrix.conf_name }}
@@ -42,7 +40,7 @@ jobs:
         name: simulation-failures-${{ matrix.conf_name }}
         path: |
           ${{ env.PRONOC_WORK }}/failures.txt 
-          ${{ env.LOG_DIR }}/*       
+          ${{ env.LOG_DIR }}/${{ matrix.conf_name }}     
     - name: Upload simulation reports - ${{ matrix.conf_name }}
       uses: actions/upload-artifact@v4
       with:
