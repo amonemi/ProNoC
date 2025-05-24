@@ -29,7 +29,7 @@ jobs:
         ls -lR $ROOT/Integration_test/synthetic_sim/src
         cd $ROOT/Integration_test/synthetic_sim/src
         perl ./verify.perl -p 15 -u 80 -l 2 -s 4 -d ${{ matrix.conf_name }}   
-        perl ./check.pl -o $GOLDEN_REF/${{ matrix.conf_name }} -n $LOG_DIR/${{ matrix.conf_name }}_report || {
+        perl ./check.pl -o $GOLDEN_REF/${{ matrix.conf_name }} -n $LOG_DIR/${{ matrix.conf_name }} || {
           echo "❌ Verification check failed. Please inspect the simulation logs."
           # failures.txt is created inside $PRONOC_WORK already (shared volume)
           # no need to copy it anywhere else
