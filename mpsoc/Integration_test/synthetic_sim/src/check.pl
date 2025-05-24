@@ -113,12 +113,19 @@ sub percent_decrease {
 
 
 
-open my $fh, ">>$fail_report" or die "could not open $fail_report: $!";
+open my $out, ">>$fail_report" or die "could not open $fail_report: $!";
+open my $in, '<', $new_file or die "Cannot open $new_file: $!";
 
 foreach my $fail (@failures) {
     print "$fail\n";
-    print $fh "$fail\n";
+    print $out "$fail\n";
 }
-close($fh);
+
+while (my $line = <$in>) {
+    print $out $line;
+}
+
+close $in;
+close $out;
 
 exit($has_failures);
