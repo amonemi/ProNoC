@@ -147,15 +147,15 @@ module testbench_noc;
             sent_stat.min_latency = latency;
         end
     end
-    endtask    
+    endtask
     
     initial begin 
         reset_st (rsvd_stat_total);
         reset_st (sent_stat_total);
         for(m=0;m<NE;m++) begin
-            for (c=0;c<STAT_NUM;c++)begin            
+            for (c=0;c<STAT_NUM;c++)begin
                 reset_st(sent_stat[m][c]);
-                reset_st(rsvd_stat[m][c]);            
+                reset_st(rsvd_stat[m][c]);
             end
             reset_st(rsvd_stat_class[m]);
             reset_st(sent_stat_class[m]);
@@ -227,7 +227,7 @@ module testbench_noc;
         .NOC_ID(NOC_ID)
     ) the_noc (
         .reset(reset),
-        .clk(clk),    
+        .clk(clk),
         .chan_in_all(chan_in_all),
         .chan_out_all(chan_out_all),
         .router_event(router_event)
@@ -258,11 +258,9 @@ module testbench_noc;
     
     genvar i;
     wire [NE-1 : 0] valid_dst;
-    
+    wire [EAw-1 : 0] current_e_addr [NE-1 : 0];
     generate 
     for(i=0; i< NE; i=i+1) begin : endpoints
-        wire [EAw-1 : 0] current_e_addr [NE-1 : 0];
-        
         endp_addr_encoder #(
             .TOPOLOGY(TOPOLOGY),
             .T1(T1),
@@ -273,14 +271,14 @@ module testbench_noc;
         ) encoder (
             .id(i[NEw-1 : 0]),
             .code(current_e_addr[i])
-        );    
+        );
         
         traffic_gen_top #(
             .NOC_ID(NOC_ID),
             .MAX_RATIO(100),
             .ENDP_ID(i)
         ) the_traffic_gen (
-            .ratio (ratio),                    
+            .ratio (ratio),
             .pck_size_in(pck_size_in[i]),
             .current_e_addr(current_e_addr[i]),
             .dest_e_addr(dest_e_addr[i]),
@@ -327,7 +325,7 @@ module testbench_noc;
             .C0_p(C0_p),
             .C1_p(C1_p),
             .C2_p(C2_p),
-            .C3_p(C3_p)            
+            .C3_p(C3_p)
         )
         the_pck_class_in_gen
         (
@@ -468,8 +466,8 @@ module testbench_noc;
                 if (rsvd_core_worst_delay[core_num] < time_stamp_h2t[core_num]) rsvd_core_worst_delay[core_num] = ( AVG_LATENCY_METRIC == "HEAD_2_TAIL")? time_stamp_h2t[core_num] : time_stamp_h2h[core_num];
                 if (sent_core_worst_delay[src_id[core_num]] < time_stamp_h2t[core_num]) sent_core_worst_delay[src_id[core_num]] = (AVG_LATENCY_METRIC == "HEAD_2_TAIL")?  time_stamp_h2t[core_num] : time_stamp_h2h[core_num];
                 if (pck_size_o[core_num] >= MIN_PACKET_SIZE && pck_size_o[core_num] <=MAX_PACKET_SIZE) rsv_size_array[pck_size_o[core_num]-MIN_PACKET_SIZE] = rsv_size_array[pck_size_o[core_num]-MIN_PACKET_SIZE]+1;
-            end            
-        end        
+            end
+        end
     end//always
     
     integer rsv_ideal_cnt,total_rsv_flit_number_old;
@@ -477,13 +475,14 @@ module testbench_noc;
     wire all_done_in;
     assign all_done_in = (clk_counter > STOP_SIM_CLK) || ( total_sent_pck_num >  STOP_PCK_NUM );
     assign sent_done = all_done_in & ~ all_done_reg;
-    
+    logic report_active_ivcs;
     always @(`pronoc_clk_reset_edge)begin
         if (`pronoc_reset) begin 
             all_done_reg <= 1'b0;
             rsv_ideal_cnt<=0;
             done<=1'b0;
             total_rsv_flit_number_old<=0;
+            report_active_ivcs<='0;
         end  else  begin 
             all_done_reg <= all_done_in;
             total_rsv_flit_number_old<=total_rsv_flit_number;
@@ -495,13 +494,15 @@ module testbench_noc;
                 end
                 if(rsv_ideal_cnt >= 100) begin //  Injectors stopped sending packets, number of received and sent flits are not equal yet and for 100 cycles no flit is consumed. 
                     done<=1'b1;
-                    #100 $display ("ERROR: The number of expected (%d) & received flits (%d) were not equal at the end of simulation",total_expect_rsv_flit_num ,total_rsv_flit_number);
-                    
+                    #50;
+                    report_active_ivcs<=1'b1;
+                    #50;
+                    $display ("ERROR: The number of expected (%d) & received flits (%d) were not equal at the end of simulation",total_expect_rsv_flit_num ,total_rsv_flit_number);
                     $stop;
                 end
             end
         end
-    end    
+    end
     
     initial total_active_endp=0;
     real avg_throughput,avg_latency_flit,avg_latency_pck,std_dev,avg_latency_per_hop,min_avg_latency_per_class;
@@ -516,7 +517,7 @@ module testbench_noc;
     always @( posedge done) begin     
         for (core_num=0; core_num<NE; core_num=core_num+1) begin  
             if(pck_counter[core_num]>0) total_active_endp       =     total_active_endp +1;
-        end        
+        end
         avg_throughput= ((total_sent_flit_number*100)/total_active_endp )/clk_counter;
         avg_latency_flit =sum_clk_h2h/$itor(total_rsv_pck_num);
         avg_latency_pck     =sum_clk_h2t/$itor(total_rsv_pck_num);

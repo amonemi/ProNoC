@@ -442,6 +442,11 @@ module  endp_addr_encoder #(
             .id(id),
             .code(code)
         );
+    end else if (TOPOLOGY == "MULTI_MESH") begin :mmesh
+        multimesh_address_encoder addr_encoder (
+            .rid_in(id),
+            .addr_st_o(code)
+        );
     end else begin :custom
         assign code =id;
     end
@@ -459,15 +464,15 @@ module endp_addr_decoder  #(
 ) (
     id,
     code
-);    
+);
 
     function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
+    input integer number; begin
+        log2=(number <=1) ? 1: 0;
+        while(2**log2<number) begin
+            log2=log2+1;
+        end
+    end
     endfunction // log2 
     
     localparam NEw= log2(NE);
@@ -511,7 +516,11 @@ module endp_addr_decoder  #(
             .id(id),
             .code(code)
         );
-        
+    end else if (TOPOLOGY == "MULTI_MESH") begin 
+        multimesh_address_decoder addr_coder (
+            .rid_out(id),
+            .addr_st_i(code)
+        );
     end else begin :custom
         assign id = code;
     end
@@ -570,6 +579,7 @@ module check_pck_size #(
             .clk    (clk   ), 
             .out    (pck_size_counter[i]   )
         );
+        
         always @(posedge clk) begin 
             if (vc_num_in == i)begin 
                 if(flit_in_wr & tail_flg_in) begin 

@@ -325,8 +325,7 @@ module mesh_torus_mask_non_assignable_destport_no_self_loop #(
     output [P_1-1 : 0 ] dest_port_out;
     input odd_column;
     
-    generate 
-    
+    generate    
     /* verilator lint_off WIDTH */ 
     if (TOPOLOGY == "RING" || TOPOLOGY == "LINE") begin : oneD // A port can send packets to all other ports in these topologies
     /* verilator lint_on WIDTH */ 

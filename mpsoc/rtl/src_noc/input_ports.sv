@@ -64,11 +64,12 @@ module input_ports #(
     ssa_ctrl_in,
     smart_ctrl_in,
     credit_init_val_out,
+    ctrl_in,
     reset,
     clk
 );  
     
-    `NOC_CONF    
+    `NOC_CONF
     
     localparam
         PV = V * P,
@@ -120,7 +121,8 @@ module input_ports #(
     
     input refresh_w_counter;
     
-    input   [DSTPw-1 : 0] destport_clear [P-1 : 0][V-1 : 0];   
+    input   [DSTPw-1 : 0] destport_clear [P-1 : 0][V-1 : 0];
+    input   ctrl_chanel_t ctrl_in  [P-1 : 0];
     
     genvar i;
     generate 
@@ -152,7 +154,7 @@ module input_ports #(
             .swap_port_presel(swap_port_presel[(i+1)*V-1 : i*V]),
             .nonspec_first_arbiter_granted_ivc(nonspec_first_arbiter_granted_ivc_all[(i+1)*V-1 : i*V]),
             .reset(reset),
-            .clk(clk),            
+            .clk(clk),
             .destport_clear(destport_clear [i]),
             .iport_weight(iport_weight_all[(i+1)*W-1 : i*W]),
             .oports_weight(oports_weight_all[(i+1)*WP-1 : i*WP]),
@@ -164,7 +166,8 @@ module input_ports #(
             .vsa_ctrl_in(vsa_ctrl_in [i]),
             .smart_ctrl_in(smart_ctrl_in [i]),
             .ssa_ctrl_in(ssa_ctrl_in [i]),
-            .credit_init_val_out(credit_init_val_out[i])
+            .credit_init_val_out(credit_init_val_out[i]),
+            .ctrl_in(ctrl_in)
         );
     end//for
     endgenerate
@@ -211,7 +214,8 @@ module input_queue_per_port #(
     smart_ctrl_in,
     vsa_ctrl_in,
     ssa_ctrl_in,
-    credit_init_val_out
+    credit_init_val_out,
+    ctrl_in
 );
     
     `NOC_CONF
@@ -278,8 +282,9 @@ module input_queue_per_port #(
     input   vsa_ctrl_t  vsa_ctrl_in;
     input   ssa_ctrl_t  ssa_ctrl_in;
     output  [CRDTw-1 : 0 ] credit_init_val_out [V-1 : 0];
+    input   ctrl_chanel_t ctrl_in  [P-1 : 0];
 
-    wire   [RAw-1 : 0] current_r_addr = router_info.current_r_addr;
+    wire   [RAw-1 : 0] current_r_addr = router_info.router_addr;
     wire   [PRAw-1: 0] neighbors_r_addr = router_info.neighbors_r_addr[PRAw-1: 0];
     
     wire  [DSTPw-1 : 0] dest_port_encoded [V-1 : 0];
@@ -447,8 +452,21 @@ module input_queue_per_port #(
         );
         
     end else begin : other
-        assign destport_in_encoded = destport_in;    
+        assign destport_in_encoded = destport_in;
     end
+    
+    logic [1:0] ovc_sel_i;
+    logic [1:0] ovc_sel_ivc [V-1 : 0];
+    if(IS_MULTI_MESH) begin : mmesh_
+        multi_mesh_ovc_sel #(
+            .SW_LOC(SW_LOC),
+            .LOCAL_ADAPT(0)
+        )ovc_sel(
+            .local_dst_icr(dest_e_addr_in[DAw-1 : DAw/2]),// dest_e_addr_in = {local_dst_icr,global_dst}
+            .current_router_addr_i(router_info.router_addr),
+            .ovc_sel(ovc_sel_i)
+        );
+    end // "MULTI_MESH"
     
     for (i=0;i<PORT_IVC; i=i+1) begin: V_
         
@@ -457,7 +475,7 @@ module input_queue_per_port #(
         one_hot_to_bin #(.ONE_HOT_WIDTH(V),.BIN_WIDTH(Vw)) conv (
             .one_hot_code(assigned_ovc_num[(i+1)*V-1 : i*V]), 
             .bin_code(ivc_info[i].assigned_ovc_bin)
-        );    
+        );
         
         assign ivc_info[i].single_flit_pck =
             /* verilator lint_off WIDTH */
@@ -478,7 +496,7 @@ module input_queue_per_port #(
             assign ivc_info[i].destport_one_hot= destport_one_hot[i];
         end else begin : no_max
             assign ivc_info[i].destport_one_hot= {{(MAX_P-P){1'b0}},destport_one_hot[i]};
-        end    
+        end
         
         `ifdef SIMULATION
         //check ivc info
@@ -491,17 +509,39 @@ module input_queue_per_port #(
             end
         end
         `endif
-        
-        ovc_list #(
-            .SW_LOC(SW_LOC),
-            .IVC_NUM(i),
-            .P(P)
-        )OvcList(
-            .class_in(class_out[i]),
-            .destport_one_hot(destport_one_hot[i]),
-            .ovcs_out(candidate_ovcs [(i+1)*V-1 : i*V])
-        );
-        
+        if(IS_MULTI_MESH==0) begin :ovc_
+            ovc_list  OvcList(
+                .class_in(class_out[i]),
+                .ovcs_out(candidate_ovcs [(i+1)*V-1 : i*V])
+            );
+        end else begin :mmesh_ovc
+            fwft_fifo #(
+                .DATA_WIDTH(2),
+                .MAX_DEPTH (MAX_PCK),
+                .IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
+            ) ovc_fifo (
+                .din (ovc_sel_i),
+                .wr_en (wr_hdr_fwft_fifo[i]),   // Write enable
+                .rd_en (rd_hdr_fwft_fifo[i]),   // Read the next word
+                .dout (ovc_sel_ivc[i]),    // Data out
+                .full ( ),
+                .nearly_full ( ),
+                .recieve_more_than_0 ( ),
+                .recieve_more_than_1 ( ),
+                .reset (reset),
+                .clk (clk)
+            );
+            multi_mesh_ovc_list_per_ivc #(
+                .IVC_NUM(i), //Input port VC number
+                .P(P) //router IO number
+            )OvcList(
+                .destport_one_hot(destport_one_hot[i]),
+                .ctrl_in(ctrl_in),
+                .class_in(class_out[i]),
+                .ovc_sel(ovc_sel_ivc[i]),
+                .ovcs_out(candidate_ovcs [(i+1)*V-1 : i*V])
+            );
+        end
         if(PCK_TYPE == "MULTI_FLIT") begin : multi_flit 
             
             always @ (*) begin
@@ -594,8 +634,8 @@ module input_queue_per_port #(
                 .recieve_more_than_0 ( ),
                 .recieve_more_than_1 ( ),
                 .reset (reset),
-                .clk (clk)            
-            );       
+                .clk (clk)
+            );
             
         end else begin : no_smart
             assign ivc_info[i].dest_e_addr = {EAw{1'bx}};
@@ -1017,7 +1057,7 @@ module input_queue_per_port #(
         end//mesh
         if (PORT_IVC != V) begin : hetero
             always @(posedge clk) begin
-                if (flit_in_wr &  (|(vc_num_in & ~hetero_ovc_unary(router_info.current_r_id , SW_LOC)))) begin
+                if (flit_in_wr &  (|(vc_num_in & ~hetero_ovc_unary(router_info.router_id , SW_LOC)))) begin
                     $display("%t: ERROR: Input port supports %0d VCs, but received a flit targeting an out-of-bound VC: %b. Module: %m\n", 
                     $time, PORT_IVC, vc_num_in[V-1 : PORT_IVC]);
                     $finish;

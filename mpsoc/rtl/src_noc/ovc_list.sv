@@ -23,56 +23,28 @@
 **    Description: 
 **      This module provides a list of available output VCs for the allocator
 *************************************/
-module ovc_list #(
-    parameter SW_LOC=0,
-    parameter IVC_NUM=0,
-    parameter P=5 
-)(
+module ovc_list (
     class_in,
-    destport_one_hot,
     ovcs_out
 );
     `NOC_CONF
     
     input [Cw-1 : 0] class_in;
-    input [P-1 : 0] destport_one_hot;
     output[V-1 : 0] ovcs_out;
-    
     function automatic logic [V-1:0] get_vc_list_section(input int c);
     begin
         logic [CVw-1 : 0] shiftted = CLASS_SETTING >> c*V;
         return shiftted[V-1 : 0];
     end
     endfunction
-    
     //Masks VCs acording to message classes
     logic [V-1 : 0] class_table [C-1 : 0];
-    logic [V-1 : 0] ovc_message_class, ovc_topology;
+    logic [V-1 : 0] ovc_message_class;
     always_comb begin
         for(int i=0; i<C; i++) class_table[i] = get_vc_list_section(i);
     end
-    assign  ovc_message_class= (C == 0 || C == 1)? {V{1'b1}} : class_table[class_in];
-    //custom ovc selection rules basd on topology
-    generate
-    /* verilator lint_off WIDTH */
-    if(TOPOLOGY=="MULTI_MESH")begin 
-    /* verilator lint_on WIDTH */
-        multi_mesh_ovc_sel #(
-            .SW_LOC(SW_LOC),
-            .IVC_NUM(IVC_NUM)
-        ) ovc_sel (
-            .destport_one_hot(destport_one_hot),
-            .ovc_out(ovc_topology)
-        );
-    end else begin 
-        assign ovc_topology = {V{1'b1}};
-    end
-    endgenerate
-    
-    assign ovcs_out = (V==1) ? {V{1'b1}} : ovc_message_class & ovc_topology;
+    assign  ovcs_out= (C == 0 || C == 1)? {V{1'b1}} : class_table[class_in];
 endmodule
-
-
 
 
 module vc_priority_based_dest_port #(

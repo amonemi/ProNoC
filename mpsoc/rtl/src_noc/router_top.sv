@@ -113,8 +113,7 @@ module router_top #(
         .iport_info(iport_info),
         .oport_info(oport_info),
         .smart_ctrl_in(smart_ctrl),
-        .current_r_addr(current_r_addr),
-        .current_r_id(current_r_id),
+        .router_config_in(router_config_in),
         .chan_in(r2_chan_in),
         .chan_out(r2_chan_out),
         .ctrl_in(ctrl_in),
@@ -294,17 +293,20 @@ module router_top #(
         
     end
     /* verilator lint_on WIDTH */
-    
-    logic report_active_ivcs = 0;
     generate 
+    `ifdef IVC_DEBUG
+    wire report_active_ivcs = testbench_noc.report_active_ivcs;
     for(i=0; i<P; i=i+1) begin :P1_
         for(j=0; j<V; j=j+1) begin :V_
             always @(posedge report_active_ivcs) begin
-                if(ivc_info[i][j].ivc_req) $display("%t : The IVC in router[%h] port[%d] VC [%d] is not empty",$time,current_r_addr,i,j);
+                if(ivc_info[i][j].ivc_req)begin 
+                    $display("%t : The IVC in router_addr=%h, router_id=%d, port=%d VC=%d is not empty: 
+                    ivc_info:%p",$time,router_config_in.router_addr,router_config_in.router_id,i,j,ivc_info[i][j]);
+                end
             end
         end
     end
-    
+    `endif
     //header flit info, it is useful for debugin
     hdr_flit_t hdr_flit_i [P-1 : 0]; // the received packet header flit info
     hdr_flit_t hdr_flit_o [P-1 : 0]; // the sent packet header flit info

@@ -1104,8 +1104,9 @@ sub add_param_widget {
             $widget =get_dir_in_object ($self,$attribut1,$param,$value,'ref',10,$default);
             set_gui_status($self,$new_status,$ref_delay) if(defined $ref_delay);
     }    
-    elsif ( $type eq "FILE_path"){ # use $content as extention
-            $widget =get_file_name_object ($self,$attribut1,$param,$content,undef,$new_status,$ref_delay);
+    elsif ( $type eq "FILE_path"){ # use $content for file extention:open_in
+        my ($ext, $open_in) = split(/:/, $content, 2);
+            $widget =get_file_name_object ($self,$attribut1,$param,$ext,$open_in,$new_status,$ref_delay);
     }    
     elsif ( $type eq 'Fixed'){
         $self->object_add_attribute($attribut1,$param,$default);

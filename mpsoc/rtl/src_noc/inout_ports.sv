@@ -203,6 +203,7 @@ module inout_ports #(
         .vsa_ctrl_in(vsa_ctrl_in),
         .ssa_ctrl_in(ssa_ctrl),
         .credit_init_val_out(credit_init_val_out),
+        .ctrl_in(ctrl_in),
         .reset (reset),
         .clk (clk)
     );   

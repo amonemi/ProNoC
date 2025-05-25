@@ -24,7 +24,7 @@ package pronoc_pkg;
         Bw  = log2(B),    
         WRRA_CONFIG_INDEX=0,
         SMART_EN = (SMART_MAX !=0),
-        SMART_NUM= (SMART_EN) ? SMART_MAX : 1,    
+        SMART_NUM= (SMART_EN) ? SMART_MAX : 1,
         NEV  = NE * V,
         T4 = 0,
         BEw = (BYTE_EN)? log2(Fpay/8) : 1;
@@ -35,7 +35,7 @@ package pronoc_pkg;
         (CONGESTION_INDEX==7)?  3:
         (CONGESTION_INDEX==9)?  3:
         (CONGESTION_INDEX==10)? 4:
-        (CONGESTION_INDEX==12)? 3:2;        
+        (CONGESTION_INDEX==12)? 3:2;
         
     localparam
         E_SRC_LSB =0,                   E_SRC_MSB = E_SRC_LSB + EAw-1,
@@ -70,7 +70,7 @@ package pronoc_pkg;
  *****************/
     typedef struct packed {
         logic [V-1 : 0] ovc_is_allocated;
-        logic [V-1 : 0] ovc_is_released;         
+        logic [V-1 : 0] ovc_is_released;
         logic [V-1 : 0] ivc_num_getting_sw_grant; 
         logic [V-1 : 0] ivc_num_getting_ovc_grant;
         logic [V-1 : 0] ivc_reset;
@@ -86,7 +86,7 @@ package pronoc_pkg;
     
     typedef struct packed {
         logic [V-1 : 0] ovc_is_allocated;
-        logic [V-1 : 0] ovc_is_released;         
+        logic [V-1 : 0] ovc_is_released;
         logic [V-1 : 0] ivc_num_getting_sw_grant; 
         logic [V-1 : 0] ivc_num_getting_ovc_grant;
         logic [V-1 : 0] ivc_reset;
@@ -96,7 +96,7 @@ package pronoc_pkg;
         bit              ssa_flit_wr;
         logic [V*V-1: 0] ivc_granted_ovc_num;
     } ssa_ctrl_t;    
-    localparam  SSA_CTRL_w = $bits(ssa_ctrl_t);    
+    localparam  SSA_CTRL_w = $bits(ssa_ctrl_t);
     
 /*********************
 *    smart : straight bypass allocator:
@@ -105,9 +105,9 @@ package pronoc_pkg;
     typedef struct packed {
         logic [EAw-1 : 0] dest_e_addr;
         logic ovc_is_assigned;
-        logic [Vw-1   : 0] assigned_ovc_bin;        
+        logic [Vw-1   : 0] assigned_ovc_bin;
     } smart_ivc_info_t;
-    localparam SMART_IVC_w = $bits(smart_ivc_info_t);    
+    localparam SMART_IVC_w = $bits(smart_ivc_info_t);
     
     typedef struct packed {
         bit        smart_en;
@@ -118,14 +118,14 @@ package pronoc_pkg;
         logic   [V-1 : 0] credit_out;
         logic   [V-1 : 0] buff_space_decreased;
         logic   [V-1 : 0] ovc_is_allocated;
-        logic   [V-1 : 0] ovc_is_released;        
+        logic   [V-1 : 0] ovc_is_released;
         logic   [V-1 : 0] ivc_num_getting_ovc_grant;
         logic   [V-1 : 0] ivc_reset;
         logic   [V-1 : 0] mask_available_ovc;
         logic   [V-1 : 0] ivc_single_flit_pck;
         logic   [V-1 : 0] ovc_single_flit_pck;
         logic   [V*V-1: 0] ivc_granted_ovc_num;
-    } smart_ctrl_t;    
+    } smart_ctrl_t;
     localparam  SMART_CTRL_w = $bits(smart_ctrl_t);
     
 /*****************
@@ -137,8 +137,7 @@ package pronoc_pkg;
         logic [V-1 : 0] swa_grant; // The VC number in an input port which got the swa grant
         logic [MAX_P-1 : 0] granted_oport_one_hot;    //The granted output port num (one-hot) for an input port
         logic any_ivc_get_swa_grant;
-        
-    } iport_info_t;    
+    } iport_info_t;
     localparam  IPORT_INFO_w = $bits(iport_info_t);
     
     typedef struct packed {
@@ -149,8 +148,7 @@ package pronoc_pkg;
         //logic [V-1 : 0] ovc_avalable;
         bit any_ovc_granted;
         //bit crossbar_flit_wr;
-        
-    }oport_info_t;    
+    }oport_info_t;
     localparam  OPORT_INFO_w = $bits(oport_info_t);
     
 /*********************
@@ -160,7 +158,7 @@ package pronoc_pkg;
         //ivc
         logic [EAw-1 : 0] dest_e_addr;
         logic ovc_is_assigned;
-        logic [V-1   : 0] assigned_ovc_num;    
+        logic [V-1   : 0] assigned_ovc_num;
         logic [Vw-1  : 0] assigned_ovc_bin;
         logic [MAX_P-1   : 0] destport_one_hot;
         logic [DSTPw-1 : 0]  dest_port_encoded;
@@ -170,7 +168,6 @@ package pronoc_pkg;
         logic [V-1  : 0] candidate_ovc;
         logic [Cw-1 : 0] class_num;
         logic single_flit_pck;
-        
     } ivc_info_t;
     localparam  IVC_INFO_w = $bits( ivc_info_t);
     
@@ -191,8 +188,8 @@ package pronoc_pkg;
 *   router id
 **************/
     typedef struct packed {
-        logic [31:0] current_r_id;
-        logic [RAw-1 :  0] current_r_addr;
+        logic [31:0] router_id;
+        logic [RAw-1 :  0] router_addr;
         logic [MAX_P*RAw-1:  0] neighbors_r_addr;
     } router_info_t;
     localparam  ROUTER_INFO_w = $bits(router_info_t);
@@ -201,7 +198,7 @@ package pronoc_pkg;
         logic [NRw-1 : 0] router_id;
         logic [RAw-1 : 0] router_addr;
         logic [NE_PER_R*EAw-1 : 0]  endp_addrs;
-        logic [NE_PER_R*NEw-1 : 0]  endp_ids;
+        logic [NE_PER_R*NEw-1 : 0]  endp_ids;        
     } router_config_t;
     localparam  ROUTER_CONFIG_w = $bits(router_config_t);
 
@@ -209,37 +206,37 @@ package pronoc_pkg;
 * router_chanels
 *********************/
     
-    typedef struct packed {    
+    typedef struct packed {
         logic [EAw-1     : 0] src_e_addr;
         logic [DAw-1     : 0] dest_e_addr;
-        logic [DSTPw-1    : 0] destport;    
+        logic [DSTPw-1    : 0] destport;
         logic [Cw-1        : 0] message_class;
         logic [WEIGHTw-1: 0] weight;
-        logic [BEw-1     : 0] be;        
+        logic [BEw-1     : 0] be;
     } hdr_flit_t;
     localparam HDR_FLIT_w = $bits(hdr_flit_t); 
     
     /* verilator lint_off WIDTH */
-    localparam FPAYw = (PCK_TYPE == "SINGLE_FLIT")?   Fpay + MSB_BE: Fpay;    
+    localparam FPAYw = (PCK_TYPE == "SINGLE_FLIT")?   Fpay + MSB_BE: Fpay;
     /* verilator lint_on WIDTH */
     
     typedef struct packed {
         bit hdr_flag;
         bit tail_flag;
         logic [V-1 : 0] vc;
-        logic [FPAYw-1 : 0] payload;        
+        logic [FPAYw-1 : 0] payload;
     } flit_t;
     localparam FLIT_w = $bits(flit_t); 
     
     localparam
         Fw = FLIT_w,
-        NEFw = NE *Fw;    
+        NEFw = NE *Fw;
     
-    typedef struct packed {    
+    typedef struct packed {
         logic  flit_wr;
         logic  [V-1 :  0]  credit;
-        flit_t  flit;        
-        logic  [CONGw-1 :  0]  congestion;        
+        flit_t  flit;
+        logic  [CONGw-1 :  0]  congestion;
     } flit_chanel_t;
     localparam FLIT_CHANEL_w = $bits(flit_chanel_t); 
     
@@ -252,11 +249,11 @@ package pronoc_pkg;
         bit   flit_in_bypassed; 
         logic [BYPASSw-1 : 0] bypassed_num;
     } smart_chanel_t;
-    localparam SMART_CHANEL_w = $bits(smart_chanel_t);    
+    localparam SMART_CHANEL_w = $bits(smart_chanel_t);
     
     localparam CRDTw = (B>LB) ? log2(B+1) : log2(LB+1);
     typedef struct packed {
-        bit endp_port;  
+        bit endp_port;
             // If set to 1, the corresponding port is connected to an endpoint.
         logic [EAw-1 : 0] endp_addr; 
             // If endp_port is 1, this field represents the address of the connected endpoint. 
@@ -272,7 +269,7 @@ package pronoc_pkg;
             // when heterogeneous VC support is enabled.
     } ctrl_chanel_t;
     
-    localparam CTRL_CHANEL_w = $bits(ctrl_chanel_t);    
+    localparam CTRL_CHANEL_w = $bits(ctrl_chanel_t);
     
     typedef struct packed {
         flit_chanel_t    flit_chanel;
@@ -311,7 +308,7 @@ package pronoc_pkg;
         hetero_ovc_unary = 
             (HETERO_VC == 0) ? {V{1'b1}} :
             (HETERO_VC == 1) ? (1 << VC_CONFIG_TABLE [router_id][0]) - 1 :
-            (1 << VC_CONFIG_TABLE [router_id][router_port_num]) -1;        
+            (1 << VC_CONFIG_TABLE [router_id][router_port_num]) -1;
         end
     endfunction
     
@@ -329,12 +326,12 @@ package pronoc_pkg;
     
     typedef struct packed {
         integer value;
-        integer percentage;     
+        integer percentage;
     }rnd_discrete_t;
     
      //packet injector interface
     localparam PCK_INJ_Dw =64;//TODO to be defined by user
-    localparam PCK_SIZw= log2(MAX_PCK_SIZ+1);    
+    localparam PCK_SIZw= log2(MAX_PCK_SIZ+1);
     
     typedef struct packed {
         logic [PCK_INJ_Dw-1 : 0] data;
@@ -348,7 +345,7 @@ package pronoc_pkg;
         logic [DISTw-1 : 0] distance;
         logic [15: 0]  h2t_delay;
     }    pck_injct_t;
-    localparam PCK_INJCT_w = $bits(pck_injct_t); 
+    localparam PCK_INJCT_w = $bits(pck_injct_t);
     
     typedef struct packed {
         logic [BYPASSw-1 : 0] bypassed_num;

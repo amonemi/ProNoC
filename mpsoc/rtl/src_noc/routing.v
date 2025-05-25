@@ -197,6 +197,16 @@ module conventional_routing #(
             .dest_e_addr(dest_e_addr),
             .destport(destport)
         );
+    /* verilator lint_off WIDTH */
+    end else if (TOPOLOGY=="MULTI_MESH") begin : multimesh
+    /* verilator lint_on WIDTH */
+        mesh_cluster_route_xyz #(
+            .NOC_ID(NOC_ID)
+        ) the_conventional_routing  (
+            .current_router_addr_i(current_r_addr),
+            .destination_router_addr_i(dest_e_addr[EAw-1:0]),
+            .router_port_out(destport)
+        );
     end else begin :custom
         custom_ni_routing  #(
             .TOPOLOGY(TOPOLOGY),
@@ -397,6 +407,10 @@ module look_ahead_routing #(
     end else if (TOPOLOGY == "STAR") begin : star
     /* verilator lint_on WIDTH */
         //look-ahead routing is not needed in star topology as there is only one router
+        assign  lkdestport_encoded={DSTPw{1'b0}};
+    /* verilator lint_off WIDTH */
+    end else if (TOPOLOGY == "MULTI_MESH") begin : multimesh
+    /* verilator lint_on WIDTH */
         assign  lkdestport_encoded={DSTPw{1'b0}};
     end else begin : custom
         custom_lkh_routing  #(

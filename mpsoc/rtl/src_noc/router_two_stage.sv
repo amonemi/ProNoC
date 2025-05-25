@@ -34,8 +34,7 @@ module router_two_stage #(
     parameter ROUTER_ID=0,
     parameter P=5
 ) (
-        current_r_id,
-        current_r_addr,// connected to constant parameter  
+        router_config_in,
         
         chan_in,
         chan_out,
@@ -61,8 +60,7 @@ module router_two_stage #(
     // However, in order to give an identical RTL code to each router, they are given as input ports. The identical RTL code reduces the
     // compilation time. Note that they wont be implemented as  input ports in the final synthesized code. 
     
-    input [RAw-1 :  0]  current_r_addr;
-    input [31:0] current_r_id;
+    input router_config_t router_config_in;
     
     input   flit_chanel_t chan_in  [P-1 : 0];
     output  flit_chanel_t chan_out [P-1 : 0];
@@ -154,10 +152,17 @@ module router_two_stage #(
     wire [PRAw-1  :  0] neighbors_r_addr;
     wire [CRDTw-1 : 0 ] credit_init_val_in  [P-1 : 0][V-1 : 0];
     wire [CRDTw-1 : 0 ] credit_init_val_out [P-1 : 0][V-1 : 0];    
+    logic [31:0] current_r_id;
+    logic [RAw-1 :  0]  current_r_addr;
+    always_comb begin 
+        current_r_addr = router_config_in.router_addr;
+        current_r_id = 0;
+        current_r_id [NRw-1 : 0] = router_config_in.router_id;
+    end
     
     router_info_t router_info;
-    assign router_info.current_r_id=current_r_id;
-    assign router_info.current_r_addr=current_r_addr;
+    assign router_info.router_id=current_r_id;
+    assign router_info.router_addr=current_r_addr;
     assign router_info.neighbors_r_addr[PRAw-1  :  0] = neighbors_r_addr;
     
     genvar i,j;
@@ -190,6 +195,12 @@ module router_two_stage #(
             assign  ctrl_out[i].endp_port =1'b0; 
             assign  ctrl_out[i].hetero_ovc_presence= hetero_ovc_unary(current_r_id,i);
             
+            if(IS_LINE | IS_RING |  IS_MESH | IS_FMESH | IS_TORUS) begin 
+                localparam ENP_NUM = (i>SOUTH)?  i-SOUTH : LOCAL;
+                assign  ctrl_out[i].endp_addr = router_config_in[ (ENP_NUM+1)*EAw-1 : ENP_NUM*EAw];
+            end else if (IS_MULTI_MESH) begin
+                assign  ctrl_out[i].endp_addr = router_config_in[EAw-1 : 0];
+            end //TODO complete it for fattree and bin tree
             assign  chan_out[i].flit=          flit_out_all       [(i+1)*Fw-1:  i*Fw];
             assign  chan_out[i].flit_wr=       flit_out_wr_all    [i];
             assign  chan_out[i].credit=        credit_out_all     [(i+1)*V-1:  i*V] | credit_release_out [(i+1)*V-1:  i*V];         

@@ -104,8 +104,8 @@ for my $filename (@param_files){
         # Split the declaration into individual parameter assignments
         my @params = split /,\s*/, $declaration;
         foreach my $param (@params) {
-            # Extract the parameter name
-            if ($param =~ /^\s*(\w+)/) {
+            # Extract the parameter name while skipping 'int', 'signed', 'unsigned'
+            if ($param =~ /^\s*(?:int|signed|unsigned)?\s*(\w+)/) {
                 push @param_list ,$1;
             }
         }
