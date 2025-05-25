@@ -300,8 +300,7 @@ module router_top #(
         for(j=0; j<V; j=j+1) begin :V_
             always @(posedge report_active_ivcs) begin
                 if(ivc_info[i][j].ivc_req)begin 
-                    $display("%t : The IVC in router_addr=%h, router_id=%d, port=%d VC=%d is not empty: 
-                    ivc_info:%p",$time,router_config_in.router_addr,router_config_in.router_id,i,j,ivc_info[i][j]);
+                    $display("%t : The IVC in router_addr=%h, router_id=%d, port=%d VC=%d is not empty ivc_info:%p",$time,router_config_in.router_addr,router_config_in.router_id,i,j,ivc_info[i][j]);
                 end
             end
         end
