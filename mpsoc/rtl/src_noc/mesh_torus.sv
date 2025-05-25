@@ -676,7 +676,7 @@ module mesh_torus_distance_gen (
         Xw = log2(T1),   // number of node in x axis
         Yw = log2(NYY);    // number of node in y axis 
     localparam [Xw : 0] NX = T1;
-    localparam [Yw : 0] NY = NYY;
+    localparam [Yw : 0] NY = NYY [Yw : 0];
     
     input [EAw-1 : 0] src_e_addr;
     input [EAw-1 : 0] dest_e_addr;               
