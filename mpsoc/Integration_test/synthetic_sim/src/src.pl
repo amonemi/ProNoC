@@ -28,7 +28,7 @@ my $verify  = "$ENV{PRONOC_WORK}/verify";
 my $src_verilator = "$root/src_verilator";
 my $src_c = "$root/src_c";
 my $src = "$script_path";
-my $report = "$dirname/report";
+
 
 #require "$root/perl_gui/lib/perl/common.pl";
 require "$root/perl_gui/lib/perl/topology.pl";
@@ -456,7 +456,7 @@ sub compile_models{
 
 }
 sub check_compilation_log {
-	my ($name,$ref,$inref) = @_;
+	my ($name,$ref,$inref,$log_file) = @_;
     my @log_report_match =@{$ref};
 	my ($paralel_run,$MIN,$MAX,$STEP) = @{$inref};
 	my $logfile	= "$work/$name/out.log";	
@@ -469,7 +469,7 @@ sub check_compilation_log {
 	}	
 	
 	foreach my $line (@found) {
-              append_text_to_file($report,"\t $line\n");
+              append_text_to_file($log_file,"\t $line\n");
     }
 }
 
@@ -478,21 +478,21 @@ sub check_compilation_log {
 
 
 sub check_compilation {
-	my ($self,$ref1,$inref,$mref)=@_;
+	my ($self,$ref1,$inref,$mref,$log_file)=@_;
 	
 	my @models = get_model_names($mref,$inref);
 
 	foreach my $m (@models){
 		my ($name,$fpath,$fsuffix) = fileparse("$m",qr"\..[^.]*$");
-		append_text_to_file($report,"****************************$name : Compile *******************************:\n");
+		append_text_to_file($log_file,"****************************$name : Compile *******************************:\n");
 		#check if testbench is generated successfully	
 		if(-f "$work/$name/obj_dir/testbench"){
-			append_text_to_file($report,"\t model is generated successfully.\n"); 
-			check_compilation_log($name,$ref1,$inref);
+			append_text_to_file($log_file,"\t model is generated successfully.\n"); 
+			check_compilation_log($name,$ref1,$inref,$log_file);
 
 		}else{
-			append_text_to_file($report,"\t model generation is FAILED.\n"); 
-			check_compilation_log($name,$ref1,$inref);
+			append_text_to_file($log_file,"\t model generation is FAILED.\n"); 
+			check_compilation_log($name,$ref1,$inref,$log_file);
 		}
 
 	}
@@ -500,30 +500,30 @@ sub check_compilation {
 
 
 sub run_all_models {
-	my ($self,$inref,$mref) =@_;
+	my ($self,$inref,$mref,$log_file) =@_;
     my ($paralel_run,$MIN,$MAX,$STEP) = @{$inref};
 	my @models = get_model_names($mref,$inref);	
     foreach my $m (@models){
-		run_traffic ($self,$m,'random',$inref);
+		run_traffic ($self,$m,'random',$inref,$log_file);
 	}
 	foreach my $m (@models){
-		run_traffic ($self,$m,'transposed 1',$inref);
+		run_traffic ($self,$m,'transposed 1',$inref,$log_file);
 	}
 }
 
 
 
 sub run_traffic {
-	my ($self,$model,$traffic,$inref)=@_;
+	my ($self,$model,$traffic,$inref,$log_file)=@_;
      my ($paralel_run,$MIN,$MAX,$STEP) = @{$inref};
 	my ($name,$fpath,$fsuffix) = fileparse("$model",qr"\..[^.]*$");
 	
 	my %param = get_model_parameter($model);
 	my $min_pck = $param{'MIN_PCK_SIZE'};
 	
-    append_text_to_file($report,"****************************$name	: $traffic traffic *******************************:\n");
+    append_text_to_file($log_file,"****************************$name	: $traffic traffic *******************************:\n");
 	unless (-f "$work/$name/obj_dir/testbench"){
-		append_text_to_file($report,"\t Failed. Simulation model is not avaialable\n");
+		append_text_to_file($log_file,"\t Failed. Simulation model is not avaialable\n");
 		return;
 	}
 
@@ -551,7 +551,7 @@ sub run_traffic {
 	$proc1->wait;
 	$proc1->die; 
 
-	check_sim_results($self,$name,$traffic,$inref);
+	check_sim_results($self,$name,$traffic,$inref,$log_file);
 
 }
 
@@ -607,7 +607,7 @@ sub get_zero_load_and_saturation{
 
 
 sub check_sim_results{
-	my ($self,$name,$traffic,$inref)=@_;
+	my ($self,$name,$traffic,$inref,$log_file)=@_;
     my ($paralel_run,$MIN,$MAX,$STEP) = @{$inref};
     my $file_name="${traffic}_results";
     $file_name =~ s/\s+//g;
@@ -621,7 +621,7 @@ sub check_sim_results{
 	
 		my @errors = unix_grep("$file","ERROR:");
 		if (scalar @errors  ){
-			append_text_to_file($report,"\t Error in running simulation:\n @errors \n");	
+			append_text_to_file($log_file,"\t Error in running simulation:\n @errors \n");	
 			$self->{'name'}{"$name"}{'traffic'}{$traffic}{'overal_result'}="Failed";
 			$self->{'name'}{"$name"}{'traffic'}{$traffic}{'message'}="@errors";
 			return;						
@@ -647,7 +647,7 @@ sub check_sim_results{
 
 
 
-	append_text_to_file($report,"\t Passed:   zero load ($z,$zl) saturation ($s,$sl)\n");
+	append_text_to_file($log_file,"\t Passed:   zero load ($z,$zl) saturation ($s,$sl)\n");
     $self->{'name'}{"$name"}{'traffic'}{$traffic}{'overal_result'}="passed";		
 }
 

@@ -50,7 +50,7 @@ PRUN=20
 MIN=2
 MAX=80
 STEP=4
-CONFS="default"
+CONFS="general"
 
 CONFS_path=$(realpath $SCRPT_DIR_PATH/configurations)
 
@@ -158,11 +158,14 @@ echo "---------------------------------------------"
 
 args="-p $PRUN -u $MAX -l $MIN -s $STEP -d $CONFS $model"
 
-report="${SCRPT_DIR_PATH}/reports/${CONFS}_report"
+log_dir="${SCRPT_DIR_PATH}/result_logs"
+log_file="${log_dir}/${CONFS}"
+golden_ref="${SCRPT_DIR_PATH}/golden_ref/${CONFS}"
 
+mkdir -p $log_dir
 
-if [ -f "$report" ]; then
-    rm "$report"
+if [ -f "$log_file" ]; then
+    rm "$log_file"
 fi
 
 
@@ -232,15 +235,15 @@ if [ "${servers[0]}" != "local" ]; then
     copy_sources
     echo "source \"/etc/profile\"; bash server_run.sh $args"
 $my_ssh $my_server  "cd ${SERVER_ROOT_DIR}/mpsoc/Integration_test/synthetic_sim/src;  source \"/etc/profile\";  bash   server_run.sh $args;"
-    $my_scp -r   "$my_server:${SERVER_ROOT_DIR}/mpsoc/Integration_test/synthetic_sim/report"  "$report"
+    $my_scp -r   "$my_server:${SERVER_ROOT_DIR}/mpsoc/Integration_test/synthetic_sim/result_logs/${CONFS}"  "$log_file"
 
 else 
 
     cd $SCRPT_DIR_PATH/src; bash   server_run.sh $args
-    mv $SCRPT_DIR_PATH/report  $report
+   
 
 fi
 
 
 wait
-meld "$report" "${report}_old" &
+meld "$golden_ref" "$log_file" &

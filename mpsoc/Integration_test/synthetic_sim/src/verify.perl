@@ -19,7 +19,7 @@ use FindBin;
 use lib $FindBin::Bin;
 use constant::boolean;
 
-
+use File::Path qw(make_path);
 
 
 use strict;
@@ -99,8 +99,8 @@ my $app = __PACKAGE__->new();
 
 
 
-my $dirname = dirname(__FILE__);
-require "$dirname/src.pl";
+my $script_path = dirname(__FILE__);
+require "$script_path/src.pl";
 
 
 my @inputs =($paralel_run,$MIN,$MAX,$STEP,$model_dir);
@@ -114,12 +114,24 @@ if (defined $options{m}){
     }
 }
 
+
+my $dirname = realpath("$script_path/..");
+my $log_dir ="${dirname}/result_logs";
+my $log_file="${log_dir}/$model_dir";
+
+unless (-d "$log_dir") {
+    print "Creating working directory inside $log_dir\n";
+    mkdir("$log_dir", 0700) or die "Failed to create directory $log_dir: $!";
+}
+
+
+
 check_models_are_exsited(\@models,\@inputs);
 
 my @log_report_match =("Error","Warning" );
 
 
-save_file ("$dirname/../report","Verification Results:\n");
+save_file ("$log_file","Verification Results:\n");
 
 recompile_synful();
 
@@ -129,9 +141,9 @@ gen_models(\@models,\@inputs);
 
 compile_models($app,\@inputs,\@models);
 
-check_compilation($app,\@log_report_match,\@inputs,\@models);
+check_compilation($app,\@log_report_match,\@inputs,\@models,$log_file);
 
-run_all_models($app,\@inputs,\@models);
+run_all_models($app,\@inputs,\@models,$log_file);
 
 
 

@@ -326,14 +326,15 @@ module mesh_torus_mask_non_assignable_destport_no_self_loop #(
     input odd_column;
     
     generate 
-    if(P>5)begin :p5
-        assign dest_port_out[P_1-1:4] = dest_port_in[P_1-1:4]; //other local ports
-    end      
+    
     /* verilator lint_off WIDTH */ 
     if (TOPOLOGY == "RING" || TOPOLOGY == "LINE") begin : oneD // A port can send packets to all other ports in these topologies
     /* verilator lint_on WIDTH */ 
         assign  dest_port_out = dest_port_in;    
     end else begin : towD
+        if(P>5)begin :p5
+            assign dest_port_out[P_1-1:4] = dest_port_in[P_1-1:4]; //other local ports
+        end    
         /* verilator lint_off WIDTH */ 
         if ( ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY") begin :xy
         /* verilator lint_on WIDTH */ 
