@@ -385,23 +385,17 @@ endmodule
 
 
 module check_straight_oport #(
-    parameter TOPOLOGY          =   "MESH", 
-    parameter ROUTE_NAME        =   "XY",
-    parameter ROUTE_TYPE        =   "DETERMINISTIC", 
-    parameter DSTPw             =   4,
     parameter SS_PORT_LOC     =   1
 )(
     destport_coded_i,
     goes_straight_o
 );
-    
+    `NOC_CONF
     input   [DSTPw-1 : 0] destport_coded_i;
     output  goes_straight_o;
     
     generate 
-    /* verilator lint_off WIDTH */ 
-    if(TOPOLOGY == "MESH" || TOPOLOGY == "TORUS" || TOPOLOGY =="FMESH") begin :twoD        
-    /* verilator lint_on WIDTH */ 
+    if(IS_MESH | IS_TORUS | IS_FMESH) begin :twoD        
         if (SS_PORT_LOC == 0 || SS_PORT_LOC > 4) begin : local_ports
             assign goes_straight_o = 1'b0; // There is not a next router in this case at all    
         end else begin :non_local
@@ -414,9 +408,7 @@ module check_straight_oport #(
             assign goes_straight_o = destport_one_hot [SS_PORT_LOC];    
         end//else
     end//mesh_tori
-    /* verilator lint_off WIDTH */ 
-    else if(TOPOLOGY ==  "RING" || TOPOLOGY ==  "LINE") begin :oneD        
-    /* verilator lint_on WIDTH */ 
+    else if(IS_RING | IS_LINE) begin :oneD        
         if (SS_PORT_LOC == 0 || SS_PORT_LOC > 2) begin : local_ports
             assign goes_straight_o = 1'b0; // There is not a next router in this case at all    
         end else begin :non_local
@@ -507,7 +499,7 @@ module smart_validity_check_per_ivc  #(
     smart_mask_available_ss_ovc_o;    
         
     output reg [V-1 : 0] smart_ivc_granted_ovc_num_o;
-
+    
     always @(*) begin 
         smart_ivc_granted_ovc_num_o={V{1'b0}};
         smart_ivc_granted_ovc_num_o[IVC_NUM]=smart_ivc_num_getting_ovc_grant_o;
@@ -532,7 +524,7 @@ module smart_validity_check_per_ivc  #(
     /* verilator lint_off WIDTH */
     wire non_empty_ivc_condition =(PCK_TYPE == "SINGLE_FLIT")?  1'b0 :ivc_request;
     /* verilator lint_on WIDTH */
-
+    
     assign condition2=( ADD_PIPREG_AFTER_CROSSBAR == 1)? 
         ~(non_empty_ivc_condition | ss_port_link_reg_flit_wr| ss_ovc_crossbar_wr):
         ~(non_empty_ivc_condition | ss_port_link_reg_flit_wr); // ss_port_link_reg_flit_wr are identical with ss_ovc_crossbar_wr when there is no link reg
@@ -625,11 +617,9 @@ module smart_allocator_per_iport # (
     wire  [DSTPw-1  :   0]  destport,lkdestport;
     wire  goes_straight;
     
-    /* verilator lint_off WIDTH */ 
-    localparam  LOCATED_IN_NI=  
-        (TOPOLOGY=="RING" || TOPOLOGY=="LINE") ? (SW_LOC == 0 || SW_LOC>2) :
-        (TOPOLOGY =="MESH" || TOPOLOGY=="TORUS" || TOPOLOGY == "FMESH")? (SW_LOC == 0 || SW_LOC>4) : 0;
-    /* verilator lint_on WIDTH */ 
+    localparam  LOCATED_IN_NI =  
+        (IS_RING | IS_LINE) ? (SW_LOC == 0 || SW_LOC > 2) :
+        (IS_MESH | IS_TORUS | IS_FMESH) ? (SW_LOC == 0 || SW_LOC > 4 ) : 0;
     
     // does the route computation for the current router
     conventional_routing #(
@@ -657,10 +647,6 @@ module smart_allocator_per_iport # (
     pronoc_register #(.W(DSTPw)) reg1 (.in(destport), .reset(reset), .clk(clk), .out(smart_destport_o));
     
     check_straight_oport #(
-        .TOPOLOGY      ( TOPOLOGY),
-        .ROUTE_NAME    ( ROUTE_NAME),
-        .ROUTE_TYPE    ( ROUTE_TYPE),
-        .DSTPw         ( DSTPw),
         .SS_PORT_LOC   ( SS_PORT_LOC)
     ) check_straight (
         .destport_coded_i (destport),

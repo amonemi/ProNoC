@@ -431,7 +431,9 @@ module  endp_addr_encoder #(
             .id(id),
             .code(code)
         );
+    /* verilator lint_off WIDTH */ 
     end else if (TOPOLOGY == "FMESH") begin :fmesh
+    /* verilator lint_on WIDTH */ 
         fmesh_addr_encoder #(
             .NX(T1),
             .NY(T2),
@@ -442,7 +444,9 @@ module  endp_addr_encoder #(
             .id(id),
             .code(code)
         );
+    /* verilator lint_off WIDTH */ 
     end else if (TOPOLOGY == "MULTI_MESH") begin :mmesh
+    /* verilator lint_on WIDTH */ 
         multimesh_address_encoder addr_encoder (
             .rid_in(id),
             .addr_st_o(code)
@@ -516,7 +520,9 @@ module endp_addr_decoder  #(
             .id(id),
             .code(code)
         );
+    /* verilator lint_off WIDTH */ 
     end else if (TOPOLOGY == "MULTI_MESH") begin 
+    /* verilator lint_on WIDTH */ 
         multimesh_address_decoder addr_coder (
             .rid_out(id),
             .addr_st_i(code)

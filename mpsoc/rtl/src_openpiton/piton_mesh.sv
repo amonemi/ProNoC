@@ -118,9 +118,7 @@ module piton_mesh
     
     genvar x,y,l;
     generate 
-    /* verilator lint_off WIDTH */ 
-    if( TOPOLOGY == "RING" || TOPOLOGY == "LINE") begin : ring_line 
-    /* verilator lint_on WIDTH */ 
+    if( IS_RING | IS_LINE) begin : ring_line 
         for  (x=0;   x<NX; x=x+1) begin :Router_
             assign current_r_addr [x] = x[RAw-1: 0];   
             piton_router_top the_router (
@@ -132,9 +130,7 @@ module piton_mesh
             if(x    <   NX-1) begin: not_last_node            
                 assign  router_chan_in[x][FORWARD] = router_chan_out [(x+1)][BACKWARD];
             end else begin :last_node
-                /* verilator lint_off WIDTH */ 
-                if(TOPOLOGY == "LINE") begin : line_last_x
-                /* verilator lint_on WIDTH */ 
+                if(IS_LINE) begin : line_last_x
                     assign  router_chan_in[x][FORWARD]= {PITON_CHANEL_w{1'b0}};                                              
                 end else begin : ring_last_x
                     assign router_chan_in[x][FORWARD]= router_chan_out [0][BACKWARD];
@@ -143,9 +139,7 @@ module piton_mesh
             if(x>0)begin :not_first_x
                     assign router_chan_in[x][BACKWARD]= router_chan_out [(x-1)][FORWARD];                    
             end else begin :first_x
-                /* verilator lint_off WIDTH */ 
-                if(TOPOLOGY == "LINE") begin : line_first_x
-                /* verilator lint_on WIDTH */ 
+                if(IS_LINE) begin : line_first_x
                     assign  router_chan_in[x][BACKWARD]={PITON_CHANEL_w{1'b0}};                    
                 end else begin : ring_first_x
                     assign  router_chan_in[x][BACKWARD]= router_chan_out [(NX-1)][FORWARD];                                            
@@ -183,17 +177,11 @@ module piton_mesh
                     assign router_chan_in[`router_id(x,y)][EAST]= router_chan_out [`router_id(x+1,y)][WEST];
                     //assign    router_credit_in_all [`SELECT_WIRE(x,y,EAST,V)] = router_credit_out_all [`SELECT_WIRE((x+1),y,WEST,V)];                    
                 end else begin :last_x
-                    /* verilator lint_off WIDTH */ 
-                    if(TOPOLOGY == "MESH") begin :last_x_mesh
-                    /* verilator lint_on WIDTH */ 
+                    if(IS_MESH) begin :last_x_mesh
                         assign router_chan_in[`router_id(x,y)][EAST] = {PITON_CHANEL_w{1'b0}};                    
-                    /* verilator lint_off WIDTH */ 
-                    end else if(TOPOLOGY == "TORUS") begin : last_x_torus
-                    /* verilator lint_on WIDTH */ 
+                    end else if(IS_TORUS) begin : last_x_torus
                         assign router_chan_in[`router_id(x,y)][EAST] = router_chan_out [`router_id(0,y)][WEST];                        
-                    /* verilator lint_off WIDTH */ 
-                    end else if(TOPOLOGY == "FMESH") begin : last_x_fmesh //connect to endp
-                    /* verilator lint_on WIDTH */ 
+                    end else if(IS_MESH) begin : last_x_fmesh //connect to endp
                         localparam EAST_ID = NX*NY*NL + 2*NX + NY +y; 
                         assign router_chan_in [`router_id(x,y)][EAST] =    chan_in_all [EAST_ID];
                         assign chan_out_all [EAST_ID] = router_chan_out [`router_id(x,y)][EAST];                         
@@ -202,17 +190,11 @@ module piton_mesh
                 if(y>0) begin : not_first_y
                     assign router_chan_in[`router_id(x,y)][NORTH] =  router_chan_out [`router_id(x,(y-1))][SOUTH];                    
                 end else begin :first_y
-                    /* verilator lint_off WIDTH */ 
-                    if(TOPOLOGY == "MESH") begin : first_y_mesh
-                    /* verilator lint_on WIDTH */ 
+                    if(IS_MESH) begin : first_y_mesh
                         assign router_chan_in[`router_id(x,y)][NORTH] =  {PITON_CHANEL_w{1'b0}};                                                
-                    /* verilator lint_off WIDTH */ 
-                    end else if(TOPOLOGY == "TORUS") begin :first_y_torus
-                    /* verilator lint_on WIDTH */ 
+                    end else if(IS_TORUS) begin :first_y_torus
                         assign router_chan_in[`router_id(x,y)][NORTH] =  router_chan_out [`router_id(x,(NY-1))][SOUTH];                        
-                    /* verilator lint_off WIDTH */ 
-                    end else if(TOPOLOGY == "FMESH") begin : first_y_fmesh //connect to endp
-                    /* verilator lint_on WIDTH */     
+                    end else if(IS_FMESH) begin : first_y_fmesh //connect to endp
                         localparam NORTH_ID = NX*NY*NL + x; 
                         assign router_chan_in [`router_id(x,y)][NORTH] =    chan_in_all [NORTH_ID];
                         assign chan_out_all [NORTH_ID] = router_chan_out [`router_id(x,y)][NORTH];
@@ -221,17 +203,11 @@ module piton_mesh
                 if(x>0)begin :not_first_x
                     assign    router_chan_in[`router_id(x,y)][WEST] =  router_chan_out [`router_id((x-1),y)][EAST];                    
                 end else begin :first_x
-                    /* verilator lint_off WIDTH */ 
-                    if(TOPOLOGY == "MESH") begin :first_x_mesh
-                    /* verilator lint_on WIDTH */ 
+                    if(IS_MESH) begin :first_x_mesh
                         assign    router_chan_in[`router_id(x,y)][WEST] =   {PITON_CHANEL_w{1'b0}};                        
-                    /* verilator lint_off WIDTH */                
-                    end else if(TOPOLOGY == "TORUS") begin :first_x_torus
-                    /* verilator lint_on WIDTH */ 
+                    end else if(IS_TORUS) begin :first_x_torus
                         assign    router_chan_in[`router_id(x,y)][WEST] =   router_chan_out [`router_id((NX-1),y)][EAST] ;                        
-                    /* verilator lint_off WIDTH */ 
-                        end else if(TOPOLOGY == "FMESH") begin : first_x_fmesh //connect to endp
-                    /* verilator lint_on WIDTH */     
+                        end else if(IS_FMESH) begin : first_x_fmesh //connect to endp
                         localparam WEST_ID = NX*NY*NL +2*NX + y; 
                         assign router_chan_in [`router_id(x,y)][WEST] =    chan_in_all [WEST_ID];
                         assign chan_out_all [WEST_ID] = router_chan_out [`router_id(x,y)][WEST];                        
@@ -240,16 +216,11 @@ module piton_mesh
                 if(y    <    NY-1) begin : firsty
                     assign  router_chan_in[`router_id(x,y)][SOUTH] =    router_chan_out [`router_id(x,(y+1))][NORTH];                    
                 end else     begin : lasty
-                    /* verilator lint_off WIDTH */ 
-                    if(TOPOLOGY == "MESH") begin :ly_mesh
-                    /* verilator lint_on WIDTH */ 
+                    if(IS_MESH) begin :ly_mesh
                         assign  router_chan_in[`router_id(x,y)][SOUTH]=  {PITON_CHANEL_w{1'b0}};                        
-                    /* verilator lint_off WIDTH */ 
-                    end else if(TOPOLOGY == "TORUS") begin :ly_torus
-                    /* verilator lint_on WIDTH */ 
+                    end else if(IS_TORUS) begin :ly_torus
                         assign  router_chan_in[`router_id(x,y)][SOUTH]=    router_chan_out [`router_id(x,0)][NORTH];                        
-                    end else if(TOPOLOGY == "FMESH") begin : ly_fmesh //connect to endp
-                    /* verilator lint_on WIDTH */     
+                    end else if(IS_FMESH) begin : ly_fmesh //connect to endp
                         localparam SOUTH_ID = NX*NY*NL + NX + x; 
                         assign router_chan_in [`router_id(x,y)][SOUTH] =    chan_in_all [SOUTH_ID];
                         assign chan_out_all [SOUTH_ID] = router_chan_out [`router_id(x,y)][SOUTH];

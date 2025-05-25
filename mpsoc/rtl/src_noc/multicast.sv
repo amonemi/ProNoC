@@ -26,9 +26,7 @@ module multicast_routing # (
     input   [DAw-1 : 0]  dest_e_addr;
     output  [DSTPw-1 : 0] destport;
     generate
-    /* verilator lint_off WIDTH */    
-    if(TOPOLOGY=="MESH") begin: mesh
-    /* verilator lint_on WIDTH */    
+    if(IS_MESH) begin: mesh
         multicast_routing_mesh #(
             .NOC_ID(NOC_ID),
             .P(P) ,
@@ -38,9 +36,7 @@ module multicast_routing # (
             .dest_e_addr(dest_e_addr),  // destination endpoint address        
             .destport(destport)        
         );
-    /* verilator lint_off WIDTH */    
-    end else if (TOPOLOGY == "FMESH") begin : fmesh 
-    /* verilator lint_on WIDTH */
+    end else if (IS_FMESH) begin : fmesh 
         multicast_routing_fmesh #(
             .NOC_ID(NOC_ID),
             .P(P) ,
@@ -50,9 +46,7 @@ module multicast_routing # (
             .dest_e_addr(dest_e_addr),  // destination endpoint address        
             .destport(destport)        
         );
-    /* verilator lint_off WIDTH */    
-    end else if (TOPOLOGY == "STAR") begin : star
-    /* verilator lint_on WIDTH */
+    end else if (IS_STAR) begin : star
         multicast_routing_star #(
             .NOC_ID(NOC_ID),
             .P(P) ,
@@ -366,9 +360,7 @@ module mcast_dest_list_decode #(
     
     genvar i;
     generate
-        /* verilator lint_off WIDTH */     
-        if(TOPOLOGY == "STAR") begin :star
-        /* verilator lint_on WIDTH */         
+        if(IS_STAR) begin :star
             assign mcast_dst_coded=dest_e_addr;
         end else begin :no_star
             assign {row_has_any_dest,mcast_dst_coded}=dest_e_addr;
@@ -516,7 +508,7 @@ module multicast_chan_in_process #(
     wire [DAw-1 : 0] dest_e_addr;
     genvar i;
     generate 
-    if(TOPOLOGY == "MESH") begin : mesh_
+    if(IS_MESH) begin : mesh_
         assign  dest_e_addr = {row_has_any_dest,mcast_dst_coded};
         if(SW_LOC == LOCAL || SW_LOC > SOUTH) begin :endp
             wire [NE/NX-1 : 0] endp_mask [NX-1 : 0];        
@@ -544,9 +536,7 @@ module multicast_chan_in_process #(
             assign  destport_o = destport;
         end
     end //mesh     
-    /* verilator lint_off WIDTH */ 
-    else if (TOPOLOGY == "FMESH" ) begin :fmesh_
-    /* verilator lint_on WIDTH */ 
+    else if ( IS_FMESH ) begin :fmesh_
         assign  dest_e_addr = {row_has_any_dest,mcast_dst_coded};
         localparam MAX_ENDP_NUM_IN_SAME_ROW = NY * NL + NY + 2;
         localparam ENDP_NUM_IN_MIDLE_ROW = NY * NL + 2;
@@ -583,9 +573,7 @@ module multicast_chan_in_process #(
         end
         assign  destport_o = (endp_port) ?    destport : destport_tmp ;
         assign  row_has_any_dest = (endp_port) ? row_has_any_dest_endp_port : row_has_any_dest_in;
-    /* verilator lint_off WIDTH */ 
-    end else if (TOPOLOGY == "STAR" ) begin :star_
-    /* verilator lint_on WIDTH */ 
+    end else if (IS_STAR ) begin :star_
         assign  destport_o =    destport;
         assign  dest_e_addr =   mcast_dst_coded;
     end   
@@ -674,10 +662,8 @@ module multicast_dst_sel # (
     generate 
     for (i=0; i<DSTPw;i++) begin : lp
         localparam PR = 
-            /* verilator lint_off WIDTH */ 
-            (TOPOLOGY == "MESH" || TOPOLOGY == "TORUS" || TOPOLOGY == "FMESH"  )?  mesh_tori_pririty_order(i):
-            (TOPOLOGY == "RING" || TOPOLOGY == "LINE") ? ring_lin_pririty_order(i) : i;
-            /* verilator lint_on WIDTH */                                
+            ( IS_MESH | IS_TORUS | IS_FMESH ) ?  mesh_tori_pririty_order(i):
+            ( IS_RING | IS_LINE ) ? ring_lin_pririty_order(i) : i;
         assign arb_in[i] = destport_in[PR];
         assign destport_out [PR] = arb_out[i];
     end

@@ -54,11 +54,9 @@ package pronoc_pkg;
         HDR_MAX_DATw = (PCK_TYPE == "SINGLE_FLIT")? Fpay : Fpay - MSB_BE -1;
         /* verilator lint_on WIDTH */
         
-        /* verilator lint_off WIDTH */ 
     localparam
-        DISTw =  (TOPOLOGY=="FATTREE" || TOPOLOGY=="TREE" ) ? log2(2*L+1): log2(NR+1),
-        OVC_ALLOC_MODE= ((V==1 || B<=4) )?   1'b1 : 1'b0;
-        /* verilator lint_on WIDTH */ 
+        DISTw =  (IS_FATTREE | IS_TREE ) ? log2(2*L+1): log2(NR+1),
+        OVC_ALLOC_MODE= ((V==1 || B <= 4) ) ?   1'b1 : 1'b0;
         
         // 0: The new ovc is allocated only if its not nearly full. Results in a simpler sw_mask_gen logic
         // 1: The new ovc is allocated only if its not full. Results in a little more complex sw_mask_gen logic

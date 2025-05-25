@@ -267,7 +267,7 @@ module header_flit_update_lk_route_ovc #(
     
     generate 
     /* verilator lint_off WIDTH */ 
-    if((TOPOLOGY == "MESH" || TOPOLOGY == "FMESH" || TOPOLOGY == "TORUS"  || TOPOLOGY ==  "RING") && ROUTE_TYPE != "DETERMINISTIC" )begin :coded
+    if((IS_MESH | IS_FMESH | IS_TORUS | IS_RING) && (ROUTE_TYPE != "DETERMINISTIC"))begin :coded
     /* verilator lint_on WIDTH */ 
         mesh_torus_adaptive_lk_dest_encoder #(
             .V(V),

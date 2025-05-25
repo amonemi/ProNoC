@@ -664,32 +664,19 @@ endmodule
 /********************
 *    distance_gen 
 ********************/
-module mesh_torus_distance_gen #(
-    parameter T1= 4,    // number of node in x axis
-    parameter T2= 4,    // number of node in y axis
-    parameter T3= 4,
-    parameter EAw=4,
-    parameter DISTw=4,
-    parameter TOPOLOGY = "MESH"
-)(
+module mesh_torus_distance_gen (
     src_e_addr,
     dest_e_addr,
     distance
 );
-
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end       
-    end   
-    endfunction // log2 
+    `NOC_CONF
+    
     localparam 
+        NYY =(IS_RING | IS_LINE )? 1 : T2,
         Xw = log2(T1),   // number of node in x axis
-        Yw = log2(T2);    // number of node in y axis 
+        Yw = log2(NYY);    // number of node in y axis 
     localparam [Xw : 0] NX = T1;
-    localparam [Yw : 0] NY = T2;
+    localparam [Yw : 0] NY = NYY;
     
     input [EAw-1 : 0] src_e_addr;
     input [EAw-1 : 0] dest_e_addr;               
@@ -699,7 +686,7 @@ module mesh_torus_distance_gen #(
     mesh_tori_endp_addr_decode #(
         .TOPOLOGY(TOPOLOGY),
         .T1(T1),
-        .T2(T2),
+        .T2(NYY),
         .T3(T3),
         .EAw(EAw)
     ) src_addr_decode (
@@ -713,7 +700,7 @@ module mesh_torus_distance_gen #(
     mesh_tori_endp_addr_decode #(
         .TOPOLOGY(TOPOLOGY),
         .T1(T1),
-        .T2(T2),
+        .T2(NYY),
         .T3(T3),
         .EAw(EAw)
     ) dest_addr_decode (
@@ -727,9 +714,7 @@ module mesh_torus_distance_gen #(
     reg [Xw-1 : 0] x_offset;
     reg [Yw-1 : 0] y_offset;
     generate 
-    /* verilator lint_off WIDTH */ 
-    if( TOPOLOGY == "MESH" || TOPOLOGY == "LINE") begin : oneD
-    /* verilator lint_on WIDTH */ 
+    if( IS_MESH | IS_LINE) begin : oneD
         always @(*) begin 
             x_offset = (src_x> dest_x)? src_x - dest_x : dest_x - src_x;
             y_offset = (src_y> dest_y)? src_y - dest_y : dest_y - src_y;

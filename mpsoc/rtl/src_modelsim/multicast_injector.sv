@@ -302,14 +302,7 @@ module multicast_injector #(
     assign chan_out.flit_chanel.credit= credit_o;
     assign chan_out.ctrl_chanel.credit_init_val= LB;
     assign chan_out.ctrl_chanel.endp_port =1'b1;
-    distance_gen #(
-        .TOPOLOGY(TOPOLOGY),
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .EAw(EAw),
-        .DISTw(DISTw)
-    ) the_distance_gen (
+    distance_gen the_distance_gen (
         .src_e_addr(sender_endp_addr_reg[vc_bin]),
         .dest_e_addr(current_e_addr),
         .distance(pck_injct_out.distance)

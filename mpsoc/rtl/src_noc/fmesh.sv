@@ -358,26 +358,12 @@ endmodule
 /********************
 *    distance_gen 
  ********************/
-module fmesh_distance_gen #(
-    parameter T1= 4,    // number of router in x axis
-    parameter T2= 4,    // number of router in y axis
-    parameter T3= 4,
-    parameter EAw=4,
-    parameter DISTw=4
-)(
+module fmesh_distance_gen (
     src_e_addr,
     dest_e_addr,
     distance
 );
-    
-    function integer log2;
-        input integer number; begin   
-            log2=(number <=1) ? 1: 0;    
-            while(2**log2<number) begin    
-                log2=log2+1;    
-            end       
-        end   
-    endfunction // log2  
+    `NOC_CONF
     
     localparam 
         Xw  =   log2(T1),   // number of node in x axis

@@ -435,9 +435,7 @@ module router_two_stage #(
     
 `ifdef SIMULATION
     generate 
-    /* verilator lint_off WIDTH */ 
-    if(DEBUG_EN && TOPOLOGY == "MESH")begin :dbg
-    /* verilator lint_on WIDTH */ 
+    if(DEBUG_EN & IS_MESH)begin :dbg
         debug_mesh_edges #(
             .T1(T1),
             .T2(T2),

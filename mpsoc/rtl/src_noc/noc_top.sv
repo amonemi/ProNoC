@@ -47,9 +47,7 @@ module  noc_top #(
     output  router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];
     
     generate 
-    /* verilator lint_off WIDTH */
-    if (TOPOLOGY ==    "MESH" || TOPOLOGY == "FMESH" || TOPOLOGY ==  "TORUS" || TOPOLOGY == "RING" || TOPOLOGY == "LINE") begin : tori_noc 
-    /* verilator lint_on WIDTH */
+    if (IS_MESH | IS_FMESH | IS_TORUS | IS_RING | IS_LINE) begin : tori_noc 
         mesh_torus_noc_top #(
             .NOC_ID(NOC_ID)
         ) noc_top (
@@ -59,9 +57,7 @@ module  noc_top #(
             .chan_out_all  (chan_out_all ),
             .router_event  (router_event )
         );
-    /* verilator lint_off WIDTH */
-    end else if (TOPOLOGY == "FATTREE") begin : fat_
-    /* verilator lint_on WIDTH */
+    end else if (IS_FATTREE) begin : fat_
         fattree_noc_top #(
             .NOC_ID(NOC_ID)
         ) noc_top (
@@ -71,9 +67,7 @@ module  noc_top #(
             .chan_out_all  (chan_out_all ),
             .router_event  (router_event )
         );
-    /* verilator lint_off WIDTH */
-    end else if (TOPOLOGY == "TREE") begin : tree_
-    /* verilator lint_on WIDTH */
+    end else if (IS_TREE) begin : tree_
         tree_noc_top  #(
             .NOC_ID(NOC_ID)
         ) noc_top ( 
@@ -83,9 +77,7 @@ module  noc_top #(
             .chan_out_all  (chan_out_all ),
             .router_event  (router_event )
         );
-    /* verilator lint_off WIDTH */
-    end else if (TOPOLOGY == "STAR") begin : star_
-    /* verilator lint_on WIDTH */
+    end else if (IS_STAR) begin : star_
         star_noc_top  #(
             .NOC_ID(NOC_ID)
         ) noc_top ( 

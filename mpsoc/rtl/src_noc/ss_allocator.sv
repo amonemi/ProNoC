@@ -217,7 +217,7 @@ module ssa_per_vc #(
         SW_LOC = V_GLOBAL/V,
         V_LOCAL = V_GLOBAL%V;
     /* verilator lint_off WIDTH */ 
-    localparam SSA_EN_IN_PORT = ((TOPOLOGY== "MESH" || TOPOLOGY == "TORUS") && (ROUTE_TYPE == "FULL_ADAPTIVE") && (SS_PORT==2 || SS_PORT == 4) && ((1<<V_LOCAL &  ~ESCAP_VC_MASK ) != {V{1'b0}})) ? 1'b0 :1'b1;
+    localparam SSA_EN_IN_PORT = ((IS_MESH | IS_TORUS) && (ROUTE_TYPE == "FULL_ADAPTIVE") && (SS_PORT==2 || SS_PORT == 4) && ((1<<V_LOCAL &  ~ESCAP_VC_MASK ) != {V{1'b0}})) ? 1'b0 :1'b1;
     /* verilator lint_on WIDTH */   
     
     input [Fw-1 : 0]  flit_in;
@@ -366,9 +366,7 @@ module ssa_check_destport #(
     output ss_port_hdr_flit, ss_port_nonhdr_flit;
     
     generate
-    /* verilator lint_off WIDTH */
-    if(TOPOLOGY == "FATTREE") begin : fat
-    /* verilator lint_on WIDTH */
+    if(IS_FATTREE) begin : fat
         fattree_ssa_check_destport #(
             .DSTPw(DSTPw),
             .SS_PORT(SS_PORT)
@@ -378,9 +376,7 @@ module ssa_check_destport #(
             .ss_port_hdr_flit(ss_port_hdr_flit),
             .ss_port_nonhdr_flit(ss_port_nonhdr_flit)
         );
-    /* verilator lint_off WIDTH */
-    end else if (TOPOLOGY == "MESH" || TOPOLOGY == "TORUS" ) begin : mesh
-    /* verilator lint_on WIDTH */
+    end else if (IS_MESH | IS_TORUS ) begin : mesh
         mesh_torus_ssa_check_destport #(
             .ROUTE_TYPE(ROUTE_TYPE),
             .SW_LOC(SW_LOC),
@@ -399,13 +395,11 @@ module ssa_check_destport #(
             .hdr_flg(hdr_flg)
             `endif
         ); 
-    /* verilator lint_off WIDTH */
-    end else if (TOPOLOGY == "FMESH") begin :fmesh
-    /* verilator lint_on WIDTH */
+    end else if (IS_FMESH) begin :fmesh
         localparam 
             ELw = log2(T3),
             Pw  = log2(P),
-            PLw = (TOPOLOGY == "FMESH") ? Pw : ELw;
+            PLw = (IS_FMESH) ? Pw : ELw;
             
         wire [Pw-1 : 0] endp_p_in;
         wire [MAX_P-1 : 0] destport_one_hot_in;

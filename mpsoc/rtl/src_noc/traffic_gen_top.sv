@@ -344,14 +344,7 @@ module  traffic_gen_top    #(
         .data_o(rd_hdr_data_out)
     );
     
-    distance_gen #(
-        .TOPOLOGY(TOPOLOGY),
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .EAw(EAw),
-        .DISTw(DISTw)
-    ) the_distance_gen (
+    distance_gen the_distance_gen (
         .src_e_addr(src_e_addr),
         .dest_e_addr(current_e_addr),
         .distance(distance)
@@ -961,58 +954,32 @@ endmodule
 /********************
     distance_gen 
 ********************/
-module distance_gen #(
-    parameter TOPOLOGY  = "MESH",
-    parameter T1=4,
-    parameter T2=4,
-    parameter T3=4,
-    parameter EAw=2,
-    parameter DISTw=4
-)(
+module distance_gen (
     src_e_addr,
     dest_e_addr,
     distance
 );
-    
+    `NOC_CONF
     input [EAw-1 : 0] src_e_addr;
     input [EAw-1 : 0] dest_e_addr;
     output [DISTw-1 : 0]   distance;
     
     generate 
-    /* verilator lint_off WIDTH */ 
-    if (TOPOLOGY ==    "MESH" || TOPOLOGY ==  "TORUS" || TOPOLOGY == "RING" || TOPOLOGY == "LINE")begin : tori_noc 
-        localparam NY =(TOPOLOGY == "RING" || TOPOLOGY == "LINE")? 1 : T2;
-    /* verilator lint_on WIDTH */ 
-        mesh_torus_distance_gen #(
-            .T1(T1),
-            .T2(NY),
-            .T3(T3),
-            .TOPOLOGY(TOPOLOGY),
-            .DISTw(DISTw),
-            .EAw(EAw)
-        ) distance_gen (
+    if (IS_MESH | IS_TORUS | IS_RING | IS_LINE) begin : tori_noc 
+        
+        mesh_torus_distance_gen distance_gen (
             .src_e_addr(src_e_addr),
             .dest_e_addr(dest_e_addr),
             .distance(distance)
         );
-    /* verilator lint_off WIDTH */ 
-    end else if (TOPOLOGY ==    "FMESH") begin :fmesh
-    /* verilator lint_on WIDTH */ 
-        fmesh_distance_gen #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),            
-            .DISTw(DISTw),
-            .EAw(EAw)
-        ) distance_gen (
+    end else if (IS_FMESH) begin :fmesh
+        fmesh_distance_gen  distance_gen (
             .src_e_addr(src_e_addr),
             .dest_e_addr(dest_e_addr),
             .distance(distance)
         );
         
-    /* verilator lint_off WIDTH */ 
-    end else if (TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE") begin : fat 
-    /* verilator lint_on WIDTH */    
+    end else if (IS_FATTREE | IS_TREE) begin : fat 
         fattree_distance_gen #(
             .K(T1),
             .L(T2)
@@ -1021,7 +988,7 @@ module distance_gen #(
             .dest_addr_encoded(dest_e_addr),
             .distance(distance)
         );
-    end else if (TOPOLOGY == "STAR") begin 
+    end else if (IS_STAR) begin 
         assign distance =1;
     end
     endgenerate
