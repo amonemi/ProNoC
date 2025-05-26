@@ -228,7 +228,7 @@ module input_queue_per_port #(
     
     localparam
         VV = V * V,
-        VDSTPw = V * DSTPw,        
+        VDSTPw = V * DSTPw,
         W = WEIGHTw,
         WP = W * P,
         P_1=( SELF_LOOP_EN=="NO")?  P-1 : P,
@@ -248,7 +248,7 @@ module input_queue_per_port #(
         PLw = (TOPOLOGY == "FMESH") ? Pw : ELw,
         VPLw= V * PLw,
         PRAw= P * RAw;
-    /* verilator lint_on WIDTH */   
+    /* verilator lint_on WIDTH */
     
     input reset, clk;
     input   router_info_t router_info;
@@ -336,7 +336,7 @@ module input_queue_per_port #(
     assign flit_wr =(flit_in_wr )? vc_num_in : {V{1'b0}};
     assign rd_hdr_fwft_fifo  = (ssa_ctrl_in.ivc_reset | vsa_ctrl_in.ivc_reset | (smart_ctrl_in.ivc_reset  & ~ smart_ctrl_in.ivc_single_flit_pck)) & ~ multiple_dest;
     assign wr_hdr_fwft_fifo  = hdr_flit_wr | (smart_hdr_en & ~ smart_ctrl_in.ivc_single_flit_pck);
-    assign ivc_request = ivc_not_empty;    
+    assign ivc_request = ivc_not_empty;
     
     wire  [V-1 : 0] flit_is_tail2;
     
@@ -531,6 +531,7 @@ module input_queue_per_port #(
                 .reset (reset),
                 .clk (clk)
             );
+            /*
             multi_mesh_ovc_list_per_ivc #(
                 .IVC_NUM(i), //Input port VC number
                 .P(P) //router IO number
@@ -541,6 +542,7 @@ module input_queue_per_port #(
                 .ovc_sel(ovc_sel_ivc[i]),
                 .ovcs_out(candidate_ovcs [(i+1)*V-1 : i*V])
             );
+            */
         end
         if(PCK_TYPE == "MULTI_FLIT") begin : multi_flit 
             
@@ -662,7 +664,7 @@ module input_queue_per_port #(
             );
         end else begin :c_num_1
             assign class_out[i] = 1'b0;
-        end        
+        end
         
         //localparam CAST_TYPE = "UNICAST"; // multicast is not yet supported
         /* verilator lint_off WIDTH */    
@@ -687,7 +689,7 @@ module input_queue_per_port #(
                 .reset(reset),
                 .clk(clk),
                 .clear(clear_dspt_mulicast [i])   // clear the  destination port once it got  the entire packet
-            );               
+            );
             
             //TODO remove multiple_dest[i] to see if it works?
             
@@ -796,7 +798,7 @@ module input_queue_per_port #(
             .swap_port_presel(swap_port_presel[i]),
             .port_pre_sel(port_pre_sel),
             .odd_column(odd_column)
-        );       
+        );
         
         /* verilator lint_off WIDTH */  
         if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && (T3>1) && (CAST_TYPE== "UNICAST")) begin : multi_local

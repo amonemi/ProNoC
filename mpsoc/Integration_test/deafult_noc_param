@@ -39,7 +39,7 @@ $model = bless({
         "HETERO_VC"=> "0",
         "MAX_ROUTER"=>"1",
         "MAX_PORT"=>"1",
-        "int VC_CONFIG_TABLE [MAX_ROUTER][MAX_PORT]"=>"'{0}",
+        "int VC_CONFIG_TABLE [MAX_ROUTER][MAX_PORT]"=>"'{'{0}}",
     },
     
     'parameters_order' => {

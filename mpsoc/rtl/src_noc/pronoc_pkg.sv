@@ -21,7 +21,7 @@ package pronoc_pkg;
         Cw=  (C==0)? 1 : log2(C),
         NRw = log2(NR),
         NEw = log2(NE),
-        Bw  = log2(B),    
+        Bw  = log2(B),
         WRRA_CONFIG_INDEX=0,
         SMART_EN = (SMART_MAX !=0),
         SMART_NUM= (SMART_EN) ? SMART_MAX : 1,
@@ -80,7 +80,7 @@ package pronoc_pkg;
 /*********************
 *     ssa : static straight allocator:
 *           enable single cycle latency for flits goes to the same direction
-**********************/     
+**********************/
     
     typedef struct packed {
         logic [V-1 : 0] ovc_is_allocated;

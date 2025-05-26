@@ -1,0 +1,47 @@
+extract_results(/home/alireza/work/git/hca_git/git-hub/ProNoC/mpsoc_work/verify/quartus_pronoc,pronoc);
+/home/alireza/work/git/hca_git/git-hub/ProNoC/mpsoc_work/verify/quartus_pronoc
+***************** results *****************
+ , Fr_max
+pronoc_output_files,  146.35  ,  Fmax =  146.35   Mhz
+
+
+
+
+-,     Combinational ALUTs           
+pronoc_output_files, 15546 , 36100 ( 43 % )                    ;  
+
+
+
+
+-,     Dedicated logic registers     
+pronoc_output_files, 9732 , 36100 ( 27 % )                     ;  
+
+
+
+
+-,     Memory ALUTs                  
+pronoc_output_files, 0 , 18050 ( 0 % )                          ;  
+
+
+
+
+-, ALMs:  partially or completely used                                               
+pronoc_output_files, 11348 , 18050 ( 63 % )   
+
+
+
+
+-, Logic utilization                                                                 
+pronoc_output_files, 18852 , 36100 ( 52 % )   
+
+
+
+
+-, M9K blocks                                                                        
+pronoc_output_files, 64 , 319 ( 20 % )            ;  
+
+
+
+
+-, Total block memory bits           
+pronoc_output_files, 17408 , 2939904 ( < 1 % )                ;  

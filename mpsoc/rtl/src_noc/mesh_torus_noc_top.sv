@@ -145,7 +145,7 @@ module mesh_torus_noc_top #(
                     (IS_MESH)?  is_grounded :                      //last_y_mesh
                     (IS_TORUS)? router_chan_out[fmesh_router_id(x, 0)][NORTH] :   //last_y_torus
                                 chan_in_all[SOUTH_ID];                   //last_y_fmesh
-                if(IS_FMESH) begin :IS_FMESH //connect to endpoints
+                if(IS_FMESH) begin :fmesh //connect to endpoints
                     if(x == NX-1)  assign chan_out_all [EAST_ID] = router_chan_out [fmesh_router_id(x,y)][EAST];
                     if(y ==0 )     assign chan_out_all [NORTH_ID] = router_chan_out [fmesh_router_id(x,y)][NORTH];
                     if (x ==0 )    assign chan_out_all [WEST_ID] = router_chan_out[fmesh_router_id(x, y)][WEST];

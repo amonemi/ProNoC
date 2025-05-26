@@ -35,7 +35,7 @@
 
 module  ss_allocator #(
     parameter NOC_ID=0,
-    parameter P=5     
+    parameter P=5
 )(
     clk,
     reset,  
@@ -45,17 +45,17 @@ module  ss_allocator #(
     any_ivc_sw_request_granted_all ,
     ovc_avalable_all,
     ivc_info,
-    ovc_info,   
+    ovc_info,
     ssa_ctrl_o
 );
-    `NOC_CONF        
-    localparam  
+    `NOC_CONF
+    localparam
         PV = V * P,
         VV = V * V,
         PVV = PV * V,
-        PVDSTPw= PV * DSTPw,                
+        PVDSTPw= PV * DSTPw,
         PFw = P * Fw,
-        DISABLED = P;                       
+        DISABLED = P;
         
     input [PFw-1 : 0]  flit_in_all;
     input [P-1 : 0]  flit_in_wr_all;
@@ -83,7 +83,7 @@ module  ss_allocator #(
     wire [PV-1 : 0] decreased_credit_in_ss_ovc;
     wire [PV-1 : 0] ivc_num_getting_sw_grantin_SS_all;
     wire [PV-1 : 0] ivc_request_all;
-    wire [PV-1 : 0] assigned_ovc_not_full_all;  
+    wire [PV-1 : 0] assigned_ovc_not_full_all;
     wire [PVDSTPw-1 : 0] dest_port_encoded_all;
     wire [PVV-1 : 0] assigned_ovc_num_all;
     wire [PV-1 : 0] ovc_is_assigned_all;
@@ -96,7 +96,7 @@ module  ss_allocator #(
         localparam  C_PORT  = i/V;
         localparam  SS_PORT = strieght_port (P,C_PORT);
         assign ivc_request_all[i] = ivc_info[C_PORT][i%V].ivc_req;
-        assign assigned_ovc_not_full_all[i] = ~ovc_info[SS_PORT][i%V].full;
+        
         //assign assigned_ovc_not_full_all[i] = ivc_info[C_PORT][i%V].assigned_ovc_not_full;
         assign dest_port_encoded_all [(i+1)*DSTPw-1 : i*DSTPw] = ivc_info[C_PORT][i%V].dest_port_encoded;
         assign assigned_ovc_num_all[(i+1)*V-1 : i*V] = ivc_info[C_PORT][i%V].assigned_ovc_num;
@@ -114,8 +114,10 @@ module  ss_allocator #(
             assign   single_flit_pck_all[i]= 1'b0;
             assign   ovc_single_flit_pck_all [i] =1'b0;
             assign   ivc_num_getting_sw_grantin_SS_all[i]=1'b0;
-           // assign   predict_flit_wr_all [i]=1'b0;       
+            assign   assigned_ovc_not_full_all[i]=1'b0;
+           // assign   predict_flit_wr_all [i]=1'b0;
         end else begin : ssa
+            assign   assigned_ovc_not_full_all[i] = ~ovc_info[SS_PORT][i%V].full;
             assign   any_ovc_granted_in_ss_port[i]=any_ovc_granted_in_outport_all[SS_PORT];
             assign   ovc_avalable_in_ss_port[i]=ovc_avalable_all[(SS_PORT*V)+(i%V)];
             assign   ovc_allocated_all[(SS_PORT*V)+(i%V)]=ovc_allocated_in_ss_port[i];
@@ -128,20 +130,20 @@ module  ss_allocator #(
                 .NOC_ID(NOC_ID),
                 .SS_PORT(SS_PORT),
                 .V_GLOBAL(i),
-                .P(P)              
+                .P(P)
             ) the_ssa_per_vc (
                 .flit_in_wr(flit_in_wr_all[(i/V)]),
                 .flit_in(flit_in_all[((i/V)+1)*Fw-1 : (i/V)*Fw]),
-                .any_ivc_sw_request_granted(any_ivc_sw_request_granted_all[(i/V)]),                
-                .any_ovc_granted_in_ss_port(any_ovc_granted_in_ss_port[i]),                
-                .ovc_avalable_in_ss_port(ovc_avalable_in_ss_port[i]),                
+                .any_ivc_sw_request_granted(any_ivc_sw_request_granted_all[(i/V)]),
+                .any_ovc_granted_in_ss_port(any_ovc_granted_in_ss_port[i]),
+                .ovc_avalable_in_ss_port(ovc_avalable_in_ss_port[i]),
                 .ivc_request(ivc_request_all[i]),
                 .assigned_ovc_not_full(assigned_ovc_not_full_all[i]),
                 .destport_encoded(dest_port_encoded_all[(i+1)*DSTPw-1 : i*DSTPw]),
                 .assigned_to_ssovc(assigned_ovc_num_all[(i*V)+(i%V)]),
-                .ovc_is_assigned(ovc_is_assigned_all[i]),                
-                .ovc_allocated(ovc_allocated_in_ss_port[i]),                
-                .ovc_released(ovc_released_in_ss_port[i]),                
+                .ovc_is_assigned(ovc_is_assigned_all[i]),
+                .ovc_allocated(ovc_allocated_in_ss_port[i]),
+                .ovc_released(ovc_released_in_ss_port[i]),
                 .granted_ovc_num(granted_ovc_num_all[(i+1)*V-1 : i*V]),
                 .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant_all[i]),
                 .ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant_all[i]),
@@ -152,11 +154,11 @@ module  ss_allocator #(
                 `ifdef SIMULATION
                 ,.clk(clk)
                 `endif 
-            );           
+            );
         end//ssa
     end// vc_loop
     
-    for(i=0;i<P;i=i+1)begin: P_         
+    for(i=0;i<P;i=i+1)begin: P_
         pronoc_register #(.W(1)) reg1 (
             .in(|ivc_num_getting_sw_grantin_SS_all[(i+1)*V-1 : i*V] ),
             .out(ssa_flit_wr_all[i]),
@@ -209,16 +211,16 @@ module ssa_per_vc #(
     `ifdef SIMULATION
     ,clk
     `endif
-);      
+);
     
-    `NOC_CONF        
+    `NOC_CONF
     //header packet filds width
     localparam  
         SW_LOC = V_GLOBAL/V,
         V_LOCAL = V_GLOBAL%V;
     /* verilator lint_off WIDTH */ 
     localparam SSA_EN_IN_PORT = ((IS_MESH | IS_TORUS) && (ROUTE_TYPE == "FULL_ADAPTIVE") && (SS_PORT==2 || SS_PORT == 4) && ((1<<V_LOCAL &  ~ESCAP_VC_MASK ) != {V{1'b0}})) ? 1'b0 :1'b1;
-    /* verilator lint_on WIDTH */   
+    /* verilator lint_on WIDTH */
     
     input [Fw-1 : 0]  flit_in;
     input flit_in_wr;
@@ -258,8 +260,8 @@ module ssa_per_vc #(
     assign  single_flit_pck = 
         (PCK_TYPE == "SINGLE_FLIT")? 1'b1 :
         (MIN_PCK_SIZE==1)?  hdr_flg & tail_flg : 1'b0; 
-    /* verilator lint_on WIDTH */     
-    wire   condition_1_2_valid;     
+    /* verilator lint_on WIDTH */
+    wire   condition_1_2_valid;
     wire [DAw-1 : 0]  dest_e_addr_in;
     extract_header_flit_info #(
         .NOC_ID(NOC_ID),
@@ -289,7 +291,7 @@ module ssa_per_vc #(
         .SW_LOC(SW_LOC),
         .P(P),  
         .SS_PORT(SS_PORT)
-    ) check_destport (   
+    ) check_destport (
         .destport_encoded(destport_encoded),
         .destport_in_encoded(destport_in_encoded),
         .destport_one_hot(destport_one_hot),
@@ -432,7 +434,7 @@ module ssa_check_destport #(
             .CAST_TYPE(CAST_TYPE)
         ) decoder (
             .destport_one_hot (destport_one_hot_in),
-            .dest_port_encoded(destport_in_encoded),             
+            .dest_port_encoded(destport_in_encoded),
             .dest_port_out( ),   
             .endp_localp_num(endp_p_in),
             .swap_port_presel(1'b0),
@@ -440,7 +442,7 @@ module ssa_check_destport #(
             .odd_column(1'b0)
         );
         
-        assign ss_port_nonhdr_flit = destport_one_hot [SS_PORT];         
+        assign ss_port_nonhdr_flit = destport_one_hot [SS_PORT];
         assign ss_port_hdr_flit    = destport_one_hot_in [SS_PORT]; 
     end else begin : line
         line_ring_ssa_check_destport #(
@@ -454,7 +456,7 @@ module ssa_check_destport #(
             .destport_encoded(destport_encoded),
             .destport_in_encoded(destport_in_encoded),
             .ss_port_hdr_flit(ss_port_hdr_flit),
-            .ss_port_nonhdr_flit(ss_port_nonhdr_flit)    
+            .ss_port_nonhdr_flit(ss_port_nonhdr_flit)
         );
     end
     endgenerate
@@ -468,7 +470,7 @@ endmodule
 **************************/
 module add_ss_port #(
     parameter NOC_ID=0,
-    parameter SW_LOC=0,    
+    parameter SW_LOC=0,
     parameter P=5
 )(
     destport_in,
@@ -503,8 +505,8 @@ module add_ss_port #(
                     destport_temp[SS_PORT_CODE]= 1'b1;
                 end
             end 
-            assign destport_out = destport_temp;        
-        end         
+            assign destport_out = destport_temp;
+        end
     end //ss
     endgenerate
 endmodule

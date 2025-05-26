@@ -295,7 +295,7 @@ module inout_ports #(
             .any_ovc_granted_in_outport_all(any_ovc_granted_in_outport_all),
             .ovc_avalable_all(ovc_avalable_all),
             .clk(clk),
-            .reset(reset),                        
+            .reset(reset),
             .ssa_ctrl_o(ssa_ctrl)
         );
         
@@ -305,7 +305,7 @@ module inout_ports #(
         end
     end //ssa   
     
-    for(i=0;i< P;i=i+1) begin :p_            
+    for(i=0;i< P;i=i+1) begin :p_
         assign ssa_flit_wr_all [i] = ssa_ctrl[i].ssa_flit_wr;
     end//for    
     

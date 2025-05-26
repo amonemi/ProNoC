@@ -240,7 +240,6 @@ $my_ssh $my_server  "cd ${SERVER_ROOT_DIR}/mpsoc/Integration_test/synthetic_sim/
 else 
 
     cd $SCRPT_DIR_PATH/src; bash   server_run.sh $args
-   
 
 fi
 

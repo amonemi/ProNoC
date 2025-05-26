@@ -1,0 +1,41 @@
+ , Fr_max
+pronoc_output_files,  159.64  ,  Fmax =  159.64   Mhz
+
+-,     Combinational ALUTs           
+pronoc_output_files, 1696 , 36100 ( 5 % )                      ;  
+
+
+
+
+-,     Dedicated logic registers     
+pronoc_output_files, 1426 , 36100 ( 4 % )                      ;  
+
+
+
+
+-,     Memory ALUTs                  
+pronoc_output_files, 0 , 18050 ( 0 % )                          ;  
+
+
+
+
+-, ALMs:  partially or completely used                                               
+pronoc_output_files, 1435 , 18050 ( 8 % )   
+
+
+
+
+-, Logic utilization                                                                 
+pronoc_output_files, 2460 , 36100 ( 7 % )   
+
+
+
+
+-, M9K blocks                                                                        
+pronoc_output_files, 20 , 319 ( 6 % )            ;  
+
+
+
+
+-, Total block memory bits           
+pronoc_output_files, 5808 , 2939904 ( < 1 % )                 ;  

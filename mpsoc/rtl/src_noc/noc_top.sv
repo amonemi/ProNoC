@@ -88,6 +88,7 @@ module  noc_top #(
                 .router_event  (router_event )
         );
     end else if (IS_MULTI_MESH) begin : multimesh
+    /*
         multi_mesh #(
             .NOC_ID(NOC_ID)
         ) noc_top ( 
@@ -97,6 +98,7 @@ module  noc_top #(
                 .chan_out_all  (chan_out_all ),
                 .router_event  (router_event )
         );
+    */
     end else begin :custom_
         
         custom_noc_top #(
