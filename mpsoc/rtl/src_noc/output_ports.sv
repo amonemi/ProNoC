@@ -113,7 +113,6 @@ module output_ports #(
     wire [PV-1 : 0]    full_all_next,nearly_full_all_next,empty_all_next;
     wire [PV-1 : 0] credit_decreased_all;
     wire [PV-1 : 0] ovc_released_all;
-    wire [PV-1 : 0] ovc_allocated_all;
     wire [CREDITw-1 : 0] credit_counter [PV-1 : 0]; 
     wire [PVV-1 : 0] assigned_ovc_num_all;
     wire [PV-1 : 0] ovc_is_assigned_all;
@@ -165,10 +164,9 @@ module output_ports #(
     wire [PV-1 : 0] non_smart_ovc_allocated_all;
     generate
     for(i=0;i<P;i=i+1    ) begin :P_
-        assign ssa_granted_ovc_num_all[(i+1)*VV-1: i*VV] = ssa_ctrl_in[i].ivc_granted_ovc_num;          
+        assign ssa_granted_ovc_num_all[(i+1)*VV-1: i*VV] = ssa_ctrl_in[i].ivc_granted_ovc_num;
         assign credit_decreased_all [(i+1)*V-1 : i*V] = vsa_ctrl_in[i].buff_space_decreased |     ssa_ctrl_in[i].buff_space_decreased | smart_ctrl_in[i].buff_space_decreased;
         assign ovc_released_all [(i+1)*V-1 : i*V] = vsa_ctrl_in[i].ovc_is_released  | ssa_ctrl_in[i].ovc_is_released  | smart_ctrl_in[i].ovc_is_released;
-        assign ovc_allocated_all [(i+1)*V-1 : i*V] = vsa_ctrl_in[i].ovc_is_allocated | ssa_ctrl_in[i].ovc_is_allocated | smart_ctrl_in[i].ovc_is_allocated;  
         //assign non_smart_ovc_allocated_all [(i+1)*V-1 : i*V] = ssa_ctrl_in[i].ovc_is_allocated | vsa_ctrl_in[i].ovc_is_allocated;
         assign non_smart_ovc_allocated_all [(i+1)*V-1 : i*V] = vsa_ctrl_in[i].ovc_is_allocated;
         assign oport_info[i].non_smart_ovc_is_allocated = non_smart_ovc_allocated_all [(i+1)*V-1 :i*V];
@@ -194,7 +192,7 @@ module output_ports #(
             assign     ovc_info[i][j].full =full_all[i*V+j];
             assign     ovc_info[i][j].nearly_full=nearly_full_all[i*V+j];
             assign     ovc_info[i][j].empty=empty_all[i*V+j];
-        end                    
+        end
     end//for
     
     for(i=0;i< PV;i=i+1) begin :total_vc_loop2
@@ -209,7 +207,7 @@ module output_ports #(
                 end
             end else begin :slp
                 assign ovc_released_gen [i][j] = ovc_released[j][i];
-                assign credit_decreased_gen[i][j] = credit_decreased [j][i];            
+                assign credit_decreased_gen[i][j] = credit_decreased [j][i];
             end
         end//j
         assign vsa_ovc_released_all [i] = |ovc_released_gen[i];
@@ -254,9 +252,9 @@ module output_ports #(
             .credit_decreased(credit_decreased_all[i]),
             .empty_all_next(empty_all_next[i]),
             .full_all_next(full_all_next[i]),
-            .nearly_full_all_next(nearly_full_all_next[i]),   
+            .nearly_full_all_next(nearly_full_all_next[i]),
             .reset(reset),
-            .clk(clk)    
+            .clk(clk)
         ); 
         
         full_ovc_predictor #(
@@ -282,7 +280,7 @@ module output_ports #(
     end//for
     for(i=0;    i<PV; i=i+1) begin :reg_blk
         always @ (*)begin 
-            ovc_status_next[i] = ovc_status[i];             
+            ovc_status_next[i] = ovc_status[i];
             /* verilator lint_off WIDTH */
             if(PCK_TYPE == "SINGLE_FLIT")  ovc_status_next[i]=1'b0; // donot change VC status for single flit packet
             /* verilator lint_on WIDTH */
@@ -293,7 +291,7 @@ module output_ports #(
                     (ssa_ctrl_in[i/V].ovc_is_allocated[i%V] & ~ssa_ctrl_in[i/V].ovc_single_flit_pck[i%V])|
                     (smart_ctrl_in[i/V].ovc_is_allocated[i%V] & ~smart_ctrl_in[i/V].ovc_single_flit_pck[i%V]))  
                     ovc_status_next[i]=1'b1; // donot change VC status for single flit packet    
-            end        
+            end
         end//always
     end//for     
     endgenerate
@@ -322,6 +320,10 @@ module output_ports #(
     `ifdef SIMULATION
     generate 
     if(DEBUG_EN) begin: debug
+        wire [PV-1 : 0] ovc_allocated_all;
+        for(i=0;i<P;i=i+1 ) begin :P_
+            assign ovc_allocated_all [(i+1)*V-1 : i*V] = vsa_ctrl_in[i].ovc_is_allocated | ssa_ctrl_in[i].ovc_is_allocated | smart_ctrl_in[i].ovc_is_allocated;
+        end
         always @ (posedge clk )begin 
             for(k=0;    k<PV; k=k+1'b1) begin 
                 if(empty_all[k] & credit_increased_all[k]) begin 
@@ -332,7 +334,7 @@ module output_ports #(
                     $display("%t: ERROR: Attempt to send flit to full ovc[%d]: %m",$time,k);
                     $finish;
                 end
-                if(ovc_released_all[k] & ovc_allocated_all[k]) begin    
+                if(ovc_released_all[k] & ovc_allocated_all[k]) begin
                     $display("%t: ERROR: simultaneous allocation and release for an OVC[%d]: %m",$time,k);
                     $finish;
                 end
@@ -357,7 +359,7 @@ module output_ports #(
                 .NUM(PV) 
             )cnt1 (
                 .in_all(ovc_status),
-                .out(num1)         
+                .out(num1)
             );
             accumulator #(
                 .INw(PV),
@@ -393,7 +395,7 @@ endmodule
 
 
 /*********************
- *     credit_monitor_per_ovc     
+ *     credit_monitor_per_ovc 
  ********************/
 module   credit_monitor_per_ovc  #(
     parameter NOC_ID=0,
@@ -405,12 +407,12 @@ module   credit_monitor_per_ovc  #(
     credit_counter_o,
     empty_all_next,
     full_all_next,
-    nearly_full_all_next,   
+    nearly_full_all_next,
     reset,
     clk
 );
     
-    `NOC_CONF    
+    `NOC_CONF
     localparam 
         PORT_B = port_buffer_size(SW_LOC),    
         DEPTHw = log2(PORT_B+1);
@@ -442,11 +444,11 @@ module   credit_monitor_per_ovc  #(
     assign     nearly_full_all_next = (credit_counter_next  <= 1);    
     
     pronoc_register_reset_init #(
-        .W(DEPTHw)            
+        .W(DEPTHw)
     )reg1( 
         .in(credit_counter_next),
-        .reset(reset),    
-        .clk(clk),        
+        .reset(reset),
+        .clk(clk),
         .out(credit_counter),
         .reset_to(credit_init_val_i [DEPTHw-1 : 0]) // Bint;
     );
@@ -529,7 +531,7 @@ endmodule
 *    full_ovc_predictor
 *********************************/
 module full_ovc_predictor #(
-    parameter PCK_TYPE = "MULTI_FLIT",    
+    parameter PCK_TYPE = "MULTI_FLIT",
     parameter V = 4, // vc_num_per_port
     parameter P = 5, // router port num
     parameter OVC_ALLOC_MODE=1'b0,
@@ -548,10 +550,10 @@ module full_ovc_predictor #(
     clk,
     reset
 );
-    localparam      
+    localparam
         P_1 = ( SELF_LOOP_EN=="NO")?  P-1 : P,
         VP_1 = V * P_1;
-    input clk,reset;                
+    input clk,reset;
     input ovc_is_assigned;
     input [V-1 : 0]  assigned_ovc_num,granted_ovc_num,ssa_granted_ovc_num;
     input [P_1-1 : 0] dest_port;
@@ -586,7 +588,7 @@ module full_ovc_predictor #(
         .out       (nearly_full_muxout1),
         .sel       (dest_port)
     );
-    // assigned ovc mux         
+    // assigned ovc mux
     onehot_mux_1D #(
         .W (1),
         .N (V)
@@ -657,7 +659,7 @@ module check_ovc #(
                 .destport_out(destport_num[i])
             );
         end else begin :slp
-            assign destport_num[i] = destport_sel[i];            
+            assign destport_num[i] = destport_sel[i];
         end
         one_hot_demux    #(
             .IN_WIDTH    (V),

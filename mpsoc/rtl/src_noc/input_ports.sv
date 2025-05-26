@@ -302,7 +302,7 @@ module input_queue_per_port #(
     wire [DAw-1 : 0] dest_e_addr_in;
     wire [EAw-1 : 0] src_e_addr_in;
     wire [V-1 : 0] vc_num_in;
-    wire [V-1 : 0] hdr_flit_wr,flit_wr;
+    wire [V-1 : 0] hdr_flit_wr;
     wire [VV-1 : 0] assigned_ovc_num;
     
     wire [DSTPw-1 : 0] lk_destination_in_encoded;
@@ -333,7 +333,6 @@ module input_queue_per_port #(
     assign smart_hdr_en  = (SMART_EN) ? smart_ctrl_in.ivc_num_getting_ovc_grant: {V{1'b0}};
     assign reset_ivc  = smart_ctrl_in.ivc_reset | ssa_ctrl_in.ivc_reset | vsa_ctrl_in.ivc_reset;
     assign ivc_num_getting_sw_grant = ssa_ctrl_in.ivc_num_getting_sw_grant | vsa_ctrl_in.ivc_num_getting_sw_grant;
-    assign flit_wr =(flit_in_wr )? vc_num_in : {V{1'b0}};
     assign rd_hdr_fwft_fifo  = (ssa_ctrl_in.ivc_reset | vsa_ctrl_in.ivc_reset | (smart_ctrl_in.ivc_reset  & ~ smart_ctrl_in.ivc_single_flit_pck)) & ~ multiple_dest;
     assign wr_hdr_fwft_fifo  = hdr_flit_wr | (smart_hdr_en & ~ smart_ctrl_in.ivc_single_flit_pck);
     assign ivc_request = ivc_not_empty;

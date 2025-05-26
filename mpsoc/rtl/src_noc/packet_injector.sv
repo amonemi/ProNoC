@@ -92,7 +92,7 @@ module packet_injector #(
             .destport(destport)
         );
     end 
-    endgenerate    
+    endgenerate
     
     localparam 
         HDR_BYTE_NUM = HDR_MAX_DATw / 8, // = HDR_MAX_DATw / (8 - HDR_MAX_DATw %8)
@@ -116,7 +116,7 @@ module packet_injector #(
     
     header_flit_generator #(
         .NOC_ID(NOC_ID),
-        .DATA_w(HDR_DATA_w)                
+        .DATA_w(HDR_DATA_w)
     ) the_header_flit_generator (
         .flit_out(hdr_flit_out),
         .vc_num_in(pck_injct_in.vc),
@@ -135,20 +135,20 @@ module packet_injector #(
     
     wire [Fpay -1 : 0]  remain_dat [REMAIN_DAT_FLIT -1 : 0];
     wire [Fpay-1 : 0] dataIn =  remain_dat[counter2];
-    enum  bit [2:0] {HEADER, BODY,TAIL} flit_type,flit_type_next;
+    enum  bit [2:0] {HEADER, BODY, TAIL_ST} flit_type,flit_type_next;
     
     wire [V-1 : 0]   wr_vc_send = (flit_wr)?   pck_injct_in.vc : {V{1'b0}};
     wire [V-1 : 0]   vc_fifo_full;
     
-    wire noc_ready;    
+    wire noc_ready;
     
     genvar i,k;
     generate 
         for(i=0; i<REMAIN_DAT_FLIT_I; i++) begin :rem
-            assign remain_dat [i] = pck_injct_in.data [Fpay*(i+1)+HDR_DATA_w-1   : (Fpay*i)+HDR_DATA_w];                
+            assign remain_dat [i] = pck_injct_in.data [Fpay*(i+1)+HDR_DATA_w-1   : (Fpay*i)+HDR_DATA_w];
         end
         if(REMAIN_DAT_FLIT_F ) begin :flt
-            assign remain_dat [REMAIN_DAT_FLIT_I][LASTw-1 : 0] = pck_injct_in.data [PCK_INJ_Dw-1   : (Fpay*REMAIN_DAT_FLIT_I)+HDR_DATA_w];                
+            assign remain_dat [REMAIN_DAT_FLIT_I][LASTw-1 : 0] = pck_injct_in.data [PCK_INJ_Dw-1   : (Fpay*REMAIN_DAT_FLIT_I)+HDR_DATA_w];
         end
     endgenerate
     
@@ -180,7 +180,7 @@ module packet_injector #(
                         if(pck_injct_in.size == 1)begin
                             tail=1'b1;
                         end else if (pck_injct_in.size == 2) begin 
-                            flit_type_next = TAIL;
+                            flit_type_next = TAIL_ST;
                         end else begin 
                             flit_type_next = BODY;
                         end 
@@ -190,11 +190,11 @@ module packet_injector #(
                     flit_wr=1;
                     counter_next = counter -1'b1;
                     counter2_next =counter2 +1'b1;
-                    if(counter == 2) begin                             
-                        flit_type_next = TAIL;
+                    if(counter == 2) begin
+                        flit_type_next = TAIL_ST;
                     end
                 end
-                TAIL: begin                        
+                TAIL_ST: begin
                     flit_type_next = HEADER;
                     flit_wr=1;
                     tail=1'b1;
@@ -355,7 +355,7 @@ module packet_injector #(
     endgenerate
     
     wire [V-1 : 0] vc_reg;
-    wire tail_flag_reg, hdr_flag_reg;    
+    wire tail_flag_reg, hdr_flag_reg;
     
     pronoc_register #(.W(V))   register1 (.in(chan_in.flit_chanel.flit.vc), .reset(reset ), .clk(clk),.out(vc_reg));
     pronoc_register #(.W(1))   register2 (.in(chan_in.flit_chanel.flit.hdr_flag), .reset(reset ), .clk(clk),.out(hdr_flag_reg));
@@ -377,7 +377,7 @@ module packet_injector #(
     assign pck_injct_out.ready = (flit_type == HEADER)?  ~vc_fifo_full : {V{1'b0}};    
     assign pck_injct_out.endp_addr[EAw-1 : 0] =  sender_endp_addr_reg[vc_bin];
     assign pck_injct_out.vc = vc_reg;
-    assign pck_injct_out.pck_wr = tail_flag_reg;      
+    assign pck_injct_out.pck_wr = tail_flag_reg;
     
     assign chan_out.flit_chanel.flit.hdr_flag =head;
     assign chan_out.flit_chanel.flit.tail_flag=tail;

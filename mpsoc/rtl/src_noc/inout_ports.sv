@@ -125,8 +125,8 @@ module inout_ports #(
     input [CONG_ALw-1 : 0] congestion_in_all;
     output[CONG_ALw-1 : 0] congestion_out_all;
     output[PV-1 : 0] vc_weight_is_consumed_all;
-    output[P-1 : 0] iport_weight_is_consumed_all;  
-    input [P-1 : 0] granted_dst_is_from_a_single_flit_pck;    
+    output[P-1 : 0] iport_weight_is_consumed_all;
+    input [P-1 : 0] granted_dst_is_from_a_single_flit_pck;
     
     // to vc/sw allocator
     output [PVP_1-1 : 0] dest_port_all;
@@ -155,7 +155,7 @@ module inout_ports #(
     input   smart_ctrl_t   smart_ctrl_in [P-1 : 0];
     input   vsa_ctrl_t   vsa_ctrl_in [P-1 : 0];
     input   [CRDTw-1 : 0 ] credit_init_val_in  [P-1 : 0][V-1 : 0];
-    output  [CRDTw-1 : 0 ] credit_init_val_out [P-1 : 0][V-1 : 0];     
+    output  [CRDTw-1 : 0 ] credit_init_val_out [P-1 : 0][V-1 : 0];
     
     wire [PPSw-1 : 0] port_pre_sel;
     wire [PV-1 :  0]  swap_port_presel;
@@ -526,7 +526,7 @@ module  vc_alloc_request_gen #(
         assign destport_clear_all={PVDSTPw{1'b0}};
         assign sel = {PV{1'bx}};
         
-    end else begin: adptv     
+    end else begin: adptv
         
         if(P==5 && SELF_LOOP_EN == "NO" )begin : sl_mesh // combine portsel and available VC mux as proposed in ProNoC paper
             

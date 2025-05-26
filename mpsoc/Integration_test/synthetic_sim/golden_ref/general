@@ -15,6 +15,8 @@ Verification Results:
 	 model is generated successfully.
 ****************************mesh_2x2_openpiton : Compile *******************************:
 	 model is generated successfully.
+****************************mesh_3x3_v2_ssa : Compile *******************************:
+	 model is generated successfully.
 ****************************mesh_4x4_2cycle_mcast_f : Compile *******************************:
 	 model is generated successfully.
 ****************************mesh_4x4_smart3 : Compile *******************************:
@@ -59,6 +61,8 @@ Verification Results:
 	 Passed:   zero load (2,14.4245) saturation (30,98.3569)
 ****************************mesh_2x2_openpiton	: random traffic *******************************:
 	 Passed:   zero load (2,9.10156) saturation (66,72.3384)
+****************************mesh_3x3_v2_ssa	: random traffic *******************************:
+	 Passed:   zero load (2,10.2442) saturation (74,99.0811)
 ****************************mesh_4x4_2cycle_mcast_f	: random traffic *******************************:
 	 Passed:   zero load (2,14.4623) saturation (22,261.684)
 ****************************mesh_4x4_smart3	: random traffic *******************************:
@@ -103,6 +107,8 @@ Verification Results:
 	 Passed:   zero load (2,15.916) saturation (26,118.048)
 ****************************mesh_2x2_openpiton	: transposed 1 traffic *******************************:
 	 Passed:   zero load (2,8.7482) saturation (100,-)
+****************************mesh_3x3_v2_ssa	: transposed 1 traffic *******************************:
+	 Passed:   zero load (10,10.3955) saturation (54,77.1181)
 ****************************mesh_4x4_2cycle_mcast_f	: transposed 1 traffic *******************************:
 	 Passed:   zero load (2,14.8953) saturation (26,146.747)
 ****************************mesh_4x4_smart3	: transposed 1 traffic *******************************:

@@ -30,7 +30,7 @@
 module flit_buffer
 #(
     parameter V=  1,
-    parameter B = 4    
+    parameter B = 4
 )(
     din,     // Data in
     vc_num_wr,//write virtual channel
@@ -52,14 +52,14 @@ module flit_buffer
     `NOC_CONF
     
     
-    localparam        
+    localparam
         Bw = (B==1)? 1 : log2(B),
         BV = B   *   V,
-        BVw = log2(BV),              
+        BVw = log2(BV),
         Vw = (V==1)? 1 : log2(V),
         DEPTHw = log2(B+1),
         BwV = Bw * V,
-        BVwV = BVw * V,               
+        BVwV = BVw * V,
         RESTw = Fw -2-V , 
         PTRw = ((2**Bw)==B)? Bw : BVw, // if B is power of 2 PTRw is Bw else is BVw
         ARRAYw = PTRw * V,
@@ -76,21 +76,21 @@ module flit_buffer
     output [V-1 :0]  vc_not_empty;
     input      reset;
     input      clk;
-    input [V-1 :0]  ssa_rd;   
+    input [V-1 :0]  ssa_rd;
     input [V-1 :0]  multiple_dest;
-    input [V-1 :0]  sub_rd_ptr_ld;       
-    output [V-1 : 0]        flit_is_tail;   
+    input [V-1 :0]  sub_rd_ptr_ld;
+    output [V-1 : 0]        flit_is_tail;
     
     //pointers
     wire [PTRw- 1 : 0] rd_ptr [V-1 :0];
-    wire [PTRw- 1 : 0] wr_ptr [V-1 :0];    
+    wire [PTRw- 1 : 0] wr_ptr [V-1 :0];
     reg [PTRw- 1 : 0] rd_ptr_next [V-1 :0];
     reg [PTRw- 1 : 0] wr_ptr_next [V-1 :0];
     reg [PTRw- 1 : 0] sub_rd_ptr_next [V-1 :0];
-    wire [PTRw- 1 : 0] sub_rd_ptr [V-1 :0];        
+    wire [PTRw- 1 : 0] sub_rd_ptr [V-1 :0];
     wire [PTRw-1 : 0] ptr_tmp  [V-1 : 0];
     wire [ARRAYw-1 : 0] rd_ptr_array;
-    wire [ARRAYw-1 : 0] wr_ptr_array;   
+    wire [ARRAYw-1 : 0] wr_ptr_array;
     
     wire [RAM_DATA_WIDTH-1 : 0] fifo_ram_din;
     wire [RAM_DATA_WIDTH-1 : 0] fifo_ram_dout;
@@ -98,40 +98,40 @@ module flit_buffer
     wire [V-1       : 0] rd;  
     wire [DEPTHw-1  : 0] depth      [V-1 :0];
     reg [DEPTHw-1  : 0] depth_next [V-1 :0];
-    wire [DEPTHw-1  : 0] sub_depth       [V-1 :0];  
-    reg [DEPTHw-1  : 0] sub_depth_next  [V-1 :0];   
+    wire [DEPTHw-1  : 0] sub_depth       [V-1 :0];
+    reg [DEPTHw-1  : 0] sub_depth_next  [V-1 :0];
     
-    reg [B-1 : 0] tail_fifo [V-1 : 0];    
+    reg [B-1 : 0] tail_fifo [V-1 : 0];
     wire [1 : 0] flgs_in, flgs_out;
     wire [V-1: 0] vc_in;
     wire [RESTw-1 :0      ] flit_rest_in,flit_rest_out;
     wire [V-1 : 0] sub_rd;
     wire [V-1 : 0] sub_restore;
     
-    assign  wr = (wr_en)?  vc_num_wr : {V{1'b0}};   
+    assign  wr = (wr_en)?  vc_num_wr : {V{1'b0}};
     
-    genvar i;    
+    genvar i;
     generate
     /* verilator lint_off WIDTH */ 
     if (CAST_TYPE != "UNICAST") begin : nouni
         /* verilator lint_on WIDTH */ 
         assign  sub_rd = (rd_en)?  vc_num_rd : ssa_rd; 
         assign  sub_restore = sub_rd_ptr_ld; 
-        assign  rd = (rd_en)?  vc_num_rd & ~multiple_dest : ssa_rd & ~multiple_dest;            
+        assign  rd = (rd_en)?  vc_num_rd & ~multiple_dest : ssa_rd & ~multiple_dest;
     end else begin : unicast
-        assign  rd = (rd_en)?  vc_num_rd : ssa_rd;        
+        assign  rd = (rd_en)?  vc_num_rd : ssa_rd;
     end
     
     /* verilator lint_off WIDTH */ 
     if (PCK_TYPE == "MULTI_FLIT") begin :multi
-        /* verilator lint_on WIDTH */    
-        assign {flgs_in,vc_in,flit_rest_in}=din;    
+    /* verilator lint_on WIDTH */
+        assign {flgs_in,vc_in,flit_rest_in}=din;
         assign fifo_ram_din = {flgs_in,flit_rest_in};
         assign {flgs_out,flit_rest_out} = fifo_ram_dout;
-        assign dout = {flgs_out,{V{1'bX}},flit_rest_out};    
+        assign dout = {flgs_out,{V{1'bX}},flit_rest_out};
     end else begin : single
         assign fifo_ram_din = din[RAM_DATA_WIDTH-1 : 0];
-        assign dout = {2'b11,{V{1'bX}},fifo_ram_dout};    
+        assign dout = {2'b11,{V{1'bX}},fifo_ram_dout};
     end
     
     for(i=0;i<V;i=i+1) begin :V_
@@ -152,7 +152,7 @@ module flit_buffer
             else if (~wr[i] & sub_rd[i]) sub_depth_next [i] = sub_depth[i] - 1'h1;    
         end//always
         
-        assign  vc_not_empty [i] = (sub_depth[i] > 0);       
+        assign  vc_not_empty [i] = (sub_depth[i] > 0);
         
         end else begin : unicast
             assign  rd_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = rd_ptr[i];   
@@ -160,7 +160,7 @@ module flit_buffer
         end
     end//for
     
-/*****************      
+/*****************
     Buffer width is
     power of 2
 ******************/
@@ -171,10 +171,10 @@ module flit_buffer
         wire [Vw-1 : 0]  wr_select_addr;
         wire [Vw-1 : 0]  rd_select_addr; 
         wire [Bw+Vw-1 : 0]  wr_addr;
-        wire [Bw+Vw-1 : 0]  rd_addr;        
+        wire [Bw+Vw-1 : 0]  rd_addr;
         
         assign  wr_addr = {wr_select_addr,vc_wr_addr};
-        assign  rd_addr = {rd_select_addr,vc_rd_addr};        
+        assign  rd_addr = {rd_select_addr,vc_rd_addr};
         
         onehot_mux_1D #(
             .W(Bw),
@@ -183,7 +183,7 @@ module flit_buffer
             .in(wr_ptr_array),
             .out(vc_wr_addr),
             .sel(vc_num_wr)
-        );       
+        );
         
         onehot_mux_1D #(
             .W(Bw),
@@ -195,14 +195,14 @@ module flit_buffer
         );    
         
         one_hot_to_bin #(
-            .ONE_HOT_WIDTH(V)    
+            .ONE_HOT_WIDTH(V)
         ) wr_vc_start_addr (
             .one_hot_code(vc_num_wr),
             .bin_code(wr_select_addr)
         );
         
         one_hot_to_bin #(
-            .ONE_HOT_WIDTH(V)    
+            .ONE_HOT_WIDTH(V)
         ) rd_vc_start_addr (
             .one_hot_code(vc_num_rd),
             .bin_code(rd_select_addr)
@@ -211,7 +211,7 @@ module flit_buffer
         fifo_ram    #(
             .DATA_WIDTH (RAM_DATA_WIDTH),
             .ADDR_WIDTH (BVw ),
-            .SSA_EN(SSA_EN)       
+            .SSA_EN(SSA_EN)
         ) the_queue (
             .wr_data(fifo_ram_din), 
             .wr_addr(wr_addr[BVw-1 : 0]),
@@ -240,16 +240,16 @@ module flit_buffer
                 if (wr[i]  ) wr_ptr_next [i] = wr_ptr [i]+ 1'h1;
                 if (rd[i]  ) rd_ptr_next [i] = rd_ptr [i]+ 1'h1;
                 if (wr[i] & ~rd[i]) depth_next [i] = depth[i] + 1'h1;
-                else if (~wr[i] & rd[i]) depth_next [i] = depth[i] - 1'h1;                
+                else if (~wr[i] & rd[i]) depth_next [i] = depth[i] - 1'h1;
             end//always
             
             /* verilator lint_off WIDTH */ 
             if (CAST_TYPE != "UNICAST") begin :multicast
-            /* verilator lint_on WIDTH */           
+            /* verilator lint_on WIDTH */
                 always @ (*)begin
                     sub_rd_ptr_next[i] = sub_rd_ptr[i];
                     if (sub_restore[i]) sub_rd_ptr_next[i] = rd_ptr_next [i];
-                    else if(sub_rd[i])  sub_rd_ptr_next[i] = sub_rd_ptr[i]+ 1'h1;            
+                    else if(sub_rd[i])  sub_rd_ptr_next[i] = sub_rd_ptr[i]+ 1'h1;
                 end
                 
                 /* verilator lint_off WIDTH */
@@ -266,7 +266,7 @@ module flit_buffer
         end//for V_
         
     end  else begin :no_pow2
-/*****************      
+/*****************
     Buffer width is
     not power of 2
 ******************/
@@ -277,7 +277,7 @@ module flit_buffer
             
             pronoc_register #(.W(BVw),.RESET_TO(B*i)) reg1 (.in(rd_ptr_next[i]), .out(rd_ptr[i]), .reset(reset), .clk(clk));
             pronoc_register #(.W(BVw),.RESET_TO(B*i)) reg2 (.in(wr_ptr_next[i]), .out(wr_ptr[i]), .reset(reset), .clk(clk));
-            pronoc_register #(.W(DEPTHw)            ) reg3 (.in(depth_next[i] ), .out(depth [i]), .reset(reset), .clk(clk));         
+            pronoc_register #(.W(DEPTHw)            ) reg3 (.in(depth_next[i] ), .out(depth [i]), .reset(reset), .clk(clk));
             
             always @(posedge clk) begin
                 /* verilator lint_off WIDTH */ 
@@ -319,11 +319,11 @@ module flit_buffer
                 assign  flit_is_tail[i] = (PCK_TYPE == "MULTI_FLIT")?  tail_fifo[i][rd_ptr[i]-(B*i)] : 1'b1;
                 /* verilator lint_on WIDTH */ 
             end
-        end// for V_       
+        end// for V_
         
         onehot_mux_1D #(
             .W(BVw),
-            .N(V)        
+            .N(V)
         ) wr_mux (
             .in(wr_ptr_array),
             .out(wr_addr),
@@ -332,7 +332,7 @@ module flit_buffer
         
         onehot_mux_1D #(
             .W(BVw),
-            .N(V)        
+            .N(V)
         ) rd_mux (
             .in(rd_ptr_array),
             .out(rd_addr),
@@ -342,7 +342,7 @@ module flit_buffer
         fifo_ram_mem_size #(
             .DATA_WIDTH (RAM_DATA_WIDTH),
             .MEM_SIZE (BV ),
-            .SSA_EN(SSA_EN)       
+            .SSA_EN(SSA_EN)
         ) the_queue (
             .wr_data        (fifo_ram_din), 
             .wr_addr        (wr_addr),
@@ -377,7 +377,7 @@ module flit_buffer
         
         /* verilator lint_off WIDTH */ 
         if (CAST_TYPE != "UNICAST") begin :multicast
-        /* verilator lint_on WIDTH */       
+        /* verilator lint_on WIDTH */
             
             always @(posedge clk) begin
                 if (wr[i] && (sub_depth[i] == B [DEPTHw-1 : 0]) && !sub_rd[i]) begin
@@ -412,7 +412,7 @@ module flit_buffer
             end
             /* verilator lint_off WIDTH */
             if (rd[i] && !wr[i] && (depth[i] == {DEPTHw{1'b0}} &&  SSA_EN =="YES" ))begin 
-                /* verilator lint_on WIDTH */    
+                /* verilator lint_on WIDTH */
                 $display("%t: ERROR: Attempt to read an empty FIFO: %m",$time);
                 $finish;
             end
@@ -434,7 +434,7 @@ endmodule
 module fifo_ram #(
     parameter DATA_WIDTH = 32,
     parameter ADDR_WIDTH = 8,
-    parameter SSA_EN="YES" // "YES" , "NO"       
+    parameter SSA_EN="YES" // "YES" , "NO"
     )(
     wr_data,        
     wr_addr,
@@ -446,13 +446,13 @@ module fifo_ram #(
 );  
     
     
-    input [DATA_WIDTH-1 :    0]  wr_data;        
+    input [DATA_WIDTH-1 :    0]  wr_data;
     input [ADDR_WIDTH-1 :    0]  wr_addr;
     input [ADDR_WIDTH-1 :    0]  rd_addr;
     input                      wr_en;
     input                      rd_en;
     input                      clk;
-    output [DATA_WIDTH-1 :    0]       rd_data;    
+    output [DATA_WIDTH-1 :    0]       rd_data;
     
     reg [DATA_WIDTH-1:0] memory_rd_data; 
     // memory
@@ -494,9 +494,9 @@ endmodule
 module fifo_ram_mem_size #(
     parameter DATA_WIDTH = 32,
     parameter MEM_SIZE = 200,
-    parameter SSA_EN = "YES" // "YES" , "NO"       
+    parameter SSA_EN = "YES" // "YES" , "NO"
     ) (
-    wr_data,        
+    wr_data,
     wr_addr,
     rd_addr,
     wr_en,
@@ -509,22 +509,21 @@ module fifo_ram_mem_size #(
     input integer number; begin
         log2=(number <=1) ? 1: 0;    
         while(2**log2<number) begin
-        log2=log2+1;    
+        log2=log2+1;
         end
     end
     endfunction // log2
     
     localparam ADDR_WIDTH=log2(MEM_SIZE);
     
-    input [DATA_WIDTH-1 :    0]  wr_data;       
+    input [DATA_WIDTH-1 :    0]  wr_data;
     input [ADDR_WIDTH-1 :    0]  wr_addr;
     input [ADDR_WIDTH-1 :    0]  rd_addr;
     input                       wr_en;
     input                       rd_en;
     input                       clk;
-    output [DATA_WIDTH-1 :    0]   rd_data;    
-    
-    reg [DATA_WIDTH-1:0] memory_rd_data; 
+    output [DATA_WIDTH-1 :    0]   rd_data;
+    reg [DATA_WIDTH-1:0] memory_rd_data;
     // memory
     reg [DATA_WIDTH-1:0] queue [MEM_SIZE-1:0] /* synthesis ramstyle = "no_rw_check , M9K" */;
     always @(posedge clk ) begin
@@ -581,9 +580,9 @@ module fwft_fifo #(
     
     function integer log2;
     input integer number; begin
-        log2=(number <=1) ? 1: 0;    
+        log2=(number <=1) ? 1: 0;
         while(2**log2<number) begin
-        log2=log2+1;    
+        log2=log2+1;
         end
     end
     endfunction // log2
@@ -621,13 +620,13 @@ module fwft_fifo #(
                 
                 assign mux_in[i] = shiftreg[i];
                 assign mux_out[i] = mux_in[i][mux_sel];
-                assign dout_next[i] = (out_sel) ? mux_out[i] : din[i];  
+                assign dout_next[i] = (out_sel) ? mux_out[i] : din[i];
             end //for
             
         end else begin :w1
             wire [MAX_DEPTH-2 : 0] mux_in;
             wire mux_out;
-            reg [MAX_DEPTH-2 : 0] shiftreg; 
+            reg [MAX_DEPTH-2 : 0] shiftreg;
             
             always @(posedge clk ) begin
                 if(wr_en) shiftreg <= {shiftreg[MAX_DEPTH-3 : 0]  ,din};
@@ -635,7 +634,7 @@ module fwft_fifo #(
             
             assign mux_in = shiftreg;
             assign mux_out = mux_in[mux_sel];
-            assign dout_next = (out_sel) ? mux_out : din;      
+            assign dout_next = (out_sel) ? mux_out : din;
         end
         
         assign full = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0];
@@ -645,8 +644,8 @@ module fwft_fifo #(
         assign recieve_more_than_1 = ~( depth == {DEPTH_DATA_WIDTH{1'b0}} ||  depth== 1 );
         assign out_sel = (recieve_more_than_1)  ? 1'b1 : 1'b0;
         assign out_ld = (depth !=0 )?  rd_en : wr_en;
-        assign depth_2 = depth - 2;       
-        assign mux_sel = depth_2[MUX_SEL_WIDTH-1 : 0];   
+        assign depth_2 = depth - 2;
+        assign mux_sel = depth_2[MUX_SEL_WIDTH-1 : 0];
         
     end else if  ( MAX_DEPTH == 2) begin :mw2
         
@@ -661,7 +660,7 @@ module fwft_fifo #(
         assign out_ld = (depth !=0 )?  rd_en : wr_en;
         assign recieve_more_than_0 = (depth != {DEPTH_DATA_WIDTH{1'b0}});
         assign recieve_more_than_1 = ~( depth == 0 ||  depth== 1 );
-        assign dout_next = (recieve_more_than_1) ? register : din;  
+        assign dout_next = (recieve_more_than_1) ? register : din;
         
     end else begin :mw1 // MAX_DEPTH == 1
         assign out_ld = wr_en;
@@ -680,7 +679,7 @@ module fwft_fifo #(
         depth_next = depth;
         dout_next_ld = dout;
         if (wr_en & ~rd_en) depth_next = depth + 1'h1;
-        else if (~wr_en & rd_en) depth_next = depth - 1'h1;  
+        else if (~wr_en & rd_en) depth_next = depth - 1'h1;
         if (out_ld) dout_next_ld = dout_next;
     end//always
     
@@ -719,7 +718,7 @@ endmodule
 module fwft_fifo_with_output_clear #(
     parameter DATA_WIDTH = 2,
     parameter MAX_DEPTH = 2,
-    parameter IGNORE_SAME_LOC_RD_WR_WARNING="NO" // "YES" , "NO" 
+    parameter IGNORE_SAME_LOC_RD_WR_WARNING="NO" // "YES" , "NO"
     ) (
     din,     // Data in
     wr_en,   // Write enable
@@ -734,7 +733,7 @@ module fwft_fifo_with_output_clear #(
     clear
 );
     
-    input [DATA_WIDTH-1:0] din;     
+    input [DATA_WIDTH-1:0] din;
     input wr_en;
     input rd_en;
     output [DATA_WIDTH-1:0]  dout;
@@ -744,13 +743,13 @@ module fwft_fifo_with_output_clear #(
     output recieve_more_than_1;
     input reset;
     input clk;
-    input [DATA_WIDTH-1:0]  clear;    
+    input [DATA_WIDTH-1:0]  clear;
     
     function integer log2;
     input integer number; begin
-        log2=(number <=1) ? 1: 0;    
+        log2=(number <=1) ? 1: 0;
         while(2**log2<number) begin
-            log2=log2+1;    
+            log2=log2+1;
         end
     end
     endfunction // log2
@@ -787,13 +786,13 @@ module fwft_fifo_with_output_clear #(
                 
                 assign mux_in[i] = shiftreg[i];
                 assign mux_out[i] = mux_in[i][mux_sel];
-                assign dout_next[i] = (out_sel) ? mux_out[i] : din[i];  
+                assign dout_next[i] = (out_sel) ? mux_out[i] : din[i];
             end //D_
             
         end else begin : w1
             wire [MAX_DEPTH-2 : 0] mux_in;
             wire mux_out;
-            reg [MAX_DEPTH-2 : 0] shiftreg; 
+            reg [MAX_DEPTH-2 : 0] shiftreg;
             
             always @(posedge clk ) begin
                 if(wr_en) shiftreg <= {shiftreg[MAX_DEPTH-3 : 0]  ,din};
@@ -801,7 +800,7 @@ module fwft_fifo_with_output_clear #(
             
             assign mux_in = shiftreg;
             assign mux_out = mux_in[mux_sel];
-            assign dout_next = (out_sel) ? mux_out : din;            
+            assign dout_next = (out_sel) ? mux_out : din;
         end //w1
         
         assign full = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0];
@@ -811,12 +810,12 @@ module fwft_fifo_with_output_clear #(
         assign recieve_more_than_1 = ~( depth == {DEPTH_DATA_WIDTH{1'b0}} ||  depth== 1 );
         assign out_sel = (recieve_more_than_1)  ? 1'b1 : 1'b0;
         assign out_ld = (depth !=0 )?  rd_en : wr_en;
-        assign depth_2 = depth-'d2;       
-        assign mux_sel = depth_2[MUX_SEL_WIDTH-1 : 0]  ;   
+        assign depth_2 = depth-'d2;
+        assign mux_sel = depth_2[MUX_SEL_WIDTH-1 : 0];
         
     end else if  ( MAX_DEPTH == 2) begin :mw2
         
-        reg [DATA_WIDTH-1 : 0] register;            
+        reg [DATA_WIDTH-1 : 0] register;
         
         always @(posedge clk ) begin
             if(wr_en) register <= din;
@@ -827,7 +826,7 @@ module fwft_fifo_with_output_clear #(
         assign out_ld = (depth !=0 )?  rd_en : wr_en;
         assign recieve_more_than_0 = (depth != {DEPTH_DATA_WIDTH{1'b0}});
         assign recieve_more_than_1 = ~( depth == 0 ||  depth== 1 );
-        assign dout_next = (recieve_more_than_1) ? register : din;     
+        assign dout_next = (recieve_more_than_1) ? register : din;
         
     end else begin :mw1 // MAX_DEPTH == 1
         assign out_ld = wr_en;
@@ -845,7 +844,7 @@ module fwft_fifo_with_output_clear #(
     always @ (*)begin
         depth_next = depth;
         if (wr_en & ~rd_en) depth_next = depth + 1'h1;
-        else if (~wr_en & rd_en) depth_next = depth - 1'h1;       
+        else if (~wr_en & rd_en) depth_next = depth - 1'h1;
     end//always
     
     generate
@@ -853,7 +852,7 @@ module fwft_fifo_with_output_clear #(
         always @(*)begin
             dout_next_ld[i] = dout[i];
             if (clear[i]) dout_next_ld[i] = 1'b0;
-            else if (out_ld) dout_next_ld[i] = dout_next[i];           
+            else if (out_ld) dout_next_ld[i] = dout_next[i];
         end//always
     end
     endgenerate
@@ -905,9 +904,9 @@ module fwft_fifo_bram #(
     
     function integer log2;
     input integer number; begin
-        log2=(number <=1) ? 1: 0;    
+        log2=(number <=1) ? 1: 0;
         while(2**log2<number) begin
-            log2=log2+1;    
+            log2=log2+1;
         end
     end
     endfunction // log2
@@ -933,7 +932,7 @@ module fwft_fifo_bram #(
     assign bram_rd_en = (rd_en & ~bram_empty);
     assign bram_wr_en = (pass_din_to_out_reg)?  1'b0 :wr_en ; //make sure not write on the Bram if the reg fifo is empty 
     
-    assign  out_reg_wr_en = pass_din_to_out_reg | bram_out_is_valid;    
+    assign  out_reg_wr_en = pass_din_to_out_reg | bram_out_is_valid;
     assign  bram_out_is_valid_next = (bram_rd_en )? (rd_en &  ~bram_empty): 1'b0;
     
     always @(*) begin
@@ -995,7 +994,7 @@ module fwft_fifo_bram #(
             $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
             $finish;
         end
-        /* verilator lint_on WIDTH */           
+        /* verilator lint_on WIDTH */
     end // always
     `endif // SIMULATION
     
@@ -1008,10 +1007,10 @@ module bram_based_fifo  #(
     parameter Dw = 72,//data_width
     parameter B = 10// buffer num
 )(
-    din,   
-    wr_en, 
-    rd_en, 
-    dout,  
+    din,
+    wr_en,
+    rd_en,
+    dout,
     full,
     nearly_full,
     empty,
@@ -1021,11 +1020,11 @@ module bram_based_fifo  #(
     
     function integer log2;
     input integer number; begin
-        log2=(number <=1) ? 1: 0;    
+        log2=(number <=1) ? 1: 0;
         while(2**log2<number) begin
-        log2=log2+1;    
+        log2=log2+1;
         end
-    end   
+    end
     endfunction // log2
     
     localparam

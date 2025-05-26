@@ -197,7 +197,7 @@ module router_top #(
                     .smart_ovc_single_flit_pck_o(smart_ctrl[SS_PORT].ovc_single_flit_pck),
                     .smart_ss_ovc_is_allocated_o(smart_ctrl[SS_PORT].ovc_is_allocated),
                     .smart_ss_ovc_is_released_o    (smart_ctrl[SS_PORT].ovc_is_released),
-                    .smart_mask_available_ss_ovc_o(smart_ctrl[SS_PORT].mask_available_ovc)                
+                    .smart_mask_available_ss_ovc_o(smart_ctrl[SS_PORT].mask_available_ovc)
                 );
                 
                 assign smart_ctrl[i].ivc_smart_en = ivc_smart_en[i];

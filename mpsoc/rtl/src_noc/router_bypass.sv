@@ -254,12 +254,12 @@ module smart_forward_ivc_info #(
     non_assigned_vc_req[2][0] destport_one_hot[3]--> | [3][0] [2]
     */
     
-    smart_chanel_t smart_chanel_next  [P-1 : 0];    
+    smart_chanel_t smart_chanel_next  [P-1 : 0];
     
     genvar i,j,z;
     generate 
     for (i=0;i<P;i=i+1) begin : P_
-        for (j=0; j < V; j=j+1) begin : V_                   
+        for (j=0; j < V; j=j+1) begin : V_
             assign smart_ivc_info[i][j].dest_e_addr = ivc_info[i][j].dest_e_addr;
             assign smart_ivc_info[i][j].ovc_is_assigned= ivc_info[i][j].ovc_is_assigned;
             assign smart_ivc_info[i][j].assigned_ovc_bin=ivc_info[i][j].assigned_ovc_bin;    
@@ -294,11 +294,12 @@ module smart_forward_ivc_info #(
             .one_hot_code   (assigned_ovc[i])
         );
         
-        assign smart_chanel_next[i].dest_e_addr= smart_vc_info_o[i].dest_e_addr;    
+        assign smart_chanel_next[i].dest_e_addr= smart_vc_info_o[i].dest_e_addr;
         assign smart_chanel_next[i].ovc= (smart_vc_info_o[i].ovc_is_assigned)? assigned_ovc[i] : oport_info[i].non_smart_ovc_is_allocated;
         assign smart_chanel_next[i].hdr_flit=~smart_vc_info_o[i].ovc_is_assigned;
         assign smart_chanel_next[i].requests = (oport_info[i].any_ovc_granted)? {SMART_NUM{1'b1}}:{SMART_NUM{1'b0}} ;
         assign smart_chanel_next[i].bypassed_num = {BYPASSw{1'b0}} ;
+        assign smart_chanel_next[i].flit_in_bypassed=1'b0;
         
         if( ADD_PIPREG_AFTER_CROSSBAR == 1) begin :link_reg
             pronoc_register #(
@@ -309,10 +310,10 @@ module smart_forward_ivc_info #(
                 .clk    (clk), 
                 .out    (smart_chanel[i]));
         end else begin :no_link_reg
-                assign smart_chanel[i] = smart_chanel_next[i];        
+                assign smart_chanel[i] = smart_chanel_next[i];
         end
     end//port_
-    endgenerate    
+    endgenerate
 endmodule
 
 
@@ -437,8 +438,8 @@ module smart_validity_check_per_ivc  #(
     goes_straight ,
     smart_requests_i,
     smart_ivc_i,
-    smart_hdr_flit,        
-    //flit                       
+    smart_hdr_flit,
+    //flit
     flit_hdr_flag_i,
     flit_tail_flag_i,
     flit_wr_i,
@@ -448,11 +449,11 @@ module smart_validity_check_per_ivc  #(
     assigned_ovc_not_full,
     ovc_is_assigned,
     ivc_request,
-    //ss port status                            
+    //ss port status
     ss_ovc_avalable_in_ss_port,
     ss_port_link_reg_flit_wr,
     ss_ovc_crossbar_wr,
-    //output                          
+    //output
     smart_single_flit_pck_o,
     smart_ivc_smart_en_o,
     smart_credit_o,
@@ -461,7 +462,7 @@ module smart_validity_check_per_ivc  #(
     smart_ss_ovc_is_released_o,
     smart_mask_available_ss_ovc_o, 
     smart_ivc_num_getting_ovc_grant_o,
-    smart_ivc_reset_o,            
+    smart_ivc_reset_o,
     smart_ivc_granted_ovc_num_o
 );
     `NOC_CONF
