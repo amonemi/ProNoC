@@ -1,116 +1,106 @@
 #!/usr/bin/perl -w
+use strict;
+use warnings;
+
 use Cwd qw(getcwd);
-use IPC::Run qw( run start pump finish timeout );
+use IPC::Run qw(run timeout);
 
+# Regular expression to match hardware utilization results like:
+#   2,460 / 36,100 ( 7 % )
+#   5808 , 2939904 ( < 1 % )
+my $result_reg  = '[[:space:]]*[0-9,]+[[:space:]]*[,/][[:space:]]*[0-9,]+[[:space:]]*'
+                . '\([[:space:]]*(<\s*)?[0-9]+[[:space:]]*%[[:space:]]*\)[[:space:]]*;';
 
-
-my @HWs = (
-"; Logic utilization                                                                 ;",
-";     Combinational ALUTs           ;",
-";     Memory ALUTs                  ;",
-";     Dedicated logic registers     ;",
-"; Total block memory bits           ;",
-"; ALMs:  partially or completely used                                               ;",
-"; M9K blocks                                                                        ;"
-
+# Hash of report labels and their corresponding regex patterns
+my %HWs = (
+    'Logic utilization'               => ';[[:space:]]*Logic utilization[[:space:]]*;' . $result_reg,
+    'Combinational ALUTs'            => ';[[:space:]]*Combinational ALUTs[[:space:]]*;' . $result_reg,
+    'Memory ALUTs'                   => ';[[:space:]]*Memory ALUTs[[:space:]]*;' . $result_reg,
+    'Dedicated logic registers'      => ';[[:space:]]*Dedicated logic registers[[:space:]]*;' . $result_reg,
+    'Total block memory bits'        => ';[[:space:]]*Total block memory bits[[:space:]]*;' . $result_reg,
+    'ALMs: partially or completely used' => ';[[:space:]]*ALMs:[[:space:]]*partially or completely used[[:space:]]*;' . $result_reg,
+    'M9K blocks'                     => ';[[:space:]]*M9K blocks[[:space:]]*;' . $result_reg,
 );
 
-
-
-my $csv="";
+# Result containers
 my %freq;
 my %results;
+my $csv = "";
 
 sub extract_results {
- 	my ($dir,$parent) =@_;
-	my @cat = qw( bash  ); 
-	chdir "$dir";
-	print getcwd()."\n";
-	
-	my ($in, $out, $err); 	
-	#Fmax
-	$in ='grep -R "; clk        ;      ;$" | sort';
-    run \@cat, \$in, \$out, \$err, timeout( 10 ) or die "grep: $?";
-	
+    my ($dir, $parent) = @_;
+    chdir $dir or die "Cannot change to directory $dir: $!";
 
-	my @lines = split("\n",$out);
-	foreach my $l (@lines)  {
-	
-		my @f=split ('/',$l);
-		my $name= "${parent}_$f[0]";
-		
-		@f=split (':',$l);
-		@f=split (';',$f[1]);
-		$f[1] =~ s/MHz//;
-		
-		if(!defined $freq{$name}){
-			$freq{$name}=$f[1];
-		}else{#get the minum reported max frequency
-			$freq{$name}=$f[1] if($f[1]< $freq{$name});
-		}
-	
-	}
+    # -----------------------
+    # Extract Fmax frequency
+    # -----------------------
+    my ($in, $out, $err);
+    $in = 'grep -R "; clk        ;      ;$" | sort';
+    run ['bash'], \$in, \$out, \$err, timeout(10) or die "Error running Fmax grep: $?";
 
-	
+    for my $line (split "\n", $out) {
+        my ($file) = split '/', $line;
+        my $name = "${parent}_$file";
 
+        my @parts = split ':', $line;
+        my @fields = split ';', $parts[1];
+        my $mhz = $fields[1];
+        $mhz =~ s/MHz//;
 
-	foreach my $hw (@HWs){
-		
-		
-		
-		my @cat = qw( bash  );
-		my $in ="grep -R \"$hw\" | sort";
-		$hw =~ s/[\;]//g;
-		
-		#$csv.="-,$hw\n";
-		$out=undef;		
-		run \@cat, \$in, \$out, \$err, timeout( 10 ) or die "grep: $?";
-		@lines = split("\n",$out);
-		
-		foreach my $l (@lines)  {
-			unless ( index($l,".fit.rpt") >= 0){ next;}
-			
-			my @f=split ('/',$l);	
-			 
-			my $name= "${parent}_$f[0]";
-			my @ff = split (/\; /,$l);
-			my $val=$ff[2];
-			$val =~ s/,//g;
-			my @vv = split ("/",$val);
-			my $t =join(',',@vv);
-			#$csv.= "$name, $t  \n" if (defined $val) ;
-			$results{$hw}{$name}=$t if (defined $val) ;
-		}
-	}
+        $freq{$name} = $mhz if !defined($freq{$name}) || $mhz < $freq{$name};
+    }
 
+    # -----------------------
+    # Extract HW usage stats
+    # -----------------------
+    for my $metric (sort keys %HWs) {
+        my $regex = $HWs{$metric};
+        my $grep_cmd = "grep -RE '$regex' | sort";
+
+        $out = undef;
+        run ['bash'], \$grep_cmd, \$out, \$err, timeout(10) or die "Error running grep for $metric: $?";
+
+        for my $line (split "\n", $out) {
+            next unless $line =~ /\.fit\.rpt/;
+
+            my ($file) = split '/', $line;
+            my $name = "${parent}_$file";
+
+            my @fields = split(/\; /, $line);
+            my $value = $fields[2];
+            $value =~ s/[;,]//g;
+
+            my @numbers = split /[\/,]/, $value;
+            $results{$metric}{$name} = join(',', @numbers);
+        }
+    }
 }
 
+# Main execution
+extract_results($ARGV[0], $ARGV[1]);
 
-
-print "extract_results($ARGV[0],$ARGV[1]);\n";
-
-extract_results($ARGV[0],$ARGV[1]);
-
-
-
-
-$csv.=" , Fr_max\n";
-foreach my $p (sort keys  %freq){		
-		$csv.= "$p, $freq{$p},  Fmax = $freq{$p} Mhz\n";
+# Print frequency results
+$csv .= "Max frequency |";
+for my $p (sort keys %freq) {
+    $csv .= "$freq{$p},  $freq{$p} MHz\n";
 }
 
-
-foreach my $p (sort keys  %results){
-	my $ref = $results{$p};
-	my %r = %{$results{$p}} if (defined $ref) ;
-	$csv.= "\n\n\n\n" ;	
-	$csv.="-,$p\n";
-	foreach my $p (sort keys  %r){
-		$csv.= "$p, $r{$p}  \n";
-	}
-
+# Print hardware utilization results
+for my $metric (sort keys %results) {
+    $csv .= "\n$metric |";
+    for my $design (sort keys %{ $results{$metric} }) {
+        $csv .= "  $results{$metric}{$design}\n";
+    }
 }
 
-print "***************** results *****************\n";	
-	print $csv;
+#grep -RE "Warning[[:space:]]*\("
+
+
+
+
+# Output
+print $csv;
+
+
+
 

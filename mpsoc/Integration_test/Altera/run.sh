@@ -3,15 +3,45 @@
 SCRPT_FULL_PATH=$(realpath ${BASH_SOURCE[0]})
 SCRPT_DIR_PATH=$(dirname $SCRPT_FULL_PATH)
 
-conf="mesh_4x4_2cycle_mcast_f"
-conf="line4_smart3"
-
-conf_file="${SCRPT_DIR_PATH}/configurations/$conf"
-work="${PRONOC_WORK}/verify/quartus_pronoc"
-top="quartus_pronoc"
+# Source the environment variables
+conf_dir="${SCRPT_DIR_PATH}/configurations"
 log_dir="${SCRPT_DIR_PATH}/result_logs"
-log_file="${log_dir}/$conf"
-golden_ref="${SCRPT_DIR_PATH}/golden_ref/$conf"
+golden_dir="${SCRPT_DIR_PATH}/golden_ref"
+work="${PRONOC_WORK}/verify/quartus_pronoc"
+log_work="${PRONOC_WORK}/verify/logs"
+mkdir -p $log_work
+mkdir -p $log_dir
+
+
+
+
+quartus_get_result () {
+    conf=$1
+    if [[ -z "$conf" ]]; then
+        echo "No configuration provided"
+        exit 1
+    fi
+    if [[ ! -f "${SCRPT_DIR_PATH}/configurations/$conf" ]]; then
+        echo "Configuration file ${SCRPT_DIR_PATH}/configurations/$conf does not exist"
+        exit 1
+    fi
+    if [[ ! -d "${SCRPT_DIR_PATH}/result_logs" ]]; then
+        mkdir -p "${SCRPT_DIR_PATH}/result_logs"
+    fi
+    conf_file="${SCRPT_DIR_PATH}/configurations/$conf"
+    top="quartus_pronoc"
+    log_file="${log_work}/$conf"
+    golden_ref="${SCRPT_DIR_PATH}/golden_ref/$conf"
+    
+
+    perl  ${SCRPT_DIR_PATH}/src/param_gen.pl  $conf_file
+    #compile
+    wait;
+    mkdir -p $log_work
+    perl ${SCRPT_DIR_PATH}/src/extract.prl "$PRONOC_WORK/verify/quartus_pronoc" "pronoc" > $log_file
+    #meld "$golden_ref" "$log_file" &
+    rm -f ${SCRPT_DIR_PATH}/src/noc_localparam.v
+}
 
 copy_filelist () {
     fname=$1
@@ -88,14 +118,67 @@ compile () {
     $Quartus_bin/quartus_sta --64bit pronoc
 }
 
-perl  ${SCRPT_DIR_PATH}/src/param_gen.pl  $conf_file
+report_all_configurations () {
+    output_file="$log_dir/report.csv"
+    > "$output_file"  # Empty the file at start
+    # Initialize a set to track unique metric names
+    declare -A all_keys
 
-compile
+    # First pass: collect all metric names
+    for file in "$log_work"/*; do
+        while IFS= read -r line; do
+            [[ -z "$line" || "$line" =~ ^# ]] && continue
+            IFS='|' read -ra parts <<< "$line"
+            key="${parts[0]// /}"   # Trim whitespace from key
+            all_keys["$key"]=1
+        done < "$file"
+    done
 
-wait;
+    # Build the header
+    {
+        printf "File"
+        for key in "${!all_keys[@]}"; do
+            printf "| %s" "$key"
+        done
+        printf "\n"
+    } >> "$output_file"
 
-mkdir -p $log_dir
-perl ${SCRPT_DIR_PATH}/src/extract.prl "$PRONOC_WORK/verify/quartus_pronoc" "pronoc" > $log_file
+    # Second pass: extract values for each file
+    for file in "$log_work"/*; do
+        declare -A data
+        data["File"]="${file##*/}"
 
-meld "$golden_ref" "$log_file" &
-rm -f ${SCRPT_DIR_PATH}/src/noc_localparam.v
+        while IFS= read -r line; do
+            [[ -z "$line" || "$line" =~ ^# ]] && continue
+            IFS='|' read -ra parts <<< "$line"
+            key="${parts[0]// /}"
+            val="${parts[1]// /}"
+            data["$key"]="$val"
+        done < "$file"
+
+        {
+            printf "%s" "${data["File"]}"
+            for key in "${!all_keys[@]}"; do
+                printf "| %s" "${data[$key]}"
+            done
+            printf "\n"
+        } >> "$output_file"
+
+        unset data
+    done
+}
+
+for f in "$conf_dir"/*; do
+    if [[ -d "$f" ]]; then
+        continue
+    fi
+    conf=$(basename "$f")
+    echo "Compile configuration $conf"
+    quartus_get_result "$conf"
+done
+
+
+report_all_configurations
+
+meld "$golden_dir/report.csv" "$log_dir/report.csv" &
+echo "All configurations processed. Results are in $log_dir/report.csv"

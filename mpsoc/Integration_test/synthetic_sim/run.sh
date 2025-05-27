@@ -3,9 +3,9 @@
 servers=( 'mn5')
 #servers' shorthand name. They should be defined in ~/.ssh/config :
 # 
-#	Host your_short_name
-#		HostName server.on.the.web
-#		User user_to_user
+#    Host your_short_name
+#        HostName server.on.the.web
+#        User user_to_user
 
 
 my_ssh="ssh -t -o StrictHostKeyChecking=no"
@@ -34,11 +34,11 @@ ProNoC=$(realpath "$SCRPT_DIR_PATH/../..")
 
 my_srcs=( "rtl"
     "Integration_test"
-	"src_verilator"
-	"src_c/netrace-1.0"
-	"src_c/synfull"
-	"script"
-	"/perl_gui/lib/perl" )
+    "src_verilator"
+    "src_c/netrace-1.0"
+    "src_c/synfull"
+    "script"
+    "/perl_gui/lib/perl" )
 
 
 
@@ -175,7 +175,7 @@ fi
 
 #step one login in the server and find how much is bussy 
 function get_server_load_percentage {
-	 # Retrieve uptime and core information from the server
+    # Retrieve uptime and core information from the server
     out=$($my_ssh "$1" "uptime")
     load_avg=$(echo "$out" | grep -oP '(?<=load average: )[\d.]+' | head -n 1)  # Extract 1-minute load average
     nproc=$($my_ssh "$1" "nproc" | tr -d '\r')  # Remove any extra characters (e.g., carriage return)
@@ -190,40 +190,40 @@ function get_server_load_percentage {
 
 
 function select_a_server {
-	min_load="100"	
-	for i in "${servers[@]}"; do
-	 		echo "get load average on $i server"        
-			get_server_load_percentage $i			
-			if [ $min_load  -gt $load_percentage ]
-			then
-				min_load=$load_percentage
-				my_server=$i
-			fi		
-	done
-	if [ $min_load -gt $max_allowed_server_load_percentage ] 
-	then
-		echo "[INFO] All servers are busy. Cannot continue"		
-		exit
-	fi
-	echo "[INFO] Server $my_server is selected for running the integration test."
+    min_load="100"    
+    for i in "${servers[@]}"; do
+            echo "get load average on $i server"        
+            get_server_load_percentage $i            
+            if [ $min_load  -gt $load_percentage ]
+            then
+                min_load=$load_percentage
+                my_server=$i
+            fi        
+    done
+    if [ $min_load -gt $max_allowed_server_load_percentage ] 
+    then
+        echo "[INFO] All servers are busy. Cannot continue"        
+        exit
+    fi
+    echo "[INFO] Server $my_server is selected for running the integration test."
 }
 
 
 function copy_sources {
-	$my_ssh $my_server  rm -rf  ${SERVER_ROOT_DIR}
-	$my_ssh $my_server  mkdir -p "${SERVER_ROOT_DIR}/mpsoc/perl_gui/lib/"
+    $my_ssh $my_server  rm -rf  ${SERVER_ROOT_DIR}
+    $my_ssh $my_server  mkdir -p "${SERVER_ROOT_DIR}/mpsoc/perl_gui/lib/"
     $my_ssh $my_server  mkdir -p "${SERVER_ROOT_DIR}/mpsoc/src_c/"
-	$my_ssh $my_server  mkdir -p "${SERVER_ROOT_DIR}/mpsoc_work"
-	for i in "${my_srcs[@]}"; do	
-		echo "Copy $i  on the server"        
-		$my_scp -r "$ProNoC/$i"  "$my_server:${SERVER_ROOT_DIR}/mpsoc/$i"
-	done	
+    $my_ssh $my_server  mkdir -p "${SERVER_ROOT_DIR}/mpsoc_work"
+    for i in "${my_srcs[@]}"; do    
+        echo "Copy $i  on the server"        
+        $my_scp -r "$ProNoC/$i"  "$my_server:${SERVER_ROOT_DIR}/mpsoc/$i"
+    done    
 }
 
 
 function run_test {
-	cmd="export PRONOC_WORK=${SERVER_ROOT_DIR}/mpsoc_work;" 
-	$my_ssh $my_server $cmd
+    cmd="export PRONOC_WORK=${SERVER_ROOT_DIR}/mpsoc_work;" 
+    $my_ssh $my_server $cmd
 
 }
 
