@@ -929,7 +929,7 @@ module ${Vname}_look_ahead_routing_genvar  #(
             src_e_addr_delay<=src_e_addr;
         end
     end
-    ${name}_look_ahead_routing_genvar_comb  #(
+    ${Vname}_look_ahead_routing_genvar_comb  #(
         .RAw(RAw),  
         .EAw(EAw),   
         .DSTPw(DSTPw),

@@ -60,7 +60,7 @@ module Tcustom1Rcustom_look_ahead_routing_genvar  #(
             src_e_addr_delay<=src_e_addr;
         end
     end
-    custom1_look_ahead_routing_genvar_comb  #(
+    Tcustom1Rcustom_look_ahead_routing_genvar_comb  #(
         .RAw(RAw),  
         .EAw(EAw),   
         .DSTPw(DSTPw),

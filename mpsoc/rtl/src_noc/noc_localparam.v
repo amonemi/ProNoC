@@ -156,7 +156,7 @@
 
 	localparam MAX_ROUTER=1;
 	localparam MAX_PORT=1;
-	localparam int VC_CONFIG_TABLE [MAX_ROUTER][MAX_PORT]='{0};
+	localparam int VC_CONFIG_TABLE [MAX_ROUTER][MAX_PORT]='{'{0}};
             //int VC_CONFIG_TABLE [MAX_ROUTER][MAX_PORT] : Defines how a heterogeneous number of VCs are distributed in the NoC.
             //    - HETERO_VC= 0: Uniform VC configuration. All routers and ports have 
             //        the same number of VCs, and this parameter is not used.
