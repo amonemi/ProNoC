@@ -57,7 +57,7 @@ package pronoc_pkg;
     localparam
         DISTw =  (IS_FATTREE | IS_TREE ) ? log2(2*L+1): log2(NR+1),
         OVC_ALLOC_MODE= ((V==1 || B <= 4) ) ?   1'b1 : 1'b0;
-        
+    localparam [WEIGHTw-1:0] WEIGHT_INIT = 1; //initial weight for WRRA allocator
         // 0: The new ovc is allocated only if its not nearly full. Results in a simpler sw_mask_gen logic
         // 1: The new ovc is allocated only if its not full. Results in a little more complex sw_mask_gen logic
         
@@ -91,7 +91,7 @@ package pronoc_pkg;
         logic [V-1 : 0] buff_space_decreased;
         logic [V-1 : 0] ivc_single_flit_pck;
         logic [V-1 : 0] ovc_single_flit_pck;
-        bit              ssa_flit_wr;
+        bit             ssa_flit_wr;
         logic [V*V-1: 0] ivc_granted_ovc_num;
     } ssa_ctrl_t;    
     localparam  SSA_CTRL_w = $bits(ssa_ctrl_t);
@@ -108,9 +108,9 @@ package pronoc_pkg;
     localparam SMART_IVC_w = $bits(smart_ivc_info_t);
     
     typedef struct packed {
-        bit        smart_en;
+        bit     smart_en;
         bit     hdr_flit_req;
-        logic   [V-1 : 0]        ivc_smart_en;
+        logic   [V-1 : 0] ivc_smart_en;
         logic   [DSTPw-1  :   0] lk_destport;
         logic   [DSTPw-1  :   0] destport;
         logic   [V-1 : 0] credit_out;
@@ -196,7 +196,7 @@ package pronoc_pkg;
         logic [NRw-1 : 0] router_id;
         logic [RAw-1 : 0] router_addr;
         logic [NE_PER_R*EAw-1 : 0]  endp_addrs;
-        logic [NE_PER_R*NEw-1 : 0]  endp_ids;        
+        logic [NE_PER_R*NEw-1 : 0]  endp_ids;
     } router_config_t;
     localparam  ROUTER_CONFIG_w = $bits(router_config_t);
 
@@ -338,7 +338,7 @@ package pronoc_pkg;
         logic [Cw-1  : 0] class_num; 
         logic [WEIGHTw-1   : 0] init_weight;
         logic [V-1   : 0] vc;
-        bit   pck_wr;      
+        bit   pck_wr;
         bit   [V-1   : 0] ready;
         logic [DISTw-1 : 0] distance;
         logic [15: 0]  h2t_delay;

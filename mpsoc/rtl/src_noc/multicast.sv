@@ -482,15 +482,15 @@ module multicast_chan_in_process #(
     
     wire  [MCASTw-1 : 0]  mcast_dst_coded;
     wire  [NE-1 : 0] dest_mcast_all_endp;
-    wire  [NX-1 : 0] row_has_any_dest,row_has_any_dest_in;    
-    wire  [DSTPw-1 : 0] destport,destport_o;    
+    wire  [NX-1 : 0] row_has_any_dest,row_has_any_dest_in;
+    wire  [DSTPw-1 : 0] destport,destport_o;
     
     hdr_flit_t hdr_flit;
     header_flit_info #(
         .NOC_ID (NOC_ID)
     ) extract (
         .flit(chan_in.flit),
-        .hdr_flit(hdr_flit),        
+        .hdr_flit(hdr_flit),
         .data_o()
     );
     

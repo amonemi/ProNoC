@@ -20,6 +20,15 @@
         IS_STAR=   (TOPOLOGY == "STAR"),
         IS_MULTI_MESH=(TOPOLOGY == "MULTI_MESH");
         /* verilator lint_on WIDTH */ 
+    
+    localparam [0:0]
+        /* verilator lint_off WIDTH */
+        IS_RRA = (SWA_ARBITER_TYPE == "RRA"),
+        IS_WRRA = (SWA_ARBITER_TYPE == "WRRA"),
+        IS_SINGLE_FLIT = (PCK_TYPE == "SINGLE_FLIT"),
+        IS_MULTI_FLIT = (PCK_TYPE == "MULTI_FLIT");
+        /* verilator lint_on WIDTH */
+    
     //MESH, TORUS Topology p=5
     localparam    
         LOCAL   =   0,
@@ -223,7 +232,7 @@
         DSTPw_MULTI_MESH = log2(MAX_P_MULTI_MESH);
     /* verilator lint_off WIDTH */ 
     localparam
-        PPSw = PPSw_MESH_TORI,    
+        PPSw = PPSw_MESH_TORI,
         // maximum number of port in a router in the topology
         MAX_P =
             (IS_FATTREE)? MAX_P_FATTREE:
@@ -233,7 +242,7 @@
             (IS_STAR) ? MAX_P_STAR:
             (IS_MULTI_MESH) ? MAX_P_MULTI_MESH:
             MAX_P_CUSTOM, 
-        // destination port width in header flit           
+        // destination port width in header flit
         DSTPw =
            // Each asserted bit indicats that the flit should be sent to that port
             (IS_FATTREE)? DSTPw_FATTREE:
@@ -244,7 +253,7 @@
             (IS_STAR) ? DSTPw_STAR:
             (IS_MULTI_MESH) ? DSTPw_MULTI_MESH:
             DSTPw_CUSTOM,
-        //router address width        
+        //router address width
         RAw =
             (IS_FATTREE)? RAw_FATTREE:
             (IS_TREE)?  RAw_TREE:
@@ -368,12 +377,12 @@
     input integer in;
     integer  y, x, l,p, diff,mul;
     begin
-        mul  = NX*NY*NL;            
+        mul  = NX*NY*NL;
         if(in < mul) begin 
             y = ((in/NL) / NX ); 
             x = ((in/NL) % NX ); 
             l = (in % NL); 
-            p = (l==0)? LOCAL : 4+l;            
+            p = (l==0)? LOCAL : 4+l;
         end else begin      
             diff = in -  mul ;
             if( diff <  NX) begin //top mesh edge 
@@ -394,7 +403,7 @@
                 p = EAST; 
             end
         end//else 
-            fmesh_addrencode = ( p<<(NXw+NYw) | (y<<NXw) | x);      
+            fmesh_addrencode = ( p<<(NXw+NYw) | (y<<NXw) | x);
     end   
     endfunction // addrencode    
     

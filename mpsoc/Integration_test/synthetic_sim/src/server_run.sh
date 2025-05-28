@@ -7,7 +7,8 @@ SCRPT_DIR_PATH=$(dirname $SCRPT_FULL_PATH)
 
 
 export PRONOC_WORK=$(realpath "$SCRPT_DIR_PATH/../../../../mpsoc_work")
-export VERILATOR_ROOT=~/scratch/`whoami`/verilator_4_104
+export VERILATOR_ROOT=~/scratch/`whoami`/verilator_4_104 
+#export VERILATOR_ROOT=~/scratch/`whoami`/verilator_5_014
 export PATH=$PATH:$VERILATOR_ROOT/bin
 export C_INCLUDE_PATH=$VERILATOR_ROOT/include
 export CPLUS_INCLUDE_PATH=$VERILATOR_ROOT/include

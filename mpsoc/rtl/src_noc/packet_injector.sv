@@ -62,14 +62,14 @@ module packet_injector #(
     input   pck_injct_t pck_injct_in;
     output  pck_injct_t pck_injct_out;
     
-    wire  [RAw-1 :0 ] current_r_addr;    
+    wire  [RAw-1 :0 ] current_r_addr;
     wire  [DSTPw-1 : 0 ] destport;
     reg flit_wr;
     
     assign current_r_addr = chan_in.ctrl_chanel.router_addr;
     
     generate 
-    if(CAST_TYPE == "UNICAST") begin : uni    
+    if(CAST_TYPE == "UNICAST") begin : uni
         conventional_routing #(
             .NOC_ID(NOC_ID),
             .TOPOLOGY(TOPOLOGY),
@@ -244,12 +244,12 @@ module packet_injector #(
     hdr_flit_t hdr_flit_i;
     
     header_flit_info  #(
-        .NOC_ID (NOC_ID),    
+        .NOC_ID (NOC_ID),
         .DATA_w (HDR_DATA_w)
     ) extractor (
         .flit(chan_in.flit_chanel.flit),
-        .hdr_flit(hdr_flit_i),        
-        .data_o(hdr_data_o)    
+        .hdr_flit(hdr_flit_i),
+        .data_o(hdr_data_o)
     );
     
     wire [PCK_INJ_Dw-1 : 0]  pck_data_o [V-1 : 0];
@@ -257,8 +257,9 @@ module packet_injector #(
     
     reg [PCK_SIZw-1 : 0] rsv_counter [V-1 : 0];
     reg [EAw-1 : 0] sender_endp_addr_reg [V-1 : 0];
+    logic [Cw-1 : 0] sender_class_reg [V-1 : 0];
     logic [15:0] h2t_counter [V-1 : 0];
-    logic [15:0] h2t_counter_next [V-1 : 0];    
+    logic [15:0] h2t_counter_next [V-1 : 0];
     
     `ifdef SIMULATION
     wire [NEw-1 : 0] current_id; 
@@ -281,8 +282,7 @@ module packet_injector #(
         );
     end
     
-    for(i=0; i<V; i++) begin: V_ 
-        
+    for(i=0; i<V; i++) begin: V_
         always@(*) begin
             h2t_counter_next[i]=h2t_counter[i]+1'b1;
             if(chan_in.flit_chanel.flit.vc[i] & chan_in.flit_chanel.flit_wr & chan_in.flit_chanel.flit.hdr_flag)begin 
@@ -295,12 +295,14 @@ module packet_injector #(
                 rsv_counter[i]<= {PCK_SIZw{1'b0}};
                 h2t_counter[i]<= 16'd0;
                 sender_endp_addr_reg [i]<= {EAw{1'b0}};
+                sender_class_reg [i]<= {Cw{1'b0}};
             end else begin 
                 h2t_counter[i]<=h2t_counter_next[i];
                 if(chan_in.flit_chanel.flit.vc[i] & chan_in.flit_chanel.flit_wr ) begin 
                     if(chan_in.flit_chanel.flit.hdr_flag)begin
                         rsv_counter[i]<= {{(PCK_SIZw-1){1'b0}}, 1'b1};
-                        sender_endp_addr_reg [i]<= hdr_flit_i.src_e_addr; 
+                        sender_endp_addr_reg [i] <= hdr_flit_i.src_e_addr;
+                        sender_class_reg [i] <= hdr_flit_i.message_class;
                         `ifdef SIMULATION
                         if(CAST_TYPE == "UNICAST") begin
                             if(hdr_flit_i.dest_e_addr[EAw-1:0] != current_e_addr) begin 
@@ -338,7 +340,7 @@ module packet_injector #(
             
             if   (k == 0 ) assign pck_data_o [i][HDR_DATA_w-1 : 0] = pck_data_o_gen [i][0][HDR_DATA_w-1 : 0];
             else if (k == REMAIN_DAT_FLIT) assign pck_data_o [i][PCK_INJ_Dw-1 :    (k-1)*Fpay+ HDR_DATA_w] = pck_data_o_gen [i][k][LASTw-1: 0];
-            else assign pck_data_o [i][(k)*Fpay+HDR_DATA_w -1 : (k-1)*Fpay+ HDR_DATA_w] = pck_data_o_gen [i][k];    
+            else assign pck_data_o [i][(k)*Fpay+HDR_DATA_w -1 : (k-1)*Fpay+ HDR_DATA_w] = pck_data_o_gen [i][k];
             
         end //for k
         
@@ -356,6 +358,7 @@ module packet_injector #(
     
     wire [V-1 : 0] vc_reg;
     wire tail_flag_reg, hdr_flag_reg;
+    logic [DISTw-1:   0] distance;
     
     pronoc_register #(.W(V))   register1 (.in(chan_in.flit_chanel.flit.vc), .reset(reset ), .clk(clk),.out(vc_reg));
     pronoc_register #(.W(1))   register2 (.in(chan_in.flit_chanel.flit.hdr_flag), .reset(reset ), .clk(clk),.out(hdr_flag_reg));
@@ -370,47 +373,44 @@ module packet_injector #(
         .one_hot_code(vc_reg), 
         .bin_code(vc_bin)
     );
-    
-    assign pck_injct_out.data  =  pck_data_o[vc_bin];
-    assign pck_injct_out.size  =  rsv_counter[vc_bin];
-    assign pck_injct_out.h2t_delay = h2t_counter[vc_bin];
-    assign pck_injct_out.ready = (flit_type == HEADER)?  ~vc_fifo_full : {V{1'b0}};    
-    assign pck_injct_out.endp_addr[EAw-1 : 0] =  sender_endp_addr_reg[vc_bin];
-    assign pck_injct_out.vc = vc_reg;
-    assign pck_injct_out.pck_wr = tail_flag_reg;
-    
-    assign chan_out.flit_chanel.flit.hdr_flag =head;
-    assign chan_out.flit_chanel.flit.tail_flag=tail;
-    assign chan_out.flit_chanel.flit.vc=pck_injct_in.vc;
-    assign chan_out.flit_chanel.flit_wr=flit_wr;
-    
-    generate 
-    /* verilator lint_off WIDTH */
-    if(PCK_TYPE == "SINGLE_FLIT" ) begin : single_f
-    /* verilator lint_on WIDTH */
-        assign chan_out.flit_chanel.flit.payload = hdr_flit_out[FPAYw-1 : 0];
-    end else begin    
-        assign chan_out.flit_chanel.flit.payload = (flit_type==    HEADER)? hdr_flit_out[Fpay-1 : 0] : dataIn;
-    end
-    endgenerate
-    
-    assign chan_out.smart_chanel = {SMART_CHANEL_w{1'b0}};
-    assign chan_out.flit_chanel.congestion = {CONGw{1'b0}};
-    assign chan_out.flit_chanel.credit= credit_o;    
-    assign chan_out.ctrl_chanel.credit_init_val= LB;    
-    assign chan_out.ctrl_chanel.credit_release_en={V{1'b0}};
-    assign chan_out.ctrl_chanel.endp_port =1'b1;
-    assign chan_out.ctrl_chanel.hetero_ovc_presence ={V{1'b1}};
+    always_comb begin
+        pck_injct_out.data  =  pck_data_o[vc_bin];
+        pck_injct_out.size  =  rsv_counter[vc_bin];
+        pck_injct_out.h2t_delay = h2t_counter[vc_bin];
+        pck_injct_out.ready = (flit_type == HEADER)?  ~vc_fifo_full : {V{1'b0}};
+        pck_injct_out.endp_addr[EAw-1 : 0] =  sender_endp_addr_reg[vc_bin];
+        pck_injct_out.class_num = sender_class_reg[vc_bin];
+        pck_injct_out.init_weight = WEIGHT_INIT;
+        pck_injct_out.vc = vc_reg;
+        pck_injct_out.pck_wr = tail_flag_reg;
+        pck_injct_out.distance = distance;
+        
+        chan_out.flit_chanel.flit.hdr_flag =head;
+        chan_out.flit_chanel.flit.tail_flag=tail;
+        chan_out.flit_chanel.flit.vc=pck_injct_in.vc;
+        chan_out.flit_chanel.flit_wr=flit_wr;
+        chan_out.flit_chanel.flit.payload =
+            (IS_SINGLE_FLIT )? hdr_flit_out[FPAYw-1 : 0] :
+            /* verilator lint_off WIDTH */
+            (flit_type==HEADER)? hdr_flit_out[Fpay-1 : 0] : dataIn [Fpay-1 : 0];
+            /* verilator lint_on WIDTH */
+        chan_out.smart_chanel = {SMART_CHANEL_w{1'b0}};
+        chan_out.flit_chanel.congestion = {CONGw{1'b0}};
+        chan_out.flit_chanel.credit= credit_o;
+        for(int i=0;i<V;i++) chan_out.ctrl_chanel.credit_init_val[i]= LB [CRDTw-1: 0];
+        chan_out.ctrl_chanel.credit_release_en={V{1'b0}};
+        chan_out.ctrl_chanel.endp_port =1'b1;
+        chan_out.ctrl_chanel.hetero_ovc_presence ={V{1'b1}};
+    end 
     
     distance_gen the_distance_gen (
         .src_e_addr(sender_endp_addr_reg[vc_bin]),
         .dest_e_addr(current_e_addr),
-        .distance(pck_injct_out.distance)
+        .distance(distance)
     );
     
     `ifdef SIMULATION
     //`define MONITOR_RSV_DAT
-    
     always @(posedge clk) begin 
         if((pck_injct_in.vc == {V{1'b0}} ) & pck_injct_in.pck_wr )begin 
             $display("%t: ERROR: a packet injection request is recived while vc is not set. %m",$time);
@@ -425,7 +425,7 @@ module packet_injector #(
         if(pck_injct_in.pck_wr) begin 
             $display ("pck_inj(%d) send a packet:  size=%d, data=%h, v=%h",current_id,
                 pck_injct_in.size, pck_injct_in.data,pck_injct_in.vc);
-        end    
+        end
         
         if(pck_injct_out.pck_wr) begin 
             $display ("pck_inj(%d) got a packet: source=%d, size=%d, data=%h",current_id,
@@ -480,7 +480,7 @@ module injector_ovc_status #(
                 if(  wr_in[i]  && ~credit_in[i])   credit[i] <= credit[i]-1'b1;
                 if( ~wr_in[i]  &&  credit_in[i])   credit[i] <= credit[i]+1'b1;
             end //reset
-        end//always        
+        end//always
         assign  full_vc[i]   = (credit[i] == {DEPTH_WIDTH{1'b0}});
         assign  nearly_full_vc[i]=  (credit[i] == 1) |  full_vc[i];
         assign  empty_vc[i]  = (credit[i] == credit_init_val_in[i][DEPTH_WIDTH-1:0]);
@@ -545,17 +545,17 @@ module packet_injector_verilator #(
     input [Cw-1         : 0] pck_injct_in_class_num; 
     input [WEIGHTw-1    : 0] pck_injct_in_init_weight;
     input [V-1          : 0] pck_injct_in_vc;
-    input                    pck_injct_in_pck_wr;      
+    input                    pck_injct_in_pck_wr;
     input [V-1          : 0] pck_injct_in_ready;
     
-    output [PCK_INJ_Dw-1 : 0] pck_injct_out_data;             
-    output [PCK_SIZw-1   : 0] pck_injct_out_size;             
-    output [DAw-1        : 0] pck_injct_out_endp_addr;        
-    output [Cw-1         : 0] pck_injct_out_class_num;        
-    output [WEIGHTw-1    : 0] pck_injct_out_init_weight;      
-    output [V-1          : 0] pck_injct_out_vc;               
-    output                    pck_injct_out_pck_wr;           
-    output [V-1          : 0] pck_injct_out_ready;  
+    output [PCK_INJ_Dw-1 : 0] pck_injct_out_data;
+    output [PCK_SIZw-1   : 0] pck_injct_out_size;
+    output [DAw-1        : 0] pck_injct_out_endp_addr;
+    output [Cw-1         : 0] pck_injct_out_class_num;
+    output [WEIGHTw-1    : 0] pck_injct_out_init_weight;
+    output [V-1          : 0] pck_injct_out_vc;
+    output                    pck_injct_out_pck_wr;
+    output [V-1          : 0] pck_injct_out_ready;
     output [DISTw-1       : 0] pck_injct_out_distance;
     output [15              : 0] pck_injct_out_h2t_delay;
     output [4              : 0] min_pck_size;
@@ -563,14 +563,16 @@ module packet_injector_verilator #(
     pck_injct_t pck_injct_in;
     pck_injct_t pck_injct_out;
     
-    assign pck_injct_in.data         = pck_injct_in_data;
-    assign pck_injct_in.size         = pck_injct_in_size;
-    assign pck_injct_in.endp_addr    = pck_injct_in_endp_addr;
-    assign pck_injct_in.class_num    = pck_injct_in_class_num;
-    assign pck_injct_in.init_weight  = pck_injct_in_init_weight;
-    assign pck_injct_in.vc           = pck_injct_in_vc;
-    assign pck_injct_in.pck_wr        = pck_injct_in_pck_wr;
-    assign pck_injct_in.ready        = pck_injct_in_ready;
+    always_comb begin
+        pck_injct_in.data         = pck_injct_in_data;
+        pck_injct_in.size         = pck_injct_in_size;
+        pck_injct_in.endp_addr    = pck_injct_in_endp_addr;
+        pck_injct_in.class_num    = pck_injct_in_class_num;
+        pck_injct_in.init_weight  = pck_injct_in_init_weight;
+        pck_injct_in.vc           = pck_injct_in_vc;
+        pck_injct_in.pck_wr       = pck_injct_in_pck_wr;
+        pck_injct_in.ready        = pck_injct_in_ready;
+    end
     
     assign pck_injct_out_data        = pck_injct_out.data;
     assign pck_injct_out_size        = pck_injct_out.size;
@@ -578,11 +580,12 @@ module packet_injector_verilator #(
     assign pck_injct_out_class_num   = pck_injct_out.class_num;
     assign pck_injct_out_init_weight = pck_injct_out.init_weight;
     assign pck_injct_out_vc          = pck_injct_out.vc;
-    assign pck_injct_out_pck_wr        = pck_injct_out.pck_wr;
+    assign pck_injct_out_pck_wr      = pck_injct_out.pck_wr;
     assign pck_injct_out_ready       = pck_injct_out.ready;
     assign pck_injct_out_distance    = pck_injct_out.distance;
     assign pck_injct_out_h2t_delay   = pck_injct_out.h2t_delay;
-    
+
+
     packet_injector #(
         .NOC_ID(NOC_ID)
     ) injector (

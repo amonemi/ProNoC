@@ -11,10 +11,10 @@ module  traffic_gen_top    #(
     
     //input 
     ratio,// real injection ratio  = (MAX_RATIO/100)*ratio
-    pck_size_in,        
+    pck_size_in,
     current_e_addr,
     dest_e_addr,
-    pck_class_in,        
+    pck_class_in,
     start, 
     stop,  
     report,
@@ -32,7 +32,7 @@ module  traffic_gen_top    #(
     flit_in_wr,
     
     distance,
-    pck_class_out,   
+    pck_class_out,
     time_stamp_h2h,
     time_stamp_h2t,
     pck_size_o,
@@ -67,7 +67,7 @@ module  traffic_gen_top    #(
     output [Cw-1 :0] pck_class_out;
     
     // the current endpoint address
-    input  [EAw-1 :0] current_e_addr;    
+    input  [EAw-1 :0] current_e_addr;
     // the destination endpoint address
     input  [DAw-1 :0] dest_e_addr;  
     
@@ -79,50 +79,44 @@ module  traffic_gen_top    #(
     input  [Cw-1 :0] pck_class_in;
     input  [W-1 :0] init_weight;
     
-    input                               report;
+    input report;
     input  [DELAYw-1 :0] start_delay;
     // the received packet source endpoint address
     output [EAw-1 : 0] src_e_addr;
-    output [PCK_SIZw-1 : 0]    pck_size_o;    
+    output [PCK_SIZw-1 : 0]    pck_size_o;
     output [NEw-1 : 0] mcast_dst_num_o;
     
-    logic  [Fw-1 :0] flit_out;     
-    output  logic                       flit_out_wr; 
+    logic  [Fw-1 :0] flit_out;
+    output  logic flit_out_wr;
     output  [Cw-1 : 0] flit_out_class;
     logic   [V-1 :0] credit_in;
     
-    logic   [Fw-1 :0] flit_in;   
-    output logic                              flit_in_wr;   
-    logic  [V-1 :0] credit_out;     
+    logic   [Fw-1 :0] flit_in;
+    output logic flit_in_wr;
+    logic  [V-1 :0] credit_out;
     
     // the connected router address
-    wire  [RAw-1 :0] current_r_addr;    
+    wire  [RAw-1 :0] current_r_addr;
     
     /* verilator lint_off WIDTH */
     wire [PCK_SIZw-1 : 0] pck_size_tmp= (PCK_TYPE == "SINGLE_FLIT" )?   1 : pck_size_in;
     /* verilator lint_on WIDTH */
     
-    assign     chan_out.flit_chanel.flit = flit_out; 
-    assign  chan_out.flit_chanel.flit_wr = flit_out_wr;
-    assign  chan_out.flit_chanel.credit = credit_out;
-    assign  chan_out.smart_chanel = {SMART_CHANEL_w {1'b0}};
-    
-    assign flit_in   =  chan_in.flit_chanel.flit;   
-    assign flit_in_wr=  chan_in.flit_chanel.flit_wr; 
-    assign credit_in =  chan_in.flit_chanel.credit;  
-    assign current_r_addr = chan_in.ctrl_chanel.router_addr;
-    
-    genvar i;
-    generate
-    for (i=0; i<V;i++) begin :V_
-        assign chan_out.ctrl_chanel.credit_init_val[i]= PORT_B;
+    always_comb begin
+        chan_out.flit_chanel.flit = flit_out; 
+        chan_out.flit_chanel.flit_wr = flit_out_wr;
+        chan_out.flit_chanel.credit = credit_out;
+        chan_out.smart_chanel = {SMART_CHANEL_w {1'b0}};
+        for (int k=0; k<V;k++) chan_out.ctrl_chanel.credit_init_val[k] = PORT_B [CRDTw-1: 0] ;
+        chan_out.ctrl_chanel.endp_port =1'b1;
+        chan_out.ctrl_chanel.credit_release_en={V{1'b0}};
+        chan_out.ctrl_chanel.hetero_ovc_presence={V{1'b1}};
     end
-    endgenerate
-    
-    assign chan_out.ctrl_chanel.endp_port =1'b1;
-    assign chan_out.ctrl_chanel.credit_release_en={V{1'b0}};
-    assign chan_out.ctrl_chanel.hetero_ovc_presence={V{1'b1}};
-    
+    assign flit_in   =  chan_in.flit_chanel.flit;
+    assign flit_in_wr=  chan_in.flit_chanel.flit_wr;
+    assign credit_in =  chan_in.flit_chanel.credit;
+    assign current_r_addr = chan_in.ctrl_chanel.router_addr;
+
     //old traffic.v file
     reg [2:0]   ps,ns;
     localparam IDEAL =3'b001, SENT =3'b010, WAIT=3'b100;
@@ -137,7 +131,7 @@ module  traffic_gen_top    #(
     reg tt;
         always @(posedge clk) begin
             if(`pronoc_reset)begin 
-                tt<=1'b0;               
+                tt<=1'b0;
             end else begin 
                 if(flit_out_wr && tt==1'b0 )begin
                     $display( "%t: Injector: current_r_addr=%x,current_e_addr=%x,dest_e_addr=%x\n",$time, current_r_addr, current_e_addr, dest_e_addr);

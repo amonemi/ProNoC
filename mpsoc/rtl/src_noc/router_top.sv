@@ -436,9 +436,10 @@ module router_top_v
     output router_event_t router_event [P-1 : 0];
     
     router_config_t router_config_in;
-    assign router_config_in.router_id= current_r_id [NRw-1 : 0];
-    assign router_config_in.router_addr=current_r_addr;
-    
+    always_comb begin
+        router_config_in.router_id= current_r_id [NRw-1 : 0];
+        router_config_in.router_addr=current_r_addr;
+    end
     router_top #(
         .NOC_ID(NOC_ID),
         .ROUTER_ID(ROUTER_ID),

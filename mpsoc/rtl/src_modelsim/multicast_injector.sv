@@ -45,9 +45,7 @@ module multicast_injector #(
         .EAw(EAw),
         .DSTPw(DSTPw),
         .LOCATED_IN_NI(1)
-    )
-    routing_module
-    (
+    ) routing_module (
         .reset(reset),
         .clk(clk),
         .current_r_addr(current_r_addr),
@@ -67,14 +65,14 @@ module multicast_injector #(
         .NOC_ID(NOC_ID),
         .DATA_w(HDR_DATA_w)
     ) the_header_flit_generator (
-        .flit_out            (hdr_flit_out),
-        .vc_num_in            (pck_injct_in.vc),
-        .class_in            (pck_injct_in.class_num),
-        .dest_e_addr_in        (pck_injct_in.endp_addr),
-        .src_e_addr_in        (current_e_addr),
-        .weight_in            (pck_injct_in.init_weight),
-        .destport_in        (destport),
-        .data_in            (hdr_data_in),
+        .flit_out (hdr_flit_out),
+        .vc_num_in (pck_injct_in.vc),
+        .class_in (pck_injct_in.class_num),
+        .dest_e_addr_in (pck_injct_in.endp_addr),
+        .src_e_addr_in (current_e_addr),
+        .weight_in (pck_injct_in.init_weight),
+        .destport_in (destport),
+        .data_in (hdr_data_in),
         .be_in({BEw{1'b1}} )// Be is not used in simulation as we dont sent real data
     );
     localparam
@@ -84,17 +82,17 @@ module multicast_injector #(
         REMAIN_DAT_FLIT   = REMAIN_DAT_FLIT_I + REMAIN_DAT_FLIT_F,
         CNTw = log2(REMAIN_DAT_FLIT),
         MIN_PCK_SIZ = REMAIN_DAT_FLIT +1;
-    reg [PCK_SIZw-1             :   0]  counter, counter_next;
-    reg [CNTw-1                 :   0]  counter2,counter2_next;
+    reg [PCK_SIZw-1 : 0]  counter, counter_next;
+    reg [CNTw-1 : 0]  counter2,counter2_next;
     reg tail,head;
     wire [Fpay -1 : 0]  remain_dat [REMAIN_DAT_FLIT -1 : 0];
     wire [Fpay-1 : 0] dataIn =  remain_dat[counter2];
     enum {HEADER, BODY,TAIL} flit_type,flit_type_next;
-    wire [V-1 : 0]   wr_vc_send = (flit_wr)?   pck_injct_in.vc : {V{1'b0}};
-    wire [V-1 : 0]   vc_fifo_full;
+    wire [V-1 : 0] wr_vc_send = (flit_wr)?   pck_injct_in.vc : {V{1'b0}};
+    wire [V-1 : 0] vc_fifo_full;
     wire noc_ready;
     localparam
-        LAST_TMP =PCK_INJ_Dw -  (Fpay*REMAIN_DAT_FLIT_I)-HDR_DATA_w,
+        LAST_TMP =PCK_INJ_Dw - (Fpay*REMAIN_DAT_FLIT_I)-HDR_DATA_w,
         LASTw=(LAST_TMP==0)? Fpay : LAST_TMP;
     genvar i;
     generate
@@ -107,13 +105,13 @@ module multicast_injector #(
     endgenerate
     
     one_hot_mux #(
-        .IN_WIDTH   (V ),
-        .SEL_WIDTH  (V ),
-        .OUT_WIDTH  (1 )
+        .IN_WIDTH (V ),
+        .SEL_WIDTH (V ),
+        .OUT_WIDTH (1 )
     ) one_hot_mux1 (
-        .mux_in     (~ vc_fifo_full    ),
-        .mux_out    (noc_ready   ),
-        .sel        (pck_injct_in.vc       )
+        .mux_in (~ vc_fifo_full),
+        .mux_out (noc_ready),
+        .sel (pck_injct_in.vc)
     );
     
     always @ (*) begin
@@ -202,6 +200,7 @@ module multicast_injector #(
     genvar k;
     reg [PCK_SIZw-1 : 0] rsv_counter [V-1 : 0];
     reg [EAw-1 : 0] sender_endp_addr_reg [V-1 : 0];
+    logic [Cw-1 : 0] sender_class_reg [V-1 : 0];
     logic [15:0] h2t_counter [V-1 : 0];
     logic [15:0] h2t_counter_next [V-1 : 0];
     
@@ -225,18 +224,20 @@ module multicast_injector #(
                 rsv_counter[i]<= {PCK_SIZw{1'b0}};
                 h2t_counter[i]<= 16'd0;
                 sender_endp_addr_reg [i]<= {EAw{1'b0}};
+                sender_class_reg [i]<= {Cw{1'b0}};
             end else begin
                 h2t_counter[i]<=h2t_counter_next[i];
                 if(chan_in.flit_chanel.flit.vc[i] & chan_in.flit_chanel.flit_wr ) begin
                     if(chan_in.flit_chanel.flit.hdr_flag)begin
                         rsv_counter[i]<= {{(PCK_SIZw-1){1'b0}}, 1'b1};
                         sender_endp_addr_reg [i]<= hdr_flit_i.src_e_addr;
-                        //synthesis translate_off
+                        sender_class_reg [i]<= hdr_flit_i.message_class;
+                        `ifdef SIMULATION
                         if(hdr_flit_i.dest_e_addr != current_e_addr) begin
                             $display("%t: ERROR: packet destination address %d does not match reciver endp address %d. %m",$time,hdr_flit_i.dest_e_addr , current_e_addr );
                             $finish;
                         end//if hdr_flit_i
-                        //synthesis translate_on
+                        `endif //SIMULATION
                     end //if hdr_flag
                     else rsv_counter[i]<= rsv_counter[i]+1'b1;
                 end//flit wr
@@ -257,8 +258,8 @@ module multicast_injector #(
                     end //if
                 end //else
             end// always
-            if  (k == 0 ) assign pck_data_o [i][HDR_DATA_w-1 : 0] = pck_data_o_gen [i][0][HDR_DATA_w-1 : 0];
-            else if (k == REMAIN_DAT_FLIT) assign pck_data_o [i][PCK_INJ_Dw-1 :    (k-1)*Fpay+ HDR_DATA_w] = pck_data_o_gen [i][k][LASTw-1: 0];
+            if (k == 0 ) assign pck_data_o [i][HDR_DATA_w-1 : 0] = pck_data_o_gen [i][0][HDR_DATA_w-1 : 0];
+            else if (k == REMAIN_DAT_FLIT) assign pck_data_o [i][PCK_INJ_Dw-1 : (k-1)*Fpay+ HDR_DATA_w] = pck_data_o_gen [i][k][LASTw-1: 0];
             else assign pck_data_o [i][(k)*Fpay+HDR_DATA_w -1 : (k-1)*Fpay+ HDR_DATA_w] = pck_data_o_gen [i][k];
         end //for k
         `ifdef SIMULATION
@@ -274,38 +275,47 @@ module multicast_injector #(
     
     wire [V-1 : 0] vc_reg;
     wire tail_flag_reg, hdr_flag_reg;
-    pronoc_register #(.W(V))   register1 (.in(chan_in.flit_chanel.flit.vc),        .reset  (reset ), .clk (clk),.out(vc_reg));
-    pronoc_register #(.W(1))   register2 (.in(chan_in.flit_chanel.flit.hdr_flag),    .reset  (reset ), .clk (clk),.out(hdr_flag_reg));
-    pronoc_register #(.W(1))   register3 (.in(chan_in.flit_chanel.flit.tail_flag & chan_in.flit_chanel.flit_wr ),.reset  (reset ), .clk (clk),.out(tail_flag_reg));
+    logic [DISTw-1:   0] distance;
+    pronoc_register #(.W(V))   register1 (.in(chan_in.flit_chanel.flit.vc),        .reset (reset ), .clk (clk),.out(vc_reg));
+    pronoc_register #(.W(1))   register2 (.in(chan_in.flit_chanel.flit.hdr_flag),    .reset (reset ), .clk (clk),.out(hdr_flag_reg));
+    pronoc_register #(.W(1))   register3 (.in(chan_in.flit_chanel.flit.tail_flag & chan_in.flit_chanel.flit_wr ),.reset (reset ), .clk (clk),.out(tail_flag_reg));
     wire [Vw-1 : 0] vc_bin;
     one_hot_to_bin #(
-        .ONE_HOT_WIDTH  (V),
-        .BIN_WIDTH      (Vw )
+        .ONE_HOT_WIDTH (V),
+        .BIN_WIDTH (Vw )
     ) one_hot_to_bin (
-        .one_hot_code   (vc_reg  ),
-        .bin_code       (vc_bin  )
+        .one_hot_code (vc_reg  ),
+        .bin_code (vc_bin  )
     );
-    assign pck_injct_out.data  =  pck_data_o[vc_bin];
-    assign pck_injct_out.size  =  rsv_counter[vc_bin];
-    assign pck_injct_out.h2t_delay = h2t_counter[vc_bin];
-    assign pck_injct_out.ready = (flit_type == HEADER)?  ~vc_fifo_full : {V{1'b0}};
-    assign pck_injct_out.endp_addr =  sender_endp_addr_reg[vc_bin];
-    assign pck_injct_out.vc = vc_reg;
-    assign pck_injct_out.pck_wr = tail_flag_reg;
-    assign chan_out.flit_chanel.flit.hdr_flag =head;
-    assign chan_out.flit_chanel.flit.tail_flag=tail;
-    assign chan_out.flit_chanel.flit.vc=pck_injct_in.vc;
-    assign chan_out.flit_chanel.flit_wr=flit_wr;
-    assign chan_out.flit_chanel.flit.payload = (flit_type==    HEADER)? hdr_flit_out[Fpay-1 : 0] : dataIn;
-    assign chan_out.smart_chanel = {SMART_CHANEL_w{1'b0}};
-    assign chan_out.flit_chanel.congestion = {CONGw{1'b0}};
-    assign chan_out.flit_chanel.credit= credit_o;
-    assign chan_out.ctrl_chanel.credit_init_val= LB;
-    assign chan_out.ctrl_chanel.endp_port =1'b1;
+    always_comb begin 
+        pck_injct_out.data  =  pck_data_o[vc_bin];
+        pck_injct_out.size  =  rsv_counter[vc_bin];
+        pck_injct_out.h2t_delay = h2t_counter[vc_bin];
+        pck_injct_out.ready = (flit_type == HEADER)?  ~vc_fifo_full : {V{1'b0}};
+        pck_injct_out.endp_addr =  sender_endp_addr_reg[vc_bin];
+        pck_injct_out.class_num = sender_class_reg[vc_bin];
+        pck_injct_out.init_weight = WEIGHT_INIT;
+        pck_injct_out.vc = vc_reg;
+        pck_injct_out.pck_wr = tail_flag_reg;
+        pck_injct_out.distance = distance;
+        
+        chan_out.flit_chanel.flit.hdr_flag =head;
+        chan_out.flit_chanel.flit.tail_flag=tail;
+        chan_out.flit_chanel.flit.vc=pck_injct_in.vc;
+        chan_out.flit_chanel.flit_wr=flit_wr;
+        chan_out.flit_chanel.flit.payload = (flit_type == HEADER)? hdr_flit_out[Fpay-1 : 0] : dataIn;
+        chan_out.flit_chanel.congestion = {CONGw{1'b0}};
+        chan_out.flit_chanel.credit= credit_o;
+        chan_out.smart_chanel = {SMART_CHANEL_w{1'b0}};
+        for(int i=0;i<V;i++) chan_out.ctrl_chanel.credit_init_val[i]= LB [CRDTw-1: 0];
+        chan_out.ctrl_chanel.endp_port =1'b1;
+        chan_out.ctrl_chanel.hetero_ovc_presence ={V{1'b1}};
+    end
+    
     distance_gen the_distance_gen (
         .src_e_addr(sender_endp_addr_reg[vc_bin]),
         .dest_e_addr(current_e_addr),
-        .distance(pck_injct_out.distance)
+        .distance(distance)
     );
     `ifdef SIMULATION
     //`define MONITOR_RSV_DAT
@@ -336,18 +346,18 @@ endmodule
  *   ovc_status
  *******************/
 module multi_cast_injector_ovc_status #(
-    parameter V     =   4,
-    parameter B =   16,
-    parameter CRDTw =4
+    parameter V = 4,
+    parameter B = 16,
+    parameter CRDTw = 4
     ) (
     input   [V-1 : 0] [CRDTw-1 : 0 ] credit_init_val_in,
-    input   [V-1            :0] wr_in,
-    input   [V-1            :0] credit_in,
-    output  [V-1            :0] full_vc,
-    output  [V-1            :0] nearly_full_vc,
-    output  [V-1            :0] empty_vc,
-    input                       clk,
-    input                       reset
+    input   [V-1 :0] wr_in,
+    input   [V-1 :0] credit_in,
+    output  [V-1 :0] full_vc,
+    output  [V-1 :0] nearly_full_vc,
+    output  [V-1 :0] empty_vc,
+    input clk,
+    input reset
     );
     function integer log2;
         input integer number; begin
@@ -372,7 +382,7 @@ module multi_cast_injector_ovc_status #(
             end //reset
         end//always
         assign  full_vc[i]   = (credit[i] == {DEPTH_WIDTH{1'b0}});
-        assign  nearly_full_vc[i]=  (credit[i] == 1) |  full_vc[i];
+        assign  nearly_full_vc[i]= (credit[i] == 1) | full_vc[i];
         assign  empty_vc[i]  = (credit[i] == credit_init_val_in[i][DEPTH_WIDTH-1:0]);
     end//for
     endgenerate

@@ -372,8 +372,8 @@ module fmesh_distance_gen (
     localparam [Yw : 0] NY  = T2;
     
     input [EAw-1 : 0] src_e_addr;
-    input [EAw-1 : 0] dest_e_addr;               
-    output[DISTw-1:   0]distance;                     
+    input [EAw-1 : 0] dest_e_addr;
+    output[DISTw-1:   0]distance;
     
     wire [Xw-1 :   0]src_x,dest_x;
     wire [Yw-1 :   0]src_y,dest_y;

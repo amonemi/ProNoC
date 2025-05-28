@@ -308,9 +308,9 @@ module piton_to_pronoc_wrapper  #(
     input  [`NOC_X_WIDTH-1:0]       default_coreid_x;
     input  [`NOC_Y_WIDTH-1:0]       default_coreid_y;
     input  [FLATID_WIDTH-1:0] flat_tileid;
-    input [Fpay-1:0]         dataIn;
-    input                               validIn;
-    input                               yummyIn;
+    input  [Fpay-1:0]  dataIn;
+    input  validIn;
+    input  yummyIn;
     
     //pronoc
     input [RAw-1 : 0] current_r_addr_i;
@@ -369,7 +369,7 @@ module piton_to_pronoc_wrapper  #(
         .pronoc_endp_addr_o (dest_e_addr),
         .piton_end_addr_coded_o(dest_coded)
         
-    );     
+    );
     
     conventional_routing #(
         .TOPOLOGY(TOPOLOGY),
@@ -422,18 +422,20 @@ module piton_to_pronoc_wrapper  #(
         .weight_in(win), 
         .vc_num_in(1'b1),
         .be_in(1'b0),
-        .data_in(head_data)    
+        .data_in(head_data)
     );
     
-    assign chan_out.ctrl_chanel.credit_init_val = 4;
-    assign chan_out.flit_chanel.flit.hdr_flag =head;
-    assign chan_out.flit_chanel.flit.tail_flag=tail;
-    assign chan_out.flit_chanel.flit.vc=1'b1;
-    assign chan_out.flit_chanel.flit_wr=validIn;
-    assign chan_out.flit_chanel.credit=yummyIn;
-    assign chan_out.flit_chanel.flit.payload = (head)? header_flit[Fpay-1 : 0] : dataIn;
-    assign chan_out.smart_chanel = {SMART_CHANEL_w{1'b0}};
-    assign chan_out.flit_chanel.congestion = {CONGw{1'b0}};
+    always_comb begin
+        chan_out.ctrl_chanel.credit_init_val = 4;
+        chan_out.flit_chanel.flit.hdr_flag =head;
+        chan_out.flit_chanel.flit.tail_flag=tail;
+        chan_out.flit_chanel.flit.vc=1'b1;
+        chan_out.flit_chanel.flit_wr=validIn;
+        chan_out.flit_chanel.credit=yummyIn;
+        chan_out.flit_chanel.flit.payload = (head)? header_flit[Fpay-1 : 0] : dataIn;
+        chan_out.smart_chanel = {SMART_CHANEL_w{1'b0}};
+        chan_out.flit_chanel.congestion = {CONGw{1'b0}};
+    end
     /*
     always @ (posedge clk) begin 
         if(validIn==1'b1 && flit_type==    HEADER)begin 

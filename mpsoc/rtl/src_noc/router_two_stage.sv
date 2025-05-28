@@ -154,19 +154,44 @@ module router_two_stage #(
     wire [CRDTw-1 : 0 ] credit_init_val_out [P-1 : 0][V-1 : 0];    
     logic [31:0] current_r_id;
     logic [RAw-1 :  0]  current_r_addr;
+    router_info_t router_info;
+    wire [P-1 : 0] granted_oport_one_hot [P-1 : 0];
+    wire [EAw-1 : 0] endp_addrs [NE_PER_R-1 : 0];
+    
+    function automatic int get_enp_num(input int i);
+        if(IS_LINE | IS_RING |  IS_MESH | IS_FMESH | IS_TORUS) begin 
+                return (i > SOUTH) ? i - SOUTH : LOCAL;
+        end else if (IS_MULTI_MESH) begin
+            return LOCAL;
+        end else return 0; //TODO complete it for fattree and bin tree
+    endfunction
+
     always_comb begin 
         current_r_addr = router_config_in.router_addr;
         current_r_id = 0;
         current_r_id [NRw-1 : 0] = router_config_in.router_id;
-    end
-    
-    router_info_t router_info;
-    assign router_info.router_id=current_r_id;
-    assign router_info.router_addr=current_r_addr;
-    assign router_info.neighbors_r_addr[PRAw-1  :  0] = neighbors_r_addr;
-    
+        router_info.router_id=current_r_id;
+        router_info.router_addr=current_r_addr;
+        router_info.neighbors_r_addr[PRAw-1  :  0] = neighbors_r_addr;
+        for (int port=0; port<P; port++ ) begin 
+            ctrl_out[port].router_addr = current_r_addr;
+            ctrl_out[port].endp_port =1'b0; 
+            ctrl_out[port].hetero_ovc_presence= hetero_ovc_unary(current_r_id,port);
+            ctrl_out[port].endp_addr = endp_addrs[get_enp_num(port)];
+            for (int vc=0;vc<V;vc++)begin 
+                ctrl_out[port].credit_init_val[vc] = credit_init_val_out [port][vc];
+                ctrl_out[port].credit_release_en[vc] = 1'b0; 
+            end
+        end
+    end 
+
+
+
     genvar i,j;
     generate
+        for (i=0; i<NE_PER_R; i=i+1 ) begin :Endp_
+            assign endp_addrs[i] = router_config_in.endp_addrs[ (i+1)*EAw-1 : i*EAw];
+        end
         for (i=0; i<P; i=i+1 ) begin :p_
             
             if(CAST_TYPE == "UNICAST") begin : uni 
@@ -184,6 +209,17 @@ module router_two_stage #(
                     .clk(clk)
                 );
             end
+            if(SELF_LOOP_EN == "NO") begin :nslp
+                add_sw_loc_one_hot #(
+                    .P(P),
+                    .SW_LOC(i)
+                )add(
+                    .destport_in(granted_dest_port_all[(i+1)*P_1-1:  i*P_1]),
+                    .destport_out(granted_oport_one_hot[i])
+                );
+            end else begin :slp
+                assign granted_oport_one_hot[i] = granted_dest_port_all[(i+1)*P_1-1:  i*P_1];
+            end
             
             assign  neighbors_r_addr  [(i+1)*RAw-1:  i*RAw] = ctrl_in[i].router_addr;
             assign  flit_in_all       [(i+1)*Fw-1:  i*Fw] = chan_in_tmp[i].flit;
@@ -191,16 +227,6 @@ module router_two_stage #(
             assign  credit_in_all     [(i+1)*V-1:  i*V] = chan_in_tmp[i].credit;
             assign  congestion_in_all [(i+1)*CONGw-1:  i*CONGw] = chan_in_tmp[i].congestion; 
             
-            assign  ctrl_out[i].router_addr = current_r_addr;
-            assign  ctrl_out[i].endp_port =1'b0; 
-            assign  ctrl_out[i].hetero_ovc_presence= hetero_ovc_unary(current_r_id,i);
-            
-            if(IS_LINE | IS_RING |  IS_MESH | IS_FMESH | IS_TORUS) begin 
-                localparam ENP_NUM = (i>SOUTH)?  i-SOUTH : LOCAL;
-                assign  ctrl_out[i].endp_addr = router_config_in[ (ENP_NUM+1)*EAw-1 : ENP_NUM*EAw];
-            end else if (IS_MULTI_MESH) begin
-                assign  ctrl_out[i].endp_addr = router_config_in[EAw-1 : 0];
-            end //TODO complete it for fattree and bin tree
             assign  chan_out[i].flit=          flit_out_all       [(i+1)*Fw-1:  i*Fw];
             assign  chan_out[i].flit_wr=       flit_out_wr_all    [i];
             assign  chan_out[i].credit=        credit_out_all     [(i+1)*V-1:  i*V] | credit_release_out [(i+1)*V-1:  i*V];         
@@ -210,6 +236,7 @@ module router_two_stage #(
             assign  iport_info[i].swa_grant = ivc_num_getting_sw_grant[(i+1)*V-1:  i*V];
             assign  iport_info[i].any_ivc_get_swa_grant=    any_ivc_sw_request_granted_all[i]; 
             assign  iport_info[i].ivc_req = ivc_request_all [(i+1)*V-1:  i*V]; 
+            assign  iport_info[i].granted_oport_one_hot [P-1:0] = granted_oport_one_hot[i];
             
             assign  vsa_ctrl[i].ovc_is_allocated = ovc_allocated_all [(i+1)*V-1:  i*V];
             assign  vsa_ctrl[i].ovc_is_released  = vsa_ovc_released_all[(i+1)*V-1:  i*V];
@@ -219,20 +246,7 @@ module router_two_stage #(
             assign  vsa_ctrl[i].buff_space_decreased =  vsa_credit_decreased_all[(i+1)*V-1:  i*V]; 
             assign  vsa_ctrl[i].ivc_granted_ovc_num = granted_ovc_num_all[(i+1)*VV-1:  i*VV];
             
-            if(SELF_LOOP_EN == "NO") begin :nslp
-                add_sw_loc_one_hot #(
-                    .P(P),
-                    .SW_LOC(i)
-                )add(
-                    .destport_in(granted_dest_port_all[(i+1)*P_1-1:  i*P_1]),
-                    .destport_out(iport_info[i].granted_oport_one_hot[P-1 : 0])
-                );    
-            end else begin :slp
-                assign iport_info[i].granted_oport_one_hot[P-1 : 0] = granted_dest_port_all[(i+1)*P_1-1:  i*P_1];
-            end
-            
             for (j=0;j<V;j++)begin :V_
-                
                 //credit_release. Only activated for local ports as credit_release_en never be asserted in router to router connection.  
                 credit_release_gen #(
                     .NOC_ID(NOC_ID),
@@ -243,10 +257,7 @@ module router_two_stage #(
                     .en (ctrl_in[i].credit_release_en[j]), 
                     .credit_out(credit_release_out[i*V+j])
                 );
-                
-                assign ctrl_out[i].credit_release_en[j] =1'b0;
                 assign credit_init_val_in[i][j]       = ctrl_in[i].credit_init_val[j];
-                assign ctrl_out[i].credit_init_val[j] = credit_init_val_out [i][j];        
             end
         end
     endgenerate
@@ -261,7 +272,7 @@ module router_two_stage #(
         .flit_in_wr_all(flit_in_wr_all),
         .credit_out_all(credit_out_all),
         .credit_in_all(credit_in_all),
-        .masked_ovc_request_all(masked_ovc_request_all),            
+        .masked_ovc_request_all(masked_ovc_request_all),
         .granted_dst_is_from_a_single_flit_pck(granted_dst_is_from_a_single_flit_pck),
         .vsa_ovc_allocated_all(ovc_allocated_all), 
         .granted_ovc_num_all(granted_ovc_num_all), 
@@ -298,7 +309,7 @@ module router_two_stage #(
         .vsa_ctrl_in(vsa_ctrl),
         .credit_init_val_in (credit_init_val_in),
         .credit_init_val_out (credit_init_val_out),
-        .flit_is_tail_all(flit_is_tail_all),            
+        .flit_is_tail_all(flit_is_tail_all),
         .crossbar_flit_out_wr_all(crossbar_flit_out_wr_all),
         .vsa_ovc_released_all(vsa_ovc_released_all),
         .vsa_credit_decreased_all(vsa_credit_decreased_all)
@@ -322,8 +333,8 @@ module router_two_stage #(
         .granted_dest_port_all(granted_dest_port_all), 
         .any_ivc_sw_request_granted_all(any_ivc_sw_request_granted_all), 
         .any_ovc_granted_in_outport_all(any_ovc_granted_in_outport_all),
-        .spec_ovc_num_all(spec_ovc_num_all),       
-        // .lk_destination_all(lk_destination_all),  
+        .spec_ovc_num_all(spec_ovc_num_all),
+        // .lk_destination_all(lk_destination_all),
         .vc_weight_is_consumed_all(vc_weight_is_consumed_all),  
         .iport_weight_is_consumed_all(iport_weight_is_consumed_all),  
         .ivc_info(ivc_info),
@@ -333,22 +344,22 @@ module router_two_stage #(
     
     pronoc_register #(.W(PP_1)) reg2 (.in(granted_dest_port_all ), .out(granted_dest_port_all_delayed), .reset(reset), .clk(clk));
     
-    crossbar #(    
-        .NOC_ID(NOC_ID),            
+    crossbar #(
+        .NOC_ID(NOC_ID),
         .TOPOLOGY(TOPOLOGY),
         .V (V),     // vc_num_per_port
         .P (P),     // router port num
         .Fw (Fw),
-        .MUX_TYPE (MUX_TYPE),                
+        .MUX_TYPE (MUX_TYPE),
         .SSA_EN (SSA_EN),
-        .SELF_LOOP_EN(SELF_LOOP_EN)                
+        .SELF_LOOP_EN(SELF_LOOP_EN)
     ) the_crossbar (
         .granted_dest_port_all (granted_dest_port_all_delayed),
-        .flit_in_all (iport_flit_out_all),                
+        .flit_in_all (iport_flit_out_all),
         .ssa_flit_wr_all (ssa_flit_wr_all),
-        .flit_out_all (crossbar_flit_out_all),                
-        .flit_out_wr_all (crossbar_flit_out_wr_all)        
-    );    
+        .flit_out_all (crossbar_flit_out_all),
+        .flit_out_wr_all (crossbar_flit_out_wr_all)
+    );
     
     //link reg 
     generate 
@@ -361,7 +372,7 @@ module router_two_stage #(
         pronoc_register #(.W(P)  ) reg2 (.in(crossbar_flit_out_wr_all ), .out(flit_out_wr_all_pipe), .reset(reset), .clk(clk));
         
         assign link_flit_out_all    = flit_out_all_pipe;
-        assign link_flit_out_wr_all = flit_out_wr_all_pipe;       
+        assign link_flit_out_wr_all = flit_out_wr_all_pipe;
         
     end else begin :no_link_reg
         
@@ -420,7 +431,7 @@ module router_two_stage #(
         );        
     end // WRRA
     else begin : rra_    
-        assign flit_out_all  =  link_flit_out_all;   
+        assign flit_out_all  =  link_flit_out_all;
         assign refresh_w_counter = 1'b0;
     end
     endgenerate 

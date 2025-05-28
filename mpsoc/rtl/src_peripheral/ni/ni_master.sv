@@ -746,7 +746,7 @@ Shared registers for all VCs
         .vc_num_in(send_vc_enable),
         .weight_in(weight),
         .be_in(be_in),
-        .data_in(hdr_data)        
+        .data_in(hdr_data)
     );
     
     wire [V-1    :   0] wr_vc_send =  (fifo_wr) ? send_vc_enable : {V{1'b0}};  
@@ -754,7 +754,7 @@ Shared registers for all VCs
     ovc_status #(
         .V(V),
         .B(LB),
-        .CRDTw(CRDTw)    
+        .CRDTw(CRDTw)
     ) the_ovc_status (
         .credit_init_val_in ( chan_in.ctrl_chanel.credit_init_val),
         .wr_in(wr_vc_send),
@@ -764,9 +764,9 @@ Shared registers for all VCs
         .empty_vc( ),
         .clk(clk),
         .reset(reset)
-    );   
+    );
     
-    // header info mux    
+    // header info mux
     assign dest_e_addr = vc_dest_e_addr[send_vc_enable_binary];
     assign pck_class  = vc_pck_class[send_vc_enable_binary];
     assign weight =   vc_weight[send_vc_enable_binary];  
@@ -775,14 +775,14 @@ Shared registers for all VCs
     assign send_tail = send_vc_send_tail[send_vc_enable_binary]; 
     assign be_in = vc_be_in[send_vc_enable_binary];
     
-    //wb multiplexors    
+    //wb multiplexors
     assign m_send_sel_o  = vc_m_send_sel_o[send_vc_enable_binary];
     assign m_send_addr_o = vc_m_send_addr_o[send_vc_enable_binary];
     assign m_send_cti_o  = vc_m_send_cti_o[send_vc_enable_binary];
     assign m_send_stb_o  = vc_m_send_stb_o[send_vc_enable_binary];
     assign m_send_cyc_o  = vc_m_send_cyc_o[send_vc_enable_binary];
-    assign m_send_we_o   = vc_m_send_we_o[send_vc_enable_binary];       
-                        
+    assign m_send_we_o   = vc_m_send_we_o[send_vc_enable_binary];
+    
     assign m_receive_sel_o = vc_m_receive_sel_o[receive_vc_enable_binary];
     assign m_receive_addr_o= vc_m_receive_addr_o[receive_vc_enable_binary];
     assign m_receive_cti_o = vc_m_receive_cti_o[receive_vc_enable_binary];
@@ -845,17 +845,19 @@ Shared registers for all VCs
     assign credit_out = vc_fifo_rd;
     assign flit_out_wr= fifo_wr;  
     assign flit_out [Fpay+V-1 : Fpay] = send_vc_enable;    
-    assign flit_out [Fpay-1   : 0   ] = (send_hdr)?  hdr_flit_out [Fpay-1 : 0] :
-            (send_tail)? tail_flit_out :  m_send_dat_i [Fpay-1 : 0];
-    assign flit_out [Fw-1 : Fw-2] =   (send_hdr)?  HDR_FLAG : 
-            (send_tail)?  TAIL_FLAG    : BDY_FLAG;                                       
+    assign flit_out [Fpay-1   : 0   ] = 
+        (send_hdr)?  hdr_flit_out [Fpay-1 : 0] :
+        (send_tail)? tail_flit_out :  m_send_dat_i [Fpay-1 : 0];
+    assign flit_out [Fw-1 : Fw-2] =
+        (send_hdr)?  HDR_FLAG : 
+        (send_tail)?  TAIL_FLAG : BDY_FLAG;
 endmodule
     
 /******************
 *   ovc_status
 *******************/
     
- module ovc_status #(
+module ovc_status #(
     parameter V     =   4,
     parameter B =   16,
     parameter CRDTw =4

@@ -35,8 +35,10 @@ quartus_get_result () {
     
 
     perl  ${SCRPT_DIR_PATH}/src/param_gen.pl  $conf_file
-    #compile
+    
+    compile
     wait;
+    
     mkdir -p $log_work
     perl ${SCRPT_DIR_PATH}/src/extract.prl "$PRONOC_WORK/verify/quartus_pronoc" "pronoc" > $log_file
     #meld "$golden_ref" "$log_file" &

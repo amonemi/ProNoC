@@ -113,18 +113,18 @@ module onehot_mux_1D_reverse #(
         .sel  (sel), 
         .out  (out)
     );
-endmodule    
+endmodule
 
 
 
 module header_flit_info #(
     parameter NOC_ID = 0,
-    parameter DATA_w = 0    
+    parameter DATA_w = 0 
 )(
     flit,
-    hdr_flit,        
-    data_o    
-);     
+    hdr_flit,
+    data_o
+);
     
     `NOC_CONF
     
@@ -135,36 +135,28 @@ module header_flit_info #(
     output hdr_flit_t hdr_flit;
     output [Dw-1 : 0] data_o;
     
-    localparam                 
-        DATA_LSB= MSB_BE+1,               DATA_MSB= (DATA_LSB + DATA_w)<FPAYw ? DATA_LSB + Dw-1 : FPAYw-1,
+    localparam
+        DATA_LSB= MSB_BE+1,
+        DATA_MSB= (DATA_LSB + DATA_w)<FPAYw ? DATA_LSB + Dw-1 : FPAYw-1,
         OFFSETw = DATA_MSB - DATA_LSB +1;
     
-    wire [OFFSETw-1 : 0 ] offset;
+    always_comb begin
+        hdr_flit.src_e_addr  = flit.payload [E_SRC_MSB : E_SRC_LSB];
+        hdr_flit.dest_e_addr = flit.payload [E_DST_MSB : E_DST_LSB];
+        hdr_flit.destport    = flit.payload [DST_P_MSB : DST_P_LSB];
+        hdr_flit.message_class = (C>1)? flit.payload [CLASS_MSB : CLASS_LSB] :  {Cw{1'b0}};
+        hdr_flit.weight = (IS_WRRA)? flit.payload [WEIGHT_MSB : WEIGHT_LSB] : {WEIGHTw{1'b0}};
+        hdr_flit.be = (BYTE_EN)? flit.payload [BE_MSB : BE_LSB]: {BEw{1'b0}};
+    end
     
-    assign hdr_flit.src_e_addr  = flit.payload [E_SRC_MSB : E_SRC_LSB];
-    assign hdr_flit.dest_e_addr = flit.payload [E_DST_MSB : E_DST_LSB];
-    assign hdr_flit.destport    = flit.payload [DST_P_MSB : DST_P_LSB];
-    
-    assign hdr_flit.message_class = (C>1)? 
-        flit.payload [CLASS_MSB : CLASS_LSB] :
-        {Cw{1'b0}};
-    /* verilator lint_off WIDTH */
-    assign hdr_flit.weight = (SWA_ARBITER_TYPE != "RRA")?
-    /* verilator lint_on WIDTH */
-        flit.payload [WEIGHT_MSB : WEIGHT_LSB]:  
-        {WEIGHTw{1'bX}};    
-    assign hdr_flit.be = (BYTE_EN)? 
-        flit.payload [BE_MSB : BE_LSB]:
-        {BEw{1'bX}};
-    
-    assign offset = flit.payload [DATA_MSB : DATA_LSB];    
+    wire [OFFSETw-1 : 0 ] offset = flit.payload [DATA_MSB : DATA_LSB];
     generate
-    if(Dw > OFFSETw) begin : if1     
+    if(Dw > OFFSETw) begin : if1
         assign data_o={{(Dw-OFFSETw){1'b0}},offset};
     end else begin : if2 
         assign data_o=offset[Dw-1 : 0];
-    end   
-    endgenerate          
+    end
+    endgenerate
 endmodule
 
 `ifdef SIMULATION
