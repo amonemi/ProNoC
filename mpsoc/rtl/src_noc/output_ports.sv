@@ -628,7 +628,7 @@ module check_ovc #(
 );
     localparam
         PV = V *  P,
-        PVV = PV * V,    
+        PVV = PV * V,
         P_1 = (SELF_LOOP_EN )?  P : P-1,
         PVP_1 = PV * P_1;
 
@@ -645,8 +645,8 @@ module check_ovc #(
     genvar i;
     generate
     for(i=0; i<PV;i=i+1) begin :lp_pv
-        assign assigned_ovc_num [i]= (ovc_is_assigned_all[i])? assigned_ovc_num_all[(i+1)*V-1 : i*V]: 0;
-        assign destport_sel [i]= dest_port_all[(i+1)*P_1-1 : i*P_1];    
+        assign assigned_ovc_num [i]= (ovc_is_assigned_all[i])? assigned_ovc_num_all[(i+1)*V-1 : i*V]: {V{1'b0}};
+        assign destport_sel [i]= dest_port_all[(i+1)*P_1-1 : i*P_1];
         if(SELF_LOOP_EN==0) begin : nslp
             add_sw_loc_one_hot #(
                 .P(P),
@@ -658,13 +658,13 @@ module check_ovc #(
         end else begin :slp
             assign destport_num[i] = destport_sel[i];
         end
-        one_hot_demux    #(
-            .IN_WIDTH    (V),
-            .SEL_WIDTH    (P)
+        one_hot_demux #(
+            .IN_WIDTH (V),
+            .SEL_WIDTH (P)
         ) demux (
-            .demux_sel    (destport_num[i]),//selectore
-            .demux_in    (assigned_ovc_num[i]),//repeated
-            .demux_out    (ovc_num[i])
+            .demux_sel (destport_num[i]),//selectore
+            .demux_in (assigned_ovc_num[i]),//repeated
+            .demux_out (ovc_num[i])
         );
         always @(posedge clk)begin 
             if(ovc_status >0 && ovc_num[i] >0 && (ovc_num[i] & ovc_status)==0) $display ("%t :Error: OVC status%d missmatch:%b & %b, %m  ",$time,i,ovc_num[i] , ovc_status);

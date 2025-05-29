@@ -548,7 +548,7 @@ endmodule
 module fwft_fifo #(
     parameter DATA_WIDTH = 2,
     parameter MAX_DEPTH = 2,
-    parameter IGNORE_SAME_LOC_RD_WR_WARNING="YES" // "YES" , "NO" 
+    parameter IGNORE_SAME_LOC_RD_WR_WARNING=1 //  1 : "YES", 0: "NO"
     ) (
     input [DATA_WIDTH-1:0] din,     // Data in
     input wr_en,   // Write enable
@@ -676,18 +676,15 @@ module fwft_fifo #(
             $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,MAX_DEPTH);
             $finish;
         end
-        /* verilator lint_off WIDTH */
-        if (rd_en & !recieve_more_than_0 & IGNORE_SAME_LOC_RD_WR_WARNING == "NO") begin
+        if (rd_en & !recieve_more_than_0 & IGNORE_SAME_LOC_RD_WR_WARNING == 0) begin
             $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
             $finish;
         end
-        if (rd_en & ~wr_en & !recieve_more_than_0 & (IGNORE_SAME_LOC_RD_WR_WARNING == "YES")) begin
+        if (rd_en & ~wr_en & !recieve_more_than_0 & (IGNORE_SAME_LOC_RD_WR_WARNING == 1)) begin
             $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
             $finish;
         end
-        /* verilator lint_on WIDTH */
     end // always @ (posedge clk)
-    
     `endif//SIMULATION
 endmodule
 
@@ -702,7 +699,7 @@ endmodule
 module fwft_fifo_with_output_clear #(
     parameter DATA_WIDTH = 2,
     parameter MAX_DEPTH = 2,
-    parameter IGNORE_SAME_LOC_RD_WR_WARNING="NO" // "YES" , "NO"
+    parameter IGNORE_SAME_LOC_RD_WR_WARNING=0 //  1 : "YES", 0: "NO"
     ) (
     din,     // Data in
     wr_en,   // Write enable
@@ -851,16 +848,14 @@ module fwft_fifo_with_output_clear #(
             $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,MAX_DEPTH);
             $finish;
             end
-            /* verilator lint_off WIDTH */
-            if (rd_en && !recieve_more_than_0 && IGNORE_SAME_LOC_RD_WR_WARNING == "NO") begin
+            if (rd_en && !recieve_more_than_0 && (IGNORE_SAME_LOC_RD_WR_WARNING == 0)) begin
             $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
             $finish;
             end
-            if (rd_en && ~wr_en && !recieve_more_than_0 && IGNORE_SAME_LOC_RD_WR_WARNING == "YES") begin
+            if (rd_en && ~wr_en && !recieve_more_than_0 && (IGNORE_SAME_LOC_RD_WR_WARNING == 1)) begin
             $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
             $finish;
             end
-            /* verilator lint_on WIDTH */
         end// ~reset
     end // always @ (posedge clk)
     `endif // SIMULATION
@@ -872,7 +867,7 @@ fwft_fifo_bram
 module fwft_fifo_bram #(
     parameter DATA_WIDTH = 2,
     parameter MAX_DEPTH = 2,
-    parameter IGNORE_SAME_LOC_RD_WR_WARNING="YES" // "YES" , "NO" 
+    parameter IGNORE_SAME_LOC_RD_WR_WARNING=1 // 1 : "YES" , 0: "NO"
     ) (
     input [DATA_WIDTH-1:0] din,     // Data in
     input wr_en,   // Write enable
@@ -962,23 +957,20 @@ module fwft_fifo_bram #(
     assign recieve_more_than_0 = ~ empty;
     assign recieve_more_than_1 = ~( depth == {DEPTH_DATA_WIDTH{1'b0}} ||  depth== 1 );
     
-    
     `ifdef SIMULATION
     always @(posedge clk) begin
         if (wr_en & ~rd_en & full) begin
             $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,MAX_DEPTH);
             $finish;
         end
-        /* verilator lint_off WIDTH */
-        if (rd_en & !recieve_more_than_0 & IGNORE_SAME_LOC_RD_WR_WARNING == "NO") begin
+        if (rd_en & !recieve_more_than_0 & (IGNORE_SAME_LOC_RD_WR_WARNING == 0)) begin
             $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
             $finish;
         end
-        if (rd_en & ~wr_en & !recieve_more_than_0 & (IGNORE_SAME_LOC_RD_WR_WARNING == "YES")) begin
+        if (rd_en & ~wr_en & !recieve_more_than_0 & (IGNORE_SAME_LOC_RD_WR_WARNING == 1)) begin
             $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
             $finish;
         end
-        /* verilator lint_on WIDTH */
     end // always
     `endif // SIMULATION
     

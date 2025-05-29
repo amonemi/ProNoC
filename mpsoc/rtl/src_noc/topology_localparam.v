@@ -360,18 +360,18 @@
             end
             end
     end
-    endfunction  
+    endfunction
     
     function automatic integer mcast_partial_width;
     input [NE-1 : 0] p;
-    integer i;      
+    integer i;
     begin 
         mcast_partial_width=0;
         for (i=0;i<NE;i=i+1) begin
             if (p [i]==1'b1) mcast_partial_width=mcast_partial_width+1;
         end
-    end   
-    endfunction    
+    end
+    endfunction
     
     function automatic  integer fmesh_addrencode; 
     input integer in;

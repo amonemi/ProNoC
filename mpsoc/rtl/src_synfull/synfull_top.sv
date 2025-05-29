@@ -88,7 +88,7 @@ module synfull_top;
         fwft_fifo_bram #(
             .DATA_WIDTH(32+PCK_SIZw+NEw),
             .MAX_DEPTH(1000000),
-            .IGNORE_SAME_LOC_RD_WR_WARNING("NO") 
+            .IGNORE_SAME_LOC_RD_WR_WARNING(0) //"NO"
         ) fifo  (
             .din({synfull_pronoc_req_all[i].id,synfull_pronoc_req_all[i].size,synfull_pronoc_req_all[i].dest}),     // Data in
             .wr_en(fifo_wr[i]),   // Write enable
@@ -100,7 +100,7 @@ module synfull_top;
             .recieve_more_than_1(),
             .reset(reset),
             .clk (clk)
-        );        
+        );
         
         //from synfull 
         assign pck_injct_in[i].data = (fifo_not_empty[i])?  fifo_id[i] : synfull_pronoc_req_all[i].id;

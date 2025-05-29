@@ -431,7 +431,7 @@ Shared registers for all VCs
             fwft_fifo #(
                 .DATA_WIDTH(HDATA_PRECAPw),
                 .MAX_DEPTH(LB/MIN_PCK_SIZE),//maximum packet number which can be stored in buffer 
-                .IGNORE_SAME_LOC_RD_WR_WARNING("YES")
+                .IGNORE_SAME_LOC_RD_WR_WARNING(1) //"YES"
             )  precap_data_fifo  (
                 .din(precap_din),
                 .wr_en(precap_hdr_flit_wr[i]),

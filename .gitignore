@@ -52,6 +52,7 @@ mpsoc_work/
 mpsoc/rtl/src_openpiton/nocs
 mpsoc/Integration_test/synthetic_sim/result_logs/*
 mpsoc/Integration_test/Altera/result_logs/*
+mpsoc/Integration_test/VCS/result_logs/*
 
 
 

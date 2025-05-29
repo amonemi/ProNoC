@@ -360,7 +360,7 @@ module  accumulator #(
     genvar i;
     generate 
     for (i=0; i<NUM; i=i+1)begin : lp
-        assign in[i] = in_all[(i+1)*N-1 : i*N];    
+        assign in[i] = in_all[(i+1)*N-1 : i*N];
     end
     
     if(  SUMw == OUTw) begin : equal
@@ -375,10 +375,10 @@ module  accumulator #(
     // It works with Quartus, Verilator and Modelsim compilers  
     integer k; 
     always @(*)begin 
-        sum=0;
+        sum = {SUMw{1'b0}};
         for (k=0;k<NUM;k=k+1)begin 
-            sum= sum + {{(SUMw-N){1'b0}},in[k]};        
-        end   
+            sum= sum + {{(SUMw-N){1'b0}},in[k]};
+        end
     end
     //In case your compiler could not synthesize or wrongly synthesizes it try this
     //assumming the maximum NUM as parameter can be 20:

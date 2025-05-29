@@ -239,7 +239,7 @@ module input_queue_per_port #(
         OFFSET = (PORT_B%MIN_PCK_SIZE)? 1 :0,
         NON_ATOM_PCKS =  (PORT_B>MIN_PCK_SIZE)?  (PORT_B/MIN_PCK_SIZE)+ OFFSET : 1,
         MAX_PCK = (VC_REALLOCATION_TYPE== "ATOMIC")?  1 : NON_ATOM_PCKS + OVC_ALLOC_MODE,// min packet size is two hence the max packet number in buffer is (B/2)
-        IGNORE_SAME_LOC_RD_WR_WARNING = ((SSA_EN==1) || (SMART_EN==1))? "YES" : "NO";
+        IGNORE_SAME_LOC_RD_WR_WARNING = ((SSA_EN==1) || (SMART_EN==1))? 1 : 0;
     
     localparam
         ELw = log2(T3),
@@ -376,7 +376,7 @@ module input_queue_per_port #(
     
     always @ (*)begin 
         iport_weight_next = iport_weight;
-        if(hdr_flit_wr != {V{1'b0}})  iport_weight_next = (weight_in=={WEIGHTw{1'b0}})? 1 : weight_in; // the minimum weight is 1
+        if(hdr_flit_wr != {V{1'b0}})  iport_weight_next = (weight_in=={WEIGHTw{1'b0}})? WEIGHT_INIT : weight_in; // the minimum weight is 1
     end
     
     

@@ -30,9 +30,9 @@ module check_flit_chanel_type_is_in_order #(
     reg  [V-1 : 0] hdr_passed_next;
     wire [V-1 : 0] single_flit_pck;
     
-    assign  vc_num_hdr_wr =(hdr_flg_in & flit_in_wr) ?    vc_num_in : 0;
-    assign  vc_num_tail_wr =(tail_flg_in & flit_in_wr)?    vc_num_in : 0;
-    assign  vc_num_bdy_wr =({hdr_flg_in,tail_flg_in} == 2'b00 && flit_in_wr)?    vc_num_in : 0;
+    assign  vc_num_hdr_wr =(hdr_flg_in & flit_in_wr) ?    vc_num_in :  {V{1'b0}};
+    assign  vc_num_tail_wr =(tail_flg_in & flit_in_wr)?    vc_num_in : {V{1'b0}};
+    assign  vc_num_bdy_wr =({hdr_flg_in,tail_flg_in} == 2'b00 && flit_in_wr)?  vc_num_in : {V{1'b0}};
     assign  single_flit_pck = vc_num_hdr_wr & vc_num_tail_wr;
     always @(*)begin
         hdr_passed_next = (hdr_passed | vc_num_hdr_wr) & ~vc_num_tail_wr; 
@@ -40,24 +40,24 @@ module check_flit_chanel_type_is_in_order #(
     
     `ifdef SIMULATION
     pronoc_register #(
-        .W(V)          
+        .W(V)
     ) reg2 ( 
         .in(hdr_passed_next),
-        .reset(reset),    
-        .clk(clk),      
+        .reset(reset),
+        .clk(clk),
         .out(hdr_passed)
-    );   
+    );
     always @ (posedge clk ) begin 
         if(( hdr_passed & vc_num_hdr_wr)>0  )begin 
-            $display("%t ERROR: a header flit is received in  an active IVC %m",$time);               
+            $display("%t ERROR: a header flit is received in  an active IVC %m",$time);
             $finish;
         end
         if((~hdr_passed & vc_num_tail_wr & ~single_flit_pck )>0 ) begin 
-            $display("%t ERROR: a tail flit is received in an inactive IVC %m",$time);                
+            $display("%t ERROR: a tail flit is received in an inactive IVC %m",$time);
             $finish;
-        end                
+        end
         if ((~hdr_passed & vc_num_bdy_wr    )>0)begin 
-            $display("%t ERROR: a body flit is received in an inactive IVC %m",$time);                
+            $display("%t ERROR: a body flit is received in an inactive IVC %m",$time);
             $finish;
         end
         /* verilator lint_off WIDTH */
