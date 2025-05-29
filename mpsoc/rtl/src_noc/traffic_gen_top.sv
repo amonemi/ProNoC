@@ -99,7 +99,7 @@ module  traffic_gen_top    #(
     wire  [RAw-1 :0] current_r_addr;
     
     /* verilator lint_off WIDTH */
-    wire [PCK_SIZw-1 : 0] pck_size_tmp= (PCK_TYPE == "SINGLE_FLIT" )?   1 : pck_size_in;
+    wire [PCK_SIZw-1 : 0] pck_size_tmp= (IS_SINGLE_FLIT )?   1 : pck_size_in;
     /* verilator lint_on WIDTH */
     
     always_comb begin
@@ -539,16 +539,16 @@ module  traffic_gen_top    #(
         
         /* verilator lint_off WIDTH */
         if (CAST_TYPE == "BROADCAST_FULL") begin :bcastf
-            assign mcast_dst_num_o = (is_unicast) ? 1 : (SELF_LOOP_EN == "NO")? NE-1 : NE;
+            assign mcast_dst_num_o = (is_unicast) ? 1 : (SELF_LOOP_EN ) ? NE : NE-1;
         end else  if ( CAST_TYPE == "BROADCAST_PARTIAL" )  begin :bcastp 
-            if (SELF_LOOP_EN == "NO") begin 
+            if (SELF_LOOP_EN == 0) begin 
                 //check if injector node is included in partial list
                 wire [NEw-1: 0]  current_enp_id;
                 endp_addr_decoder  #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) decod1 ( .id(current_enp_id), .code(current_e_addr));
                 assign mcast_dst_num_o = (is_unicast) ? 1 : (MCAST_ENDP_LIST[current_enp_id]== 1'b1)?  MCAST_PRTLw-1 : MCAST_PRTLw;
             end else begin 
                 assign mcast_dst_num_o = (is_unicast)? 1 : MCAST_PRTLw;
-            end            
+            end
         /* verilator lint_on WIDTH */
         
         end else begin : mcast
@@ -595,7 +595,7 @@ module  traffic_gen_top    #(
         /* verilator lint_off WIDTH */
         if(CAST_TYPE == "UNICAST") begin
         /* verilator lint_on WIDTH */
-            if(flit_out_wr && hdr_flit && dest_e_addr_o [EAw-1 : 0]  == current_e_addr  && SELF_LOOP_EN == "NO") begin 
+            if(flit_out_wr && hdr_flit && dest_e_addr_o [EAw-1 : 0]  == current_e_addr  && SELF_LOOP_EN == 0) begin 
                 $display("%t: ERROR: The self-loop is not enabled in the router while a packet is injected to the NoC with identical source and destination address in endpoint (%h).: %m",$time, dest_e_addr_o );
                 $finish;
             end
@@ -608,7 +608,7 @@ module  traffic_gen_top    #(
             if((CAST_TYPE == "MULTICAST_FULL") || (CAST_TYPE == "MULTICAST_PARTIAL")) begin
             /* verilator lint_on WIDTH */
                 
-                if(flit_out_wr && hdr_flit && dest_mcast_all_endp1[current_id]  == 1'b1  && SELF_LOOP_EN == "NO") begin 
+                if(flit_out_wr && hdr_flit && dest_mcast_all_endp1[current_id]  == 1'b1  && SELF_LOOP_EN == 0) begin 
                     $display("%t: ERROR: The self-loop is not enabled in the router while a packet is injected to the NoC with identical source and destination address in endpoint %d. destination nodes:0X%h. : %m",$time, current_id,dest_mcast_all_endp1 );
                     $finish;
                 end
@@ -896,7 +896,7 @@ module packet_gen
         .rd_en(pck_rd),
         .dout({tmp1,tmp2,pck_timestamp}),
         .full(timestamp_fifo_full),
-        .nearly_full(timestamp_fifo_nearly_full),       
+        .nearly_full(timestamp_fifo_nearly_full),
         .recieve_more_than_0(recieve_more_than_0),
         .recieve_more_than_1(),
         .reset(reset),
@@ -907,7 +907,7 @@ module packet_gen
     
     assign dest_e_addr_o =tmp1;
     /* verilator lint_off WIDTH */
-    assign pck_size_o = (PCK_TYPE == "SINGLE_FLIT" )?   1 : tmp2;
+    assign pck_size_o = (IS_SINGLE_FLIT )?   1 : tmp2;
     /* verilator lint_on WIDTH */
     assign buffer_empty = ~recieve_more_than_0;
     

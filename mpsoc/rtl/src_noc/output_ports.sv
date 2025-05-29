@@ -62,14 +62,14 @@ module output_ports #(
     localparam
         PV = V * P,
         VV = V * V,
-        PVV = PV * V,    
-        P_1 = ( SELF_LOOP_EN=="NO")?  P-1 : P,
-        VP_1 = V * P_1,                
+        PVV = PV * V,
+        P_1 = (SELF_LOOP_EN )?  P : P-1,
+        VP_1 = V * P_1,
         PP_1 = P_1 * P,
         PVP_1 = PV * P_1;
     
-    localparam [V-1 : 0] ADAPTIVE_VC_MASK = ~ ESCAP_VC_MASK;   
-    localparam  CONG_ALw= CONGw * P;   //  congestion width per router;             
+    localparam [V-1 : 0] ADAPTIVE_VC_MASK = ~ ESCAP_VC_MASK;
+    localparam  CONG_ALw= CONGw * P;   //  congestion width per router;
     
     input [PV-1 : 0] vsa_ovc_allocated_all;
     input [PV-1 : 0] flit_is_tail_all;   
@@ -197,7 +197,7 @@ module output_ports #(
     
     for(i=0;i< PV;i=i+1) begin :total_vc_loop2
         for(j=0;j<P;    j=j+1)begin: assign_loop2
-            if ( SELF_LOOP_EN=="NO") begin : nslp  
+            if ( SELF_LOOP_EN==0) begin : nslp  
                 if((i/V)<j )begin: jj
                     assign ovc_released_gen [i][j-1] = ovc_released[j][i];
                     assign credit_decreased_gen[i][j-1] = credit_decreased [j][i];
@@ -214,7 +214,7 @@ module output_ports #(
         assign vsa_credit_decreased_all [i] = (|credit_decreased_gen[i])|vsa_ovc_allocated_all[i];
     end//i
     
-    if ( SELF_LOOP_EN=="NO") begin : nslp  
+    if ( SELF_LOOP_EN==0) begin : nslp  
         //remove source port from the list 
         for(i=0;i< P;i=i+1) begin :port_loop
             if(i==0)  begin :i0
@@ -277,15 +277,12 @@ module output_ports #(
             .clk (clk),
             .reset  (reset)
         );
-    end//for
-    for(i=0;    i<PV; i=i+1) begin :reg_blk
-        always @ (*)begin 
+        
+        always_comb begin
             ovc_status_next[i] = ovc_status[i];
-            /* verilator lint_off WIDTH */
-            if(PCK_TYPE == "SINGLE_FLIT")  ovc_status_next[i]=1'b0; // donot change VC status for single flit packet
-            /* verilator lint_on WIDTH */
+            if(IS_SINGLE_FLIT)  ovc_status_next[i]=1'b0; // donot change VC status for single flit packet
             else begin 
-                if(ovc_released_all[i])        ovc_status_next[i] =1'b0;
+                if(ovc_released_all[i])  ovc_status_next[i] =1'b0;
                 //if(ovc_allocated_all[i] & ~granted_dst_is_from_a_single_flit_pck[i/V])    ovc_status_next[i]=1'b1; // donot change VC status for single flit packet
                 if((vsa_ctrl_in[i/V].ovc_is_allocated[i%V] & ~granted_dst_is_from_a_single_flit_pck[i/V]) |
                     (ssa_ctrl_in[i/V].ovc_is_allocated[i%V] & ~ssa_ctrl_in[i/V].ovc_single_flit_pck[i%V])|
@@ -293,7 +290,7 @@ module output_ports #(
                     ovc_status_next[i]=1'b1; // donot change VC status for single flit packet    
             end
         end//always
-    end//for     
+    end//for
     endgenerate
     
     pronoc_register #(.W(PV)) reg2 (.in(ovc_status_next ), .out(ovc_status), .reset(reset), .clk(clk));
@@ -461,7 +458,7 @@ endmodule
 module oport_ovc_sig_gen #(
     parameter V = 4, // vc_num_per_port
     parameter P = 5, // router port num
-    parameter SELF_LOOP_EN = "NO"
+    parameter SELF_LOOP_EN = 0
 )(
     flit_is_tail,
     assigned_ovc_num,
@@ -470,11 +467,11 @@ module oport_ovc_sig_gen #(
     first_arbiter_granted_ivc,
     credit_decreased,
     ovc_released
-);    
+);
     
     localparam
         VV = V * V,
-        P_1 = ( SELF_LOOP_EN=="NO")?  P-1 : P,
+        P_1 = (SELF_LOOP_EN )?  P : P-1,
         VP_1 = V * P_1;
     
     input [V-1 : 0]  flit_is_tail;
@@ -486,7 +483,7 @@ module oport_ovc_sig_gen #(
     output [VP_1-1 : 0] ovc_released;
     
     wire [V-1 : 0] muxout1;
-    wire                   muxout2;
+    wire muxout2;
     wire [VV-1 : 0] assigned_ovc_num_masked;
     genvar i;
     generate 
@@ -535,7 +532,7 @@ module full_ovc_predictor #(
     parameter V = 4, // vc_num_per_port
     parameter P = 5, // router port num
     parameter OVC_ALLOC_MODE=1'b0,
-    parameter SELF_LOOP_EN = "NO"
+    parameter SELF_LOOP_EN = 0
 )(
     ssa_granted_ovc_num,
     granted_ovc_num,
@@ -551,7 +548,7 @@ module full_ovc_predictor #(
     reset
 );
     localparam
-        P_1 = ( SELF_LOOP_EN=="NO")?  P-1 : P,
+        P_1 = (SELF_LOOP_EN )?  P : P-1,
         VP_1 = V * P_1;
     input clk,reset;
     input ovc_is_assigned;
@@ -620,7 +617,7 @@ endmodule
 module check_ovc #(
     parameter V = 4, // vc_num_per_port
     parameter P = 5, // router port num
-    parameter SELF_LOOP_EN="NO"
+    parameter SELF_LOOP_EN=0
 )(
     ovc_status,
     assigned_ovc_num_all,
@@ -632,7 +629,7 @@ module check_ovc #(
     localparam
         PV = V *  P,
         PVV = PV * V,    
-        P_1 = ( SELF_LOOP_EN=="NO")?  P-1 : P,
+        P_1 = (SELF_LOOP_EN )?  P : P-1,
         PVP_1 = PV * P_1;
 
     input [PV-1 : 0] ovc_status;
@@ -650,7 +647,7 @@ module check_ovc #(
     for(i=0; i<PV;i=i+1) begin :lp_pv
         assign assigned_ovc_num [i]= (ovc_is_assigned_all[i])? assigned_ovc_num_all[(i+1)*V-1 : i*V]: 0;
         assign destport_sel [i]= dest_port_all[(i+1)*P_1-1 : i*P_1];    
-        if(SELF_LOOP_EN=="NO") begin : nslp
+        if(SELF_LOOP_EN==0) begin : nslp
             add_sw_loc_one_hot #(
                 .P(P),
                 .SW_LOC(i/V)

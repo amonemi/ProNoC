@@ -1052,8 +1052,8 @@ arbiters external priority enable';
     
     $label='Self loop enable'; 
     $param='SELF_LOOP_EN';
-    $default='"NO"';
-    $content='"NO","YES"';
+    $default='0';
+    $content='0,1';
     $type='Combo-box';
     $info="Allows a router input port to send packets to its own output port, 
     enabling self-communication for tiles."; 

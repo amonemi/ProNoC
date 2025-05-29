@@ -81,7 +81,7 @@ module router_two_stage #(
         PV = V * P,
         VV = V*V,
         PVV = PV * V,    
-        P_1 = ( SELF_LOOP_EN=="NO")?  P-1 : P,
+        P_1 = (SELF_LOOP_EN )?  P : P-1,
         PP_1 = P_1 * P,
         PVP_1 = PV * P_1,
         PFw = P*Fw,
@@ -209,7 +209,7 @@ module router_two_stage #(
                     .clk(clk)
                 );
             end
-            if(SELF_LOOP_EN == "NO") begin :nslp
+            if(SELF_LOOP_EN == 0) begin :nslp
                 add_sw_loc_one_hot #(
                     .P(P),
                     .SW_LOC(i)

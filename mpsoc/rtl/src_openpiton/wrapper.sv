@@ -614,12 +614,12 @@ module pronoc_to_piton_wrapper #(
         .NL(T3),
         .P(MAX_P),
         .PLw(PLw),
-        .DSTPw(DSTPw),        
+        .DSTPw(DSTPw),
         .SELF_LOOP_EN (SELF_LOOP_EN),
         .SW_LOC(PORT_NUM)
     ) decoder (
         .destport_one_hot (destport_one_hot),
-        .dest_port_encoded(dstp_encoded),             
+        .dest_port_encoded(dstp_encoded),
         .dest_port_out(),   
         .endp_localp_num(endp_p_in),
         .swap_port_presel(),
@@ -637,7 +637,7 @@ module pronoc_to_piton_wrapper #(
     assign header_flit [ `MSG_OPTIONS_1]  = option1; 
     
     generate 
-    if(Fpay > 64) begin :R_           
+    if(Fpay > 64) begin :R_
         assign  header_flit [Fpay - 1 : 64] =  head_dat[Fpay + HEAD_DATw -65 :HEAD_DATw]; 
     end
     endgenerate

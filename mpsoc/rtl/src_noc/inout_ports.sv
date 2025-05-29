@@ -92,9 +92,9 @@ module inout_ports #(
     localparam
         PV = V * P,
         PVV = PV * V,    
-        P_1 = ( SELF_LOOP_EN=="NO")?  P-1 : P,
+        P_1 = (SELF_LOOP_EN )?  P : P-1,
         PP_1 = P_1 * P,
-        PVP_1 = PV * P_1,       
+        PVP_1 = PV * P_1,
         PFw = P * Fw,
         CONG_ALw = CONGw*P,    //  congestion width per router 
         W = WEIGHTw,
@@ -453,7 +453,7 @@ module  vc_alloc_request_gen #(
     `NOC_CONF
     
     localparam  
-        P_1     = (SELF_LOOP_EN == "NO")?  P-1 : P,
+        P_1 = (SELF_LOOP_EN )?  P : P-1,
         PV      =   V       *   P,
         PVV     =   PV      *  V,
         PVP_1   =   PV      *   P_1,
@@ -528,7 +528,7 @@ module  vc_alloc_request_gen #(
         
     end else begin: adptv
         
-        if(P==5 && SELF_LOOP_EN == "NO" )begin : sl_mesh // combine portsel and available VC mux as proposed in ProNoC paper
+        if(P==5 && SELF_LOOP_EN == 0 )begin : sl_mesh // combine portsel and available VC mux as proposed in ProNoC paper
             
             mesh_torus_vc_alloc_request_gen_adaptive #(
                 .ROUTE_TYPE(ROUTE_TYPE),
@@ -604,9 +604,8 @@ endmodule
 module  vc_alloc_request_gen_determinstic #(    
     parameter P = 5,
     parameter V = 4,
-    parameter SELF_LOOP_EN="NO",
+    parameter SELF_LOOP_EN=0,
     parameter CAST_TYPE = "UNICAST" 
-    
 )(
     ovc_avalable_all,
     candidate_ovc_all,
@@ -617,11 +616,11 @@ module  vc_alloc_request_gen_determinstic #(
 );
 
     localparam  
-        P_1     =  (SELF_LOOP_EN == "NO")?  P-1 : P,
+        P_1 = (SELF_LOOP_EN )?  P : P-1,
         PV      =   V       *   P,
         PVV     =   PV      *   V,
         PVP_1   =   PV      *   P_1,
-        VP_1    =   V       *   P_1;             
+        VP_1    =   V       *   P_1;
     
     input   [PV-1       :   0]  ovc_avalable_all;
     input   [PV-1       :   0]  ivc_request_all;
@@ -641,7 +640,7 @@ module  vc_alloc_request_gen_determinstic #(
     
     genvar i;
     generate
-    if(SELF_LOOP_EN == "NO" ) begin :nslp
+    if(SELF_LOOP_EN == 0 ) begin :nslp
         //remove available ovc of receiver port 
         for(i=0;i< P;i=i+1) begin :port_loop
             if(i==0) begin : first assign ovc_avalable_perport[i]=ovc_avalable_all [PV-1              :   V]; end

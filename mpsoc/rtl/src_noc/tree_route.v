@@ -298,21 +298,21 @@ module  tree_destp_generator #(
     parameter P=K+1,
     parameter SW_LOC=0,
     parameter DSTPw=4,
-    parameter SELF_LOOP_EN = "NO"
+    parameter SELF_LOOP_EN = 0
 )(
     dest_port_in_encoded,
     dest_port_out
 );
     localparam
         MAX_P = K+1,
-        P_1 = (SELF_LOOP_EN == "NO")? P-1 : P;
-        
+        P_1 = (SELF_LOOP_EN )? P : P-1;
+
     input  [DSTPw-1: 0] dest_port_in_encoded;
-    output [P_1-1 : 0] dest_port_out;    
+    output [P_1-1 : 0] dest_port_out;
     
     wire [MAX_P-1 : 0] destport_decoded;
     
-    tree_destport_decoder #(           
+    tree_destport_decoder #(
         .K(K)
     ) destport_decoder(
         .destport_encoded_i(dest_port_in_encoded),
@@ -320,7 +320,7 @@ module  tree_destp_generator #(
     );
     
     generate 
-    if(SELF_LOOP_EN == "NO") begin : nslp      
+    if(SELF_LOOP_EN == 0) begin : nslp
         remove_sw_loc_one_hot #(
             .P(P),
             .SW_LOC(SW_LOC)
@@ -329,7 +329,7 @@ module  tree_destp_generator #(
             .destport_out(dest_port_out[P_1-1 : 0 ])
         );  
     end else begin : slp
-        assign dest_port_out = destport_decoded;    
+        assign dest_port_out = destport_decoded;
     end
     endgenerate
 endmodule

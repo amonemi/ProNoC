@@ -4,7 +4,7 @@ $model = bless( {
 		"ADD_PIPREG_AFTER_CROSSBAR" => "1'b1",						
 		"V" => "1",
 		"B" => "4",
-		"SELF_LOOP_EN" => "\"YES\"",
+		"SELF_LOOP_EN" => "1",
 		"SMART_MAX" => "7",
 		"ESCAP_VC_MASK" => "1'b1",
 	}

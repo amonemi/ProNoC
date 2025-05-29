@@ -370,7 +370,7 @@ void mcast_full_rnd (unsigned int core_num){
     int a;
     for(;;)  {
         DEST_ADDR_ASSIGN_RAND(traffic[core_num]->dest_e_addr);
-        if((strcmp (SELF_LOOP_EN,"NO")==0)) DEST_ADDR_BIT_CLR(traffic[core_num]->dest_e_addr,core_num);
+        if(SELF_LOOP_EN==0) DEST_ADDR_BIT_CLR(traffic[core_num]->dest_e_addr,core_num);
         DEST_ADDR_IS_ZERO(a,traffic[core_num]->dest_e_addr);
         //rnd = rand() & ~(0x1<<core_num);
         //rnd &= ((1<<NE) -1);
@@ -388,7 +388,7 @@ void mcast_partial_rnd (unsigned int core_num){
         for(;;){
             DEST_ADDR_ASSIGN_RAND(traffic[core_num]->dest_e_addr);
             DEST_ADDR_BIT_CLR(traffic[core_num]->dest_e_addr,0);
-            if((strcmp (SELF_LOOP_EN,"NO")==0))    DEST_ADDR_BIT_CLR(traffic[core_num]->dest_e_addr,self_node_addr);
+            if(SELF_LOOP_EN==0)    DEST_ADDR_BIT_CLR(traffic[core_num]->dest_e_addr,self_node_addr);
             //rnd = rand() & ~((0x1<<(self_node_addr+1))|0x1); // generate a random multicast destination. remove the current node flag and unicast_flag from destination list
             //rnd &= ((1<<(MCAST_PRTLw+1)) -1);
             //printf("rnd=%d\n",rnd);
@@ -425,7 +425,7 @@ void pck_dst_gen (     unsigned int core_num, unsigned char * inject_en) {
     unsigned int rnd = rand() % 100; // 0~99
     if(rnd >= mcast.ratio){
         //send a unicast packet
-        if((strcmp (SELF_LOOP_EN,"NO")==0) && dest_id==core_num){
+        if(SELF_LOOP_EN==0 && dest_id==core_num){
             *inject_en=0;
             return;
         }
@@ -1259,7 +1259,7 @@ void print_parameter (){
     printf ("\tSSA_EN enabled:%s \n",SSA_EN);
     printf ("\tSwitch allocator arbitration type:%s \n",SWA_ARBITER_TYPE);
     printf ("\tMinimum supported packet size:%d flit(s) \n",MIN_PCK_SIZE);
-    printf ("\tLoop back is enabled:%s \n",SELF_LOOP_EN);
+    printf ("\tLoop back is enabled:%d \n",SELF_LOOP_EN);
     printf ("\tNumber of multihop bypass (SMART max):%d \n",SMART_MAX);
     printf ("\tCastying type:%s.\n",CAST_TYPE);
     if (IS_MCAST_PARTIAL){

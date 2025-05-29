@@ -511,24 +511,24 @@ module multicast_chan_in_process #(
     if(IS_MESH) begin : mesh_
         assign  dest_e_addr = {row_has_any_dest,mcast_dst_coded};
         if(SW_LOC == LOCAL || SW_LOC > SOUTH) begin :endp
-            wire [NE/NX-1 : 0] endp_mask [NX-1 : 0];        
+            wire [NE/NX-1 : 0] endp_mask [NX-1 : 0];
             for(i=0; i< NE; i=i+1) begin : endpoints
-                //Endpoint decoded address                
+                //Endpoint decoded address
                 localparam 
                     MCAST_ID = endp_id_to_mcast_id(i),
                     YY = ((i/NL) / NX ), 
                     XX = ((i/NL) % NX ), 
                     LL = (i % NL),
                     PP = YY*NL + LL;
-                assign endp_mask [XX] [PP] = dest_mcast_all_endp [i];            
+                assign endp_mask [XX] [PP] = dest_mcast_all_endp [i];
             end
             for(i=0;i<NX; i++) begin : X_
-                assign row_has_any_dest[i] =| endp_mask[i];            
+                assign row_has_any_dest[i] =| endp_mask[i];
             end    
             reg   [DSTPw-1 : 0] destport_tmp;
             always @(*) begin 
                 destport_tmp = destport;
-                if(SELF_LOOP_EN   == "NO") destport_tmp [ SW_LOC ] = 1'b0; 
+                if(SELF_LOOP_EN   == 0) destport_tmp [ SW_LOC ] = 1'b0; 
             end
             assign destport_o = destport_tmp;
         end else begin : no_endp
@@ -541,12 +541,12 @@ module multicast_chan_in_process #(
         localparam MAX_ENDP_NUM_IN_SAME_ROW = NY * NL + NY + 2;
         localparam ENDP_NUM_IN_MIDLE_ROW = NY * NL + 2;
         localparam Pw = log2(MAX_P_FMESH);
-        wire [NX-1 : 0] row_has_any_dest_endp_port;    
-        wire [NY*NL-1 : 0] endp_mask [NX-1 : 0];        
-        for(i=0; i< NE; i=i+1) begin : endpoints
-            //Endpoint decoded address                
+        wire [NX-1 : 0] row_has_any_dest_endp_port;
+        wire [NY*NL-1 : 0] endp_mask [NX-1 : 0];
+        for(i=0; i< NE; i=i+1) begin : _E
+            //Endpoint decoded address
             localparam 
-                ADR = fmesh_addrencode(i),                    
+                ADR = fmesh_addrencode(i),
                 XX = ADR [NXw -1 : 0],
                 YY = ADR [NXw+NYw-1 : NXw], 
                 PP = ADR [NXw+NYw+Pw-1 : NXw+NYw]; 
@@ -559,7 +559,7 @@ module multicast_chan_in_process #(
         wire [NY-1 : 0] west_endps;
         wire [NX-1 : 0] south_endps;
         wire [NY-1 : 0] east_endps;
-        assign {    east_endps,    west_endps ,south_endps ,north_endps}  = dest_mcast_all_endp [NE-1 : NY*NL*NX];
+        assign { east_endps, west_endps ,south_endps ,north_endps}  = dest_mcast_all_endp [NE-1 : NY*NL*NX];
         
         for(i=0;i<NX; i++) begin : X_
             if(i==0) assign row_has_any_dest_endp_port[i] =(| endp_mask[i]) | ( |west_endps)  | north_endps[i] | south_endps[i];
@@ -569,7 +569,7 @@ module multicast_chan_in_process #(
         reg   [DSTPw-1 : 0] destport_tmp;
         always @(*) begin 
             destport_tmp = destport;
-            if(SELF_LOOP_EN   == "NO") destport_tmp [ SW_LOC ] = 1'b0; 
+            if(SELF_LOOP_EN   == 0) destport_tmp [ SW_LOC ] = 1'b0;
         end
         assign  destport_o = (endp_port) ?    destport : destport_tmp ;
         assign  row_has_any_dest = (endp_port) ? row_has_any_dest_endp_port : row_has_any_dest_in;
@@ -582,11 +582,11 @@ module multicast_chan_in_process #(
     #(
         .NOC_ID(NOC_ID),
         .P(P) ,
-        .SW_LOC(SW_LOC)        
+        .SW_LOC(SW_LOC)
     )routing(
         .current_r_addr(current_r_addr),  //current router  address
-        .dest_e_addr(dest_e_addr),  // destination endpoint address        
-        .destport(destport)        
+        .dest_e_addr(dest_e_addr),  // destination endpoint address
+        .destport(destport)
     );  
     always @(*) begin 
         chan_out=chan_in;

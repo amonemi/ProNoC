@@ -75,7 +75,7 @@ module input_ports #(
         PV = V * P,
         VV = V * V,
         PVV = PV * V,    
-        P_1 = ( SELF_LOOP_EN=="NO")?  P-1 : P,
+        P_1 = (SELF_LOOP_EN )?  P : P-1,
         PP_1 = P * P_1, 
         VP_1 = V * P_1,
         PVP_1 = PV * P_1,
@@ -231,8 +231,8 @@ module input_queue_per_port #(
         VDSTPw = V * DSTPw,
         W = WEIGHTw,
         WP = W * P,
-        P_1=( SELF_LOOP_EN=="NO")?  P-1 : P,
-        VP_1 = V * P_1;    
+        P_1 = (SELF_LOOP_EN )?  P : P-1,
+        VP_1 = V * P_1;
     
     localparam
     /* verilator lint_off WIDTH */
@@ -476,11 +476,9 @@ module input_queue_per_port #(
             .bin_code(ivc_info[i].assigned_ovc_bin)
         );
         
-        assign ivc_info[i].single_flit_pck =
-            /* verilator lint_off WIDTH */
-            (PCK_TYPE == "SINGLE_FLIT")? 1'b1  :
-            /* verilator lint_on WIDTH */
-            (MIN_PCK_SIZE == 1)? flit_is_tail[i] & ~ovc_is_assigned[i] :  1'b0; 
+        assign ivc_info[i].single_flit_pck = 
+            ( IS_SINGLE_FLIT ) ? 1'b1  :
+            ( MIN_PCK_SIZE == 1 )? flit_is_tail[i] & ~ovc_is_assigned[i] :  1'b0; 
         assign ivc_info[i].ivc_req = ivc_request[i];
         assign ivc_info[i].class_num = class_out[i];
         assign ivc_info[i].flit_is_tail = flit_is_tail[i];
@@ -491,9 +489,9 @@ module input_queue_per_port #(
         assign ivc_info[i].dest_port_encoded=dest_port_encoded[i];
         //assign ivc_info[i].getting_swa_first_arbiter_grant=nonspec_first_arbiter_granted_ivc[i];
         //assign ivc_info[i].getting_swa_grant=ivc_num_getting_sw_grant[i];
-        if(P==MAX_P) begin :max_
+        if( P==MAX_P ) begin 
             assign ivc_info[i].destport_one_hot= destport_one_hot[i];
-        end else begin : no_max
+        end else if( P < MAX_P ) begin 
             assign ivc_info[i].destport_one_hot= {{(MAX_P-P){1'b0}},destport_one_hot[i]};
         end
         
@@ -1100,7 +1098,7 @@ module destp_generator #(
     parameter PLw=1,
     parameter PPSw=4,
     parameter SW_LOC=0,
-    parameter SELF_LOOP_EN="NO",
+    parameter SELF_LOOP_EN=0,
     parameter CAST_TYPE = "UNICAST"
 )(
     destport_one_hot,
@@ -1112,7 +1110,7 @@ module destp_generator #(
     odd_column
 );
     
-    localparam P_1= ( SELF_LOOP_EN=="NO")?  P-1 : P;
+    localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     input [DSTPw-1 : 0]  dest_port_encoded;
     input [PLw-1 : 0] endp_localp_num;
     output [P_1-1: 0] dest_port_out;
@@ -1126,7 +1124,7 @@ module destp_generator #(
     if(CAST_TYPE!= "UNICAST") begin : muticast
     /* verilator lint_on WIDTH */
         // destination port is not coded for multicast/broadcast
-        if( SELF_LOOP_EN=="NO") begin : nslp
+        if( SELF_LOOP_EN==0) begin : nslp
             remove_sw_loc_one_hot #(
                 .P(P),
                 .SW_LOC(SW_LOC)
@@ -1222,7 +1220,7 @@ module destp_generator #(
         );
     end
     /* verilator lint_off WIDTH */
-    if(SELF_LOOP_EN=="NO") begin : nslp
+    if(SELF_LOOP_EN==0) begin : nslp
     /* verilator lint_on WIDTH */
         add_sw_loc_one_hot #(
             .P(P),
@@ -1247,14 +1245,14 @@ module custom_topology_destp_decoder #(
     parameter DSTPw=4,
     parameter P=5,
     parameter SW_LOC=0,
-    parameter SELF_LOOP_EN="NO"
+    parameter SELF_LOOP_EN=0
 )(
     dest_port_in_encoded,
     dest_port_out
 );
     
     localparam
-        P_1 = ( SELF_LOOP_EN=="NO")?  P-1 : P,
+        P_1 = (SELF_LOOP_EN )?  P : P-1,
         MAXW =2**DSTPw;
     
     input  [DSTPw-1 : 0] dest_port_in_encoded;
@@ -1271,9 +1269,7 @@ module custom_topology_destp_decoder #(
     );
     
     generate
-    /* verilator lint_off WIDTH */
-    if( SELF_LOOP_EN=="NO") begin : nslp
-    /* verilator lint_on WIDTH */
+    if( SELF_LOOP_EN==0) begin : nslp
         remove_sw_loc_one_hot #(
             .P(P),
             .SW_LOC(SW_LOC)

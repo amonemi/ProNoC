@@ -1520,7 +1520,7 @@ For XILINX FPGAs define it as "XILINX_JTAG_WB". In this case, the UART uses BSCA
                                                                                        'value' => '"XY"'
                                                                                      },
                                                                      'SELF_LOOP_EN' => {
-                                                                                         'value' => '"NO"'
+                                                                                         'value' => '0'
                                                                                        },
                                                                      'RAw' => {
                                                                                 'value' => '16'

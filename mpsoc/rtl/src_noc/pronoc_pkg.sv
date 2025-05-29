@@ -44,15 +44,11 @@ package pronoc_pkg;
         CLASS_LSB = DST_P_MSB + 1,      CLASS_MSB = CLASS_LSB + Cw -1, 
         MSB_CLASS = (C>1)? CLASS_MSB : DST_P_MSB,
         WEIGHT_LSB= MSB_CLASS + 1,      WEIGHT_MSB = WEIGHT_LSB + WEIGHTw -1,
-        /* verilator lint_off WIDTH */ 
-        MSB_W = (SWA_ARBITER_TYPE== "WRRA")? WEIGHT_MSB : MSB_CLASS,
-        /* verilator lint_on WIDTH */
+        MSB_W = (IS_WRRA)? WEIGHT_MSB : MSB_CLASS,
         BE_LSB =  MSB_W + 1,            BE_MSB = BE_LSB+ BEw-1,
         MSB_BE = (BYTE_EN==1)?   BE_MSB  : MSB_W,
         //the maximum data width that can be carried out with header flit
-        /* verilator lint_off WIDTH */ 
-        HDR_MAX_DATw = (PCK_TYPE == "SINGLE_FLIT")? Fpay : Fpay - MSB_BE -1;
-        /* verilator lint_on WIDTH */
+        HDR_MAX_DATw = (IS_SINGLE_FLIT)? Fpay : Fpay - MSB_BE -1;
         
     localparam
         DISTw =  (IS_FATTREE | IS_TREE ) ? log2(2*L+1): log2(NR+1),
@@ -214,9 +210,7 @@ package pronoc_pkg;
     } hdr_flit_t;
     localparam HDR_FLIT_w = $bits(hdr_flit_t); 
     
-    /* verilator lint_off WIDTH */
-    localparam FPAYw = (PCK_TYPE == "SINGLE_FLIT")?   Fpay + MSB_BE: Fpay;
-    /* verilator lint_on WIDTH */
+    localparam FPAYw = (IS_SINGLE_FLIT)?   Fpay + MSB_BE: Fpay;
     
     typedef struct packed {
         bit hdr_flag;

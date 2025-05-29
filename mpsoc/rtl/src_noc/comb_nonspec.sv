@@ -36,7 +36,7 @@ module comb_nonspec_allocator # (
     //input 
     dest_port_all,         // from input port
     masked_ovc_request_all,
-    pck_is_single_flit_all,    
+    pck_is_single_flit_all,
     
     //output 
     ovc_allocated_all,//to the output port
@@ -60,17 +60,16 @@ module comb_nonspec_allocator # (
     clk,
     reset
 );
-    
     `NOC_CONF
     
     localparam
-        P_1 = (SELF_LOOP_EN == "NO")? P-1 : P,
+        P_1 = (SELF_LOOP_EN)? P : P-1,
         PV = V * P,
         VV = V * V,
-        VP_1 = V * P_1,                
+        VP_1 = V * P_1,
         PP_1 = P_1 * P,
         PVV = PV * V,
-        PVP_1 = PV * P_1;            
+        PVP_1 = PV * P_1;
     input  ivc_info_t ivc_info [P-1 : 0][V-1 : 0]; 
     input  [PVV-1 : 0] masked_ovc_request_all;
     input  [PVP_1-1 : 0] dest_port_all;
@@ -215,7 +214,7 @@ module comb_nonspec_allocator # (
     
     for(i=0;i< PV;i=i+1) begin :_PV
         for(j=0;j<P;    j=j+1)begin: P_
-            if(SELF_LOOP_EN == "NO") begin 
+            if(SELF_LOOP_EN == 0) begin 
                 if((i/V)<j )begin
                     assign ovc_allocated_all_gen[i][j-1] = cand_ovc_granted[j][i];
                 end else if((i/V)>j) begin
@@ -241,7 +240,7 @@ module  comb_nonspec_v2_allocator #(
     parameter FIRST_ARBITER_EXT_P_EN = 1,
     parameter SWA_ARBITER_TYPE = "WRRA",
     parameter MIN_PCK_SIZE=2, //minimum packet size in flits. The minimum value is 1.
-    parameter SELF_LOOP_EN= "NO"
+    parameter SELF_LOOP_EN= 0
 )(
     //VC allocator
     //input    
@@ -274,13 +273,13 @@ module  comb_nonspec_v2_allocator #(
     reset
 );
     localparam
-        P_1 = (SELF_LOOP_EN == "NO") ?  P-1 :P,
+        P_1 = (SELF_LOOP_EN) ? P : P-1,
         PV = V * P,
         VV = V * V,
-        VP_1 = V * P_1,                
+        VP_1 = V * P_1,
         PP_1 = P_1 * P,
         PVV = PV * V,
-        PVP_1 = PV * P_1;    
+        PVP_1 = PV * P_1;
         
     input   [PVV-1 : 0] masked_ovc_request_all;
     input   [PVP_1-1 : 0] dest_port_all;
@@ -429,7 +428,7 @@ module nonspec_sw_alloc #(
     parameter FIRST_ARBITER_EXT_P_EN = 1, 
     parameter SWA_ARBITER_TYPE = "WRRA",
     parameter MIN_PCK_SIZE=2, //minimum packet size in flits. The minimum value is 1.
-    parameter SELF_LOOP_EN="NO"
+    parameter SELF_LOOP_EN=0
 )(
     ivc_granted_all,
     ivc_request_masked_all,
@@ -448,9 +447,9 @@ module nonspec_sw_alloc #(
 );
     
     localparam
-        P_1 = (SELF_LOOP_EN== "NO") ? P-1 : P,
+        P_1 = (SELF_LOOP_EN) ? P : P-1,
         PV = V * P,
-        VP_1 = V * P_1,                
+        VP_1 = V * P_1,
         PP_1 = P_1 * P,
         PVP_1 = PV * P_1,
         PP = P*P;  
@@ -478,15 +477,15 @@ module nonspec_sw_alloc #(
     wire [PP-1 : 0] single_flit_granted_dst_all;
     
     // internal wires
-    wire    [V-1 : 0] ivc_masked     [P-1 : 0];//output of mask and             
+    wire    [V-1 : 0] ivc_masked     [P-1 : 0];//output of mask and  
     wire    [V-1 : 0] first_arbiter_grant     [P-1 : 0];//output of first arbiter 
-    wire    [P-1 : 0] single_flit_pck_local_grant;           
-    wire    [P_1-1 : 0] dest_port      [P-1 : 0];//output of multiplexer
+    wire    [P-1 : 0] single_flit_pck_local_grant;  
+    wire    [P_1-1 : 0] dest_port  [P-1 : 0];//output of multiplexer
     wire    [P_1-1 : 0] second_arbiter_request  [P-1 : 0]; 
     wire    [P_1-1 : 0] second_arbiter_grant    [P-1 : 0]; 
     wire    [P_1-1 : 0] second_arbiter_weight_consumed [P-1 : 0]; 
     wire    [V-1 : 0] vc_weight_is_consumed [P-1 : 0]; 
-    wire    [P-1    :0] winner_weight_consumed;            
+    wire    [P-1    :0] winner_weight_consumed;
     
     genvar i,j;
     generate
@@ -495,8 +494,8 @@ module nonspec_sw_alloc #(
         //assign in/out to the port based wires
         //output
         assign ivc_granted_all [(i+1)*V-1 : i*V] =   ivc_granted [i];
-        assign granted_dest_port_all    [(i+1)*P_1-1 : i*P_1]   =   granted_dest_port[i];
-        assign first_arbiter_granted_ivc_all[(i+1)*V-1 : i*V]=           first_arbiter_grant[i];
+        assign granted_dest_port_all [(i+1)*P_1-1 : i*P_1]  =   granted_dest_port[i];
+        assign first_arbiter_granted_ivc_all[(i+1)*V-1 : i*V] =  first_arbiter_grant[i];
         //input 
         assign ivc_masked[i]  = ivc_request_masked_all [(i+1)*V-1 : i*V];
         assign dest_port_ivc[i]  = dest_port_all [(i+1)*VP_1-1 : i*VP_1];
@@ -524,10 +523,10 @@ module nonspec_sw_alloc #(
         ) mux (
             .in (dest_port_ivc [i]),
             .out (dest_port[i]),
-            .sel(first_arbiter_grant[i])    
+            .sel(first_arbiter_grant[i])
         );
         
-        if(MIN_PCK_SIZE == 1) begin       
+        if(MIN_PCK_SIZE == 1) begin
             //single_flit req multiplexer
             assign pck_is_single_flit[i] = pck_is_single_flit_all [(i+1)*V-1 : i*V];
             onehot_mux_1D #(
@@ -540,8 +539,8 @@ module nonspec_sw_alloc #(
             );   
             
             assign  single_flit_granted_dst[i] = (single_flit_pck_local_grant[i])?  granted_dest_port[i] : {P_1{1'b0}};
-            
-            if (SELF_LOOP_EN == "NO") begin 
+
+            if (SELF_LOOP_EN == 0) begin
                 add_sw_loc_one_hot #(
                     .P(P),
                     .SW_LOC(i)
@@ -560,7 +559,7 @@ module nonspec_sw_alloc #(
         end
         //second arbiter input/output generate
         for(j=0;j<P;    j=j+1)begin: P_
-            if (SELF_LOOP_EN == "NO") begin 
+            if (SELF_LOOP_EN == 0) begin 
                 if(i<j) begin
                     assign second_arbiter_request[i][j-1]  = dest_port[j][i];
                     //assign second_arbiter_weight_consumed[i][j-1]  =winner_weight_consumed[j] ;
@@ -576,7 +575,7 @@ module nonspec_sw_alloc #(
             end else begin 
                 assign second_arbiter_request[i][j]  = dest_port[j][i];
                 assign second_arbiter_weight_consumed[i][j]  =iport_weight_is_consumed_all[j] ;
-                assign granted_dest_port[j][i] = second_arbiter_grant  [i][j] ;        
+                assign granted_dest_port[j][i] = second_arbiter_grant  [i][j] ;
             end
         end //P_
         //second level arbiter 
@@ -587,9 +586,9 @@ module nonspec_sw_alloc #(
             .weight_consumed(second_arbiter_weight_consumed[i]),  // only used for WRRA
             .clk(clk), 
             .reset(reset), 
-            .request(second_arbiter_request [i]), 
+            .request(second_arbiter_request [i]),
             .grant(second_arbiter_grant [i]),
-            .any_grant(any_ovc_granted_all [i])  
+            .any_grant(any_ovc_granted_all [i])
         );
         //any ivc 
         assign  any_ivc_granted_all[i] = | granted_dest_port[i];
@@ -642,7 +641,7 @@ module swa_input_port_arbiter #(
         // one hot mux    
         onehot_mux_1D #(
             .W(1),
-            .N(ARBITER_WIDTH)            
+            .N(ARBITER_WIDTH)
         ) mux (
             .in(vc_weight_is_consumed),
             .out(winner_weight_consumed),
@@ -676,7 +675,7 @@ module swa_input_port_arbiter #(
                 .request (request), 
                 .grant (grant),
                 .any_grant (any_grant ),
-                .priority_en (ext_pr_en_i)        
+                .priority_en (ext_pr_en_i)
             );
         end else  begin: first_lvl_arbiter_internal_en
             arbiter #(
@@ -741,7 +740,7 @@ module swa_output_port_arbiter #(
             .request (request), 
             .grant (grant),
             .any_grant (any_grant ),
-            .priority_en (pr_en)        
+            .priority_en (pr_en)
         );
         
      /* verilator lint_off WIDTH */
@@ -749,20 +748,20 @@ module swa_output_port_arbiter #(
     /* verilator lint_on WIDTH */
         // use classic WRRA. only for compasrion with propsoed wrra 
         
-        wire  [ARBITER_WIDTH-1  :    0] masked_req=       request & ~weight_consumed;
+        wire  [ARBITER_WIDTH-1  :    0] masked_req =  request & ~weight_consumed;
         wire sel = |masked_req;
         wire  [ARBITER_WIDTH-1  :    0] mux_req = (sel==1'b1)? masked_req : request;
         
         arbiter #(
             .ARBITER_WIDTH  (ARBITER_WIDTH )
-        ) arb  (   
+        ) arb  (
             .clk (clk), 
             .reset (reset), 
             .request (mux_req), 
             .grant (grant),
             .any_grant (any_grant )
         );
-    end else begin : rra_m   
+    end else begin : rra_m
         
         arbiter #(
             .ARBITER_WIDTH  (ARBITER_WIDTH )

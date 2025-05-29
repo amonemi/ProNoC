@@ -4,6 +4,6 @@ $model = bless( {
         "T2" => "4",
         "CAST_TYPE" => "\"MULTICAST_FULL\"",
         "Fpay" => "64",
-        "SELF_LOOP_EN" => "\"YES\""
+        "SELF_LOOP_EN" => "1"
     }
 }, 'ProNOC' );

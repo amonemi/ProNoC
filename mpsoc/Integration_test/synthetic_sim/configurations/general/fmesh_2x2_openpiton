@@ -9,6 +9,6 @@ $model = bless( {
         "LB" => "16",
         "Fpay" => "64",
         "SSA_EN" => "\"YES\"",
-        "SELF_LOOP_EN" => "\"YES\"",
+        "SELF_LOOP_EN" => "1",
     }
 }, 'ProNOC' );

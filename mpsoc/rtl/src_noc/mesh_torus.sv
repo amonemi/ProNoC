@@ -227,21 +227,21 @@ module   mesh_torus_mask_non_assignable_destport #(
     parameter ROUTE_NAME="XY",
     parameter SW_LOC=0,
     parameter P=5,
-    parameter SELF_LOOP_EN="NO"    
+    parameter SELF_LOOP_EN=0
 ) (
     odd_column,// use only for odd even routing
     dest_port_in,
     dest_port_out
 );
     
-    localparam P_1 = (SELF_LOOP_EN=="NO") ? P-1 : P;
+    localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     input  [P_1-1 : 0 ] dest_port_in;
     output [P_1-1 : 0 ] dest_port_out;
     input odd_column;
     
     wire  [P-2 : 0] dest_port_in_tmp,dest_port_out_tmp;
     generate 
-    if(SELF_LOOP_EN == "NO") begin :nslp
+    if(SELF_LOOP_EN == 0) begin :nslp
         assign dest_port_in_tmp = dest_port_in;
         assign dest_port_out = dest_port_out_tmp;
     end else begin :slp
@@ -1122,7 +1122,7 @@ module mesh_torus_destp_generator #(
     parameter PLw=1,
     parameter PPSw=4,
     parameter SW_LOC=0,
-    parameter SELF_LOOP_EN="NO" 
+    parameter SELF_LOOP_EN=0 
 )(
     dest_port_out,
     dest_port_coded,
@@ -1131,7 +1131,7 @@ module mesh_torus_destp_generator #(
     port_pre_sel,
     odd_column
 );
-    localparam P_1 = ( SELF_LOOP_EN=="NO")?  P-1 : P;
+    localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     
     input  [DSTPw-1 : 0] dest_port_coded;
     input  [PLw-1 : 0] endp_localp_num;
@@ -1202,7 +1202,7 @@ module mesh_torus_destp_decoder #(
     parameter ELw=1,
     parameter PPSw=4,
     parameter SW_LOC=0,
-    parameter SELF_LOOP_EN="NO"
+    parameter SELF_LOOP_EN=0
 )(
     dest_port_coded,
     endp_localp_num,
@@ -1210,7 +1210,7 @@ module mesh_torus_destp_decoder #(
     swap_port_presel,
     port_pre_sel
 );
-    localparam P_1 = ( SELF_LOOP_EN=="NO")?  P-1 : P;
+    localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     input  [DSTPw-1 : 0] dest_port_coded;
     input  [ELw-1 : 0] endp_localp_num;
     output [P_1-1 : 0] dest_port_out;
@@ -1245,8 +1245,8 @@ module mesh_torus_destp_decoder #(
             endcase
         end //always
     end 
-    if(NL==1) begin :slp        
-        if(SELF_LOOP_EN == "NO") begin :nslp
+    if(NL==1) begin :slp
+        if(SELF_LOOP_EN == 0) begin :nslp
             remove_sw_loc_one_hot #(
                 .P(5),
                 .SW_LOC(SW_LOC)
@@ -1270,7 +1270,7 @@ module mesh_torus_destp_decoder #(
         assign destport_onehot =(portout[0])? 
             { endp_localp_onehot[NL-1 : 1] ,{(P-NL){1'b0}},endp_localp_onehot[0]}: /*select local destination*/ 
             { {(NL-1){1'b0}} ,portout};
-        if(SELF_LOOP_EN == "NO") begin :nslp
+        if(SELF_LOOP_EN == 0) begin :nslp
             remove_sw_loc_one_hot #(
                 .P(P),
                 .SW_LOC(SW_LOC)
@@ -1297,13 +1297,13 @@ module line_ring_destp_decoder #(
     parameter ELw=1,
     parameter PPSw=4,
     parameter SW_LOC=0,
-    parameter SELF_LOOP_EN= "NO"
+    parameter SELF_LOOP_EN= 0
 )(
     dest_port_coded,
     endp_localp_num,
     dest_port_out   
 );
-    localparam P_1 = (SELF_LOOP_EN == "NO")?  P-1 : P;
+    localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     input  [DSTPw-1 : 0] dest_port_coded;
     input  [ELw-1 : 0] endp_localp_num;
     output [P_1-1 : 0] dest_port_out;
@@ -1317,8 +1317,8 @@ module line_ring_destp_decoder #(
     
     
     generate
-    if(NL==1) begin :slp        
-        if(SELF_LOOP_EN == "NO") begin :nslp
+    if(NL==1) begin :_se
+        if(SELF_LOOP_EN == 0) begin :nslp
             remove_sw_loc_one_hot #(
                 .P(3),
                 .SW_LOC(SW_LOC)
@@ -1329,7 +1329,7 @@ module line_ring_destp_decoder #(
         end else begin : slp 
             assign dest_port_out = portout;
         end
-    end else begin :mlp
+    end else begin :_me
         wire [P-1 : 0] destport_onehot;
     
         bin_to_one_hot #(
@@ -1343,7 +1343,7 @@ module line_ring_destp_decoder #(
         assign destport_onehot =(portout[0])? 
             { endp_localp_onehot[NL-1 : 1] ,{(P-NL){1'b0}},endp_localp_onehot[0]}: /*select local destination*/ 
             { {(NL-1){1'b0}} ,portout};
-        if(SELF_LOOP_EN == "NO") begin :nslp
+        if(SELF_LOOP_EN == 0) begin :nslp
             remove_sw_loc_one_hot #(
                 .P(P),
                 .SW_LOC(SW_LOC)
@@ -1352,7 +1352,7 @@ module line_ring_destp_decoder #(
                 .destport_out(dest_port_out)
             ); 
         end else begin :slp
-            assign dest_port_out = destport_onehot;            
+            assign dest_port_out = destport_onehot;
         end
     end
     endgenerate

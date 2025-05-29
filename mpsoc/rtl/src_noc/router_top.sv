@@ -282,7 +282,7 @@ module router_top #(
             $display("ERROR: SMART only works with non-speculative VSA");
             $finish;
         end
-        if((MIN_PCK_SIZE > 1) &&(PCK_TYPE == "SINGLE_FLIT")) begin 
+        if((MIN_PCK_SIZE > 1) && (IS_SINGLE_FLIT)) begin 
             $display("ERROR: The minimum packet size must be set as one for single-flit packet type NoC");
             $finish;
         end

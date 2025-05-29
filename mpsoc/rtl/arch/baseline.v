@@ -35,7 +35,7 @@ module baseline_allocator #(
     parameter TREE_ARBITER_EN = 0,
     parameter DEBUG_EN = 1,
     parameter SWA_ARBITER_TYPE = "WRRA",
-    parameter SELF_LOOP_EN= "NO"
+    parameter SELF_LOOP_EN= 0
 )
 (
     dest_port_all,
@@ -62,11 +62,11 @@ module baseline_allocator #(
     localparam 
         PV = V * P,
         PVV = PV * V,   
-        P_1 = (SELF_LOOP_EN == "NO") ? P-1 : P,
+        P_1 = (SELF_LOOP_EN) ? P : P-1, 
         PP_1 = P_1 * P,
-        PVP_1 = PV * P_1;                   
-                    
-    input  [PVP_1-1:   0]    dest_port_all;    
+        PVP_1 = PV * P_1;
+        
+    input  [PVP_1-1:   0]    dest_port_all;
     input  [PV-1:   0]    ovc_is_assigned_all;
     input  [PV-1:   0]  ivc_request_all;
     input  [PV-1:   0]  assigned_ovc_not_full_all;

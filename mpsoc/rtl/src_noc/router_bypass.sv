@@ -312,8 +312,8 @@ endmodule
 
 module smart_bypass_chanels #(
     parameter NOC_ID=0,
-    parameter P=5    
-) (            
+    parameter P=5
+) (
     ivc_info,
     iport_info,
     oport_info,
@@ -322,11 +322,11 @@ module smart_bypass_chanels #(
     smart_chanel_out,
     smart_req,
     reset,
-    clk    
+    clk
 );
     
-    `NOC_CONF    
-    input reset,clk;    
+    `NOC_CONF
+    input reset,clk;
     input smart_chanel_t smart_chanel_new  [P-1 : 0];
     input smart_chanel_t smart_chanel_in   [P-1 : 0];
     input ivc_info_t   ivc_info    [P-1 : 0][V-1 : 0];
@@ -345,14 +345,12 @@ module smart_bypass_chanels #(
     reg [P-1 : 0] rq;
     genvar i;
     generate
-    for (i=0;i<P;i=i+1) begin: P_    
-        /* verilator lint_off WIDTH */
-        assign ivc_forwardable[i] =  (PCK_TYPE == "SINGLE_FLIT")?  1'b1 :~iport_info[i].ivc_req;
-        /* verilator lint_on WIDTH */
+    for (i=0;i<P;i=i+1) begin: P_
+        assign ivc_forwardable[i] =  (IS_SINGLE_FLIT)?  {V{1'b1}} :~iport_info[i].ivc_req;
         if( ADD_PIPREG_AFTER_CROSSBAR == 1) begin :link_reg
         always @( posedge clk)begin
             outport_is_granted[i] <= oport_info[i].any_ovc_granted;
-        end    
+        end
         end else begin 
             assign outport_is_granted[i] = oport_info[i].any_ovc_granted;
         end
@@ -372,13 +370,13 @@ module smart_bypass_chanels #(
             assign {smart_chanel_shifted[i].requests,smart_req[i]} = {(SMART_NUM+1){1'b0}};
             assign smart_chanel_out[i] = {SMART_CHANEL_w{1'b0}};
         end
-    end    
+    end
     endgenerate
 endmodule 
 
 
 module check_straight_oport #(
-    parameter SS_PORT_LOC     =   1
+    parameter SS_PORT_LOC = 1
 )(
     destport_coded_i,
     goes_straight_o
@@ -388,9 +386,9 @@ module check_straight_oport #(
     output  goes_straight_o;
     
     generate 
-    if(IS_MESH | IS_TORUS | IS_FMESH) begin :twoD        
+    if(IS_MESH | IS_TORUS | IS_FMESH) begin :twoD
         if (SS_PORT_LOC == 0 || SS_PORT_LOC > 4) begin : local_ports
-            assign goes_straight_o = 1'b0; // There is not a next router in this case at all    
+            assign goes_straight_o = 1'b0; // There is not a next router in this case at all
         end else begin :non_local
             wire [4 : 0 ] destport_one_hot;
             mesh_tori_decode_dstport decoder(
@@ -401,22 +399,22 @@ module check_straight_oport #(
             assign goes_straight_o = destport_one_hot [SS_PORT_LOC];    
         end//else
     end//mesh_tori
-    else if(IS_RING | IS_LINE) begin :oneD        
+    else if(IS_RING | IS_LINE) begin :oneD
         if (SS_PORT_LOC == 0 || SS_PORT_LOC > 2) begin : local_ports
-            assign goes_straight_o = 1'b0; // There is not a next router in this case at all    
+            assign goes_straight_o = 1'b0; // There is not a next router in this case at all
         end else begin :non_local
             wire [2: 0 ] destport_one_hot;
             line_ring_decode_dstport decoder(
                 .dstport_encoded(destport_coded_i),
                 .dstport_one_hot(destport_one_hot)
             );
-            assign goes_straight_o = destport_one_hot [SS_PORT_LOC];    
+            assign goes_straight_o = destport_one_hot [SS_PORT_LOC];
         end    //non_local
     end// oneD
     
     //TODO Add fattree & custom 
-endgenerate    
-endmodule    
+endgenerate
+endmodule
 
 
 
@@ -464,8 +462,8 @@ module smart_validity_check_per_ivc  #(
     input goes_straight,
     smart_requests_i,
     smart_ivc_i,
-    smart_hdr_flit,        
-    //flit                       
+    smart_hdr_flit,
+    //flit
     flit_hdr_flag_i ,
     flit_tail_flag_i,
     flit_wr_i,
@@ -475,21 +473,21 @@ module smart_validity_check_per_ivc  #(
     assigned_ovc_not_full,
     ovc_is_assigned,
     ivc_request,
-    //ss port status                            
+    //ss port status
     ss_ovc_avalable_in_ss_port,
     ss_ovc_crossbar_wr,
     ss_port_link_reg_flit_wr;
-    //output                          
+    //output
     output 
-    smart_single_flit_pck_o    ,
+    smart_single_flit_pck_o,
     smart_ivc_smart_en_o,
     smart_credit_o,
     smart_buff_space_decreased_o,
     smart_ss_ovc_is_allocated_o,
     smart_ss_ovc_is_released_o,
     smart_ivc_num_getting_ovc_grant_o,
-    smart_ivc_reset_o,            
-    smart_mask_available_ss_ovc_o;    
+    smart_ivc_reset_o,
+    smart_mask_available_ss_ovc_o;
         
     output reg [V-1 : 0] smart_ivc_granted_ovc_num_o;
     
@@ -509,14 +507,10 @@ module smart_validity_check_per_ivc  #(
     wire hdr_flit_condition    = ~ovc_locally_requested & ss_ovc_avalable_in_ss_port;    
     wire nonhdr_flit_condition = assigned_to_ss_ovc & assigned_ovc_not_full;
     wire condition1 = 
-        /* verilator lint_off WIDTH */
-        (PCK_TYPE == "SINGLE_FLIT")?  hdr_flit_condition :
-        /* verilator lint_on WIDTH */    
+        (IS_SINGLE_FLIT)?  hdr_flit_condition :
         (ovc_is_assigned)? nonhdr_flit_condition : hdr_flit_condition;
     wire condition2;
-    /* verilator lint_off WIDTH */
-    wire non_empty_ivc_condition =(PCK_TYPE == "SINGLE_FLIT")?  1'b0 :ivc_request;
-    /* verilator lint_on WIDTH */
+    wire non_empty_ivc_condition =(IS_SINGLE_FLIT)?  1'b0 :ivc_request;
     
     assign condition2=( ADD_PIPREG_AFTER_CROSSBAR == 1)? 
         ~(non_empty_ivc_condition | ss_port_link_reg_flit_wr| ss_ovc_crossbar_wr):
@@ -524,9 +518,7 @@ module smart_validity_check_per_ivc  #(
     wire conditions_met = condition1 & condition2;
     assign smart_ivc_smart_en_o = conditions_met & smart_req_valid;
     assign smart_single_flit_pck_o = 
-        /* verilator lint_off WIDTH */
-        (PCK_TYPE == "SINGLE_FLIT")? 1'b1 :
-        /* verilator lint_on WIDTH */
+        (IS_SINGLE_FLIT)? 1'b1 :
         (MIN_PCK_SIZE==1)?  flit_tail_flag_i & flit_hdr_flag_i : 1'b0; 
     assign smart_buff_space_decreased_o =  smart_ivc_smart_en_o & flit_wr_i ;
     assign smart_ivc_num_getting_ovc_grant_o  =  smart_buff_space_decreased_o & !ovc_is_assigned  & flit_hdr_flag_i;
@@ -562,16 +554,16 @@ module smart_allocator_per_iport # (
     //output
     smart_destport_o,
     smart_lk_destport_o,
-    smart_ivc_smart_en_o,                      
-    smart_credit_o,                 
-    smart_buff_space_decreased_o, 
-    smart_ss_ovc_is_allocated_o,     
+    smart_ivc_smart_en_o,
+    smart_credit_o,
+    smart_buff_space_decreased_o,
+    smart_ss_ovc_is_allocated_o,
     smart_ss_ovc_is_released_o, 
     smart_ivc_num_getting_ovc_grant_o,
     smart_ivc_reset_o,
     smart_mask_available_ss_ovc_o,
     smart_hdr_flit_req_o,
-    smart_ivc_granted_ovc_num_o,    
+    smart_ivc_granted_ovc_num_o,
     smart_ivc_single_flit_pck_o,
     smart_ovc_single_flit_pck_o
 );
@@ -579,7 +571,7 @@ module smart_allocator_per_iport # (
     //general
     input clk, reset;
     input [RAw-1   :0]  current_r_addr_i;
-    input [RAw-1:  0]  neighbors_r_addr_i [P-1 : 0];    
+    input [RAw-1:  0]  neighbors_r_addr_i [P-1 : 0];
     //channels
     input smart_chanel_t smart_chanel_i;
     input flit_chanel_t flit_chanel_i;
@@ -594,16 +586,16 @@ module smart_allocator_per_iport # (
     output [DSTPw-1 : 0] smart_destport_o,smart_lk_destport_o;
     output smart_hdr_flit_req_o;
     output [V-1 : 0] 
-        smart_ivc_smart_en_o,                      
-        smart_credit_o,                 
+        smart_ivc_smart_en_o,
+        smart_credit_o,
         smart_buff_space_decreased_o, 
-        smart_ss_ovc_is_allocated_o,     
+        smart_ss_ovc_is_allocated_o,
         smart_ss_ovc_is_released_o, 
         smart_mask_available_ss_ovc_o,
         smart_ivc_num_getting_ovc_grant_o,
-        smart_ivc_reset_o,        
+        smart_ivc_reset_o,
         smart_ivc_single_flit_pck_o,
-        smart_ovc_single_flit_pck_o;    
+        smart_ovc_single_flit_pck_o;
     output [V*V-1 : 0] smart_ivc_granted_ovc_num_o;
     
     assign smart_ovc_single_flit_pck_o = smart_ivc_single_flit_pck_o;

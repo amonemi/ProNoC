@@ -229,7 +229,7 @@ module fmesh_destp_generator #(
     parameter PLw=1,
     parameter PPSw=4,
     parameter SW_LOC=0,
-    parameter SELF_LOOP_EN="NO" 
+    parameter SELF_LOOP_EN=0 
 )(
     dest_port_out,
     dest_port_coded,
@@ -239,7 +239,7 @@ module fmesh_destp_generator #(
     odd_column
     );
     
-    localparam P_1 =  ( SELF_LOOP_EN=="NO")?  P-1 : P;
+    localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     
     input  [DSTPw-1 : 0] dest_port_coded;
     input  [PLw-1 : 0] endp_localp_num;
@@ -260,7 +260,7 @@ module fmesh_destp_generator #(
         .SW_LOC(SW_LOC),
         .SELF_LOOP_EN(SELF_LOOP_EN)
     ) decoder  (
-        .dest_port_coded(dest_port_coded),             
+        .dest_port_coded(dest_port_coded),
         .dest_port_out(dest_port_in),
         .endp_localp_num(endp_localp_num),
         .swap_port_presel(swap_port_presel),
@@ -279,7 +279,7 @@ module fmesh_destp_decoder #(
     parameter PLw=1,
     parameter PPSw=4,
     parameter SW_LOC=0,
-    parameter SELF_LOOP_EN="NO"
+    parameter SELF_LOOP_EN=0
 )(
     dest_port_coded,
     endp_localp_num,
@@ -287,8 +287,7 @@ module fmesh_destp_decoder #(
     swap_port_presel,
     port_pre_sel
 );
-    
-    localparam P_1 = ( SELF_LOOP_EN=="NO")?  P-1 : P;
+    localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     
     input  [DSTPw-1 : 0] dest_port_coded;
     input  [PLw-1 : 0] endp_localp_num;
@@ -340,7 +339,7 @@ module fmesh_destp_decoder #(
         assign destport_onehot =(portout[0])? endp_localp_onehot : /*select local destination*/ 
             portout;
     end    
-    if(SELF_LOOP_EN == "NO") begin :nslp
+    if(SELF_LOOP_EN == 0) begin :nslp
         remove_sw_loc_one_hot #(
                 .P(P),
                 .SW_LOC(SW_LOC)

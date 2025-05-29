@@ -863,10 +863,10 @@ module fattree_router_addr_decode #(
 
     function integer log2;
     input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
+        log2=(number <=1) ? 1: 0;
+        while(2**log2<number) begin
+            log2=log2+1;
+        end
     end   
     endfunction // log2 
     
@@ -878,7 +878,7 @@ module fattree_router_addr_decode #(
     
     input   [RAw-1 : 0]   r_addr;
     output  [LKw-1 :0]    rx;
-    output  [Lw-1  :0]    rl;  
+    output  [Lw-1  :0]    rl;
     assign {rl,rx} = r_addr;
 endmodule
 
@@ -889,20 +889,20 @@ module  fattree_destp_generator #(
     parameter P=2*K,
     parameter SW_LOC=0,
     parameter DSTPw=4,
-    parameter SELF_LOOP_EN = "NO"
+    parameter SELF_LOOP_EN = 0
 )(
     dest_port_in_encoded,
     dest_port_out
 );
 
-    localparam P_1 = (SELF_LOOP_EN == "NO")? P-1 : P;
+    localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     input  [DSTPw-1:0] dest_port_in_encoded;
     output [P_1-1 : 0] dest_port_out;
     
     wire [2*K-1 : 0] destport_decoded;
     wire [2*K-1 : 0] destport_masked;
 
-    fattree_destport_decoder #(           
+    fattree_destport_decoder #(
         .K(K)
     )destport_decoder (
         .destport_encoded_i(dest_port_in_encoded),
@@ -912,14 +912,14 @@ module  fattree_destp_generator #(
     fattree_mask_non_assignable_destport #(
         .K(K),
         .P(P),
-        .SW_LOC(SW_LOC)        
+        .SW_LOC(SW_LOC)
     ) mask  (
         .destport_in(destport_decoded),
-        .destport_out(destport_masked)        
+        .destport_out(destport_masked)
     );
     
     generate 
-    if(SELF_LOOP_EN == "NO") begin : nslp
+    if(SELF_LOOP_EN == 0) begin : nslp
         remove_sw_loc_one_hot #(
             .P(P),
             .SW_LOC(SW_LOC)

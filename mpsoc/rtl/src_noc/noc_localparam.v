@@ -143,7 +143,7 @@
 	localparam WEIGHTw=4;
             //WEIGHTw : Maximum weight width
 
-	localparam SELF_LOOP_EN="NO";
+	localparam SELF_LOOP_EN=0;
             //SELF_LOOP_EN : Allows a router input port to send packets to its own output port, 
             //    enabling self-communication for tiles.
 

@@ -256,11 +256,9 @@ module ssa_per_vc #(
     wire    [V-1 : 0] vc_num_in;
     wire    hdr_flg;
     wire    tail_flg;
-    /* verilator lint_off WIDTH */ 
     assign  single_flit_pck = 
-        (PCK_TYPE == "SINGLE_FLIT")? 1'b1 :
+        (IS_SINGLE_FLIT)? 1'b1 :
         (MIN_PCK_SIZE==1)?  hdr_flg & tail_flg : 1'b0; 
-    /* verilator lint_on WIDTH */
     wire   condition_1_2_valid;
     wire [DAw-1 : 0]  dest_e_addr_in;
     extract_header_flit_info #(
@@ -478,20 +476,18 @@ module add_ss_port #(
 );
     `NOC_CONF
     localparam SS_PORT = strieght_port(P,SW_LOC);
-    localparam DISABLED = P;   
-    localparam P_1 = ( SELF_LOOP_EN=="NO")?  P-1 : P;   
+    localparam DISABLED = P;
+    localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     
     input  [P_1-1 : 0] destport_in;
     output [P_1-1 : 0] destport_out; 
     
-    generate    
+    generate
     if(SS_PORT == DISABLED) begin :no_ss
-        assign destport_out = destport_in;    
+        assign destport_out = destport_in;
     end else begin : ss 
         reg [P_1-1 : 0] destport_temp; 
-        /* verilator lint_off WIDTH */
-        if( SELF_LOOP_EN=="YES") begin : slp
-        /* verilator lint_on WIDTH */
+        if( SELF_LOOP_EN) begin : slp
             always @(*)begin 
                 destport_temp=destport_in;
                 if(destport_in=={P_1{1'b0}}) destport_temp[SS_PORT]= 1'b1;

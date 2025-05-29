@@ -241,7 +241,7 @@ module  weight_control #(
     parameter WEIGHTw= 4,
     parameter WRRA_CONFIG_INDEX=0,
     parameter P=5,
-    parameter SELF_LOOP_EN = "NO"
+    parameter SELF_LOOP_EN = 0
 )(
     sw_is_granted,
     flit_is_tail,  
@@ -249,14 +249,14 @@ module  weight_control #(
     granted_dest_port,
     weight_is_consumed_o, 
     oports_weight,  
-    refresh_w_counter,     
+    refresh_w_counter,
     clk,
-    reset           
-);      
+    reset
+);
     localparam 
         W = WEIGHTw,
         WP = W * P,
-        P_1 = (SELF_LOOP_EN=="NO") ?  P-1 : P;
+        P_1 = (SELF_LOOP_EN) ?  P : P-1;
     localparam [W-1 : 0] INIT_WEIGHT = 1;
     localparam [W-1 : 0] MAX_WEIGHT = {W{1'b1}}-1'b1;
     localparam  
@@ -281,7 +281,7 @@ module  weight_control #(
     reg  [W-1 : 0] oport_weight [P-1 : 0];
     
     generate
-    if(SELF_LOOP_EN == "NO") begin : nslp
+    if(SELF_LOOP_EN == 0) begin : nslp
         add_sw_loc_one_hot #(
             .P(P),
             .SW_LOC(SW_LOC)
@@ -421,7 +421,7 @@ module  wrra_contention_gen #(
     parameter P=5,
     parameter WRRA_CONFIG_INDEX=0,
     parameter WEIGHTw = 4, // WRRA width
-    parameter SELF_LOOP_EN ="NO"
+    parameter SELF_LOOP_EN = 0
 )(
     ovc_is_assigned_all, 
     ivc_request_all,
@@ -441,7 +441,7 @@ module  wrra_contention_gen #(
     endfunction // log2 
     
     localparam 
-        P_1 = (SELF_LOOP_EN == "NO") ?  P-1 : P,
+        P_1 = (SELF_LOOP_EN) ?  P : P-1,
         PV = P * V, 
         VP_1= V * P_1,
         PVP_1 = PV * P_1,
@@ -528,14 +528,14 @@ module  wrra_inputport_destports_sum #(
     parameter V=4,
     parameter P=5,
     parameter SW_LOC=0,
-    parameter SELF_LOOP_EN = "NO"
+    parameter SELF_LOOP_EN = 0
 )(
     weight_is_valid,
     dest_ports,
     destports_sum
 );
     localparam 
-        P_1 = (SELF_LOOP_EN== "NO")? P - 1 : P,
+        P_1 = (SELF_LOOP_EN) ? P : P - 1,
         VP_1 = V * P_1;
     input [V-1 : 0] weight_is_valid;
     input [VP_1-1 : 0] dest_ports;
@@ -557,8 +557,8 @@ module  wrra_inputport_destports_sum #(
         .or_in(dest_ports_masked),
         .or_out(sum)
     );
-    
-    if(SELF_LOOP_EN=="NO") begin : nslp
+
+    if(SELF_LOOP_EN == 0) begin : nslp
         add_sw_loc_one_hot #(
             .P(P),
             .SW_LOC(SW_LOC)

@@ -33,30 +33,30 @@ module crossbar #(
     parameter Fw     = 36,
     parameter MUX_TYPE="BINARY",        //"ONE_HOT" or "BINARY"    
     parameter SSA_EN="YES", // "YES" , "NO"
-    parameter SELF_LOOP_EN= "NO"
+    parameter SELF_LOOP_EN= 0
 )(
     granted_dest_port_all,
     flit_in_all,
     flit_out_all,
     flit_out_wr_all,
     ssa_flit_wr_all
-);    
+);
     function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
+    input integer number; begin
+        log2=(number <=1) ? 1: 0;
+        while(2**log2<number) begin
+            log2=log2+1;
+        end
     end   
     endfunction // log2 
     
     localparam 
         PV = V * P,
         VV = V * V,
-        PP = P * P,        
-        PVV = PV * V,    
-        P_1 = (SELF_LOOP_EN == "NO")? P-1 : P,
-        VP_1 = V * P_1,                
+        PP = P * P,
+        PVV = PV * V,
+        P_1 = (SELF_LOOP_EN )?  P : P-1,
+        VP_1 = V * P_1,
         PP_1 = P_1 * P,
         PVP_1 = PV * P_1,
         PFw = P*Fw,
@@ -82,7 +82,7 @@ module crossbar #(
     for(i=0;i<P;i=i+1) begin : P_
         assign granted_dest_port[i] = granted_dest_port_all[(i+1)*P_1-1 : i*P_1];
         for(j=0;j<P;j=j+1)begin : P_ 
-            if(SELF_LOOP_EN == "NO") begin : nslp
+            if(SELF_LOOP_EN == 0) begin : nslp
                 //remove sender port flit from flit list
                 if(i>j)    begin 
                     assign mux_in[i][(j+1)*Fw-1 : j*Fw]=     flit_in_all[(j+1)*Fw-1 : j*Fw];
@@ -142,7 +142,7 @@ module crossbar #(
                 .sel(mux_sel_bin[i])
             );
         end//binary
-        if(SELF_LOOP_EN == "NO") begin : nslp
+        if(SELF_LOOP_EN == 0) begin : nslp
             add_sw_loc_one_hot #(
                 .P(P),
                 .SW_LOC(i)

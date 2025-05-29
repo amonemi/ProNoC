@@ -55,13 +55,13 @@ module combined_vc_sw_alloc #(
     localparam
         PV = V * P,
         PVV = PV * V,    
-        P_1 = (SELF_LOOP_EN == "NO")? P-1 : P,
+        P_1 = (SELF_LOOP_EN )?  P : P-1,
         PP_1 = P_1 * P,
         PVP_1 = PV * P_1;   
         
-    input  ivc_info_t ivc_info [P-1 : 0][V-1 : 0];     
+    input  ivc_info_t ivc_info [P-1 : 0][V-1 : 0];
     input  [PVP_1-1 : 0] dest_port_all;
-    input  [PVV-1 :  0] masked_ovc_request_all;  
+    input  [PVV-1 :  0] masked_ovc_request_all;
     output [PV-1 : 0] ovc_allocated_all;
     output [PVV-1 : 0] granted_ovc_num_all;
     output [PV-1 : 0] ivc_num_getting_ovc_grant;

@@ -324,13 +324,13 @@ module check_destination_addr #(
     parameter T4=2,
     parameter EAw=2,
     parameter DAw=2,
-    parameter SELF_LOOP_EN="NO",
+    parameter SELF_LOOP_EN=0,
     parameter CAST_TYPE = "UNICAST",
     parameter NE=8
 )(
     dest_is_valid,
     dest_e_addr,
-    current_e_addr    
+    current_e_addr
 );
 
     input [DAw-1 : 0]  dest_e_addr;
@@ -338,21 +338,21 @@ module check_destination_addr #(
     output dest_is_valid;
     // general rules
     /* verilator lint_off WIDTH */
-    wire valid_dst  = (SELF_LOOP_EN   == "NO")? dest_e_addr  !=  current_e_addr : 1'b1;
+    wire valid_dst  = (SELF_LOOP_EN == 0)? dest_e_addr  !=  current_e_addr : 1'b1;
     /* verilator lint_on WIDTH */
     wire valid;
     generate
-    if(CAST_TYPE != "UNICAST") begin     
-        wire [NE-1 : 0] dest_mcast_all_endp;            
+    if(CAST_TYPE != "UNICAST") begin
+        wire [NE-1 : 0] dest_mcast_all_endp;
         mcast_dest_list_decode #(
-            .NOC_ID(NOC_ID)        
+            .NOC_ID(NOC_ID)
         ) decode (
             .dest_e_addr(dest_e_addr),
             .dest_o(dest_mcast_all_endp),
             .row_has_any_dest( ),
             .is_unicast()
         );
-        //wire valid_dst_multi_r1  = (SELF_LOOP_EN   == "NO") ? ~(dest_mcast_all_endp[current_e_addr] == 1'b1) : 1'b1;
+        //wire valid_dst_multi_r1  = (SELF_LOOP_EN   == 0) ? ~(dest_mcast_all_endp[current_e_addr] == 1'b1) : 1'b1;
         wire valid_dst_multi_r2  = ~(dest_mcast_all_endp == {NE{1'b0}}); // there should be atleast one asserted destination
         assign  dest_is_valid =  valid_dst_multi_r2;// & valid_dst_multi_r1 ;  
     end else     
