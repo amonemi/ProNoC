@@ -1256,7 +1256,7 @@ void print_parameter (){
     printf ("\tAVC_ATOMIC_EN:%d \n", AVC_ATOMIC_EN);
     printf ("\tCongestion Index:%d \n",CONGESTION_INDEX);
     printf ("\tADD_PIPREG_AFTER_CROSSBAR:%d\n",ADD_PIPREG_AFTER_CROSSBAR);
-    printf ("\tSSA_EN enabled:%s \n",SSA_EN);
+    printf ("\tSSA_EN enabled: %d \n",SSA_EN);
     printf ("\tSwitch allocator arbitration type:%s \n",SWA_ARBITER_TYPE);
     printf ("\tMinimum supported packet size:%d flit(s) \n",MIN_PCK_SIZE);
     printf ("\tLoop back is enabled:%d \n",SELF_LOOP_EN);

@@ -457,10 +457,10 @@
         $display ("\tAVC_ATOMIC_EN:%0d", AVC_ATOMIC_EN);
         $display ("\tCongestion Index:%0d",CONGESTION_INDEX);
         $display ("\tADD_PIPREG_AFTER_CROSSBAR:%0d",ADD_PIPREG_AFTER_CROSSBAR);
-        $display ("\tSSA_EN enabled:%s",SSA_EN);
+        $display ("\tSSA_EN enabled:%0d",SSA_EN);
         $display ("\tSwitch allocator arbitration type:%s",SWA_ARBITER_TYPE);
         $display ("\tMinimum supported packet size:%0d flit(s)",MIN_PCK_SIZE);
-        $display ("\tLoop back is enabled:%d",SELF_LOOP_EN);
+        $display ("\tLoop back is enabled:%0d",SELF_LOOP_EN);
         $display ("\tNumber of multihop bypass (SMART max):%0d",SMART_MAX);
         $display ("\tCastying type:%s.",CAST_TYPE);
         if (CAST_TYPE == "MULTICAST_PARTIAL" || CAST_TYPE == "BROADCAST_PARTIAL")begin

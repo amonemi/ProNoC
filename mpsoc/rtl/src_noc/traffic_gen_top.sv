@@ -382,7 +382,7 @@ module  traffic_gen_top    #(
     assign  ovc_wr_in   = (flit_out_wr ) ?      wr_vc : {V{1'b0}};
     
     /* verilator lint_off WIDTH */
-    //assign  wr_vc_is_full           = (SSA_EN=="NO")?  | ( full_vc & wr_vc) : | (nearly_full_vc & wr_vc);
+    //assign  wr_vc_is_full           = (SSA_EN==0)?  | ( full_vc & wr_vc) : | (nearly_full_vc & wr_vc);
     assign  wr_vc_is_full           = | ( full_vc & wr_vc);
     /* verilator lint_on WIDTH */ 
     

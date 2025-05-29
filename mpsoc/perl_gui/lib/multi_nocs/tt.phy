@@ -43,7 +43,7 @@ $phy = bless( {
                                   'WEIGHTw' => '4',
                                   'SWA_ARBITER_TYPE' => '"RRA"',
                                   'MIN_PCK_SIZE' => '2',
-                                  'SSA_EN' => '"NO"',
+                                  'SSA_EN' => '0',
                                   'TOPOLOGY' => '"MESH"',
                                   'PCK_TYPE' => '"MULTI_FLIT"'
                                 },
@@ -208,7 +208,7 @@ $phy = bless( {
                                   'VC_REALLOCATION_TYPE' => '"NONATOMIC"',
                                   'TOPOLOGY' => '"MESH"',
                                   'PCK_TYPE' => '"MULTI_FLIT"',
-                                  'SSA_EN' => '"NO"',
+                                  'SSA_EN' => '0',
                                   'MIN_PCK_SIZE' => '2',
                                   'SWA_ARBITER_TYPE' => '"RRA"'
                                 },
@@ -240,7 +240,7 @@ $phy = bless( {
                                   'ROUTE_NAME' => '"XY"',
                                   'ESCAP_VC_MASK' => '2\'b01',
                                   'B' => '4',
-                                  'SSA_EN' => '"NO"',
+                                  'SSA_EN' => '0',
                                   'PCK_TYPE' => '"MULTI_FLIT"',
                                   'TOPOLOGY' => '"MESH"',
                                   'SWA_ARBITER_TYPE' => '"RRA"',
@@ -306,7 +306,7 @@ $phy = bless( {
                                                    },
                                                    {
                                                      'param_name' => 'SSA_EN',
-                                                     'value' => '"NO"'
+                                                     'value' => 0
                                                    },
                                                    {
                                                      'param_name' => 'SWA_ARBITER_TYPE ',

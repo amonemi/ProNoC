@@ -9,14 +9,14 @@
 
 module  noc_emulator #(
     //NoC parameters
-    parameter V    = 1,    
-    parameter B    = 4,     
+    parameter V    = 1,
+    parameter B    = 4,
     parameter T1   = 4, 
     parameter T2   = 4, 
     parameter T3   = 1,
     parameter TOPOLOGY = "MESH",
     parameter ROUTE_NAME  =   "XY",
-    parameter C    = 4,  
+    parameter C    = 4,
     parameter Fpay = 32,
     parameter MUX_TYPE  = "BINARY", 
     parameter VC_REALLOCATION_TYPE  =  "NONATOMIC",
@@ -27,13 +27,13 @@ module  noc_emulator #(
     parameter AVC_ATOMIC_EN = 1,
     parameter ADD_PIPREG_AFTER_CROSSBAR = 0,
     parameter CVw=(C==0)? V : C * V,
-    parameter [CVw-1:   0] CLASS_SETTING = {CVw{1'b1}},    
-    parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000,  
-    parameter SSA_EN = "NO",        
+    parameter [CVw-1:   0] CLASS_SETTING = {CVw{1'b1}},
+    parameter [V-1  :   0] ESCAP_VC_MASK = 4'b1000,
+    parameter SSA_EN = 0,
     parameter SWA_ARBITER_TYPE = "RRA", 
     parameter WEIGHTw = 4, 
     parameter MIN_PCK_SIZE = 2, 
-    parameter BYTE_EN=0,    
+    parameter BYTE_EN=0,
     
     
     // simulation

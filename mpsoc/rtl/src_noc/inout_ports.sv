@@ -279,10 +279,8 @@ module inout_ports #(
     
     genvar i;
     generate  
-    
-    /* verilator lint_off WIDTH */
-    if( SSA_EN =="YES" ) begin : ssa 
-    /* verilator lint_on WIDTH */
+
+    if( SSA_EN == 1 ) begin : ssa
         ss_allocator #(
             .NOC_ID(NOC_ID),
             .P(P)

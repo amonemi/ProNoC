@@ -37,7 +37,7 @@ module  mesh_torus_vc_alloc_request_gen_adaptive #(
     parameter ROUTE_TYPE = "FULL_ADAPTIVE",    // "FULL_ADAPTIVE", "PAR_ADAPTIVE"  
     parameter V = 4,
     parameter DSTPw=4,
-    parameter SSA_EN ="NO",
+    parameter SSA_EN = 0,
     parameter PPSw=4,
     parameter [V-1 : 0] ESCAP_VC_MASK = 4'b1000   // mask scape vc, valid only for full adaptive       
 )(
@@ -179,7 +179,7 @@ endmodule
 
 
 module mesh_tori_dspt_clear_gen #(
-    parameter SSA_EN="YES",
+    parameter SSA_EN = 1,
     parameter DSTPw =4,
     parameter SW_LOC=0
 )(
@@ -195,29 +195,27 @@ module mesh_tori_dspt_clear_gen #(
     input ssa_ivc_num_getting_ovc_grant;
     
     localparam 
-        LOCAL = 3'd0,  
-        EAST = 3'd1, 
+        LOCAL = 3'd0,
+        EAST = 3'd1,
         WEST = 3'd3;
     generate
-    /* verilator lint_off WIDTH */    
-    if ( SSA_EN=="YES" ) begin :predict_if    
-    /* verilator lint_on WIDTH */   
+    if ( SSA_EN==1 ) begin :predict_if
         if (SW_LOC == LOCAL ) begin :local_if
             assign destport_clear= (ivc_num_getting_ovc_grant)?{2'b00,sel,~sel} :{DSTPw{1'b0}};                  
         end else if (SW_LOC == EAST || SW_LOC == WEST ) begin :xdir_if
             assign destport_clear = (ivc_num_getting_ovc_grant)? 
                 {2'b00,sel,~sel} : 
                 (ssa_ivc_num_getting_ovc_grant)? 4'b0001: //clear b
-                4'b0000;                  
+                4'b0000;
         end else begin : ydir_if
             assign destport_clear = (ivc_num_getting_ovc_grant)? 
                 {2'b00,sel,~sel} :
                 (ssa_ivc_num_getting_ovc_grant)? 4'b0010: //clear a
-                4'b0000;              
+                4'b0000;
         end
         end else begin :nopredict_if 
             assign destport_clear = (ivc_num_getting_ovc_grant )? {2'b00,sel,~sel} :{DSTPw{1'b0}}; 
-        end//   nopredict_if    
+        end//   nopredict_if
     endgenerate
 endmodule
 
@@ -1366,7 +1364,7 @@ module  mesh_torus_dynamic_portsel_control #(
     parameter ROUTE_TYPE = "FULL_ADAPTIVE",    // "FULL_ADAPTIVE", "PAR_ADAPTIVE"  
     parameter V = 4,
     parameter DSTPw=4,
-    parameter SSA_EN ="NO",
+    parameter SSA_EN = 0, // 1: SSA enabled, 0: SSA disabled
     parameter PPSw=4,
     parameter [V-1 : 0] ESCAP_VC_MASK = 4'b1000   // mask scape vc, valid only for full adaptive       
 )(   

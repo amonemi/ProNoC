@@ -94,7 +94,7 @@
             //    Select one of "UNICAST","MULTICAST_PARTIAL","MULTICAST_FULL","BROADCAST_PARTIAL","BROADCAST_FULL"
 
 	localparam MCAST_ENDP_LIST=32'hf;
-	localparam SSA_EN="NO";
+	localparam SSA_EN=0;
             //SSA_EN : Enable single cycle latency on packets traversing in the same direction using 
             //    static straight allocator (SSA)
 

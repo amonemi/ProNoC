@@ -30,9 +30,9 @@ module crossbar #(
     parameter TOPOLOGY = "MESH",
     parameter V    = 4,     // vc_num_per_port
     parameter P    = 5,     // router port num
-    parameter Fw     = 36,
-    parameter MUX_TYPE="BINARY",        //"ONE_HOT" or "BINARY"    
-    parameter SSA_EN="YES", // "YES" , "NO"
+    parameter Fw   = 36,
+    parameter MUX_TYPE="BINARY",  //"ONE_HOT" or "BINARY"
+    parameter SSA_EN= 1, // 1: enable SSA, 0: disable SSA
     parameter SELF_LOOP_EN= 0
 )(
     granted_dest_port_all,
@@ -96,12 +96,10 @@ module crossbar #(
                 assign mux_in[i][(j+1)*Fw-1 : j*Fw]=     flit_in_all[(j+1)*Fw-1 : j*Fw];
                 assign mux_sel_pre[i][j] =    granted_dest_port[j][i];            
             end
-        end//for j       
+        end//for j
         
-        /* verilator lint_off WIDTH */
-        if (SSA_EN =="YES") begin : predict //If no output is granted replace the output port with SS port
-        /* verilator lint_on WIDTH */
-            add_ss_port #(               
+        if (SSA_EN) begin : predict //If no output is granted replace the output port with SS port
+            add_ss_port #(
                 .NOC_ID(NOC_ID),
                 .SW_LOC(i),
                 .P(P)

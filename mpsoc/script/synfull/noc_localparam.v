@@ -42,7 +42,7 @@
     localparam PCK_TYPE="MULTI_FLIT";
     localparam MIN_PCK_SIZE=1;
     localparam BYTE_EN=0;
-    localparam SSA_EN="NO";
+    localparam SSA_EN=0;
     localparam SMART_MAX=0;
     localparam CONGESTION_INDEX=3;
     localparam ESCAP_VC_MASK=1;

@@ -274,7 +274,7 @@ module router_top #(
 `ifdef SIMULATION
     /* verilator lint_off WIDTH */
     initial begin
-        if((SSA_EN=="YES")  &&(SMART_EN==1'b1))begin
+        if((SSA_EN==1)  && (SMART_EN==1))begin
             $display("ERROR: Only one of the SMART or SAA can be enabled at the same time");
             $finish;
         end
@@ -286,11 +286,10 @@ module router_top #(
             $display("ERROR: The minimum packet size must be set as one for single-flit packet type NoC");
             $finish;
         end
-        if(((SSA_EN=="YES")  ||(SMART_EN==1'b1)) && CAST_TYPE!="UNICAST") begin
+        if(((SSA_EN==1) || (SMART_EN==1)) && CAST_TYPE!="UNICAST") begin
             $display("ERROR: SMART or SAA do not support muticast/braodcast packets");
             $finish;
         end
-        
     end
     /* verilator lint_on WIDTH */
     generate 

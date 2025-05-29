@@ -16,9 +16,8 @@ module  flit_buffer_reg_base #(
     parameter DEBUG_EN =   1,
     parameter C=1,
     parameter DSTPw=4,
-    parameter SSA_EN="YES", // "YES" , "NO"  
+    parameter SSA_EN=1, // 1,0
     parameter CAST_TYPE="UNI_CAST"
-         
 )(
     din,
     vc_num_wr,
@@ -138,7 +137,7 @@ module  flit_buffer_reg_base #(
     flit_buffer #(
 		.V(V),
         .B(B),
-        .SSA_EN("NO"),// should be "NO" even if SSA is enabled
+        .SSA_EN(0),// should be 0 even if SSA is enabled
         .Fw(Fw),
 		.PCK_TYPE(PCK_TYPE),
 		.CAST_TYPE(CAST_TYPE),

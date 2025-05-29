@@ -868,8 +868,8 @@ if($topology ne '"CUSTOM"' ){
     #SSA
     $label='SSA Enable'; 
     $param='SSA_EN';
-    $default='"NO"';
-    $content='"YES","NO"';
+    $default='0';
+    $content='0,1';
     $type='Combo-box';
     $info="Enable single cycle latency on packets traversing in the same direction using 
     static straight allocator (SSA)"; 

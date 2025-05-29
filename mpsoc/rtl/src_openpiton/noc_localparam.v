@@ -20,7 +20,7 @@
 	localparam BYTE_EN=0;
 	localparam CAST_TYPE="UNICAST";
 	localparam MCAST_ENDP_LIST=10'h3ff;
-	localparam SSA_EN="YES";
+	localparam SSA_EN=1;
 	localparam SMART_MAX=0;
 	localparam CONGESTION_INDEX=3;
 	localparam ESCAP_VC_MASK=1'b1;

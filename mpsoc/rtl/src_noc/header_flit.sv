@@ -245,9 +245,7 @@ module header_flit_update_lk_route_ovc #(
     );
     
     generate 
-    /* verilator lint_off WIDTH */
-    if( SSA_EN == "YES" ) begin : predict // bypass the lk fifo when no ivc is granted
-    /* verilator lint_on WIDTH */
+    if( SSA_EN == 1 ) begin : predict // bypass the lk fifo when no ivc is granted
         logic ivc_any_delayed;
         pronoc_register #(.W(1)) reg2 (.in(any_ivc_sw_request_granted ), .out(ivc_any_delayed), .reset(reset), .clk(clk));
         assign lk_dest = (ivc_any_delayed == 1'b0)? lk_dest_not_registered : lk_mux_out;

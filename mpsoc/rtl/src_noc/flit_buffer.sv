@@ -384,15 +384,11 @@ module flit_buffer
                 $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,B);
                 $finish;
                 end
-                /* verilator lint_off WIDTH */
-                if (sub_rd[i] && (sub_depth[i] == {DEPTHw{1'b0}} &&  SSA_EN !="YES"  ))begin 
-                /* verilator lint_on WIDTH */
+                if (sub_rd[i] && (sub_depth[i] == {DEPTHw{1'b0}} &&  (SSA_EN != 1) ))begin 
                 $display("%t: ERROR: Attempt to read an empty FIFO: %m",$time);
                 $finish;
                 end
-                /* verilator lint_off WIDTH */
-                if (sub_rd[i] && !wr[i] && (sub_depth[i] == {DEPTHw{1'b0}} &&  SSA_EN =="YES" ))begin 
-                /* verilator lint_on WIDTH */
+                if (sub_rd[i] && !wr[i] && (sub_depth[i] == {DEPTHw{1'b0}} &&  (SSA_EN == 1) ))begin 
                 $display("%t: ERROR: Attempt to read an empty FIFO: %m",$time);
                 $finish;
                 end
@@ -404,15 +400,11 @@ module flit_buffer
                 $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,B);
                 $finish;
             end
-            /* verilator lint_off WIDTH */
-            if (rd[i] && (depth[i] == {DEPTHw{1'b0}} &&  SSA_EN !="YES"  ))begin
-                /* verilator lint_on WIDTH */
+            if (rd[i] && (depth[i] == {DEPTHw{1'b0}} &&  (SSA_EN != 1) ))begin
                 $display("%t: ERROR: Attempt to read an empty FIFO: %m",$time);
                 $finish;
             end
-            /* verilator lint_off WIDTH */
-            if (rd[i] && !wr[i] && (depth[i] == {DEPTHw{1'b0}} &&  SSA_EN =="YES" ))begin 
-                /* verilator lint_on WIDTH */
+            if (rd[i] && !wr[i] && (depth[i] == {DEPTHw{1'b0}} &&  (SSA_EN == 1)))begin
                 $display("%t: ERROR: Attempt to read an empty FIFO: %m",$time);
                 $finish;
             end
@@ -434,17 +426,16 @@ endmodule
 module fifo_ram #(
     parameter DATA_WIDTH = 32,
     parameter ADDR_WIDTH = 8,
-    parameter SSA_EN="YES" // "YES" , "NO"
+    parameter SSA_EN=1 // 1: enable SSA, 0: disable SSA
     )(
-    wr_data,        
+    wr_data,
     wr_addr,
     rd_addr,
     wr_en,
     rd_en,
     clk,
     rd_data
-);  
-    
+);
     
     input [DATA_WIDTH-1 :    0]  wr_data;
     input [ADDR_WIDTH-1 :    0]  wr_addr;
@@ -465,9 +456,7 @@ module fifo_ram #(
     end
     
     generate
-    /* verilator lint_off WIDTH */
-    if(SSA_EN =="YES") begin :predict
-    /* verilator lint_on WIDTH */
+    if(SSA_EN == 1) begin :predict
         //add bypass
         reg [DATA_WIDTH-1:0]  bypass_reg;
         reg rd_en_delayed;
@@ -485,16 +474,13 @@ module fifo_ram #(
 endmodule
 
 
-
 /*********************
- *
  *   fifo_ram_mem_size
- *
  **********************/
 module fifo_ram_mem_size #(
     parameter DATA_WIDTH = 32,
     parameter MEM_SIZE = 200,
-    parameter SSA_EN = "YES" // "YES" , "NO"
+    parameter SSA_EN = 1 // 1: enable SSA, 0: disable SSA
     ) (
     wr_data,
     wr_addr,
@@ -507,7 +493,7 @@ module fifo_ram_mem_size #(
     
     function integer log2;
     input integer number; begin
-        log2=(number <=1) ? 1: 0;    
+        log2=(number <=1) ? 1: 0;
         while(2**log2<number) begin
         log2=log2+1;
         end
@@ -534,9 +520,7 @@ module fifo_ram_mem_size #(
     end
     
     generate 
-    /* verilator lint_off WIDTH */
-    if(SSA_EN =="YES") begin :predict
-    /* verilator lint_on WIDTH */
+    if(SSA_EN == 1) begin :predict
         //add bypass
         reg [DATA_WIDTH-1:0]  bypass_reg;
         reg rd_en_delayed;

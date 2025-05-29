@@ -239,13 +239,12 @@ module input_queue_per_port #(
         OFFSET = (PORT_B%MIN_PCK_SIZE)? 1 :0,
         NON_ATOM_PCKS =  (PORT_B>MIN_PCK_SIZE)?  (PORT_B/MIN_PCK_SIZE)+ OFFSET : 1,
         MAX_PCK = (VC_REALLOCATION_TYPE== "ATOMIC")?  1 : NON_ATOM_PCKS + OVC_ALLOC_MODE,// min packet size is two hence the max packet number in buffer is (B/2)
-        IGNORE_SAME_LOC_RD_WR_WARNING = ((SSA_EN=="YES")| SMART_EN)? "YES" : "NO";
-        
+        IGNORE_SAME_LOC_RD_WR_WARNING = ((SSA_EN==1) || (SMART_EN==1))? "YES" : "NO";
     
-    localparam 
+    localparam
         ELw = log2(T3),
         Pw  = log2(P),
-        PLw = (TOPOLOGY == "FMESH") ? Pw : ELw,
+        PLw = (IS_FMESH) ? Pw : ELw,
         VPLw= V * PLw,
         PRAw= P * RAw;
     /* verilator lint_on WIDTH */

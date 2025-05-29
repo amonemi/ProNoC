@@ -61,7 +61,7 @@ module iport_reg_base  #(
     parameter [CVw-1: 0] CLASS_SETTING = {CVw{1'b1}}, // shows how each class can use VCs   
     parameter [V-1  : 0] ESCAP_VC_MASK = 4'b1000,  // mask scape vc, valid only for full adaptive
     parameter DSTPw = P-1,
-    parameter SSA_EN="YES", // "YES" , "NO"      
+    parameter SSA_EN=1, // 1: enable SSA, 0: disable SSA 
     parameter SWA_ARBITER_TYPE ="RRA",// "RRA","WRRA"
     parameter WEIGHTw=4,
     parameter WRRA_CONFIG_INDEX=0,

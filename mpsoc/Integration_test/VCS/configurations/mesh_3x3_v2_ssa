@@ -3,9 +3,9 @@ $model = bless( {
         "T1" => "3",
         "T2" => "3",
         "SELF_LOOP_EN" => "1",
-        "SSA_EN"=> "\"YES\"",
+        "SSA_EN"=> "1",
         "LB" => 16,
-        "DEBUG_EN" => "0",   
-        "MIN_PCK_SIZE"  => "1",    
+        "DEBUG_EN" => "0",
+        "MIN_PCK_SIZE"  => "1",
     }
 }, 'ProNOC' );

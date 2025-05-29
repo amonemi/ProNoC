@@ -39,7 +39,7 @@ sub network_maker_main {
     {param_name=> "ADD_PIPREG_AFTER_CROSSBAR", value=>0},
     {param_name=> "CVw", value=>"(C==0)? V : C * V"},
     {param_name=> "CLASS_SETTING ", value=>"{CVw{1\'b1}}"},
-    {param_name=> "SSA_EN", value=>'"NO"'},
+    {param_name=> "SSA_EN", value=>'0'},
     {param_name=> "SWA_ARBITER_TYPE ", value=>'"RRA"'},
     {param_name=> "WEIGHTw ", value=>7},
     {param_name=> "MIN_PCK_SIZE", value=>2},
