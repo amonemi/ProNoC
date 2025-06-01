@@ -22,10 +22,10 @@ void synful_init(char * fname, bool ss_exit, int seed,unsigned int max_clk, unsi
     //std::cout << "Initiating synful with: " << fname << "random seed:" << seed << std::endl;
     synful_model_init(fname, ss_exit,seed,max_clk, max_pck, traffic_model_mapping );
 
-     synful_inject   = (queue_t**) malloc( NE * sizeof(queue_t*) );
-     synful_traverse = (queue_t**) malloc( NE * sizeof(queue_t*) );
+    synful_inject   = (queue_t**) malloc( NE * sizeof(queue_t*) );
+    synful_traverse = (queue_t**) malloc( NE * sizeof(queue_t*) );
 
-     if(synful_inject == NULL || synful_traverse == NULL ) {
+    if(synful_inject == NULL || synful_traverse == NULL ) {
         printf( "ERROR: malloc fail queues\n" );
         exit(0);
     }

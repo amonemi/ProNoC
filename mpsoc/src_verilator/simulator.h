@@ -134,7 +134,6 @@ unsigned int sim_end_clk_num;
 unsigned long int nt_tr_list_pck=0;
 int netrace_speed_up =1;
 
-unsigned int * rsv_size_array;
 int AVG_PACKET_SIZE=5;
 int MIN_PACKET_SIZE=5;
 int MAX_PACKET_SIZE=5;
@@ -238,7 +237,6 @@ void update_hotspot(char * );
 void update_mcast_traffic(char * str);
 void initial_threads (void);
 void print_statistic_new (unsigned long int);
-void allocate_rsv_pck_counters (void);
 void update_all_router_stat(void);
 void print_router_st(void);
 void print_endp_to_endp_st(const char *);
@@ -249,6 +247,10 @@ void update_traffic_injector_st (unsigned int );
 #include "traffic_synthetic.h"
 #include "netrace_lib.h"
 #include "synful_wrapper.h"
+
+#define PACK_SIZE_HISTO  0
+
+#include "histogram.h"
 
 #define RATIO_INIT        2
 #define DISABLE -1

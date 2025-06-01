@@ -108,13 +108,6 @@ void netrace_init( char * tracefile){
     MAX_PACKET_SIZE = (64*8)/Fpay;
     AVG_PACKET_SIZE=(MIN_PACKET_SIZE+MAX_PACKET_SIZE)/2;// average packet size
     int p=(MAX_PACKET_SIZE-MIN_PACKET_SIZE)+1;
-    rsv_size_array = (unsigned int*) calloc ( p , sizeof(int));
-    if (rsv_size_array==NULL){
-        fprintf(stderr,"ERROR: cannot allocate (%d x int) memory for rsv_size_array. \n",p);
-        exit(1);
-    }
-
-
     if(verbosity==1)     printf("\e[?25l"); //To hide the cursor:
 
 }

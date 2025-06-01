@@ -25,7 +25,6 @@ int main(int argc, char** argv) {
     for(i=0;i<NE;i++)   custom_traffic_table[i]=INJECT_OFF; //off
     Verilated::commandArgs(argc, argv);   // Remember args
     processArgs ( argc,  argv );
-    allocate_rsv_pck_counters();
     if (class_percentage==NULL) {
             class_percentage =   (int *) malloc(sizeof(int));
             class_percentage[0]=100;
@@ -576,14 +575,6 @@ void update_pck_size(char *str){
     }
 }
 
-void allocate_rsv_pck_counters (void) {
-    int p=(MAX_PACKET_SIZE-MIN_PACKET_SIZE)+1;
-    rsv_size_array = (unsigned int*) calloc ( p , sizeof(int));
-    if (rsv_size_array==NULL){
-        fprintf(stderr,"ERROR: cannot allocate memory for rsv_size_array\n");
-        exit(1);
-    }
-}
 
 void task_traffic_init (char * str) {
     load_traffic_file(str,task_graph_data,task_graph_abstract);
@@ -591,12 +582,7 @@ void task_traffic_init (char * str) {
     MIN_PACKET_SIZE = task_graph_min_pck_size;
     MAX_PACKET_SIZE = task_graph_max_pck_size;
     AVG_PACKET_SIZE=(MIN_PACKET_SIZE+MAX_PACKET_SIZE)/2;// average packet size
-    int p=(MAX_PACKET_SIZE-MIN_PACKET_SIZE)+1;
-    rsv_size_array = (unsigned int*) calloc ( p , sizeof(int));
-    if (rsv_size_array==NULL){
-        fprintf(stderr,"ERROR: cannot allocate (%d x int) memory for rsv_size_array. \n",p);
-        exit(1);
-    }
+    int p=(MAX_PACKET_SIZE-MIN_PACKET_SIZE)+1;    
 }
 
 void processArgs (int argc, char **argv ){
@@ -640,18 +626,6 @@ void traffic_gen_final_report(){
     for (i=0;i<NE;i++) if(traffic[i]->pck_number>0) total_active_endp       =     total_active_endp +1;
     printf("\nsimulation results-------------------\n");
     printf("\tSimulation clock cycles:%d\n",clk_counter);
-    printf("\n\tTotal received packet in different size:\n");
-    printf("\tflit_size,");
-    for (i=0;i<=(MAX_PACKET_SIZE - MIN_PACKET_SIZE);i++){
-        if(rsv_size_array[i]>0) printf("%u,",i+ MIN_PACKET_SIZE);
-    }
-    printf("\n\t#pck,");
-    for (i=0;i<=(MAX_PACKET_SIZE - MIN_PACKET_SIZE);i++){
-        if(rsv_size_array[i]>0) printf("%u,",rsv_size_array[i]);
-    }
-    printf("\n");
-//    printf(" total received flits:%d\n",total_rsv_flit_number);
-//    printf(" total sent flits:%d\n",total_sent_flit_number);
     print_statistic_new (clk_counter);
 }
 
@@ -916,6 +890,7 @@ void sim_final_all (void){
     if(ENDP_TYPE == PCK_INJECTOR) for(i=0;i<NE;i++) pck_inj[i]->final();
     else for(i=0;i<NE;i++) traffic[i]->final();
     //noc->final();
+    cleanup_histogram();
 }
 
 void connect_clk_reset_start_all(void){
@@ -1065,12 +1040,7 @@ void update_statistic_at_ejection (
     unsigned int src,
     unsigned int pck_size
     ){
-    if(ENDP_TYPE == TRFC_INJECTOR) {
-        if( traffic[core_num]->pck_size_o >= MIN_PACKET_SIZE && traffic[core_num]->pck_size_o <=MAX_PACKET_SIZE){
-            if(rsv_size_array!=NULL)     rsv_size_array[traffic[core_num]->pck_size_o-MIN_PACKET_SIZE]++;
-        }
-    }
-    if(verbosity==0 && ( TRAFFIC_TYPE == NETRACE || TRAFFIC_TYPE ==SYNFUL)) if((total_rsv_pck_num & 0X1FFFF )==0 ) printf(" Packets recived total=%u\n",total_rsv_pck_num);
+    record (PACK_SIZE_HISTO, pck_size);  
     unsigned int latency = (strcmp (AVG_LATENCY_METRIC,"HEAD_2_TAIL")==0)? clk_num_h2t :  clk_num_h2h;
     #if(C>1)
         update_rsvd_st ( &rsvd_stat[core_num][class_num],      clk_num_h2h,   clk_num_h2t,     latency,    distance,pck_size);
@@ -1159,6 +1129,9 @@ void merge_statistic (statistic_t * merge_stat, statistic_t stat_in){
 
 void print_statistic_new (unsigned long int total_clk){
     int i;
+    printf("\n\tTotal received packet in different sizes:\n");
+    print_histogram(PACK_SIZE_HISTO,"\tflit_size,","\n\t#pck,");
+    printf("\n");
     print_router_st();
     print_endp_to_endp_st("pck_num");
     print_endp_to_endp_st("flit_num");
