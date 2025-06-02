@@ -197,7 +197,7 @@ module  traffic_gen_top    #(
             start_delay_counter_next= start_delay_counter + 1'b1;
         end
         if(stop) begin 
-            start_en_next=1'b0;            
+            start_en_next=1'b0;
         end
     end//always
     

@@ -76,29 +76,28 @@ module router_top #(
         current_r_addr = router_config_in.router_addr;
         current_r_id = 0;
         current_r_id [NRw-1 : 0] = router_config_in.router_id;
+        for( int k=0; k<P; k++) begin 
+            ctrl_in [k] = chan_in[k].ctrl_chanel;
+            chan_out[k].ctrl_chanel= ctrl_out [k];
+        end
     end
     
-    generate
-    for(i=0; i<P; i=i+1) begin :Pt_
-        assign  ctrl_in [i] = chan_in[i].ctrl_chanel;
-        assign  chan_out[i].ctrl_chanel= ctrl_out [i];
+    always_comb begin
+        for(int k=0; k<P; k++) begin
+            router_event[k].flit_wr_i = chan_in[k].flit_chanel.flit_wr;
+            router_event[k].bypassed_num = chan_in[k].smart_chanel.bypassed_num;
+            router_event[k].pck_wr_i  = chan_in[k].flit_chanel.flit_wr & chan_in[k].flit_chanel.flit.hdr_flag;
+            router_event[k].flit_wr_o = chan_out[k].flit_chanel.flit_wr;
+            router_event[k].pck_wr_o  = chan_out[k].flit_chanel.flit_wr & chan_out[k].flit_chanel.flit.hdr_flag;
+            router_event[k].flit_in_bypassed = chan_out[k].smart_chanel.flit_in_bypassed;
+            `ifdef ACTIVE_LOW_RESET_MODE
+            router_event[k].active_high_reset = 1'b0;
+            `else
+            router_event[k].active_high_reset = 1'b1;
+            `endif
+            router_event[k].empty = ~(|iport_info[k].ivc_req) && (chan_out[k].flit_chanel.flit_wr==1'b0);
+        end
     end
-    
-    for(i=0; i<P; i=i+1) begin :P2_
-        assign router_event[i].flit_wr_i = chan_in[i].flit_chanel.flit_wr;
-        assign router_event[i].bypassed_num = chan_in[i].smart_chanel.bypassed_num;
-        assign router_event[i].pck_wr_i  = chan_in[i].flit_chanel.flit_wr & chan_in[i].flit_chanel.flit.hdr_flag;
-        assign router_event[i].flit_wr_o = chan_out[i].flit_chanel.flit_wr;
-        assign router_event[i].pck_wr_o  = chan_out[i].flit_chanel.flit_wr & chan_out[i].flit_chanel.flit.hdr_flag;
-        assign router_event[i].flit_in_bypassed = chan_out[i].smart_chanel.flit_in_bypassed;
-        `ifdef ACTIVE_LOW_RESET_MODE
-        assign router_event[i].active_high_reset = 1'b0;
-        `else
-        assign router_event[i].active_high_reset = 1'b1;
-        `endif
-        assign router_event[i].empty = ~(|iport_info[i].ivc_req) && (chan_out[i].flit_chanel.flit_wr==1'b0);
-    end
-    endgenerate
     
     wire [V-1 : 0] ovc_locally_requested [P-1 : 0];
     flit_chanel_t ss_flit_chanel [P-1 : 0]; //flit  bypass link goes to straight port
@@ -159,9 +158,11 @@ module router_top #(
         for(i=0;i<P;i=i+1)begin : Port_
             localparam SS_PORT = strieght_port(P,i);
             if(SS_PORT == DISABLED) begin: smart_dis
-                assign r2_chan_in[i]   =  chan_in[i].flit_chanel;
-                assign chan_out[i].flit_chanel     =  r2_chan_out[i];
-                assign smart_ctrl[i]={SMART_CTRL_w{1'b0}};
+                always_comb begin
+                    r2_chan_in[i]   =  chan_in[i].flit_chanel;
+                    chan_out[i].flit_chanel     =  r2_chan_out[i];
+                    smart_ctrl[i]={SMART_CTRL_w{1'b0}};
+                end
             end
             else begin :smart_en
                 assign neighbors_r_addr [i] = chan_in[i].ctrl_chanel.router_addr;
@@ -200,9 +201,11 @@ module router_top #(
                     .smart_mask_available_ss_ovc_o(smart_ctrl[SS_PORT].mask_available_ovc)
                 );
                 
-                assign smart_ctrl[i].ivc_smart_en = ivc_smart_en[i];
-                assign smart_ctrl[i].smart_en = |ivc_smart_en[i];
-                
+                always_comb begin
+                    smart_ctrl[i].ivc_smart_en = ivc_smart_en[i];
+                    smart_ctrl[i].smart_en = |ivc_smart_en[i];
+                    smart_chanel_in[i] =   chan_in[i].smart_chanel;
+                end
                 `ifdef SIMULATION
                 //assign chan_out[i].smart_chanel =(smart_chanel[i].requests[0]) ? smart_chanel_new[i] : take ss shifted smart;    
                 smart_chanel_check #(
@@ -215,14 +218,9 @@ module router_top #(
                 );
                 `endif //SIMULATION
                 
-                assign smart_chanel_in[i] =   chan_in[i].smart_chanel;
-                
                 //r2 demux
                 // flit_in_wr demux
-                always @(*) begin
-                    chan_out[i].smart_chanel = smart_chanel_out[i];
-                    chan_out[i].smart_chanel.flit_in_bypassed =smart_ctrl[i].smart_en & chan_in[i].flit_chanel.flit_wr ;
-                    
+                always_comb begin
                     //mask only flit_wr if smart_en is asserted
                     r2_chan_in[i]   =  chan_in[i].flit_chanel;
                     //can replace destport here and remove lk rout from internal router
@@ -233,14 +231,15 @@ module router_top #(
                     if(smart_ctrl[i].hdr_flit_req) ss_flit_chanel[SS_PORT].flit[DST_P_MSB : DST_P_LSB] =  smart_ctrl[i].lk_destport;   
                 end
                 
-                always @(*) begin
+                always_comb begin
+                    chan_out[i].smart_chanel = smart_chanel_out[i];
+                    chan_out[i].smart_chanel.flit_in_bypassed =smart_ctrl[i].smart_en & chan_in[i].flit_chanel.flit_wr ;
                     // mux out flit channel
                     chan_out[i].flit_chanel = r2_chan_out[i];
                     chan_out[i].flit_chanel.credit    =  credit_out[i] ;
                     if(smart_ctrl[SS_PORT].smart_en) begin
                         chan_out[i].flit_chanel.flit    =  ss_flit_chanel[i].flit;
                         chan_out[i].flit_chanel.flit_wr =  ss_flit_chanel[i].flit_wr;
-                    
                     end
                 end
                 
@@ -259,11 +258,13 @@ module router_top #(
         end//for Port_
         
     end else begin :no_smart
-        for(i=0;i<P;i=i+1)begin : Port_
-            assign r2_chan_in[i]   =  chan_in[i].flit_chanel;
-            assign chan_out[i].flit_chanel     =  r2_chan_out[i];
-            assign smart_ctrl[i]={SMART_CTRL_w{1'b0}};
-        end//for
+        always_comb begin
+            for( int k=0;k<P;k++) begin 
+                r2_chan_in[k] = chan_in[k].flit_chanel;
+                chan_out[k].flit_chanel = r2_chan_out[k];
+                smart_ctrl[k]={SMART_CTRL_w{1'b0}};
+            end
+        end
     end //:no_smart
     endgenerate
     
