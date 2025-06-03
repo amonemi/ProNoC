@@ -182,5 +182,5 @@ done
 
 report_all_configurations
 
-meld "$golden_dir/report.csv" "$log_dir/report.csv" &
+perl ${SCRPT_DIR_PATH}/src/compare.pl "$golden_dir/report.csv" "$log_dir/report.csv" 
 echo "All configurations processed. Results are in $log_dir/report.csv"

@@ -2,10 +2,10 @@
 `define PRONOC_DEF
     
     // Reset Configurations
-    // `define SYNC_RESET_MODE
+    `define SYNC_RESET_MODE
     /*
-     *  Reset is asynchronous by default.
-     *  Uncomment this line to enable synchronous reset.
+     *  Reset is synchronous by default.
+     *  comment this line to enable synchronous reset.
      */
     
     // `define ACTIVE_LOW_RESET_MODE

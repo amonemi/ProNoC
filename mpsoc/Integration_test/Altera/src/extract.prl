@@ -22,9 +22,14 @@ my %HWs = (
     'M9K blocks'                     => ';[[:space:]]*M9K blocks[[:space:]]*;' . $result_reg,
 );
 
+my %HIST =(
+    'Warnings' => 'Warning[[:space:]]*\(',
+);
+
 # Result containers
 my %freq;
 my %results;
+my %histograms;
 my $csv = "";
 
 sub extract_results {
@@ -37,10 +42,10 @@ sub extract_results {
     my ($in, $out, $err);
     $in = 'grep -R "; clk        ;      ;$" | sort';
     run ['bash'], \$in, \$out, \$err, timeout(10) or die "Error running Fmax grep: $?";
-
+    my $name;
     for my $line (split "\n", $out) {
         my ($file) = split '/', $line;
-        my $name = "${parent}_$file";
+        $name = "${parent}_$file";
 
         my @parts = split ':', $line;
         my @fields = split ';', $parts[1];
@@ -64,7 +69,7 @@ sub extract_results {
             next unless $line =~ /\.fit\.rpt/;
 
             my ($file) = split '/', $line;
-            my $name = "${parent}_$file";
+            $name = "${parent}_$file";
 
             my @fields = split(/\; /, $line);
             my $value = $fields[2];
@@ -74,6 +79,17 @@ sub extract_results {
             $results{$metric}{$name} = join(',', @numbers);
         }
     }
+    # --------------------------
+    #   Count number of warnings/Errors
+    #---------------------------
+    for my $metric (sort keys %HIST) {
+        my $regex = $HIST{$metric};
+        my $grep_cmd = "grep -RE '$regex'  | wc -l";
+        $out = undef;
+        run ['bash'], \$grep_cmd, \$out, \$err, timeout(10) or die "Error running grep for $metric: $?";
+        $histograms{$metric} = $out;
+    }
+    
 }
 
 # Main execution
@@ -93,7 +109,10 @@ for my $metric (sort keys %results) {
     }
 }
 
-#grep -RE "Warning[[:space:]]*\("
+for my $metric (sort keys %histograms) {
+    $csv .= "\n$metric |";
+    $csv .= "  $histograms{$metric}\n";
+}
 
 
 
