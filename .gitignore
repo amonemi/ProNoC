@@ -50,9 +50,6 @@ mpsoc/remove_cycle/__pycache__
 
 mpsoc_work/
 mpsoc/rtl/src_openpiton/nocs
-mpsoc/Integration_test/synthetic_sim/result_logs/*
-mpsoc/Integration_test/Altera/result_logs/*
-mpsoc/Integration_test/VCS/result_logs/*
 
-
-
+mpsoc/Integration_test/**/work
+mpsoc/Integration_test/**/result_logs/*

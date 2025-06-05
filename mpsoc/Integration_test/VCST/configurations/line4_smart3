@@ -1,0 +1,16 @@
+$model = bless( {
+    'noc_param'=> {
+        "SMART_MAX" => "3",
+        TOPOLOGY=>"\"LINE\"",
+        "T1" => "4",
+        "T2" => "4",
+        "V" => "1",
+        "ESCAP_VC_MASK" => "1'b1",
+        "B" => "4",
+        "LB" => "16",
+        "Fpay" => "64",
+        "SSA_EN" => "0",
+        "SELF_LOOP_EN" => "1",
+        "MCAST_ENDP_LIST" => "'b11",
+    }
+}, 'ProNOC' );
