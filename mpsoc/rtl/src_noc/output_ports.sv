@@ -134,7 +134,7 @@ module output_ports #(
             if(ROUTE_TYPE == "FULL_ADAPTIVE") begin :full_adpt
             /* verilator lint_on WIDTH */
                 reg [PV-1 : 0] full_adaptive_ovc_mask,full_adaptive_ovc_mask_next; 
-                always @(*) begin
+                always_comb begin
                     for(k=0; k<PV; k=k+1) begin
                      //in full adaptive routing, adaptive VCs located in y axies can not be reallocated non-atomicly   
                         if( AVC_ATOMIC_EN== 0) begin :avc_atomic
@@ -426,7 +426,7 @@ module   credit_monitor_per_ovc  #(
     
     reg [DEPTHw-1 : 0]    credit_counter_next;
     reg [DEPTHw-1 : 0]    credit_counter;
-    always @(*) begin        
+    always_comb begin        
         credit_counter_next = credit_counter;
         if(credit_increased    &   ~credit_decreased) begin 
             credit_counter_next = credit_counter+1'b1;

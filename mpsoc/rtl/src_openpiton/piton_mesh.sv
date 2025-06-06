@@ -295,7 +295,7 @@ module piton_mesh_pronoc_wrap (
             .valid()
         );
         
-        always @(*) begin 
+        always_comb begin 
             myLocX[i]   = {`XY_WIDTH{1'b0}};
             myLocY[i]   = {`XY_WIDTH{1'b0}};
             myChipID[i] = {`CHIP_ID_WIDTH{1'b0}};

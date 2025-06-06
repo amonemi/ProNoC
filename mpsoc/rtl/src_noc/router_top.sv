@@ -372,7 +372,7 @@ module router_top #(
 //    logic  router_is_ideal /*verilator public_flat_rd*/ ;
 //    logic  not_ideal_next,not_ideal;
 //    integer ii,jj;
-//    always @(*) begin
+//    always_comb begin
 //        router_is_ideal = 1'b1;
 //        not_ideal_next  = 1'b0;
 //        for(ii=0; ii<P; ii=ii+1) begin

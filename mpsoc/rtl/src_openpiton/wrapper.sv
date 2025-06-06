@@ -138,12 +138,12 @@ module piton_to_pronoc_endp_addr_converter_diffrent_topology
     reg [NEw-1 : 0] ProNoC_id;
     generate 
         if (PITON_NEw < NEw) begin 
-            always @ (*) begin 
+            always_comb begin 
                 ProNoC_id =0;
                 ProNoC_id [PITON_NEw-1 : 0] = piton_id;
             end
         end else begin 
-            always @ (*) begin                 
+            always_comb begin                 
                 ProNoC_id =0;
                 ProNoC_id  = piton_id [ NEw-1 : 0];
             end
@@ -160,7 +160,7 @@ module piton_to_pronoc_endp_addr_converter_diffrent_topology
     endp_addr_encoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) 
         encode3 ( .id(CHIP_SET_ID), .code( chipset_endp_addr ));
     assign pronoc_endp_addr_o =  (piton_chipid_i == default_chipid_i ) ? pronoc_endp_addr : chipset_endp_addr;
-    always @ (*) begin 
+    always_comb begin 
         piton_end_addr_coded_o = {ADDR_CODED{1'b0}};
         piton_end_addr_coded_o [Yw+Xw-1 : 0] =   {piton_coreid_y_i[Yw-1 : 0],  piton_coreid_x_i[Xw-1 : 0]};
         if(piton_chipid_i == 8192 ) begin 
@@ -220,7 +220,7 @@ module piton_to_pronoc_endp_addr_converter_same_topology
     //coded for FMESH topology
     generate     
     if(TOPOLOGY == "FMESH") begin 
-        always @ (*) begin 
+        always_comb begin 
             pronoc_endp_addr_o = {EAw{1'b0}};
             if(piton_chipid_i == default_chipid_i ) begin 
                 pronoc_endp_addr_o [Yw+Xw-1 : 0] =  {piton_coreid_y_i[Yw-1 : 0],  piton_coreid_x_i[Xw-1 : 0]};
@@ -232,14 +232,14 @@ module piton_to_pronoc_endp_addr_converter_same_topology
             end
         end    
     end else begin //"mesh" 
-        always @ (*) begin 
+        always_comb begin 
             pronoc_endp_addr_o = {EAw{1'b0}};
             pronoc_endp_addr_o [Yw+Xw-1 : 0] =  {piton_coreid_y_i[Yw-1 : 0],  piton_coreid_x_i[Xw-1 : 0]};            
         end    
     end
     endgenerate
     
-    always @ (*) begin 
+    always_comb begin 
         piton_end_addr_coded_o = {ADDR_CODED{1'b0}};
         piton_end_addr_coded_o [Yw+Xw-1 : 0] =   {piton_coreid_y_i[Yw-1 : 0],  piton_coreid_x_i[Xw-1 : 0]};
         if(piton_chipid_i == 8192 ) begin 
@@ -273,7 +273,7 @@ output  reg [`NOC_X_WIDTH-1:0]   piton_coreid_x_o;
 output  reg [`NOC_Y_WIDTH-1:0]   piton_coreid_y_o;
 input   [ADDR_CODED-1 : 0] piton_end_addr_coded_i;
     
-    always @(*)begin 
+    always_combbegin 
         piton_coreid_x_o = {`MSG_DST_X_WIDTH{1'b0}}; 
         piton_coreid_y_o = {`MSG_DST_Y_WIDTH{1'b0}}; 
         {piton_coreid_y_o[Yw-1 : 0],  piton_coreid_x_o[Xw-1 : 0]}=piton_end_addr_coded_i [Yw+Xw-1 : 0];
@@ -405,7 +405,7 @@ module piton_to_pronoc_wrapper  #(
     
     wire [Fw-1 : 0] header_flit;
     reg [WEIGHTw-1 : 0] win;
-    always @(*) begin 
+    always_comb begin 
         win={WEIGHTw{1'b0}};
         win[0]=1'b1;
     end    

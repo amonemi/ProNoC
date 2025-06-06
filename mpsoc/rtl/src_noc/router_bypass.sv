@@ -358,7 +358,7 @@ module smart_bypass_chanels #(
         if(SS_PORT != DISABLE) begin: ssp 
             //smart_chanel_shifter
             assign smart_forwardable[i] = |  (ivc_forwardable[i] & smart_chanel_in[i].ovc);
-            always @(*) begin 
+            always_comb begin 
                 smart_chanel_shifted[i] = smart_chanel_in [i];
                 {smart_chanel_shifted[i].requests,rq[i]} =(smart_forwardable[i])? {1'b0,smart_chanel_in[i].requests}:{{SMART_NUM{1'b0}},smart_chanel_in[i].requests[0]};
                 smart_chanel_shifted[i].bypassed_num =   smart_chanel_in [i].bypassed_num +1'b1;
@@ -491,7 +491,7 @@ module smart_validity_check_per_ivc  #(
         
     output reg [V-1 : 0] smart_ivc_granted_ovc_num_o;
     
-    always @(*) begin 
+    always_comb begin 
         smart_ivc_granted_ovc_num_o={V{1'b0}};
         smart_ivc_granted_ovc_num_o[IVC_NUM]=smart_ivc_num_getting_ovc_grant_o;
     end    
@@ -754,7 +754,7 @@ module smart_credit_manage_per_vc #(
     output credit_out;
     logic [Bw : 0] counter, counter_next;
     
-    always @(*) begin 
+    always_comb begin 
         counter_next=counter;
         if(credit_in &     smart_credit_in) counter_next = counter +1'b1;
         else if(credit_in |    smart_credit_in) counter_next=counter;

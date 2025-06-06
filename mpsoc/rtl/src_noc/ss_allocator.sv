@@ -330,7 +330,7 @@ module ssa_per_vc #(
     assign ovc_released = ivc_reset & ~single_flit_pck;
     assign ovc_allocated= ivc_num_getting_ovc_grant & ~single_flit_pck;
     
-    always @(*)begin
+    always_combbegin
         granted_ovc_num={V{1'b0}};
         granted_ovc_num[V_LOCAL]= ivc_num_getting_ovc_grant;   
     end   
@@ -488,14 +488,14 @@ module add_ss_port #(
     end else begin : ss 
         reg [P_1-1 : 0] destport_temp; 
         if( SELF_LOOP_EN) begin : slp
-            always @(*)begin 
+            always_combbegin 
                 destport_temp=destport_in;
                 if(destport_in=={P_1{1'b0}}) destport_temp[SS_PORT]= 1'b1;
             end 
             assign destport_out = destport_temp;
         end else begin : nslp
             localparam SS_PORT_CODE = (SW_LOC>SS_PORT) ? SS_PORT : SS_PORT-1;
-            always @(*)begin 
+            always_combbegin 
                 destport_temp=destport_in;
                 if(destport_in=={P_1{1'b0}}) begin 
                     destport_temp[SS_PORT_CODE]= 1'b1;

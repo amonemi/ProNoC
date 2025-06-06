@@ -157,7 +157,7 @@ module multicast_routing_mesh    #(
         assign goto_local[i] = |(local_p[i] & dest_mcast_all_endp);// will be synthesized as single bit assign
     end//for
     reg [4 : 0] destport_tmp;
-    always @(*) begin 
+    always_comb begin 
         destport_tmp = {5{1'b0}};
         destport_tmp[LOCAL]=goto_local[LOCAL];                
         if     (SW_LOC == SOUTH) destport_tmp [NORTH] = goto_north;
@@ -303,7 +303,7 @@ module multicast_routing_fmesh #(
     wire goto_west  = (|(x_plus  & row_has_any_dest))    | goto_local[WEST];
     
     reg [4 : 0] destport_tmp;
-    always @(*) begin 
+    always_comb begin 
         destport_tmp = {DSTPw{1'b0}};
         destport_tmp[LOCAL]=goto_local[LOCAL];                
         if     (SW_LOC == SOUTH)begin 
@@ -392,7 +392,7 @@ module mcast_dest_list_decode #(
             .id(unicast_id)                
         );            
         
-        always @(*)begin 
+        always_combbegin 
             dest_o_uni = {NE{1'b0}};
             dest_o_uni[unicast_id]=1'b1;
         end
@@ -424,7 +424,7 @@ module mcast_dest_list_decode #(
             .id(unicast_id)                
         );            
         
-        always @(*)begin 
+        always_combbegin 
             dest_o_uni = {NE{1'b0}};
             dest_o_uni[unicast_id]=1'b1;
         end
@@ -451,7 +451,7 @@ module mcast_dest_list_decode #(
             .id(unicast_id)                
         );            
         
-        always @(*)begin 
+        always_combbegin 
             dest_o_uni = {NE{1'b0}};
             dest_o_uni[unicast_id]=1'b1;
         end
@@ -526,7 +526,7 @@ module multicast_chan_in_process #(
                 assign row_has_any_dest[i] =| endp_mask[i];
             end    
             reg   [DSTPw-1 : 0] destport_tmp;
-            always @(*) begin 
+            always_comb begin 
                 destport_tmp = destport;
                 if(SELF_LOOP_EN   == 0) destport_tmp [ SW_LOC ] = 1'b0; 
             end
@@ -567,7 +567,7 @@ module multicast_chan_in_process #(
             else assign row_has_any_dest_endp_port[i] =(| endp_mask[i]) |  north_endps[i] | south_endps[i];
         end    
         reg   [DSTPw-1 : 0] destport_tmp;
-        always @(*) begin 
+        always_comb begin 
             destport_tmp = destport;
             if(SELF_LOOP_EN   == 0) destport_tmp [ SW_LOC ] = 1'b0;
         end
@@ -588,7 +588,7 @@ module multicast_chan_in_process #(
         .dest_e_addr(dest_e_addr),  // destination endpoint address
         .destport(destport)
     );  
-    always @(*) begin 
+    always_comb begin 
         chan_out=chan_in;
         if(chan_in.flit.hdr_flag == 1'b1) begin
             chan_out.flit [E_DST_MSB : E_DST_LSB] = dest_e_addr;

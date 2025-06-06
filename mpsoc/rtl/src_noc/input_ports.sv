@@ -374,7 +374,7 @@ module input_queue_per_port #(
         .clk    (clk),
         .Q_out  (credit_out)); 
     
-    always @ (*)begin 
+    always_combbegin 
         iport_weight_next = iport_weight;
         if(hdr_flit_wr != {V{1'b0}})  iport_weight_next = (weight_in=={WEIGHTw{1'b0}})? WEIGHT_INIT : weight_in; // the minimum weight is 1
     end
@@ -542,7 +542,7 @@ module input_queue_per_port #(
         end
         if(PCK_TYPE == "MULTI_FLIT") begin : multi_flit 
             
-            always @ (*) begin
+            always_comb begin
                 ovc_is_assigned_next[i] = ovc_is_assigned[i];
                 if( vsa_ctrl_in.ivc_reset[i] |
                         ssa_ctrl_in.ivc_reset[i] |
@@ -554,7 +554,7 @@ module input_queue_per_port #(
                     )       ovc_is_assigned_next[i] = 1'b1;
             end//always 
             
-            always @(*) begin
+            always_comb begin
                 assigned_ovc_num_next[(i+1)*V-1 : i*V] = assigned_ovc_num[(i+1)*V-1 : i*V] ;
                 if(vsa_ctrl_in.ivc_num_getting_ovc_grant[i] | ssa_ctrl_in.ivc_num_getting_ovc_grant[i] | smart_ctrl_in.ivc_num_getting_ovc_grant[i] ) begin 
                     assigned_ovc_num_next[(i+1)*V-1 : i*V] = mux_out[i];
@@ -598,7 +598,7 @@ module input_queue_per_port #(
             //assign flit_is_tail[i]=1'b1;
             assign ovc_is_assigned_next[i] = 1'b0;
             
-            always @(*) begin
+            always_comb begin
                 assigned_ovc_num_next[(i+1)*V-1 : i*V] = assigned_ovc_num[(i+1)*V-1 : i*V] ;
                 if(vsa_ctrl_in.ivc_num_getting_ovc_grant[i] | ssa_ctrl_in.ivc_num_getting_ovc_grant[i]) begin 
                     assigned_ovc_num_next[(i+1)*V-1 : i*V] = mux_out[i];

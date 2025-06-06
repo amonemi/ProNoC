@@ -48,7 +48,7 @@ module pck_class_in_gen #(
         end
     end
     
-    always @(*) begin 
+    always_comb begin 
         if      ( rnd <   C0_p)                 pck_class_o =0;
         else if ( rnd <   (C0_p+C1_p))          pck_class_o =1;
         else if ( rnd <   (C0_p+C1_p+C2_p))     pck_class_o =2;
@@ -185,7 +185,7 @@ module  pck_dst_gen  #(
         
         if(CAST_TYPE == "MULTICAST_FULL") begin :mful
         
-            always @( * ) begin 
+            always_comb begin 
                 multicast_dest_e_addr = {DAw{1'b0}};
                 temp={DAw{1'b0}};
                 temp[unicast_id_num]=1'b1;
@@ -205,7 +205,7 @@ module  pck_dst_gen  #(
             
         end else if(CAST_TYPE == "MULTICAST_PARTIAL") begin :mpar
             
-            always @( * ) begin 
+            always_comb begin 
                 multicast_dest_e_addr = {DAw{1'b0}};
                 temp={unicast_dest_e_addr,1'b1};
                 pck_siz_tmp= pck_size_uni;
@@ -227,7 +227,7 @@ module  pck_dst_gen  #(
             
         end else begin //Broadcast
             
-            always @( * ) begin 
+            always_comb begin 
                 multicast_dest_e_addr = {DAw{1'b0}};
                 pck_siz_tmp = pck_size_uni;
                 if(rnd_reg >= MCAST_TRAFFIC_RATIO) begin 
@@ -748,7 +748,7 @@ module pck_size_gen
             reg [PCK_SIZw-1 : 0] rnd,rnd_next;
             integer rnd2;
             integer k;
-            always @(*) begin 
+            always_comb begin 
                 rnd_next = rnd;
                 if(en) begin 
                     if(rnd2 < rnd_discrete[0].percentage) rnd_next = rnd_discrete[0].value;
@@ -819,7 +819,7 @@ module hot_spot_dest_gen
     end
     logic hotspot_flag;
     integer i;
-    always @(*)begin 
+    always_combbegin 
         off_flag=0;
         for (i=0;i<HOTSPOT_NUM; i=i+1)begin
             if ( hotspot_info[i].send_enable == 0 && core_num ==hotspot_info[i].ip_num)begin

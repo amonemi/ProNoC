@@ -187,7 +187,7 @@ module  traffic_gen_top    #(
     pronoc_register #(.W(1)) streg1 (.reset(reset),.clk(clk), .D_in(start_en_next), .Q_out(start_en)    );
     pronoc_register #(.W(DELAYw)) streg2 (.reset(reset),.clk(clk), .D_in(start_delay_counter_next), .Q_out(start_delay_counter)    );
     
-    always @(*) begin 
+    always_comb begin 
         start_en_next =start_en;
         start_delay_counter_next= start_delay_counter;
         if(start)    begin 
@@ -399,7 +399,7 @@ module  traffic_gen_top    #(
     
     reg not_yet_sent_aflit_next,not_yet_sent_aflit;
     
-    always @(*)begin
+    always_combbegin
         wr_vc_next          = wr_vc; 
         cand_wr_vc_en       = 1'b0;
         flit_out_wr         = 1'b0;
@@ -686,7 +686,7 @@ module  traffic_gen_top    #(
 // `ifdef VERILATOR
 //   logic  endp_is_active   /*verilator public_flat_rd*/ ;
 //  
-//    always @ (*) begin 
+//    always_comb begin 
 //        endp_is_active  = 1'b0;        
 //        if (chan_out.flit_chanel.flit_wr) endp_is_active=1'b1;
 //        if (chan_out.flit_chanel.credit > {V{1'b0}} ) endp_is_active=1'b1;
@@ -748,7 +748,7 @@ module injection_ratio_ctrl #
     
     reg sent,next_sent,next_inject;
     
-    always @(*) begin 
+    always_comb begin 
         next_state        =state;
         next_flit_counter =flit_counter;
         next_sent         =sent;

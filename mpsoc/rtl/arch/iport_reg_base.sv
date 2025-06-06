@@ -238,7 +238,7 @@ module iport_reg_base  #(
     		.Q_out(iport_weight  ));
 	
 	
-    always @ (*)begin 
+    always_combbegin 
     	iport_weight_next = iport_weight;
     	if(hdr_flit_wr != {V{1'b0}})  iport_weight_next = (weight_in=={WEIGHTw{1'b0}})? 1 : weight_in; // the minimum weight is 1
     end

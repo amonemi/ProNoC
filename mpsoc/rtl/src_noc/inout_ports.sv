@@ -390,7 +390,7 @@ module output_vc_status #(
             .reset_to(credit_init_val_in[i][DEPTH_WIDTH-1:0])
         );
         
-        always @ ( * )begin 
+        always_combbegin 
             credit_next[i] = credit [i];
             if(  wr_in[i]  && ~credit_in[i])   credit_next[i] = credit[i]-1'b1;
             if( ~wr_in[i]  &&  credit_in[i])   credit_next[i] = credit[i]+1'b1;
@@ -418,7 +418,7 @@ module output_vc_status #(
     logic [V-1 : 0] cand_vc_ld_next;  
     pronoc_register #(.W(V)) reg2 (.D_in(cand_vc_ld_next ), .Q_out(cand_vc), .reset(reset), .clk(clk));
 
-    always  @ ( *) begin 
+    always_comb begin 
         cand_vc_ld_next = cand_vc;
         if(cand_wr_vc_en)    cand_vc_ld_next  =  cand_vc_next;
     end

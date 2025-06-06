@@ -114,7 +114,7 @@ module multicast_injector #(
         .sel (pck_injct_in.vc)
     );
     
-    always @ (*) begin
+    always_comb begin
         counter_next = counter;
         counter2_next =counter2;
         flit_type_next =flit_type;

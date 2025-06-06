@@ -298,7 +298,7 @@ module header_flit_update_lk_route_ovc #(
          */
     end
         
-    always @(*)begin 
+    always_combbegin 
         flit_out = {flit_in[Fw-1 : Fw-2],ovc_num,flit_in[FPAYw-1 :0]};
         if(hdr_flag) flit_out[DST_P_MSB : DST_P_LSB]= dest_coded;
     end

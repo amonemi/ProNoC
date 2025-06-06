@@ -66,15 +66,15 @@ module vc_priority_based_dest_port #(
     integer j;  
     generate 
     if(P_1 == V  )begin :b1
-        always @(*) begin vc_pririty_init =  dest_port; end
+        always_comb begin vc_pririty_init =  dest_port; end
     end else if (P_1 > V  )begin :b2
         for (i=0;i<V; i=i+1)begin:yy
-            always @(*) begin 
+            always_comb begin 
                 vc_pririty_init[i] = | dest_port[((i+1)*(P_1))/V-1: (i*(P_1))/V ];
             end
         end
     end else begin :b3
-        always @(*) begin //P_1 < V
+        always_comb begin //P_1 < V
             vc_pririty_init={V{1'b0}};
             for (j=0;j<P_1; j=j+1)  vc_pririty_init[j+OFFSET] =  dest_port[j];
         end

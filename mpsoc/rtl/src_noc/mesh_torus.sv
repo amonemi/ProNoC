@@ -713,14 +713,14 @@ module mesh_torus_distance_gen (
     reg [Yw-1 : 0] y_offset;
     generate 
     if( IS_MESH | IS_LINE) begin : oneD
-        always @(*) begin 
+        always_comb begin 
             x_offset = (src_x> dest_x)? src_x - dest_x : dest_x - src_x;
             y_offset = (src_y> dest_y)? src_y - dest_y : dest_y - src_y;
         end
     end else begin : twoD //torus ring
         wire tranc_x_plus,tranc_x_min,tranc_y_plus,tranc_y_min,same_x,same_y;
         /* verilator lint_off WIDTH */
-        always @ (*) begin 
+        always_comb begin 
             x_offset= {Xw{1'b0}};
             y_offset= {Yw{1'b0}};
             //x_offset
@@ -1221,7 +1221,7 @@ module mesh_torus_destp_decoder #(
     if( ROUTE_TYPE == "DETERMINISTIC") begin :dtrmn
         wire x,y,a,b;
         assign {x,y,a,b} = dest_port_coded;
-        always @(*)begin 
+        always_combbegin 
             case({a,b})
                 2'b10 : portout = {1'b0,~x,1'b0,x,1'b0};
                 2'b01 : portout = {~y,1'b0,y,1'b0,1'b0};
@@ -1234,7 +1234,7 @@ module mesh_torus_destp_decoder #(
         assign {x,y,a,b} = dest_port_coded;        
         wire [PPSw-1:0] port_pre_sel_final;
         assign port_pre_sel_final= (swap_port_presel)? ~port_pre_sel: port_pre_sel;
-        always @(*)begin 
+        always_combbegin 
             case({a,b})
                 2'b10 : portout = {1'b0,~x,1'b0,x,1'b0};
                 2'b01 : portout = {~y,1'b0,y,1'b0,1'b0};

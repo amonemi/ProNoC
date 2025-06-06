@@ -162,7 +162,7 @@ module packet_injector #(
         .sel (pck_injct_in.vc)
     );
     
-    always @ (*) begin 
+    always_comb begin 
         counter_next = counter;
         counter2_next =counter2;
         flit_type_next =flit_type;
@@ -214,7 +214,7 @@ module packet_injector #(
     pronoc_register #(.W(CNTw))     reg3 (.D_in(counter2_next ), .Q_out(counter2), .reset(reset), .clk(clk));
     pronoc_register #(.W(V))     reg4 (.D_in(credit_o_next ), .Q_out(credit_o), .reset(reset), .clk(clk));
 
-    always @ (*) begin
+    always_comb begin
         credit_o_next = credit_o;
         if (chan_in.flit_chanel.flit_wr) credit_o_next =  chan_in.flit_chanel.flit.vc;
         else credit_o_next = {V{1'b0}};
@@ -616,7 +616,7 @@ module packet_injector_verilator #(
     // `ifdef VERILATOR
     //     logic  endp_is_active   /*verilator public_flat_rd*/ ;
     //
-    //     always @ (*) begin 
+    //     always_comb begin 
     //        endp_is_active  = 1'b0; 
     //         if (chan_out.flit_chanel.flit_wr) endp_is_active=1'b1;
     //         if (chan_out.flit_chanel.credit > {V{1'b0}} ) endp_is_active=1'b1;

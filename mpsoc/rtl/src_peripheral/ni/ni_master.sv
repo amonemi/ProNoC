@@ -296,7 +296,7 @@ Shared registers for all VCs
     else assign temp = {{(8-HDw){1'b0}},rsv_hdr_dat [vc_addr]};
     endgenerate
     //read wb registers
-    always @(*)begin 
+    always_combbegin 
         s_dat_o ={Dw{1'b0}};
         case(vc_s_addr_i)
         GENERAL_REGS_WB_ADDR:begin // This is a general address. check the general address filed
@@ -335,7 +335,7 @@ Shared registers for all VCs
     end
     
     //write wb registers
-    always @ (*)begin 
+    always_combbegin 
         burst_counter_next=burst_counter;
         burst_size_next= burst_size;
         if(burst_counter_ld)    burst_counter_next = burst_size;
@@ -665,7 +665,7 @@ Shared registers for all VCs
         assign tail_flit_out[31 : 0]  =  send_crc_out;
     end   else begin : no_crc 
         assign tail_flit_out   =  m_send_dat_i [Fpay-1 : 0];
-        //always @(*) crc_miss_match = {V{1'b0}};
+        //always_comb crc_miss_match = {V{1'b0}};
     always @(posedge clk) crc_miss_match <= {V{1'b0}};
     end
 
