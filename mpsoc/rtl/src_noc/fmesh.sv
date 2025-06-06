@@ -31,16 +31,16 @@ module  fmesh_addr_encoder #(
         SOUTH   =   4;  
         
     function integer addrencode; 
-        input integer in,nx,nxw,nl,nyw,ny;
+        input integer addr,nx,nxw,nl,nyw,ny;
         integer  y, x, l,p, diff,mul;begin
             mul  = nx*ny*nl;            
-            if(in < mul) begin 
-                y = ((in/nl) / nx ); 
-                x = ((in/nl) % nx ); 
-                l = (in % nl); 
+            if(addr < mul) begin 
+                y = ((addr/nl) / nx ); 
+                x = ((addr/nl) % nx ); 
+                l = (addr % nl); 
                 p = (l==0)? LOCAL : 4+l;            
             end else begin      
-                diff = in -  mul ;
+                diff = addr -  mul ;
                 if( diff <  nx) begin //top mesh edge 
                     y = 0;
                     x = diff;
@@ -114,16 +114,16 @@ module  fmesh_addr_coder #(
         SOUTH   =   4;  
         
     function integer addrencode; 
-        input integer in,nx,nxw,nl,nyw,ny;
+        input integer addr,nx,nxw,nl,nyw,ny;
         integer  y, x, l,p, diff,mul;begin
             mul  = nx*ny*nl;            
-            if(in < mul) begin 
-                y = ((in/nl) / nx ); 
-                x = ((in/nl) % nx ); 
-                l = (in % nl); 
+            if(addr < mul) begin 
+                y = ((addr/nl) / nx ); 
+                x = ((addr/nl) % nx ); 
+                l = (addr % nl); 
                 p = (l==0)? LOCAL : 4+l;            
             end else begin      
-                diff = in -  mul ;
+                diff = addr -  mul ;
                 if( diff <  nx) begin //top mesh edge 
                     y = 0;
                     x = diff;

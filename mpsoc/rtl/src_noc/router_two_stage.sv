@@ -342,7 +342,7 @@ module router_two_stage #(
         .reset(reset)
     );
     
-    pronoc_register #(.W(PP_1)) reg2 (.in(granted_dest_port_all ), .out(granted_dest_port_all_delayed), .reset(reset), .clk(clk));
+    pronoc_register #(.W(PP_1)) reg2 (.D_in(granted_dest_port_all ), .Q_out(granted_dest_port_all_delayed), .reset(reset), .clk(clk));
     
     crossbar #(
         .NOC_ID(NOC_ID),
@@ -368,8 +368,8 @@ module router_two_stage #(
         reg [PFw-1 : 0] flit_out_all_pipe;
         reg [P-1 : 0] flit_out_wr_all_pipe;
         
-        pronoc_register #(.W(PFw)) reg1 (.in(crossbar_flit_out_all    ), .out(flit_out_all_pipe), .reset(reset), .clk(clk));
-        pronoc_register #(.W(P)  ) reg2 (.in(crossbar_flit_out_wr_all ), .out(flit_out_wr_all_pipe), .reset(reset), .clk(clk));
+        pronoc_register #(.W(PFw)) reg1 (.D_in(crossbar_flit_out_all    ), .Q_out(flit_out_all_pipe), .reset(reset), .clk(clk));
+        pronoc_register #(.W(P)  ) reg2 (.D_in(crossbar_flit_out_wr_all ), .Q_out(flit_out_wr_all_pipe), .reset(reset), .clk(clk));
         
         assign link_flit_out_all    = flit_out_all_pipe;
         assign link_flit_out_wr_all = flit_out_wr_all_pipe;
@@ -614,7 +614,7 @@ module pronoc_trace_dump_sub #(
     input   flit_chanel_t chan_in  [P-1 : 0];
     input   clk;
     
-    integer out;
+    integer Q_out;
     string fname [P-1 : 0];
     
     genvar p;
@@ -626,22 +626,22 @@ module pronoc_trace_dump_sub #(
             if(TRACE_DUMP_PER == "ROUTER") fname[p] = $sformatf("trace_dump_R%0d.out",current_r_id);
             if(TRACE_DUMP_PER == "NOC"   ) fname[p] = $sformatf("trace_dump.out");
             /* verilator lint_on WIDTH */ 
-            out = $fopen(fname[p],"w");
-            $fclose(out);
+            Q_out = $fopen(fname[p],"w");
+            $fclose(Q_out);
         end
         
         always @(posedge clk) begin 
             if(chan_in[p].flit_wr) begin 
-                out = $fopen(fname[p],"a");
-                if(CYCLE_REPORT) $fwrite(out,"%t:",$time);
-                $fwrite(out, "Flit %s: Port %0d, Payload: %h\n",DIRECTION, p, chan_in[p].flit);
-                $fclose(out);                
+                Q_out = $fopen(fname[p],"a");
+                if(CYCLE_REPORT) $fwrite(Q_out,"%t:",$time);
+                $fwrite(Q_out, "Flit %s: Port %0d, Payload: %h\n",DIRECTION, p, chan_in[p].flit);
+                $fclose(Q_out);                
             end
             if(chan_in[p].credit>0) begin 
-                out = $fopen(fname[p],"a");
-                if(CYCLE_REPORT) $fwrite(out,"%t:",$time);
-                $fwrite(out, "credit %s:%h Port %0d\n",DIRECTION, chan_in[p].credit,p);
-                $fclose(out);                
+                Q_out = $fopen(fname[p],"a");
+                if(CYCLE_REPORT) $fwrite(Q_out,"%t:",$time);
+                $fwrite(Q_out, "credit %s:%h Port %0d\n",DIRECTION, chan_in[p].credit,p);
+                $fclose(Q_out);                
             end        
         end    
     end

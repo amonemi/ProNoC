@@ -249,8 +249,8 @@ module tree_look_ahead_routing #(
         .lkdestport_encoded(lkdestport_encoded)
     );
     
-    pronoc_register #(.W(DSPw)) reg1 (.in(destport_encoded  ), .out(destport_encoded_delayed), .reset(reset), .clk(clk));
-    pronoc_register #(.W(LKw )) reg2 (.in(dest_addr_encoded ), .out(dest_addr_encoded_delayed),.reset(reset), .clk(clk));
+    pronoc_register #(.W(DSPw)) reg1 (.D_in(destport_encoded  ), .Q_out(destport_encoded_delayed), .reset(reset), .clk(clk));
+    pronoc_register #(.W(LKw )) reg2 (.D_in(dest_addr_encoded ), .Q_out(dest_addr_encoded_delayed),.reset(reset), .clk(clk));
 endmodule
 
 

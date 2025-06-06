@@ -116,11 +116,11 @@ module output_ports #(
     wire [CREDITw-1 : 0] credit_counter [PV-1 : 0]; 
     wire [PVV-1 : 0] assigned_ovc_num_all;
     wire [PV-1 : 0] ovc_is_assigned_all;
-    
-    pronoc_register #(.W(PV)) reg_1 ( .in(full_all_next), .reset(reset), .clk(clk), .out(full_all));
-    pronoc_register #(.W(PV)) reg_2 ( .in(nearly_full_all_next), .reset(reset), .clk(clk), .out(nearly_full_all));
-    pronoc_register #(.W(PV)) reg_3 ( .in(empty_all_next), .reset(reset), .clk(clk), .out(empty_all));
-    
+
+    pronoc_register #(.W(PV)) reg_1 ( .D_in(full_all_next), .reset(reset), .clk(clk), .Q_out(full_all));
+    pronoc_register #(.W(PV)) reg_2 ( .D_in(nearly_full_all_next), .reset(reset), .clk(clk), .Q_out(nearly_full_all));
+    pronoc_register #(.W(PV)) reg_3 ( .D_in(empty_all_next), .reset(reset), .clk(clk), .Q_out(empty_all));
+
     integer k;
     genvar i,j;
     generate
@@ -150,7 +150,7 @@ module output_ports #(
                         end                       
                      end // for  
                 end//always
-                pronoc_register #(.W(PV)) reg2 ( .in(full_adaptive_ovc_mask_next), .reset(reset), .clk(clk), .out(full_adaptive_ovc_mask));
+                pronoc_register #(.W(PV)) reg2 ( .D_in(full_adaptive_ovc_mask_next), .reset(reset), .clk(clk), .Q_out(full_adaptive_ovc_mask));
                 assign ovc_avalable_all   = ~ovc_status & full_adaptive_ovc_mask;
             end else begin : par_adpt //par adaptive
                 assign ovc_avalable_all = (OVC_ALLOC_MODE)? ~(ovc_status | full_all) : ~(ovc_status | nearly_full_all);
@@ -292,8 +292,8 @@ module output_ports #(
         end//always
     end//for
     endgenerate
-    
-    pronoc_register #(.W(PV)) reg2 (.in(ovc_status_next ), .out(ovc_status), .reset(reset), .clk(clk));
+
+    pronoc_register #(.W(PV)) reg2 (.D_in(ovc_status_next ), .Q_out(ovc_status), .reset(reset), .clk(clk));
     port_pre_sel_gen #(
         .PPSw(PPSw),
         .P(P),
@@ -356,7 +356,7 @@ module output_ports #(
                 .NUM(PV) 
             )cnt1 (
                 .in_all(ovc_status),
-                .out(num1)
+                .sum_o(num1)
             );
             accumulator #(
                 .INw(PV),
@@ -364,7 +364,7 @@ module output_ports #(
                 .NUM(PV) 
             ) cnt2 (
                 .in_all(ovc_is_assigned_all),
-                .out(num2)         
+                .sum_o(num2)         
             );
             always @(posedge clk) begin
                 if(num1    != num2 )begin 
@@ -443,10 +443,10 @@ module   credit_monitor_per_ovc  #(
     pronoc_register_reset_init #(
         .W(DEPTHw)
     )reg1( 
-        .in(credit_counter_next),
+        .D_in(credit_counter_next),
         .reset(reset),
         .clk(clk),
-        .out(credit_counter),
+        .Q_out(credit_counter),
         .reset_to(credit_init_val_i [DEPTHw-1 : 0]) // Bint;
     );
 endmodule
@@ -497,8 +497,8 @@ module oport_ovc_sig_gen #(
         .W  (V),
         .N  (V)
     )ovc_mux (
-        .in  (assigned_ovc_num_masked),
-        .out (muxout1),
+        .D_in(assigned_ovc_num_masked),
+        .Q_out(muxout1),
         .sel (first_arbiter_granted_ivc)
     );
     // tail mux 
@@ -506,8 +506,8 @@ module oport_ovc_sig_gen #(
         .W  (1),
         .N  (V)
     )tail_mux (
-        .in        (flit_is_tail),
-        .out       (muxout2),
+        .D_in(flit_is_tail),
+        .Q_out(muxout2),
         .sel       (first_arbiter_granted_ivc)
     );
     
@@ -573,16 +573,16 @@ module full_ovc_predictor #(
         .W  (V),
         .N  (P_1)
     )full_mux1 (
-        .in     (full_muxin1),
-        .out    (full_muxout1),
+        .D_in(full_muxin1),
+        .Q_out(full_muxout1),
         .sel    (dest_port)
     );
     onehot_mux_1D #(
         .W  (V),
         .N  (P_1)
     )nearly_full_mux1 (
-        .in        (nearly_full_muxin1),
-        .out       (nearly_full_muxout1),
+        .D_in(nearly_full_muxin1),
+        .Q_out(nearly_full_muxout1),
         .sel       (dest_port)
     );
     // assigned ovc mux
@@ -590,8 +590,8 @@ module full_ovc_predictor #(
         .W (1),
         .N (V)
     ) full_mux2 (
-        .in  (full_muxout1),
-        .out (full_muxout2),
+        .D_in(full_muxout1),
+        .Q_out(full_muxout2),
         .sel (assigned_ovc_num)
     );
     wire [V-1 : 0]  nearlyfull_sel = (ovc_is_assigned | ~OVC_ALLOC_MODE)? assigned_ovc_num : granted_ovc_num ;// or (granted_ovc_num | ssa_granted_ovc_num) ?    
@@ -599,18 +599,18 @@ module full_ovc_predictor #(
         .W (1),
         .N (V)
     ) nearlfull_mux2 (
-        .in  (nearly_full_muxout1),
-        .out (nearly_full_muxout2),
+        .D_in(nearly_full_muxout1),
+        .Q_out(nearly_full_muxout2),
         .sel (nearlyfull_sel)
     );
     
     assign full_reg1_next = full_muxout2;
     assign full_reg2_next = nearly_full_muxout2 & ivc_getting_sw_grant;
     assign assigned_ovc_is_full = (PCK_TYPE == "MULTI_FLIT")? full_reg1 | full_reg2: 1'b0;
-    
-    pronoc_register #(.W(1)) reg1 (.in(full_reg1_next ), .out(full_reg1), .reset(reset), .clk(clk));
-    pronoc_register #(.W(1)) reg2 (.in(full_reg2_next ), .out(full_reg2), .reset(reset), .clk(clk));
-    
+
+    pronoc_register #(.W(1)) reg1 (.D_in(full_reg1_next ), .Q_out(full_reg1), .reset(reset), .clk(clk));
+    pronoc_register #(.W(1)) reg2 (.D_in(full_reg2_next ), .Q_out(full_reg2), .reset(reset), .clk(clk));
+
 endmodule
 
 `ifdef SIMULATION

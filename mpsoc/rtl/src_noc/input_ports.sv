@@ -339,40 +339,40 @@ module input_queue_per_port #(
     wire  [V-1 : 0] flit_is_tail2;
     
     pronoc_register #(.W(V)) reg1(
-        .in     (ovc_is_assigned_next), 
+        .D_in   (ovc_is_assigned_next), 
         .reset  (reset ), 
         .clk    (clk   ), 
-        .out    (ovc_is_assigned   ));
+        .Q_out  (ovc_is_assigned   ));
     
     pronoc_register #(.W(VV)) reg2(
-        .in     (assigned_ovc_num_next), 
+        .D_in   (assigned_ovc_num_next), 
         .reset  (reset ), 
         .clk    (clk   ), 
-        .out    (assigned_ovc_num  ));
+        .Q_out  (assigned_ovc_num  ));
     
     pronoc_register #(.W(V)) reg3(
-        .in     (rd_hdr_fwft_fifo), 
+        .D_in   (rd_hdr_fwft_fifo), 
         .reset  (reset ), 
         .clk    (clk   ), 
-        .out    (rd_hdr_fwft_fifo_delay ));
+        .Q_out  (rd_hdr_fwft_fifo_delay ));
     
     pronoc_register #(.W(V)) reg4(
-        .in     (wr_hdr_fwft_fifo), 
+        .D_in   (wr_hdr_fwft_fifo), 
         .reset  (reset ), 
         .clk    (clk   ), 
-        .out    (wr_hdr_fwft_fifo_delay ));
+        .Q_out  (wr_hdr_fwft_fifo_delay ));
     
     pronoc_register #(.W(WEIGHTw), .RESET_TO(1)) reg5(
-        .in     (iport_weight_next ), 
+        .D_in   (iport_weight_next ), 
         .reset  (reset ), 
         .clk    (clk   ), 
-        .out    (iport_weight  ));
+        .Q_out  (iport_weight  ));
     
     pronoc_register #(.W(V)) credit_reg (
-        .in     (ivc_num_getting_sw_grant & ~ multiple_dest),
+        .D_in   (ivc_num_getting_sw_grant & ~ multiple_dest),
         .reset  (reset),
         .clk    (clk),
-        .out    (credit_out)); 
+        .Q_out  (credit_out)); 
     
     always @ (*)begin 
         iport_weight_next = iport_weight;
@@ -565,11 +565,11 @@ module input_queue_per_port #(
                 .N  (3), 
                 .W  (V)
             ) hot_mux (
-                .in     ({vsa_ctrl_in.ivc_granted_ovc_num[(i+1)*V-1 : i*V], 
+                .D_in({vsa_ctrl_in.ivc_granted_ovc_num[(i+1)*V-1 : i*V], 
                         ssa_ctrl_in.ivc_granted_ovc_num[(i+1)*V-1 : i*V],
                         smart_ctrl_in.ivc_granted_ovc_num[(i+1)*V-1 : i*V]}), 
                 .sel    ({vsa_ctrl_in.ivc_num_getting_ovc_grant[i],ssa_ctrl_in.ivc_num_getting_ovc_grant[i],smart_ctrl_in.ivc_num_getting_ovc_grant[i]}  ),
-                .out    (mux_out[i]) 
+                .Q_out(mux_out[i]) 
             );
             
             /*
@@ -609,9 +609,9 @@ module input_queue_per_port #(
                 .N (2), 
                 .W (V)
             ) hot_mux (
-                .in ({vsa_ctrl_in.ivc_granted_ovc_num[(i+1)*V-1 : i*V], ssa_ctrl_in.ivc_granted_ovc_num[(i+1)*V-1 : i*V]}), 
+                .D_in({vsa_ctrl_in.ivc_granted_ovc_num[(i+1)*V-1 : i*V], ssa_ctrl_in.ivc_granted_ovc_num[(i+1)*V-1 : i*V]}), 
                 .sel ({vsa_ctrl_in.ivc_num_getting_ovc_grant[i], ssa_ctrl_in.ivc_num_getting_ovc_grant[i]}),
-                .out (mux_out[i]) 
+                .Q_out(mux_out[i]) 
             );
             
         end
@@ -703,7 +703,7 @@ module input_queue_per_port #(
             is_onehot0 #(
                 .IN_WIDTH(DSTPw)
             ) one_h (
-                .in(dest_port_multi[i]),
+                .D_in(dest_port_multi[i]),
                 .result(dst_onhot0[i])
             );
             assign multiple_dest[i]=~dst_onhot0[i];
@@ -873,8 +873,8 @@ module input_queue_per_port #(
             .W(1),
             .N(V)
         )onehot_mux(
-            .in(flit_is_tail),
-            .out(granted_flit_is_tail),
+            .D_in(flit_is_tail),
+            .Q_out(granted_flit_is_tail),
             .sel(ivc_num_getting_sw_grant)
         );
         

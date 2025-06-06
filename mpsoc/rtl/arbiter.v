@@ -181,88 +181,88 @@ module my_one_hot_arbiter #(
     end
     assign any_grant = | request;
     generate 
-        if(ARBITER_WIDTH    ==2) begin: w2  arbiter_2_one_hot arb( .in(request) , .out(grant), .low_pr(low_pr)); end
-        if(ARBITER_WIDTH    ==3) begin: w3  arbiter_3_one_hot arb( .in(request) , .out(grant), .low_pr(low_pr)); end
-        if(ARBITER_WIDTH    ==4) begin: w4  arbiter_4_one_hot arb( .in(request) , .out(grant), .low_pr(low_pr)); end
+        if(ARBITER_WIDTH    ==2) begin: w2  arbiter_2_one_hot arb( .D_in(request) , .Q_out(grant), .low_pr(low_pr)); end
+        if(ARBITER_WIDTH    ==3) begin: w3  arbiter_3_one_hot arb( .D_in(request) , .Q_out(grant), .low_pr(low_pr)); end
+        if(ARBITER_WIDTH    ==4) begin: w4  arbiter_4_one_hot arb( .D_in(request) , .Q_out(grant), .low_pr(low_pr)); end
     endgenerate
 endmodule
 
 
 module arbiter_2_one_hot(
-    input [1 : 0] in,
-    output reg[1 : 0] out,
+    input [1 : 0] D_in,
+    output reg[1 : 0] Q_out,
     input low_pr
 );
     always @(*) begin
-        out=2'b00;
+        Q_out=2'b00;
         case(low_pr)
             1'd0:
-                if(in[1])              out=2'b10;
-                else if(in[0])         out=2'b01;
+                if(D_in[1])              Q_out=2'b10;
+                else if(D_in[0])         Q_out=2'b01;
             1'd1:
-                if(in[0])              out=2'b01;
-                else if(in[1])         out=2'b10;
-            default: out=2'b00;
+                if(D_in[0])              Q_out=2'b01;
+                else if(D_in[1])         Q_out=2'b10;
+            default: Q_out=2'b00;
         endcase 
     end
 endmodule 
 
 
 module arbiter_3_one_hot(
-    input [2 : 0] in,
-    output reg[2 : 0] out,
+    input [2 : 0] D_in,
+    output reg[2 : 0] Q_out,
     input [1 : 0] low_pr
 );
     always @(*) begin
-        out=3'b000;
+        Q_out=3'b000;
         case(low_pr)
             2'd0:
-                if(in[1])              out=3'b010;
-                else if(in[2])         out=3'b100;
-                else if(in[0])         out=3'b001;
+                if(D_in[1])              Q_out=3'b010;
+                else if(D_in[2])         Q_out=3'b100;
+                else if(D_in[0])         Q_out=3'b001;
             2'd1:
-                if(in[2])              out=3'b100;
-                else if(in[0])         out=3'b001;
-                else if(in[1])         out=3'b010;
+                if(D_in[2])              Q_out=3'b100;
+                else if(D_in[0])         Q_out=3'b001;
+                else if(D_in[1])         Q_out=3'b010;
             2'd2:
-                if(in[0])              out=3'b001;
-                else if(in[1])         out=3'b010;
-                else if(in[2])         out=3'b100;
-            default: out=3'b000;
+                if(D_in[0])              Q_out=3'b001;
+                else if(D_in[1])         Q_out=3'b010;
+                else if(D_in[2])         Q_out=3'b100;
+            default: Q_out=3'b000;
         endcase 
     end
 endmodule 
 
 
 module arbiter_4_one_hot(
-    input [3 : 0] in,
-    output reg[3 : 0] out,
+    input [3 : 0] D_in,
+    output reg[3 : 0] Q_out,
     input [1 : 0] low_pr
 );
     always @(*) begin
-        out=4'b0000;
+        Q_out=4'b0000;
         case(low_pr)
             2'd0:
-                if(in[1])              out=4'b0010;
-                else if(in[2])         out=4'b0100;
-                else if(in[3])         out=4'b1000;
-                else if(in[0])         out=4'b0001;
+                if(D_in[1])              Q_out=4'b0010;
+                else if(D_in[2])         Q_out=4'b0100;
+                else if(D_in[3])         Q_out=4'b1000;
+                else if(D_in[0])         Q_out=4'b0001;
             2'd1:
-                if(in[2])              out=4'b0100;
-                else if(in[3])         out=4'b1000;
-                else if(in[0])         out=4'b0001;
-                else if(in[1])         out=4'b0010;
+                if(D_in[2])              Q_out=4'b0100;
+                else if(D_in[3])         Q_out=4'b1000;
+                else if(D_in[0])         Q_out=4'b0001;
+                else if(D_in[1])         Q_out=4'b0010;
             2'd2:
-                if(in[3])              out=4'b1000;
-                else if(in[0])         out=4'b0001;
-                else if(in[1])         out=4'b0010;
-                else if(in[2])         out=4'b0100;
+                if(D_in[3])              Q_out=4'b1000;
+                else if(D_in[0])         Q_out=4'b0001;
+                else if(D_in[1])         Q_out=4'b0010;
+                else if(D_in[2])         Q_out=4'b0100;
             2'd3:
-                if(in[0])              out=4'b0001;
-                else if(in[1])         out=4'b0010;
-                else if(in[2])         out=4'b0100;
-                else if(in[3])         out=4'b1000;
-            default: out=4'b0000;
+                if(D_in[0])              Q_out=4'b0001;
+                else if(D_in[1])         Q_out=4'b0010;
+                else if(D_in[2])         Q_out=4'b0100;
+                else if(D_in[3])         Q_out=4'b1000;
+            default: Q_out=4'b0000;
         endcase 
     end
 endmodule 
@@ -312,9 +312,9 @@ module my_one_hot_arbiter_priority_en #(
     
     assign any_grant = | request;
     generate 
-        if(ARBITER_WIDTH    ==2) begin : w2 arbiter_2_one_hot arb( .in(request) , .out(grant), .low_pr(low_pr)); end
-        if(ARBITER_WIDTH    ==3) begin : w3 arbiter_3_one_hot arb( .in(request) , .out(grant), .low_pr(low_pr)); end
-        if(ARBITER_WIDTH    ==4) begin : w4 arbiter_4_one_hot arb( .in(request) , .out(grant), .low_pr(low_pr)); end
+        if(ARBITER_WIDTH    ==2) begin : w2 arbiter_2_one_hot arb( .D_in(request) , .Q_out(grant), .low_pr(low_pr)); end
+        if(ARBITER_WIDTH    ==3) begin : w3 arbiter_3_one_hot arb( .D_in(request) , .Q_out(grant), .low_pr(low_pr)); end
+        if(ARBITER_WIDTH    ==4) begin : w4 arbiter_4_one_hot arb( .D_in(request) , .Q_out(grant), .low_pr(low_pr)); end
     endgenerate
 endmodule
 
@@ -326,13 +326,13 @@ endmodule
 module thermo_gen #(
     parameter WIDTH=16
 )(
-    input [WIDTH-1 : 0]in,
-    output [WIDTH-1 : 0]out
+    input [WIDTH-1 : 0]D_in,
+    output [WIDTH-1 : 0]Q_out
 );
     genvar i;
     generate
     for(i=0;i<WIDTH;i=i+1)begin :lp
-        assign out[i]= | in[i :0];    
+        assign Q_out[i]= | D_in[i :0];    
     end
     endgenerate
 endmodule
@@ -562,9 +562,9 @@ module my_one_hot_arbiter_ext_priority #(
     );
     assign any_grant = | request;
     generate 
-        if(ARBITER_WIDTH    ==2) begin: w2       arbiter_2_one_hot arb( .in(request) , .out(grant), .low_pr(low_pr)); end
-        if(ARBITER_WIDTH    ==3) begin: w3       arbiter_3_one_hot arb( .in(request) , .out(grant), .low_pr(low_pr)); end
-        if(ARBITER_WIDTH    ==4) begin: w4       arbiter_4_one_hot arb( .in(request) , .out(grant), .low_pr(low_pr)); end
+        if(ARBITER_WIDTH    ==2) begin: w2       arbiter_2_one_hot arb( .D_in(request) , .Q_out(grant), .low_pr(low_pr)); end
+        if(ARBITER_WIDTH    ==3) begin: w3       arbiter_3_one_hot arb( .D_in(request) , .Q_out(grant), .low_pr(low_pr)); end
+        if(ARBITER_WIDTH    ==4) begin: w4       arbiter_4_one_hot arb( .D_in(request) , .Q_out(grant), .low_pr(low_pr)); end
     endgenerate
 endmodule
 

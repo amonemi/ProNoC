@@ -383,10 +383,10 @@ module output_vc_status #(
         pronoc_register_reset_init #(
             .W(DEPTH_WIDTH)
         )reg1( 
-            .in(credit_next[i]),
+            .D_in(credit_next[i]),
             .reset(reset),
             .clk(clk),
-            .out(credit[i]),
+            .Q_out(credit[i]),
             .reset_to(credit_init_val_in[i][DEPTH_WIDTH-1:0])
         );
         
@@ -416,8 +416,8 @@ module output_vc_status #(
     );
     
     logic [V-1 : 0] cand_vc_ld_next;  
-    pronoc_register #(.W(V)) reg2 (.in(cand_vc_ld_next ), .out(cand_vc), .reset(reset), .clk(clk));
-    
+    pronoc_register #(.W(V)) reg2 (.D_in(cand_vc_ld_next ), .Q_out(cand_vc), .reset(reset), .clk(clk));
+
     always  @ ( *) begin 
         cand_vc_ld_next = cand_vc;
         if(cand_wr_vc_en)    cand_vc_ld_next  =  cand_vc_next;
@@ -662,8 +662,8 @@ module  vc_alloc_request_gen_determinstic #(
             .W       (V),
             .N      (P_1)
         ) multiplexer (
-            .in     (ovc_avalable_ivc   [i]),
-            .out    (ovc_avb_muxed      [i]),
+            .D_in(ovc_avalable_ivc   [i]),
+            .Q_out(ovc_avb_muxed      [i]),
             .sel    (dest_port_ivc      [i])
         );  
         

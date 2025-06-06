@@ -64,7 +64,7 @@ module xilinx_jtag_wb #(
     input reset;//,clk;
     output reg cpu_en, system_reset;
     
-   // output [7: 0 ] out;
+   // output [7: 0 ] Q_out;
     
     input [JWB_NUM*WB2Jw-1  : 0] wb_to_jtag_all;
     output[JWB_NUM*J2WBw-1 : 0] jtag_to_wb_all; 
@@ -127,8 +127,8 @@ module xilinx_jtag_wb #(
                 (
                 .clk(clk),
                 .jtag_clk(tclk),
-                .in(wb_to_jtag_ack_all[i]),
-                .out(wb_to_jtag_ack_all_latched[i])
+                .D_in(wb_to_jtag_ack_all[i]),
+                .Q_out(wb_to_jtag_ack_all_latched[i])
             );
       
             
@@ -277,32 +277,32 @@ endmodule
 module wb_to_jtag_latch  (
     clk,
     jtag_clk,
-    in,
-    out
+    D_in,
+    Q_out
 );
 
-   input clk,jtag_clk,in;
-   output out;
-   
+   input clk,jtag_clk,D_in;
+   output Q_out;
+
    reg out_latch,reset_out;
     
     
     always @ (posedge clk) begin 
-        if(in) out_latch<=1'b1;
+        if(D_in) out_latch<=1'b1;
         else if(reset_out) out_latch<=1'b0;    
     end
     
    always @(posedge jtag_clk)begin 
-        if(out_latch | in) reset_out<=1'b1;
+        if(out_latch | D_in) reset_out<=1'b1;
         else reset_out<=1'b0;
    
    end
     
-    
-    
-    assign out =  reset_out ; 
-    
-  
+
+
+    assign Q_out =  reset_out ; 
+
+
 endmodule
 
   

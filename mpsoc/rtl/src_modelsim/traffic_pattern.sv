@@ -268,7 +268,7 @@ module  pck_dst_gen_unicast
 ); 
     `NOC_CONF
     localparam
-        ADDR_DIMENSION =   (IS_MESH | IS_TORUS) ? 2 : 1;  // "RING" and FULLY_CONNECT 
+        ADDR_DIMENSION =   (IS_MESH | IS_TORUS) ? 2 : 1,  // "RING" and FULLY_CONNECT 
         PCK_CNTw = log2(MAX_PCK_NUM+1),
         HOTSPOT_NUM= (TRAFFIC=="HOTSPOT")? HOTSPOT_NODE_NUM : 1;
     

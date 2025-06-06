@@ -209,12 +209,12 @@ module packet_injector #(
     
     logic [V-1 : 0] credit_o, credit_o_next;
     
-    //pronoc_register #(.W(3),.RESET_TO(HEADER) ) reg1 (.in(flit_type_next ), .out(flit_type), .reset(reset), .clk(clk));
-    pronoc_register #(.W(PCK_SIZw)) reg2 (.in(counter_next ), .out(counter), .reset(reset), .clk(clk));
-    pronoc_register #(.W(CNTw))     reg3 (.in(counter2_next ), .out(counter2), .reset(reset), .clk(clk));
-    pronoc_register #(.W(V))     reg4 (.in(credit_o_next ), .out(credit_o), .reset(reset), .clk(clk));
-    
-    always @ (*) begin 
+    //pronoc_register #(.W(3),.RESET_TO(HEADER) ) reg1 (.D_in(flit_type_next ), .Q_out(flit_type), .reset(reset), .clk(clk));
+    pronoc_register #(.W(PCK_SIZw)) reg2 (.D_in(counter_next ), .Q_out(counter), .reset(reset), .clk(clk));
+    pronoc_register #(.W(CNTw))     reg3 (.D_in(counter2_next ), .Q_out(counter2), .reset(reset), .clk(clk));
+    pronoc_register #(.W(V))     reg4 (.D_in(credit_o_next ), .Q_out(credit_o), .reset(reset), .clk(clk));
+
+    always @ (*) begin
         credit_o_next = credit_o;
         if (chan_in.flit_chanel.flit_wr) credit_o_next =  chan_in.flit_chanel.flit.vc;
         else credit_o_next = {V{1'b0}};
@@ -360,9 +360,9 @@ module packet_injector #(
     wire tail_flag_reg, hdr_flag_reg;
     logic [DISTw-1:   0] distance;
     
-    pronoc_register #(.W(V))   register1 (.in(chan_in.flit_chanel.flit.vc), .reset(reset ), .clk(clk),.out(vc_reg));
-    pronoc_register #(.W(1))   register2 (.in(chan_in.flit_chanel.flit.hdr_flag), .reset(reset ), .clk(clk),.out(hdr_flag_reg));
-    pronoc_register #(.W(1))   register3 (.in(chan_in.flit_chanel.flit.tail_flag & chan_in.flit_chanel.flit_wr ),.reset(reset ), .clk (clk),.out(tail_flag_reg));
+    pronoc_register #(.W(V))   register1 (.D_in(chan_in.flit_chanel.flit.vc), .reset(reset ), .clk(clk),.Q_out(vc_reg));
+    pronoc_register #(.W(1))   register2 (.D_in(chan_in.flit_chanel.flit.hdr_flag), .reset(reset ), .clk(clk),.Q_out(hdr_flag_reg));
+    pronoc_register #(.W(1))   register3 (.D_in(chan_in.flit_chanel.flit.tail_flag & chan_in.flit_chanel.flit_wr ),.reset(reset ), .clk (clk),.Q_out(tail_flag_reg));
     
     wire [Vw-1 : 0] vc_bin;
     

@@ -42,10 +42,10 @@ module check_flit_chanel_type_is_in_order #(
     pronoc_register #(
         .W(V)
     ) reg2 ( 
-        .in(hdr_passed_next),
+        .D_in(hdr_passed_next),
         .reset(reset),
         .clk(clk),
-        .out(hdr_passed)
+        .Q_out(hdr_passed)
     );
     always @ (posedge clk ) begin 
         if(( hdr_passed & vc_num_hdr_wr)>0  )begin 
@@ -201,10 +201,10 @@ module debug_mesh_tori_route_ckeck #(
         pronoc_register #(
             .W(V)          
         ) reg2 ( 
-            .in(not_empty_next),
+            .D_in(not_empty_next),
             .reset(reset),    
             .clk(clk),      
-            .out(not_empty)
+            .Q_out(not_empty)
         );
         always@(*) begin
             not_empty_next = not_empty;
@@ -580,10 +580,10 @@ module check_pck_size #(
         end     
         
         pronoc_register #(.W(32)) reg1(
-            .in     (pck_size_counter_next[i]), 
+            .D_in(pck_size_counter_next[i]), 
             .reset  (reset ), 
             .clk    (clk   ), 
-            .out    (pck_size_counter[i]   )
+            .Q_out  (pck_size_counter[i]   )
         );
         
         always @(posedge clk) begin 
@@ -603,11 +603,11 @@ module check_pck_size #(
         //Check that the size of multicast/broadcast packets <= buffer size
             assign vc_hdr_wr_en [i] = flit_in_wr & hdr_flg_in & (vc_num_in == i);
             pronoc_register_ld_en #(.W(DAw)) reg2(
-                .in     (dest_e_addr_in), 
+                .D_in     (dest_e_addr_in), 
                 .reset  (reset ), 
                 .clk    (clk   ), 
                 .ld     (vc_hdr_wr_en [i] ),
-                .out    (dest_e_addr[i])
+                .Q_out    (dest_e_addr[i])
             );
             
             mcast_dest_list_decode #(
@@ -622,7 +622,7 @@ module check_pck_size #(
             is_onehot0 #(
                 .IN_WIDTH(NE)    
             ) one_h (
-                .in(dest_mcast_all_endp[i]),
+                .D_in(dest_mcast_all_endp[i]),
                 .result(onehot[i])
             );
             always @(posedge clk) begin 

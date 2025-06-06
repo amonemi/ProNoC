@@ -182,8 +182,8 @@ module comb_nonspec_allocator # (
             .W(V),
             .N(V)
         ) mux2 (
-            .in(masked_candidate_ovc_per_port[i]),
-            .out(candidate_ovc_local_num[i]),
+            .D_in(masked_candidate_ovc_per_port[i]),
+            .Q_out(candidate_ovc_local_num[i]),
             .sel(first_arbiter_granted_ivc_per_port[i])
         );
         
@@ -191,8 +191,8 @@ module comb_nonspec_allocator # (
             .W (1),
             .N (V)
         ) mux2_1 (
-            .in  (ovc_is_assigned_all[(i+1)*V-1 : i*V]),
-            .out (ovc_assigned_local[i]),
+            .D_in(ovc_is_assigned_all[(i+1)*V-1 : i*V]),
+            .Q_out(ovc_assigned_local[i]),
             .sel (first_arbiter_granted_ivc_per_port [i])            
         );
         
@@ -370,8 +370,8 @@ module  comb_nonspec_v2_allocator #(
             .W(V),
             .N(V)
         ) mux2 (
-            .in (masked_non_assigned_request_per_port [i]),
-            .out (candidate_ovc_local_num [i]),
+            .D_in(masked_non_assigned_request_per_port [i]),
+            .Q_out(candidate_ovc_local_num [i]),
             .sel (first_arbiter_granted_ivc_per_port [i])
         );
         
@@ -521,8 +521,8 @@ module nonspec_sw_alloc #(
             .W (P_1),
             .N (V)
         ) mux (
-            .in (dest_port_ivc [i]),
-            .out (dest_port[i]),
+            .D_in(dest_port_ivc [i]),
+            .Q_out(dest_port[i]),
             .sel(first_arbiter_grant[i])
         );
         
@@ -533,8 +533,8 @@ module nonspec_sw_alloc #(
                 .W (1),
                 .N (V)
             ) mux2 (
-                .in (pck_is_single_flit  [i]),
-                .out (single_flit_pck_local_grant[i]),
+                .D_in(pck_is_single_flit  [i]),
+                .Q_out(single_flit_pck_local_grant[i]),
                 .sel (first_arbiter_grant[i])
             );   
             
@@ -643,8 +643,8 @@ module swa_input_port_arbiter #(
             .W(1),
             .N(ARBITER_WIDTH)
         ) mux (
-            .in(vc_weight_is_consumed),
-            .out(winner_weight_consumed),
+            .D_in(vc_weight_is_consumed),
+            .Q_out(winner_weight_consumed),
             .sel(grant)
         );
         
@@ -727,8 +727,8 @@ module swa_output_port_arbiter #(
             .W(1),
             .N(ARBITER_WIDTH)
         ) mux (
-            .in(weight_consumed),
-            .out(pr_en),
+            .D_in(weight_consumed),
+            .Q_out(pr_en),
             .sel(grant)
         );
         

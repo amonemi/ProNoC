@@ -142,9 +142,8 @@ module flit_buffer
         /* verilator lint_on WIDTH */ 
         assign  rd_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = sub_rd_ptr[i]; 
         localparam RESET_TO = ((2**Bw)==B)? 0 : B*i;
-        pronoc_register #(.W(PTRw),.RESET_TO(RESET_TO)) reg4 (.in(sub_rd_ptr_next[i]), .out(sub_rd_ptr[i]), .reset(reset), .clk(clk));
-        
-        pronoc_register #(.W(DEPTHw)) sub_depth_reg (.in(sub_depth_next[i] ), .out(sub_depth [i]), .reset(reset), .clk(clk));
+        pronoc_register #(.W(PTRw),.RESET_TO(RESET_TO)) reg4 (.D_in(sub_rd_ptr_next[i]), .Q_out(sub_rd_ptr[i]), .reset(reset), .clk(clk));
+        pronoc_register #(.W(DEPTHw)) sub_depth_reg (.D_in(sub_depth_next[i] ), .Q_out(sub_depth [i]), .reset(reset), .clk(clk));
         always @ (*)begin
             sub_depth_next  [i] = sub_depth   [i];
             if(sub_restore[i]) sub_depth_next  [i]= depth_next[i];
@@ -180,8 +179,8 @@ module flit_buffer
             .W(Bw),
             .N(V) 
         ) wr_ptr_mux (
-            .in(wr_ptr_array),
-            .out(vc_wr_addr),
+            .D_in(wr_ptr_array),
+            .Q_out(vc_wr_addr),
             .sel(vc_num_wr)
         );
         
@@ -189,8 +188,8 @@ module flit_buffer
             .W(Bw),
             .N(V) 
         ) rd_ptr_mux (
-            .in(rd_ptr_array),
-            .out(vc_rd_addr),
+            .D_in(rd_ptr_array),
+            .Q_out(vc_rd_addr),
             .sel(vc_num_rd)
         );    
         
@@ -228,9 +227,9 @@ module flit_buffer
                 if(wr[i]) tail_fifo[i][wr_ptr[i]] <= din[Fw-2];
             end
             
-            pronoc_register #(.W(Bw    )) reg1 (.in(rd_ptr_next[i]), .out(rd_ptr[i]), .reset(reset), .clk(clk));
-            pronoc_register #(.W(Bw    )) reg2 (.in(wr_ptr_next[i]), .out(wr_ptr[i]), .reset(reset), .clk(clk));
-            pronoc_register #(.W(DEPTHw)) reg3 (.in(depth_next[i] ), .out(depth [i]), .reset(reset), .clk(clk));
+            pronoc_register #(.W(Bw    )) reg1 (.D_in(rd_ptr_next[i]), .Q_out(rd_ptr[i]), .reset(reset), .clk(clk));
+            pronoc_register #(.W(Bw    )) reg2 (.D_in(wr_ptr_next[i]), .Q_out(wr_ptr[i]), .reset(reset), .clk(clk));
+            pronoc_register #(.W(DEPTHw)) reg3 (.D_in(depth_next[i] ), .Q_out(depth [i]), .reset(reset), .clk(clk));
             
             always @ (*) begin
                 rd_ptr_next [i] = rd_ptr  [i];
@@ -274,11 +273,10 @@ module flit_buffer
         wire [BVw- 1 : 0]  wr_addr;
         wire [BVw- 1 : 0]  rd_addr;
         for(i=0;i<V;i=i+1) begin :V_
-            
-            pronoc_register #(.W(BVw),.RESET_TO(B*i)) reg1 (.in(rd_ptr_next[i]), .out(rd_ptr[i]), .reset(reset), .clk(clk));
-            pronoc_register #(.W(BVw),.RESET_TO(B*i)) reg2 (.in(wr_ptr_next[i]), .out(wr_ptr[i]), .reset(reset), .clk(clk));
-            pronoc_register #(.W(DEPTHw)            ) reg3 (.in(depth_next[i] ), .out(depth [i]), .reset(reset), .clk(clk));
-            
+            pronoc_register #(.W(BVw),.RESET_TO(B*i)) reg1 (.D_in(rd_ptr_next[i]), .Q_out(rd_ptr[i]), .reset(reset), .clk(clk));
+            pronoc_register #(.W(BVw),.RESET_TO(B*i)) reg2 (.D_in(wr_ptr_next[i]), .Q_out(wr_ptr[i]), .reset(reset), .clk(clk));
+            pronoc_register #(.W(DEPTHw)) reg3 (.D_in(depth_next[i]), .Q_out(depth[i]), .reset(reset), .clk(clk));
+
             always @(posedge clk) begin
                 /* verilator lint_off WIDTH */ 
                 if(wr[i]) tail_fifo[i][wr_ptr[i]-(B*i)] <= din[Fw-2];
@@ -325,8 +323,8 @@ module flit_buffer
             .W(BVw),
             .N(V)
         ) wr_mux (
-            .in(wr_ptr_array),
-            .out(wr_addr),
+            .D_in(wr_ptr_array),
+            .Q_out(wr_addr),
             .sel(vc_num_wr)
         );
         
@@ -334,8 +332,8 @@ module flit_buffer
             .W(BVw),
             .N(V)
         ) rd_mux (
-            .in(rd_ptr_array),
-            .out(rd_addr),
+            .D_in(rd_ptr_array),
+            .Q_out(rd_addr),
             .sel(vc_num_rd)
         );
         
@@ -633,10 +631,10 @@ module fwft_fifo #(
         
     end else if  ( MAX_DEPTH == 2) begin :mw2
         
-        reg [DATA_WIDTH-1 : 0] register;
+        reg [DATA_WIDTH-1 : 0] din_f;
         
         always @(posedge clk ) begin
-            if(wr_en) register <= din;
+            if(wr_en) din_f <= din;
         end //always
         
         assign full = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0];
@@ -644,7 +642,7 @@ module fwft_fifo #(
         assign out_ld = (depth !=0 )?  rd_en : wr_en;
         assign recieve_more_than_0 = (depth != {DEPTH_DATA_WIDTH{1'b0}});
         assign recieve_more_than_1 = ~( depth == 0 ||  depth== 1 );
-        assign dout_next = (recieve_more_than_1) ? register : din;
+        assign dout_next = (recieve_more_than_1) ? din_f : din;
         
     end else begin :mw1 // MAX_DEPTH == 1
         assign out_ld = wr_en;
@@ -655,10 +653,10 @@ module fwft_fifo #(
         assign recieve_more_than_1 = 1'b0;
     end
     endgenerate
-    
-    pronoc_register #(.W(DEPTH_DATA_WIDTH)) reg1 (.in(depth_next), .out(depth), .reset(reset), .clk(clk));
-    pronoc_register #(.W(DATA_WIDTH))       reg2 (.in(dout_next_ld), .out(dout ), .reset(reset), .clk(clk));
-    
+
+    pronoc_register #(.W(DEPTH_DATA_WIDTH)) reg1 (.D_in(depth_next), .Q_out(depth), .reset(reset), .clk(clk));
+    pronoc_register #(.W(DATA_WIDTH))       reg2 (.D_in(dout_next_ld), .Q_out(dout ), .reset(reset), .clk(clk));
+
     always @ (*)begin
         depth_next = depth;
         dout_next_ld = dout;
@@ -796,10 +794,10 @@ module fwft_fifo_with_output_clear #(
         
     end else if  ( MAX_DEPTH == 2) begin :mw2
         
-        reg [DATA_WIDTH-1 : 0] register;
+        reg [DATA_WIDTH-1 : 0] din_f;
         
         always @(posedge clk ) begin
-            if(wr_en) register <= din;
+            if(wr_en) din_f <= din;
         end //always
         
         assign full = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0];
@@ -807,8 +805,8 @@ module fwft_fifo_with_output_clear #(
         assign out_ld = (depth !=0 )?  rd_en : wr_en;
         assign recieve_more_than_0 = (depth != {DEPTH_DATA_WIDTH{1'b0}});
         assign recieve_more_than_1 = ~( depth == 0 ||  depth== 1 );
-        assign dout_next = (recieve_more_than_1) ? register : din;
-        
+        assign dout_next = (recieve_more_than_1) ? din_f : din;
+
     end else begin :mw1 // MAX_DEPTH == 1
         assign out_ld = wr_en;
         assign dout_next = din;
@@ -818,10 +816,10 @@ module fwft_fifo_with_output_clear #(
         assign recieve_more_than_1 = 1'b0;
     end
     endgenerate
-    
-    pronoc_register #(.W(DEPTH_DATA_WIDTH)) reg1 (.in(depth_next), .out(depth), .reset(reset), .clk(clk));
-    pronoc_register #(.W(DATA_WIDTH))       reg2 (.in(dout_next_ld), .out(dout ), .reset(reset), .clk(clk));
-    
+
+    pronoc_register #(.W(DEPTH_DATA_WIDTH)) reg1 (.D_in(depth_next), .Q_out(depth), .reset(reset), .clk(clk));
+    pronoc_register #(.W(DATA_WIDTH))       reg2 (.D_in(dout_next_ld), .Q_out(dout), .reset(reset), .clk(clk));
+
     always @ (*)begin
         depth_next = depth;
         if (wr_en & ~rd_en) depth_next = depth + 1'h1;
@@ -936,10 +934,10 @@ module fwft_fifo_bram #(
         .clk(clk)
     );  
     
-    pronoc_register #(.W(DATA_WIDTH)      ) reg1 (.in(out_reg_next           ), .out(out_reg), .reset(reset), .clk(clk));
-    pronoc_register #(.W(1)               ) reg2 (.in(valid_next             ), .out(valid), .reset(reset), .clk(clk));
-    pronoc_register #(.W(1)               ) reg3 (.in(bram_out_is_valid_next ), .out(bram_out_is_valid), .reset(reset), .clk(clk));
-    pronoc_register #(.W(DEPTH_DATA_WIDTH)) reg4 (.in(depth_next             ), .out(depth), .reset(reset), .clk(clk));
+    pronoc_register #(.W(DATA_WIDTH)      ) reg1 (.D_in(out_reg_next           ), .Q_out(out_reg), .reset(reset), .clk(clk));
+    pronoc_register #(.W(1)               ) reg2 (.D_in(valid_next             ), .Q_out(valid), .reset(reset), .clk(clk));
+    pronoc_register #(.W(1)               ) reg3 (.D_in(bram_out_is_valid_next ), .Q_out(bram_out_is_valid), .reset(reset), .clk(clk));
+    pronoc_register #(.W(DEPTH_DATA_WIDTH)) reg4 (.D_in(depth_next             ), .Q_out(depth), .reset(reset), .clk(clk));
     
     always @(*) begin
         out_reg_next = out_reg; 

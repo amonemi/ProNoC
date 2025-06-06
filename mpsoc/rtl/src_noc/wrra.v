@@ -79,7 +79,7 @@ module  wrra #(
             .reset(reset),
             .clk(clk),
             .decr(grant[i]),
-            .out(weight_counter_is_reset[i])
+            .Q_out(weight_counter_is_reset[i])
         );
     end
     endgenerate
@@ -89,8 +89,8 @@ module  wrra #(
         .W(1),
         .N(ARBITER_WIDTH)        
     ) mux  (
-        .in(weight_counter_is_reset),
-        .out(winner_weight_consumed),
+        .D_in(weight_counter_is_reset),
+        .Q_out(winner_weight_consumed),
         .sel(grant)
     );
     
@@ -138,8 +138,8 @@ module  rra_priority_lock #(
         .W(1),
         .N(ARBITER_WIDTH)        
     )  mux (
-        .in(pr_en_array_i),
-        .out(winner_weight_consumed),
+        .D_in(pr_en_array_i),
+        .Q_out(winner_weight_consumed),
         .sel(grant)
     );
     
@@ -167,13 +167,13 @@ module weight_counter #(
     weight_i,
     decr,
     load_i,
-    out,
+    Q_out,
     reset,
     clk
 );
     input [WEIGHTw-1    :   0]  weight_i;
     input reset,clk,decr,load_i;
-    output  out;
+    output  Q_out;
     wire [WEIGHTw-1    :   0]  weight;
     
     reg  [WEIGHTw-1    :   0] counter_next;
@@ -182,7 +182,7 @@ module weight_counter #(
     
     assign couner_zero = counter == {WEIGHTw{1'b0}};
     assign load =  (counter > weight_i) | load_i;
-    assign out = couner_zero;
+    assign Q_out = couner_zero;
     assign weight= (weight_i == {WEIGHTw{1'b0}} )? 1 : weight_i; // minimum weight is 1;
     always @(*)begin 
         counter_next = counter;
@@ -190,7 +190,7 @@ module weight_counter #(
         if(decr) counter_next  = (couner_zero)? weight-1'b1  : counter - 1'b1; // if the couner has zero value then the load is active not decrese
     end
     
-    pronoc_register #(.W(WEIGHTw)) reg2 (.in(counter_next ), .out(counter), .reset(reset), .clk(clk));
+    pronoc_register #(.W(WEIGHTw)) reg2 (.D_in(counter_next ), .Q_out(counter), .reset(reset), .clk(clk));
 endmodule
 
 
@@ -204,30 +204,30 @@ module classic_weight_counter #(
     weight_i,
     decr,
     load_i,
-    out,
+    Q_out,
     reset,
     clk
 );
     input [WEIGHTw-1    :   0]  weight_i;
     input reset,clk,decr,load_i;
-    output  out;
+    output  Q_out;
     wire [WEIGHTw-1    :   0]  weight;
     
     reg  [WEIGHTw-1    :   0] counter_next;
     wire [WEIGHTw-1    :   0] counter;
-    wire couner_zero, load;
+    wire counter_zero, load;
     
-    assign couner_zero = counter == {WEIGHTw{1'b0}};
+    assign counter_zero = counter == {WEIGHTw{1'b0}};
     assign load =  (counter > weight_i) | load_i;
-    assign out = couner_zero;
+    assign Q_out = counter_zero;
     assign weight= (weight_i == {WEIGHTw{1'b0}} )? 1 : weight_i; // minimum weight is 1;
     always @(*)begin 
         counter_next = counter;
         if(load) counter_next  = weight- 1'b1 ;
-        if(decr && !couner_zero) counter_next  = counter - 1'b1; // if the couner has zero value then the load is active not decrese
+        if(decr && !counter_zero) counter_next  = counter - 1'b1; // if the counter has zero value then the load is active not decrese
     end
     
-    pronoc_register #(.W(WEIGHTw)) reg2 (.in(counter_next ), .out(counter), .reset(reset), .clk(clk));
+    pronoc_register #(.W(WEIGHTw)) reg2 (.D_in(counter_next ), .Q_out(counter), .reset(reset), .clk(clk));
 endmodule
 
 
@@ -298,7 +298,7 @@ module  weight_control #(
     genvar i;
     generate 
     if(PROPOGATE_EQUALL | PROPOGATE_LIMITED )begin : eq         
-        for (i=1;i<P;i=i+1)begin : port
+        for (i=1;i<P;i=i+1)begin : P_
             if(i==SW_LOC) begin : if1
                 assign oports_weight [(i+1)*W-1 : i*W] = {W{1'b0}};
             end else begin :else1
@@ -310,7 +310,7 @@ module  weight_control #(
             oport_weight_counter[0]= {W{1'b0}};// the output port weight of local port is useless. hence fix it as zero.
             oport_weight[0]= {W{1'b0}};
         end
-        for (i=1;i<P;i=i+1)begin : port
+        for (i=1;i<P;i=i+1)begin : P_
             if(i==SW_LOC) begin : if1
                 always @(*) begin 
                     oport_weight_counter[i]= {W{1'b0}};// The loopback injection is forbiden hence it will be always as zero.
@@ -391,7 +391,7 @@ module  weight_control #(
             .reset(reset),
             .clk(clk),
             .decr(weight_dcrease_en),
-            .out(counter_is_reset)
+            .Q_out(counter_is_reset)
         );     
     end else begin : wrra_mine
         // weight counters   
@@ -403,7 +403,7 @@ module  weight_control #(
             .reset(reset),
             .clk(clk),
             .decr(weight_dcrease_en),
-            .out(counter_is_reset)
+            .Q_out(counter_is_reset)
         ); 
     end    
     endgenerate
@@ -504,7 +504,7 @@ module  wrra_contention_gen #(
             .NUM(P)
         ) accum (
             .in_all(weight_array_per_outport[i]),
-            .out(weight_sum[i])         
+            .sum_o(weight_sum[i])         
         );
         if(PROPOGATE_LIMITED) begin : limted
             wire [W-1 : 0] limited_oport_weight [P-1 : 0]; 
@@ -687,7 +687,7 @@ module weights_update # (
             .NUM(P)
         ) accum (
             .in_all(iport_weight_all),
-            .out(iweight_sum)         
+            .sum_o(iweight_sum)         
         );
         
         weight_counter #(
@@ -698,8 +698,8 @@ module weights_update # (
             .clk(clk),
             .decr(any_tail_is_sent),
             .load_i(1'b0),
-            .out(capture_o_weights )
-         // .out(refresh_w_counter)
+            .Q_out(capture_o_weights )
+         // .Q_out(refresh_w_counter)
         );
         
     end else begin :dontcare
@@ -726,7 +726,7 @@ module weights_update # (
             .NUM(P)
         ) accum (
             .in_all(iport_weight_all),
-            .out(iweight_sum)         
+            .sum_o(iweight_sum)         
         );
         
         weight_counter #(
@@ -737,7 +737,7 @@ module weights_update # (
             .clk(clk),
             .decr(any_tail_is_sent),
             .load_i(1'b0),
-            .out(refresh_w_counter)
+            .Q_out(refresh_w_counter)
         );
     end  
     endgenerate

@@ -374,17 +374,17 @@
     endfunction    
     
     function automatic  integer fmesh_addrencode; 
-    input integer in;
+    input integer addr_in;
     integer  y, x, l,p, diff,mul;
     begin
         mul  = NX*NY*NL;
-        if(in < mul) begin 
-            y = ((in/NL) / NX ); 
-            x = ((in/NL) % NX ); 
-            l = (in % NL); 
+        if(addr_in < mul) begin 
+            y = ((addr_in/NL) / NX ); 
+            x = ((addr_in/NL) % NX ); 
+            l = (addr_in % NL); 
             p = (l==0)? LOCAL : 4+l;
         end else begin      
-            diff = in -  mul ;
+            diff = addr_in -  mul ;
             if( diff <  NX) begin //top mesh edge 
                 y = 0;
                 x = diff;

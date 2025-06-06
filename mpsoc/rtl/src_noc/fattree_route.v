@@ -60,10 +60,10 @@ module fattree_nca_random_up_routing  #(
         .W(K),
         .RESET_TO(1)
     ) reg1 ( 
-        .in({counter[0],counter[K-1:1]}),
+        .D_in({counter[0],counter[K-1:1]}),
         .reset(reset),    
         .clk(clk),      
-        .out(counter)
+        .Q_out(counter)
     );
     
     assign current_addr [0]={Kw{1'b0}}; 
@@ -153,10 +153,10 @@ module fattree_nca_destp_up_routing  #(
         .W(K),
         .RESET_TO(1)
     ) reg1 ( 
-        .in({counter[0],counter[K-1:1]}),
+        .D_in({counter[0],counter[K-1:1]}),
         .reset(reset),    
         .clk(clk),      
-        .out(counter)
+        .Q_out(counter)
     );
     
     assign current_addr [0]={Kw{1'b0}}; 
@@ -243,10 +243,10 @@ module fattree_nca_straight_up_routing  #(
         .W(K),
         .RESET_TO(1)
     ) reg1 ( 
-        .in({counter[0],counter[K-1:1]}),
+        .D_in({counter[0],counter[K-1:1]}),
         .reset(reset),    
         .clk(clk),      
-        .out(counter)
+        .Q_out(counter)
     );
     
     assign current_addr [0]={Kw{1'b0}}; 
@@ -445,19 +445,19 @@ module fattree_look_ahead_routing #(
     pronoc_register #(
         .W(K+1)
     ) reg1 ( 
-        .in(destport_encoded),
+        .D_in(destport_encoded),
         .reset(reset),    
         .clk(clk),      
-        .out(destport_encoded_delayed)
+        .Q_out(destport_encoded_delayed)
     );
     
     pronoc_register #(
         .W(LKw)
     ) reg2 ( 
-        .in(dest_addr_encoded),
+        .D_in(dest_addr_encoded),
         .reset(reset),    
         .clk(clk),      
-        .out(dest_addr_encoded_delayed)
+        .Q_out(dest_addr_encoded_delayed)
     );
 endmodule
 

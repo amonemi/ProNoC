@@ -24,17 +24,17 @@ module reduction_or #(
     parameter W = 5,//out width
     parameter N = 4 //array lenght 
 )(
-    in,
-    out    
+    D_in,
+    Q_out
 );
-    input  [W-1 : 0] in [N-1 : 0];
-    output reg [W-1 : 0] out;    
+    input  [W-1 : 0] D_in [N-1 : 0];
+    output reg [W-1 : 0] Q_out;    
     
-    // assign out = in.or(); //it is not synthesizable able by some compiler
+    // assign Q_out = D_in.or(); //it is not synthesizable able by some compiler
     always_comb begin
-        out = {W{1'b0}};
+        Q_out = {W{1'b0}};
         for (int i = 0; i < N; i++)
-            out |=   in[i];
+            Q_out |=   D_in[i];
     end
 endmodule
 
@@ -42,18 +42,18 @@ module onehot_mux_2D #(
     parameter W = 5,//out width
     parameter N = 4 //sel width 
 )(
-    in,
+    D_in,
     sel,
-    out    
+    Q_out
     );
-    input  [W-1 : 0] in [N-1 : 0];
+    input  [W-1 : 0] D_in [N-1 : 0];
     input  [N-1 : 0] sel;
-    output reg [W-1 : 0] out;    
+    output reg [W-1 : 0] Q_out;    
     
     always_comb begin
-        out = {W{1'b0}};
+        Q_out = {W{1'b0}};
         for (int i = 0; i < N; i++)
-            out |= (sel[i]) ?  in[i] :  {W{1'b0}};
+            Q_out |= (sel[i]) ?  D_in[i] :  {W{1'b0}};
     end
 endmodule
     
@@ -61,16 +61,16 @@ module onehot_mux_1D #(
     parameter W = 5,//out width
     parameter N = 4 //sel width 
 )(
-    input  [W*N-1 : 0] in,
+    input  [W*N-1 : 0] D_in,
     input  [N-1 : 0] sel,
-    output [W-1 : 0] out    
+    output [W-1 : 0] Q_out    
 );
 
     wire  [W-1 : 0] in_array [N-1 : 0];
     genvar i;
     generate
     for (i=0;i<N;i++)begin :sep 
-        assign in_array[i] = in[(i+1)*W-1 : i*W];
+        assign in_array[i] = D_in[(i+1)*W-1 : i*W];
     end
     endgenerate
     
@@ -78,9 +78,9 @@ module onehot_mux_1D #(
         .W(W), 
         .N(N)
     ) onehot_mux_2D (
-        .in(in_array), 
+        .D_in(in_array), 
         .sel(sel), 
-        .out(out)
+        .Q_out(Q_out)
     );
 endmodule    
 
@@ -89,16 +89,16 @@ module onehot_mux_1D_reverse #(
     parameter W = 5,//out width  p
     parameter N = 4 //sel width  v
 )(
-    input  [W*N-1 : 0] in,
+    input  [W*N-1 : 0] D_in,
     input  [N-1 : 0] sel,
-    output [W-1 : 0] out    
+    output [W-1 : 0] Q_out    
 );
     wire  [N-1 : 0] in_array [W-1 : 0];
     wire  [W-1 : 0] in_array2[N-1 : 0];
     genvar i,j;
     generate
         for (i=0;i<W;i++)begin :sep 
-            assign in_array[i] = in[(i+1)*N-1 : i*N];
+            assign in_array[i] = D_in[(i+1)*N-1 : i*N];
             for (j=0;j<N;j++)begin :sep
                 assign in_array2[j][i] = in_array[i][j];
             end
@@ -109,9 +109,9 @@ module onehot_mux_1D_reverse #(
         .W    (N), 
         .N    (W)
     ) onehot_mux_2D (
-        .in   (in_array2), 
+        .D_in(in_array2), 
         .sel  (sel), 
-        .out  (out)
+        .Q_out(Q_out)
     );
 endmodule
 
@@ -261,9 +261,9 @@ module smart_forward_ivc_info #(
             end
             assign ovc_locally_requested_next[i][j]=|mask_gen[i][j];
         end//V
-        pronoc_register #(.W(V)) reg1 (.in(ovc_locally_requested_next[i]), .reset(reset), .clk(clk), .out(ovc_locally_requested[i]));
+        pronoc_register #(.W(V)) reg1 (.D_in(ovc_locally_requested_next[i]), .reset(reset), .clk(clk), .Q_out(ovc_locally_requested[i]));
         
-        onehot_mux_2D    #(.W(SMART_IVC_w),.N(V)) mux1 ( .in(smart_ivc_info[i]), .sel(iport_info[i].swa_first_level_grant), .out(smart_ivc_mux[i]));
+        onehot_mux_2D    #(.W(SMART_IVC_w),.N(V)) mux1 ( .D_in(smart_ivc_info[i]), .sel(iport_info[i].swa_first_level_grant), .Q_out(smart_ivc_mux[i]));
         //demux
         for (j=0;j<P;j=j+1) begin : port_
             assign smart_ivc_info_all_port[j][i] = (iport_info[i].granted_oport_one_hot[j]==1'b1)? smart_ivc_mux[i] : {SMART_IVC_w{1'b0}};    
@@ -274,8 +274,8 @@ module smart_forward_ivc_info #(
             .W    (SMART_IVC_w), 
             .N    (P)
         ) _or (
-            .in   (smart_ivc_info_all_port[i]), 
-            .out  (smart_vc_info_o[i])
+            .D_in(smart_ivc_info_all_port[i]), 
+            .Q_out(smart_vc_info_o[i])
         );
         
         bin_to_one_hot #(
@@ -296,11 +296,11 @@ module smart_forward_ivc_info #(
         if( ADD_PIPREG_AFTER_CROSSBAR == 1) begin :link_reg
             pronoc_register #(
                 .W      ( SMART_CHANEL_w)
-            ) register (
-                .in     (smart_chanel_next[i]), 
+            ) pipe_reg (
+                .D_in(smart_chanel_next[i]), 
                 .reset  (reset), 
                 .clk    (clk), 
-                .out    (smart_chanel[i]));
+                .Q_out(smart_chanel[i]));
         end else begin :no_link_reg
                 assign smart_chanel[i] = smart_chanel_next[i];
         end
@@ -501,8 +501,8 @@ module smart_validity_check_per_ivc  #(
     wire  smart_hdr_flit_req_next = smart_req_valid_next  & smart_hdr_flit;
     logic smart_hdr_flit_req;
     
-    pronoc_register #(.W(1)) req1 (.in(smart_req_valid_next), .reset(reset), .clk(clk), .out(smart_req_valid));
-    pronoc_register #(.W(1)) req2 (.in(smart_hdr_flit_req_next), .reset(reset), .clk(clk), .out(smart_hdr_flit_req));
+    pronoc_register #(.W(1)) req1 (.D_in(smart_req_valid_next), .reset(reset), .clk(clk), .Q_out(smart_req_valid));
+    pronoc_register #(.W(1)) req2 (.D_in(smart_hdr_flit_req_next), .reset(reset), .clk(clk), .Q_out(smart_hdr_flit_req));
     // condition1: new smart vc allocation condition
     wire hdr_flit_condition    = ~ovc_locally_requested & ss_ovc_avalable_in_ss_port;    
     wire nonhdr_flit_condition = assigned_to_ss_ovc & assigned_ovc_not_full;
@@ -527,7 +527,7 @@ module smart_validity_check_per_ivc  #(
     assign smart_ss_ovc_is_allocated_o = smart_ivc_num_getting_ovc_grant_o & ~smart_single_flit_pck_o;
     //mask the available SS OVC for local requests allocation if the following conditions met
     assign smart_mask_available_ss_ovc_o = smart_hdr_flit_req & ~ovc_locally_requested & condition2;
-    pronoc_register #(.W(1)) credit(.in(smart_buff_space_decreased_o), .reset(reset), .clk(clk), .out(smart_credit_o));
+    pronoc_register #(.W(1)) credit(.D_in(smart_buff_space_decreased_o), .reset(reset), .clk(clk), .Q_out(smart_credit_o));
 endmodule
 
 
@@ -629,7 +629,7 @@ module smart_allocator_per_iport # (
         .destport        (destport)
     ); 
     
-    pronoc_register #(.W(DSTPw)) reg1 (.in(destport), .reset(reset), .clk(clk), .out(smart_destport_o));
+    pronoc_register #(.W(DSTPw)) reg1 (.D_in(destport), .reset(reset), .clk(clk), .Q_out(smart_destport_o));
     
     check_straight_oport #(
         .SS_PORT_LOC   ( SS_PORT_LOC)
@@ -661,7 +661,7 @@ module smart_allocator_per_iport # (
         .destport        (lkdestport)
     ); 
     
-    pronoc_register #(.W(DSTPw)) reg2 (.in(lkdestport), .reset(reset), .clk(clk), .out(smart_lk_destport_o));
+    pronoc_register #(.W(DSTPw)) reg2 (.D_in(lkdestport), .reset(reset), .clk(clk), .Q_out(smart_lk_destport_o));
     
     wire [V-1 : 0] ss_ovc_crossbar_wr;//If asserted, a flit will be injected to ovc at next clk cycle 
     assign ss_ovc_crossbar_wr = (ss_smart_chanel_new.requests[0]) ? ss_smart_chanel_new.ovc : {V{1'b0}};
@@ -705,7 +705,7 @@ module smart_allocator_per_iport # (
         );    
     end//for
     endgenerate    
-    pronoc_register #(.W(1)) reg3 (.in(smart_chanel_i.hdr_flit), .reset(reset), .clk(clk), .out(smart_hdr_flit_req_o));
+    pronoc_register #(.W(1)) reg3 (.D_in(smart_chanel_i.hdr_flit), .reset(reset), .clk(clk), .Q_out(smart_hdr_flit_req_o));
 endmodule    
 
 
@@ -761,5 +761,5 @@ module smart_credit_manage_per_vc #(
         else if(counter > 0) counter_next = counter -1'b1;
     end
     assign credit_out = credit_in |     smart_credit_in | (counter > 0);
-    pronoc_register #(.W(Bw+1)) reg1 (.in(counter_next), .reset(reset), .clk(clk), .out(counter));
+    pronoc_register #(.W(Bw+1)) reg1 (.D_in(counter_next), .reset(reset), .clk(clk), .Q_out(counter));
 endmodule

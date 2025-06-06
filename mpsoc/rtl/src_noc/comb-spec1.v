@@ -195,7 +195,7 @@ module comb_spec1_allocator #(
             is_onehot0 #(
                 .IN_WIDTH(P_1)
             ) check_ovc_allocated (
-                .in(ovc_allocated_all_gen[i]),
+                .D_in(ovc_allocated_all_gen[i]),
                 .result(result[i])
             );
             always @(posedge clk ) begin 

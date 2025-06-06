@@ -213,20 +213,20 @@ module  flit_buffer_reg_base #(
       pronoc_register #(
            .W(REGFw)          
       ) reg1 ( 
-           .in(flit_regs_next[i]),
+           .D_in(flit_regs_next[i]),
            .reset(reset),    
            .clk(clk),      
-           .out(flit_regs[i])
+           .Q_out(flit_regs[i])
       );
       
       
        pronoc_register #(
            .W(Cw)           
       ) reg2 ( 
-           .in(class_vc_next[i]),
+           .D_in(class_vc_next[i]),
            .reset(reset),    
            .clk(clk),      
-           .out(class_vc[i])
+           .Q_out(class_vc[i])
       );
         
         

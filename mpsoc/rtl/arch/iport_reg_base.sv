@@ -232,10 +232,10 @@ module iport_reg_base  #(
      
 
     pronoc_register #(.W(WEIGHTw), .RESET_TO(1)) reg5(
-    		.in		(iport_weight_next ), 
+    		.D_in(iport_weight_next ), 
     		.reset  (reset ), 
     		.clk    (clk   ), 
-    		.out    (iport_weight  ));
+    		.Q_out(iport_weight  ));
 	
 	
     always @ (*)begin 
@@ -247,10 +247,10 @@ module iport_reg_base  #(
 // genrate write enable for lk_routing result with one clock cycle latency after reciveing the flit
     
     pronoc_register #(.W(V)) reg1(
-    		.in		(hdr_flit_wr ), 
+    		.D_in(hdr_flit_wr ), 
     		.reset  (reset ), 
     		.clk    (clk   ), 
-    		.out    (hdr_flit_wr_delayed  ));
+    		.Q_out(hdr_flit_wr_delayed  ));
 
 
 
@@ -511,8 +511,8 @@ generate
         	.N(V)
         )
         onehot_mux(
-        	.in(flit_is_tail),
-        	.out(granted_flit_is_tail),
+        	.D_in(flit_is_tail),
+        	.Q_out(granted_flit_is_tail),
         	.sel(ivc_num_getting_sw_grant)
         );
     
@@ -710,10 +710,10 @@ endgenerate
         
     
     pronoc_register #(.W(V)) reg2(
-    		.in		(dst_rd_fifo ), 
+    		.D_in(dst_rd_fifo ), 
     		.reset  (reset ), 
     		.clk    (clk   ), 
-    		.out    (lk_dst_rd_fifo  ));
+    		.Q_out(lk_dst_rd_fifo  ));
 
    
     assign    dst_rd_fifo = reset_ivc;

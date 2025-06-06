@@ -157,7 +157,7 @@ module plle2_base_sim #(
 		.period_length((clkin_period_length_1000 / 1000.0)),
 		.period_stable(period_stable));
 
-	wire out[0:6];
+	wire Q_out[0:6];
 	wire [31:0] out_period_length_1000[0:6];
 	wire lock[0:6];
 
@@ -175,7 +175,7 @@ module plle2_base_sim #(
 				.period_stable(period_stable),
 				.ref_period_1000((clkin_period_length_1000)),
 				.clk(clkin),
-				.out(out[i]),
+				.Q_out(Q_out[i]),
 				.out_period_length_1000(out_period_length_1000[i]));
 		end
 	endgenerate
@@ -186,7 +186,7 @@ module plle2_base_sim #(
 			phase_shift ps (
 				.RST(RST),
 				.PWRDWN(PWRDWN),
-				.clk(out[i]),
+				.clk(Q_out[i]),
 				.shift_1000(CLKOUT_PHASE_INT_1000[i] + CLKFBOUT_PHASE_INT_1000),
 				.duty_cycle(CLKOUT_DUTY_CYCLE_INT_1000[i] / 10),
 				.clk_period_1000(out_period_length_1000[i]),
@@ -209,7 +209,7 @@ module plle2_base_sim #(
 		.period_stable(period_stable),
 		.ref_period_1000((clkin_period_length_1000)),
 		.clk(clkin),
-		.out(fb_out),
+		.Q_out(fb_out),
 		.out_period_length_1000(fb_out_period_length_1000));
 
 	phase_shift fb_ps (

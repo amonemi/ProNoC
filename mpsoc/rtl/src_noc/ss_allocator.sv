@@ -160,8 +160,8 @@ module  ss_allocator #(
     
     for(i=0;i<P;i=i+1)begin: P_
         pronoc_register #(.W(1)) reg1 (
-            .in(|ivc_num_getting_sw_grantin_SS_all[(i+1)*V-1 : i*V] ),
-            .out(ssa_flit_wr_all[i]),
+            .D_in(|ivc_num_getting_sw_grantin_SS_all[(i+1)*V-1 : i*V] ),
+            .Q_out(ssa_flit_wr_all[i]),
             .reset(reset),
             .clk(clk)
         );

@@ -74,7 +74,7 @@ module   port_presel_based_dst_ports_vc #(
             .NUM(V)
         ) counter (
             .in_all(ovc_status_per_port[i]),
-            .out(vc_counter[i])
+            .sum_o(vc_counter[i])
         );
     end//for
     endgenerate
@@ -167,10 +167,10 @@ module  port_presel_based_dst_ports_credit #(
             .W(BVw),
             .RESET_TO(C_INT)
         ) reg1 ( 
-            .in(credit_per_port_next[i]),
+            .D_in(credit_per_port_next[i]),
             .reset(reset),    
             .clk(clk),      
-            .out(credit_per_port[i])
+            .Q_out(credit_per_port[i])
         );
     end//for
 
@@ -250,7 +250,7 @@ module mesh_torus_port_presel_based_dst_routers_vc #(
     assign conjestion_cmp[X_PLUS_Y_MINUS] = (congestion_x_plus  >  congestion_y_min)?  YDIR : XDIR;
     assign conjestion_cmp[X_MINUS_Y_MINUS]= (congestion_x_min   >  congestion_y_min)?  YDIR : XDIR;
    // assign port_pre_sel = conjestion_cmp;
-    pronoc_register #(.W(PPSw)) reg1 (.in(conjestion_cmp ), .reset(reset), .clk(clk), .out(port_pre_sel));    
+    pronoc_register #(.W(PPSw)) reg1 (.D_in(conjestion_cmp ), .reset(reset), .clk(clk), .Q_out(port_pre_sel));    
 endmodule
 
 
@@ -441,8 +441,8 @@ module congestion_out_based_ivc_req #(
         .INw (PV),
         .OUTw (CONGw) 
     ) ivc_req_counter  (
-        .in (ivc_request_all),
-        .out (congestion_out)
+        .D_in(ivc_request_all),
+        .Q_out(congestion_out)
     );
     
     assign  congestion_out_all = {P{congestion_out}};     
@@ -488,10 +488,10 @@ module congestion_out_based_ivc_notgrant #(
     pronoc_register #(
         .W(PV)          
     ) reg1 ( 
-        .in(ivc_request_all & ~ivc_num_getting_sw_grant),
+        .D_in(ivc_request_all & ~ivc_num_getting_sw_grant),
         .reset(reset),    
         .clk(clk),      
-        .out(ivc_request_not_granted)
+        .Q_out(ivc_request_not_granted)
     );
     accumulator #(
         .INw(PV),
@@ -499,7 +499,7 @@ module congestion_out_based_ivc_notgrant #(
         .NUM(PV)
     ) ivc_req_counter (
         .in_all(ivc_request_not_granted),
-        .out(ivc_req_num)
+        .sum_o(ivc_req_num)
     );
     
     generate 
@@ -571,8 +571,8 @@ module congestion_out_based_3port_avb_ovc #(
             .INw(CNT_Iw),
             .OUTw(CONGw)
         )  ovc_avb_east  (
-            .in(counter_in[i]),
-            .out(congestion_out[i])
+            .D_in(counter_in[i]),
+            .Q_out(congestion_out[i])
         );   
     end
     endgenerate
@@ -627,8 +627,8 @@ module congestion_out_based_avb_ovc_w2 #(
             .INw(CNT_Iw),
             .OUTw(1)
         ) ovc_not_avb_cnt (
-            .in(counter_in[i]),
-            .out(threshold[i])
+            .D_in(counter_in[i]),
+            .Q_out(threshold[i])
         );   
     end
     endgenerate
@@ -677,8 +677,8 @@ module congestion_out_based_avb_ovc_w3 #(
             .INw(V),
             .OUTw(1)
         ) ovc_avb_east(
-            .in(ovc_not_avb[i]),
-            .out(threshold[i])
+            .D_in(ovc_not_avb[i]),
+            .Q_out(threshold[i])
         );   
     end
     endgenerate
@@ -738,8 +738,8 @@ module congestion_out_based_avb_ovc_w4 #(
             .INw(CNT_Iw),
             .OUTw(2)
         ) ovc_not_avb_cnt (
-            .in(counter_in[i]),
-            .out(threshold[i])
+            .D_in(counter_in[i]),
+            .Q_out(threshold[i])
         );   
     end
     endgenerate
@@ -816,10 +816,10 @@ module congestion_out_based_avb_ovc_not_granted_ivc #(
     pronoc_register #(
         .W(PV)          
     ) reg1 ( 
-        .in(ivc_request_all & ~ivc_num_getting_sw_grant),
+        .D_in(ivc_request_all & ~ivc_num_getting_sw_grant),
         .reset(reset),    
         .clk(clk),      
-        .out(ivc_request_not_granted)
+        .Q_out(ivc_request_not_granted)
     );
     assign  {ivc_not_grnt[SOUTH], ivc_not_grnt[WEST], ivc_not_grnt[NORTH],ivc_not_grnt[EAST]}= ivc_request_not_granted[PV-1 : V];  
     genvar i;
@@ -831,7 +831,7 @@ module congestion_out_based_avb_ovc_not_granted_ivc #(
             .NUM(CNT_Iw)
         ) ovc_counter (
             .in_all(counter_in[i]),
-            .out(counter_o[i])
+            .sum_o(counter_o[i])
         );
         accumulator #(
             .INw(V),
@@ -839,7 +839,7 @@ module congestion_out_based_avb_ovc_not_granted_ivc #(
             .NUM(V)
         ) ivc_counter (
             .in_all(ivc_not_grnt[i]),
-            .out(ivc_not_grnt_num[i])
+            .sum_o(ivc_not_grnt_num[i])
         );
         wire [CNG_w-1 : 0] congestion_num [P_1-1 : 0];
         assign congestion_num [i] = counter_o[i]+ ivc_not_grnt_num[i]+ {ivc_not_grnt_num[i],1'b0};
@@ -847,8 +847,8 @@ module congestion_out_based_avb_ovc_not_granted_ivc #(
             .MAX_IN(6*V),
             .OUTw(CONGw)
         )norm (
-            .in(congestion_num [i]),
-            .out(congestion_out[i])
+            .D_in(congestion_num [i]),
+            .Q_out(congestion_out[i])
         );
     end//for
     endgenerate
@@ -862,8 +862,8 @@ module parallel_count_normalize #(
     parameter INw = 12,
     parameter OUTw= 2
 )(
-    in,
-    out
+    D_in,
+    Q_out
 );
 
     function integer log2;
@@ -875,8 +875,8 @@ module parallel_count_normalize #(
     end   
     endfunction // log2 
     
-    input [INw-1 : 0] in;
-    output [OUTw-1 : 0] out;
+    input [INw-1 : 0] D_in;
+    output [OUTw-1 : 0] Q_out;
     localparam CNTw = log2(INw+1);
     wire [CNTw-1 : 0] counter;
     accumulator #(
@@ -884,16 +884,16 @@ module parallel_count_normalize #(
         .OUTw(CNTw),
         .NUM(INw)
     ) ovc_avb_cnt (
-        .in_all(in),
-        .out(counter)
+        .in_all(D_in),
+        .sum_o(counter)
     );
     
     normalizer #(
         .MAX_IN(INw),
         .OUTw(OUTw)
     )norm (
-        .in(counter),
-        .out(out)
+        .D_in(counter),
+        .Q_out(Q_out)
     );
 endmodule    
 
@@ -904,8 +904,8 @@ module normalizer #(
     parameter MAX_IN= 10,
     parameter OUTw= 2
 )(
-    in,
-    out
+    D_in,
+    Q_out
 );
     function integer log2;
     input integer number; begin   
@@ -918,15 +918,15 @@ module normalizer #(
     localparam 
         INw= log2(MAX_IN+1),
         OUT_ON_HOT_NUM = 2**OUTw;
-    input [INw-1 : 0] in;
-    output [OUTw-1 : 0] out; 
+    input [INw-1 : 0] D_in;
+    output [OUTw-1 : 0] Q_out; 
     wire [OUT_ON_HOT_NUM-1 : 0] one_hot_out;
     genvar i;
     generate 
     for(i=0;i< OUT_ON_HOT_NUM;i=i+1)begin :lp
         /* verilator lint_off WIDTH */
-        if(i==0) begin : i0 assign one_hot_out[i]= (in<= (MAX_IN /OUT_ON_HOT_NUM)); end
-        else begin :ib0   assign one_hot_out[i]= ((in> ((MAX_IN *i)/OUT_ON_HOT_NUM)) &&  (in<= ((MAX_IN *(i+1))/OUT_ON_HOT_NUM))); end
+        if(i==0) begin : i0 assign one_hot_out[i]= (D_in <= (MAX_IN /OUT_ON_HOT_NUM)); end
+        else begin :ib0   assign one_hot_out[i]= ((D_in> ((MAX_IN *i)/OUT_ON_HOT_NUM)) &&  (D_in<= ((MAX_IN *(i+1))/OUT_ON_HOT_NUM))); end
         /* verilator lint_on WIDTH */
     end//for
     endgenerate
@@ -935,7 +935,7 @@ module normalizer #(
         .ONE_HOT_WIDTH(OUT_ON_HOT_NUM)
     )cnv (
         .one_hot_code(one_hot_out),
-        .bin_code(out)
+        .bin_code(Q_out)
     );
 endmodule
 
@@ -1046,10 +1046,10 @@ localparam
     pronoc_register #(
         .W(CONG_ALw)          
     ) reg1 ( 
-        .in(congestion_out_all_next),
+        .D_in(congestion_out_all_next),
         .reset(reset),    
         .clk(clk),      
-        .out(congestion_out_all)
+        .Q_out(congestion_out_all)
     );
 endmodule
 
@@ -1093,10 +1093,10 @@ module  deadlock_detector #(
     pronoc_register #(
         .W(PV)          
     ) reg1 ( 
-        .in(ivc_num_getting_sw_grant),
+        .D_in(ivc_num_getting_sw_grant),
         .reset(reset),    
         .clk(clk),      
-        .out(ivc_num_getting_sw_grant_reg)
+        .Q_out(ivc_num_getting_sw_grant_reg)
     );
     //seperate all same virtual chanels requests
     genvar i,j;
@@ -1119,10 +1119,10 @@ module  deadlock_detector #(
         pronoc_register #(
             .W(CNTw)          
         ) reg2 ( 
-            .in(counter_next[i]),
+            .D_in(counter_next[i]),
             .reset(reset),    
             .clk(clk),      
-            .out(counter[i])
+            .Q_out(counter[i])
         );
         // check counters value to detect deadlock
         assign detect_gen[i] = (counter[i]== MAX_CLK-1);

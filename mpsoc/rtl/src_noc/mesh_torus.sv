@@ -469,7 +469,7 @@ module  mesh_torus_swap_port_presel_gen #(
     assign  evc_forbiden = (sel)? y_evc_forbiden : x_evc_forbiden;
     assign  swap_port_presel_next= non_assigned_ovc_request & evc_forbiden & avc_unavailable;
     assign swap_port_presel = swap_reg;
-    pronoc_register #(.W(1)) reg2 (.in(swap_port_presel_next ), .out(swap_reg), .reset(reset), .clk(clk));
+    pronoc_register #(.W(1)) reg2 (.D_in(swap_port_presel_next ), .Q_out(swap_reg), .reset(reset), .clk(clk));
 endmodule
 
 
@@ -622,8 +622,8 @@ module  mesh_torus_adaptive_lk_dest_encoder #(
         .W(1),
         .N(V) 
     ) sel_mux (
-        .in(sel),
-        .out(sel_muxed),
+        .D_in(sel),
+        .Q_out(sel_muxed),
         .sel(vc_num_delayed)
     );
     
@@ -1027,12 +1027,12 @@ module  mesh_tori_addr_encoder #(
     endfunction // log2 
     
     function integer addrencode;
-        input integer in,nx,nxw,nl,nyw;
+        input integer addr,nx,nxw,nl,nyw;
         integer  y, x, l;begin
             addrencode=0;
-            y = ((in/nl) / nx ); 
-            x = ((in/nl) % nx ); 
-            l = (in % nl);  
+            y = ((addr/nl) / nx ); 
+            x = ((addr/nl) % nx ); 
+            l = (addr % nl);  
             addrencode =(nl==1)?   (y<<nxw | x) : (l<<(nxw+nyw)|  (y<<nxw) | x);      
         end   
     endfunction // addrencode
@@ -1080,12 +1080,12 @@ module  mesh_tori_addr_coder #(
     endfunction // log2 
     
     function integer addrencode;
-        input integer in,nx,nxw,nl,nyw;
+        input integer addr,nx,nxw,nl,nyw;
         integer  y, x, l;begin
             addrencode=0;
-            y = ((in/nl) / nx ); 
-            x = ((in/nl) % nx ); 
-            l = (in % nl);  
+            y = ((addr/nl) / nx ); 
+            x = ((addr/nl) % nx ); 
+            l = (addr % nl);  
             addrencode =(nl==1)?   (y<<nxw | x) : (l<<(nxw+nyw)|  (y<<nxw) | x);      
         end   
     endfunction // addrencode

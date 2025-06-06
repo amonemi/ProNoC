@@ -32,18 +32,18 @@ module pronoc_register #(
     parameter W=1,
     parameter  RESET_TO={W{1'b0}}
 )( 
-    input [W-1: 0] in,
+    input [W-1: 0] D_in,
     input reset,    
     input clk,      
-    output [W-1: 0] out
+    output [W-1: 0] Q_out
 );
     pronoc_register_reset_init #(
         .W(W)           
     )reg1( 
-        .in(in),
+        .D_in(D_in),
         .reset(reset),  
         .clk(clk),      
-        .out(out),
+        .Q_out(Q_out),
         .reset_to(RESET_TO[W-1 : 0])
     );
 endmodule
@@ -52,15 +52,15 @@ endmodule
 module pronoc_register_reset_init #(
     parameter W=1       
 )( 
-    input [W-1: 0] in,
+    input [W-1: 0] D_in,
     input reset,    
     input clk,      
-    output reg [W-1: 0] out,
+    output reg [W-1: 0] Q_out,
     input [W-1 : 0] reset_to
 );
     always @ (`pronoc_clk_reset_edge )begin 
-        if(`pronoc_reset)   out<=reset_to;
-        else        out<=in;
+        if(`pronoc_reset)   Q_out<=reset_to;
+        else        Q_out<=D_in;
     end   
 endmodule
 
@@ -68,16 +68,16 @@ endmodule
 module pronoc_register_reset_init_ld_en   #(
     parameter W=1       
 )( 
-    input [W-1: 0] in,
+    input [W-1: 0] D_in,
     input reset,    
     input clk, 
     input ld,
-    output reg [W-1: 0] out,
+    output reg [W-1: 0] Q_out,
     input [W-1 : 0] reset_to
 );    
     always @ (`pronoc_clk_reset_edge )begin 
-        if(`pronoc_reset)   out<=reset_to;
-        else  if(ld)      out<=in;
+        if(`pronoc_reset)   Q_out<=reset_to;
+        else  if(ld)      Q_out<=D_in;
     end        
 endmodule
 
@@ -86,20 +86,20 @@ module pronoc_register_ld_en  #(
     parameter W=1,
     parameter  RESET_TO={W{1'b0}}
 )( 
-    input [W-1: 0] in,
+    input [W-1: 0] D_in,
     input reset,    
     input clk,  
     input ld,
-    output [W-1: 0] out 
+    output [W-1: 0] Q_out
 );
     pronoc_register_reset_init_ld_en  #(
         .W(W)           
     )reg1( 
-        .in(in),
+        .D_in(D_in),
         .reset(reset),  
         .clk(clk),  
         .ld(ld),
-        .out(out),
+        .Q_out(Q_out),
         .reset_to(RESET_TO[W-1 : 0])
     );
 endmodule
@@ -200,8 +200,8 @@ module outport_sum #(
     parameter CMP_VAL = IN_WIDTH/(IN_NUM-1),
     parameter OUT_WIDTH = (IN_ARRAY_WIDTH/IN_NUM)+CMP_VAL
 )(
-    input   [IN_ARRAY_WIDTH-1 : 0]  in,
-    output  [OUT_WIDTH-1 : 0]  out
+    input   [IN_ARRAY_WIDTH-1 : 0]  D_in,
+    output  [OUT_WIDTH-1 : 0]  Q_out
 );
     
     genvar i,j;
@@ -209,7 +209,7 @@ module outport_sum #(
     wire [IN_NUM-2 : 0]      gen         [OUT_WIDTH-1 : 0];
     generate 
         for(i=0;i<IN_NUM; i=i+1      ) begin : lp
-            assign in_sep[i] = in[(IN_WIDTH*(i+1))-1 : IN_WIDTH*i];
+            assign in_sep[i] = D_in[(IN_WIDTH*(i+1))-1 : IN_WIDTH*i];
         end
         for (j=0;j<IN_NUM-1;j=j+1)begin : loop1
                 for(i=0;i<OUT_WIDTH; i=i+1  )begin : loop2
@@ -225,7 +225,7 @@ module outport_sum #(
                 end// for i
             end// for j
         for(i=0;i<OUT_WIDTH; i=i+1       ) begin : lp2
-            assign out[i] = |  gen[i];
+            assign Q_out[i] = |  gen[i];
         end
     endgenerate
 endmodule
@@ -254,34 +254,26 @@ endmodule
 ************************************/
 module one_hot_to_bin #(
     parameter ONE_HOT_WIDTH = 4,
-    parameter BIN_WIDTH = (ONE_HOT_WIDTH>1)? log2(ONE_HOT_WIDTH):1
+    parameter BIN_WIDTH = (ONE_HOT_WIDTH > 1) ? $clog2(ONE_HOT_WIDTH) : 1
 )(
     input   [ONE_HOT_WIDTH-1 : 0] one_hot_code,
     output  [BIN_WIDTH-1 : 0]  bin_code
 );
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
-    localparam MUX_IN_WIDTH = BIN_WIDTH* ONE_HOT_WIDTH;
+    localparam MUX_IN_WIDTH = BIN_WIDTH * ONE_HOT_WIDTH;
     wire [MUX_IN_WIDTH-1 : 0]  bin_temp ;
     genvar i;
     generate 
-        if(ONE_HOT_WIDTH>1)begin :if1
-            for(i=0; i<ONE_HOT_WIDTH; i=i+1) begin :mux_in_gen_loop
-                assign bin_temp[(i+1)*BIN_WIDTH-1 : i*BIN_WIDTH] = i[BIN_WIDTH-1: 0];
-            end
+    if(ONE_HOT_WIDTH>1)begin :if1
+        for(i=0; i<ONE_HOT_WIDTH; i=i+1) begin :mux_in_gen_loop
+            assign bin_temp[(i+1)*BIN_WIDTH-1 : i*BIN_WIDTH] = i[BIN_WIDTH-1: 0];
+        end
         one_hot_mux #(
-            .IN_WIDTH   (MUX_IN_WIDTH),
-            .SEL_WIDTH  (ONE_HOT_WIDTH)
-        ) one_hot_to_bcd_mux  (
-            .mux_in     (bin_temp),
-            .mux_out        (bin_code),
-            .sel            (one_hot_code)
+            .IN_WIDTH (MUX_IN_WIDTH),
+            .SEL_WIDTH (ONE_HOT_WIDTH)
+        ) mux (
+            .mux_in (bin_temp),
+            .mux_out (bin_code),
+            .sel (one_hot_code)
         );
     end else begin :els
         // assign  bin_code = one_hot_code;
@@ -302,30 +294,21 @@ module binary_mux #(
     mux_out,
     sel
 );
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
-    
     localparam  
-        IN_NUM = IN_WIDTH/OUT_WIDTH,
-        SEL_WIDTH_BIN = (IN_NUM>1) ? log2(IN_NUM): 1; 
+        IN_NUM = IN_WIDTH / OUT_WIDTH,
+        SEL_WIDTH_BIN = (IN_NUM > 1) ? $clog2(IN_NUM) : 1; 
     input   [IN_WIDTH-1 : 0] mux_in;
     output  [OUT_WIDTH-1 : 0] mux_out;
     input   [SEL_WIDTH_BIN-1 : 0] sel;                 
     genvar i;
     generate 
-        if(IN_NUM>1) begin :if1
+        if(IN_NUM > 1) begin 
             wire [OUT_WIDTH-1 : 0] mux_in_2d [IN_NUM -1 : 0];
             for (i=0; i< IN_NUM; i=i+1) begin : loop
-                assign mux_in_2d[i] =mux_in[((i+1)*OUT_WIDTH)-1 : i*OUT_WIDTH];   
+                assign mux_in_2d[i] = mux_in[((i+1)*OUT_WIDTH)-1 : i*OUT_WIDTH];   
             end
             assign mux_out = mux_in_2d[sel];        
-        end else  begin :els
+        end else  begin 
             assign mux_out = mux_in;            
         end
     endgenerate
@@ -338,7 +321,7 @@ module  accumulator #(
     parameter NUM =5
 )(
     in_all,
-    out         
+    sum_o         
 );
     function integer log2;
     input integer number; begin   
@@ -353,22 +336,22 @@ module  accumulator #(
         N = INw/NUM,
         SUMw = log2(NUM)+N; 
     input [INw-1 : 0] in_all;
-    output[OUTw-1 : 0] out;
-    
-    wire [N-1 : 0] in [NUM-1 : 0];
+    output[OUTw-1 : 0] sum_o;
+
+    wire [N-1 : 0] D_in [NUM-1 : 0];
     reg [SUMw-1 : 0] sum;
     genvar i;
     generate 
     for (i=0; i<NUM; i=i+1)begin : lp
-        assign in[i] = in_all[(i+1)*N-1 : i*N];
+        assign D_in[i] = in_all[(i+1)*N-1 : i*N];
     end
     
     if(  SUMw == OUTw) begin : equal
-        assign out = sum;
+        assign sum_o = sum;
     end else if(SUMw >  OUTw) begin : bigger
-        assign out = (sum[SUMw-1 : OUTw] > 0 ) ? {OUTw{1'b1}} : sum[OUTw-1 : 0] ;
+        assign sum_o = (sum[SUMw-1 : OUTw] > 0 ) ? {OUTw{1'b1}} : sum[OUTw-1 : 0] ;
     end else begin : less
-        assign out = {{(OUTw-SUMw){1'b0}},  sum} ;
+        assign sum_o = {{(OUTw-SUMw){1'b0}},  sum} ;
     end
     endgenerate
     // This is supposed to be synyhesized as "sum=in[0]+in[1]+...in[Num-1]"; 
@@ -377,7 +360,7 @@ module  accumulator #(
     always @(*)begin 
         sum = {SUMw{1'b0}};
         for (k=0;k<NUM;k=k+1)begin 
-            sum= sum + {{(SUMw-N){1'b0}},in[k]};
+            sum= sum + {{(SUMw-N){1'b0}},D_in[k]};
         end
     end
     //In case your compiler could not synthesize or wrongly synthesizes it try this
@@ -399,50 +382,13 @@ module  accumulator #(
     */
 endmodule
 
-
-/******************************
-*    set_bits_counter 
-*******************************/
-module set_bits_counter #(
-    parameter IN_WIDTH =120,
-    parameter OUT_WIDTH = log2(IN_WIDTH+1)
-    )(
-    input   [IN_WIDTH-1 : 0]  in,
-    output  [OUT_WIDTH-1 : 0]  out
-);
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
-    
-    wire    [IN_WIDTH-2 : 0]  addrin2;
-    wire    [OUT_WIDTH-1 : 0]  addrout [IN_WIDTH-2 : 0];
-    wire    [OUT_WIDTH-1 : 0]  addrin1 [IN_WIDTH-1 : 0];
-    assign out = addrin1 [IN_WIDTH-1];
-    
-    genvar i;
-    //always @(*)begin
-    assign  addrin1[0] = {{(OUT_WIDTH-1){1'b0}},in[0]};
-    generate        
-        for (i=0; i<IN_WIDTH-1; i=i+1) begin : loop
-                assign  addrin1[i+1] = addrout[i];
-                assign  addrin2[i] = in[i+1];
-                assign  addrout[i] = addrin1[i] + addrin2 [i];
-        end
-    endgenerate
-endmodule
-
 /******************************
 *    check_single_bit_assertation
 *******************************/
 module is_onehot0 #(
     parameter IN_WIDTH =2
 )(
-    input   [IN_WIDTH-1 : 0]  in,
+    input   [IN_WIDTH-1 : 0]  D_in,
     output  result
 );
     function integer log2;
@@ -462,8 +408,8 @@ module is_onehot0 #(
         .OUTw(OUT_WIDTH),
         .NUM(IN_WIDTH)
     ) accum (
-        .in_all(in),
-        .out(sum)         
+        .in_all(D_in),
+        .sum_o(sum)         
     );
     assign result = (sum <=1)? 1'b1: 1'b0;
 endmodule

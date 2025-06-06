@@ -276,9 +276,9 @@ module multicast_injector #(
     wire [V-1 : 0] vc_reg;
     wire tail_flag_reg, hdr_flag_reg;
     logic [DISTw-1:   0] distance;
-    pronoc_register #(.W(V))   register1 (.in(chan_in.flit_chanel.flit.vc),        .reset (reset ), .clk (clk),.out(vc_reg));
-    pronoc_register #(.W(1))   register2 (.in(chan_in.flit_chanel.flit.hdr_flag),    .reset (reset ), .clk (clk),.out(hdr_flag_reg));
-    pronoc_register #(.W(1))   register3 (.in(chan_in.flit_chanel.flit.tail_flag & chan_in.flit_chanel.flit_wr ),.reset (reset ), .clk (clk),.out(tail_flag_reg));
+    pronoc_register #(.W(V))   register1 (.D_in(chan_in.flit_chanel.flit.vc),        .reset (reset ), .clk (clk),.Q_out(vc_reg));
+    pronoc_register #(.W(1))   register2 (.D_in(chan_in.flit_chanel.flit.hdr_flag),    .reset (reset ), .clk (clk),.Q_out(hdr_flag_reg));
+    pronoc_register #(.W(1))   register3 (.D_in(chan_in.flit_chanel.flit.tail_flag & chan_in.flit_chanel.flit_wr ),.reset (reset ), .clk (clk),.Q_out(tail_flag_reg));
     wire [Vw-1 : 0] vc_bin;
     one_hot_to_bin #(
         .ONE_HOT_WIDTH (V),

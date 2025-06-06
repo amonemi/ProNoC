@@ -77,8 +77,7 @@ module router_top #(
         current_r_id = 0;
         current_r_id [NRw-1 : 0] = router_config_in.router_id;
         for( int k=0; k<P; k++) begin 
-            ctrl_in [k] = chan_in[k].ctrl_chanel;
-            chan_out[k].ctrl_chanel= ctrl_out [k];
+            ctrl_in [k] = chan_in[k].ctrl_chanel;            
         end
     end
     
@@ -161,6 +160,7 @@ module router_top #(
                 always_comb begin
                     r2_chan_in[i]   =  chan_in[i].flit_chanel;
                     chan_out[i].flit_chanel     =  r2_chan_out[i];
+                    chan_out[i].ctrl_chanel= ctrl_out [i];
                     smart_ctrl[i]={SMART_CTRL_w{1'b0}};
                 end
             end
@@ -241,6 +241,7 @@ module router_top #(
                         chan_out[i].flit_chanel.flit    =  ss_flit_chanel[i].flit;
                         chan_out[i].flit_chanel.flit_wr =  ss_flit_chanel[i].flit_wr;
                     end
+                    chan_out[i].ctrl_chanel= ctrl_out [i];
                 end
                 
                 smart_credit_manage #(
@@ -262,6 +263,7 @@ module router_top #(
             for( int k=0;k<P;k++) begin 
                 r2_chan_in[k] = chan_in[k].flit_chanel;
                 chan_out[k].flit_chanel = r2_chan_out[k];
+                chan_out[k].ctrl_chanel= ctrl_out [k];
                 smart_ctrl[k]={SMART_CTRL_w{1'b0}};
             end
         end
@@ -391,7 +393,7 @@ module router_top #(
 //        end
 //        if(not_ideal) router_is_ideal =1'b0; // delay one clock cycle if the input req exist in last clock cycle bot not on the current one
 //    end
-//    pronoc_register #(    .W(1)) no_ideal_register(.in(not_ideal_next), .reset(reset),  .clk(clk), .out(not_ideal));
+//    pronoc_register #(    .W(1)) no_ideal_register(.D_in(not_ideal_next), .reset(reset),  .clk(clk), .Q_out(not_ideal));
 //`endif
     
 `endif //SIMULATION

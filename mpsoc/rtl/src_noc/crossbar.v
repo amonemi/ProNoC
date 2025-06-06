@@ -118,8 +118,8 @@ module crossbar #(
                 .W (Fw),
                 .N (P_1)
             ) cross_mux (
-                .in (mux_in [i]),
-                .out (flit_out_all[(i+1)*Fw-1 : i*Fw]),
+                .D_in(mux_in [i]),
+                .Q_out(flit_out_all[(i+1)*Fw-1 : i*Fw]),
                 .sel (mux_sel[i])
             );
         end else begin : binary

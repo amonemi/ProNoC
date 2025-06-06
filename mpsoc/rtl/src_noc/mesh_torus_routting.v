@@ -91,10 +91,10 @@ module mesh_torus_look_ahead_routing #(
         );
     end
     endgenerate
-    
-    pronoc_register #(.W(Xw) ) reg1 (.in(dest_x ), .out(destx_delayed), .reset(reset), .clk(clk));
-    pronoc_register #(.W(Yw) ) reg2 (.in(dest_y ), .out(desty_delayed), .reset(reset), .clk(clk));
-    pronoc_register #(.W(P_1)) reg3 (.in(destport_encoded ), .out(destport_delayed), .reset(reset), .clk(clk));
+
+    pronoc_register #(.W(Xw) ) reg1 (.D_in(dest_x ), .Q_out(destx_delayed), .reset(reset), .clk(clk));
+    pronoc_register #(.W(Yw) ) reg2 (.D_in(dest_y ), .Q_out(desty_delayed), .reset(reset), .clk(clk));
+    pronoc_register #(.W(P_1)) reg3 (.D_in(destport_encoded ), .Q_out(destport_delayed), .reset(reset), .clk(clk));
 endmodule
 
 

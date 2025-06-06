@@ -229,8 +229,8 @@ module header_flit_update_lk_route_ovc #(
     wire [DSTPw-1 : 0]  lk_dest,dest_coded;
     wire [DSTPw-1 : 0]  lk_mux_out;
     
-    pronoc_register #(.W(V)) reg1 (.in(vc_num_in), .out(vc_num_delayed), .reset(reset), .clk(clk));   
-    
+    pronoc_register #(.W(V)) reg1 (.D_in(vc_num_in), .Q_out(vc_num_delayed), .reset(reset), .clk(clk));   
+
     /* verilator lint_off WIDTH */
     assign hdr_flag = ( PCK_TYPE == "MULTI_FLIT")? flit_in[Fw-1]: 1'b1;
     /* verilator lint_on WIDTH */
@@ -239,15 +239,15 @@ module header_flit_update_lk_route_ovc #(
         .W(DSTPw),
         .N(V) 
     ) lkdest_mux (
-        .in(lk_dest_all_in),
-        .out(lk_mux_out),
+        .D_in(lk_dest_all_in),
+        .Q_out(lk_mux_out),
         .sel(vc_num_delayed)
     );
     
     generate 
     if( SSA_EN == 1 ) begin : predict // bypass the lk fifo when no ivc is granted
         logic ivc_any_delayed;
-        pronoc_register #(.W(1)) reg2 (.in(any_ivc_sw_request_granted ), .out(ivc_any_delayed), .reset(reset), .clk(clk));
+        pronoc_register #(.W(1)) reg2 (.D_in(any_ivc_sw_request_granted ), .Q_out(ivc_any_delayed), .reset(reset), .clk(clk));
         assign lk_dest = (ivc_any_delayed == 1'b0)? lk_dest_not_registered : lk_mux_out;
     end else begin : no_predict
         assign lk_dest =lk_mux_out;
@@ -258,8 +258,8 @@ module header_flit_update_lk_route_ovc #(
         .W(V),
         .N(V) 
     ) ovc_num_mux(
-        .in(assigned_ovc_num),
-        .out(ovc_num),
+        .D_in(assigned_ovc_num),
+        .Q_out(ovc_num),
         .sel(vc_num_delayed)
     );
     

@@ -462,8 +462,8 @@ module next_router_addr_selector_onehot #(
         .W(RXw),
         .N(P)
     )  next_x_mux (
-        .in(neighbors_rx),
-        .out(next_rx),
+        .D_in(neighbors_rx),
+        .Q_out(next_rx),
         .sel(destport_onehot)
     );
     
@@ -471,8 +471,8 @@ module next_router_addr_selector_onehot #(
         .W(RYw),
         .N(P)
     ) next_y_mux (
-        .in(neighbors_ry),
-        .out(next_ry),
+        .D_in(neighbors_ry),
+        .Q_out(next_ry),
         .sel(destport_onehot)
     );
 endmodule

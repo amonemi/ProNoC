@@ -472,7 +472,7 @@ endgenerate
     )
     check_one_hot
     (
-        .in(s_sel_one_hot),
+        .D_in(s_sel_one_hot),
         .result(sel_is_one_hot)  
     
     );    
@@ -561,7 +561,7 @@ module  is_one_hot #(
     parameter INw= 20
 )
 (
-    in,
+    D_in,
     result         
 );
 
@@ -575,21 +575,21 @@ module  is_one_hot #(
     endfunction // log2 
     
     
-    input [INw-1  :   0] in;
+    input [INw-1  :   0] D_in;
     output result;
     
     localparam Aw = log2(INw+1);   
   
     reg [Aw-1 :   0] sum;   
-   
-  
-  // This is supposed to be synyhesized as "sum=in[0]+in[1]+...in[Num-1]"; 
+
+
+  // This is supposed to be synyhesized as "sum=D_in[0]+D_in[1]+...D_in[Num-1]"; 
   // It works with Quartus, Verilator and Modelsim compilers  
     integer k; 
     always @(*)begin 
         sum=0;
         for (k=0;k<INw;k=k+1)begin        
-             sum= sum + {{(Aw-1){1'b0}},in[k]};        
+            sum= sum + {{(Aw-1){1'b0}},D_in[k]};        
         end   
     end
     
