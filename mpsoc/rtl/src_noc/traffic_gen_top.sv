@@ -790,12 +790,17 @@ module injection_ratio_ctrl #
                 inject <=  1'b0; 
                 sent <= 1'b1; 
                 flit_counter <= 0;
+                pck_size <= pck_size_in;
+            end else begin 
+                sent <=  next_sent; 
+                state <=  next_state;
+                if(ratio!={CNTw{1'b0}}) inject <=  next_inject;             
+                flit_counter <= next_flit_counter;
+                if(flit_counter=={PCK_SIZw{1'b0}}) pck_size<=pck_size_in;
             end
-            if(flit_counter=={PCK_SIZw{1'b0}}) pck_size<=pck_size_in;
-            state <=  next_state;
-            if(ratio!={CNTw{1'b0}}) inject <=  next_inject; 
-            sent <=  next_sent; 
-            flit_counter <= next_flit_counter;
+           
+            
+            
         end
     end
     

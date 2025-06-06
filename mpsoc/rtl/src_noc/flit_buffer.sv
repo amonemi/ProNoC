@@ -1020,9 +1020,9 @@ module bram_based_fifo  #(
     input clk;
     
     reg [Dw-1 : 0] queue [B-1 : 0] /* synthesis ramstyle = "no_rw_check" */;
-    reg [Bw- 1 : 0] rd_ptr;
-    reg [Bw- 1 : 0] wr_ptr;
-    reg [DEPTHw-1 : 0] depth;
+    reg [Bw- 1 : 0] rd_ptr,rd_ptr_next;
+    reg [Bw- 1 : 0] wr_ptr,wr_ptr_next;
+    reg [DEPTHw-1 : 0] depth,depth_next;
     
     // Sample the data
     always @(posedge clk) begin
@@ -1032,17 +1032,27 @@ module bram_based_fifo  #(
             dout <= queue[rd_ptr];
     end
     
-    always @(posedge clk) begin
+    always_comb begin 
+        rd_ptr_next = rd_ptr;
+        wr_ptr_next = wr_ptr;
+        depth_next = depth;
+        if (wr_en) wr_ptr_next = (wr_ptr==Bint)? {Bw{1'b0}} : wr_ptr + 1'b1;
+        if (rd_en) rd_ptr_next = (rd_ptr==Bint)? {Bw{1'b0}} : rd_ptr + 1'b1;
+        if (wr_en & ~rd_en) depth_next = depth + 1'b1;
+        else if (~wr_en & rd_en) depth_next = depth - 1'b1;
+    end
+    
+    
+    always @(`pronoc_clk_reset_edge) begin
         if (`pronoc_reset) begin
             rd_ptr <= {Bw{1'b0}};
             wr_ptr <= {Bw{1'b0}};
             depth  <= {DEPTHw{1'b0}};
         end
         else begin
-            if (wr_en) wr_ptr <= (wr_ptr==Bint)? {Bw{1'b0}} : wr_ptr + 1'b1;
-            if (rd_en) rd_ptr <= (rd_ptr==Bint)? {Bw{1'b0}} : rd_ptr + 1'b1;
-            if (wr_en & ~rd_en) depth <= depth + 1'b1;
-            else if (~wr_en & rd_en) depth <= depth - 1'b1;
+            rd_ptr <= rd_ptr_next;
+            wr_ptr <= wr_ptr_next;
+            depth <= depth_next;
         end
     end
     
