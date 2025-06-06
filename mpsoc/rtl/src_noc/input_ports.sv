@@ -374,7 +374,7 @@ module input_queue_per_port #(
         .clk    (clk),
         .Q_out  (credit_out)); 
     
-    always_combbegin 
+    always_comb begin 
         iport_weight_next = iport_weight;
         if(hdr_flit_wr != {V{1'b0}})  iport_weight_next = (weight_in=={WEIGHTw{1'b0}})? WEIGHT_INIT : weight_in; // the minimum weight is 1
     end

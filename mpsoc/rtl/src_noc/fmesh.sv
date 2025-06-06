@@ -302,7 +302,7 @@ module fmesh_destp_decoder #(
     if( ROUTE_TYPE == "DETERMINISTIC") begin :dtrmn
         wire x,y,a,b;
         assign {x,y,a,b} = dest_port_coded;
-        always_combbegin 
+        always_comb begin 
             case({a,b})
                 2'b10 : portout = {1'b0,~x,1'b0,x,1'b0};
                 2'b01 : portout = {~y,1'b0,y,1'b0,1'b0};
@@ -315,7 +315,7 @@ module fmesh_destp_decoder #(
         assign {x,y,a,b} = dest_port_coded;        
         wire [PPSw-1:0] port_pre_sel_final;
         assign port_pre_sel_final= (swap_port_presel)? ~port_pre_sel: port_pre_sel;
-        always_combbegin 
+        always_comb begin 
             case({a,b})
                 2'b10 : portout = {1'b0,~x,1'b0,x,1'b0};
                 2'b01 : portout = {~y,1'b0,y,1'b0,1'b0};

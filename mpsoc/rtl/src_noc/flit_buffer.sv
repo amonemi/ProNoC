@@ -144,7 +144,7 @@ module flit_buffer
         localparam RESET_TO = ((2**Bw)==B)? 0 : B*i;
         pronoc_register #(.W(PTRw),.RESET_TO(RESET_TO)) reg4 (.D_in(sub_rd_ptr_next[i]), .Q_out(sub_rd_ptr[i]), .reset(reset), .clk(clk));
         pronoc_register #(.W(DEPTHw)) sub_depth_reg (.D_in(sub_depth_next[i] ), .Q_out(sub_depth [i]), .reset(reset), .clk(clk));
-        always_combbegin
+        always_comb begin
             sub_depth_next  [i] = sub_depth   [i];
             if(sub_restore[i]) sub_depth_next  [i]= depth_next[i];
             else if (wr[i] & ~sub_rd[i]) sub_depth_next [i] = sub_depth[i] + 1'h1;
@@ -245,7 +245,7 @@ module flit_buffer
             /* verilator lint_off WIDTH */ 
             if (CAST_TYPE != "UNICAST") begin :multicast
             /* verilator lint_on WIDTH */
-                always_combbegin
+                always_comb begin
                     sub_rd_ptr_next[i] = sub_rd_ptr[i];
                     if (sub_restore[i]) sub_rd_ptr_next[i] = rd_ptr_next [i];
                     else if(sub_rd[i])  sub_rd_ptr_next[i] = sub_rd_ptr[i]+ 1'h1;
@@ -299,7 +299,7 @@ module flit_buffer
             if (CAST_TYPE != "UNICAST") begin :multicast
             /* verilator lint_on WIDTH */ 
                 
-                always_combbegin
+                always_comb begin
                     sub_rd_ptr_next[i] = sub_rd_ptr[i];
                     if (sub_restore[i]) sub_rd_ptr_next[i] = rd_ptr_next [i];
                     /* verilator lint_off WIDTH */ 
@@ -657,7 +657,7 @@ module fwft_fifo #(
     pronoc_register #(.W(DEPTH_DATA_WIDTH)) reg1 (.D_in(depth_next), .Q_out(depth), .reset(reset), .clk(clk));
     pronoc_register #(.W(DATA_WIDTH))       reg2 (.D_in(dout_next_ld), .Q_out(dout ), .reset(reset), .clk(clk));
 
-    always_combbegin
+    always_comb begin
         depth_next = depth;
         dout_next_ld = dout;
         if (wr_en & ~rd_en) depth_next = depth + 1'h1;
@@ -820,7 +820,7 @@ module fwft_fifo_with_output_clear #(
     pronoc_register #(.W(DEPTH_DATA_WIDTH)) reg1 (.D_in(depth_next), .Q_out(depth), .reset(reset), .clk(clk));
     pronoc_register #(.W(DATA_WIDTH))       reg2 (.D_in(dout_next_ld), .Q_out(dout), .reset(reset), .clk(clk));
 
-    always_combbegin
+    always_comb begin
         depth_next = depth;
         if (wr_en & ~rd_en) depth_next = depth + 1'h1;
         else if (~wr_en & rd_en) depth_next = depth - 1'h1;
@@ -828,7 +828,7 @@ module fwft_fifo_with_output_clear #(
     
     generate
     for(i=0;i<DATA_WIDTH; i=i+1) begin : lp
-        always_combbegin
+        always_comb begin
             dout_next_ld[i] = dout[i];
             if (clear[i]) dout_next_ld[i] = 1'b0;
             else if (out_ld) dout_next_ld[i] = dout_next[i];

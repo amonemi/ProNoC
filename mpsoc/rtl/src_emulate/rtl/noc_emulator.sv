@@ -412,7 +412,7 @@ module  traffic_gen_ram
         .mcast_dst_num_o()
     );
 
-    always_combbegin
+    always_comb begin
         case (statistic_jtag_addr_b)
             SENT_PCK_ADDR: statistic_jtag_q_b=  total_pck_sent;
             RSVD_PCK_ADDR: statistic_jtag_q_b=  total_pck_recieved;
@@ -422,7 +422,7 @@ module  traffic_gen_ram
         endcase
     end
     
-    always_combbegin
+    always_comb begin
         ns=ps;
         addr_a_next =  addr_a;
         pck_number_sent_next = pck_number_sent;
@@ -608,13 +608,13 @@ module jtag_emulator_controller #(
         end
     end
     
-    always_combbegin
+    always_comb begin
         wb_addr_next= wb_addr;
         if(wb_wr_addr_en) wb_addr_next = data_out [Aw-1 :   0];
         else if (wb_addr_inc)  wb_addr_next =   wb_addr + 1'b1;
     end
     
-    always_combbegin
+    always_comb begin
         ns=ps;
         wr_mem_en =1'b0;
         wb_addr_inc=1'b0;

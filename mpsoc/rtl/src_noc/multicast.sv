@@ -392,7 +392,7 @@ module mcast_dest_list_decode #(
             .id(unicast_id)                
         );            
         
-        always_combbegin 
+        always_comb begin 
             dest_o_uni = {NE{1'b0}};
             dest_o_uni[unicast_id]=1'b1;
         end
@@ -424,7 +424,7 @@ module mcast_dest_list_decode #(
             .id(unicast_id)                
         );            
         
-        always_combbegin 
+        always_comb begin 
             dest_o_uni = {NE{1'b0}};
             dest_o_uni[unicast_id]=1'b1;
         end
@@ -451,7 +451,7 @@ module mcast_dest_list_decode #(
             .id(unicast_id)                
         );            
         
-        always_combbegin 
+        always_comb begin 
             dest_o_uni = {NE{1'b0}};
             dest_o_uni[unicast_id]=1'b1;
         end

@@ -273,7 +273,7 @@ output  reg [`NOC_X_WIDTH-1:0]   piton_coreid_x_o;
 output  reg [`NOC_Y_WIDTH-1:0]   piton_coreid_y_o;
 input   [ADDR_CODED-1 : 0] piton_end_addr_coded_i;
     
-    always_combbegin 
+    always_comb begin 
         piton_coreid_x_o = {`MSG_DST_X_WIDTH{1'b0}}; 
         piton_coreid_y_o = {`MSG_DST_Y_WIDTH{1'b0}}; 
         {piton_coreid_y_o[Yw-1 : 0],  piton_coreid_x_o[Xw-1 : 0]}=piton_end_addr_coded_i [Yw+Xw-1 : 0];

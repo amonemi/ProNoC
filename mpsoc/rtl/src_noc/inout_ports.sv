@@ -390,7 +390,7 @@ module output_vc_status #(
             .reset_to(credit_init_val_in[i][DEPTH_WIDTH-1:0])
         );
         
-        always_combbegin 
+        always_comb begin 
             credit_next[i] = credit [i];
             if(  wr_in[i]  && ~credit_in[i])   credit_next[i] = credit[i]-1'b1;
             if( ~wr_in[i]  &&  credit_in[i])   credit_next[i] = credit[i]+1'b1;

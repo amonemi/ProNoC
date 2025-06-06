@@ -819,7 +819,7 @@ module hot_spot_dest_gen
     end
     logic hotspot_flag;
     integer i;
-    always_combbegin 
+    always_comb begin 
         off_flag=0;
         for (i=0;i<HOTSPOT_NUM; i=i+1)begin
             if ( hotspot_info[i].send_enable == 0 && core_num ==hotspot_info[i].ip_num)begin

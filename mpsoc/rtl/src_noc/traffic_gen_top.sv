@@ -399,7 +399,7 @@ module  traffic_gen_top    #(
     
     reg not_yet_sent_aflit_next,not_yet_sent_aflit;
     
-    always_combbegin
+    always_comb begin
         wr_vc_next          = wr_vc; 
         cand_wr_vc_en       = 1'b0;
         flit_out_wr         = 1'b0;
