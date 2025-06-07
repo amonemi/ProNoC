@@ -292,18 +292,21 @@ module input_queue_per_port #(
     wire  [V-1 : 0] multiple_dest,dst_onhot0;
     wire   [DSTPw-1 : 0] clear_dspt_mulicast  [V-1 : 0];
     
-    wire  [VV-1 : 0] candidate_ovcs;
+    logic  [V-1 : 0] candidate_ovcs [V-1 : 0];
     
     wire [Cw-1 : 0] class_in;
     wire [DSTPw-1 : 0] destport_in,destport_in_encoded;
     wire [VDSTPw-1 : 0] lk_destination_encoded;
     
     wire [DAw-1 : 0] dest_e_addr_in;
+    wire [EAw-1 : 0] dest_e_addr_out [V-1 : 0];
     wire [EAw-1 : 0] src_e_addr_in;
     wire [V-1 : 0] vc_num_in;
     wire [V-1 : 0] hdr_flit_wr;
     wire [VV-1 : 0] assigned_ovc_num;
-    
+    logic [V-1 : 0] assigned_onc_one_hot [V-1 : 0];
+    logic [Vw-1 : 0] assigned_onc_bin [V-1 : 0];
+
     wire [DSTPw-1 : 0] lk_destination_in_encoded;
     wire [WEIGHTw-1  : 0] weight_in;   
     wire [Fw-1 : 0] buffer_out;
@@ -402,6 +405,9 @@ module input_queue_per_port #(
     
     genvar i;
     generate
+    for (i=0; i<V; i=i+1) begin : O_
+        assign assigned_onc_one_hot [i] = assigned_ovc_num[(i+1)*V-1 : i*V];
+    end
     /* verilator lint_off WIDTH */  
     if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && (T3>1) && CAST_TYPE== "UNICAST") begin : multi_local
     /* verilator lint_on WIDTH */  
@@ -466,33 +472,40 @@ module input_queue_per_port #(
         );
     end // "MULTI_MESH"
     
+    always_comb begin
+        for (int k=0; k<PORT_IVC; k=k+1) begin
+            ivc_info[k].single_flit_pck = 
+                ( IS_SINGLE_FLIT ) ? 1'b1  :
+                ( MIN_PCK_SIZE == 1 ) ? flit_is_tail[k] & ~ovc_is_assigned[k] :  1'b0; 
+            ivc_info[k].ivc_req = ivc_request[k];
+            ivc_info[k].class_num = class_out[k];
+            ivc_info[k].flit_is_tail = flit_is_tail[k];
+            ivc_info[k].assigned_ovc_not_full = assigned_ovc_not_full[k];
+            ivc_info[k].candidate_ovc = candidate_ovcs [k];
+            ivc_info[k].ovc_is_assigned = ovc_is_assigned[k];
+            ivc_info[k].assigned_ovc_num = assigned_onc_one_hot[k];
+            ivc_info[k].dest_port_encoded = dest_port_encoded[k];
+            //ivc_info[k].getting_swa_first_arbiter_grant=nonspec_first_arbiter_granted_ivc[k];
+            //ivc_info[k].getting_swa_grant=ivc_num_getting_sw_grant[k];
+            ivc_info[k].destport_one_hot = {MAX_P{1'b0}};
+            ivc_info[k].destport_one_hot[P-1 : 0] = destport_one_hot[k];
+            ivc_info[k].assigned_ovc_bin = assigned_onc_bin[k];
+            ivc_info[k].dest_e_addr = dest_e_addr_out[k];
+        end //for k
+        for (int k=PORT_IVC; k<V; k=k+1) begin 
+            assign ivc_info[k] = {IVC_INFO_w{1'b0}};
+        end//k
+    end
+    
     for (i=0;i<PORT_IVC; i=i+1) begin: V_
         
         assign credit_init_val_out [i] = PORT_B [CRDTw-1 : 0 ];
         
         one_hot_to_bin #(.ONE_HOT_WIDTH(V),.BIN_WIDTH(Vw)) conv (
-            .one_hot_code(assigned_ovc_num[(i+1)*V-1 : i*V]), 
-            .bin_code(ivc_info[i].assigned_ovc_bin)
-        );
+            .one_hot_code(assigned_onc_one_hot[i]), 
+            .bin_code(assigned_onc_bin[i])
+        );      
         
-        assign ivc_info[i].single_flit_pck = 
-            ( IS_SINGLE_FLIT ) ? 1'b1  :
-            ( MIN_PCK_SIZE == 1 )? flit_is_tail[i] & ~ovc_is_assigned[i] :  1'b0; 
-        assign ivc_info[i].ivc_req = ivc_request[i];
-        assign ivc_info[i].class_num = class_out[i];
-        assign ivc_info[i].flit_is_tail = flit_is_tail[i];
-        assign ivc_info[i].assigned_ovc_not_full=assigned_ovc_not_full[i];
-        assign ivc_info[i].candidate_ovc=   candidate_ovcs [(i+1)*V-1 : i*V];
-        assign ivc_info[i].ovc_is_assigned = ovc_is_assigned[i];
-        assign ivc_info[i].assigned_ovc_num= assigned_ovc_num[(i+1)*V-1 : i*V];
-        assign ivc_info[i].dest_port_encoded=dest_port_encoded[i];
-        //assign ivc_info[i].getting_swa_first_arbiter_grant=nonspec_first_arbiter_granted_ivc[i];
-        //assign ivc_info[i].getting_swa_grant=ivc_num_getting_sw_grant[i];
-        if( P==MAX_P ) begin 
-            assign ivc_info[i].destport_one_hot= destport_one_hot[i];
-        end else if( P < MAX_P ) begin 
-            assign ivc_info[i].destport_one_hot= {{(MAX_P-P){1'b0}},destport_one_hot[i]};
-        end
         
         `ifdef SIMULATION
         //check ivc info
@@ -508,7 +521,7 @@ module input_queue_per_port #(
         if(IS_MULTI_MESH==0) begin :ovc_
             ovc_list  OvcList(
                 .class_in(class_out[i]),
-                .ovcs_out(candidate_ovcs [(i+1)*V-1 : i*V])
+                .ovcs_out(candidate_ovcs [i])
             );
         end else begin :mmesh_ovc
             fwft_fifo #(
@@ -536,7 +549,7 @@ module input_queue_per_port #(
                 .ctrl_in(ctrl_in),
                 .class_in(class_out[i]),
                 .ovc_sel(ovc_sel_ivc[i]),
-                .ovcs_out(candidate_ovcs [(i+1)*V-1 : i*V])
+                .ovcs_out(candidate_ovcs [i])
             );
             */
         end
@@ -626,7 +639,7 @@ module input_queue_per_port #(
                 .din (dest_e_addr_in),
                 .wr_en (wr_hdr_fwft_fifo[i]),   // Write enable
                 .rd_en (rd_hdr_fwft_fifo[i]),   // Read the next word
-                .dout (ivc_info[i].dest_e_addr),    // Data out
+                .dout (dest_e_addr_out[i]),    // Data out
                 .full ( ),
                 .nearly_full ( ),
                 .recieve_more_than_0 ( ),
@@ -636,7 +649,7 @@ module input_queue_per_port #(
             );
             
         end else begin : no_smart
-            assign ivc_info[i].dest_e_addr = {EAw{1'bx}};
+            assign dest_e_addr_out[i]= {EAw{1'b0}};
         end    
         
         //class_fifo
@@ -930,9 +943,8 @@ module input_queue_per_port #(
         assign ivc_not_empty [V-1 : PORT_IVC]={(V-PORT_IVC){1'b0}};
         assign flit_is_tail [V-1 : PORT_IVC]={(V-PORT_IVC){1'b0}};
         for (i=PORT_IVC;i<V; i=i+1) begin: V_
-            assign credit_init_val_out [i] = {CRDTw{1'b0}};
-            assign ivc_info[i] = {IVC_INFO_w{1'b0}};
-            assign candidate_ovcs [(i+1)*V-1 : i*V]={V{1'b0}};
+            assign credit_init_val_out [i] = {CRDTw{1'b0}};            
+            assign candidate_ovcs [i] = {V{1'b0}};
             assign ovc_is_assigned_next[i] =1'b0;
             assign class_out[i]={Cw{1'b0}};
             assign dest_port_multi[i]={DSTPw{1'b0}};

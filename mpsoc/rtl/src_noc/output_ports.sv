@@ -121,7 +121,6 @@ module output_ports #(
     pronoc_register #(.W(PV)) reg_2 ( .D_in(nearly_full_all_next), .reset(reset), .clk(clk), .Q_out(nearly_full_all));
     pronoc_register #(.W(PV)) reg_3 ( .D_in(empty_all_next), .reset(reset), .clk(clk), .Q_out(empty_all));
 
-    integer k;
     genvar i,j;
     generate
         /* verilator lint_off WIDTH */
@@ -135,7 +134,7 @@ module output_ports #(
             /* verilator lint_on WIDTH */
                 reg [PV-1 : 0] full_adaptive_ovc_mask,full_adaptive_ovc_mask_next; 
                 always_comb begin
-                    for(k=0; k<PV; k=k+1) begin
+                    for( int k=0; k<PV; k=k+1) begin
                      //in full adaptive routing, adaptive VCs located in y axies can not be reallocated non-atomicly   
                         if( AVC_ATOMIC_EN== 0) begin :avc_atomic
                             if((((k/V) == NORTH ) || ((k/V) == SOUTH )) && (  ADAPTIVE_VC_MASK[k%V]))  
@@ -322,7 +321,7 @@ module output_ports #(
             assign ovc_allocated_all [(i+1)*V-1 : i*V] = vsa_ctrl_in[i].ovc_is_allocated | ssa_ctrl_in[i].ovc_is_allocated | smart_ctrl_in[i].ovc_is_allocated;
         end
         always @ (posedge clk )begin 
-            for(k=0;    k<PV; k=k+1'b1) begin 
+            for( int k=0; k<PV; k=k+1'b1) begin 
                 if(empty_all[k] & credit_increased_all[k]) begin 
                     $display("%t: ERROR: unexpected credit recived for empty ovc[%d]: %m",$time,k);
                     $finish;

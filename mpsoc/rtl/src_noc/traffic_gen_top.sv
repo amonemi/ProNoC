@@ -96,7 +96,7 @@ module  traffic_gen_top    #(
     logic  [V-1 :0] credit_out;
     
     // the connected router address
-    wire  [RAw-1 :0] current_r_addr;
+    logic  [RAw-1 :0] current_r_addr;
     
     /* verilator lint_off WIDTH */
     wire [PCK_SIZw-1 : 0] pck_size_tmp= (IS_SINGLE_FLIT )?   1 : pck_size_in;
@@ -111,12 +111,11 @@ module  traffic_gen_top    #(
         chan_out.ctrl_chanel.endp_port =1'b1;
         chan_out.ctrl_chanel.credit_release_en={V{1'b0}};
         chan_out.ctrl_chanel.hetero_ovc_presence={V{1'b1}};
+        flit_in   =  chan_in.flit_chanel.flit;
+        flit_in_wr=  chan_in.flit_chanel.flit_wr;
+        credit_in =  chan_in.flit_chanel.credit;
+        current_r_addr = chan_in.ctrl_chanel.router_addr;
     end
-    assign flit_in   =  chan_in.flit_chanel.flit;
-    assign flit_in_wr=  chan_in.flit_chanel.flit_wr;
-    assign credit_in =  chan_in.flit_chanel.credit;
-    assign current_r_addr = chan_in.ctrl_chanel.router_addr;
-
     //old traffic.v file
     reg [2:0]   ps,ns;
     localparam IDEAL =3'b001, SENT =3'b010, WAIT=3'b100;
@@ -126,19 +125,18 @@ module  traffic_gen_top    #(
     logic [DAw-1 :0] dest_e_addr_reg,dest_e_addr_o;
     
     `ifdef SIMULATION
-    `ifdef MONITORE_PATH
-    
+    `ifdef MONITORE_PATH    
     reg tt;
-        always @(posedge clk) begin
-            if(`pronoc_reset)begin 
-                tt<=1'b0;
-            end else begin 
-                if(flit_out_wr && tt==1'b0 )begin
-                    $display( "%t: Injector: current_r_addr=%x,current_e_addr=%x,dest_e_addr=%x\n",$time, current_r_addr, current_e_addr, dest_e_addr);
-                    tt<=1'b1;
-                end
+    always @(posedge clk) begin
+        if(`pronoc_reset)begin
+            tt<=1'b0;
+        end else begin
+            if(flit_out_wr && tt==1'b0 )begin
+                $display( "%t: Injector: current_r_addr=%x,current_e_addr=%x,dest_e_addr=%x\n",$time, current_r_addr, current_e_addr, dest_e_addr);
+                tt<=1'b1;
             end
         end
+    end
     `endif //MONITORE_PATH
     `endif //SIMULATION
     
@@ -380,16 +378,12 @@ module  traffic_gen_top    #(
     endgenerate
     
     assign  ovc_wr_in   = (flit_out_wr ) ?      wr_vc : {V{1'b0}};
-    
-    /* verilator lint_off WIDTH */
-    //assign  wr_vc_is_full           = (SSA_EN==0)?  | ( full_vc & wr_vc) : | (nearly_full_vc & wr_vc);
     assign  wr_vc_is_full           = | ( full_vc & wr_vc);
-    /* verilator lint_on WIDTH */ 
     
     generate
     /* verilator lint_off WIDTH */ 
     if(VC_REALLOCATION_TYPE ==  "NONATOMIC") begin : nanatom_b
-        /* verilator lint_on WIDTH */  
+    /* verilator lint_on WIDTH */  
         assign wr_vc_avb    =  ~wr_vc_is_full; 
     end else begin : atomic_b 
         assign wr_vc_is_empty   =  | ( empty_vc & wr_vc);
@@ -798,16 +792,12 @@ module injection_ratio_ctrl #
                 flit_counter <= next_flit_counter;
                 if(flit_counter=={PCK_SIZw{1'b0}}) pck_size<=pck_size_in;
             end
-           
-            
-            
         end
     end
-    
 endmodule
 
 /*************************************
-        packet_buffer
+*        packet_buffer
 **************************************/
 module packet_gen 
 #(   
@@ -951,7 +941,7 @@ endmodule
 
 
 /********************
-    distance_gen 
+*    distance_gen 
 ********************/
 module distance_gen (
     src_e_addr,
