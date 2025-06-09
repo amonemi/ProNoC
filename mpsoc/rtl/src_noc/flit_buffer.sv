@@ -110,7 +110,7 @@ module flit_buffer
     
     genvar i;
     generate
-    if (IS_UNICAST) begin : nouni
+    if (~IS_UNICAST) begin : nouni
         assign  sub_rd = (rd_en)?  vc_num_rd : ssa_rd; 
         assign  sub_restore = sub_rd_ptr_ld; 
         assign  rd = (rd_en)?  vc_num_rd & ~multiple_dest : ssa_rd & ~multiple_dest;
