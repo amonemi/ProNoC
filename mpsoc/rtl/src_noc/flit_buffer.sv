@@ -284,10 +284,9 @@ module flit_buffer
                 /* verilator lint_off WIDTH */ 
                 assign  ptr_tmp [i] = sub_rd_ptr[i]-(B*i);
                 assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][ptr_tmp [i]] :1'b1;
-                /* verilator lint_on WIDTH */
-                
             end else begin : unicast
                 assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr[i]-(B*i)] : 1'b1;
+                /* verilator lint_on WIDTH */
             end
         end// for V_
         
