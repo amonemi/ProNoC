@@ -110,9 +110,7 @@ module flit_buffer
     
     genvar i;
     generate
-    /* verilator lint_off WIDTH */ 
-    if (CAST_TYPE != "UNICAST") begin : nouni
-        /* verilator lint_on WIDTH */ 
+    if (IS_UNICAST) begin : nouni
         assign  sub_rd = (rd_en)?  vc_num_rd : ssa_rd; 
         assign  sub_restore = sub_rd_ptr_ld; 
         assign  rd = (rd_en)?  vc_num_rd & ~multiple_dest : ssa_rd & ~multiple_dest;
@@ -120,9 +118,7 @@ module flit_buffer
         assign  rd = (rd_en)?  vc_num_rd : ssa_rd;
     end
     
-    /* verilator lint_off WIDTH */ 
-    if (PCK_TYPE == "MULTI_FLIT") begin :multi
-    /* verilator lint_on WIDTH */
+    if (IS_MULTI_FLIT) begin :multi
         assign {flgs_in,vc_in,flit_rest_in}=din;
         assign fifo_ram_din = {flgs_in,flit_rest_in};
         assign {flgs_out,flit_rest_out} = fifo_ram_dout;
@@ -134,23 +130,18 @@ module flit_buffer
     
     for(i=0;i<V;i=i+1) begin :V_
         assign  wr_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = wr_ptr[i];  
-        
-        /* verilator lint_off WIDTH */ 
-        if (CAST_TYPE != "UNICAST") begin
-        /* verilator lint_on WIDTH */ 
-        assign  rd_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = sub_rd_ptr[i]; 
-        localparam RESET_TO = ((2**Bw)==B)? 0 : B*i;
-        pronoc_register #(.W(PTRw),.RESET_TO(RESET_TO)) reg4 (.D_in(sub_rd_ptr_next[i]), .Q_out(sub_rd_ptr[i]), .reset(reset), .clk(clk));
-        pronoc_register #(.W(DEPTHw)) sub_depth_reg (.D_in(sub_depth_next[i] ), .Q_out(sub_depth [i]), .reset(reset), .clk(clk));
-        always_comb begin
-            sub_depth_next  [i] = sub_depth   [i];
-            if(sub_restore[i]) sub_depth_next  [i]= depth_next[i];
-            else if (wr[i] & ~sub_rd[i]) sub_depth_next [i] = sub_depth[i] + 1'h1;
-            else if (~wr[i] & sub_rd[i]) sub_depth_next [i] = sub_depth[i] - 1'h1;    
-        end//always
-        
-        assign  vc_not_empty [i] = (sub_depth[i] > 0);
-        
+        if (~IS_UNICAST) begin
+            assign  rd_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = sub_rd_ptr[i]; 
+            localparam RESET_TO = ((2**Bw)==B)? 0 : B*i;
+            pronoc_register #(.W(PTRw),.RESET_TO(RESET_TO)) reg4 (.D_in(sub_rd_ptr_next[i]), .Q_out(sub_rd_ptr[i]), .reset(reset), .clk(clk));
+            pronoc_register #(.W(DEPTHw)) sub_depth_reg (.D_in(sub_depth_next[i] ), .Q_out(sub_depth [i]), .reset(reset), .clk(clk));
+            always_comb begin
+                sub_depth_next  [i] = sub_depth   [i];
+                if(sub_restore[i]) sub_depth_next  [i]= depth_next[i];
+                else if (wr[i] & ~sub_rd[i]) sub_depth_next [i] = sub_depth[i] + 1'h1;
+                else if (~wr[i] & sub_rd[i]) sub_depth_next [i] = sub_depth[i] - 1'h1;    
+            end//always
+            assign  vc_not_empty [i] = (sub_depth[i] > 0);
         end else begin : unicast
             assign  rd_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = rd_ptr[i];   
             assign  vc_not_empty [i] = (depth[i] > 0);
@@ -233,32 +224,21 @@ module flit_buffer
                 rd_ptr_next [i] = rd_ptr  [i];
                 wr_ptr_next [i] = wr_ptr  [i];
                 depth_next  [i] = depth   [i];
-                
                 if (wr[i]  ) wr_ptr_next [i] = wr_ptr [i]+ 1'h1;
                 if (rd[i]  ) rd_ptr_next [i] = rd_ptr [i]+ 1'h1;
                 if (wr[i] & ~rd[i]) depth_next [i] = depth[i] + 1'h1;
                 else if (~wr[i] & rd[i]) depth_next [i] = depth[i] - 1'h1;
             end//always
-            
-            /* verilator lint_off WIDTH */ 
-            if (CAST_TYPE != "UNICAST") begin :multicast
-            /* verilator lint_on WIDTH */
+
+            if (~IS_UNICAST) begin :multicast
                 always_comb begin
                     sub_rd_ptr_next[i] = sub_rd_ptr[i];
                     if (sub_restore[i]) sub_rd_ptr_next[i] = rd_ptr_next [i];
                     else if(sub_rd[i])  sub_rd_ptr_next[i] = sub_rd_ptr[i]+ 1'h1;
                 end
-                
-                /* verilator lint_off WIDTH */
-                assign  flit_is_tail[i] = (PCK_TYPE == "MULTI_FLIT")? tail_fifo[i][sub_rd_ptr[i]] : 1'b1;
-                /* verilator lint_on WIDTH */
-                
-                
+                assign  flit_is_tail[i] = (IS_MULTI_FLIT)? tail_fifo[i][sub_rd_ptr[i]] : 1'b1;
             end else begin : unicast
-                
-                /* verilator lint_off WIDTH */
-                assign  flit_is_tail[i] = (PCK_TYPE == "MULTI_FLIT")?  tail_fifo[i][rd_ptr[i]] : 1'b1;
-                /* verilator lint_on WIDTH */
+                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr[i]] : 1'b1;
             end
         end//for V_
         
@@ -292,11 +272,7 @@ module flit_buffer
                 if (wr[i] & ~rd[i]) depth_next [i] = depth[i] + 1'h1;
                 else if (~wr[i] & rd[i]) depth_next [i] = depth[i] - 1'h1;
             end//always
-            
-            /* verilator lint_off WIDTH */ 
-            if (CAST_TYPE != "UNICAST") begin :multicast
-            /* verilator lint_on WIDTH */ 
-                
+            if (~IS_UNICAST) begin :multicast
                 always_comb begin
                     sub_rd_ptr_next[i] = sub_rd_ptr[i];
                     if (sub_restore[i]) sub_rd_ptr_next[i] = rd_ptr_next [i];
@@ -307,13 +283,11 @@ module flit_buffer
                 
                 /* verilator lint_off WIDTH */ 
                 assign  ptr_tmp [i] = sub_rd_ptr[i]-(B*i);
-                assign  flit_is_tail[i] = (PCK_TYPE == "MULTI_FLIT")?  tail_fifo[i][ptr_tmp [i]] :1'b1;
+                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][ptr_tmp [i]] :1'b1;
                 /* verilator lint_on WIDTH */
                 
             end else begin : unicast
-                /* verilator lint_off WIDTH */ 
-                assign  flit_is_tail[i] = (PCK_TYPE == "MULTI_FLIT")?  tail_fifo[i][rd_ptr[i]-(B*i)] : 1'b1;
-                /* verilator lint_on WIDTH */ 
+                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr[i]-(B*i)] : 1'b1;
             end
         end// for V_
         
@@ -370,11 +344,7 @@ module flit_buffer
     end //DEBUG_EN
     
     for(i=0;i<V;i=i+1) begin :VC_
-        
-        /* verilator lint_off WIDTH */ 
-        if (CAST_TYPE != "UNICAST") begin :multicast
-        /* verilator lint_on WIDTH */
-            
+        if (~IS_UNICAST) begin :multicast
             always @(posedge clk) begin
                 if (wr[i] && (sub_depth[i] == B [DEPTHw-1 : 0]) && !sub_rd[i]) begin
                 $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,B);
