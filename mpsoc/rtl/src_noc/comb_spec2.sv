@@ -469,8 +469,7 @@ module sw_alloc_sub2#(
         //first level arbiter
         swa_input_port_arbiter #(
             .ARBITER_WIDTH(V),
-            .EXT_P_EN(0),
-            .ARBITER_TYPE(SWA_ARBITER_TYPE)
+            .EXT_P_EN(0)
         )input_arbiter (
             .ext_pr_en_i(1'b1),// not used here anyway
             .request(ivc_masked [i]),
@@ -535,8 +534,7 @@ module sw_alloc_sub2#(
         
        //second level arbiter
         swa_output_port_arbiter #(
-            .ARBITER_WIDTH(P_1),
-            .ARBITER_TYPE(SWA_ARBITER_TYPE) // RRA, WRRA
+            .ARBITER_WIDTH(P_1)
         ) output_arbiter(
             .weight_consumed(second_arbiter_weight_consumed[i]),  // only used for WRRA
             .clk(clk),
@@ -653,8 +651,7 @@ module spec_sw_alloc_sub2#(
         //first level arbiter
         swa_input_port_arbiter #(
             .ARBITER_WIDTH(V),
-            .EXT_P_EN(0),
-            .ARBITER_TYPE(SWA_ARBITER_TYPE)
+            .EXT_P_EN(0)
         ) input_arbiter (
             .ext_pr_en_i(1'b1),// not used here anyway
             .request(ivc_masked [i]),
@@ -719,8 +716,7 @@ module spec_sw_alloc_sub2#(
         end        
         //second level arbiter
         swa_output_port_arbiter #(
-            .ARBITER_WIDTH(P_1),
-            .ARBITER_TYPE(SWA_ARBITER_TYPE) // RRA, WRRA
+            .ARBITER_WIDTH(P_1)
         ) output_arbiter  (
            .weight_consumed(second_arbiter_weight_consumed[i]),  // only used for WRRA
             .clk(clk),

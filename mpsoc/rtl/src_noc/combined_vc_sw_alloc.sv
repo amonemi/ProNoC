@@ -127,9 +127,7 @@ module combined_vc_sw_alloc #(
         );
         end else
     */    
-    /* verilator lint_off WIDTH */
-    if(COMBINATION_TYPE == "COMB_SPEC1") begin : spec1
-    /* verilator lint_on WIDTH */
+    if(IS_COMB_SPEC1) begin : spec1
         comb_spec1_allocator #(
             .V(V),    
             .P(P),
@@ -137,7 +135,6 @@ module combined_vc_sw_alloc #(
             .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE),
             .MIN_PCK_SIZE(MIN_PCK_SIZE),
             .SELF_LOOP_EN(SELF_LOOP_EN)
-            
         )the_comb_spec1(
             .dest_port_all(dest_port_all), 
             .masked_ovc_request_all(masked_ovc_request_all),
@@ -163,9 +160,7 @@ module combined_vc_sw_alloc #(
         
         assign spec_granted_dest_port_all = {PP_1{1'bx}};
         assign spec_ovc_num_all = {PVV{1'bx}};
-    /* verilator lint_off WIDTH */    
-    end else if (COMBINATION_TYPE == "COMB_SPEC2") begin : spec2
-    /* verilator lint_on WIDTH */
+    end else if (IS_COMB_SPEC2) begin : spec2
         comb_spec2_allocator #(
             .V(V),    
             .P(P),
@@ -251,9 +246,9 @@ module combined_vc_sw_alloc #(
                 .reset(reset)
             );
         end
-        assign nonspec_granted_dest_port_all      = granted_dest_port_all;
-        assign spec_granted_dest_port_all         = {PP_1{1'bx}};
-        assign spec_ovc_num_all                      = {PVV{1'bx}};
+        assign nonspec_granted_dest_port_all = granted_dest_port_all;
+        assign spec_granted_dest_port_all  = {PP_1{1'bx}};
+        assign spec_ovc_num_all = {PVV{1'bx}};
         assign spec_first_arbiter_granted_ivc_all =  nonspec_first_arbiter_granted_ivc_all ;
     end
 endgenerate

@@ -504,8 +504,7 @@ module nonspec_sw_alloc #(
         //first level arbiter
         swa_input_port_arbiter #(
             .ARBITER_WIDTH(V),
-            .EXT_P_EN(FIRST_ARBITER_EXT_P_EN),
-            .ARBITER_TYPE(SWA_ARBITER_TYPE)
+            .EXT_P_EN(FIRST_ARBITER_EXT_P_EN)
         ) input_arbiter (
             .ext_pr_en_i(any_ivc_granted_all[i]),
             .request(ivc_masked [i]),
@@ -580,8 +579,7 @@ module nonspec_sw_alloc #(
         end //P_
         //second level arbiter 
         swa_output_port_arbiter #(
-            .ARBITER_WIDTH(P_1),
-            .ARBITER_TYPE(SWA_ARBITER_TYPE) // RRA, WRRA
+            .ARBITER_WIDTH(P_1)
         ) output_arbiter (
             .weight_consumed(second_arbiter_weight_consumed[i]),  // only used for WRRA
             .clk(clk), 
@@ -613,8 +611,7 @@ endmodule
 ********************/
 module swa_input_port_arbiter #(
     parameter ARBITER_WIDTH =4,
-    parameter EXT_P_EN = 1,
-    parameter ARBITER_TYPE = "WRRA"// RRA, WRRA
+    parameter EXT_P_EN = 1
 )(
     ext_pr_en_i,  // it is used only if the EXT_P_EN is 1
     clk, 
@@ -625,6 +622,7 @@ module swa_input_port_arbiter #(
     vc_weight_is_consumed, // only for WRRA
     winner_weight_consumed // only for WRRA
 );
+    `NOC_CONF
     input ext_pr_en_i;
     input [ARBITER_WIDTH-1 : 0] request;
     output[ARBITER_WIDTH-1 : 0] grant;
@@ -635,9 +633,7 @@ module swa_input_port_arbiter #(
     output winner_weight_consumed;
     
     generate 
-    /* verilator lint_off WIDTH */
-    if(ARBITER_TYPE != "RRA") begin: wrra_
-    /* verilator lint_on WIDTH */
+    if(IS_WRRA) begin: wrra_
         // one hot mux    
         onehot_mux_1D #(
             .W(1),
@@ -698,8 +694,7 @@ endmodule
 *
 ********************/
 module swa_output_port_arbiter #(
-    parameter ARBITER_WIDTH =4,
-    parameter ARBITER_TYPE = "WRRA" // RRA, WRRA
+    parameter ARBITER_WIDTH =4
 )(
     weight_consumed,  // only used for WRRA
     clk, 
@@ -708,7 +703,7 @@ module swa_output_port_arbiter #(
     grant,
     any_grant  
 );
-    
+    `NOC_CONF
     input     [ARBITER_WIDTH-1  :    0]    request;
     output    [ARBITER_WIDTH-1  :    0]    grant;
     output                                 any_grant;
@@ -717,9 +712,7 @@ module swa_output_port_arbiter #(
     input    [ARBITER_WIDTH-1  :    0]     weight_consumed;
     
     generate 
-    /* verilator lint_off WIDTH */
-    if(ARBITER_TYPE == "WRRA") begin : wrra_mine
-    /* verilator lint_on WIDTH */
+    if(IS_WRRA) begin : wrra
         // second level wrra priority is only changed if the granted request weight is consumed 
         wire pr_en;
         
@@ -742,12 +735,20 @@ module swa_output_port_arbiter #(
             .any_grant (any_grant ),
             .priority_en (pr_en)
         );
+    end else if(IS_RRA) begin : rra
         
-     /* verilator lint_off WIDTH */
-    end else if(ARBITER_TYPE == "WRRA_CLASSIC") begin : wrra_classic 
-    /* verilator lint_on WIDTH */
+        arbiter #(
+            .ARBITER_WIDTH  (ARBITER_WIDTH )
+        ) arb  (   
+            .clk (clk), 
+            .reset (reset), 
+            .request (request), 
+            .grant (grant),
+            .any_grant (any_grant )
+        );
+        
+    end else  begin : wrra_classic  //(ARBITER_TYPE == "WRRA_CLASSIC")   
         // use classic WRRA. only for compasrion with propsoed wrra 
-        
         wire  [ARBITER_WIDTH-1  :    0] masked_req =  request & ~weight_consumed;
         wire sel = |masked_req;
         wire  [ARBITER_WIDTH-1  :    0] mux_req = (sel==1'b1)? masked_req : request;
@@ -761,18 +762,6 @@ module swa_output_port_arbiter #(
             .grant (grant),
             .any_grant (any_grant )
         );
-    end else begin : rra_m
-        
-        arbiter #(
-            .ARBITER_WIDTH  (ARBITER_WIDTH )
-        ) arb  (   
-            .clk (clk), 
-            .reset (reset), 
-            .request (request), 
-            .grant (grant),
-            .any_grant (any_grant )
-        );
-        
     end
     endgenerate
 endmodule

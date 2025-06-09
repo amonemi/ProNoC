@@ -342,7 +342,7 @@ module port_pre_sel_gen #(
     reset,
     clk
 );
-
+    `NOC_CONF
     localparam 
         P_1 = P-1,
         PV = P * V,
@@ -356,9 +356,7 @@ module port_pre_sel_gen #(
     input reset,clk;
     
     generate
-    /* verilator lint_off WIDTH */
-    if(ROUTE_TYPE == "DETERMINISTIC") begin : detrministic
-    /* verilator lint_on WIDTH */
+    if( IS_DETERMINISTIC ) begin : detrministic
         assign port_pre_sel = {PPSw{1'b0}};
     end else begin : adaptive
         if(CONGESTION_INDEX==0) begin:indx0

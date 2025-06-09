@@ -71,9 +71,7 @@ module header_flit_generator #(
         assign flit_out [CLASS_MSB :CLASS_LSB] = class_in; 
     end 
     
-    /* verilator lint_off WIDTH */
-    if(SWA_ARBITER_TYPE != "RRA")begin  : wrra_b
-    /* verilator lint_on WIDTH */
+    if(~IS_RRA)begin  : wrra_b
         assign flit_out [WEIGHT_MSB :WEIGHT_LSB] = weight_in;   
     end 
     
@@ -160,9 +158,7 @@ module extract_header_flit_info # (
     end else begin : no_class
         assign class_o = {Cw{1'b0}};
     end 
-    /* verilator lint_off WIDTH */
-    if(SWA_ARBITER_TYPE != "RRA")begin  : wrra_b
-    /* verilator lint_on WIDTH */
+    if(~IS_RRA)begin  : wrra_b
         assign weight_o =  flit_in [WEIGHT_MSB : WEIGHT_LSB];    
     end else begin : rra_b
         assign weight_o = {WEIGHTw{1'bX}};        
@@ -179,10 +175,9 @@ module extract_header_flit_info # (
         assign data_o=offset[Dw-1 : 0];
     end    
     endgenerate          
-   /* verilator lint_off WIDTH */     
-    assign hdr_flg_o  = (PCK_TYPE == "MULTI_FLIT") ? flit_in [Fw-1]  : 1'b1;
-    assign tail_flg_o = (PCK_TYPE == "MULTI_FLIT") ? flit_in [Fw-2]  : 1'b1;
-   /* verilator lint_on WIDTH */    
+    
+    assign hdr_flg_o  = (IS_MULTI_FLIT) ? flit_in [Fw-1]  : 1'b1;
+    assign tail_flg_o = (IS_MULTI_FLIT) ? flit_in [Fw-2]  : 1'b1;
     assign vc_num_o = flit_in [FPAYw+V-1 : FPAYw];
     assign hdr_flit_wr_o= (flit_in_wr & hdr_flg_o )? vc_num_o : {V{1'b0}};
 endmodule
@@ -230,11 +225,7 @@ module header_flit_update_lk_route_ovc #(
     wire [DSTPw-1 : 0]  lk_mux_out;
     
     pronoc_register #(.W(V)) reg1 (.D_in(vc_num_in), .Q_out(vc_num_delayed), .reset(reset), .clk(clk));   
-
-    /* verilator lint_off WIDTH */
-    assign hdr_flag = ( PCK_TYPE == "MULTI_FLIT")? flit_in[Fw-1]: 1'b1;
-    /* verilator lint_on WIDTH */
-    
+    assign hdr_flag = (IS_MULTI_FLIT)? flit_in[Fw-1]: 1'b1;
     onehot_mux_1D #(
         .W(DSTPw),
         .N(V) 

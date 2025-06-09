@@ -63,9 +63,7 @@ module flit_buffer
         RESTw = Fw -2-V , 
         PTRw = ((2**Bw)==B)? Bw : BVw, // if B is power of 2 PTRw is Bw else is BVw
         ARRAYw = PTRw * V,
-        /* verilator lint_off WIDTH */ 
-        RAM_DATA_WIDTH = (PCK_TYPE == "MULTI_FLIT")? Fw - V : Fw - V -2;
-        /* verilator lint_on WIDTH */ 
+        RAM_DATA_WIDTH = (IS_MULTI_FLIT)? Fw - V : Fw - V -2;
     
     input [Fw-1 :0]   din;     // Data in
     input [V-1 :0]   vc_num_wr;//write virtual chanel

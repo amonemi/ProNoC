@@ -26,7 +26,15 @@
         IS_RRA = (SWA_ARBITER_TYPE == "RRA"),
         IS_WRRA = (SWA_ARBITER_TYPE == "WRRA"),
         IS_SINGLE_FLIT = (PCK_TYPE == "SINGLE_FLIT"),
-        IS_MULTI_FLIT = (PCK_TYPE == "MULTI_FLIT");
+        IS_MULTI_FLIT = (PCK_TYPE == "MULTI_FLIT"),
+        IS_COMB_SPEC2 = (COMBINATION_TYPE == "COMB_SPEC2"),
+        IS_COMB_SPEC1 = (COMBINATION_TYPE == "COMB_SPEC1"),
+        IS_MULTICAST_FULL = (CAST_TYPE == "MULTICAST_FULL"),
+        IS_MULTICAST_PARTIAL = (CAST_TYPE == "MULTICAST_PARTIAL"),
+        IS_BROADCAST_PARTIAL = (CAST_TYPE == "BROADCAST_PARTIAL"),
+        IS_UNICAST = (CAST_TYPE == "UNICAST"),
+        IS_BROADCAST_FULL = (CAST_TYPE == "BROADCAST_FULL"),
+        IS_DETERMINISTIC = (ROUTE_TYPE == "DETERMINISTIC");
         /* verilator lint_on WIDTH */
     
     //MESH, TORUS Topology p=5
@@ -133,7 +141,7 @@
     //route type
     localparam 
         NX = T1,
-        NY = T2,
+        NY = (IS_RING || IS_LINE) ? 1 : T2,
         NL = T3,
         NXw = log2(NX),
         NYw= log2(NY),

@@ -123,11 +123,6 @@ module conventional_routing #(
             );
         end//mesh
         mesh_torus_conventional_routing #(
-            .TOPOLOGY(TOPOLOGY),
-            .ROUTE_NAME(ROUTE_NAME),
-            .ROUTE_TYPE(ROUTE_TYPE),
-            .NX(T1),
-            .NY(T2),
             .LOCATED_IN_NI(LOCATED_IN_NI)
         ) the_conventional_routing  (
             .current_x(current_rx),
@@ -341,12 +336,7 @@ module look_ahead_routing #(
             );
         end
         mesh_torus_look_ahead_routing #(
-            .NX(T1),
-            .NY(T2),
-            .SW_LOC(SL_SW_LOC),
-            .TOPOLOGY(TOPOLOGY),
-            .ROUTE_NAME(ROUTE_NAME),
-            .ROUTE_TYPE(ROUTE_TYPE)
+            .SW_LOC(SL_SW_LOC)
         ) look_ahead_route  (
             .current_x(current_rx),
             .current_y(current_ry),

@@ -348,9 +348,9 @@ module smart_bypass_chanels #(
     for (i=0;i<P;i=i+1) begin: P_
         assign ivc_forwardable[i] =  (IS_SINGLE_FLIT)?  {V{1'b1}} :~iport_info[i].ivc_req;
         if( ADD_PIPREG_AFTER_CROSSBAR == 1) begin :link_reg
-        always @( posedge clk)begin
-            outport_is_granted[i] <= oport_info[i].any_ovc_granted;
-        end
+            always @( posedge clk)begin
+                outport_is_granted[i] <= oport_info[i].any_ovc_granted;
+            end
         end else begin 
             assign outport_is_granted[i] = oport_info[i].any_ovc_granted;
         end

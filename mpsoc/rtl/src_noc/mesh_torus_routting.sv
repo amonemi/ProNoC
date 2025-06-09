@@ -6,14 +6,8 @@
 *************************************/
 
 module mesh_torus_look_ahead_routing #(
-    parameter NX = 4,
-    parameter NY = 4,
-    parameter SW_LOC = 0,
-    parameter TOPOLOGY = "MESH",//"MESH","TORUS"
-    parameter ROUTE_NAME = "XY",// 
-    parameter ROUTE_TYPE = "DETERMINISTIC"// "DETERMINISTIC", "FULL_ADAPTIVE", "PAR_ADAPTIVE"
-)
-(
+    parameter SW_LOC = 0 
+)(
     current_x,  //current router x address
     current_y,  //current router y address
     dest_x,  // destination router x address          
@@ -23,48 +17,27 @@ module mesh_torus_look_ahead_routing #(
     reset,
     clk
 );
+    `NOC_CONF
+    localparam  P = ( IS_MESH || IS_FMESH || IS_TORUS ) ? 5 : 3;
     
-     /* verilator lint_off WIDTH */ 
-    localparam  P = (TOPOLOGY == "MESH" || TOPOLOGY == "FMESH" || TOPOLOGY == "TORUS")?  5:3;
-     /* verilator lint_on WIDTH */ 
-    
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
-    
-    localparam  
-        P_1 = P-1,
-        Xw = log2(NX),   // number of node in x axis
-        Yw = (TOPOLOGY=="RING" || TOPOLOGY == "LINE") ? 1 : log2(NY);    // number of node in y axis
-    
-    input [Xw-1 : 0]  current_x;
-    input [Yw-1 : 0]  current_y;                  
-    input [Xw-1 : 0]  dest_x;
-    input [Yw-1 : 0]  dest_y;
+    localparam  P_1 = P-1;
+    input [NXw-1 : 0]  current_x;
+    input [NYw-1 : 0]  current_y;                  
+    input [NXw-1 : 0]  dest_x;
+    input [NYw-1 : 0]  dest_y;
     input [P_1-1 : 0]  destport_encoded;
-    output  [P_1-1 : 0]  lkdestport_encoded;
+    output [P_1-1 : 0]  lkdestport_encoded;
     input          reset,clk;
-    
-    wire [Xw-1 : 0]  destx_delayed;
-    wire [Yw-1 : 0]  desty_delayed;
+
+    wire [NXw-1 : 0]  destx_delayed;
+    wire [NYw-1 : 0]  desty_delayed;
     wire [P_1-1 : 0]  destport_delayed;
     // routing algorithm
     generate 
-    /* verilator lint_off WIDTH */ 
-    if(ROUTE_TYPE=="DETERMINISTIC") begin :dtrmst
-    /* verilator lint_on WIDTH */ 
+    if( IS_DETERMINISTIC ) begin :dtrmst
         mesh_torus_deterministic_look_ahead_routing #(
             .P(P),
-            .NX(NX),
-            .NY(NY),
-            .SW_LOC(SW_LOC),
-            .TOPOLOGY(TOPOLOGY),
-            .ROUTE_NAME(ROUTE_NAME)
+            .SW_LOC(SW_LOC)
         ) deterministic_look_ahead(
             .current_x(current_x),
             .current_y(current_y),
@@ -75,12 +48,7 @@ module mesh_torus_look_ahead_routing #(
         );
     end else begin :adapt
         mesh_torus_adaptive_look_ahead_routing #(
-            .P(P),
-            .NX(NX),
-            .NY(NY),
-            .TOPOLOGY(TOPOLOGY),
-            .ROUTE_NAME(ROUTE_NAME),
-            .ROUTE_TYPE(ROUTE_TYPE)
+            .P(P)
         ) adaptive_look_ahead (
             .current_x(current_x),
             .current_y(current_y),
@@ -92,8 +60,8 @@ module mesh_torus_look_ahead_routing #(
     end
     endgenerate
 
-    pronoc_register #(.W(Xw) ) reg1 (.D_in(dest_x ), .Q_out(destx_delayed), .reset(reset), .clk(clk));
-    pronoc_register #(.W(Yw) ) reg2 (.D_in(dest_y ), .Q_out(desty_delayed), .reset(reset), .clk(clk));
+    pronoc_register #(.W(NXw) ) reg1 (.D_in(dest_x ), .Q_out(destx_delayed), .reset(reset), .clk(clk));
+    pronoc_register #(.W(NYw) ) reg2 (.D_in(dest_y ), .Q_out(desty_delayed), .reset(reset), .clk(clk));
     pronoc_register #(.W(P_1)) reg3 (.D_in(destport_encoded ), .Q_out(destport_delayed), .reset(reset), .clk(clk));
 endmodule
 
@@ -104,11 +72,7 @@ endmodule
 
 module  mesh_torus_deterministic_look_ahead_routing #(
     parameter P =5,
-    parameter NX =4,
-    parameter NY =4,
-    parameter SW_LOC =0,
-    parameter TOPOLOGY ="MESH",//"MESH","TORUS"
-    parameter ROUTE_NAME="XY"// "XY", "TRANC_XY"
+    parameter SW_LOC =0
 ) (
     current_x,  //current router x address
     current_y,  //current router y address
@@ -117,38 +81,25 @@ module  mesh_torus_deterministic_look_ahead_routing #(
     destport,   // current router destination port number       
     lkdestport // look ahead destination port number
 );
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
+    `NOC_CONF
+    localparam  P_1 = P-1;
     
-    localparam  
-        P_1 = P-1,
-        Xw = log2(NX),   // number of node in x axis
-        Yw = (TOPOLOGY=="RING" || TOPOLOGY == "LINE") ? 1 : log2(NY);    // number of node in y axis
-    
-    input [Xw-1 : 0]  current_x;
-    input [Yw-1 : 0]  current_y;                  
-    input [Xw-1 : 0]  dest_x;
-    input [Yw-1 : 0]  dest_y;
+    input [NXw-1 : 0]  current_x;
+    input [NYw-1 : 0]  current_y;                  
+    input [NXw-1 : 0]  dest_x;
+    input [NYw-1 : 0]  dest_y;
     input [P_1-1 : 0]  destport;
     output  [P_1-1 : 0]  lkdestport;
-    
-    wire [Xw-1 : 0]  next_x;
-    wire [Yw-1 : 0]  next_y; 
+
+    wire [NXw-1 : 0]  next_x;
+    wire [NYw-1 : 0]  next_y; 
     wire [P-1 : 0]  destport_one_hot;
     generate 
-    /* verilator lint_off WIDTH */ 
-    if (TOPOLOGY == "MESH" || TOPOLOGY == "TORUS" || TOPOLOGY == "FMESH" ) begin: twoD
-    /* verilator lint_on WIDTH */   
-    mesh_tori_decode_dstport decoder(
-        .dstport_encoded(destport),
-        .dstport_one_hot(destport_one_hot)
-    );
+    if (IS_MESH || IS_TORUS || IS_FMESH ) begin: twoD
+        mesh_tori_decode_dstport decoder(
+            .dstport_encoded(destport),
+            .dstport_one_hot(destport_one_hot)
+        );
     end else begin :oneD
         line_ring_decode_dstport decoder(
             .dstport_encoded(destport),
@@ -158,10 +109,7 @@ module  mesh_torus_deterministic_look_ahead_routing #(
     endgenerate 
     
     mesh_torus_next_router_addr_predictor #(
-        .P(P),
-        .TOPOLOGY(TOPOLOGY),
-        .NX(NX),
-        .NY(NY)
+        .P(P)
     ) addr_predictor(
         .destport(destport_one_hot),
         .current_x(current_x),
@@ -172,11 +120,6 @@ module  mesh_torus_deterministic_look_ahead_routing #(
     wire [P_1-1 : 0] lkdestport_encoded;
     
     mesh_torus_conventional_routing #(
-        .TOPOLOGY(TOPOLOGY),
-        .ROUTE_NAME(ROUTE_NAME),
-        .ROUTE_TYPE("DETERMINISTIC"),
-        .NX(NX),
-        .NY(NY),
         .LOCATED_IN_NI(0)
     ) conv_routing (
         .current_x(next_x),
@@ -195,12 +138,7 @@ endmodule
 *        adaptive_look_ahead_routing
 **********************************************/
 module  mesh_torus_adaptive_look_ahead_routing #(
-    parameter P =5,
-    parameter NX =4,
-    parameter NY =4,
-    parameter TOPOLOGY ="MESH",//"MESH","TORUS"
-    parameter ROUTE_NAME="WEST_FIRST",
-    parameter ROUTE_TYPE="DETERMINISTIC"
+    parameter P =5  
 )(
     current_x,  //current router x address
     current_y,  //current router y address
@@ -209,25 +147,12 @@ module  mesh_torus_adaptive_look_ahead_routing #(
     destport_encoded,   // current router destination port      
     lkdestport_encoded // look ahead destination port 
 );
-    
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
-    
-    localparam  
-        P_1 = P-1,
-        Xw = log2(NX),   // number of node in x axis
-        Yw = log2(NY);    // number of node in y axis
-    
-    input [Xw-1 : 0]  current_x;
-    input [Yw-1 : 0]  current_y;                  
-    input [Xw-1 : 0]  dest_x;
-    input [Yw-1 : 0]  dest_y;
+    `NOC_CONF
+    localparam P_1 = P-1;
+    input [NXw-1 : 0]  current_x;
+    input [NYw-1 : 0]  current_y;
+    input [NXw-1 : 0]  dest_x;
+    input [NYw-1 : 0]  dest_y;
     input [P_1-1 : 0]  destport_encoded;
     output  [P_1-1 : 0]  lkdestport_encoded;
     /**************************
@@ -237,8 +162,8 @@ module  mesh_torus_adaptive_look_ahead_routing #(
     *            ab: 00 : LOCAL, 10: xdir, 01: ydir, 11 x&y dir 
     **************************/       
     wire x,y,a,b;
-    wire [Xw-1 : 0]  next_x;
-    wire [Yw-1 : 0]  next_y; 
+    wire [NXw-1 : 0]  next_x;
+    wire [NYw-1 : 0]  next_y; 
     wire [P_1-1 : 0]  lkdestport_x,lkdestport_y;
     reg [P-1 : 0]  destport_x, destport_y;
     
@@ -255,10 +180,7 @@ module  mesh_torus_adaptive_look_ahead_routing #(
    end //always
     
     mesh_torus_next_router_addr_predictor #(
-        .P(P),
-        .TOPOLOGY(TOPOLOGY),
-        .NX(NX),
-        .NY(NY)
+        .P(P)
     ) addr_predictor_x (
         .destport(destport_x),
         .current_x(current_x),
@@ -268,10 +190,7 @@ module  mesh_torus_adaptive_look_ahead_routing #(
     );
     
     mesh_torus_next_router_addr_predictor #(
-        .P(P),
-        .TOPOLOGY(TOPOLOGY),
-        .NX(NX),
-        .NY(NY)
+        .P(P)
     )  addr_predictor_y (
         .destport(destport_y),
         .current_x(current_x),
@@ -281,11 +200,6 @@ module  mesh_torus_adaptive_look_ahead_routing #(
     );
     
     mesh_torus_conventional_routing #(
-        .TOPOLOGY(TOPOLOGY),
-        .ROUTE_NAME(ROUTE_NAME),
-        .ROUTE_TYPE(ROUTE_TYPE),
-        .NX(NX),
-        .NY(NY),
         .LOCATED_IN_NI(0)
     ) conv_route_x (
         .current_x(next_x),
@@ -296,11 +210,6 @@ module  mesh_torus_adaptive_look_ahead_routing #(
     );
     
     mesh_torus_conventional_routing #(
-        .TOPOLOGY(TOPOLOGY),
-        .ROUTE_NAME(ROUTE_NAME),
-        .ROUTE_TYPE(ROUTE_TYPE),
-        .NX(NX),
-        .NY(NY),
         .LOCATED_IN_NI(0)
     ) conv_route_y (
         .current_x(current_x),
@@ -320,10 +229,7 @@ endmodule
 ********************************************************/
 
 module mesh_torus_next_router_addr_predictor #(
-    parameter P = 5,
-    parameter TOPOLOGY ="MESH",
-    parameter NX = 4,//toutal number of router in x direction 
-    parameter NY = 4//toutal number of router in y direction 
+    parameter P = 5
 )(
     destport,
     current_x,
@@ -331,76 +237,49 @@ module mesh_torus_next_router_addr_predictor #(
     next_x,
     next_y  
 );
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
-    
-    localparam  
-        Xw = log2(NX),
-        Yw = (TOPOLOGY=="RING" || TOPOLOGY == "LINE")? 1 : log2(NY);
-    // mesh torus            
-    localparam
-        EAST = 3'd1, 
-        NORTH = 3'd2,  
-        WEST = 3'd3,  
-        SOUTH = 3'd4;
-    //ring line            
-    localparam  
-        FORWARD = 2'd1,
-        BACKWARD = 2'd2;
-    
-    localparam [Xw-1 : 0] LAST_X_ADDR =(NX[Xw-1 : 0]-1'b1);
-    localparam [Yw-1 : 0] LAST_Y_ADDR =(NY[Yw-1 : 0]-1'b1);                
+    `NOC_CONF    
+    localparam [NXw-1 : 0] LAST_X_ADDR =(NX[NXw-1 : 0]-1'b1);
+    localparam [NYw-1 : 0] LAST_Y_ADDR =(NY[NYw-1 : 0]-1'b1);
     
     input [P-1 : 0]  destport;
-    input [Xw-1 : 0]  current_x;
-    input [Yw-1 : 0]  current_y;
-    output reg [Xw-1 : 0]  next_x;
-    output reg [Yw-1 : 0]  next_y;  
+    input [NXw-1 : 0]  current_x;
+    input [NYw-1 : 0]  current_y;
+    output reg [NXw-1 : 0]  next_x;
+    output reg [NYw-1 : 0]  next_y;
     
-    generate 
-    /* verilator lint_off WIDTH */                                             
-    if(TOPOLOGY=="MESH" || TOPOLOGY == "TORUS" || TOPOLOGY == "FMESH" ) begin : mesh
-    /* verilator lint_on WIDTH */ 
+    generate
+    if( IS_MESH || IS_TORUS || IS_FMESH ) begin : twoD
         always @(*) begin
              //default values 
             next_x= current_x;
             next_y= current_y;
             if(destport[EAST]) begin   
-                next_x= (current_x==LAST_X_ADDR ) ? {Xw{1'b0}} : current_x+1'b1;
-                next_y = current_y;    
-            end       
-            else if(destport[NORTH])  begin   
+                next_x= (current_x==LAST_X_ADDR ) ? {NXw{1'b0}} : current_x+1'b1;
+                next_y = current_y;
+            end
+            else if(destport[NORTH])  begin
                 next_x= current_x;
                 next_y= (current_y==0)? LAST_Y_ADDR : current_y-1'b1;
             end
-            else  if(destport[WEST])       begin 
+            else  if(destport[WEST]) begin
                 next_x= (current_x==0) ? LAST_X_ADDR : current_x-1'b1;
                 next_y = current_y;
             end
             else  if(destport[SOUTH])  begin
                 next_x= current_x;
-                next_y= (current_y== LAST_Y_ADDR ) ? {Yw{1'b0}}: current_y+1'b1;
+                next_y= (current_y== LAST_Y_ADDR ) ? {NYw{1'b0}}: current_y+1'b1;
             end
         end//always
-    /* verilator lint_off WIDTH */     
-    end else  if(TOPOLOGY=="RING" || TOPOLOGY == "LINE") begin : ring
-    /* verilator lint_on WIDTH */ 
+    end else  if( IS_RING || IS_LINE) begin : OneD
         always @(*) begin
              //default values 
             next_x= current_x;
             next_y= 1'b0;
             if(destport[FORWARD]) begin   
-                next_x= (current_x==LAST_X_ADDR ) ? {Xw{1'b0}} : current_x+1'b1;
-                
-            end       
-            else if(destport[BACKWARD])  begin   
-                next_x= (current_x=={Xw{1'b0}} ) ? LAST_X_ADDR : current_x-1'b1;
+                next_x= (current_x==LAST_X_ADDR ) ? {NXw{1'b0}} : current_x+1'b1;
+            end
+            else if(destport[BACKWARD])  begin
+                next_x= (current_x=={NXw{1'b0}} ) ? LAST_X_ADDR : current_x-1'b1;
             end
         end//always
     end
@@ -414,33 +293,23 @@ endmodule
 *            next_router_inport_predictor
 *********************************************************/
 module mesh_torus_next_router_inport_predictor #(
-    parameter TOPOLOGY ="MESH",
     parameter P =5
 )(
     destport,
     receive_port
 );
-    input [P-1 : 0] destport;
-    output  [P-1 : 0] receive_port; 
+    `NOC_CONF
+    input  [P-1 : 0] destport;
+    output [P-1 : 0] receive_port;    
     
-    localparam  
-        LOCAL = 3'd0, 
-        EAST = 3'd1, 
-        NORTH = 3'd2,  
-        WEST = 3'd3,  
-        SOUTH = 3'd4; 
     generate
-    /* verilator lint_off WIDTH */ 
-    if(TOPOLOGY=="MESH" || TOPOLOGY == "TORUS" || TOPOLOGY == "FMESH") begin : mesh
-    /* verilator lint_on WIDTH */ 
+    if(IS_MESH || IS_TORUS || IS_FMESH) begin : mesh
         assign  receive_port[LOCAL] = destport[LOCAL];
         assign  receive_port[WEST] = destport[EAST];
         assign  receive_port[EAST] = destport[WEST];
         assign  receive_port[NORTH] = destport[SOUTH];
         assign  receive_port[SOUTH] = destport[NORTH];
-    /* verilator lint_off WIDTH */ 
-    end else  if(TOPOLOGY=="RING" || TOPOLOGY == "LINE") begin : ring
-    /* verilator lint_on WIDTH */ 
+    end else  if(IS_RING || IS_LINE) begin : ring
         assign  receive_port[0] = destport[0];
         assign  receive_port[1] = destport[2];
         assign  receive_port[2] = destport[1];
@@ -491,15 +360,7 @@ module remove_receive_port_one_hot #(
     destport_in,
     destport_out
 );
-    
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
+    `NOC_CONF
     
     localparam 
         P_1 = P-1,
@@ -595,12 +456,7 @@ endmodule
 *            conventional routing 
 ***************************************************/
 module mesh_torus_conventional_routing #(
-    parameter TOPOLOGY = "MESH", 
-    parameter ROUTE_NAME = "XY",
-    parameter ROUTE_TYPE = "DETERMINISTIC",    
-    parameter NX   = 4,
-    parameter NY   = 4,
-    parameter LOCATED_IN_NI = 0//use for add even only
+    parameter LOCATED_IN_NI = 0 //used only for odd-even routing
     ) (   
     current_x,
     current_y,
@@ -609,33 +465,22 @@ module mesh_torus_conventional_routing #(
     destport
     );
     
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
+    `NOC_CONF   
     
     localparam 
-        /* verilator lint_off WIDTH */ 
-        P = (TOPOLOGY=="RING" || TOPOLOGY=="LINE" )? 3 : 5,
-        Yw = (TOPOLOGY=="RING" || TOPOLOGY=="LINE" )? 1 : log2(NY),
-        /* verilator lint_on WIDTH */ 
+        P = (IS_RING || IS_LINE ) ? 3 : 5,
         P_1 = P-1,
-        Xw = log2(NX),        
         DSTw = P_1;               
     
-    input [Xw-1 : 0] current_x;
-    input [Yw-1 : 0] current_y;
-    input [Xw-1 : 0] dest_x;
-    input [Yw-1 : 0] dest_y;    
+    input [NXw-1 : 0] current_x;
+    input [NYw-1 : 0] current_y;
+    input [NXw-1 : 0] dest_x;
+    input [NYw-1 : 0] dest_y;    
     output  [DSTw-1 : 0] destport;
     
     generate 
+    if (IS_MESH || IS_FMESH) begin :mesh
     /* verilator lint_off WIDTH */ 
-    if (TOPOLOGY == "MESH" || TOPOLOGY == "FMESH")begin :mesh
         if(ROUTE_NAME == "XY") begin : xy_routing_blk
     /* verilator lint_on WIDTH */ 
             xy_mesh_routing #(
