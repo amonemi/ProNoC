@@ -311,7 +311,7 @@ module port_presel_based_dst_routers_ovc #(
     *pre_sel
     *      0: xdir
     *      1: ydir
-    ********************/            
+    ********************/
     wire [P_1-1 : 0] conjestion_cmp;
     assign conjestion_cmp[Q3] = (cong_from_east_Q3  >  cong_from_north_Q3)? YDIR :XDIR;
     assign conjestion_cmp[Q2] = (cong_from_east_Q2  >  cong_from_south_Q2)? YDIR :XDIR;
@@ -324,14 +324,7 @@ endmodule
 * port_pre_sel_gen
 ************************/
 module port_pre_sel_gen #(
-    parameter PPSw=4,
-    parameter P=5,
-    parameter V=4,
-    parameter B=4,
-    parameter CONGESTION_INDEX=2,
-    parameter CONGw=2,
-    parameter ROUTE_TYPE="ADAPTIVE",
-    parameter [V-1 : 0] ESCAP_VC_MASK= 4'b0001
+    parameter P=5
 )(
     port_pre_sel,
     ovc_status,
@@ -342,7 +335,7 @@ module port_pre_sel_gen #(
     reset,
     clk
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     localparam 
         P_1 = P-1,
         PV = P * V,
@@ -392,7 +385,7 @@ module port_pre_sel_gen #(
                 .PPSw(PPSw),
                 .P(P),
                 .CONGw(CONGw)
-            ) port_presel_gen (                    
+            ) port_presel_gen (
                 .congestion_in_all(congestion_in_all),
                 .port_pre_sel(port_pre_sel),
                 .reset(reset),
@@ -431,9 +424,9 @@ module congestion_out_based_ivc_req #(
         PV = (V*P),
         CONG_ALw = (CONGw* P);   //  congestion width per router;
     
-    input [PV-1 : 0] ivc_request_all; 
-    output [CONG_ALw-1 : 0] congestion_out_all;                 
-    wire [CONGw-1 : 0] congestion_out ;  
+    input [PV-1 : 0] ivc_request_all;
+    output [CONG_ALw-1 : 0] congestion_out_all;
+    wire [CONGw-1 : 0] congestion_out ;
     
     parallel_count_normalize #(
         .INw (PV),

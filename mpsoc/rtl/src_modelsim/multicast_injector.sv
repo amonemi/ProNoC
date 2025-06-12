@@ -3,9 +3,7 @@
  * This module can inject and eject packets from the NoC.
  * It can be used in simulation for injecting real application traces to the NoC
  * *************************/
-module multicast_injector #(
-    parameter NOC_ID=0
-)(
+module multicast_injector (
     //general
     current_e_addr,
     reset,
@@ -17,7 +15,7 @@ module multicast_injector #(
     pck_injct_in,
     pck_injct_out
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     //general
     input reset,clk;
     input [EAw-1 :0 ] current_e_addr;
@@ -34,7 +32,6 @@ module multicast_injector #(
     assign current_r_addr = chan_in.ctrl_chanel.router_addr;
     /*
     conventional_routing #(
-        .NOC_ID(NOC_ID),
         .TOPOLOGY(TOPOLOGY),
         .ROUTE_NAME(ROUTE_NAME),
         .ROUTE_TYPE(ROUTE_TYPE),
@@ -62,7 +59,6 @@ module multicast_injector #(
     wire [HDR_DATA_w-1 : 0]    hdr_data_in = pck_injct_in.data [HDR_DATA_w-1 : 0];
     wire [Fw-1 : 0] hdr_flit_out;
     header_flit_generator #(
-        .NOC_ID(NOC_ID),
         .DATA_w(HDR_DATA_w)
     ) the_header_flit_generator (
         .flit_out (hdr_flit_out),
@@ -188,7 +184,6 @@ module multicast_injector #(
     wire [HDR_DATA_w-1 : 0]    hdr_data_o;
     hdr_flit_t hdr_flit_i;
     header_flit_info #(
-        .NOC_ID (NOC_ID),
         .DATA_w (HDR_DATA_w)
     ) extractor (
         .flit(chan_in.flit_chanel.flit),

@@ -34,8 +34,7 @@
 
 
 module  ni_master 
-    #(    
-    parameter NOC_ID=0,
+    #(
     parameter MAX_TRANSACTION_WIDTH=10, // Maximum transaction size will be 2 power of MAX_DMA_TRANSACTION_WIDTH words 
     parameter MAX_BURST_SIZE =256, // in words
     parameter CRC_EN= "NO",// "YES","NO" if CRC is enable then the CRC32 of all packet data is calculated and sent via tail flit. 
@@ -44,11 +43,11 @@ module  ni_master
     // by the NI before saving the packet in a memory buffer. This can give some hints to the software regarding the incoming 
     // packet such as its type, or source port so the software can store the packet in its appropriate buffer.
     //wishbone port parameters
-    parameter Dw            =   32,
-    parameter S_Aw          =   7,
-    parameter M_Aw          =   32,
-    parameter TAGw          =   3,
-    parameter SELw          =   4
+    parameter Dw   = 32,
+    parameter S_Aw = 7,
+    parameter M_Aw = 32,
+    parameter TAGw = 3,
+    parameter SELw = 4
 )
 (
     //general 
@@ -91,8 +90,8 @@ module  ni_master
     irq    
 );
 
-`NOC_CONF
-    input reset,clk;   
+import pronoc_pkg::*;
+    input reset,clk;
     // NOC interfaces
     input   [RAw-1   :   0]  current_r_addr;
     input   [EAw-1   :   0]  current_e_addr;
@@ -387,11 +386,10 @@ Shared registers for all VCs
     wire [V-1 : 0 ] precap_valid;
     
     //capture data before saving the actual flit in memory
-    if(HDATA_PRECAPw > 0 ) begin : precap      
+    if(HDATA_PRECAPw > 0 ) begin : precap
         wire [EAw-1 : 0] src_endp_addr;
         extract_header_flit_info #(
-            .NOC_ID(NOC_ID),
-            .DATA_w(HDATA_PRECAPw)           
+            .DATA_w(HDATA_PRECAPw)
         )  data_extractor   (
             .flit_in(flit_in),
             .flit_in_wr(flit_in_wr),
@@ -713,7 +711,6 @@ Shared registers for all VCs
     endgenerate  
 
     conventional_routing #(
-        .NOC_ID(NOC_ID),
         .TOPOLOGY(TOPOLOGY),
         .ROUTE_NAME(ROUTE_NAME),
         .ROUTE_TYPE(ROUTE_TYPE),  
@@ -735,8 +732,7 @@ Shared registers for all VCs
     );
     
     header_flit_generator #(
-        .NOC_ID(NOC_ID),
-        .DATA_w(HDw)       
+        .DATA_w(HDw)
     ) hdr_flit_gen (
         .flit_out(hdr_flit_out),
         .class_in(pck_class),
@@ -749,7 +745,7 @@ Shared registers for all VCs
         .data_in(hdr_data)
     );
     
-    wire [V-1    :   0] wr_vc_send =  (fifo_wr) ? send_vc_enable : {V{1'b0}};  
+    wire [V-1 : 0] wr_vc_send =  (fifo_wr) ? send_vc_enable : {V{1'b0}};
     
     ovc_status #(
         .V(V),
@@ -802,10 +798,10 @@ Shared registers for all VCs
         .V(V),
         .B(LB)
     ) the_ififo  (
-        .din(flit_in),     // Data in
-        .vc_num_wr(flit_in_vc_num),//write virtual chanel    
+        .din(flit_in), // Data in
+        .vc_num_wr(flit_in_vc_num),//write virtual chanel
         .wr_en(flit_in_wr),   // Write enable
-        .vc_num_rd(receive_vc_enable),//read virtual chanel     
+        .vc_num_rd(receive_vc_enable),//read virtual chanel
         .rd_en(fifo_rd),   // Read the next word
         .dout(fifo_dout),    // Data out
         .vc_not_empty(ififo_vc_not_empty),
@@ -817,8 +813,7 @@ Shared registers for all VCs
     ); 
     
     extract_header_flit_info #(
-        .NOC_ID(NOC_ID),
-        .DATA_w (HDw)      
+        .DATA_w (HDw)
     )  extractor (
         .flit_in(fifo_dout),
         .flit_in_wr(),
@@ -839,9 +834,9 @@ Shared registers for all VCs
     assign received_flit_is_hdr  = fifo_dout[Fw-1];  
     //  assign any_vc_got_pck = |receive_vc_got_packet;
     localparam [1:0] 
-        HDR_FLAG           =   2'b10,
-        BDY_FLAG            =   2'b00,
-        TAIL_FLAG          =   2'b01;
+        HDR_FLAG =   2'b10,
+        BDY_FLAG =   2'b00,
+        TAIL_FLAG =   2'b01;
     assign credit_out = vc_fifo_rd;
     assign flit_out_wr= fifo_wr;  
     assign flit_out [Fpay+V-1 : Fpay] = send_vc_enable;    

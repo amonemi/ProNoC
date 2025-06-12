@@ -1,6 +1,6 @@
 `include "pronoc_def.v"
 parameter NOC_ID=0;
-`NOC_CONF
+import pronoc_pkg::*;
 import dpi_int_pkg::*;
 module top_dpi_interface (
     input   logic               clk_i, rst_i  ,

@@ -29,7 +29,6 @@
  **************************************************************/
     
 module input_ports #(
-    parameter NOC_ID=0,
     parameter ROUTER_ID=0,
     parameter P=5
 )(
@@ -69,7 +68,7 @@ module input_ports #(
     clk
 );  
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     localparam
         PV = V * P,
@@ -131,7 +130,6 @@ module input_ports #(
         input_queue_per_port
         // iport_reg_base
         #(
-            .NOC_ID(NOC_ID),
             .ROUTER_ID(ROUTER_ID),
             .SW_LOC(i),
             .P(P)
@@ -179,7 +177,6 @@ endmodule
     input_queue_per_port
  **************************/
 module input_queue_per_port #(
-    parameter NOC_ID=0,
     parameter ROUTER_ID=0,
     parameter P = 5,     // router port num
     parameter SW_LOC = 0
@@ -218,7 +215,7 @@ module input_queue_per_port #(
     ctrl_in
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     localparam 
         PORT_B = port_buffer_size(SW_LOC),
@@ -385,7 +382,6 @@ module input_queue_per_port #(
     
     //extract header flit info
     extract_header_flit_info #(
-        .NOC_ID(NOC_ID),
         .DATA_w(0)
     ) header_extractor (
         .flit_in(flit_in),
@@ -705,13 +701,11 @@ module input_queue_per_port #(
             assign clear_dspt_mulicast [i] = (reset_ivc[i] & multiple_dest[i]) ? dest_port_encoded[i] : {DSTPw{1'b0}}; 
             
             // a fix priority arbiter. 
-            multicast_dst_sel #(
-                .NOC_ID(NOC_ID)
-            ) sel_arb(
+            multicast_dst_sel sel_arb(
                 .destport_in(dest_port_multi[i]),
                 .destport_out(dest_port_encoded[i])
             );
-            
+
             //check if we have multiple port to send a packet to 
             is_onehot0 #(
                 .IN_WIDTH(DSTPw)
@@ -959,7 +953,6 @@ module input_queue_per_port #(
     if(CAST_TYPE== "UNICAST") begin : unicast
     /* verilator lint_on WIDTH */
         look_ahead_routing #(
-            .NOC_ID(NOC_ID),
             .T1(T1),
             .T2(T2),
             .T3(T3),
@@ -986,7 +979,6 @@ module input_queue_per_port #(
     end // unicast
     endgenerate
     header_flit_update_lk_route_ovc #(
-        .NOC_ID(NOC_ID),
         .P(P)
     ) the_flit_update (
         .flit_in (buffer_out),

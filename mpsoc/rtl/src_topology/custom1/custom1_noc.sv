@@ -6,7 +6,7 @@
 
 
 /**********************************************************************
-**    File: /home/alireza/work/git/ProNoC-repos/github-pronoc/mpsoc/rtl/src_topology/custom1/custom1_noc.sv
+**    File: /home/alireza/work/git/hca_git/git-hub/ProNoC/mpsoc/rtl/src_topology/custom1/custom1_noc.sv
 **    
 **    Copyright (C) 2014-2022  Alireza Monemi
 **    
@@ -29,9 +29,7 @@
 `include "pronoc_def.v"
 
 module   custom1_noc
-#(
-    parameter NOC_ID=0
-)(
+(
         reset,
     clk,
     //T0,
@@ -99,9 +97,9 @@ module   custom1_noc
     T15_chan_out,
     T15_router_event
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     
-    input reset,clk;    
+    input reset,clk;
     
     
     /*******************
@@ -367,7 +365,6 @@ module   custom1_noc
     *******************/
     router_config_t R0_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(0),
         .P(3)
     ) R0 (
@@ -397,7 +394,6 @@ module   custom1_noc
     *******************/
     router_config_t R1_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(1),
         .P(3)
     ) R1 (
@@ -427,7 +423,6 @@ module   custom1_noc
     *******************/
     router_config_t R2_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(2),
         .P(3)
     ) R2 (
@@ -457,7 +452,6 @@ module   custom1_noc
     *******************/
     router_config_t R3_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(3),
         .P(3)
     ) R3 (
@@ -487,7 +481,6 @@ module   custom1_noc
     *******************/
     router_config_t R4_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(4),
         .P(4)
     ) R4 (
@@ -519,7 +512,6 @@ module   custom1_noc
     *******************/
     router_config_t R5_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(5),
         .P(4)
     ) R5 (
@@ -551,7 +543,6 @@ module   custom1_noc
     *******************/
     router_config_t R6_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(6),
         .P(4)
     ) R6 (
@@ -583,7 +574,6 @@ module   custom1_noc
     *******************/
     router_config_t R7_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(7),
         .P(4)
     ) R7 (
@@ -615,7 +605,6 @@ module   custom1_noc
     *******************/
     router_config_t R12_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(8),
         .P(4)
     ) R12 (
@@ -647,7 +636,6 @@ module   custom1_noc
     *******************/
     router_config_t R13_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(9),
         .P(4)
     ) R13 (
@@ -679,7 +667,6 @@ module   custom1_noc
     *******************/
     router_config_t R14_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(10),
         .P(4)
     ) R14 (
@@ -711,7 +698,6 @@ module   custom1_noc
     *******************/
     router_config_t R15_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(11),
         .P(4)
     ) R15 (
@@ -743,7 +729,6 @@ module   custom1_noc
     *******************/
     router_config_t R8_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(12),
         .P(5)
     ) R8 (
@@ -777,7 +762,6 @@ module   custom1_noc
     *******************/
     router_config_t R9_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(13),
         .P(5)
     ) R9 (
@@ -811,7 +795,6 @@ module   custom1_noc
     *******************/
     router_config_t R10_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(14),
         .P(5)
     ) R10 (
@@ -845,7 +828,6 @@ module   custom1_noc
     *******************/
     router_config_t R11_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(15),
         .P(5)
     ) R11 (

@@ -316,7 +316,6 @@ endmodule
 
 
 module check_destination_addr #(
-    parameter NOC_ID=0,
     parameter TOPOLOGY = "MESH",
     parameter T1=2,
     parameter T2=2,
@@ -344,9 +343,7 @@ module check_destination_addr #(
     generate
     if(CAST_TYPE != "UNICAST") begin
         wire [NE-1 : 0] dest_mcast_all_endp;
-        mcast_dest_list_decode #(
-            .NOC_ID(NOC_ID)
-        ) decode (
+        mcast_dest_list_decode decode (
             .dest_e_addr(dest_e_addr),
             .dest_o(dest_mcast_all_endp),
             .row_has_any_dest( ),
@@ -535,7 +532,6 @@ endmodule
 
 
 module check_pck_size #(
-    parameter NOC_ID=0,
     parameter V=2,
     parameter MIN_PCK_SIZE=2,
     parameter Fw=36,
@@ -609,10 +605,8 @@ module check_pck_size #(
                 .ld     (vc_hdr_wr_en [i] ),
                 .Q_out    (dest_e_addr[i])
             );
-            
-            mcast_dest_list_decode #(
-                .NOC_ID(NOC_ID)
-            ) decode (
+
+            mcast_dest_list_decode decode (
                 .dest_e_addr(dest_e_addr[i]),
                 .dest_o(dest_mcast_all_endp[i]),
                 .row_has_any_dest(),
@@ -620,7 +614,7 @@ module check_pck_size #(
             ); 
             
             is_onehot0 #(
-                .IN_WIDTH(NE)    
+                .IN_WIDTH(NE)
             ) one_h (
                 .D_in(dest_mcast_all_endp[i]),
                 .result(onehot[i])

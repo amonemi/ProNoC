@@ -36,7 +36,6 @@
 **************************/
 
 module iport_reg_base  #(
-    parameter NOC_ID=0,
     parameter PCK_TYPE = "MULTI_FLIT",
     parameter V = 4,     // vc_num_per_port
     parameter P = 5,     // router port num
@@ -187,7 +186,6 @@ module iport_reg_base  #(
 
     //extract header flit info
     extract_header_flit_info #(
-        .NOC_ID(NOC_ID),
         .DATA_w(0)
     ) header_extractor (
         .flit_in(flit_in),
@@ -582,7 +580,6 @@ generate
         
         
         flit_buffer_reg_base #(           
-            .NOC_ID(NOC_ID),
             .V(V),
             .B(B),
             .SSA_EN(SSA_EN),
@@ -691,7 +688,6 @@ endgenerate
      );
 
     header_flit_update_lk_route_ovc #(
-        .NOC_ID(NOC_ID),
         .P(P)   
     ) the_flit_update (
         .flit_in (buffer_out),

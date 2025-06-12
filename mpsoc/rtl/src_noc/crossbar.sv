@@ -26,7 +26,6 @@
 **************************************************************/
 
 module crossbar #(
-    parameter NOC_ID=0,
     parameter TOPOLOGY = "MESH",
     parameter V    = 4,     // vc_num_per_port
     parameter P    = 5,     // router port num
@@ -75,7 +74,7 @@ module crossbar #(
     wire [P_1-1 : 0] mux_sel_pre [P-1 : 0];
     wire [P_1-1 : 0]  mux_sel [P-1 : 0];
     wire [P_1w-1 : 0] mux_sel_bin [P-1 : 0];
-    wire [PP-1 : 0] flit_out_wr_gen;
+    wire [P-1 : 0] flit_out_wr_gen [P-1 : 0];
     
     genvar i,j;
     generate
@@ -100,7 +99,6 @@ module crossbar #(
         
         if (SSA_EN) begin : predict //If no output is granted replace the output port with SS port
             add_ss_port #(
-                .NOC_ID(NOC_ID),
                 .SW_LOC(i),
                 .P(P)
             ) ss_port (
@@ -146,19 +144,19 @@ module crossbar #(
                 .SW_LOC(i)
             ) add_sw_loc (
                 .destport_in(granted_dest_port_all[(i+1)*P_1-1 : i*P_1]),
-                .destport_out(flit_out_wr_gen [(i+1)*P-1 : i*P])
+                .destport_out(flit_out_wr_gen [i])
             );
-        end else begin :slp 
-            assign flit_out_wr_gen [(i+1)*P-1 : i*P] = granted_dest_port_all[(i+1)*P_1-1 : i*P_1];
+        end else begin :slp
+            assign flit_out_wr_gen [i] = granted_dest_port_all[(i+1)*P_1-1 : i*P_1];
         end
-    end//for i    
+    end//for i
     endgenerate
-    custom_or #(
-        .IN_NUM(P),
-        .OUT_WIDTH(P)
+    reduction_or #(
+        .W(P),
+        .N(P)
     ) wide_or (
-        .or_in(flit_out_wr_gen),
-        .or_out(flit_we_mux_out)
+        .D_in(flit_out_wr_gen),
+        .Q_out(flit_we_mux_out)
     );
-    assign    flit_out_wr_all = flit_we_mux_out | ssa_flit_wr_all;
+    assign flit_out_wr_all = flit_we_mux_out | ssa_flit_wr_all;
 endmodule

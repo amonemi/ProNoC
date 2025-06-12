@@ -16,8 +16,7 @@
 
 module piton_to_pronoc_endp_addr_converter
 #(
-    parameter CHIP_SET_PORT = 3,
-    parameter NOC_ID=0
+    parameter CHIP_SET_PORT = 3
 ) (
     default_chipid_i,
     piton_chipid_i,
@@ -28,7 +27,7 @@ module piton_to_pronoc_endp_addr_converter
     piton_end_addr_coded_o
 );
 
-    `NOC_CONF
+    import pronoc_pkg::*;
 
     localparam  
         PRESERVED_DATw = (`MSG_LENGTH_WIDTH + `MSG_TYPE_WIDTH + `MSG_MSHRID_WIDTH + `MSG_OPTIONS_1_WIDTH ),
@@ -39,36 +38,34 @@ module piton_to_pronoc_endp_addr_converter
     input  [`NOC_CHIPID_WIDTH-1:0]  piton_chipid_i;
     input  [`NOC_X_WIDTH-1:0]       piton_coreid_x_i;
     input  [`NOC_Y_WIDTH-1:0]       piton_coreid_y_i;
-    input  [`MSG_SRC_FBITS_WIDTH-1:0]  piton_fbits_i;       
+    input  [`MSG_SRC_FBITS_WIDTH-1:0]  piton_fbits_i;
     output [EAw-1 : 0] pronoc_endp_addr_o;
     output [ADDR_CODED-1 : 0] piton_end_addr_coded_o;
     
     generate 
         if(T3==1) begin:same
             piton_to_pronoc_endp_addr_converter_same_topology  #(
-                .CHIP_SET_PORT(CHIP_SET_PORT),
-                .NOC_ID(NOC_ID)
+                .CHIP_SET_PORT(CHIP_SET_PORT)
             ) conv (
                 .default_chipid_i  (default_chipid_i),
                 .piton_chipid_i    (piton_chipid_i),
                 .piton_coreid_x_i  (piton_coreid_x_i),
                 .piton_coreid_y_i  (piton_coreid_y_i),
-                .piton_fbits_i     (piton_fbits_i ),                    
+                .piton_fbits_i     (piton_fbits_i ),
                 .pronoc_endp_addr_o (pronoc_endp_addr_o),
-                .piton_end_addr_coded_o(piton_end_addr_coded_o)        
+                .piton_end_addr_coded_o(piton_end_addr_coded_o)
             );    
         end else begin :diff
             piton_to_pronoc_endp_addr_converter_diffrent_topology  #(
-                .CHIP_SET_PORT(CHIP_SET_PORT),
-                .NOC_ID(NOC_ID)
+                .CHIP_SET_PORT(CHIP_SET_PORT)
             ) conv (
                 .default_chipid_i  (default_chipid_i),
                 .piton_chipid_i    (piton_chipid_i),
                 .piton_coreid_x_i  (piton_coreid_x_i),
                 .piton_coreid_y_i  (piton_coreid_y_i),
-                .piton_fbits_i     (piton_fbits_i ),                    
+                .piton_fbits_i     (piton_fbits_i ),
                 .pronoc_endp_addr_o (pronoc_endp_addr_o),
-                .piton_end_addr_coded_o(piton_end_addr_coded_o)        
+                .piton_end_addr_coded_o(piton_end_addr_coded_o)
             );    
         end 
     endgenerate
@@ -77,8 +74,7 @@ endmodule
 
 module piton_to_pronoc_endp_addr_converter_diffrent_topology
 #(
-    parameter CHIP_SET_PORT = 3,
-    parameter NOC_ID=0
+    parameter CHIP_SET_PORT = 3
 )(
     default_chipid_i,
     piton_chipid_i,
@@ -89,7 +85,7 @@ module piton_to_pronoc_endp_addr_converter_diffrent_topology
     piton_end_addr_coded_o
 );
 
-    `NOC_CONF
+    import pronoc_pkg::*;
     localparam  
         PRESERVED_DATw = (`MSG_LENGTH_WIDTH + `MSG_TYPE_WIDTH + `MSG_MSHRID_WIDTH + `MSG_OPTIONS_1_WIDTH ),
         HEAD_DATw      = (64-MSB_BE-1),
@@ -173,8 +169,7 @@ endmodule
 
 module piton_to_pronoc_endp_addr_converter_same_topology 
 #(
-    parameter CHIP_SET_PORT = 3,
-    parameter NOC_ID=0
+    parameter CHIP_SET_PORT = 3
 )(
     default_chipid_i,
     piton_chipid_i,
@@ -185,7 +180,7 @@ module piton_to_pronoc_endp_addr_converter_same_topology
     piton_end_addr_coded_o
 );
 
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     localparam  
         PRESERVED_DATw = (`MSG_LENGTH_WIDTH + `MSG_TYPE_WIDTH + `MSG_MSHRID_WIDTH + `MSG_OPTIONS_1_WIDTH ),
@@ -249,15 +244,13 @@ module piton_to_pronoc_endp_addr_converter_same_topology
 endmodule    
 
 
-module pronoc_to_piton_endp_addr_converter #(
-    parameter NOC_ID=0
-)(
-    piton_end_addr_coded_i,    
+module pronoc_to_piton_endp_addr_converter (
+    piton_end_addr_coded_i,
     piton_chipid_o,
     piton_coreid_x_o,
     piton_coreid_y_o
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     //coded for FMESH topology
     localparam    
@@ -285,7 +278,6 @@ endmodule
 
 
 module piton_to_pronoc_wrapper  #(
-    parameter NOC_ID=0,
     parameter TILE_NUM =0,
     parameter CHIP_SET_PORT = 3,
     parameter FLATID_WIDTH=8
@@ -297,7 +289,7 @@ module piton_to_pronoc_wrapper  #(
     chan_out
 );    
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     localparam  
         PRESERVED_DATw = (`MSG_LENGTH_WIDTH + `MSG_TYPE_WIDTH + `MSG_MSHRID_WIDTH + `MSG_OPTIONS_1_WIDTH ),
         HEAD_DATw      = (64-MSB_BE-1),
@@ -344,7 +336,6 @@ module piton_to_pronoc_wrapper  #(
     wire [ADDR_CODED-1 : 0] dest_coded;
     
     piton_to_pronoc_endp_addr_converter #(
-        .NOC_ID(NOC_ID),
         .CHIP_SET_PORT(CHIP_SET_PORT)
         ) src_conv (
         .default_chipid_i  (default_chipid),
@@ -358,9 +349,7 @@ module piton_to_pronoc_wrapper  #(
         
     );    
     
-    piton_to_pronoc_endp_addr_converter  #(
-        .NOC_ID(NOC_ID)
-    )dst_conv (
+    piton_to_pronoc_endp_addr_converter dst_conv (
         .default_chipid_i  (default_chipid),
         .piton_chipid_i    (dest_chipid),
         .piton_coreid_x_i  (dest_x),
@@ -410,11 +399,10 @@ module piton_to_pronoc_wrapper  #(
         win[0]=1'b1;
     end    
     
-    header_flit_generator    #(
-        .NOC_ID(NOC_ID),
+    header_flit_generator  #(
         .DATA_w(DATA_w) // header flit can carry Optional data. The data will be placed after control data.  Fpay >= DATA_w + CTRL_BITS_w  
     )head_gen(
-        .flit_out(header_flit),    
+        .flit_out(header_flit),
         .src_e_addr_in(src_e_addr),
         .dest_e_addr_in(dest_e_addr),
         .destport_in(destport),
@@ -467,7 +455,6 @@ endmodule
  *         pronoc_to_piton_wrapper  
  * ***************************/
 module pronoc_to_piton_wrapper #(
-    parameter NOC_ID=0,
     parameter PORT_NUM=0,
     parameter TILE_NUM =0,
     parameter FLATID_WIDTH=8
@@ -478,7 +465,7 @@ module pronoc_to_piton_wrapper #(
     current_r_addr_o,
     chan_in
 );    
-    `NOC_CONF
+    import pronoc_pkg::*;
     localparam  
         PRESERVED_DATw = (`MSG_LENGTH_WIDTH + `MSG_TYPE_WIDTH + `MSG_MSHRID_WIDTH + `MSG_OPTIONS_1_WIDTH ),
         HEAD_DATw      = (64-MSB_BE-1),
@@ -508,12 +495,11 @@ module pronoc_to_piton_wrapper #(
     wire [DATA_w-1 : 0] head_dat;
     //extract ProNoC header flit data
     header_flit_info #(
-        .NOC_ID(NOC_ID),
         .DATA_w(DATA_w)
     )extract(
         .flit(chan_in.flit_chanel.flit),
-        .hdr_flit(hdr_flit),        
-        .data_o(head_dat)    
+        .hdr_flit(hdr_flit),
+        .data_o(head_dat)
     );
     
     wire [Fpay-1:0] header_flit;
@@ -528,20 +514,18 @@ module pronoc_to_piton_wrapper #(
     wire [ADDR_CODED-1 : 0] dest_coded;
     
     assign {dest_coded, length, msg_type, mshrid, option1}  =  head_dat [HEAD_DATw-1 : 0]; 
-    pronoc_to_piton_endp_addr_converter#(
-        .NOC_ID(NOC_ID)
-        )addr_conv ( 
-        .piton_end_addr_coded_i(dest_coded),        
+    pronoc_to_piton_endp_addr_converter addr_conv ( 
+        .piton_end_addr_coded_i(dest_coded),
         .piton_chipid_o (dest_chipid),
         .piton_coreid_x_o(dest_x),
-        .piton_coreid_y_o(dest_y)    
+        .piton_coreid_y_o(dest_y)
     );
     wire [MAX_P-1:0] destport_one_hot;
     //    FBITS coding
     localparam [3: 0] 
         FBITS_WEST         =  4'b0010, 
-        FBITS_SOUTH      =  4'b0011,   
-        FBITS_EAST       =  4'b0100,   
+        FBITS_SOUTH      =  4'b0011,
+        FBITS_EAST       =  4'b0100,
         FBITS_NORTH      =  4'b0101,   
         FBITS_PROCESSOR  =  4'b0000;  
     /*    
@@ -654,15 +638,13 @@ endmodule
 /*********************
  *   pack noc_top ports 
  * ******************/
-module  noc_top_packed #(
-    parameter NOC_ID=0
-)(
+module  noc_top_packed (
     reset,
-    clk,    
+    clk,
     chan_in_all,
-    chan_out_all  
+    chan_out_all
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     localparam  
         PRESERVED_DATw = (`MSG_LENGTH_WIDTH + `MSG_TYPE_WIDTH + `MSG_MSHRID_WIDTH + `MSG_OPTIONS_1_WIDTH ),
         HEAD_DATw      = (64-MSB_BE-1),
@@ -670,7 +652,7 @@ module  noc_top_packed #(
     input   clk,reset;
     //local ports 
     input   smartflit_chanel_t [NE-1 : 0] chan_in_all  ;
-    output  smartflit_chanel_t [NE-1 : 0] chan_out_all ;    
+    output  smartflit_chanel_t [NE-1 : 0] chan_out_all ;
     smartflit_chanel_t chan_in_all_unpacked  [NE-1 : 0];
     smartflit_chanel_t chan_out_all_unpacked [NE-1 : 0];
     
@@ -682,36 +664,33 @@ module  noc_top_packed #(
     end//for
     endgenerate
     
-    noc_top #(
-        .NOC_ID(NOC_ID)
-        )unpacked (
+    noc_top  unpacked (
         .reset(reset),
-        .clk(clk),    
+        .clk(clk),
         .chan_in_all(chan_in_all_unpacked),
-        .chan_out_all(chan_out_all_unpacked)            
+        .chan_out_all(chan_out_all_unpacked)
     );
     
     //synthesis translate_off
     initial begin 
-        display_noc_parameters();         
-    end     
+        display_noc_parameters();
+    end
     //synthesis translate_on
     
-endmodule    
+endmodule
 
 
-module ground_pronoc_end_port         
+module ground_pronoc_end_port
     #(
-        parameter TILE_NUM=0,
-        parameter NOC_ID=0
+        parameter TILE_NUM=0
     )(
         clk,
         reset,
         chan_in,
-        chan_out        
+        chan_out
     );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     input  reset,clk;
     input   smartflit_chanel_t chan_in;
     output  smartflit_chanel_t    chan_out;
@@ -729,9 +708,8 @@ endmodule
 
 
 
-module pronoc_noc     
+module pronoc_noc
     #(
-    parameter NOC_ID=0,
     parameter CHIP_SET_PORT=3,
     parameter FLATID_WIDTH=8
     )(
@@ -749,7 +727,7 @@ module pronoc_noc
         clk
     );
 
-    `NOC_CONF
+    import pronoc_pkg::*;
     input clk,reset;
     input [Fpay*NE-1:0] dataIn_flatten;
     input [NE-1 : 0] validIn;
@@ -782,15 +760,14 @@ module pronoc_noc
         assign flat_tileid[i]=flat_tileid_flatten[(i+1)*FLATID_WIDTH-1 : i*FLATID_WIDTH];
         pronoc_to_piton_wrapper 
         #(
-            .NOC_ID(NOC_ID),
             .PORT_NUM(0),
             .TILE_NUM(i),
             .FLATID_WIDTH(FLATID_WIDTH)
-        )pr2pi (
+        ) pr2pi (
             .default_chipid(default_chipid),
             .default_coreid_x(default_coreid_x[i]), 
             .default_coreid_y(default_coreid_y[i]),
-            .flat_tileid(flat_tileid[i]),    
+            .flat_tileid(flat_tileid[i]),
             .reset(reset),
             .clk(clk),
             .dataOut(dataOut[i]),
@@ -798,19 +775,18 @@ module pronoc_noc
             .yummyOut(yummyOut[i]),
             .current_r_addr_o(current_r_addr[i]),
             .chan_in(pronoc_chan_out[i])
-        );    
+        );
         
-        piton_to_pronoc_wrapper      
+        piton_to_pronoc_wrapper
         #(
-            .NOC_ID(NOC_ID),
             .TILE_NUM(i),
             .CHIP_SET_PORT(CHIP_SET_PORT),
             .FLATID_WIDTH(FLATID_WIDTH)
-        )pi2pr (
+        ) pi2pr (
             .default_chipid (default_chipid),
             .default_coreid_x(default_coreid_x[i]),
             .default_coreid_y(default_coreid_y[i]),
-            .flat_tileid(flat_tileid[i]),    
+            .flat_tileid(flat_tileid[i]),
             .reset(reset),
             .clk(clk),
             .dataIn(dataIn[i]),
@@ -818,17 +794,15 @@ module pronoc_noc
             .yummyIn(yummyIn[i]),
             .current_r_addr_i(current_r_addr[i]),
             .chan_out(pronoc_chan_in[i])
-        );    
+        );
     end//for
     endgenerate
     
-    noc_top #(
-        .NOC_ID(NOC_ID)
-        )noc (
+    noc_top  noc (
         .reset(reset),
-        .clk(clk),    
+        .clk(clk),
         .chan_in_all (pronoc_chan_in ),
         .chan_out_all(pronoc_chan_out),
-        .router_event()            
+        .router_event( )
     );
 endmodule

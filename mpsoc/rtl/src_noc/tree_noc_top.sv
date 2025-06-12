@@ -42,17 +42,15 @@
 **
 **********************************************************************/
 
-module  tree_noc_top #(
-    parameter NOC_ID=0
-)(
+module  tree_noc_top (
     reset,
-    clk,    
+    clk,
     chan_in_all,
     chan_out_all,
     router_event
 );
     
-    `NOC_CONF 
+    import pronoc_pkg::*; 
     
     input   clk,reset;
     //Endpoints ports 
@@ -106,7 +104,6 @@ module  tree_noc_top #(
     assign router_config_in[ROOT_ID].router_id = ROOT_ID [NRw-1:0];
     assign router_config_in[ROOT_ID].router_addr = {current_layer_addr [ROOT_ID],current_pos_addr[ROOT_ID]};
     router_top # (
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(ROOT_ID),
         .P(K)
     ) root_router (
@@ -131,16 +128,15 @@ module  tree_noc_top #(
             localparam RID = NRATTOP1+pos;
             assign router_config_in[RID].router_id = RID[NRw-1 : 0];
             router_top # (
-                .NOC_ID(NOC_ID),
                 .ROUTER_ID(RID),
                 .P(K+1)// leaves have K+1 port number 
             ) the_router (
                 .router_config_in(router_config_in[RID]),
-                .chan_in         (router_chan_in [RID]), 
-                .chan_out        (router_chan_out[RID]), 
-                .router_event    (router_event[RID]),
-                .clk             (clk), 
-                .reset           (reset)
+                .chan_in (router_chan_in [RID]), 
+                .chan_out (router_chan_out[RID]), 
+                .router_event (router_event[RID]),
+                .clk (clk), 
+                .reset (reset)
             );  
         end//pos
     end // level

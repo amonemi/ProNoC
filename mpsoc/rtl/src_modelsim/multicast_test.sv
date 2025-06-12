@@ -3,65 +3,60 @@
 
 
 module multicast_test;
-	
-	parameter NOC_ID=0;
+    
 
-	`NOC_CONF
-	
-	reg     reset ,clk;
-	
-	initial begin 
-		clk = 1'b0;
-		forever clk = #10 ~clk;
-	end 
-	
-	
-	smartflit_chanel_t chan_in_all  [NE-1 : 0];
-	smartflit_chanel_t chan_out_all [NE-1 : 0];
-	
-	pck_injct_t pck_injct_in [NE-1 : 0];
-	pck_injct_t pck_injct_out[NE-1 : 0];
-	
-	
-	noc_top  # ( 
-		.NOC_ID(NOC_ID)
-	) the_noc (
-		.reset(reset),
-		.clk(clk),    
-		.chan_in_all(chan_in_all),
-		.chan_out_all(chan_out_all),
-		.router_event( )
-	);
-		
-	reg [NEw-1 : 0] dest_id [NE-1 : 0];
-	wire [NEw-1: 0] current_e_addr [NE-1 : 0];
-		
-	genvar i;
-	generate 
-	for(i=0; i< NE; i=i+1) begin : endpoints
-		
-		endp_addr_encoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) encode1 ( .id(i[NEw-1 :0]), .code(current_e_addr[i]));
-		
-		multicast_injector #(
-			.NOC_ID(NOC_ID)
-		) pck_inj(
-			//general
-			.current_e_addr(current_e_addr[i]),
-			.reset(reset),
-			.clk(clk),		
-   			//noc port
-			.chan_in(chan_out_all[i]),
-			.chan_out(chan_in_all[i]),  
-			//control interafce
-			.pck_injct_in(pck_injct_in[i]),
-			.pck_injct_out(pck_injct_out[i])		
-		);			
-	
+    import pronoc_pkg::*;
+    
+    reg     reset ,clk;
+    
+    initial begin 
+        clk = 1'b0;
+        forever clk = #10 ~clk;
+    end 
+    
+    
+    smartflit_chanel_t chan_in_all  [NE-1 : 0];
+    smartflit_chanel_t chan_out_all [NE-1 : 0];
+    
+    pck_injct_t pck_injct_in [NE-1 : 0];
+    pck_injct_t pck_injct_out[NE-1 : 0];
+    
+    
+    noc_top  the_noc (
+        .reset(reset),
+        .clk(clk),    
+        .chan_in_all(chan_in_all),
+        .chan_out_all(chan_out_all),
+        .router_event( )
+    );
+        
+    reg [NEw-1 : 0] dest_id [NE-1 : 0];
+    wire [NEw-1: 0] current_e_addr [NE-1 : 0];
+        
+    genvar i;
+    generate 
+    for(i=0; i< NE; i=i+1) begin : endpoints
+        
+        endp_addr_encoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) encode1 ( .id(i[NEw-1 :0]), .code(current_e_addr[i]));
+        
+        multicast_injector  pck_inj(
+            //general
+            .current_e_addr(current_e_addr[i]),
+            .reset(reset),
+            .clk(clk),
+               //noc port
+            .chan_in(chan_out_all[i]),
+            .chan_out(chan_in_all[i]),  
+            //control interafce
+            .pck_injct_in(pck_injct_in[i]),
+            .pck_injct_out(pck_injct_out[i])
+        );            
+    
 
-		endp_addr_encoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) encode2 ( .id(dest_id[i]), .code(pck_injct_in[i].endp_addr[EAw-1 : 0]));
-		
-		
-	   reg [31:0]k;
+        endp_addr_encoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) encode2 ( .id(dest_id[i]), .code(pck_injct_in[i].endp_addr[EAw-1 : 0]));
+        
+        
+       reg [31:0]k;
 
     initial begin 
 `ifdef ACTIVE_LOW_RESET_MODE 
@@ -69,66 +64,66 @@ module multicast_test;
  `else 
         reset = 1'b1;
 `endif  
-			k=0;
-			pck_injct_in[i].data =0;
-			#10
-			pck_injct_in[i].class_num=0; 
-			pck_injct_in[i].init_weight=1;
-			pck_injct_in[i].vc=1;
-			pck_injct_in[i].pck_wr=1'b0; 
-			#100
-			@(posedge clk) #1;
-			reset=~reset;
-			#100
-			@(posedge clk) #1;
-			//if(i==1) begin 
-			//	repeat(10) begin 
-					while (pck_injct_out[i].ready[0] == 1'b0) @(posedge clk)   #1;
-						
-					pck_injct_in[i].data='h123456789ABCDEFEDCBA987654321+k;
-					pck_injct_in[i].size=3+(k%18);
-					dest_id[i]=0;				
-					pck_injct_in[i].pck_wr=1'b1;  	
-					@(posedge clk)	#1 k++;
-					pck_injct_in[i].pck_wr=1'b0;
-					@(posedge clk)	#1 k++;
+            k=0;
+            pck_injct_in[i].data =0;
+            #10
+            pck_injct_in[i].class_num=0; 
+            pck_injct_in[i].init_weight=1;
+            pck_injct_in[i].vc=1;
+            pck_injct_in[i].pck_wr=1'b0; 
+            #100
+            @(posedge clk) #1;
+            reset=~reset;
+            #100
+            @(posedge clk) #1;
+            //if(i==1) begin 
+            //    repeat(10) begin 
+                    while (pck_injct_out[i].ready[0] == 1'b0) @(posedge clk)   #1;
+                        
+                    pck_injct_in[i].data='h123456789ABCDEFEDCBA987654321+k;
+                    pck_injct_in[i].size=3+(k%18);
+                    dest_id[i]=0;                
+                    pck_injct_in[i].pck_wr=1'b1;      
+                    @(posedge clk)    #1 k++;
+                    pck_injct_in[i].pck_wr=1'b0;
+                    @(posedge clk)    #1 k++;
 
-			//	end
+            //    end
 
-				#10000
-			@(posedge clk) $stop;
+                #10000
+            @(posedge clk) $stop;
 
-			//end
-			
-			
-			
-			
-			
-			
-		end
-		
-		always @(posedge clk) begin
-			if(pck_injct_out[i].pck_wr) begin 
-				$display ("%t:pck_inj(%d) got a packet: source=%d, size=%d, data=%h",$time,i,
-						pck_injct_out[i].endp_addr,pck_injct_out[i].size,pck_injct_out[i].data);
-			end		
-			
-		end
-		
-	
-	  
-	end//for
-	endgenerate
+            //end
+            
+            
+            
+            
+            
+            
+        end
+        
+        always @(posedge clk) begin
+            if(pck_injct_out[i].pck_wr) begin 
+                $display ("%t:pck_inj(%d) got a packet: source=%d, size=%d, data=%h",$time,i,
+                        pck_injct_out[i].endp_addr,pck_injct_out[i].size,pck_injct_out[i].data);
+            end        
+            
+        end
+        
+    
+      
+    end//for
+    endgenerate
        
-	
+    
 
 
 
-	
-	
+    
+    
 
-	
-	
+    
+    
 
 endmodule
 // synthesis translate_on

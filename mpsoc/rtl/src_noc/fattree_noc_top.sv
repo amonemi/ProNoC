@@ -38,9 +38,7 @@
 **
 **************************************************************/
 
-module  fattree_noc_top #(
-    parameter NOC_ID=0
-) (
+module  fattree_noc_top (
     reset,
     clk,
     chan_in_all,
@@ -48,7 +46,7 @@ module  fattree_noc_top #(
     router_event
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     input   clk,reset;
     //Endpoints ports 
@@ -100,7 +98,6 @@ module  fattree_noc_top #(
         assign router_config_in[RID].router_id = RID [NRw-1 : 0];
         assign router_config_in[RID].router_addr = current_r_addr [RID];
         router_top # (
-            .NOC_ID(NOC_ID),
             .ROUTER_ID(RID),
             .P(K)
         ) the_router (
@@ -124,7 +121,6 @@ module  fattree_noc_top #(
             assign router_config_in[RID].router_addr = current_r_addr [RID];
             
             router_top # (
-                .NOC_ID(NOC_ID),
                 .ROUTER_ID(RID),
                 .P(2*K)
             ) the_router (

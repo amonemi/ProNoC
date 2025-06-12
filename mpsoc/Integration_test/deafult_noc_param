@@ -1,5 +1,6 @@
 $model = bless({
     'noc_param' => {
+        "NOC_ID" => "0",
         "TOPOLOGY" => "\"MESH\"",
         "T1" => "8",
         "T2" => "8",
@@ -44,6 +45,7 @@ $model = bless({
     
     'parameters_order' => {
         'noc_param' => [
+            'NOC_ID',
             'TOPOLOGY',
             'T1',
             'T2',

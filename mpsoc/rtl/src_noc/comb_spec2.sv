@@ -30,12 +30,7 @@
 *************************************************************/
 
 module  comb_spec2_allocator #(
-    parameter V = 4,// Virtual chanel num per port
-    parameter P = 5,
-    parameter DEBUG_EN = 1,
-    parameter SWA_ARBITER_TYPE = "WRRA",
-    parameter MIN_PCK_SIZE=2, //minimum packet size in flits. The minimum value is 1.
-    parameter SELF_LOOP_EN=0
+    parameter P = 5 //number of ports
 )(
     dest_port_all,
     masked_ovc_request_all,
@@ -57,6 +52,7 @@ module  comb_spec2_allocator #(
     granted_dst_is_from_a_single_flit_pck,
     clk,reset
 );
+    import pronoc_pkg::*;
     localparam
         PV = V * P,
         VV = V * V,
@@ -92,11 +88,7 @@ module  comb_spec2_allocator #(
     
     //speculative switch allocator
     spec_sw_alloc2 #(
-        .V (V),
-        .P (P),
-        .DEBUG_EN (DEBUG_EN),
-        .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE),
-        .MIN_PCK_SIZE(MIN_PCK_SIZE)
+        .P (P)
     ) speculative_sw_allocator (
         .ivc_granted_all(ivc_num_getting_sw_grant),
         .ivc_request_all(ivc_request_all),
@@ -211,11 +203,7 @@ speculative switch allocator for
         comb_spec2
 ****************************/
 module spec_sw_alloc2 #(
-    parameter V = 4,
-    parameter P = 5,
-    parameter DEBUG_EN = 1,
-    parameter SWA_ARBITER_TYPE="RRA",
-    parameter MIN_PCK_SIZE=2 //minimum packet size in flits. The minimum value is 1.
+    parameter P = 5
 )(
     ivc_granted_all,
     ivc_request_all,
@@ -237,7 +225,8 @@ module spec_sw_alloc2 #(
     clk,
     reset
 );
-    localparam  
+    import pronoc_pkg::*;
+    localparam
         P_1 = P-1,//assumed that no port request for itself!
         PV  = V * P,
         VP_1= V * P_1,
@@ -277,10 +266,7 @@ module spec_sw_alloc2 #(
     wire  [P-1 : 0] spec_any_ivc_grant,nonspec_any_ivc_grant;
     
     spec_sw_alloc_sub2#(
-        .V(V),
-        .P(P),
-        .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
-        .MIN_PCK_SIZE(MIN_PCK_SIZE)
+        .P(P)
     ) speculative_alloc (
         .valid_speculation (valid_speculation),
         .ivc_granted_all (spec_ivc_granted_all),
@@ -302,10 +288,7 @@ module spec_sw_alloc2 #(
     );
     
     sw_alloc_sub2#(
-        .V (V),
-        .P (P),
-        .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
-        .MIN_PCK_SIZE(MIN_PCK_SIZE)
+        .P (P)
     ) nonspeculative_alloc (
         .ivc_granted_all (nonspec_ivc_granted_all),
         .ivc_request_all (nonspec_ivc_request_all),
@@ -381,10 +364,7 @@ endmodule
 *
 *******************************************/
 module sw_alloc_sub2#(
-    parameter V = 4,
-    parameter P = 5,
-    parameter SWA_ARBITER_TYPE="RRA",
-    parameter MIN_PCK_SIZE=2 //minimum packet size in flits. The minimum value is 1.
+    parameter P = 5
 )(
     ivc_granted_all,
     ivc_request_all,
@@ -403,7 +383,7 @@ module sw_alloc_sub2#(
     clk,
     reset
 );
-    
+    import pronoc_pkg::*;
     localparam
         P_1 = P-1,//assumed that no port request for itself!
         PV = V * P,
@@ -447,12 +427,12 @@ module sw_alloc_sub2#(
     wire [P-1 : 0] winner_weight_consumed;
     
     wire [P_1-1 : 0] single_flit_granted_dst [P-1 : 0];
-    wire [PP-1 : 0] single_flit_granted_dst_all;
+    wire [P-1 : 0] single_flit_granted_dst_all [P-1 : 0];
     wire [V-1 : 0] pck_is_single_flit [P-1 : 0];
     wire [P-1 : 0] single_flit_pck_local_grant;
     
     genvar i,j;
-    generate    
+    generate
     for(i=0;i< P;i=i+1) begin : P_
         //assign in/out to the port based wires
         //output
@@ -509,12 +489,12 @@ module sw_alloc_sub2#(
                 .SW_LOC(i)
             ) add_sw_loc (
                 .destport_in(single_flit_granted_dst[i]),
-                .destport_out(single_flit_granted_dst_all[(i+1)*P-1 : i*P])
+                .destport_out(single_flit_granted_dst_all[i])
             );
         end else begin 
             assign single_flit_pck_local_grant[i] = 1'b0;
             assign single_flit_granted_dst[i] = {P_1{1'b0}};
-            assign single_flit_granted_dst_all[(i+1)*P-1 : i*P]={P{1'b0}};
+            assign single_flit_granted_dst_all[i] = {P{1'b0}};
         end
         //second arbiter input/output generate
         for(j=0;j<P; j=j+1) begin : P_
@@ -551,21 +531,18 @@ module sw_alloc_sub2#(
     end//for i
     endgenerate
     
-    custom_or #(
-        .IN_NUM(P),
-        .OUT_WIDTH(P)
+    reduction_or #(
+        .W(P),
+        .N(P)
     ) or_dst (
-        .or_in(single_flit_granted_dst_all),
-        .or_out(granted_dst_is_from_a_single_flit_pck)
+        .D_in(single_flit_granted_dst_all),
+        .Q_out(granted_dst_is_from_a_single_flit_pck)
     );
 endmodule
 
 
 module spec_sw_alloc_sub2#(
-    parameter V = 4,
-    parameter P = 5,
-    parameter SWA_ARBITER_TYPE="RRA",
-    parameter MIN_PCK_SIZE=2 //minimum packet size in flits. The minimum value is 1.
+    parameter P = 5
 )(
     valid_speculation,
     ivc_granted_all,
@@ -585,7 +562,7 @@ module spec_sw_alloc_sub2#(
     clk,
     reset
 );
-    
+    import pronoc_pkg::*;
     localparam
         P_1 = P-1,//assumed that no port request for itself!
         PV = V * P,
@@ -629,16 +606,16 @@ module spec_sw_alloc_sub2#(
     wire [V-1 : 0] vc_weight_is_consumed [P-1 : 0];
     wire [P-1 : 0] winner_weight_consumed;    
     wire [P_1-1 : 0] single_flit_granted_dst [P-1 : 0];
-    wire [PP-1 : 0] single_flit_granted_dst_all;
+    wire [P-1 : 0] single_flit_granted_dst_all [P-1 : 0];
     wire [V-1 : 0] pck_is_single_flit [P-1 : 0];
     wire [P-1 : 0] single_flit_pck_local_grant;
     
     genvar i,j;
-    generate    
+    generate
     for(i=0;i< P;i=i+1) begin : P_
         //assign in/out to the port based wires
         //output
-        assign ivc_granted_all [(i+1)*V-1 : i*V] =   ivc_granted [i];
+        assign ivc_granted_all [(i+1)*V-1 : i*V] = ivc_granted [i];
         assign granted_dest_port_all [(i+1)*P_1-1: i*P_1] = granted_dest_port[i];
         assign first_arbiter_granted_ivc_all[(i+1)*V-1 : i*V] = first_arbiter_grant_masked[i];
         //input
@@ -647,7 +624,7 @@ module spec_sw_alloc_sub2#(
         assign dest_port_ivc[i] = dest_port_all [(i+1)*VP_1-1 : i*VP_1];
         assign vc_weight_is_consumed[i]  =  vc_weight_is_consumed_all [(i+1)*V-1 : i*V];
         //mask
-        assign ivc_masked[i] = ivc_request[i] & ivc_not_full[i];        
+        assign ivc_masked[i] = ivc_request[i] & ivc_not_full[i];
         //first level arbiter
         swa_input_port_arbiter #(
             .ARBITER_WIDTH(V),
@@ -682,12 +659,12 @@ module spec_sw_alloc_sub2#(
                 .SW_LOC(i)
             ) add_sw_loc  (
                 .destport_in(single_flit_granted_dst[i]),
-                .destport_out(single_flit_granted_dst_all[(i+1)*P-1 : i*P])
+                .destport_out(single_flit_granted_dst_all[i])
             );
         end else begin
             assign single_flit_pck_local_grant[i] = 1'b0;
             assign single_flit_granted_dst[i] = {P_1{1'b0}};
-            assign single_flit_granted_dst_all[(i+1)*P-1 : i*P]={P{1'b0}};
+            assign single_flit_granted_dst_all[i] = {P{1'b0}};
         end
         //destination port multiplexer
         one_hot_mux #(
@@ -728,15 +705,15 @@ module spec_sw_alloc_sub2#(
         //any ivc
         assign  any_ivc_grant[i] = | granted_dest_port[i];
         assign  ivc_granted[i] =  (any_ivc_grant[i]) ? first_arbiter_grant_masked[i] : {V{1'b0}};
-        assign      inport_granted_all[i]   =any_ivc_grant[i];
+        assign  inport_granted_all[i] = any_ivc_grant[i];
     end//for P_
     endgenerate
     
-    custom_or #(
-        .IN_NUM(P),
-        .OUT_WIDTH(P)
+    reduction_or #(
+        .W(P),
+        .N(P)
     ) or_dst (
-        .or_in(single_flit_granted_dst_all),
-        .or_out(granted_dst_is_from_a_single_flit_pck)
+        .D_in(single_flit_granted_dst_all),
+        .Q_out(granted_dst_is_from_a_single_flit_pck)
     );
 endmodule

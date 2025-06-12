@@ -13,7 +13,6 @@
 *     look_ahead_routing
 *************************************/
 module multicast_routing # (
-    parameter NOC_ID=0,
     parameter SW_LOC=0,    
     parameter P=5
 )(
@@ -21,14 +20,13 @@ module multicast_routing # (
     dest_e_addr,  // destination endpoint address        
     destport        
 );
-    `NOC_CONF    
+    import pronoc_pkg::*;    
     input   [RAw-1 : 0]  current_r_addr;
     input   [DAw-1 : 0]  dest_e_addr;
     output  [DSTPw-1 : 0] destport;
     generate
     if(IS_MESH) begin: mesh
         multicast_routing_mesh #(
-            .NOC_ID(NOC_ID),
             .P(P) ,
             .SW_LOC(SW_LOC)        
         ) routing (
@@ -38,7 +36,6 @@ module multicast_routing # (
         );
     end else if (IS_FMESH) begin : fmesh 
         multicast_routing_fmesh #(
-            .NOC_ID(NOC_ID),
             .P(P) ,
             .SW_LOC(SW_LOC)        
         ) routing (
@@ -48,7 +45,6 @@ module multicast_routing # (
         );
     end else if (IS_STAR) begin : star
         multicast_routing_star #(
-            .NOC_ID(NOC_ID),
             .P(P) ,
             .SW_LOC(SW_LOC)        
         ) routing (
@@ -70,7 +66,6 @@ endmodule
 
 
 module multicast_routing_mesh    #(
-    parameter NOC_ID=0,
     parameter SW_LOC=0,   
     parameter P=5
 )(
@@ -79,7 +74,7 @@ module multicast_routing_mesh    #(
     destport        
 );   
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     input   [RAw-1 : 0]  current_r_addr;
     input   [DAw-1 : 0]  dest_e_addr;
@@ -113,9 +108,7 @@ module multicast_routing_mesh    #(
     );
     wire [NX-1 : 0] row_has_any_dest;
     wire [NE-1 : 0] dest_mcast_all_endp;            
-    mcast_dest_list_decode #(
-        .NOC_ID(NOC_ID)
-    ) decode (
+    mcast_dest_list_decode decode (
         .dest_e_addr(dest_e_addr),
         .dest_o(dest_mcast_all_endp),
         .row_has_any_dest(row_has_any_dest),
@@ -188,7 +181,6 @@ module multicast_routing_mesh    #(
 endmodule
 
 module multicast_routing_star #(
-    parameter NOC_ID=0,
     parameter SW_LOC=0,    
     parameter P=5
 )(
@@ -196,14 +188,12 @@ module multicast_routing_star #(
     dest_e_addr,  // destination endpoint address        
     destport        
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     input   [RAw-1 : 0]  current_r_addr;
     input   [DAw-1 : 0]  dest_e_addr;
     output  [DSTPw-1 : 0]  destport;
     
-    mcast_dest_list_decode # (
-        .NOC_ID(NOC_ID)
-    ) decode (
+    mcast_dest_list_decode decode (
         .dest_e_addr(dest_e_addr),
         .dest_o(destport),
         .row_has_any_dest(),
@@ -213,7 +203,6 @@ endmodule
 
 
 module multicast_routing_fmesh #(
-    parameter NOC_ID=0,
     parameter SW_LOC=0,    
     parameter P=5
 ) (
@@ -222,7 +211,7 @@ module multicast_routing_fmesh #(
     destport        
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     input   [RAw-1 : 0]  current_r_addr;
     input   [DAw-1 : 0]  dest_e_addr;
     output  [DSTPw-1 : 0]  destport;
@@ -256,18 +245,16 @@ module multicast_routing_fmesh #(
     
     wire [NX-1 : 0] row_has_any_dest;
     wire [NE-1 : 0] dest_mcast_all_endp;            
-        
-    mcast_dest_list_decode # (
-        .NOC_ID(NOC_ID)
-    ) decode (
+
+    mcast_dest_list_decode decode (
         .dest_e_addr(dest_e_addr),
         .dest_o(dest_mcast_all_endp),
         .row_has_any_dest(row_has_any_dest),
         .is_unicast()
     );
-    
+
     genvar i,j;
-    generate 
+    generate
     for(i=0; i< NX; i=i+1) begin : X_
         assign x_plus[i]  = (current_rx    >    i);
         /* verilator lint_off UNSIGNED */
@@ -342,16 +329,14 @@ module multicast_routing_fmesh #(
 endmodule
 
 
-module mcast_dest_list_decode #(
-    parameter NOC_ID=0
-) (
+module mcast_dest_list_decode  (
     dest_e_addr,
     dest_o,
     row_has_any_dest,
     is_unicast
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     input  [DAw-1 :0]  dest_e_addr;
     output [NE-1 : 0]  dest_o;
     output [NX-1 : 0] row_has_any_dest;
@@ -389,7 +374,7 @@ module mcast_dest_list_decode #(
             .NE(NE)
         )  decoder (
             .code(unicast_code),
-            .id(unicast_id)                
+            .id(unicast_id)
         );            
         
         always_comb begin 
@@ -462,7 +447,6 @@ endmodule
 
 
 module multicast_chan_in_process #(
-    parameter NOC_ID=0,
     parameter SW_LOC=0,    
     parameter P=5
 )(
@@ -473,7 +457,7 @@ module multicast_chan_in_process #(
     clk
 );  
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     input endp_port;
     input   [RAw-1 : 0]  current_r_addr;
     input   flit_chanel_t chan_in;
@@ -486,17 +470,13 @@ module multicast_chan_in_process #(
     wire  [DSTPw-1 : 0] destport,destport_o;
     
     hdr_flit_t hdr_flit;
-    header_flit_info #(
-        .NOC_ID (NOC_ID)
-    ) extract (
+    header_flit_info extract (
         .flit(chan_in.flit),
         .hdr_flit(hdr_flit),
         .data_o()
     );
-    
-    mcast_dest_list_decode #(
-        .NOC_ID(NOC_ID)
-    ) decoder (
+
+    mcast_dest_list_decode decoder (
         .dest_e_addr(hdr_flit.dest_e_addr),
         .dest_o(dest_mcast_all_endp),
         .row_has_any_dest(row_has_any_dest_in),
@@ -580,7 +560,6 @@ module multicast_chan_in_process #(
     
     multicast_routing
     #(
-        .NOC_ID(NOC_ID),
         .P(P) ,
         .SW_LOC(SW_LOC)
     )routing(
@@ -621,17 +600,15 @@ module multicast_chan_in_process #(
 endmodule
 
 
-module multicast_dst_sel # (
-    parameter NOC_ID=0
-)(
+module multicast_dst_sel  (
     destport_in,
-    destport_out    
+    destport_out
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     input  [DSTPw-1 : 0] destport_in;
-    output [DSTPw-1 : 0] destport_out; 
+    output [DSTPw-1 : 0] destport_out;
     wire  [DSTPw-1 : 0] arb_in, arb_out;
-    
+
     function integer mesh_tori_pririty_order;
     input integer x;
     begin

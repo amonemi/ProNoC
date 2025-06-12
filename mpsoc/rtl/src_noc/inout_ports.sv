@@ -26,7 +26,6 @@
 **************************************************************/
 
 module inout_ports #(
-    parameter NOC_ID=0,
     parameter ROUTER_ID=0,
     parameter P=5    
 )(
@@ -87,7 +86,7 @@ module inout_ports #(
     smart_ctrl_in    
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     localparam
         PV = V * P,
@@ -169,7 +168,6 @@ module inout_ports #(
     ssa_ctrl_t ssa_ctrl [P-1 : 0];   
     
     input_ports #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(ROUTER_ID),
         .P(P)
     ) the_input_port (
@@ -209,7 +207,6 @@ module inout_ports #(
     );   
     
     output_ports #(
-        .NOC_ID(NOC_ID),
         .P (P)               
     ) output_ports (        
         .vsa_ovc_allocated_all                      (vsa_ovc_allocated_all),
@@ -242,7 +239,6 @@ module inout_ports #(
     );    
     
     vc_alloc_request_gen #(
-        .NOC_ID(NOC_ID),
         .P(P)        
     ) vc_alloc_req_gen (
         .ivc_info(ivc_info),
@@ -282,7 +278,6 @@ module inout_ports #(
 
     if( SSA_EN == 1 ) begin : ssa
         ss_allocator #(
-            .NOC_ID(NOC_ID),
             .P(P)
         ) the_ssa (
             .ivc_info(ivc_info),
@@ -429,7 +424,6 @@ endmodule
     vc_alloc_request_gen
 ************************/
 module  vc_alloc_request_gen #(
-    parameter NOC_ID=0,
     parameter P=5
 ) (
     ivc_info,
@@ -448,7 +442,7 @@ module  vc_alloc_request_gen #(
     ctrl_in
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     localparam  
         P_1 = (SELF_LOOP_EN )?  P : P-1,

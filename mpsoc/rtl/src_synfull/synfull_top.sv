@@ -2,8 +2,7 @@
 
 `ifdef SIMULATION
 module synfull_top;
-    parameter NOC_ID=0;
-    `NOC_CONF
+    import pronoc_pkg::*;
     import dpi_int_pkg::*; 
     
     reg     reset ,clk;
@@ -31,11 +30,9 @@ module synfull_top;
     req_t     [NE-1 : 0] synfull_pronoc_req_all  ;
     deliver_t [NE-1 : 0] pronoc_synfull_del_all  ;
     
-    noc_top #( 
-        .NOC_ID(NOC_ID)
-    ) the_noc (
+    noc_top  the_noc (
         .reset(reset),
-        .clk(clk),    
+        .clk(clk),
         .chan_in_all(chan_in_all),
         .chan_out_all(chan_out_all),
         .router_event(router_event)
@@ -117,21 +114,19 @@ module synfull_top;
         assign pck_injct_in[i].vc = _pck_injct_in[i].vc;
         
         endp_addr_encoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) encode1 ( .id(i[NEw-1 :0]), .code(current_e_addr[i]));
-        packet_injector #(
-            .NOC_ID(NOC_ID)
-        ) pck_inj (
+        packet_injector  pck_inj (
             //general
             .current_e_addr(current_e_addr[i]),
             .reset(reset),
-            .clk(clk),      
+            .clk(clk),
             //noc port
             .chan_in(chan_out_all[i]),
-            .chan_out(chan_in_all[i]),  
+            .chan_out(chan_in_all[i]),
             //control interafce
             .pck_injct_in(pck_injct_in[i]),
-            .pck_injct_out(pck_injct_out[i])        
-        );          
-        endp_addr_encoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) encode2 ( .id(dest_id[i]), .code(pck_injct_in[i].endp_addr));
+            .pck_injct_out(pck_injct_out[i])
+        );
+        endp_addr_encoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw), .NE(NE)) encode2 ( .id(dest_id[i]), .code(pck_injct_in[i].endp_addr));
         reg [31:0]k;
         
         initial begin 
@@ -196,24 +191,22 @@ module synfull_top;
             for(k=0; k< NE; k=k+1) begin : endpoints            
                 if(pck_injct_out[k].pck_wr) begin 
                     total_rsv_pck_count++;
-                    total_rsv_flit_count+=pck_injct_out[k].size;                
+                    total_rsv_flit_count+=pck_injct_out[k].size;
                 end 
                 if(pck_injct_in[k].pck_wr) begin 
                     total_sent_pck_count++;
-                    total_sent_flit_count+=pck_injct_in[k].size;                
+                    total_sent_flit_count+=pck_injct_in[k].size;
                 end 
                 if(synfull_pronoc_req_all[k].valid) begin
                     total_queued_pck_count++;
-                end            
-            end    
+                end 
+            end
         end
     end
     
-    routers_statistic_collector # (
-        .NOC_ID(NOC_ID)
-    ) router_stat ( 
+    routers_statistic_collector router_stat ( 
         .reset(reset),
-        .clk(clk),        
+        .clk(clk),
         .router_event(router_event),
         .print(print_router_st)
     );

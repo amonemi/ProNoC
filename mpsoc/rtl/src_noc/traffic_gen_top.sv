@@ -1,7 +1,6 @@
 `include "pronoc_def.v"
 
-module  traffic_gen_top    #(
-    parameter NOC_ID=0,
+module  traffic_gen_top  #(
     parameter MAX_RATIO = 1000,
     parameter ENDP_ID   = 100000
 ) (
@@ -42,7 +41,7 @@ module  traffic_gen_top    #(
     clk
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     localparam
         RATIOw= $clog2(MAX_RATIO),
@@ -202,7 +201,6 @@ module  traffic_gen_top    #(
     wire start_injection = (start_delay_counter == start_delay);
     
     check_destination_addr #(
-        .NOC_ID(NOC_ID),
         .TOPOLOGY(TOPOLOGY),
         .T1(T1),
         .T2(T2),
@@ -253,7 +251,6 @@ module  traffic_gen_top    #(
     );
     
     packet_gen #(
-        .NOC_ID(NOC_ID),
         .P(MAX_P)
     ) packet_buffer (
         .reset(reset),
@@ -291,7 +288,6 @@ module  traffic_gen_top    #(
     assign hdr_data_in = (MIN_PCK_SIZE==1)? wr_timestamp[HDR_Dw-1 : 0] : {HDR_Dw{1'b0}};
     
     header_flit_generator #(
-        .NOC_ID(NOC_ID),
         .DATA_w(HDR_DATA_w)
     ) the_header_flit_generator (
         .flit_out(hdr_flit_out),
@@ -318,7 +314,6 @@ module  traffic_gen_top    #(
     
     //extract header flit info
     extract_header_flit_info #(
-        .NOC_ID(NOC_ID),
         .DATA_w(HDR_DATA_w)
     ) header_extractor (
         .flit_in(flit_in),
@@ -522,9 +517,7 @@ module  traffic_gen_top    #(
         wire [NEw-1 : 0] sum_temp;
         wire is_unicast;
         
-        mcast_dest_list_decode #(
-            .NOC_ID(NOC_ID)
-        ) decode1 (
+        mcast_dest_list_decode  decode1 (
             .dest_e_addr(dest_e_addr_o),
             .dest_o(dest_mcast_all_endp1),
             .row_has_any_dest(),
@@ -574,9 +567,7 @@ module  traffic_gen_top    #(
     wire [NE-1 :0] dest_mcast_all_endp2;
     generate 
     if(CAST_TYPE != "UNICAST") begin :no_unicast
-        mcast_dest_list_decode #(
-            .NOC_ID(NOC_ID)
-        ) decode2 (
+        mcast_dest_list_decode decode2 (
             .dest_e_addr(rd_des_e_addr),
             .dest_o(dest_mcast_all_endp2),
             .row_has_any_dest(),
@@ -800,8 +791,7 @@ endmodule
 *        packet_buffer
 **************************************/
 module packet_gen 
-#(   
-    parameter NOC_ID=0,
+#(
     parameter P = 5
 )(
     clk_counter,
@@ -823,7 +813,7 @@ module packet_gen
     reset 
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     localparam 
         PCK_CNTw    =   log2(MAX_PCK_NUM+1),
@@ -852,7 +842,6 @@ module packet_gen
     generate 
     if(CAST_TYPE == "UNICAST") begin : uni 
         conventional_routing #(
-            .NOC_ID(NOC_ID),
             .TOPOLOGY(TOPOLOGY),
             .ROUTE_NAME(ROUTE_NAME),
             .ROUTE_TYPE(ROUTE_TYPE),
@@ -948,7 +937,7 @@ module distance_gen (
     dest_e_addr,
     distance
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     input [EAw-1 : 0] src_e_addr;
     input [EAw-1 : 0] dest_e_addr;
     output [DISTw-1 : 0]   distance;

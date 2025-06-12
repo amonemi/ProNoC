@@ -1,5 +1,5 @@
 #######################################################################
-##    File: /home/alireza/work/git/ProNoC-repos/github-pronoc/mpsoc/rtl/src_topology/param.obj
+##    File: /home/alireza/work/git/hca_git/git-hub/ProNoC/mpsoc/rtl/src_topology/param.obj
 ##    
 ##    Copyright (C) 2014-2022  Alireza Monemi
 ##    
@@ -9,60 +9,60 @@
 ##    MAY CAUSE UNEXPECTED BEHAVIOR.
 ################################################################################
 $Topology = {
+              '"custom1"' => {
+                               'T3' => 5,
+                               'ROUTE_NAME' => '"custom"',
+                               'T1' => 16,
+                               'T2' => 16,
+                               'ROUTER_Ps' => {
+                                                '3' => 4,
+                                                '5' => 4,
+                                                '4' => 8
+                                              },
+                               'er_addr' => [
+                                              0,
+                                              1,
+                                              2,
+                                              3,
+                                              4,
+                                              5,
+                                              6,
+                                              7,
+                                              8,
+                                              9,
+                                              10,
+                                              11,
+                                              12,
+                                              13,
+                                              14,
+                                              15
+                                            ]
+                             },
               '"mesh4x4"' => {
+                               'er_addr' => [
+                                              4,
+                                              5,
+                                              6,
+                                              7,
+                                              8,
+                                              9,
+                                              10,
+                                              11,
+                                              0,
+                                              1,
+                                              2,
+                                              3,
+                                              12,
+                                              13,
+                                              14,
+                                              15
+                                            ],
                                'ROUTER_Ps' => {
                                                 '5' => 16
                                               },
-                               'T1' => 16,
-                               'T3' => 5,
-                               'ROUTE_NAME' => '"custom","m4"',
-                               'er_addr' => [
-                                              4,
-                                              5,
-                                              6,
-                                              7,
-                                              8,
-                                              9,
-                                              10,
-                                              11,
-                                              0,
-                                              1,
-                                              2,
-                                              3,
-                                              12,
-                                              13,
-                                              14,
-                                              15
-                                            ],
-                               'T2' => 16
-                             },
-              '"custom1"' => {
-                               'T3' => 5,
-                               'T1' => 16,
-                               'ROUTER_Ps' => {
-                                                '4' => 8,
-                                                '5' => 4,
-                                                '3' => 4
-                                              },
                                'T2' => 16,
-                               'er_addr' => [
-                                              0,
-                                              1,
-                                              2,
-                                              3,
-                                              4,
-                                              5,
-                                              6,
-                                              7,
-                                              8,
-                                              9,
-                                              10,
-                                              11,
-                                              12,
-                                              13,
-                                              14,
-                                              15
-                                            ],
-                               'ROUTE_NAME' => '"custom"'
+                               'T1' => 16,
+                               'ROUTE_NAME' => '"custom","m4"',
+                               'T3' => 5
                              }
             };

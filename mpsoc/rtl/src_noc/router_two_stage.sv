@@ -30,7 +30,6 @@
  **************************************************************/
     
 module router_two_stage #(
-    parameter NOC_ID=0,
     parameter ROUTER_ID=0,
     parameter P=5
 ) (
@@ -54,7 +53,7 @@ module router_two_stage #(
         reset
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     // The current/neighbor routers addresses/port. These values are fixed in each router and they are supposed to be given as parameter. 
     // However, in order to give an identical RTL code to each router, they are given as input ports. The identical RTL code reduces the
@@ -198,7 +197,6 @@ module router_two_stage #(
                 assign chan_in_tmp[i] = chan_in[i];
             end else begin : multi
                 multicast_chan_in_process #(
-                    .NOC_ID(NOC_ID),
                     .P(P),
                     .SW_LOC(i)
                 ) multicast_process (
@@ -249,7 +247,6 @@ module router_two_stage #(
             for (j=0;j<V;j++)begin :V_
                 //credit_release. Only activated for local ports as credit_release_en never be asserted in router to router connection.  
                 credit_release_gen #(
-                    .NOC_ID(NOC_ID),
                     .CREDIT_NUM(LB)
                 ) credit_release_gen (
                     .clk(clk), 
@@ -263,7 +260,6 @@ module router_two_stage #(
     endgenerate
     
     inout_ports #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(ROUTER_ID),
         .P(P)
     ) the_inout_ports (
@@ -316,7 +312,6 @@ module router_two_stage #(
     );
     
     combined_vc_sw_alloc #(
-        .NOC_ID(NOC_ID),
         .P(P)
     ) vsa (
         .dest_port_all(dest_port_all), 
@@ -345,7 +340,6 @@ module router_two_stage #(
     pronoc_register #(.W(PP_1)) reg2 (.D_in(granted_dest_port_all ), .Q_out(granted_dest_port_all_delayed), .reset(reset), .clk(clk));
     
     crossbar #(
-        .NOC_ID(NOC_ID),
         .TOPOLOGY(TOPOLOGY),
         .V (V),     // vc_num_per_port
         .P (P),     // router port num
@@ -404,7 +398,6 @@ module router_two_stage #(
         ); 
         
         weights_update #(
-            .NOC_ID(NOC_ID),
             .ARBITER_TYPE(SWA_ARBITER_TYPE),
             .V(V),
             .P(P),
@@ -510,7 +503,6 @@ module router_two_stage #(
     
 `ifdef TRACE_DUMP_PER_NoC
     pronoc_trace_dump #(
-        .NOC_ID(NOC_ID),
         .P(P),
         .TRACE_DUMP_PER("NOC"), //NOC, ROUTER, PORT 
         .CYCLE_REPORT(0) // 1 : enable, 0 : disable    
@@ -523,7 +515,6 @@ module router_two_stage #(
 `endif    
 `ifdef TRACE_DUMP_PER_ROUTER
     pronoc_trace_dump #(
-        .NOC_ID(NOC_ID),
         .P(P),
         .TRACE_DUMP_PER("ROUTER"), //NOC, ROUTER, PORT 
         .CYCLE_REPORT(0) // 1 : enable, 0 : disable    
@@ -536,7 +527,6 @@ module router_two_stage #(
 `endif    
 `ifdef TRACE_DUMP_PER_PORT
     pronoc_trace_dump #(
-        .NOC_ID(NOC_ID),
         .P(P),
         .TRACE_DUMP_PER("PORT"), //NOC, ROUTER, PORT 
         .CYCLE_REPORT(0) // 1 : enable, 0 : disable    
@@ -554,7 +544,6 @@ endmodule
 
 `ifdef SIMULATION
 module pronoc_trace_dump #(
-    parameter NOC_ID=0,
     parameter P = 6,
     parameter TRACE_DUMP_PER= "ROUTER", //NOC, ROUTER, PORT 
     parameter CYCLE_REPORT=0 // 1 : enable, 0 : disable
@@ -566,7 +555,7 @@ module pronoc_trace_dump #(
     clk
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     input  [31:0] current_r_id;
     input   flit_chanel_t chan_in  [P-1 : 0];
@@ -574,7 +563,6 @@ module pronoc_trace_dump #(
     input   clk;
     
     pronoc_trace_dump_sub #(
-        .NOC_ID(NOC_ID),
         .P(P),
         .TRACE_DUMP_PER(TRACE_DUMP_PER), //NOC, ROUTER, PORT 
         .DIRECTION("in"), // in,out
@@ -586,7 +574,6 @@ module pronoc_trace_dump #(
     );
     
     pronoc_trace_dump_sub #(
-        .NOC_ID(NOC_ID),
         .P(P),
         .TRACE_DUMP_PER(TRACE_DUMP_PER), //NOC, ROUTER, PORT 
         .DIRECTION("out"), // in,out
@@ -599,7 +586,6 @@ module pronoc_trace_dump #(
 endmodule
 
 module pronoc_trace_dump_sub #(
-    parameter NOC_ID=0,
     parameter P = 6,
     parameter TRACE_DUMP_PER= "ROUTER", //NOC, ROUTER, PORT 
     parameter DIRECTION="in", // in,out
@@ -609,7 +595,7 @@ module pronoc_trace_dump_sub #(
     chan_in,
     clk
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     input  [31:0] current_r_id;
     input   flit_chanel_t chan_in  [P-1 : 0];
     input   clk;
@@ -653,7 +639,6 @@ endmodule
 
 
 module credit_release_gen #(
-    parameter NOC_ID=0,
     parameter CREDIT_NUM=4
 )(
     clk,
@@ -662,7 +647,7 @@ module credit_release_gen #(
     credit_out        
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     input  clk, reset;
     input  en;

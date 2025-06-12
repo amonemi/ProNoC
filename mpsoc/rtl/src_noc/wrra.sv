@@ -541,21 +541,21 @@ module  wrra_inputport_destports_sum #(
     input [VP_1-1 : 0] dest_ports;
     output [P-1 : 0] destports_sum;
     
-    wire [VP_1-1 : 0] dest_ports_masked;     
-    wire  [P_1-1    :   0] sum;
-    
+    wire [P_1-1 : 0] dest_ports_masked [V-1 : 0]; // dest_ports_masked[inport-num][outport-num]=  out-port is requested by inport-num
+    wire [P_1-1 : 0] sum;
+
     genvar i;
     generate 
     for (i=0;i<V; i=i+1) begin : port_lp
-        assign  dest_ports_masked [(i+1)*P_1-1  : i*P_1] =  (weight_is_valid[i]) ? dest_ports [(i+1)*P_1-1  : i*P_1] : {P_1{1'b0}};     
-    end    
-    
-    custom_or #(
-        .IN_NUM(V),
-        .OUT_WIDTH(P_1)
-    )custom_or(
-        .or_in(dest_ports_masked),
-        .or_out(sum)
+        assign  dest_ports_masked [i] =  (weight_is_valid[i]) ? dest_ports [(i+1)*P_1-1  : i*P_1] : {P_1{1'b0}};
+    end
+
+    reduction_or #(
+        .N(V),
+        .W(P_1)
+    )reduction_or(
+        .D_in(dest_ports_masked),
+        .Q_out(sum)
     );
 
     if(SELF_LOOP_EN == 0) begin : nslp
@@ -567,7 +567,7 @@ module  wrra_inputport_destports_sum #(
             .destport_out(destports_sum)
         );
     end else begin : slp
-        assign destports_sum = sum;    
+        assign destports_sum = sum;
     end
     endgenerate
 endmodule
@@ -576,11 +576,10 @@ endmodule
 *   weights_update
 ***************/
 module weights_update # (
-    parameter NOC_ID=0,
     parameter ARBITER_TYPE="WRRA",
     parameter V=4,
     parameter P=5,
-    parameter Fw = 36,    //flit width;  
+    parameter Fw = 36,    //flit width;
     parameter WEIGHTw=4,
     parameter C = 4,
     parameter WRRA_CONFIG_INDEX=0,
@@ -630,7 +629,6 @@ module weights_update # (
     //nonlocal port
     for (i=1; i<P; i=i+1) begin : non_local_port
         weight_update_per_port #(
-            .NOC_ID(NOC_ID),
             .V(V),
             .C(C),
             .P(P),
@@ -749,7 +747,6 @@ endmodule
 
 
 module weight_update_per_port # (
-    parameter NOC_ID=0,
     parameter V=4,
     parameter C=2,
     parameter P=5,
@@ -812,12 +809,10 @@ module weight_update_per_port # (
     endgenerate 
     
     wire [Fw-1 : 0] hdr_flit_new; 
-    hdr_flit_weight_update #(
-        .NOC_ID(NOC_ID)
-    ) updater (
+    hdr_flit_weight_update updater (
         .new_weight(contention),
         .flit_in(flit_in),
-        .flit_out(hdr_flit_new)    
+        .flit_out(hdr_flit_new)
     );
     
     // assign flit_out = (flit_is_hdr) ? {flit_in[Fw-1 : WEIGHT_LSB+WEIGHTw ] ,contention, flit_in[WEIGHT_LSB-1 : 0] }   : flit_in;
@@ -827,7 +822,7 @@ endmodule
 
 
 module output_weight_latch #(
-    parameter WEIGHTw =4    
+    parameter WEIGHTw =4
 )(
     weight_in,
     weight_out,

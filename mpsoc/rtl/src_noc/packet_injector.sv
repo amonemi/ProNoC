@@ -32,9 +32,7 @@
 **    application traces.
 **************************************************************/
 
-module packet_injector #(
-    parameter NOC_ID=0
-) (
+module packet_injector  (
     //general
     current_e_addr,
     reset,
@@ -47,7 +45,7 @@ module packet_injector #(
     pck_injct_out
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     //general
     input reset,clk;
@@ -71,7 +69,6 @@ module packet_injector #(
     generate 
     if(CAST_TYPE == "UNICAST") begin : uni
         conventional_routing #(
-            .NOC_ID(NOC_ID),
             .TOPOLOGY(TOPOLOGY),
             .ROUTE_NAME(ROUTE_NAME),
             .ROUTE_TYPE(ROUTE_TYPE),
@@ -115,7 +112,6 @@ module packet_injector #(
     wire [Fw-1 : 0] hdr_flit_out;
     
     header_flit_generator #(
-        .NOC_ID(NOC_ID),
         .DATA_w(HDR_DATA_w)
     ) the_header_flit_generator (
         .flit_out(hdr_flit_out),
@@ -244,7 +240,6 @@ module packet_injector #(
     hdr_flit_t hdr_flit_i;
     
     header_flit_info  #(
-        .NOC_ID (NOC_ID),
         .DATA_w (HDR_DATA_w)
     ) extractor (
         .flit(chan_in.flit_chanel.flit),
@@ -272,9 +267,7 @@ module packet_injector #(
     
     generate 
     if(CAST_TYPE != "UNICAST") begin
-        mcast_dest_list_decode #(
-            .NOC_ID(NOC_ID)
-        ) decode (
+        mcast_dest_list_decode decode (
             .dest_e_addr(hdr_flit_i.dest_e_addr),
             .dest_o(dest_mcast_all_endp),
             .row_has_any_dest(),
@@ -493,9 +486,7 @@ endmodule
  * 
  *    packet_injector_verilator
  * ***********************************/
-module packet_injector_verilator #(
-    parameter NOC_ID=0
-)(
+module packet_injector_verilator (
     //general
     current_e_addr,
     reset,
@@ -527,7 +518,7 @@ module packet_injector_verilator #(
     
 );
     
-    `NOC_CONF 
+    import pronoc_pkg::*; 
     
     //general
     input reset,clk;
@@ -586,9 +577,7 @@ module packet_injector_verilator #(
     assign pck_injct_out_h2t_delay   = pck_injct_out.h2t_delay;
 
 
-    packet_injector #(
-        .NOC_ID(NOC_ID)
-    ) injector (
+    packet_injector injector (
         .current_e_addr  (current_e_addr ), 
         .reset           (reset          ), 
         .clk             (clk            ), 

@@ -27,9 +27,7 @@
 **
 **************************************************************/
 
-module  noc_top #(    
-    parameter NOC_ID=0
-) (
+module  noc_top (
     reset,
     clk,
     chan_in_all,
@@ -37,7 +35,7 @@ module  noc_top #(
     router_event
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     input   clk,reset;
     //Endpoints ports 
@@ -48,9 +46,7 @@ module  noc_top #(
     
     generate 
     if (IS_MESH | IS_FMESH | IS_TORUS | IS_RING | IS_LINE) begin : tori_noc 
-        mesh_torus_noc_top #(
-            .NOC_ID(NOC_ID)
-        ) noc_top (
+        mesh_torus_noc_top noc_top (
             .reset         (reset        ), 
             .clk           (clk          ), 
             .chan_in_all   (chan_in_all  ), 
@@ -58,9 +54,7 @@ module  noc_top #(
             .router_event  (router_event )
         );
     end else if (IS_FATTREE) begin : fat_
-        fattree_noc_top #(
-            .NOC_ID(NOC_ID)
-        ) noc_top (
+        fattree_noc_top noc_top (
             .reset         (reset        ), 
             .clk           (clk          ), 
             .chan_in_all   (chan_in_all  ), 
@@ -68,9 +62,7 @@ module  noc_top #(
             .router_event  (router_event )
         );
     end else if (IS_TREE) begin : tree_
-        tree_noc_top  #(
-            .NOC_ID(NOC_ID)
-        ) noc_top ( 
+        tree_noc_top  noc_top ( 
             .reset         (reset        ), 
             .clk           (clk          ), 
             .chan_in_all   (chan_in_all  ), 
@@ -78,9 +70,7 @@ module  noc_top #(
             .router_event  (router_event )
         );
     end else if (IS_STAR) begin : star_
-        star_noc_top  #(
-            .NOC_ID(NOC_ID)
-        ) noc_top ( 
+        star_noc_top  noc_top ( 
                 .reset         (reset        ), 
                 .clk           (clk          ), 
                 .chan_in_all   (chan_in_all  ), 
@@ -89,9 +79,7 @@ module  noc_top #(
         );
     end else if (IS_MULTI_MESH) begin : multimesh
     /*
-        multi_mesh #(
-            .NOC_ID(NOC_ID)
-        ) noc_top ( 
+        multi_mesh noc_top ( 
                 .reset         (reset        ), 
                 .clk           (clk          ), 
                 .chan_in_all   (chan_in_all  ), 
@@ -100,10 +88,8 @@ module  noc_top #(
         );
     */
     end else begin :custom_
-        
-        custom_noc_top #(
-            .NOC_ID(NOC_ID)
-        ) noc_top ( 
+
+        custom_noc_top noc_top ( 
             .reset         (reset        ), 
             .clk           (clk          ), 
             .chan_in_all   (chan_in_all  ), 
@@ -122,9 +108,7 @@ endmodule
  * noc_top being used in another module,
  * preventing it from being defined as the top module.
  **************************/ 
-module  noc_top_v  #(
-    parameter NOC_ID=0
-)(
+module  noc_top_v  (
     flit_out_all,
     flit_out_wr_all,
     credit_in_all,
@@ -135,7 +119,7 @@ module  noc_top_v  #(
     clk
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     input   clk,reset;
     output [NEFw-1 : 0] flit_out_all;
@@ -148,10 +132,8 @@ module  noc_top_v  #(
     //struct typed array ports which cannot be caled in verilog 
     smartflit_chanel_t chan_in_all  [NE-1 : 0];
     smartflit_chanel_t chan_out_all [NE-1 : 0];
-    
-    noc_top  #( 
-        .NOC_ID(NOC_ID)
-    ) the_top(
+
+    noc_top  the_top(
         .reset(reset),
         .clk(clk),    
         .chan_in_all(chan_in_all),

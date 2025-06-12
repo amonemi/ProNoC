@@ -26,7 +26,6 @@
 *************************************/
 
 module combined_vc_sw_alloc #(
-    parameter NOC_ID=0,
     parameter P = 5 //port number
 )(
     ivc_info,
@@ -50,14 +49,14 @@ module combined_vc_sw_alloc #(
     clk,
     reset
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     localparam
         PV = V * P,
-        PVV = PV * V,    
+        PVV = PV * V,
         P_1 = (SELF_LOOP_EN )?  P : P-1,
         PP_1 = P_1 * P,
-        PVP_1 = PV * P_1;   
+        PVP_1 = PV * P_1;
         
     input  ivc_info_t ivc_info [P-1 : 0][V-1 : 0];
     input  [PVP_1-1 : 0] dest_port_all;
@@ -129,12 +128,7 @@ module combined_vc_sw_alloc #(
     */    
     if(IS_COMB_SPEC1) begin : spec1
         comb_spec1_allocator #(
-            .V(V),    
-            .P(P),
-            .DEBUG_EN(DEBUG_EN),
-            .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE),
-            .MIN_PCK_SIZE(MIN_PCK_SIZE),
-            .SELF_LOOP_EN(SELF_LOOP_EN)
+            .P(P)
         )the_comb_spec1(
             .dest_port_all(dest_port_all), 
             .masked_ovc_request_all(masked_ovc_request_all),
@@ -162,12 +156,7 @@ module combined_vc_sw_alloc #(
         assign spec_ovc_num_all = {PVV{1'bx}};
     end else if (IS_COMB_SPEC2) begin : spec2
         comb_spec2_allocator #(
-            .V(V),    
-            .P(P),
-            .DEBUG_EN(DEBUG_EN),
-            .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE),
-            .MIN_PCK_SIZE(MIN_PCK_SIZE),
-            .SELF_LOOP_EN(SELF_LOOP_EN)
+            .P(P)
         ) the_comb_spec2 (
             .dest_port_all(dest_port_all), 
             .masked_ovc_request_all(masked_ovc_request_all),
@@ -195,12 +184,7 @@ module combined_vc_sw_alloc #(
     end else begin :   nonspec
         if(V>7)begin : cmb_v2
             comb_nonspec_v2_allocator #(
-                .V(V),    
-                .P(P),
-                .FIRST_ARBITER_EXT_P_EN(FIRST_ARBITER_EXT_P_EN),
-                .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE),
-                .MIN_PCK_SIZE(MIN_PCK_SIZE),
-                .SELF_LOOP_EN(SELF_LOOP_EN)
+                .P(P)
             ) nonspec_comb (
                 .dest_port_all(dest_port_all), 
                 .masked_ovc_request_all(masked_ovc_request_all),
@@ -224,12 +208,11 @@ module combined_vc_sw_alloc #(
             );
         end else begin :cmb_v1
             comb_nonspec_allocator #(
-                .NOC_ID(NOC_ID),
                 .P(P)
             ) nonspec_comb (
                 .ivc_info(ivc_info),
                 .dest_port_all(dest_port_all), 
-                .masked_ovc_request_all(masked_ovc_request_all),               
+                .masked_ovc_request_all(masked_ovc_request_all),
                 .ovc_allocated_all(ovc_allocated_all), 
                 .granted_ovc_num_all(granted_ovc_num_all), 
                 .ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant), 

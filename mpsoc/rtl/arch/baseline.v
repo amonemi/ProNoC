@@ -302,7 +302,7 @@ module canonical_vc_alloc #(
         );
        end
        
-       custom_or #(
+       reduction_or #(
         .IN_NUM (P_1),
         .OUT_WIDTH (V)
         

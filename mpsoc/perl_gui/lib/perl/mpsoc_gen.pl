@@ -640,11 +640,21 @@ sub noc_config{
         $label=gen_label_in_center(' ');
         $table->attach  ( $label , 2, 3, $row,$row+1 ,'fill','shrink',2,2);
         $table->attach  ( $b1 , 0, 2, $row,$row+1,'fill','shrink',2,2);
-        $row++;    
+        $row++;
     }
     
     my $coltmp=0;
-    
+
+    #NoC_ID
+    $label='NoC ID';
+    $param='NOC_ID';
+    $default='0';
+    $content='0,255,1';
+    $type='Spin-button';
+    $info="Unique identifier for the NoC. Will be modified by phy_noc_gen.pl script.";
+    $noc_param_comment{'NOC_ID'}="Unique identifier for the NoC. Will be modified by phy_noc_gen.pl script";
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,$noc_param,1);
+
     #Router type
     $label='Router Type';
     $param='ROUTER_TYPE';
@@ -675,13 +685,13 @@ sub noc_config{
     } else {
         $noc_param_comment{'V'}="Number of Virtual chanel per each router port. V is equal to 1 means there is no VC.";
         $mpsoc->object_add_attribute($noc_param,'V',1);
-        $mpsoc->object_add_attribute($noc_param,'C',0);        
+        $mpsoc->object_add_attribute($noc_param,'C',0);
     }
     
     #buffer width per VC
     $label=($router_type eq '"VC_BASED"')? 'Buffer flits per VC': "Buffer flits";
     $param='B';
-    $default='4';                                  
+    $default='4';
     $content='2,256,1';
     $type='Spin-button';
     $info=($router_type eq '"VC_BASED"')?  'Buffer queue size per VC in flits' : 'Buffer queue size in flits';
@@ -692,7 +702,7 @@ sub noc_config{
     #Local port buffer width per VC
     $label=($router_type eq '"VC_BASED"')? 'Local port Buffer flits per VC': "Local Port Buffer flits";
     $param='LB';
-    $default='4';                                  
+    $default='4';
     $content='2,256,1';
     $type='Spin-button';
     $info = "Buffer width for local router ports connected to endpoints. 

@@ -4,11 +4,8 @@
  * pronoc_pkg.sv
  ****************************************************************************/
 
-`ifdef PRONOC_PKG
-
-`ifdef IMPORT_PRONOC_PCK
 package pronoc_pkg; 
-`endif
+
 
 `define NOC_LOCAL_PARAM
 `include "noc_localparam.v"
@@ -352,8 +349,6 @@ package pronoc_pkg;
     localparam ROUTER_EVENT_w = $bits(router_event_t); 
     
     
-`ifdef IMPORT_PRONOC_PCK
-endpackage : pronoc_pkg
-`endif
-    
-`endif //PRONOC_PKG
+
+endpackage : pronoc_pkg  
+

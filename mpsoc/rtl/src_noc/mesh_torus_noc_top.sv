@@ -26,9 +26,7 @@
 **
 **************************************************************/
 
-module mesh_torus_noc_top #(
-    parameter NOC_ID=0
-) (
+module mesh_torus_noc_top  (
     reset,
     clk,
     chan_in_all,
@@ -36,7 +34,7 @@ module mesh_torus_noc_top #(
     router_event
 );
     
-    `NOC_CONF
+     import pronoc_pkg::*;
 
     input   clk,reset;
     //Endpoints ports 
@@ -64,11 +62,10 @@ module mesh_torus_noc_top #(
             assign router_config_in[x].router_addr = RID[RAw-1: 0];
             assign router_config_in[x].router_id = RID[NRw-1: 0];
             router_top #(
-                .NOC_ID(NOC_ID),
                 .ROUTER_ID(RID),
                 .P (MAX_P)
             ) the_router (
-                .router_config_in(router_config_in[RID]),                
+                .router_config_in(router_config_in[RID]),
                 .chan_in(router_chan_in [RID]), 
                 .chan_out(router_chan_out[RID]), 
                 .router_event(router_event[RID]),
@@ -108,7 +105,6 @@ module mesh_torus_noc_top #(
                 assign router_config_in[RID].router_id = RID[NRw-1: 0];
                 
                 router_top #(
-                    .NOC_ID(NOC_ID),
                     .ROUTER_ID(RID),
                     .P(MAX_P)
                 ) the_router (

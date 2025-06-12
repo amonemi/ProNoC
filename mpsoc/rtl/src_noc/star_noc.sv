@@ -37,17 +37,15 @@
 **
 **********************************************************************/
 
-module  star_noc_top #(
-    parameter NOC_ID=0
-) (
+module  star_noc_top  (
     reset,
-    clk,    
+    clk,
     chan_in_all,
     chan_out_all,
     router_event
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     input   clk,reset;
     //Endpoints ports 
     input   smartflit_chanel_t chan_in_all  [NE-1 : 0];
@@ -59,7 +57,6 @@ module  star_noc_top #(
     assign router_config_in.router_addr = '0;
     assign router_config_in.router_id ='0;
     router_top # (
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(0),
         .P(NE)
     ) the_router (

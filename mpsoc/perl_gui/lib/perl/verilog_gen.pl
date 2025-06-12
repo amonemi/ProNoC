@@ -66,7 +66,7 @@ sub soc_generate_verilog{
     $unused_wiers_v="" if(!defined $unused_wiers_v);
     $sockets_assign_v_all=""  if(!defined $sockets_assign_v_all);
     my $has_ni =check_for_ni($soc);
-    my $import = ($has_ni)? "\n\t`NOC_CONF\n" : "";
+    my $import = ($has_ni)? "\n\timport pronoc_pkg::*;\n" : "";
     my $tscale = ($has_ni)? "`include \"pronoc_def.v\"\n" : "`timescale 1ns / 1ps\n";
     my $global_localparam=get_golal_param_v();
     my $soc_v = (defined $param_as_in_v_all )? "$tscale module $soc_name  #(\n $param_as_in_v_all\n)(\n$io_sim_v_all\n);\n$import\n": "$tscale module $soc_name (\n$io_sim_v_all\n);\n $import\n";
@@ -961,7 +961,7 @@ sub soc_generate_verilator{
     $top_io_full_all=$top_io_full_all."\n$src_io_full_all";
     #  $top_io_pass_all=$top_io_pass_all.",\n$clk_assigned_port";
     my $has_ni =check_for_ni($soc);
-    my $import = ($has_ni)? "\n\t`NOC_CONF\n" : "";
+    my $import = ($has_ni)? "\n\timport pronoc_pkg::*;\n" : "";
     my $verilator_v =  "
 /*********************
         ${name}

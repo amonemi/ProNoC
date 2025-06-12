@@ -35,15 +35,15 @@ $out_dir = "./$noc_id" if(!defined $out_dir);
 #check that NoC ID is valid verilog syntac
 #Identifiers may contain alphabetic characters, numeric characters, the underscore, and the dollar sign (a-z A-Z 0-9 _ $ )
 if ($noc_id =~ /[^a-zA-Z0-9_\$]+/){
-		 #print "use of illegal character after\n" ;
-		 my @w= split /([^a-zA-Z0-9_\$]+)/, $noc_id; 
-		 die "NOC_ID ($noc_id) contains the illegal character of \"$w[1]\" after $w[0]. Identifiers may contain alphabetic characters, numeric characters, the underscore, and the dollar sign (a-z A-Z 0-9 _ \$ )\n";
+    #print "use of illegal character after\n" ;
+    my @w= split /([^a-zA-Z0-9_\$]+)/, $noc_id; 
+    die "NOC_ID ($noc_id) contains the illegal character of \"$w[1]\" after $w[0]. Identifiers may contain alphabetic characters, numeric characters, the underscore, and the dollar sign (a-z A-Z 0-9 _ \$ )\n";
 
 }
 
 
 my %replace;
-$replace{"`NOC_CONF"} = "import pronoc_pkg_${noc_id}::*;";
+$replace{"import pronoc_pkg::*;"} = "import pronoc_pkg_${noc_id}::*;";
 $replace{"noc_localparam.v"} = "noc_localparam_${noc_id}.v";
 $replace{"topology_localparam.v"} = "topology_localparam_${noc_id}.v";
 $replace{"pronoc_pkg"} = "pronoc_pkg_${noc_id}";
@@ -68,8 +68,6 @@ my @common_file=  readdir($dir);
 @common_file = grep { $_ ne '.' && $_ ne '..' &&  -f "$noc_dir/../$_" } @common_file;
 closedir($dir);
 
-
-
 #get list of all modules
 my @module_names;
 foreach my $file (@files) {
@@ -78,10 +76,10 @@ foreach my $file (@files) {
     # Read the file line by line
     while (my $line = <$fh>) {
         # Match module keyword followed by name until encountering space, #, ;, or (
-         while ($line =~ /^\s*module\s+(\w+)[\s#;\(]/g) {
-          push @module_names, $1;
+        while ($line =~ /^\s*module\s+(\w+)[\s#;\(]/g) {
+            push @module_names, $1;
         }
-    }   
+    }
 }
 
 #get the list of all parameters/localparam 
@@ -125,8 +123,8 @@ my @replaces = uniq @param_list;
     $file_content =~ s/"(?:[^"\\]|\\.)*"//g;
     # Find all structs
     while ($file_content =~ /typedef\s+struct\s+packed\s*{.*?}\s*(\w+)\s*;/sg) {
-     my $struct_name = $1;
-     push @replaces, $struct_name;    
+    my $struct_name = $1;
+    push @replaces, $struct_name;
     }
 
 
@@ -141,8 +139,8 @@ my @replaces = uniq @param_list;
     $file_content =~ s/"(?:[^"\\]|\\.)*"//g;
     # Find all structs
     while ($file_content =~ /function\s+automatic\s+integer\s+(\w+)\s*;/sg) {
-       my $func = $1;
-       push @replaces, $func;      
+        my $func = $1;
+        push @replaces, $func;
     }
 
 
@@ -181,9 +179,8 @@ foreach my $file (@files) {
     # Open a new file for writing the modified content
     open(my $output_fh, '>', $output_filename) or die "Could not create file '$output_filename' $!";
     if($file eq "pronoc_pkg.sv"){
-         print $output_fh "`define IMPORT_PRONOC_PCK\n`define PRONOC_PKG\n";
+        print $output_fh "`define IMPORT_PRONOC_PCK\n`define PRONOC_PKG\n";
     }
-   
 
 # Read the input file line by line
 while (my $line = <$input_fh>) {
@@ -203,7 +200,7 @@ while (my $line = <$input_fh>) {
     # Write the modified line to the output file
     print $output_fh $line;
 }
-  
+
 
 # Close the input and output files
 close($input_fh);

@@ -163,29 +163,24 @@ module one_hot_demux    #(
 endmodule
 
 /**************************
-*    custom_or
+*    reduction_or
 ***************************/
-module custom_or #(
-    parameter IN_NUM = 4,
-    parameter OUT_WIDTH = 5
+module reduction_or #(
+    parameter W = 5,//out width
+    parameter N = 4 //array lenght 
 )(
-    or_in,
-    or_out
+    D_in,
+    Q_out
 );
+    input  [W-1 : 0] D_in [N-1 : 0];
+    output reg [W-1 : 0] Q_out;
     
-    localparam IN_WIDTH = IN_NUM*OUT_WIDTH;
-    input [IN_WIDTH-1 : 0]  or_in;
-    output[OUT_WIDTH-1 : 0]  or_out;
-    wire        [IN_NUM-1 : 0] in_sep   [OUT_WIDTH-1 : 0];
-    genvar i,j;
-    generate
-    for (i=0;i<OUT_WIDTH;i=i+1) begin: sep_loop
-        for (j=0;j<IN_NUM;j=j+1) begin: sep_loop
-            assign in_sep[i][j]= or_in [j*OUT_WIDTH+i];
-        end
-        assign or_out[i]= |in_sep[i];
+    // assign Q_out = D_in.or(); //it is not synthesizable able by some compiler
+    always_comb begin
+        Q_out = {W{1'b0}};
+        for (int i = 0; i < N; i++)
+            Q_out |=   D_in[i];
     end
-    endgenerate
 endmodule
 
 

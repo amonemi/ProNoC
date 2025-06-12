@@ -101,14 +101,12 @@ sub generate_topology_top_v {
 
     print $fd "
 module   ${name}_noc
-#(
-    parameter NOC_ID=0
-)(
+(
     $ports
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     
-    input reset,clk;    
+    input reset,clk;
     
     $wires
     
@@ -146,7 +144,6 @@ sub get_router_instance_v {
     *******************/
     router_config_t ${instance}_router_config_in;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID($current_r),
         .P($Pnum)
     ) $instance (
@@ -353,16 +350,15 @@ sub generate_topology_top_genvar_v{
         assign router_config [RID].router_id = RID[RAw-1: 0];
         assign router_config [RID].router_addr = RID[RAw-1: 0];
         router_top #(
-            .NOC_ID(NOC_ID),
             .ROUTER_ID(RID),
             .P($i)
         ) router_${i}_port (
             .clk(clk), 
             .reset(reset),
             .router_config_in(router_config\[RID\]),
-            .chan_in  (router_chan_in \[RID\] \[$p : 0\]), 
+            .chan_in  (router_chan_in \[RID\] \[$p : 0\]),
             .chan_out (router_chan_out\[RID\] \[$p : 0\]),
-            .router_event(router_event\[RID\] \[$p : 0\])    
+            .router_event(router_event\[RID\] \[$p : 0\])
         );
     end
 ";
@@ -379,24 +375,22 @@ sub generate_topology_top_genvar_v{
         $offset+=    $n;
         }
     }
-    $routers.="endgenerate\n";    
+    $routers.="endgenerate\n";
     print $fd "
 module   ${name}_noc_genvar
-#(
-    parameter NOC_ID=0
-)(
+(
     reset,
-    clk,    
+    clk,
     chan_in_all,
     chan_out_all,
-    router_event  
+    router_event
 );
-`NOC_CONF
+import pronoc_pkg::*;
 $ports_def
 $router_wires
 $endps_wires
 $routers
-$assign  
+$assign
 endmodule
 ";
     close $fd;
@@ -457,7 +451,6 @@ sub get_router_genvar_instance_v{
     assign router_config[$router_pos].router_id = $router_pos;
     assign router_config[$router_pos].router_addr = $router_pos;
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID($router_pos),
         .P($Pnum)
     ) router_${Pnum}_port (
@@ -1096,12 +1089,10 @@ sub generate_connection_v{
     }
         print $fd "
 module  ${name}_connection 
-#(
-    parameter NOC_ID=0
-)(
+(
     $ports
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     localparam
         P= MAX_P,
@@ -1256,9 +1247,7 @@ sub add_noc_instance_v{
     my $str="
     //do not modify this line ===${name}===
     if(TOPOLOGY == \"$name\" ) begin : T$name
-        ${name}_connection  #(
-            .NOC_ID(NOC_ID)
-        ) connection (
+        ${name}_connection  connection (
 $ports
         );
     end
@@ -1279,20 +1268,18 @@ $ports
     $str="
     //do not modify this line ===${name}===
     if(TOPOLOGY == \"$name\" ) begin : T$name
-        ${name}_noc_genvar #(
-            .NOC_ID(NOC_ID)
-        ) the_noc (    
+        ${name}_noc_genvar the_noc (
             .reset(reset),
-            .clk(clk),    
+            .clk(clk),
             .chan_in_all(chan_in_all),
             .chan_out_all(chan_out_all),
-            .router_event(router_event)  
+            .router_event(router_event)
         );
     end
     endgenerate
 ";
-    
-    my $file = "$dir/../common/custom_noc_top.sv";    
+
+    my $file = "$dir/../common/custom_noc_top.sv";
     #check if ***$name**** exist in the file
     unless (-f $file){
         add_colored_info($info,"$file dose not exist\n",'red');

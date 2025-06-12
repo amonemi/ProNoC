@@ -6,7 +6,7 @@
 
 
 /**********************************************************************
-**    File: /home/alireza/work/git/ProNoC-repos/github-pronoc/mpsoc/rtl/src_topology/custom1/custom1_noc_genvar.sv
+**    File: /home/alireza/work/git/hca_git/git-hub/ProNoC/mpsoc/rtl/src_topology/custom1/custom1_noc_genvar.sv
 **    
 **    Copyright (C) 2014-2022  Alireza Monemi
 **    
@@ -29,16 +29,14 @@
 `include "pronoc_def.v"
 
 module   custom1_noc_genvar
-#(
-    parameter NOC_ID=0
-)(
+(
     reset,
-    clk,    
+    clk,
     chan_in_all,
     chan_out_all,
-    router_event  
+    router_event
 );
-`NOC_CONF
+import pronoc_pkg::*;
 
     input  reset;
     input  clk;
@@ -63,16 +61,15 @@ module   custom1_noc_genvar
         assign router_config [RID].router_id = RID[RAw-1: 0];
         assign router_config [RID].router_addr = RID[RAw-1: 0];
         router_top #(
-            .NOC_ID(NOC_ID),
             .ROUTER_ID(RID),
             .P(3)
         ) router_3_port (
             .clk(clk), 
             .reset(reset),
             .router_config_in(router_config[RID]),
-            .chan_in  (router_chan_in [RID] [2 : 0]), 
+            .chan_in  (router_chan_in [RID] [2 : 0]),
             .chan_out (router_chan_out[RID] [2 : 0]),
-            .router_event(router_event[RID] [2 : 0])    
+            .router_event(router_event[RID] [2 : 0])
         );
     end
 
@@ -81,16 +78,15 @@ module   custom1_noc_genvar
         assign router_config [RID].router_id = RID[RAw-1: 0];
         assign router_config [RID].router_addr = RID[RAw-1: 0];
         router_top #(
-            .NOC_ID(NOC_ID),
             .ROUTER_ID(RID),
             .P(4)
         ) router_4_port (
             .clk(clk), 
             .reset(reset),
             .router_config_in(router_config[RID]),
-            .chan_in  (router_chan_in [RID] [3 : 0]), 
+            .chan_in  (router_chan_in [RID] [3 : 0]),
             .chan_out (router_chan_out[RID] [3 : 0]),
-            .router_event(router_event[RID] [3 : 0])    
+            .router_event(router_event[RID] [3 : 0])
         );
     end
 
@@ -99,16 +95,15 @@ module   custom1_noc_genvar
         assign router_config [RID].router_id = RID[RAw-1: 0];
         assign router_config [RID].router_addr = RID[RAw-1: 0];
         router_top #(
-            .NOC_ID(NOC_ID),
             .ROUTER_ID(RID),
             .P(5)
         ) router_5_port (
             .clk(clk), 
             .reset(reset),
             .router_config_in(router_config[RID]),
-            .chan_in  (router_chan_in [RID] [4 : 0]), 
+            .chan_in  (router_chan_in [RID] [4 : 0]),
             .chan_out (router_chan_out[RID] [4 : 0]),
-            .router_event(router_event[RID] [4 : 0])    
+            .router_event(router_event[RID] [4 : 0])
         );
     end
 endgenerate
@@ -257,5 +252,5 @@ endgenerate
     assign  router_chan_in [15][3] = router_chan_out [13][1];
     //Connect R11 input ports 4 to  R5 output ports 1
     assign  router_chan_in [15][4] = router_chan_out [5][1];
-  
+
 endmodule

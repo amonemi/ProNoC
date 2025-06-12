@@ -27,7 +27,6 @@
  **************************************************************/
     
 module router_top #(
-    parameter NOC_ID=0,
     parameter ROUTER_ID=0,
     parameter P=5
 )(
@@ -41,7 +40,7 @@ module router_top #(
     clk,
     reset
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     localparam DISABLED =P;
     input router_config_t router_config_in;
@@ -102,7 +101,6 @@ module router_top #(
     flit_chanel_t ss_flit_chanel [P-1 : 0]; //flit  bypass link goes to straight port
     
     router_two_stage  #(//r2
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(ROUTER_ID),
         .P(P)
     )router_ref (
@@ -124,7 +122,6 @@ module router_top #(
     if(SMART_EN) begin : smart  //smart_bypass is enabled
         
         smart_forward_ivc_info #(
-            .NOC_ID(NOC_ID),
             .P(P)
         ) forward_ivc (
             .ivc_info(ivc_info),
@@ -137,7 +134,6 @@ module router_top #(
         );
         
         smart_bypass_chanels #(
-            .NOC_ID(NOC_ID),
             .P(P)
         ) smart_bypass (
             .ivc_info(ivc_info),
@@ -168,7 +164,6 @@ module router_top #(
                 assign neighbors_r_addr [i] = chan_in[i].ctrl_chanel.router_addr;
                 //smart allocator
                 smart_allocator_per_iport #(
-                    .NOC_ID(NOC_ID),
                     .P(P),
                     .SW_LOC(i),
                     .SS_PORT_LOC(SS_PORT)
@@ -208,9 +203,7 @@ module router_top #(
                 end
                 `ifdef SIMULATION
                 //assign chan_out[i].smart_chanel =(smart_chanel[i].requests[0]) ? smart_chanel_new[i] : take ss shifted smart;    
-                smart_chanel_check #(
-                    .NOC_ID(NOC_ID)
-                ) check (
+                smart_chanel_check check (
                     .flit_chanel(chan_out[i].flit_chanel),
                     .smart_chanel(chan_out[i].smart_chanel),
                     .reset(reset),
@@ -314,17 +307,13 @@ module router_top #(
     
     for(i=0; i<P; i=i+1) begin :Port_
         
-        header_flit_info #(
-            .NOC_ID(NOC_ID)
-        ) in_extract(
+        header_flit_info  in_extract(
             .flit(chan_in[i].flit_chanel.flit),
             .hdr_flit( hdr_flit_i[i]),
             .data_o()
         );
-        
-        header_flit_info #(
-            .NOC_ID(NOC_ID)
-        ) out_extract(
+
+        header_flit_info  out_extract(
             .flit(chan_out[i].flit_chanel.flit),
             .hdr_flit( hdr_flit_o[i]),
             .data_o()
@@ -345,7 +334,6 @@ module router_top #(
             );
             
             check_pck_size #(
-                .NOC_ID(NOC_ID),
                 .V(V),
                 .MIN_PCK_SIZE(MIN_PCK_SIZE),
                 .Fw(Fw),
@@ -411,7 +399,6 @@ endmodule
     
 module router_top_v
 #(
-    parameter NOC_ID=0,
     parameter ROUTER_ID=0,
     parameter P=5
 )(
@@ -427,7 +414,7 @@ module router_top_v
     reset
 );
     
-    `NOC_CONF 
+    import pronoc_pkg::*; 
     
     input  [RAw-1 : 0] current_r_addr;
     input [31:0] current_r_id;
@@ -443,7 +430,6 @@ module router_top_v
         router_config_in.router_addr=current_r_addr;
     end
     router_top #(
-        .NOC_ID(NOC_ID),
         .ROUTER_ID(ROUTER_ID),
         .P(P)
     ) router (

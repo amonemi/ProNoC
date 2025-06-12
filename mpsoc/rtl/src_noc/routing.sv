@@ -28,7 +28,6 @@
 
 
 module conventional_routing #(
-    parameter NOC_ID            = 0,
     parameter TOPOLOGY          = "MESH",
     parameter ROUTE_NAME        = "XY",
     parameter ROUTE_TYPE        = "DETERMINISTIC",
@@ -195,9 +194,7 @@ module conventional_routing #(
     /* verilator lint_off WIDTH */
     end else if (TOPOLOGY=="MULTI_MESH") begin : multimesh
     /* verilator lint_on WIDTH */
-        mesh_cluster_route_xyz #(
-            .NOC_ID(NOC_ID)
-        ) the_conventional_routing  (
+        mesh_cluster_route_xyz  the_conventional_routing  (
             .current_router_addr_i(current_r_addr),
             .destination_router_addr_i(dest_e_addr[EAw-1:0]),
             .router_port_out(destport)
@@ -224,7 +221,6 @@ endmodule
 *     look_ahead_routing
 *************************************/
 module look_ahead_routing #(
-    parameter NOC_ID=0,
     parameter P = 5,
     parameter T1= 8,
     parameter T2= 8,

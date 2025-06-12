@@ -34,7 +34,6 @@
 
 
 module  ss_allocator #(
-    parameter NOC_ID=0,
     parameter P=5
 )(
     clk,
@@ -48,7 +47,7 @@ module  ss_allocator #(
     ovc_info,
     ssa_ctrl_o
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     localparam
         PV = V * P,
         VV = V * V,
@@ -127,7 +126,6 @@ module  ss_allocator #(
             assign   ovc_single_flit_pck_all [i] =  single_flit_pck_all[(SS_PORT*V)+(i%V)];
             
             ssa_per_vc #(
-                .NOC_ID(NOC_ID),
                 .SS_PORT(SS_PORT),
                 .V_GLOBAL(i),
                 .P(P)
@@ -184,7 +182,6 @@ endmodule
  *  ssa_per_vc 
  * ***********/
 module ssa_per_vc #(
-    parameter NOC_ID=0,
     parameter P=5,
     parameter SS_PORT = "WEST",
     parameter V_GLOBAL = 1
@@ -213,7 +210,7 @@ module ssa_per_vc #(
     `endif
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     //header packet filds width
     localparam  
         SW_LOC = V_GLOBAL/V,
@@ -262,8 +259,7 @@ module ssa_per_vc #(
     wire   condition_1_2_valid;
     wire [DAw-1 : 0]  dest_e_addr_in;
     extract_header_flit_info #(
-        .NOC_ID(NOC_ID),
-        .DATA_w(0)    
+        .DATA_w(0)
     ) extractor (
         .flit_in(flit_in),
         .flit_in_wr(flit_in_wr),
@@ -284,10 +280,9 @@ module ssa_per_vc #(
     //check destination port is ss
     wire ss_port_hdr_flit, ss_port_nonhdr_flit;
     
-    ssa_check_destport #(   
-        .NOC_ID(NOC_ID),
+    ssa_check_destport #(
         .SW_LOC(SW_LOC),
-        .P(P),  
+        .P(P),
         .SS_PORT(SS_PORT)
     ) check_destport (
         .destport_encoded(destport_encoded),
@@ -339,7 +334,6 @@ endmodule
 
 
 module ssa_check_destport #(
-    parameter NOC_ID=0,
     parameter SW_LOC = 0,
     parameter P=5,
     parameter SS_PORT=0
@@ -356,7 +350,7 @@ module ssa_check_destport #(
     hdr_flg
     `endif  
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     `ifdef SIMULATION
     input clk, ivc_num_getting_sw_grant, hdr_flg;
     `endif  
@@ -467,14 +461,13 @@ endmodule
 *the output port with ss one
 **************************/
 module add_ss_port #(
-    parameter NOC_ID=0,
     parameter SW_LOC=0,
     parameter P=5
 )(
     destport_in,
     destport_out 
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     localparam SS_PORT = strieght_port(P,SW_LOC);
     localparam DISABLED = P;
     localparam P_1 = (SELF_LOOP_EN )?  P : P-1;

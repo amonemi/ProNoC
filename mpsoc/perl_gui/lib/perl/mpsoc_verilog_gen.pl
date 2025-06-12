@@ -34,7 +34,7 @@ sub mpsoc_generate_verilog{
     $param_as_in_v = (defined $param_as_in_v)? "$param_as_in_v,\nparameter NOC_ID=0\n" : "parameter NOC_ID=0\n";
     my $global_localparam=get_golal_param_v();
     my $pdef = "`include \"pronoc_def.v\"";
-    my $mpsoc_v = (defined $param_as_in_v )? " $pdef\nmodule $mpsoc_name\n\t  #(\n $param_as_in_v)(\n$io_short\n);\n\t`NOC_CONF": "$pdef\nmodule $mpsoc_name\n \t (\n$io_short\n);\n\t`NOC_CONF";
+    my $mpsoc_v = (defined $param_as_in_v )? " $pdef\nmodule $mpsoc_name\n\t  #(\n $param_as_in_v)(\n$io_short\n);\n\timport pronoc_pkg::*;": "$pdef\nmodule $mpsoc_name\n \t (\n$io_short\n);\n\timport pronoc_pkg::*;";
     $mpsoc_v=$mpsoc_v. "
 $global_localparam
 $socs_param
@@ -373,25 +373,22 @@ sub gen_noc_v{
     //connection wire to NoC
     smartflit_chanel_t ni_chan_in  [NE-1 : 0];
     smartflit_chanel_t ni_chan_out [NE-1 : 0];
-    wire                     noc_clk_in,noc_reset_in;
+    wire   noc_clk_in,noc_reset_in;
     //NoC
-    noc_top # (
-        .NOC_ID(NOC_ID)
-    ) the_noc (
+    noc_top  the_noc (
         .reset(noc_reset_in),
         .clk(noc_clk_in),
         .chan_in_all(ni_chan_out),
         .chan_out_all(ni_chan_in),
         .router_event( )
     );
-    clk_source  src     (
+    clk_source  src   (
         .clk_in($noc_clk),
         .clk_out(noc_clk_in),
         .reset_in($noc_reset),
         .reset_out(noc_reset_in)
     );
 ";
-;
     return $noc_v;
 }
 

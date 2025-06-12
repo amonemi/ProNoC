@@ -27,7 +27,7 @@ module ovc_list (
     class_in,
     ovcs_out
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     input [Cw-1 : 0] class_in;
     output[V-1 : 0] ovcs_out;

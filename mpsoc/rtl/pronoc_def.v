@@ -14,14 +14,6 @@
      *  Uncomment this line to enable an active-low reset.
      */
     
-    // ProNoC Package Import
-    `define IMPORT_PRONOC_PCK
-    /*
-     *  `pronoc_pkg.sv` is imported by default.
-     *  Commenting out this macro includes all parameters,
-     *  functions, and structs directly from `pronoc_pkg.sv`.
-     */
-    
     /******************
      * Define SIMULATION for supported RTL simulators
      *******************/
@@ -84,13 +76,5 @@
         `uselib lib=`USE_LIB
     `endif
     
-    // NoC Configuration
-    `ifdef IMPORT_PRONOC_PCK
-        `define NOC_CONF import pronoc_pkg::*;
-        `define PRONOC_PKG
-    `else
-        `define NOC_CONF  `define PRONOC_PKG \
-        `include "pronoc_pkg.sv"
-    `endif  
     
 `endif // PRONOC_DEF

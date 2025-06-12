@@ -667,7 +667,7 @@ module mesh_torus_distance_gen (
     dest_e_addr,
     distance
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     localparam 
         NYY =(IS_RING | IS_LINE )? 1 : T2,

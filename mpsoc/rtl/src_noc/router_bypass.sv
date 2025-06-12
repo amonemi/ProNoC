@@ -19,25 +19,6 @@
  * lk-ahead routing, The packet can by-pass the next router once the bypassing condition are met
  ***************************/
 
-
-module reduction_or #(
-    parameter W = 5,//out width
-    parameter N = 4 //array lenght 
-)(
-    D_in,
-    Q_out
-);
-    input  [W-1 : 0] D_in [N-1 : 0];
-    output reg [W-1 : 0] Q_out;    
-    
-    // assign Q_out = D_in.or(); //it is not synthesizable able by some compiler
-    always_comb begin
-        Q_out = {W{1'b0}};
-        for (int i = 0; i < N; i++)
-            Q_out |=   D_in[i];
-    end
-endmodule
-
 module onehot_mux_2D #(
     parameter W = 5,//out width
     parameter N = 4 //sel width 
@@ -118,7 +99,6 @@ endmodule
 
 
 module header_flit_info #(
-    parameter NOC_ID = 0,
     parameter DATA_w = 0 
 )(
     flit,
@@ -126,7 +106,7 @@ module header_flit_info #(
     data_o
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     localparam 
         Dw = (DATA_w==0)? 1 : DATA_w;
@@ -160,29 +140,25 @@ module header_flit_info #(
 endmodule
 
 `ifdef SIMULATION
-module smart_chanel_check #(
-    parameter NOC_ID=0
-) (
+module smart_chanel_check (
     flit_chanel,
     smart_chanel,
     reset,
-    clk        
+    clk
 );
-    `NOC_CONF
-    
+    import pronoc_pkg::*;
+
     input flit_chanel_t  flit_chanel;
-    input smart_chanel_t   smart_chanel;         
+    input smart_chanel_t   smart_chanel;
     input reset,clk;
     
     smart_chanel_t   smart_chanel_delay; 
     always @(posedge clk) smart_chanel_delay<=smart_chanel;
     
     hdr_flit_t hdr_flit;
-    header_flit_info #(
-        .NOC_ID (NOC_ID)    
-    ) extract (
+    header_flit_info extract (
         .flit(flit_chanel.flit),
-        .hdr_flit(hdr_flit),        
+        .hdr_flit(hdr_flit),
         .data_o()
     );
     
@@ -207,9 +183,8 @@ endmodule
 
 
 module smart_forward_ivc_info #(
-    parameter NOC_ID=0,
     parameter P=5
-) (            
+) (
     ivc_info,
     iport_info,
     oport_info,
@@ -217,7 +192,7 @@ module smart_forward_ivc_info #(
     ovc_locally_requested,
     reset,clk
 );
-    `NOC_CONF    
+    import pronoc_pkg::*;    
     
     //ivc info 
     input reset,clk;
@@ -311,7 +286,6 @@ endmodule
 
 
 module smart_bypass_chanels #(
-    parameter NOC_ID=0,
     parameter P=5
 ) (
     ivc_info,
@@ -325,7 +299,7 @@ module smart_bypass_chanels #(
     clk
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     input reset,clk;
     input smart_chanel_t smart_chanel_new  [P-1 : 0];
     input smart_chanel_t smart_chanel_in   [P-1 : 0];
@@ -381,7 +355,7 @@ module check_straight_oport #(
     destport_coded_i,
     goes_straight_o
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     input   [DSTPw-1 : 0] destport_coded_i;
     output  goes_straight_o;
     
@@ -419,7 +393,6 @@ endmodule
 
 
 module smart_validity_check_per_ivc  #(
-    parameter NOC_ID=0,
     parameter IVC_NUM = 0
 ) (
     reset,
@@ -455,7 +428,7 @@ module smart_validity_check_per_ivc  #(
     smart_ivc_reset_o,
     smart_ivc_granted_ovc_num_o
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     input reset, clk;
     //smart channel
@@ -532,7 +505,6 @@ endmodule
 
 
 module smart_allocator_per_iport # (
-    parameter NOC_ID=0,
     parameter P=5,
     parameter SW_LOC=0,
     parameter SS_PORT_LOC=1
@@ -567,7 +539,7 @@ module smart_allocator_per_iport # (
     smart_ivc_single_flit_pck_o,
     smart_ovc_single_flit_pck_o
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     //general
     input clk, reset;
     input [RAw-1   :0]  current_r_addr_i;
@@ -608,7 +580,6 @@ module smart_allocator_per_iport # (
     
     // does the route computation for the current router
     conventional_routing #(
-        .NOC_ID          (NOC_ID),
         .TOPOLOGY        (TOPOLOGY), 
         .ROUTE_NAME      (ROUTE_NAME), 
         .ROUTE_TYPE      (ROUTE_TYPE), 
@@ -640,7 +611,6 @@ module smart_allocator_per_iport # (
     
     //look ahead routing. take straight next router address as input
     conventional_routing #(
-        .NOC_ID(NOC_ID),
         .TOPOLOGY        (TOPOLOGY), 
         .ROUTE_NAME      (ROUTE_NAME), 
         .ROUTE_TYPE      (ROUTE_TYPE), 
@@ -672,7 +642,6 @@ module smart_allocator_per_iport # (
     generate
     for (i=0;i<V; i=i+1) begin : V_
         smart_validity_check_per_ivc #(
-            .NOC_ID(NOC_ID),
             .IVC_NUM(i)        
         ) validity_check (
             .reset(reset), 

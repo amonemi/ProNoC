@@ -1,15 +1,13 @@
 `include "pronoc_def.v"
 `ifdef SIMULATION
 
-module routers_statistic_collector #(
-    parameter NOC_ID=0
-)(
+module routers_statistic_collector (
     reset,
-    clk,        
+    clk,
     router_event,
     print
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     input   clk,reset;
     input   router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];

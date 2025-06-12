@@ -29,12 +29,11 @@
 ***********************************************************************/    
 
 module comb_nonspec_allocator # (
-    parameter NOC_ID = 0,
     parameter P = 5 //port number
 )(
     //VC allocator
     //input 
-    dest_port_all,         // from input port
+    dest_port_all,  // from input port
     masked_ovc_request_all,
     pck_is_single_flit_all,
     
@@ -44,7 +43,7 @@ module comb_nonspec_allocator # (
     ivc_num_getting_ovc_grant,
     
     //switch_alloc
-    ivc_info,   
+    ivc_info,
     vc_weight_is_consumed_all,
     iport_weight_is_consumed_all,
     
@@ -60,8 +59,7 @@ module comb_nonspec_allocator # (
     clk,
     reset
 );
-    `NOC_CONF
-    
+    import pronoc_pkg::*; 
     localparam
         P_1 = (SELF_LOOP_EN)? P : P-1,
         PV = V * P,
@@ -99,12 +97,7 @@ module comb_nonspec_allocator # (
     
     //nonspeculative switch allocator 
     nonspec_sw_alloc #(
-        .V(V),
-        .P(P),
-        .FIRST_ARBITER_EXT_P_EN(FIRST_ARBITER_EXT_P_EN),
-        .SWA_ARBITER_TYPE (SWA_ARBITER_TYPE),
-        .MIN_PCK_SIZE(MIN_PCK_SIZE),
-        .SELF_LOOP_EN(SELF_LOOP_EN)
+        .P(P)
     ) nonspeculative_sw_allocator (
         .ivc_granted_all (ivc_num_getting_sw_grant),
         .ivc_request_masked_all (ivc_request_masked_all),
@@ -231,21 +224,16 @@ endmodule
 
 /**************************************************************
 *             comb_nonspec_v2
-* first arbiter has been shifted after first multiplexer            
-*
+*       first arbiter has been shifted 
+*         after first multiplexer
 *********************************************************/
 module  comb_nonspec_v2_allocator #(
-    parameter V = 4,
-    parameter P = 5,
-    parameter FIRST_ARBITER_EXT_P_EN = 1,
-    parameter SWA_ARBITER_TYPE = "WRRA",
-    parameter MIN_PCK_SIZE=2, //minimum packet size in flits. The minimum value is 1.
-    parameter SELF_LOOP_EN= 0
+    parameter P = 5
 )(
     //VC allocator
-    //input    
-    dest_port_all,      // from input port
-    ovc_is_assigned_all,    // 
+    //input
+    dest_port_all, // from input port
+    ovc_is_assigned_all, 
     masked_ovc_request_all,
     pck_is_single_flit_all,
     
@@ -272,6 +260,7 @@ module  comb_nonspec_v2_allocator #(
     clk,
     reset
 );
+    import pronoc_pkg::*;
     localparam
         P_1 = (SELF_LOOP_EN) ? P : P-1,
         PV = V * P,
@@ -308,11 +297,7 @@ module  comb_nonspec_v2_allocator #(
     
     //nonspeculative switch allocator    
     nonspec_sw_alloc #(
-        .V(V),
-        .P(P),
-        .FIRST_ARBITER_EXT_P_EN(FIRST_ARBITER_EXT_P_EN),
-        .SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
-        .MIN_PCK_SIZE(MIN_PCK_SIZE) 
+        .P(P)
     ) nonspeculative_sw_allocator (
         .ivc_granted_all (ivc_num_getting_sw_grant),
         .ivc_request_masked_all (ivc_request_masked_all),
@@ -418,17 +403,10 @@ module  comb_nonspec_v2_allocator #(
 endmodule   
 
 /********************************************
-*
 *    nonspeculative switch allocator
-*
 ******************************************/
 module nonspec_sw_alloc #(
-    parameter V = 4,
-    parameter P = 5,
-    parameter FIRST_ARBITER_EXT_P_EN = 1, 
-    parameter SWA_ARBITER_TYPE = "WRRA",
-    parameter MIN_PCK_SIZE=2, //minimum packet size in flits. The minimum value is 1.
-    parameter SELF_LOOP_EN=0
+    parameter P = 5
 )(
     ivc_granted_all,
     ivc_request_masked_all,
@@ -445,7 +423,7 @@ module nonspec_sw_alloc #(
     clk,
     reset
 );
-    
+    import pronoc_pkg::*;
     localparam
         P_1 = (SELF_LOOP_EN) ? P : P-1,
         PV = V * P,
@@ -469,23 +447,23 @@ module nonspec_sw_alloc #(
     input [P-1: 0] iport_weight_is_consumed_all;
     
     //separte input per port
-    wire [V-1 : 0] ivc_granted        [P-1 : 0];
-    wire [V-1 : 0] pck_is_single_flit [P-1 : 0];  
-    wire [VP_1-1 : 0] dest_port_ivc       [P-1 : 0];
-    wire [P_1-1 : 0] granted_dest_port  [P-1 : 0];
+    wire [V-1 : 0] ivc_granted [P-1 : 0];
+    wire [V-1 : 0] pck_is_single_flit [P-1 : 0];
+    wire [VP_1-1 : 0] dest_port_ivc [P-1 : 0];
+    wire [P_1-1 : 0] granted_dest_port [P-1 : 0];
     wire [P_1-1 : 0] single_flit_granted_dst [P-1 : 0];
-    wire [PP-1 : 0] single_flit_granted_dst_all;
-    
+    wire [P-1 : 0] single_flit_granted_dst_all [P-1 : 0];
+
     // internal wires
-    wire    [V-1 : 0] ivc_masked     [P-1 : 0];//output of mask and  
-    wire    [V-1 : 0] first_arbiter_grant     [P-1 : 0];//output of first arbiter 
-    wire    [P-1 : 0] single_flit_pck_local_grant;  
-    wire    [P_1-1 : 0] dest_port  [P-1 : 0];//output of multiplexer
-    wire    [P_1-1 : 0] second_arbiter_request  [P-1 : 0]; 
-    wire    [P_1-1 : 0] second_arbiter_grant    [P-1 : 0]; 
-    wire    [P_1-1 : 0] second_arbiter_weight_consumed [P-1 : 0]; 
-    wire    [V-1 : 0] vc_weight_is_consumed [P-1 : 0]; 
-    wire    [P-1    :0] winner_weight_consumed;
+    wire [V-1 : 0] ivc_masked     [P-1 : 0];//output of mask and  
+    wire [V-1 : 0] first_arbiter_grant     [P-1 : 0];//output of first arbiter 
+    wire [P-1 : 0] single_flit_pck_local_grant;  
+    wire [P_1-1 : 0] dest_port  [P-1 : 0];//output of multiplexer
+    wire [P_1-1 : 0] second_arbiter_request  [P-1 : 0]; 
+    wire [P_1-1 : 0] second_arbiter_grant    [P-1 : 0]; 
+    wire [P_1-1 : 0] second_arbiter_weight_consumed [P-1 : 0]; 
+    wire [V-1 : 0] vc_weight_is_consumed [P-1 : 0]; 
+    wire [P-1    :0] winner_weight_consumed;
     
     genvar i,j;
     generate
@@ -545,16 +523,16 @@ module nonspec_sw_alloc #(
                     .SW_LOC(i)
                 ) add_sw_loc (
                     .destport_in(single_flit_granted_dst[i]),
-                    .destport_out(single_flit_granted_dst_all[(i+1)*P-1 : i*P])
+                    .destport_out(single_flit_granted_dst_all[i])
                 );
             end else begin 
-                assign single_flit_granted_dst_all[(i+1)*P-1 : i*P] = single_flit_granted_dst[i];
+                assign single_flit_granted_dst_all[i] = single_flit_granted_dst[i];
             end
             
         end else begin 
             assign single_flit_pck_local_grant[i] = 1'bx;
             assign single_flit_granted_dst[i] = {P_1{1'bx}};
-            assign single_flit_granted_dst_all[(i+1)*P-1 : i*P]={P{1'b0}};
+            assign single_flit_granted_dst_all[i] = {P{1'b0}};
         end
         //second arbiter input/output generate
         for(j=0;j<P;    j=j+1)begin: P_
@@ -595,19 +573,18 @@ module nonspec_sw_alloc #(
     end//for P_
     endgenerate 
     
-    custom_or #(
-            .IN_NUM(P),
-            .OUT_WIDTH(P)
+    reduction_or #(
+        .W(P),
+        .N(P)
     ) or_dst (
-        .or_in(single_flit_granted_dst_all),
-        .or_out(granted_dst_is_from_a_single_flit_pck)
+        .D_in(single_flit_granted_dst_all),
+        .Q_out(granted_dst_is_from_a_single_flit_pck)
     );
 endmodule
 
 
 /*******************
 *    swa_input_port_arbiter
-*
 ********************/
 module swa_input_port_arbiter #(
     parameter ARBITER_WIDTH =4,
@@ -622,7 +599,7 @@ module swa_input_port_arbiter #(
     vc_weight_is_consumed, // only for WRRA
     winner_weight_consumed // only for WRRA
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     input ext_pr_en_i;
     input [ARBITER_WIDTH-1 : 0] request;
     output[ARBITER_WIDTH-1 : 0] grant;
@@ -691,19 +668,18 @@ endmodule
 
 /*******************
 *    swa_output_port_arbiter
-*
 ********************/
 module swa_output_port_arbiter #(
     parameter ARBITER_WIDTH =4
 )(
     weight_consumed,  // only used for WRRA
-    clk, 
-    reset, 
-    request, 
+    clk,
+    reset,
+    request,
     grant,
-    any_grant  
+    any_grant
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     input     [ARBITER_WIDTH-1  :    0]    request;
     output    [ARBITER_WIDTH-1  :    0]    grant;
     output                                 any_grant;

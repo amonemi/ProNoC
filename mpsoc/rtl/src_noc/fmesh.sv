@@ -362,7 +362,7 @@ module fmesh_distance_gen (
     dest_e_addr,
     distance
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     localparam 
         Xw  =   log2(T1),   // number of node in x axis

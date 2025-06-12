@@ -32,7 +32,7 @@ module flit_buffer
     parameter V=  1,
     parameter B = 4
 )(
-    din,     // Data in
+    din,  // Data in
     vc_num_wr,//write virtual channel
     vc_num_rd,//read virtual channel
     wr_en,   // Write enable
@@ -49,7 +49,7 @@ module flit_buffer
     flit_is_tail
 );
     
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     
     localparam
@@ -77,7 +77,7 @@ module flit_buffer
     input [V-1 :0]  ssa_rd;
     input [V-1 :0]  multiple_dest;
     input [V-1 :0]  sub_rd_ptr_ld;
-    output [V-1 : 0]        flit_is_tail;
+    output [V-1 : 0]  flit_is_tail;
     
     //pointers
     wire [PTRw- 1 : 0] rd_ptr [V-1 :0];

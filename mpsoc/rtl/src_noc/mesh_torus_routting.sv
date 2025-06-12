@@ -10,19 +10,19 @@ module mesh_torus_look_ahead_routing #(
 )(
     current_x,  //current router x address
     current_y,  //current router y address
-    dest_x,  // destination router x address          
-    dest_y,  // destination router y address                  
-    destport_encoded,   // current router destination port number       
+    dest_x,  // destination router x address
+    dest_y,  // destination router y address
+    destport_encoded,   // current router destination port number
     lkdestport_encoded, // look ahead destination port number
     reset,
     clk
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     localparam  P = ( IS_MESH || IS_FMESH || IS_TORUS ) ? 5 : 3;
     
     localparam  P_1 = P-1;
     input [NXw-1 : 0]  current_x;
-    input [NYw-1 : 0]  current_y;                  
+    input [NYw-1 : 0]  current_y;
     input [NXw-1 : 0]  dest_x;
     input [NYw-1 : 0]  dest_y;
     input [P_1-1 : 0]  destport_encoded;
@@ -81,11 +81,11 @@ module  mesh_torus_deterministic_look_ahead_routing #(
     destport,   // current router destination port number       
     lkdestport // look ahead destination port number
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     localparam  P_1 = P-1;
     
     input [NXw-1 : 0]  current_x;
-    input [NYw-1 : 0]  current_y;                  
+    input [NYw-1 : 0]  current_y;
     input [NXw-1 : 0]  dest_x;
     input [NYw-1 : 0]  dest_y;
     input [P_1-1 : 0]  destport;
@@ -138,7 +138,7 @@ endmodule
 *        adaptive_look_ahead_routing
 **********************************************/
 module  mesh_torus_adaptive_look_ahead_routing #(
-    parameter P =5  
+    parameter P =5
 )(
     current_x,  //current router x address
     current_y,  //current router y address
@@ -147,7 +147,7 @@ module  mesh_torus_adaptive_look_ahead_routing #(
     destport_encoded,   // current router destination port      
     lkdestport_encoded // look ahead destination port 
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     localparam P_1 = P-1;
     input [NXw-1 : 0]  current_x;
     input [NYw-1 : 0]  current_y;
@@ -237,7 +237,7 @@ module mesh_torus_next_router_addr_predictor #(
     next_x,
     next_y  
 );
-    `NOC_CONF    
+    import pronoc_pkg::*;    
     localparam [NXw-1 : 0] LAST_X_ADDR =(NX[NXw-1 : 0]-1'b1);
     localparam [NYw-1 : 0] LAST_Y_ADDR =(NY[NYw-1 : 0]-1'b1);
     
@@ -298,7 +298,7 @@ module mesh_torus_next_router_inport_predictor #(
     destport,
     receive_port
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     input  [P-1 : 0] destport;
     output [P-1 : 0] receive_port;    
     
@@ -360,7 +360,7 @@ module remove_receive_port_one_hot #(
     destport_in,
     destport_out
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     localparam 
         P_1 = P-1,
@@ -465,7 +465,7 @@ module mesh_torus_conventional_routing #(
     destport
     );
     
-    `NOC_CONF   
+    import pronoc_pkg::*;   
     
     localparam 
         P = (IS_RING || IS_LINE ) ? 3 : 5,

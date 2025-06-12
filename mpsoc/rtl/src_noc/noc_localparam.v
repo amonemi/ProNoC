@@ -33,6 +33,8 @@
 	
 
 //NoC parameters
+    localparam NOC_ID=0;
+            //NOC_ID : Unique identifier for the NoC. Will be modified by phy_noc_gen.pl script
 	localparam TOPOLOGY="MESH";
             //TOPOLOGY : Specifies the NoC topology. 
             //    Options include "MESH","FMESH","TORUS","RING","LINE","FATTREE","TREE","STAR","CUSTOM"

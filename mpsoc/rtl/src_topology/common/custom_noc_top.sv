@@ -1,16 +1,14 @@
 `include "pronoc_def.v"
 
 module   custom_noc_top 
-    #(
-        parameter NOC_ID=0
-    )(
+    (
     reset,
-    clk,    
+    clk,
     chan_in_all,
     chan_out_all,
-    router_event  
+    router_event
 );
-    `NOC_CONF
+    import pronoc_pkg::*;
     
     input   clk,reset;
     //local ports 
@@ -23,11 +21,9 @@ module   custom_noc_top
     
     //do not modify this line ===custom1===
     if(TOPOLOGY == "custom1" ) begin : Tcustom1
-        custom1_noc_genvar #(
-            .NOC_ID(NOC_ID)
-        ) the_noc (    
+        custom1_noc_genvar the_noc (
             .reset(reset),
-            .clk(clk),    
+            .clk(clk),
             .chan_in_all(chan_in_all),
             .chan_out_all(chan_out_all),
             .router_event(router_event)  
@@ -35,4 +31,4 @@ module   custom_noc_top
     end
     endgenerate
     
-endmodule     
+endmodule 
