@@ -58,28 +58,26 @@ module vc_priority_based_dest_port #(
         P_1 =  (P-1),
         OFFSET =  V/(P_1);
     
-    input   [P_1-1        :   0] dest_port;
-    reg     [V-1          :   0] vc_pririty_init;
-    output  [V-1          :   0] vc_pririty;
+    input   [P_1-1 : 0] dest_port;
+    output  [V-1   : 0] vc_pririty;
     
-    genvar i;
-    integer j;  
-    generate 
-    if(P_1 == V  )begin :b1
-        always_comb begin vc_pririty_init =  dest_port; end
-    end else if (P_1 > V  )begin :b2
-        for (i=0;i<V; i=i+1)begin:yy
-            always_comb begin 
-                vc_pririty_init[i] = | dest_port[((i+1)*(P_1))/V-1: (i*(P_1))/V ];
+    logic [V-1:0] vc_pririty_init;
+    always_comb begin
+        if (P_1 == V) begin
+            vc_pririty_init = dest_port;
+        end else if (P_1 > V) begin
+            // P_1 > V
+            for (int i = 0; i < V; i++) begin
+                vc_pririty_init[i] = |dest_port[((i+1)*P_1)/V - 1 -: ((P_1)/V)];
+                // Note: Using part-select with width (P_1/V) for clarity
+            end
+        end else begin
+            // P_1 < V
+            vc_pririty_init = '0;
+            for (int j = 0; j < P_1; j++) begin
+                vc_pririty_init[j + OFFSET] = dest_port[j];
             end
         end
-    end else begin :b3
-        always_comb begin //P_1 < V
-            vc_pririty_init={V{1'b0}};
-            for (j=0;j<P_1; j=j+1)  vc_pririty_init[j+OFFSET] =  dest_port[j];
-        end
     end
-    endgenerate
-    
-    assign vc_pririty=(vc_pririty_init==0)? {{(V-1){1'b0}},1'b1}: vc_pririty_init;
+    assign vc_pririty = (vc_pririty_init == 0) ? {{(V-1){1'b0}}, 1'b1} : vc_pririty_init;
 endmodule

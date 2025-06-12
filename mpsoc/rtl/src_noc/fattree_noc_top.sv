@@ -95,6 +95,7 @@ module  fattree_noc_top (
     generate 
     for( pos=0; pos<NRL; pos=pos+1) begin : root 
         localparam RID = pos;
+        localparam BOUND=(MAX_P > K)? K : MAX_P;
         assign router_config_in[RID].router_id = RID [NRw-1 : 0];
         assign router_config_in[RID].router_addr = current_r_addr [RID];
         router_top # (
@@ -102,11 +103,11 @@ module  fattree_noc_top (
             .P(K)
         ) the_router (
             .router_config_in(router_config_in[RID]),
-            .chan_in         (router_chan_in [RID][K-1 : 0]), 
-            .chan_out        (router_chan_out[RID][K-1 : 0]), 
-            .router_event    (router_event[RID][K-1 : 0]),
-            .clk             (clk), 
-            .reset           (reset )
+            .chan_in (router_chan_in [RID][BOUND-1 : 0]), 
+            .chan_out(router_chan_out[RID][BOUND-1 : 0]), 
+            .router_event (router_event[RID][BOUND-1 : 0]),
+            .clk (clk), 
+            .reset (reset)
         );  
     end
     

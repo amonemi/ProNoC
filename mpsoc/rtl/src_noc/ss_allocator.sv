@@ -468,29 +468,17 @@ module add_ss_port #(
     localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     
     input  [P_1-1 : 0] destport_in;
-    output [P_1-1 : 0] destport_out; 
-    
-    generate
-    if(SS_PORT == DISABLED) begin :no_ss
-        assign destport_out = destport_in;
-    end else begin : ss 
-        reg [P_1-1 : 0] destport_temp; 
-        if( SELF_LOOP_EN) begin : slp
-            always_comb begin 
-                destport_temp=destport_in;
-                if(destport_in=={P_1{1'b0}}) destport_temp[SS_PORT]= 1'b1;
-            end 
-            assign destport_out = destport_temp;
-        end else begin : nslp
-            localparam SS_PORT_CODE = (SW_LOC>SS_PORT) ? SS_PORT : SS_PORT-1;
-            always_comb begin 
-                destport_temp=destport_in;
-                if(destport_in=={P_1{1'b0}}) begin 
-                    destport_temp[SS_PORT_CODE]= 1'b1;
-                end
-            end 
-            assign destport_out = destport_temp;
+    output [P_1-1 : 0] destport_out;
+    logic [P_1-1 : 0] destport_temp;
+    localparam SS_PORT_CODE = 
+        (SS_PORT == DISABLED) ? 0 :
+        (SELF_LOOP_EN) ? SS_PORT :
+        (SW_LOC > SS_PORT) ? SS_PORT : SS_PORT - 1;
+    always_comb begin
+        destport_temp = destport_in;
+        if (destport_in == {P_1{1'b0}}) begin
+            if((SS_PORT != DISABLED)) destport_temp[SS_PORT_CODE] = 1'b1;
         end
-    end //ss
-    endgenerate
+    end
+    assign destport_out = (SS_PORT == DISABLED)? destport_in : destport_temp;
 endmodule

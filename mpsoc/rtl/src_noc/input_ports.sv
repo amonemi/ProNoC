@@ -301,7 +301,7 @@ module input_queue_per_port #(
     wire [V-1 : 0] vc_num_in;
     wire [V-1 : 0] hdr_flit_wr;
     wire [VV-1 : 0] assigned_ovc_num;
-    logic [V-1 : 0] assigned_onc_one_hot [V-1 : 0];
+    logic [V-1 : 0] assigned_ovc_one_hot [V-1 : 0];
     logic [Vw-1 : 0] assigned_onc_bin [V-1 : 0];
 
     wire [DSTPw-1 : 0] lk_destination_in_encoded;
@@ -319,7 +319,7 @@ module input_queue_per_port #(
     wire [V-1 : 0] rd_hdr_fwft_fifo,wr_hdr_fwft_fifo,rd_hdr_fwft_fifo_delay,wr_hdr_fwft_fifo_delay;
     
     logic [V-1  : 0] ovc_is_assigned_next;
-    logic [VV-1 : 0] assigned_ovc_num_next;
+    logic [V-1 : 0] assigned_ovc_num_next [V-1 : 0];
     
     wire odd_column = current_r_addr[0]; 
     wire [P-1 : 0] destport_one_hot [V-1 :0];
@@ -343,12 +343,6 @@ module input_queue_per_port #(
         .reset  (reset ), 
         .clk    (clk   ), 
         .Q_out  (ovc_is_assigned   ));
-    
-    pronoc_register #(.W(VV)) reg2(
-        .D_in   (assigned_ovc_num_next), 
-        .reset  (reset ), 
-        .clk    (clk   ), 
-        .Q_out  (assigned_ovc_num  ));
     
     pronoc_register #(.W(V)) reg3(
         .D_in   (rd_hdr_fwft_fifo), 
@@ -402,7 +396,12 @@ module input_queue_per_port #(
     genvar i;
     generate
     for (i=0; i<V; i=i+1) begin : O_
-        assign assigned_onc_one_hot [i] = assigned_ovc_num[(i+1)*V-1 : i*V];
+        assign assigned_ovc_one_hot [i] = assigned_ovc_num[(i+1)*V-1 : i*V];
+        pronoc_register #(.W(V)) reg2(
+            .D_in   (assigned_ovc_num_next[i]), 
+            .reset  (reset ), 
+            .clk    (clk   ), 
+            .Q_out  (assigned_ovc_num [(i+1)*V-1 : i*V]  ));
     end
     if (( IS_RING | IS_LINE | IS_MESH | IS_TORUS) & (T3 > 1) & IS_UNICAST) begin : multi_local
         mesh_tori_endp_addr_decode endp_addr_decode (
@@ -463,7 +462,7 @@ module input_queue_per_port #(
             ivc_info[k].assigned_ovc_not_full = assigned_ovc_not_full[k];
             ivc_info[k].candidate_ovc = candidate_ovcs [k];
             ivc_info[k].ovc_is_assigned = ovc_is_assigned[k];
-            ivc_info[k].assigned_ovc_num = assigned_onc_one_hot[k];
+            ivc_info[k].assigned_ovc_num = assigned_ovc_one_hot[k];
             ivc_info[k].dest_port_encoded = dest_port_encoded[k];
             //ivc_info[k].getting_swa_first_arbiter_grant=nonspec_first_arbiter_granted_ivc[k];
             //ivc_info[k].getting_swa_grant=ivc_num_getting_sw_grant[k];
@@ -473,16 +472,46 @@ module input_queue_per_port #(
             ivc_info[k].dest_e_addr = dest_e_addr_out[k];
         end //for k
         for (int k=PORT_IVC; k<V; k=k+1) begin 
-            assign ivc_info[k] = {IVC_INFO_w{1'b0}};
+            ivc_info[k] = {IVC_INFO_w{1'b0}};
         end//k
     end
+
     
+    always_comb begin
+        ovc_is_assigned_next = {V{1'b0}}; //for single flit mode
+        for ( int k=0; k<PORT_IVC; k++) begin
+            assigned_ovc_num_next[k]  = assigned_ovc_one_hot [k];
+            if( IS_MULTI_FLIT) begin 
+                ovc_is_assigned_next[k] = ovc_is_assigned[k];
+                if( vsa_ctrl_in.ivc_reset[k] |
+                        ssa_ctrl_in.ivc_reset[k] |
+                        smart_ctrl_in.ivc_reset[k] 
+                    )   ovc_is_assigned_next[k] = 1'b0;
+                else if( vsa_ctrl_in.ivc_num_getting_ovc_grant[k] |
+                        (ssa_ctrl_in.ivc_num_getting_ovc_grant[k] & ~  ssa_ctrl_in.ivc_single_flit_pck[k])|
+                        (smart_ctrl_in.ivc_num_getting_ovc_grant[k] & ~  smart_ctrl_in.ivc_single_flit_pck[k])
+                    )   ovc_is_assigned_next[k] = 1'b1;
+                if(vsa_ctrl_in.ivc_num_getting_ovc_grant[k] | ssa_ctrl_in.ivc_num_getting_ovc_grant[k] | smart_ctrl_in.ivc_num_getting_ovc_grant[k] ) begin 
+                    assigned_ovc_num_next[k] = mux_out[k];
+                end
+            end// "IS_MULTI_FLIT"
+            else begin //single flit mode
+                if(vsa_ctrl_in.ivc_num_getting_ovc_grant[k] | ssa_ctrl_in.ivc_num_getting_ovc_grant[k]) begin 
+                    assigned_ovc_num_next[k] = mux_out[k];
+                end
+            end
+        end //for k
+    end//always 
+
+
+
+
     for (i=0;i<PORT_IVC; i=i+1) begin: V_
         
         assign credit_init_val_out [i] = PORT_B [CRDTw-1 : 0 ];
         
         one_hot_to_bin #(.ONE_HOT_WIDTH(V),.BIN_WIDTH(Vw)) conv (
-            .one_hot_code(assigned_onc_one_hot[i]), 
+            .one_hot_code(assigned_ovc_one_hot[i]), 
             .bin_code(assigned_onc_bin[i])
         );
         
@@ -532,26 +561,7 @@ module input_queue_per_port #(
             );
             */
         end
-        if(PCK_TYPE == "MULTI_FLIT") begin : multi_flit 
-            
-            always_comb begin
-                ovc_is_assigned_next[i] = ovc_is_assigned[i];
-                if( vsa_ctrl_in.ivc_reset[i] |
-                        ssa_ctrl_in.ivc_reset[i] |
-                        smart_ctrl_in.ivc_reset[i] 
-                    )      ovc_is_assigned_next[i] = 1'b0;
-                else if( vsa_ctrl_in.ivc_num_getting_ovc_grant[i] |
-                        (ssa_ctrl_in.ivc_num_getting_ovc_grant[i] & ~  ssa_ctrl_in.ivc_single_flit_pck[i])|
-                        (smart_ctrl_in.ivc_num_getting_ovc_grant[i] & ~  smart_ctrl_in.ivc_single_flit_pck[i])
-                    )       ovc_is_assigned_next[i] = 1'b1;
-            end//always 
-            
-            always_comb begin
-                assigned_ovc_num_next[(i+1)*V-1 : i*V] = assigned_ovc_num[(i+1)*V-1 : i*V] ;
-                if(vsa_ctrl_in.ivc_num_getting_ovc_grant[i] | ssa_ctrl_in.ivc_num_getting_ovc_grant[i] | smart_ctrl_in.ivc_num_getting_ovc_grant[i] ) begin 
-                    assigned_ovc_num_next[(i+1)*V-1 : i*V] = mux_out[i];
-                end
-            end
+        if( IS_MULTI_FLIT) begin : multi_flit
             
             onehot_mux_1D #(
                 .N  (3), 
@@ -588,14 +598,6 @@ module input_queue_per_port #(
             
         end else begin :single_flit
             //assign flit_is_tail[i]=1'b1;
-            assign ovc_is_assigned_next[i] = 1'b0;
-            
-            always_comb begin
-                assigned_ovc_num_next[(i+1)*V-1 : i*V] = assigned_ovc_num[(i+1)*V-1 : i*V] ;
-                if(vsa_ctrl_in.ivc_num_getting_ovc_grant[i] | ssa_ctrl_in.ivc_num_getting_ovc_grant[i]) begin 
-                    assigned_ovc_num_next[(i+1)*V-1 : i*V] = mux_out[i];
-                end
-            end
             
             onehot_mux_1D #(
                 .N (2), 
@@ -922,7 +924,6 @@ module input_queue_per_port #(
         for (i=PORT_IVC;i<V; i=i+1) begin: V_
             assign credit_init_val_out [i] = {CRDTw{1'b0}};            
             assign candidate_ovcs [i] = {V{1'b0}};
-            assign ovc_is_assigned_next[i] =1'b0;
             assign class_out[i]={Cw{1'b0}};
             assign dest_port_multi[i]={DSTPw{1'b0}};
             assign dest_port_encoded[i]={DSTPw{1'b0}};

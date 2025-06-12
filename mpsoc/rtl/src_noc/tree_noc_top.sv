@@ -97,6 +97,7 @@ module  tree_noc_top (
     *****************/
     localparam [Lw-1 : 0] ROOT_L = L-1; 
     localparam ROOT_ID = 0;
+    localparam BOUND=(MAX_P > K)? K : MAX_P;
     
     assign current_layer_addr [ROOT_ID] = ROOT_L;
     assign current_pos_addr [ROOT_ID] = {LKw{1'b0}};
@@ -108,9 +109,9 @@ module  tree_noc_top (
         .P(K)
     ) root_router (
         .router_config_in(router_config_in[ROOT_ID]),
-        .chan_in         (router_chan_in [ROOT_ID][K-1:0]), 
-        .chan_out        (router_chan_out[ROOT_ID][K-1:0]), 
-        .router_event    (router_event[ROOT_ID][K-1 : 0]),
+        .chan_in         (router_chan_in [ROOT_ID][BOUND-1:0]), 
+        .chan_out        (router_chan_out[ROOT_ID][BOUND-1:0]), 
+        .router_event    (router_event[ROOT_ID][BOUND-1 : 0]),
         .clk             (clk), 
         .reset           (reset)
     );

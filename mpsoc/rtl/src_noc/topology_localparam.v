@@ -34,7 +34,6 @@
         IS_BROADCAST_PARTIAL = (CAST_TYPE == "BROADCAST_PARTIAL"),
         IS_UNICAST = (CAST_TYPE == "UNICAST"),
         IS_BROADCAST_FULL = (CAST_TYPE == "BROADCAST_FULL"),
-        IS_DETERMINISTIC = (ROUTE_TYPE == "DETERMINISTIC"),
         IS_ONE_HOT_MUX = (MUX_TYPE=="ONE_HOT");
         /* verilator lint_on WIDTH */
     
@@ -328,7 +327,9 @@
             (IS_FMESH)? ROUTE_TYPE_MESH_TORI:
             (IS_STAR) ? ROUTE_TYPE_STAR:
             ROUTE_TYPE_CUSTOM;
-    /* verilator lint_on WIDTH */         
+
+            localparam  [0:0] IS_DETERMINISTIC = (ROUTE_TYPE == "DETERMINISTIC");
+    /* verilator lint_on WIDTH */
     function automatic integer mcast_id_to_endp_id;
     input integer  mcast_id;
     reg [NE-1 : 0] mcast_list;

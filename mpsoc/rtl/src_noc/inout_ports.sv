@@ -371,6 +371,14 @@ module output_vc_status #(
     wire  [V-1 : 0] cand_vc_next;
     wire  [V-1 :0] request;
     
+    always_comb begin 
+        for(int k=0;k<V;k++) begin
+            credit_next[k] = credit [k];
+            if(  wr_in[k]  && ~credit_in[k])   credit_next[k] = credit[k]-1'b1;
+            if( ~wr_in[k]  &&  credit_in[k])   credit_next[k] = credit[k]+1'b1;
+        end
+    end//always
+    
     genvar i;
     generate
     for(i=0;i<V;i=i+1) begin : vc_loop
@@ -384,12 +392,6 @@ module output_vc_status #(
             .Q_out(credit[i]),
             .reset_to(credit_init_val_in[i][DEPTH_WIDTH-1:0])
         );
-        
-        always_comb begin 
-            credit_next[i] = credit [i];
-            if(  wr_in[i]  && ~credit_in[i])   credit_next[i] = credit[i]-1'b1;
-            if( ~wr_in[i]  &&  credit_in[i])   credit_next[i] = credit[i]+1'b1;
-        end//always
         
         assign  full_vc[i]   = (credit[i] == {DEPTH_WIDTH{1'b0}});
         assign  nearly_full_vc[i]=  (credit[i] == 1) |  full_vc[i];
