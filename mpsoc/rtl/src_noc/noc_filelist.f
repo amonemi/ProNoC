@@ -1,8 +1,8 @@
 +incdir+./
 +incdir+./../
 ./pronoc_pkg.sv
-./../main_comp.sv
-./../arbiter.sv
+./../main_comp.v
+./../arbiter.v
 ./ovc_list.sv
 ./ss_allocator.sv
 ./route_torus.sv

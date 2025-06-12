@@ -69,16 +69,6 @@ module packet_injector  (
     generate 
     if(CAST_TYPE == "UNICAST") begin : uni
         conventional_routing #(
-            .TOPOLOGY(TOPOLOGY),
-            .ROUTE_NAME(ROUTE_NAME),
-            .ROUTE_TYPE(ROUTE_TYPE),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .RAw(RAw),
-            .EAw(EAw),
-            .DAw(DAw),
-            .DSTPw(DSTPw),
             .LOCATED_IN_NI(1)
         ) routing_module (
             .reset(reset),
@@ -259,8 +249,8 @@ module packet_injector  (
     `ifdef SIMULATION
     wire [NEw-1 : 0] current_id; 
     wire [NEw-1 : 0] sendor_id; 
-    endp_addr_decoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) encode1 ( .id(current_id), .code(current_e_addr));
-    endp_addr_decoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) encode2 ( .id(sendor_id), .code(pck_injct_out.endp_addr[EAw-1 : 0]));
+    endp_addr_decoder encode1 ( .id_out(current_id), .code_in(current_e_addr));
+    endp_addr_decoder encode2 ( .id_out(sendor_id), .code_in(pck_injct_out.endp_addr[EAw-1 : 0]));
     `endif
     
     wire [NE-1 :0] dest_mcast_all_endp;   

@@ -193,16 +193,9 @@ module  Jtag_traffic_gen
     generate
     for (i=0;   i<NE;   i=i+1) begin: endp
         wire [EAw-1 : 0] current_e_addr [NE-1 : 0];
-        endp_addr_encoder #(
-            .TOPOLOGY(TOPOLOGY),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .EAw(EAw),
-            .NE(NE)
-        ) encoder (
-            .id(i[NEw-1 : 0]),
-            .code(current_e_addr[i])
+        endp_addr_encoder encoder (
+            .id_in(i[NEw-1 : 0]),
+            .code_out(current_e_addr[i])
         );
         // seperate interfaces per router
         assign jtag_we_sep[i] = (jtag_RAM_select == i) ? jtag_we :1'b0;

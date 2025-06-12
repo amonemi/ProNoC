@@ -398,12 +398,7 @@ module ssa_check_destport #(
         wire [Pw-1 : 0] endp_p_in;
         wire [MAX_P-1 : 0] destport_one_hot_in;
         
-        fmesh_endp_addr_decode #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .EAw(EAw)
-        ) endp_addr_decode (
+        fmesh_endp_addr_decode  endp_addr_decode (
             .e_addr(dest_e_addr_in),
             .ex(),
             .ey(),

@@ -129,8 +129,7 @@ module piton_to_pronoc_endp_addr_converter_diffrent_topology
     //find  piton index
     wire [PITON_EAw-1 : 0] piton_e_addr = {piton_l,piton_y,piton_x}; 
     wire [PITON_NEw-1 : 0] piton_id;
-    endp_addr_decoder #( .TOPOLOGY(PITON_TOPOLOGY),   .T1(`PITON_X_TILES), .T2(`PITON_Y_TILES), .T3(1), .EAw(PITON_EAw),  .NE(PITON_NE))
-        encode1 ( .id(piton_id), .code(piton_e_addr ));
+    endp_addr_decoder encode1 ( .id_out(piton_id), .code_in(piton_e_addr ));
     reg [NEw-1 : 0] ProNoC_id;
     generate 
         if (PITON_NEw < NEw) begin 
@@ -139,22 +138,20 @@ module piton_to_pronoc_endp_addr_converter_diffrent_topology
                 ProNoC_id [PITON_NEw-1 : 0] = piton_id;
             end
         end else begin 
-            always_comb begin                 
+            always_comb begin
                 ProNoC_id =0;
                 ProNoC_id  = piton_id [ NEw-1 : 0];
             end
         end
     endgenerate 
-    endp_addr_encoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) 
-        encode2 ( .id(ProNoC_id), .code( pronoc_endp_addr1 ));
+    endp_addr_encoder encode2 ( .id_in(ProNoC_id), .code_out( pronoc_endp_addr1 ));
     // The address2 is generated for pronoc in OP and its not coded based on OP so no need to convert it.
     // It is indicated when msb of fbit is one  
     wire   [`NOC_X_WIDTH + `NOC_Y_WIDTH-1 : 0]   input_merged = {piton_coreid_y_i ,    piton_coreid_x_i};
     assign pronoc_endp_addr2 = input_merged [EAw-1 : 0];
     assign pronoc_endp_addr  = (piton_fbits_i[3]) ? pronoc_endp_addr2 : pronoc_endp_addr1;
     localparam [NEw-1 : 0] CHIP_SET_ID = T1*T2*T3+2*T1; // endp connected  of west port of router 0-0
-    endp_addr_encoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) 
-        encode3 ( .id(CHIP_SET_ID), .code( chipset_endp_addr ));
+    endp_addr_encoder encode3 ( .id_in(CHIP_SET_ID), .code_out( chipset_endp_addr ));
     assign pronoc_endp_addr_o =  (piton_chipid_i == default_chipid_i ) ? pronoc_endp_addr : chipset_endp_addr;
     always_comb begin 
         piton_end_addr_coded_o = {ADDR_CODED{1'b0}};
@@ -361,16 +358,6 @@ module piton_to_pronoc_wrapper  #(
     );
     
     conventional_routing #(
-        .TOPOLOGY(TOPOLOGY),
-        .ROUTE_NAME(ROUTE_NAME),
-        .ROUTE_TYPE(ROUTE_TYPE),
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .RAw(RAw),
-        .EAw(EAw),
-        .DAw(DAw),
-        .DSTPw(DSTPw),
         .LOCATED_IN_NI(1)
     ) routing_module (
         .reset(reset),
@@ -381,7 +368,7 @@ module piton_to_pronoc_wrapper  #(
         .destport(destport)
     );
     
-    //endp_addr_decoder  #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) decod1 ( .id(TILE_NUM), .code(current_e_addr));
+    //endp_addr_decoder  decod1 ( .id_out(TILE_NUM), .code_in(current_e_addr));
     localparam DATA_w = HEAD_DATw + Fpay - 64; 
     wire [DATA_w-1 : 0] head_data;
     generate 
@@ -558,16 +545,11 @@ module pronoc_to_piton_wrapper #(
     localparam 
         ELw = log2(T3),
         Pw  = log2(MAX_P),
-        PLw = (TOPOLOGY == "FMESH") ? Pw : ELw;
+        PLw = (IS_FMESH) ? Pw : ELw;
     wire [PLw-1 : 0] endp_p_in;
     generate
-    if(TOPOLOGY == "FMESH") begin : fmesh
-        fmesh_endp_addr_decode #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .EAw(EAw)
-        ) endp_addr_decode  (
+    if(IS_FMESH) begin : fmesh
+        fmesh_endp_addr_decode endp_addr_decode  (
             .e_addr(hdr_flit.dest_e_addr),
             .ex(),
             .ey(),
@@ -575,13 +557,7 @@ module pronoc_to_piton_wrapper #(
             .valid()
         );
     end else begin : mesh
-        mesh_tori_endp_addr_decode #(
-            .TOPOLOGY("MESH"),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .EAw(EAw)
-        )  endp_addr_decode (
+        mesh_tori_endp_addr_decode endp_addr_decode (
             .e_addr(hdr_flit.dest_e_addr),
             .ex( ),
             .ey( ),

@@ -132,28 +132,16 @@ module debug_mesh_tori_route_ckeck #(
     wire [RXw-1 : 0] current_x;
     wire [EXw-1 : 0] x_dst_in,x_src_in;
     wire [RYw-1 : 0] current_y;
-    wire [EYw-1 : 0] y_dst_in,y_src_in;      
+    wire [EYw-1 : 0] y_dst_in,y_src_in;
     
-    mesh_tori_router_addr_decode #(
-        .TOPOLOGY(TOPOLOGY),
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .RAw(RAw)
-    ) r_addr_decode  (
+    mesh_tori_router_addr_decode  r_addr_decode  (
         .r_addr(current_r_addr),
         .rx(current_x),
         .ry(current_y),
         .valid()
     );
     
-    mesh_tori_endp_addr_decode #(
-        .TOPOLOGY(TOPOLOGY),
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .EAw(EAw)
-    ) dst_addr_decode (
+    mesh_tori_endp_addr_decode  dst_addr_decode (
         .e_addr(dest_e_addr_in),
         .ex(x_dst_in),
         .ey(y_dst_in),
@@ -161,13 +149,7 @@ module debug_mesh_tori_route_ckeck #(
         .valid()
     );
     
-    mesh_tori_endp_addr_decode #(
-        .TOPOLOGY(TOPOLOGY),
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .EAw(EAw)
-    ) src_addr_decode  (
+    mesh_tori_endp_addr_decode  src_addr_decode  (
         .e_addr(src_e_addr_in),
         .ex(x_src_in),
         .ey(y_src_in),
@@ -284,13 +266,7 @@ module debug_mesh_edges #(
     wire [RXw-1 : 0] current_rx;
     wire [RYw-1 : 0] current_ry;
     
-    mesh_tori_router_addr_decode #(
-        .TOPOLOGY("MESH"),
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .RAw(RAw)
-    ) addr_decode (
+    mesh_tori_router_addr_decode addr_decode (
         .r_addr(current_r_addr),
         .rx(current_rx),
         .ry(current_ry),
@@ -354,15 +330,9 @@ module check_destination_addr #(
         assign  dest_is_valid =  valid_dst_multi_r2;// & valid_dst_multi_r1 ;  
     end else     
     /* verilator lint_off WIDTH */ 
-    if(TOPOLOGY=="MESH" || TOPOLOGY == "TORUS" || TOPOLOGY=="RING" || TOPOLOGY == "LINE") begin : mesh        
+    if(TOPOLOGY=="MESH" || TOPOLOGY == "TORUS" || TOPOLOGY=="RING" || TOPOLOGY == "LINE") begin : mesh
    /* verilator lint_on WIDTH */ 
-        mesh_tori_endp_addr_decode #(
-            .TOPOLOGY(TOPOLOGY),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .EAw(EAw)
-        ) mesh_tori_endp_addr_decode (
+        mesh_tori_endp_addr_decode  endp_decode (
             .e_addr(dest_e_addr),
             .ex(),
             .ey(),
@@ -371,42 +341,24 @@ module check_destination_addr #(
         );
         assign  dest_is_valid = valid_dst & valid;
     end else begin : tree
-        assign  dest_is_valid = valid_dst;    
+        assign  dest_is_valid = valid_dst;
     end
     endgenerate
 endmodule
 
 
-module  endp_addr_encoder #(
-    parameter TOPOLOGY ="MESH",
-    parameter T1=4,
-    parameter T2=4,
-    parameter T3=4,
-    parameter EAw=4,
-    parameter NE=16
-)(
-    id,
-    code
-);    
+module  endp_addr_encoder (
+    id_in,
+    code_out
+);
 
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
-    
+    import pronoc_pkg::*;
     localparam NEw= log2(NE);
-    
     input [NEw-1 :0] id;
     output [EAw-1 : 0] code;
     
     generate 
-    /* verilator lint_off WIDTH */ 
-    if(TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE" ) begin : tree
-    /* verilator lint_on WIDTH */ 
+    if( IS_FATTREE  | IS_TREE ) begin : tree
         fattree_addr_encoder #(
             .K(T1),
             .L(T2)
@@ -414,9 +366,7 @@ module  endp_addr_encoder #(
         .id(id),
         .code(code)
         );
-    /* verilator lint_off WIDTH */ 
-    end else if  (TOPOLOGY == "MESH" || TOPOLOGY == "TORUS" || TOPOLOGY == "RING" || TOPOLOGY == "LINE") begin :tori
-    /* verilator lint_on WIDTH */ 
+    end else if  (IS_MESH | IS_TORUS | IS_RING | IS_LINE) begin : tori
         mesh_tori_addr_encoder #(
             .NX(T1),
             .NY(T2),
@@ -428,9 +378,7 @@ module  endp_addr_encoder #(
             .id(id),
             .code(code)
         );
-    /* verilator lint_off WIDTH */ 
-    end else if (TOPOLOGY == "FMESH") begin :fmesh
-    /* verilator lint_on WIDTH */ 
+    end else if (IS_FMESH) begin :fmesh
         fmesh_addr_encoder #(
             .NX(T1),
             .NY(T2),
@@ -441,9 +389,7 @@ module  endp_addr_encoder #(
             .id(id),
             .code(code)
         );
-    /* verilator lint_off WIDTH */ 
-    end else if (TOPOLOGY == "MULTI_MESH") begin :mmesh
-    /* verilator lint_on WIDTH */ 
+    end else if ( IS_MULTI_MESH) begin :mmesh
         multimesh_address_encoder addr_encoder (
             .rid_in(id),
             .addr_st_o(code)
@@ -455,44 +401,25 @@ module  endp_addr_encoder #(
 endmodule
 
 
-module endp_addr_decoder  #(
-    parameter TOPOLOGY ="MESH",
-    parameter T1=4,
-    parameter T2=4,
-    parameter T3=4,
-    parameter EAw=4,
-    parameter NE=16
-) (
-    id,
-    code
+module endp_addr_decoder  (
+    code_in,
+    id_out
 );
-
-    function integer log2;
-    input integer number; begin
-        log2=(number <=1) ? 1: 0;
-        while(2**log2<number) begin
-            log2=log2+1;
-        end
-    end
-    endfunction // log2 
+    import pronoc_pkg::*;
     
     localparam NEw= log2(NE);
-    output [NEw-1 :0] id;
-    input  [EAw-1 : 0] code;
+    output [NEw-1 :0] id_out;
+    input  [EAw-1 : 0] code_in;
     generate 
-    /* verilator lint_off WIDTH */ 
-    if(TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE" ) begin : tree
-    /* verilator lint_on WIDTH */ 
+    if(IS_FATTREE | IS_TREE ) begin : tree
         fattree_addr_decoder #(
             .K(T1),
             .L(T2)
         )decoder(
-            .id(id),
-            .code(code)
+            .id(id_out),
+            .code(code_in)
         );
-    /* verilator lint_off WIDTH */     
-    end else if  (TOPOLOGY == "MESH" || TOPOLOGY == "TORUS" || TOPOLOGY == "RING" || TOPOLOGY == "LINE") begin :tori
-    /* verilator lint_on WIDTH */      
+    end else if  ( IS_MESH | IS_TORUS | IS_RING | IS_LINE ) begin :tori
         mesh_tori_addr_coder #(
             .TOPOLOGY(TOPOLOGY),
             .NX    (T1   ), 
@@ -501,12 +428,10 @@ module endp_addr_decoder  #(
             .NE    (NE   ), 
             .EAw   (EAw  )
         ) addr_coder (
-            .id    (id   ), 
-            .code  (code )
+            .id    (id_out), 
+            .code  (code_in )
         );
-      /* verilator lint_off WIDTH */          
-    end else if (TOPOLOGY == "FMESH") begin :fmesh
-      /* verilator lint_on WIDTH */   
+    end else if (IS_FMESH) begin :fmesh
         fmesh_addr_coder #(
             .NX(T1),
             .NY(T2),
@@ -514,18 +439,16 @@ module endp_addr_decoder  #(
             .NE(NE),
             .EAw(EAw)
         ) addr_coder (
-            .id(id),
-            .code(code)
+            .id(id_out),
+            .code(code_in)
         );
-    /* verilator lint_off WIDTH */ 
-    end else if (TOPOLOGY == "MULTI_MESH") begin 
-    /* verilator lint_on WIDTH */ 
+    end else if ( IS_MULTI_MESH) begin 
         multimesh_address_decoder addr_coder (
-            .rid_out(id),
-            .addr_st_i(code)
+            .rid_out(id_out),
+            .addr_st_i(code_in)
         );
     end else begin :custom
-        assign id = code;
+        assign id_out = code_in;
     end
     endgenerate
 endmodule  

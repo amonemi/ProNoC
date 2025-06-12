@@ -404,16 +404,8 @@ module input_queue_per_port #(
     for (i=0; i<V; i=i+1) begin : O_
         assign assigned_onc_one_hot [i] = assigned_ovc_num[(i+1)*V-1 : i*V];
     end
-    /* verilator lint_off WIDTH */  
-    if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && (T3>1) && CAST_TYPE== "UNICAST") begin : multi_local
-    /* verilator lint_on WIDTH */  
-        mesh_tori_endp_addr_decode #(
-            .TOPOLOGY(TOPOLOGY),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .EAw(EAw)
-        ) endp_addr_decode (
+    if (( IS_RING | IS_LINE | IS_MESH | IS_TORUS) & (T3 > 1) & IS_UNICAST) begin : multi_local
+        mesh_tori_endp_addr_decode endp_addr_decode (
             .e_addr(dest_e_addr_in),
             .ex( ),
             .ey( ),
@@ -421,16 +413,8 @@ module input_queue_per_port #(
             .valid( )
         );
     end :multi_local
-    /* verilator lint_off WIDTH */  
-    if ( TOPOLOGY == "FMESH" && CAST_TYPE== "UNICAST" ) begin : fmesh
-    /* verilator lint_on WIDTH */
-        
-        fmesh_endp_addr_decode #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .EAw(EAw)
-        ) endp_addr_decode (
+    if ( IS_FMESH & IS_UNICAST ) begin : fmesh
+        fmesh_endp_addr_decode  endp_addr_decode (
             .e_addr(dest_e_addr_in),
             .ex(),
             .ey(),
@@ -438,9 +422,9 @@ module input_queue_per_port #(
             .valid()
         );
     
-    end    
+    end
     /* verilator lint_off WIDTH */  
-    if(TOPOLOGY=="FATTREE" && ROUTE_NAME == "NCA_STRAIGHT_UP") begin : fat
+    if(IS_FATTREE & (ROUTE_NAME == "NCA_STRAIGHT_UP")) begin : fat
     /* verilator lint_on WIDTH */  
         
         fattree_destport_up_select #(
@@ -500,8 +484,7 @@ module input_queue_per_port #(
         one_hot_to_bin #(.ONE_HOT_WIDTH(V),.BIN_WIDTH(Vw)) conv (
             .one_hot_code(assigned_onc_one_hot[i]), 
             .bin_code(assigned_onc_bin[i])
-        );      
-        
+        );
         
         `ifdef SIMULATION
         //check ivc info
@@ -949,23 +932,10 @@ module input_queue_per_port #(
         end
     end
     
-    /* verilator lint_off WIDTH */
-    if(CAST_TYPE== "UNICAST") begin : unicast
-    /* verilator lint_on WIDTH */
+    if( IS_UNICAST ) begin : unicast
         look_ahead_routing #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .T4(T4),
             .P(P),
-            .RAw(RAw),
-            .EAw(EAw),
-            .DAw(DAw),
-            .DSTPw(DSTPw),
-            .SW_LOC(SW_LOC),
-            .TOPOLOGY(TOPOLOGY),
-            .ROUTE_NAME(ROUTE_NAME),
-            .ROUTE_TYPE(ROUTE_TYPE)
+            .SW_LOC(SW_LOC)
         ) lk_routing (
             .current_r_addr(current_r_addr),
             .neighbors_r_addr(neighbors_r_addr),

@@ -258,16 +258,9 @@ module testbench_noc;
     wire [EAw-1 : 0] current_e_addr [NE-1 : 0];
     generate 
     for(i=0; i< NE; i=i+1) begin : endpoints
-        endp_addr_encoder #(
-            .TOPOLOGY(TOPOLOGY),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .EAw(EAw),
-            .NE(NE)
-        ) encoder (
-            .id(i[NEw-1 : 0]),
-            .code(current_e_addr[i])
+        endp_addr_encoder encoder (
+            .id_in(i[NEw-1 : 0]),
+            .code_out(current_e_addr[i])
         );
         
         traffic_gen_top #(
@@ -304,16 +297,9 @@ module testbench_noc;
             .mcast_dst_num_o(mcast_dst_num[i])
         );
         
-        endp_addr_decoder #(
-            .TOPOLOGY(TOPOLOGY),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .EAw(EAw),
-            .NE(NE)
-        ) decoder (
-            .id(src_id[i]),
-            .code(src_e_addr[i])
+        endp_addr_decoder decoder (
+            .id_out(src_id[i]),
+            .code_in(src_e_addr[i])
         );    
         
         pck_class_in_gen #(

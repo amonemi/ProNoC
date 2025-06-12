@@ -580,24 +580,14 @@ module smart_allocator_per_iport # (
     
     // does the route computation for the current router
     conventional_routing #(
-        .TOPOLOGY        (TOPOLOGY), 
-        .ROUTE_NAME      (ROUTE_NAME), 
-        .ROUTE_TYPE      (ROUTE_TYPE), 
-        .T1              (T1), 
-        .T2              (T2), 
-        .T3              (T3), 
-        .RAw             (RAw), 
-        .EAw             (EAw), 
-        .DAw             (DAw), 
-        .DSTPw           (DSTPw),
         .LOCATED_IN_NI   (LOCATED_IN_NI)
     ) routing (
-        .reset           (reset), 
-        .clk             (clk), 
-        .current_r_addr  (current_r_addr_i), 
-        .src_e_addr       (            ),// needed only for custom routing
-        .dest_e_addr     (smart_chanel_i.dest_e_addr), 
-        .destport        (destport)
+        .reset (reset), 
+        .clk (clk), 
+        .current_r_addr (current_r_addr_i), 
+        .src_e_addr ( ),// needed only for custom routing
+        .dest_e_addr (smart_chanel_i.dest_e_addr), 
+        .destport (destport)
     ); 
     
     pronoc_register #(.W(DSTPw)) reg1 (.D_in(destport), .reset(reset), .clk(clk), .Q_out(smart_destport_o));
@@ -611,24 +601,14 @@ module smart_allocator_per_iport # (
     
     //look ahead routing. take straight next router address as input
     conventional_routing #(
-        .TOPOLOGY        (TOPOLOGY), 
-        .ROUTE_NAME      (ROUTE_NAME), 
-        .ROUTE_TYPE      (ROUTE_TYPE), 
-        .T1              (T1), 
-        .T2              (T2), 
-        .T3              (T3), 
-        .RAw             (RAw), 
-        .EAw             (EAw), 
-        .DAw             (DAw),
-        .DSTPw           (DSTPw),
         .LOCATED_IN_NI   (LOCATED_IN_NI)
     ) lkrouting (
-        .reset           (reset), 
-        .clk             (clk), 
+        .reset (reset), 
+        .clk (clk), 
         .current_r_addr  (neighbors_r_addr_i[SS_PORT_LOC]), 
-        .src_e_addr       (            ),// needed only for custom routing
-        .dest_e_addr     (smart_chanel_i.dest_e_addr), 
-        .destport        (lkdestport)
+        .src_e_addr ( ),// needed only for custom routing
+        .dest_e_addr (smart_chanel_i.dest_e_addr), 
+        .destport (lkdestport)
     ); 
     
     pronoc_register #(.W(DSTPw)) reg2 (.D_in(lkdestport), .reset(reset), .clk(clk), .Q_out(smart_lk_destport_o));

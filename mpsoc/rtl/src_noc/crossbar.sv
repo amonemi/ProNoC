@@ -26,13 +26,7 @@
 **************************************************************/
 
 module crossbar #(
-    parameter TOPOLOGY = "MESH",
-    parameter V    = 4,     // vc_num_per_port
-    parameter P    = 5,     // router port num
-    parameter Fw   = 36,
-    parameter MUX_TYPE="BINARY",  //"ONE_HOT" or "BINARY"
-    parameter SSA_EN= 1, // 1: enable SSA, 0: disable SSA
-    parameter SELF_LOOP_EN= 0
+    parameter P = 5// router port num
 )(
     granted_dest_port_all,
     flit_in_all,
@@ -40,14 +34,7 @@ module crossbar #(
     flit_out_wr_all,
     ssa_flit_wr_all
 );
-    function integer log2;
-    input integer number; begin
-        log2=(number <=1) ? 1: 0;
-        while(2**log2<number) begin
-            log2=log2+1;
-        end
-    end   
-    endfunction // log2 
+    import pronoc_pkg::*;
     
     localparam 
         PV = V * P,
@@ -109,9 +96,7 @@ module crossbar #(
             assign mux_sel[i]= mux_sel_pre[i];
         end
         
-        /* verilator lint_off WIDTH */
-        if (MUX_TYPE == "ONE_HOT") begin : one_hot_gen
-        /* verilator lint_on WIDTH */
+        if (IS_ONE_HOT_MUX) begin : one_hot_gen
             onehot_mux_1D #(
                 .W (Fw),
                 .N (P_1)

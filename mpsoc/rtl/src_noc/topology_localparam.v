@@ -34,7 +34,8 @@
         IS_BROADCAST_PARTIAL = (CAST_TYPE == "BROADCAST_PARTIAL"),
         IS_UNICAST = (CAST_TYPE == "UNICAST"),
         IS_BROADCAST_FULL = (CAST_TYPE == "BROADCAST_FULL"),
-        IS_DETERMINISTIC = (ROUTE_TYPE == "DETERMINISTIC");
+        IS_DETERMINISTIC = (ROUTE_TYPE == "DETERMINISTIC"),
+        IS_ONE_HOT_MUX = (MUX_TYPE=="ONE_HOT");
         /* verilator lint_on WIDTH */
     
     //MESH, TORUS Topology p=5

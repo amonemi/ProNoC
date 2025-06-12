@@ -86,7 +86,7 @@ module star_conventional_routing #(
         end
     endfunction // log2 
     
-    localparam EAw = log2(NE);      
+    localparam EAw = log2(NE);
     
     input   [EAw-1   :0] dest_e_addr;
     output  [EAw-1   :0] destport;

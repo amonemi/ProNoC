@@ -263,13 +263,7 @@ module piton_mesh_pronoc_wrap (
     genvar i;
     generate
     for (i=0; i<NE;i++) begin :E_
-        mesh_tori_router_addr_decode #(
-            .TOPOLOGY(TOPOLOGY),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .RAw(RAw)
-        ) r_addr_decode  (
+        mesh_tori_router_addr_decode  r_addr_decode  (
             .r_addr(i[RAw-1:0]),
             .rx(current_x[i]),
             .ry(current_y[i]),

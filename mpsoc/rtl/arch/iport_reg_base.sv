@@ -258,14 +258,7 @@ generate
     /* verilator lint_off WIDTH */  
     if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && (T3>1)) begin : multi_local
     /* verilator lint_on WIDTH */  
-        mesh_tori_endp_addr_decode #(
-            .TOPOLOGY("MESH"),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .EAw(EAw)
-        )
-        endp_addr_decode
+        mesh_tori_endp_addr_decode endp_addr_decode
         (
             .e_addr(dest_e_addr_in),
             .ex( ),
@@ -273,7 +266,7 @@ generate
             .el(endp_l_in),
             .valid( )
         );
-   end
+    end
 
     /* verilator lint_off WIDTH */  
     if(TOPOLOGY=="FATTREE" && ROUTE_NAME == "NCA_STRAIGHT_UP") begin : fat
@@ -664,18 +657,9 @@ generate
 endgenerate    
 
     look_ahead_routing #(
-    	.T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .T4(T4), 
-        .P(P),       
-        .RAw(RAw),  
-        .EAw(EAw), 
-    	.DSTPw(DSTPw),
-    	.SW_LOC(SW_LOC),
-    	.TOPOLOGY(TOPOLOGY),
-    	.ROUTE_NAME(ROUTE_NAME),
-    	.ROUTE_TYPE(ROUTE_TYPE)
+        .P(P),
+    	.SW_LOC(SW_LOC)
+    	
     ) lk_routing (
         .current_r_addr(current_r_addr),
         .neighbors_r_addr(neighbors_r_addr),

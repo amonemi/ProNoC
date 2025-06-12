@@ -148,16 +148,9 @@ module  pck_dst_gen  #(
         reg  [PCK_SIZw-1 : 0] pck_siz_tmp;
         wire [NEw-1 : 0] unicast_id_num;  
         
-        endp_addr_decoder  #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .NE(NE),
-            .EAw(EAw),
-            .TOPOLOGY(TOPOLOGY)
-        ) enc (
-            .code(unicast_dest_e_addr),
-            .id(unicast_id_num)
+        endp_addr_decoder enc (
+            .code_in(unicast_dest_e_addr),
+            .id_out(unicast_id_num)
         );
         
         pck_size_gen #(
@@ -357,13 +350,7 @@ module two_dimension_pck_dst_gen
     wire [NYw-1 : 0] dest_y;
     wire [NLw-1  : 0] dest_l;
     
-    mesh_tori_endp_addr_decode #(
-        .TOPOLOGY(TOPOLOGY),
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .EAw(EAw)
-    ) src_addr_decode (
+    mesh_tori_endp_addr_decode src_addr_decode (
         .e_addr(current_e_addr),
         .ex(current_x),
         .ey(current_y),
@@ -385,16 +372,9 @@ module two_dimension_pck_dst_gen
             end
         end
         assign dest_ip_num = rnd_reg;
-        endp_addr_encoder #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .NE(NE),
-            .EAw(EAw),
-            .TOPOLOGY(TOPOLOGY)
-        ) addr_encoder (
-            .id(dest_ip_num),
-            .code(dest_e_addr)
+        endp_addr_encoder addr_encoder (
+            .id_in(dest_ip_num),
+            .code_out(dest_e_addr)
         );
         
     end else if (TRAFFIC == "HOTSPOT") begin 
@@ -411,16 +391,9 @@ module two_dimension_pck_dst_gen
             .core_num(core_num),
             .off_flag(off_flag)
         );
-        endp_addr_encoder #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .NE(NE),
-            .EAw(EAw),
-            .TOPOLOGY(TOPOLOGY)
-        ) addr_encoder (
-            .id(dest_ip_num),
-            .code(dest_e_addr)
+        endp_addr_encoder addr_encoder (
+            .id_in(dest_ip_num),
+            .code_out(dest_e_addr)
         ); 
     end else if( TRAFFIC == "TRANSPOSE1") begin 
         assign dest_x   = NX-current_y-1;
@@ -428,17 +401,10 @@ module two_dimension_pck_dst_gen
         assign dest_l   = NL-current_l-1; 
         assign dest_e_addr = (T3==1)? {dest_y,dest_x} : {dest_l,dest_y,dest_x};
         
-        endp_addr_decoder  #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .NE(NE),
-            .EAw(EAw),
-            .TOPOLOGY(TOPOLOGY)
-        )enc
+        endp_addr_decoder enc
         (
-            .code(dest_e_addr),
-            .id(dest_ip_num)
+            .code_in(dest_e_addr),
+            .id_out(dest_ip_num)
         );
         
     end else if( TRAFFIC == "TRANSPOSE2") begin :transpose2
@@ -446,33 +412,19 @@ module two_dimension_pck_dst_gen
         assign dest_y   = current_x;
         assign dest_l   = current_l;
         assign dest_e_addr = (T3==1)? {dest_y,dest_x} : {dest_l,dest_y,dest_x};
-        endp_addr_decoder  #(
-                .T1(T1),
-                .T2(T2),
-                .T3(T3),
-                .NE(NE),
-                .EAw(EAw),
-                .TOPOLOGY(TOPOLOGY)
-            )enc (
-                .code(dest_e_addr),
-                .id(dest_ip_num)
-            );
+        endp_addr_decoder  enc (
+            .code_in(dest_e_addr),
+            .id_out(dest_ip_num)
+        );
     end  else if( TRAFFIC == "BIT_REVERSE") begin :bitreverse
         
         for(i=0; i<(EAw); i=i+1'b1) begin :lp//reverse the address
             assign dest_ip_num[i]  = current_e_addr [((EAw)-1)-i];
         end
         
-        endp_addr_encoder #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .NE(NE),
-            .EAw(EAw),
-            .TOPOLOGY(TOPOLOGY)
-        ) addr_encoder(
-            .id(dest_ip_num),
-            .code(dest_e_addr)
+        endp_addr_encoder  addr_encoder(
+            .id_in(dest_ip_num),
+            .code_out(dest_e_addr)
         );
         
     end  else if( TRAFFIC == "BIT_COMPLEMENT") begin :bitcomp
@@ -480,16 +432,9 @@ module two_dimension_pck_dst_gen
         assign dest_y   = ~current_y;  
         assign dest_l   = ~dest_l;
         assign dest_e_addr = (T3==1)? {dest_y,dest_x} : {dest_l,dest_y,dest_x};
-        endp_addr_decoder  #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .NE(NE),
-            .EAw(EAw),
-            .TOPOLOGY(TOPOLOGY)
-        ) enc (
-            .code(dest_e_addr),
-            .id(dest_ip_num)
+        endp_addr_decoder  enc (
+            .code_in(dest_e_addr),
+            .id_out(dest_ip_num)
         );
     end else if( TRAFFIC == "TORNADO" ) begin :tornado
         //[(x+(k/2-1)) mod k, (y+(k/2-1)) mod k],
@@ -498,16 +443,9 @@ module two_dimension_pck_dst_gen
         assign dest_l   = current_l;
         assign dest_e_addr = (T3==1)? {dest_y,dest_x} : {dest_l,dest_y,dest_x};
         
-        endp_addr_decoder  #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .NE(NE),
-            .EAw(EAw),
-            .TOPOLOGY(TOPOLOGY)
-        ) enc (
-            .code(dest_e_addr),
-            .id(dest_ip_num)
+        endp_addr_decoder enc (
+            .code_in(dest_e_addr),
+            .id_out(dest_ip_num)
         );
     end else if( TRAFFIC == "NEIGHBOR")  begin :neighbor
         //dx = sx + 1 mod k
@@ -515,31 +453,17 @@ module two_dimension_pck_dst_gen
         assign dest_y = (current_y + 1) >= NY? 0 : (current_y + 1);
         assign dest_l = current_l;
         assign dest_e_addr = (T3==1)? {dest_y,dest_x} : {dest_l,dest_y,dest_x};
-        endp_addr_decoder  #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .NE(NE),
-            .EAw(EAw),
-            .TOPOLOGY(TOPOLOGY)
-        )enc(
-            .code(dest_e_addr),
-            .id(dest_ip_num)
+        endp_addr_decoder enc(
+            .code_in(dest_e_addr),
+            .id_out(dest_ip_num)
         );
     end else if( TRAFFIC == "SHUFFLE") begin: shuffle
         //di = siÃ¢ÂÂ1 mod b
         for(i=1; i<(EAw); i=i+1'b1) begin :lp//reverse the address
             assign dest_ip_num[i]  = current_e_addr [i-1];
         end
-        assign dest_ip_num[0]  = current_e_addr [EAw-1];        
-        endp_addr_encoder #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .NE(NE),
-            .EAw(EAw),
-            .TOPOLOGY(TOPOLOGY)
-        ) addr_encoder(
+        assign dest_ip_num[0]  = current_e_addr [EAw-1];
+        endp_addr_encoder  addr_encoder(
             .id(dest_ip_num),
             .code(dest_e_addr)
         );
@@ -548,31 +472,17 @@ module two_dimension_pck_dst_gen
         for(i=0; i<(EAw-1); i=i+1'b1) begin :lp//reverse the address
             assign dest_ip_num[i]  = current_e_addr [i+1];
         end
-        assign dest_ip_num[EAw-1]  = current_e_addr [0];        
-        endp_addr_encoder #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .NE(NE),
-            .EAw(EAw),
-            .TOPOLOGY(TOPOLOGY)
-        ) addr_encoder(
-            .id(dest_ip_num),
-            .code(dest_e_addr)
+        assign dest_ip_num[EAw-1]  = current_e_addr [0];
+        endp_addr_encoder addr_encoder(
+            .id_in(dest_ip_num),
+            .code_out(dest_e_addr)
         ); 
     end else if(TRAFFIC == "CUSTOM" )begin 
         
         assign dest_ip_num = custom_traffic_t;
-        endp_addr_encoder #(
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .NE(NE),
-            .EAw(EAw),
-            .TOPOLOGY(TOPOLOGY)
-        ) addr_encoder (
-            .id(dest_ip_num),
-            .code(dest_e_addr)
+        endp_addr_encoder addr_encoder (
+            .id_in(dest_ip_num),
+            .code_out(dest_e_addr)
         );
         assign  off_flag  =  ~custom_traffic_en;    
         
@@ -685,16 +595,9 @@ module one_dimension_pck_dst_gen #(
         assign dest_ip_num = custom_traffic_t;
     end
     
-    endp_addr_encoder #(
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .NE(NE),
-        .EAw(EAw),
-        .TOPOLOGY(TOPOLOGY)
-    )  addr_encoder  (
-        .id(dest_ip_num),
-        .code(dest_e_addr)
+    endp_addr_encoder  addr_encoder  (
+        .id_in(dest_ip_num),
+        .code_out(dest_e_addr)
     );
     
     wire valid_temp  =    (dest_ip_num  <= (NE-1));    

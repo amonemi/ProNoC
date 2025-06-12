@@ -340,13 +340,7 @@ module router_two_stage #(
     pronoc_register #(.W(PP_1)) reg2 (.D_in(granted_dest_port_all ), .Q_out(granted_dest_port_all_delayed), .reset(reset), .clk(clk));
     
     crossbar #(
-        .TOPOLOGY(TOPOLOGY),
-        .V (V),     // vc_num_per_port
-        .P (P),     // router port num
-        .Fw (Fw),
-        .MUX_TYPE (MUX_TYPE),
-        .SSA_EN (SSA_EN),
-        .SELF_LOOP_EN(SELF_LOOP_EN)
+        .P (P) // router port num
     ) the_crossbar (
         .granted_dest_port_all (granted_dest_port_all_delayed),
         .flit_in_all (iport_flit_out_all),

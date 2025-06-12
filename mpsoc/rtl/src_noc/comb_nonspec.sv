@@ -146,7 +146,7 @@ module comb_nonspec_allocator # (
         //if(VC_ARBITER_TYPE=="RRA")begin :round_robin
         arbiter #(
             .ARBITER_WIDTH(V)
-        ) ovc_arbiter (    
+        ) ovc_arbiter (
             .clk (clk), 
             .reset (reset), 
             .request (masked_non_assigned_request    [i]), 

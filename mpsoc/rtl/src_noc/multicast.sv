@@ -93,21 +93,15 @@ module multicast_routing_mesh    #(
     //Only one-bit is asserted for each local_p[i]
     wire [NE-1 : 0] local_p [NL-1 : 0];
     wire   [RXw-1 : 0]  current_rx;
-    wire   [RYw-1 : 0]  current_ry;                  
-    mesh_tori_router_addr_decode #(
-        .TOPOLOGY(TOPOLOGY),
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .RAw(RAw)
-    ) router_addr_decode (
+    wire   [RYw-1 : 0]  current_ry;
+    mesh_tori_router_addr_decode  router_addr_decode (
         .r_addr(current_r_addr),
         .rx(current_rx),
         .ry(current_ry),
         .valid( )
     );
     wire [NX-1 : 0] row_has_any_dest;
-    wire [NE-1 : 0] dest_mcast_all_endp;            
+    wire [NE-1 : 0] dest_mcast_all_endp;
     mcast_dest_list_decode decode (
         .dest_e_addr(dest_e_addr),
         .dest_o(dest_mcast_all_endp),
@@ -230,13 +224,8 @@ module multicast_routing_fmesh #(
     wire [NE-1 : 0] y_plus,y_min;
     //Only one-bit is asserted for each local_p[i]
     wire [NE-1 : 0] local_p [MAX_P_FMESH-1 : 0];
-    mesh_tori_router_addr_decode #(
-        .TOPOLOGY(TOPOLOGY),
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .RAw(RAw)
-    )router_addr_decode(
+    mesh_tori_router_addr_decode router_addr_decode
+    (
         .r_addr(current_r_addr),
         .rx(current_rx),
         .ry(current_ry),
@@ -244,21 +233,21 @@ module multicast_routing_fmesh #(
     );
     
     wire [NX-1 : 0] row_has_any_dest;
-    wire [NE-1 : 0] dest_mcast_all_endp;            
-
+    wire [NE-1 : 0] dest_mcast_all_endp;
+    
     mcast_dest_list_decode decode (
         .dest_e_addr(dest_e_addr),
         .dest_o(dest_mcast_all_endp),
         .row_has_any_dest(row_has_any_dest),
         .is_unicast()
     );
-
+    
     genvar i,j;
     generate
     for(i=0; i< NX; i=i+1) begin : X_
-        assign x_plus[i]  = (current_rx    >    i);
+        assign x_plus[i]  = (current_rx > i);
         /* verilator lint_off UNSIGNED */
-        assign x_minus[i] = (current_rx    <    i);
+        assign x_minus[i] = (current_rx < i);
         /* verilator lint_on UNSIGNED */
     end
     //get all endp addresses located in the same x
@@ -365,17 +354,10 @@ module mcast_dest_list_decode  (
         reg  [NE-1 : 0]  dest_o_uni;
         wire [NEw-1 : 0] unicast_id;
         assign is_unicast = not_in_cast_list;
-        endp_addr_decoder  #(
-            .TOPOLOGY (TOPOLOGY),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .EAw(EAw),
-            .NE(NE)
-        )  decoder (
-            .code(unicast_code),
-            .id(unicast_id)
-        );            
+        endp_addr_decoder decoder (
+            .code_in(unicast_code),
+            .id_out(unicast_id)
+        );
         
         always_comb begin 
             dest_o_uni = {NE{1'b0}};
@@ -396,18 +378,11 @@ module mcast_dest_list_decode  (
         assign is_unicast =not_broad_casted;
         wire [NE-1 : 0]  dest_o_multi;
         reg  [NE-1 : 0]  dest_o_uni;
-        wire [NEw-1 : 0] unicast_id;        
-        endp_addr_decoder  #(
-            .TOPOLOGY (TOPOLOGY),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .EAw(EAw),
-            .NE(NE)
-        ) decoder (
-            .code(unicast_code),
-            .id(unicast_id)                
-        );            
+        wire [NEw-1 : 0] unicast_id;
+        endp_addr_decoder  decoder (
+            .code_in(unicast_code),
+            .id_out(unicast_id)
+        );
         
         always_comb begin 
             dest_o_uni = {NE{1'b0}};
@@ -424,17 +399,10 @@ module mcast_dest_list_decode  (
         reg  [NE-1 : 0]  dest_o_uni;
         wire [NEw-1 : 0] unicast_id;
         
-        endp_addr_decoder  #(
-            .TOPOLOGY (TOPOLOGY),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .EAw(EAw),
-            .NE(NE)
-        ) decoder (
-            .code(unicast_code),
-            .id(unicast_id)                
-        );            
+        endp_addr_decoder decoder (
+            .code_in(unicast_code),
+            .id_out(unicast_id)
+        );
         
         always_comb begin 
             dest_o_uni = {NE{1'b0}};
@@ -442,7 +410,7 @@ module mcast_dest_list_decode  (
         end
         assign dest_o = (not_broad_casted)? dest_o_uni : MCAST_ENDP_LIST;
     end
-    endgenerate        
+    endgenerate
 endmodule
 
 

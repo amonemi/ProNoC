@@ -669,25 +669,12 @@ module mesh_torus_distance_gen (
 );
     import pronoc_pkg::*;
     
-    localparam 
-        NYY =(IS_RING | IS_LINE )? 1 : T2,
-        Xw = log2(T1),   // number of node in x axis
-        Yw = log2(NYY);    // number of node in y axis 
-    localparam [Xw : 0] NX = T1;
-    localparam [Yw : 0] NY = NYY [Yw : 0];
-    
     input [EAw-1 : 0] src_e_addr;
-    input [EAw-1 : 0] dest_e_addr;               
-    output[DISTw-1: 0]distance;                     
-    wire [Xw-1 : 0]src_x,dest_x;
-    wire [Yw-1 : 0]src_y,dest_y;
-    mesh_tori_endp_addr_decode #(
-        .TOPOLOGY(TOPOLOGY),
-        .T1(T1),
-        .T2(NYY),
-        .T3(T3),
-        .EAw(EAw)
-    ) src_addr_decode (
+    input [EAw-1 : 0] dest_e_addr;
+    output[DISTw-1: 0]distance;
+    wire [NXw-1 : 0]src_x,dest_x;
+    wire [NYw-1 : 0]src_y,dest_y;
+    mesh_tori_endp_addr_decode src_addr_decode (
         .e_addr(src_e_addr),
         .ex(src_x),
         .ey(src_y),
@@ -695,13 +682,7 @@ module mesh_torus_distance_gen (
         .valid()
     );
     
-    mesh_tori_endp_addr_decode #(
-        .TOPOLOGY(TOPOLOGY),
-        .T1(T1),
-        .T2(NYY),
-        .T3(T3),
-        .EAw(EAw)
-    ) dest_addr_decode (
+    mesh_tori_endp_addr_decode  dest_addr_decode (
         .e_addr(dest_e_addr),
         .ex(dest_x),
         .ey(dest_y),
@@ -709,8 +690,8 @@ module mesh_torus_distance_gen (
         .valid()
     );
     
-    reg [Xw-1 : 0] x_offset;
-    reg [Yw-1 : 0] y_offset;
+    reg [NXw-1 : 0] x_offset;
+    reg [NYw-1 : 0] y_offset;
     generate 
     if( IS_MESH | IS_LINE) begin : oneD
         always_comb begin 
@@ -721,10 +702,10 @@ module mesh_torus_distance_gen (
         wire tranc_x_plus,tranc_x_min,tranc_y_plus,tranc_y_min,same_x,same_y;
         /* verilator lint_off WIDTH */
         always_comb begin 
-            x_offset= {Xw{1'b0}};
-            y_offset= {Yw{1'b0}};
+            x_offset= {NXw{1'b0}};
+            y_offset= {NYw{1'b0}};
             //x_offset
-            if(same_x) x_offset= {Xw{1'b0}};
+            if(same_x) x_offset= {NXw{1'b0}};
             else if(tranc_x_plus) begin 
                 if(dest_x   > src_x)    x_offset= dest_x-src_x; 
                 else                    x_offset= (NX-src_x)+dest_x;
@@ -734,7 +715,7 @@ module mesh_torus_distance_gen (
                 else                     x_offset= src_x+(NX-dest_x);
             end
             //y_offset
-            if(same_y) y_offset= {Yw{1'b0}};
+            if(same_y) y_offset= {NYw{1'b0}};
             else if(tranc_y_plus) begin 
                 if(dest_y   > src_y)    y_offset= dest_y-src_y; 
                 else                    y_offset= (NY-src_y)+dest_y;
@@ -874,33 +855,17 @@ module line_ring_ssa_check_destport #(
 endmodule
 
 
-module mesh_tori_router_addr_decode #(
-    parameter TOPOLOGY = "MESH",
-    parameter T1=4,
-    parameter T2=4,
-    parameter T3=4,
-    parameter RAw=6
-)(
+module mesh_tori_router_addr_decode (
     r_addr,
     rx,
     ry,
     valid
 );
-    
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
+    import pronoc_pkg::*;
     
     localparam
-        NX = T1,
-        NY = T2,
         RXw = log2(NX),    // number of node in x axis
-        RYw = (TOPOLOGY=="RING" || TOPOLOGY == "LINE") ? 1 : log2(NY);    // number of node in y axis
+        RYw = (IS_RING | IS_LINE) ? 1 : log2(NY);    // number of node in y axis
     /* verilator lint_off WIDTH */ 
     localparam [RXw-1 : 0]    MAXX = (NX-1); 
     localparam [RYw-1 : 0]    MAXY = (NY-1); 
@@ -912,11 +877,11 @@ module mesh_tori_router_addr_decode #(
     output valid;
     
     generate 
-    if ((TOPOLOGY == "RING") || (TOPOLOGY == "LINE")) begin :oneD 
-        assign rx = r_addr;   
+    if (IS_RING | IS_LINE) begin :oneD 
+        assign rx = r_addr;
         assign ry = 1'b0;
     end else begin : twoD
-        assign {ry,rx} = r_addr;    
+        assign {ry,rx} = r_addr;
     end
     endgenerate
     /* verilator lint_off CMPCONST */
@@ -925,34 +890,18 @@ module mesh_tori_router_addr_decode #(
 endmodule
 
 
-module mesh_tori_endp_addr_decode #(
-    parameter TOPOLOGY = "MESH",
-    parameter T1=4,
-    parameter T2=4,
-    parameter T3=4,
-    parameter EAw=9
-)(
+module mesh_tori_endp_addr_decode 
+(
     e_addr,
     ex,
     ey,
     el,
     valid
 );
-
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
+    import pronoc_pkg::*;
     localparam
-        NX = T1,
-        NY = T2,
-        NL = T3, 
         EXw = log2(NX),    // number of node in x axis
-        EYw = (TOPOLOGY=="RING" || TOPOLOGY == "LINE")? 1 : log2(NY),
+        EYw = (IS_RING | IS_LINE) ? 1 : log2(NY),
         ELw = log2(NL);    // number of node in y axis
     /* verilator lint_off WIDTH */ 
     localparam [EXw-1 : 0]    MAXX = (NX-1); 
@@ -967,9 +916,9 @@ module mesh_tori_endp_addr_decode #(
     output valid;
     
     generate 
-    if ((TOPOLOGY == "RING") || (TOPOLOGY == "LINE")) begin :oneD 
-        if(NL==1)begin:one_local 
-            assign ex = e_addr;   
+    if (IS_RING | IS_LINE) begin :oneD 
+        if(NL==1) begin:one_local
+            assign ex = e_addr;
             assign ey = 1'b0;
             assign el = 1'b0;
             /* verilator lint_off CMPCONST */

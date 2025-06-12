@@ -113,7 +113,7 @@ module synfull_top;
         assign pck_injct_in[i].init_weight = _pck_injct_in[i].init_weight;
         assign pck_injct_in[i].vc = _pck_injct_in[i].vc;
         
-        endp_addr_encoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) encode1 ( .id(i[NEw-1 :0]), .code(current_e_addr[i]));
+        endp_addr_encoder encode1 ( .id_in(i[NEw-1 :0]), .code_out(current_e_addr[i]));
         packet_injector  pck_inj (
             //general
             .current_e_addr(current_e_addr[i]),
@@ -126,7 +126,7 @@ module synfull_top;
             .pck_injct_in(pck_injct_in[i]),
             .pck_injct_out(pck_injct_out[i])
         );
-        endp_addr_encoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw), .NE(NE)) encode2 ( .id(dest_id[i]), .code(pck_injct_in[i].endp_addr));
+        endp_addr_encoder encode2 ( .id_in(dest_id[i]), .code_out(pck_injct_in[i].endp_addr));
         reg [31:0]k;
         
         initial begin 

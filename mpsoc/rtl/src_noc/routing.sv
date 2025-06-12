@@ -28,17 +28,7 @@
 
 
 module conventional_routing #(
-    parameter TOPOLOGY          = "MESH",
-    parameter ROUTE_NAME        = "XY",
-    parameter ROUTE_TYPE        = "DETERMINISTIC",
-    parameter T1                = 4,
-    parameter T2                = 4,
-    parameter T3                = 4,
-    parameter RAw               = 3,
-    parameter EAw               = 3,
-    parameter DAw               = EAw,
-    parameter DSTPw             = 4,
-    parameter LOCATED_IN_NI     = 1 // only needed for mesh and odd-even routing
+    parameter LOCATED_IN_NI = 1 // only needed for mesh and odd-even routing
 )(
     reset,
     clk,
@@ -48,14 +38,7 @@ module conventional_routing #(
     destport
 );
 
-    function integer log2;
-    input integer number; begin
-        log2=(number <=1) ? 1: 0;
-        while(2**log2<number) begin
-            log2=log2+1;
-        end
-    end
-    endfunction // log2
+    import pronoc_pkg::*;
     
     input  reset,clk;
     input   [RAw-1   :0] current_r_addr;
@@ -64,42 +47,25 @@ module conventional_routing #(
     output  [DSTPw-1 :0] destport;
     
     generate
-    /* verilator lint_off WIDTH */
-    if(TOPOLOGY == "MESH" || TOPOLOGY == "FMESH" || TOPOLOGY == "TORUS"  || TOPOLOGY ==  "RING" || TOPOLOGY ==  "LINE") begin :mesh_torus
-    /* verilator lint_on WIDTH */    
+    if( IS_MESH | IS_FMESH | IS_TORUS | IS_RING | IS_LINE ) begin : mesh_torus
         localparam
-            NX = T1,
-            NY = T2,
             RXw = log2(NX),
-            RYw = (TOPOLOGY=="RING" || TOPOLOGY == "LINE") ? 1 :log2(NY),
+            RYw = (IS_RING | IS_LINE) ? 1 :log2(NY),
             EXw = RXw,
-            EYw = (TOPOLOGY=="RING" || TOPOLOGY == "LINE") ? 1 : RYw;
+            EYw =(IS_RING | IS_LINE) ? 1 : RYw;
         wire   [RXw-1   :   0]  current_rx;
         wire   [RYw-1   :   0]  current_ry;
         wire   [EXw-1   :   0]  dest_ex;
         wire   [EYw-1   :   0]  dest_ey;
         
-        mesh_tori_router_addr_decode #(
-            .TOPOLOGY(TOPOLOGY),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .RAw(RAw)
-        )  router_addr_decode  (
+        mesh_tori_router_addr_decode router_addr_decode  (
                 .r_addr(current_r_addr),
                 .rx(current_rx),
                 .ry(current_ry),
                 .valid( )
         );
-        /* verilator lint_off WIDTH */
-        if(TOPOLOGY == "FMESH") begin :fmesh
-        /* verilator lint_on WIDTH */
-            fmesh_endp_addr_decode #(
-                    .T1(T1),
-                    .T2(T2),
-                    .T3(T3),
-                    .EAw(EAw)
-            ) end_addr_decode (
+        if( IS_FMESH) begin :fmesh
+            fmesh_endp_addr_decode end_addr_decode (
                     .e_addr(dest_e_addr),
                     .ex(dest_ex),
                     .ey(dest_ey),
@@ -107,13 +73,7 @@ module conventional_routing #(
                     .valid()
             );
         end else begin : mesh
-            mesh_tori_endp_addr_decode #(
-                .TOPOLOGY(TOPOLOGY),
-                .T1(T1),
-                .T2(T2),
-                .T3(T3),
-                .EAw(EAw)
-            ) end_addr_decode  (
+            mesh_tori_endp_addr_decode end_addr_decode  (
                 .e_addr(dest_e_addr),
                 .ex(dest_ex),
                 .ey(dest_ey),
@@ -130,37 +90,18 @@ module conventional_routing #(
             .dest_y(dest_ey),
             .destport(destport)
         );
-    /* verilator lint_off WIDTH */
-    end else if(TOPOLOGY == "FATTREE" || TOPOLOGY == "TREE" ) begin :tree_based
-    /* verilator lint_on WIDTH */
-        localparam
-            K=T1,
-            L=T2,
-            Kw = log2(K),
-            LKw= L*Kw,
-            Lw = log2(L);
+    end else if(IS_FATTREE | IS_TREE ) begin : ftree
         wire [LKw-1 :0]    current_rx;
         wire [Lw-1  :0]    current_rl;
         
-        fattree_router_addr_decode #(
-            .K(T1),
-            .L(T2)
-        )
-        router_addr_decode
+        fattree_router_addr_decode router_addr_decode
         (
             .r_addr(current_r_addr),
             .rx(current_rx),
             .rl(current_rl)
         );
-        
-        /* verilator lint_off WIDTH */
-        if(TOPOLOGY == "FATTREE" )begin : fattree
-        /* verilator lint_on WIDTH */
-            fattree_conventional_routing #(
-                .ROUTE_NAME(ROUTE_NAME),
-                .K(T1),
-                .L(T2)
-            ) the_conventional_routing (
+        if( IS_FATTREE ) begin : fattree
+            fattree_conventional_routing the_conventional_routing (
                 .reset(reset),
                 .clk(clk),
                 .current_addr_encoded(current_rx),
@@ -168,9 +109,7 @@ module conventional_routing #(
                 .dest_addr_encoded(dest_e_addr),
                 .destport_encoded(destport)
             );
-        /* verilator lint_off WIDTH */
-        end else  if(TOPOLOGY == "TREE" )begin : tree
-        /* verilator lint_on WIDTH */
+        end else if( IS_TREE )begin : tree
             tree_conventional_routing #(
                 .ROUTE_NAME(ROUTE_NAME),
                 .K(T1),
@@ -182,8 +121,7 @@ module conventional_routing #(
                 .destport_encoded(destport)
             );
         end // tree
-    /* verilator lint_off WIDTH */
-    end else if (TOPOLOGY == "STAR") begin : star
+    end else if (IS_STAR) begin : star
     /* verilator lint_on WIDTH */
         star_conventional_routing #(
             .NE(T1)
@@ -191,9 +129,7 @@ module conventional_routing #(
             .dest_e_addr(dest_e_addr),
             .destport(destport)
         );
-    /* verilator lint_off WIDTH */
-    end else if (TOPOLOGY=="MULTI_MESH") begin : multimesh
-    /* verilator lint_on WIDTH */
+    end else if (IS_MULTI_MESH) begin : multimesh
         mesh_cluster_route_xyz  the_conventional_routing  (
             .current_router_addr_i(current_r_addr),
             .destination_router_addr_i(dest_e_addr[EAw-1:0]),
@@ -222,18 +158,7 @@ endmodule
 *************************************/
 module look_ahead_routing #(
     parameter P = 5,
-    parameter T1= 8,
-    parameter T2= 8,
-    parameter T3= 8,
-    parameter T4= 8,
-    parameter RAw = 3,
-    parameter EAw = 3,
-    parameter DAw = 3,
-    parameter DSTPw=P-1,
-    parameter SW_LOC    =0,
-    parameter TOPOLOGY  ="MESH",//"MESH","TORUS"
-    parameter ROUTE_NAME="XY",//
-    parameter ROUTE_TYPE="DETERMINISTIC"// "DETERMINISTIC", "FULL_ADAPTIVE", "PAR_ADAPTIVE"
+    parameter SW_LOC = 0
 )(
     current_r_addr,  //current router  address
     neighbors_r_addr,
@@ -244,24 +169,10 @@ module look_ahead_routing #(
     reset,
     clk
 );
-
-    function integer log2;
-    input integer number; begin
-        log2=(number <=1) ? 1: 0;
-        while(2**log2<number) begin
-            log2=log2+1;
-        end
-    end
-    endfunction // log2
+    import pronoc_pkg::*;
     
     localparam
-        PRAw= P * RAw;
-    localparam
-        //K= T1,
-        //L=T2,
-        Kw = log2(T1),
-        Lw = log2(T2),
-        LKw= T2 * Kw,
+        PRAw= P * RAw,
         PLw = P * Lw,
         PLKw = P * LKw;
     input   [PRAw-1:  0]  neighbors_r_addr;
@@ -270,18 +181,14 @@ module look_ahead_routing #(
     input   [EAw-1   :   0]  src_e_addr;
     input   [DSTPw-1  :   0]  destport_encoded;
     output  [DSTPw-1  :   0]  lkdestport_encoded;
-    input                   reset,clk;
+    input   reset,clk;
     
     genvar i;
     generate
-    /* verilator lint_off WIDTH */
-    if(TOPOLOGY == "MESH" || TOPOLOGY == "FMESH" || TOPOLOGY == "TORUS"  || TOPOLOGY ==  "RING" || TOPOLOGY ==  "LINE")begin :mesh_torus
-    /* verilator lint_on WIDTH */
+    if(IS_MESH | IS_FMESH | IS_TORUS | IS_RING | IS_LINE) begin : mesh_torus
         localparam
-            NX = T1,
-            NY = T2,
             RXw = log2(NX),
-            RYw = (TOPOLOGY=="RING" || TOPOLOGY == "LINE")? 1 : log2(NY),
+            RYw = (IS_RING | IS_LINE) ? 1 : log2(NY),
             EXw = RXw,
             EYw = RYw;
         wire   [RXw-1   :   0]  current_rx;
@@ -289,27 +196,14 @@ module look_ahead_routing #(
         wire   [EXw-1   :   0]  dest_ex;
         wire   [EYw-1   :   0]  dest_ey;
         localparam SL_SW_LOC = ( SW_LOC > P-T3) ? 0 : SW_LOC; //single_local
-        mesh_tori_router_addr_decode #(
-            .TOPOLOGY(TOPOLOGY),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .RAw(RAw)
-        ) router_addr_decode (
+        mesh_tori_router_addr_decode router_addr_decode (
             .r_addr(current_r_addr),
             .rx(current_rx),
             .ry(current_ry),
             .valid( )
         );
-         /* verilator lint_off WIDTH */
-        if(TOPOLOGY == "FMESH") begin :fmesh
-         /* verilator lint_on WIDTH */
-            fmesh_endp_addr_decode #(
-                .T1(T1),
-                .T2(T2),
-                .T3(T3),
-                .EAw(EAw)
-            ) end_addr_decode  (
+        if(IS_FMESH) begin :fmesh
+            fmesh_endp_addr_decode end_addr_decode  (
                 .e_addr(dest_e_addr),
                 .ex(dest_ex),
                 .ey(dest_ey),
@@ -317,13 +211,7 @@ module look_ahead_routing #(
                 .valid()
             );
         end else begin :mesh
-            mesh_tori_endp_addr_decode #(
-                .TOPOLOGY(TOPOLOGY),
-                .T1(T1),
-                .T2(T2),
-                .T3(T3),
-                .EAw(EAw)
-            ) end_addr_decode (
+            mesh_tori_endp_addr_decode end_addr_decode (
                 .e_addr(dest_e_addr),
                 .ex(dest_ex),
                 .ey(dest_ey),
@@ -343,9 +231,7 @@ module look_ahead_routing #(
             .reset(reset),
             .clk(clk)
         );
-    /* verilator lint_off WIDTH */
-    end else if (TOPOLOGY == "FATTREE") begin: fat
-    /* verilator lint_on WIDTH */
+    end else if (IS_FATTREE) begin: fat
         wire  [PLKw-1 : 0]  neighbors_rx;
         wire  [PLw-1 : 0]  neighbors_ry;
         for (i=0; i<P; i=i+1) begin : port
@@ -353,10 +239,7 @@ module look_ahead_routing #(
             assign neighbors_ry[(i+1)*Lw-1 : i*Lw]  = neighbors_r_addr[(i+1)*RAw-1: (i*RAw)+LKw];
         end//port
         fattree_look_ahead_routing #(
-            .ROUTE_NAME(ROUTE_NAME),
-            .P(P),
-            .K(T1),
-            .L(T2)            
+            .P(P)
         ) look_ahead_route (
             .destport_encoded(destport_encoded),
             .dest_addr_encoded(dest_e_addr),
@@ -366,9 +249,7 @@ module look_ahead_routing #(
             .reset(reset),
             .clk(clk)
         );
-    /* verilator lint_off WIDTH */
-    end else if (TOPOLOGY == "TREE") begin: tree
-    /* verilator lint_on WIDTH */
+    end else if ( IS_TREE) begin: tree
         wire  [PLKw-1 : 0]  neighbors_rx_tree;
         wire  [PLw-1 : 0]  neighbors_ry_tree;
         for (i=0; i<P; i=i+1) begin : port
@@ -376,10 +257,7 @@ module look_ahead_routing #(
             assign neighbors_ry_tree[(i+1)*Lw-1 : i*Lw]  = neighbors_r_addr[(i+1)*RAw-1: (i*RAw)+LKw];
         end//port
         tree_look_ahead_routing #(
-            .ROUTE_NAME(ROUTE_NAME),
-            .P(P),
-            .L(T2),
-            .K(T1)
+            .P(P)
         )  look_ahead_routing (
             .destport_encoded(destport_encoded),
             .dest_addr_encoded(dest_e_addr),
@@ -389,14 +267,10 @@ module look_ahead_routing #(
             .reset(reset),
             .clk(clk)
         );
-    /* verilator lint_off WIDTH */
-    end else if (TOPOLOGY == "STAR") begin : star
-    /* verilator lint_on WIDTH */
+    end else if (IS_STAR) begin : star
         //look-ahead routing is not needed in star topology as there is only one router
         assign  lkdestport_encoded={DSTPw{1'b0}};
-    /* verilator lint_off WIDTH */
-    end else if (TOPOLOGY == "MULTI_MESH") begin : multimesh
-    /* verilator lint_on WIDTH */
+    end else if (IS_MULTI_MESH) begin : multimesh
         assign  lkdestport_encoded={DSTPw{1'b0}};
     end else begin : custom
         custom_lkh_routing  #(

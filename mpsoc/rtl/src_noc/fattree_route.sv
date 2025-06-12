@@ -300,11 +300,7 @@ endmodule
 /*************************
  *  fattree_conventional_routing 
  * **********************/
-module fattree_conventional_routing #(
-    parameter ROUTE_NAME = "NCA_RND_UP",
-    parameter K   = 2, // number of last level individual router`s endpoints.
-    parameter L   = 2 // Fattree layer number (The height of FT)
-)(
+module fattree_conventional_routing (
     reset,
     clk,
     current_addr_encoded,    // connected to current router x address
@@ -312,18 +308,7 @@ module fattree_conventional_routing #(
     dest_addr_encoded,        // destination address
     destport_encoded    // router output port
 );
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
-    localparam
-        Kw = log2(K),
-        LKw= L*Kw,
-        Lw = log2(L);
+    import pronoc_pkg::*;
     input reset,clk;
     input  [LKw-1 :0]    current_addr_encoded;
     input  [Lw-1  :0]    current_level;    
@@ -387,10 +372,7 @@ endmodule
 *    fattree_look_ahead_routing
 **************************************/
 module fattree_look_ahead_routing #(
-    parameter ROUTE_NAME = "NCA_RND_UP",
-    parameter P = 4,
-    parameter L = 2,
-    parameter K = 2
+    parameter P = 4
 )(
     reset,
     clk,
@@ -398,22 +380,11 @@ module fattree_look_ahead_routing #(
     dest_addr_encoded,
     neighbors_rx,
     neighbors_ry,
-    lkdestport_encoded // look ahead destination port     
+    lkdestport_encoded // look ahead destination port
 );
-    
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
+    import pronoc_pkg::*;
     
     localparam
-        Kw = log2(K),
-        LKw= L*Kw,
-        Lw = log2(L),
         PLw = P * Lw,
         PLKw = P * LKw;
     
@@ -422,16 +393,13 @@ module fattree_look_ahead_routing #(
     input  [PLKw-1 : 0]  neighbors_rx;
     input  [PLw-1 : 0]  neighbors_ry;
     output [K: 0]    lkdestport_encoded;
-    input                   reset,clk;
+    input  reset,clk;
     
     wire  [K :0]    destport_encoded_delayed;
     wire  [LKw-1 :0]    dest_addr_encoded_delayed;
     
     fattree_deterministic_look_ahead_routing #(
-        .P(P),
-        .ROUTE_NAME(ROUTE_NAME),
-        .K(K),
-        .L(L)
+        .P(P)
     ) look_ahead_routing (
         .reset(reset),
         .clk(clk),
@@ -466,10 +434,7 @@ endmodule
 *        deterministic_look_ahead_routing
 **********************************************/
 module  fattree_deterministic_look_ahead_routing #(
-    parameter P=4,
-    parameter ROUTE_NAME = "NCA_RND_UP",
-    parameter K   = 2, // number of last level individual router`s endpoints.
-    parameter L   = 2 // Fattree layer number (The height of FT)
+    parameter P=4
 )(
     reset,
     clk,
@@ -479,21 +444,9 @@ module  fattree_deterministic_look_ahead_routing #(
     neighbors_ry,
     lkdestport_encoded // look ahead destination port     
 );
-
-
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
+    import pronoc_pkg::*;
     
     localparam
-        Kw = log2(K),
-        LKw= L*Kw,
-        Lw = log2(L),
         PLw = P * Lw,
         PLKw = P * LKw;
         
@@ -528,11 +481,7 @@ module  fattree_deterministic_look_ahead_routing #(
         .next_ry(next_level)
     );
     
-    fattree_conventional_routing #(        
-        .ROUTE_NAME(ROUTE_NAME),
-        .K(K),
-        .L(L)        
-    ) conv_routing (
+    fattree_conventional_routing  conv_routing (
         .reset(reset),
         .clk(clk),
         .current_addr_encoded(next_addr_encoded),
@@ -851,31 +800,13 @@ endmodule
  */
 
 
-module fattree_router_addr_decode #(
-    parameter K=4,
-    parameter L=4
-)(
+module fattree_router_addr_decode (
     r_addr,
     rx,
     rl
     //valid
 );
-
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;
-        while(2**log2<number) begin
-            log2=log2+1;
-        end
-    end   
-    endfunction // log2 
-    
-    localparam
-        Kw = log2(K),
-        LKw= L*Kw,
-        Lw = log2(L),
-        RAw= LKw + Lw;
-    
+    import pronoc_pkg::*;
     input   [RAw-1 : 0]   r_addr;
     output  [LKw-1 :0]    rx;
     output  [Lw-1  :0]    rl;

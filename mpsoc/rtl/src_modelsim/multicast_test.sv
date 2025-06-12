@@ -1,13 +1,11 @@
 // synthesis translate_off
 `include "pronoc_def.v"
 
-
 module multicast_test;
     
-
     import pronoc_pkg::*;
     
-    reg     reset ,clk;
+    reg  reset ,clk;
     
     initial begin 
         clk = 1'b0;
@@ -29,15 +27,15 @@ module multicast_test;
         .chan_out_all(chan_out_all),
         .router_event( )
     );
-        
+    
     reg [NEw-1 : 0] dest_id [NE-1 : 0];
     wire [NEw-1: 0] current_e_addr [NE-1 : 0];
-        
+    
     genvar i;
     generate 
     for(i=0; i< NE; i=i+1) begin : endpoints
         
-        endp_addr_encoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) encode1 ( .id(i[NEw-1 :0]), .code(current_e_addr[i]));
+        endp_addr_encoder encode1 ( .id_in(i[NEw-1 :0]), .code_out(current_e_addr[i]));
         
         multicast_injector  pck_inj(
             //general
@@ -50,15 +48,13 @@ module multicast_test;
             //control interafce
             .pck_injct_in(pck_injct_in[i]),
             .pck_injct_out(pck_injct_out[i])
-        );            
-    
-
-        endp_addr_encoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) encode2 ( .id(dest_id[i]), .code(pck_injct_in[i].endp_addr[EAw-1 : 0]));
+        );
         
+        endp_addr_encoder encode2 ( .id_in(dest_id[i]), .code_out(pck_injct_in[i].endp_addr[EAw-1 : 0]));
         
-       reg [31:0]k;
+        reg [31:0]k;
 
-    initial begin 
+        initial begin 
 `ifdef ACTIVE_LOW_RESET_MODE 
         reset = 1'b0;
  `else 
@@ -82,49 +78,25 @@ module multicast_test;
                         
                     pck_injct_in[i].data='h123456789ABCDEFEDCBA987654321+k;
                     pck_injct_in[i].size=3+(k%18);
-                    dest_id[i]=0;                
-                    pck_injct_in[i].pck_wr=1'b1;      
+                    dest_id[i]=0;
+                    pck_injct_in[i].pck_wr=1'b1;
                     @(posedge clk)    #1 k++;
                     pck_injct_in[i].pck_wr=1'b0;
                     @(posedge clk)    #1 k++;
-
             //    end
-
                 #10000
             @(posedge clk) $stop;
-
             //end
-            
-            
-            
-            
-            
-            
         end
         
         always @(posedge clk) begin
             if(pck_injct_out[i].pck_wr) begin 
                 $display ("%t:pck_inj(%d) got a packet: source=%d, size=%d, data=%h",$time,i,
                         pck_injct_out[i].endp_addr,pck_injct_out[i].size,pck_injct_out[i].data);
-            end        
-            
+            end
         end
-        
-    
-      
     end//for
     endgenerate
-       
-    
-
-
-
-    
-    
-
-    
-    
-
 endmodule
 // synthesis translate_on
 

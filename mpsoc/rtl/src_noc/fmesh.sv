@@ -171,41 +171,25 @@ endmodule
 
 
 
-module fmesh_endp_addr_decode #(
-    parameter T1=4,
-    parameter T2=4,
-    parameter T3=4,
-    parameter EAw=9
-)(
+module fmesh_endp_addr_decode (
     e_addr,
     ex,
     ey,
     ep,
     valid
 );
-    
-    function integer log2;
-        input integer number; begin   
-            log2=(number <=1) ? 1: 0;    
-            while(2**log2<number) begin    
-                log2=log2+1;    
-            end        
-        end   
-    endfunction // log2 
+    import pronoc_pkg::*;
     
     localparam
-        NX = T1,
-        NY = T2,
-        NL = T3, 
-        EXw = log2(NX),   
+        EXw = log2(NX),
         EYw = log2(NY),
         EPw = EAw - EXw - EYw,
-        P   = 5 + NL -1;    
+        P   = 5 + NL -1;
     
     /* verilator lint_off WIDTH */ 
     localparam [EXw-1 : 0]    MAXX = (NX-1); 
     localparam [EYw-1 : 0]    MAXY = (NY-1);
-    localparam [EPw-1 : 0]    MAXP = (P-1);    
+    localparam [EPw-1 : 0]    MAXP = (P-1);
     /* verilator lint_on WIDTH */ 
     
     input  [EAw-1 : 0] e_addr;
@@ -377,12 +361,7 @@ module fmesh_distance_gen (
     wire [Xw-1 :   0]src_x,dest_x;
     wire [Yw-1 :   0]src_y,dest_y;
     
-    fmesh_endp_addr_decode #(
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .EAw(EAw)
-    ) src_addr_decode (
+    fmesh_endp_addr_decode src_addr_decode (
         .e_addr(src_e_addr),
         .ex(src_x),
         .ey(src_y),
@@ -390,12 +369,7 @@ module fmesh_distance_gen (
         .valid()
     );
     
-    fmesh_endp_addr_decode #(
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .EAw(EAw)
-    ) dest_addr_decode (
+    fmesh_endp_addr_decode dest_addr_decode (
         .e_addr(dest_e_addr),
         .ex(dest_x),
         .ey(dest_y),

@@ -30,27 +30,7 @@ module multicast_injector (
     wire  [DSTPw-1 : 0 ] destport;
     reg flit_wr;
     assign current_r_addr = chan_in.ctrl_chanel.router_addr;
-    /*
-    conventional_routing #(
-        .TOPOLOGY(TOPOLOGY),
-        .ROUTE_NAME(ROUTE_NAME),
-        .ROUTE_TYPE(ROUTE_TYPE),
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .RAw(RAw),
-        .EAw(EAw),
-        .DSTPw(DSTPw),
-        .LOCATED_IN_NI(1)
-    ) routing_module (
-        .reset(reset),
-        .clk(clk),
-        .current_r_addr(current_r_addr),
-        .dest_e_addr(pck_injct_in.endp_addr),
-        .src_e_addr(current_e_addr),
-        .destport(destport)
-    );
-    */
+    
     assign destport = 7;
     localparam
         HDR_BYTE_NUM =    HDR_MAX_DATw / 8, // = HDR_MAX_DATw / (8 - HDR_MAX_DATw %8)
@@ -202,8 +182,8 @@ module multicast_injector (
     `ifdef SIMULATION
     wire [NEw-1 : 0] current_id;
     wire [NEw-1 : 0] sendor_id;
-    endp_addr_decoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) encode1 ( .id(current_id), .code(current_e_addr));
-    endp_addr_decoder #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) encode2 ( .id(sendor_id), .code(pck_injct_out.endp_addr[EAw-1 : 0]));
+    endp_addr_decoder  encode1 ( .id_out(current_id), .code_in(current_e_addr));
+    endp_addr_decoder  encode2 ( .id_out(sendor_id), .code_in(pck_injct_out.endp_addr[EAw-1 : 0]));
     `endif
     
     generate

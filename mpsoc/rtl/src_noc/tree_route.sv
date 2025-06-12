@@ -127,11 +127,8 @@ endmodule
 *        deterministic_look_ahead_routing
 **********************************************/
 
-module  tree_deterministic_look_ahead_routing #(
-    parameter P=4,
-    parameter ROUTE_NAME = "NCA_RND_UP",
-    parameter K   = 2, // number of last level individual router`s endpoints.
-    parameter L   = 2 // Fattree layer number (The height of FT)
+module  tree_deterministic_look_ahead_routing # (
+    parameter P=4
 ) (
     destport_encoded,// current router destination port 
     dest_addr_encoded,
@@ -139,19 +136,9 @@ module  tree_deterministic_look_ahead_routing #(
     neighbors_ry,
     lkdestport_encoded // look ahead destination port     
 );
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
+    import pronoc_pkg::*;
     
     localparam
-        Kw = log2(K),
-        LKw= L*Kw,
-        Lw = log2(L),
         Pw=log2(P),
         PLw = P * Lw,
         PLKw = P * LKw,
@@ -179,10 +166,10 @@ module  tree_deterministic_look_ahead_routing #(
         .next_ry(next_level)
     );
     
-    tree_conventional_routing #(        
+    tree_conventional_routing #(
         .ROUTE_NAME(ROUTE_NAME),
         .K(K),
-        .L(L)        
+        .L(L)
     ) conv_routing (
         .current_addr_encoded(next_addr_encoded),
         .current_level(next_level),
@@ -196,10 +183,7 @@ endmodule
 *     tree_look_ahead_routing
 *************************************/
 module tree_look_ahead_routing #(
-    parameter ROUTE_NAME = "NCA",
-    parameter P = 4,
-    parameter L = 2,
-    parameter K = 2
+    parameter P = 4 // port number
 )(
     reset,
     clk,
@@ -207,21 +191,11 @@ module tree_look_ahead_routing #(
     dest_addr_encoded,
     neighbors_rx,
     neighbors_ry,
-    lkdestport_encoded // look ahead destination port     
+    lkdestport_encoded // look ahead destination port
 );
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
+    import pronoc_pkg::*;
     
     localparam
-        Kw = log2(K),
-        LKw= L*Kw,
-        Lw = log2(L),
         PLw = P * Lw,
         PLKw = P * LKw,
         DSPw= log2(K+1);
@@ -237,10 +211,7 @@ module tree_look_ahead_routing #(
     wire [LKw-1 : 0]  dest_addr_encoded_delayed;
     
     tree_deterministic_look_ahead_routing #(
-        .P(P),
-        .ROUTE_NAME(ROUTE_NAME),
-        .K(K),
-        .L(L)
+        .P(P)
     ) look_ahead_routing (
         .destport_encoded(destport_encoded_delayed),
         .dest_addr_encoded(dest_addr_encoded_delayed),

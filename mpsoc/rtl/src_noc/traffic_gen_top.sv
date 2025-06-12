@@ -531,7 +531,7 @@ module  traffic_gen_top  #(
             if (SELF_LOOP_EN == 0) begin 
                 //check if injector node is included in partial list
                 wire [NEw-1: 0]  current_enp_id;
-                endp_addr_decoder  #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) decod1 ( .id(current_enp_id), .code(current_e_addr));
+                endp_addr_decoder  decod1 ( .id_out(current_enp_id), .code_in(current_e_addr));
                 assign mcast_dst_num_o = (is_unicast) ? 1 : (MCAST_ENDP_LIST[current_enp_id]== 1'b1)?  MCAST_PRTLw-1 : MCAST_PRTLw;
             end else begin 
                 assign mcast_dst_num_o = (is_unicast)? 1 : MCAST_PRTLw;
@@ -560,9 +560,9 @@ module  traffic_gen_top  #(
     
     wire [NEw-1: 0]  src_id,dst_id,current_id;
     
-    endp_addr_decoder  #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) decod1 ( .id(current_id), .code(current_e_addr));
-    endp_addr_decoder  #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) decod2 ( .id(dst_id), .code(rd_des_e_addr[EAw-1 : 0]));// only for unicast
-    endp_addr_decoder  #( .TOPOLOGY(TOPOLOGY), .T1(T1), .T2(T2), .T3(T3), .EAw(EAw),  .NE(NE)) decod3 ( .id(src_id), .code(rd_src_e_addr));
+    endp_addr_decoder  decod1 ( .id_out(current_id), .code_in(current_e_addr));
+    endp_addr_decoder  decod2 ( .id_out(dst_id), .code_in(rd_des_e_addr[EAw-1 : 0]));// only for unicast
+    endp_addr_decoder  decod3 ( .id_out(src_id), .code_in(rd_src_e_addr));
     
     wire [NE-1 :0] dest_mcast_all_endp2;
     generate 
@@ -840,18 +840,8 @@ module packet_gen
     assign pck_ready = ~buffer_empty & valid_dst;
     
     generate 
-    if(CAST_TYPE == "UNICAST") begin : uni 
+    if( IS_UNICAST ) begin : uni 
         conventional_routing #(
-            .TOPOLOGY(TOPOLOGY),
-            .ROUTE_NAME(ROUTE_NAME),
-            .ROUTE_TYPE(ROUTE_TYPE),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .RAw(RAw),
-            .EAw(EAw),
-            .DAw(DAw),
-            .DSTPw(DSTPw),
             .LOCATED_IN_NI(1)
         ) routing_module (
             .reset(reset),
@@ -916,7 +906,7 @@ module packet_gen
     
     always @ (`pronoc_clk_reset_edge )begin 
         if(`pronoc_reset) begin 
-            packet_counter <= {PCK_CNTw{1'b0}};    
+            packet_counter <= {PCK_CNTw{1'b0}};
         end else begin 
             if(pck_rd) begin 
                 packet_counter <= packet_counter+1'b1;

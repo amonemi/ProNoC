@@ -709,18 +709,8 @@ Shared registers for all VCs
         assign receive_vc_enable_binary = 1'b0;
     end
     endgenerate  
-
+    
     conventional_routing #(
-        .TOPOLOGY(TOPOLOGY),
-        .ROUTE_NAME(ROUTE_NAME),
-        .ROUTE_TYPE(ROUTE_TYPE),  
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .RAw(RAw),
-        .EAw(EAw),
-        .DAw(DAw),
-        .DSTPw(DSTPw),
         .LOCATED_IN_NI(1)
     ) route_compute (
         .reset(reset),
