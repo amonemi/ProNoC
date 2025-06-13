@@ -281,33 +281,21 @@ module fmesh_destp_decoder #(
     
     wire [P-1 : 0] endp_localp_onehot;
     reg [4:0] portout;
+    wire x,y,a,b;
+    assign {x,y,a,b} = dest_port_coded;
+    wire [PPSw-1:0] port_pre_sel_final;
+    assign port_pre_sel_final = 
+        ( ROUTE_TYPE == "DETERMINISTIC") ? {PPSw{1'b1}}:
+        (swap_port_presel) ? ~port_pre_sel : port_pre_sel;
+    always_comb begin 
+        case({a,b})
+            2'b10 : portout = {1'b0,~x,1'b0,x,1'b0};
+            2'b01 : portout = {~y,1'b0,y,1'b0,1'b0};
+            2'b00 : portout = 5'b00001;
+            2'b11 : portout = (port_pre_sel_final[{x,y}]) ?  {~y,1'b0,y,1'b0,1'b0} : {1'b0,~x,1'b0,x,1'b0};
+        endcase
+    end //always
     
-    generate 
-    if( ROUTE_TYPE == "DETERMINISTIC") begin :dtrmn
-        wire x,y,a,b;
-        assign {x,y,a,b} = dest_port_coded;
-        always_comb begin 
-            case({a,b})
-                2'b10 : portout = {1'b0,~x,1'b0,x,1'b0};
-                2'b01 : portout = {~y,1'b0,y,1'b0,1'b0};
-                2'b00 : portout =  5'b00001;
-                2'b11 : portout = {~y,1'b0,y,1'b0,1'b0}; //invalid condition in determinstic routing
-            endcase
-        end //always
-    end else begin : adpv
-        wire x,y,a,b;
-        assign {x,y,a,b} = dest_port_coded;        
-        wire [PPSw-1:0] port_pre_sel_final;
-        assign port_pre_sel_final= (swap_port_presel)? ~port_pre_sel: port_pre_sel;
-        always_comb begin 
-            case({a,b})
-                2'b10 : portout = {1'b0,~x,1'b0,x,1'b0};
-                2'b01 : portout = {~y,1'b0,y,1'b0,1'b0};
-                2'b11 : portout = (port_pre_sel_final[{x,y}])?  {~y,1'b0,y,1'b0,1'b0} : {1'b0,~x,1'b0,x,1'b0};
-                2'b00 : portout =  5'b00001;
-            endcase
-        end //always
-    end //adaptive    
     wire [P-1 : 0] destport_onehot;    
     bin_to_one_hot #(
         .BIN_WIDTH(PLw),
@@ -316,6 +304,8 @@ module fmesh_destp_decoder #(
         .bin_code(endp_localp_num),
         .one_hot_code(endp_localp_onehot)
     );
+    
+    generate 
     if(NL>1) begin :multi    
         assign destport_onehot =(portout[0])? endp_localp_onehot : /*select local destination*/ 
             { {(NL-1){1'b0}} ,portout};
@@ -325,14 +315,14 @@ module fmesh_destp_decoder #(
     end    
     if(SELF_LOOP_EN == 0) begin :nslp
         remove_sw_loc_one_hot #(
-                .P(P),
-                .SW_LOC(SW_LOC)
-            ) remove_sw_loc (
-                .destport_in(destport_onehot),
-                .destport_out(dest_port_out)
-            );
+            .P(P),
+            .SW_LOC(SW_LOC)
+        ) remove_sw_loc (
+            .destport_in(destport_onehot),
+            .destport_out(dest_port_out)
+        );
     end else begin: slp
-            assign dest_port_out = destport_onehot;            
+        assign dest_port_out = destport_onehot;            
     end
     endgenerate
 endmodule

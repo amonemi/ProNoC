@@ -6,7 +6,7 @@
 
 
 /**********************************************************************
-**    File: /home/alireza/work/git/hca_git/git-hub/ProNoC/mpsoc/rtl/src_topology/custom1/custom1_noc_genvar.sv
+**    File: /home/alireza/work/git/ProNoC-repos/github-pronoc/mpsoc/rtl/src_topology/custom1/custom1_noc_genvar.sv
 **    
 **    Copyright (C) 2014-2022  Alireza Monemi
 **    
@@ -54,7 +54,8 @@ import pronoc_pkg::*;
 
 
     genvar i;
-    generate    
+    generate   
+    if (TOPOLOGY == "custom1" ) begin  
     
     for( i=0; i<4; i=i+1) begin : router_3_port_lp
         localparam RID = i;
@@ -106,7 +107,6 @@ import pronoc_pkg::*;
             .router_event(router_event[RID] [4 : 0])
         );
     end
-endgenerate
 
     //Connect R0 input ports 0 to  T0 output ports 0
     assign  router_chan_in [0][0] = chan_in_all [0];
@@ -253,4 +253,6 @@ endgenerate
     //Connect R11 input ports 4 to  R5 output ports 1
     assign  router_chan_in [15][4] = router_chan_out [5][1];
 
+end // topology
+endgenerate
 endmodule

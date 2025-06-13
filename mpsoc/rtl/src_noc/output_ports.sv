@@ -273,22 +273,24 @@ module output_ports #(
             .assigned_ovc_is_full  (assigned_ovc_is_full_all[i]),
             .clk (clk),
             .reset  (reset)
-        );
-        
-        always_comb begin
-            ovc_status_next[i] = ovc_status[i];
-            if(IS_SINGLE_FLIT)  ovc_status_next[i]=1'b0; // donot change VC status for single flit packet
-            else begin 
-                if(ovc_released_all[i])  ovc_status_next[i] =1'b0;
-                //if(ovc_allocated_all[i] & ~granted_dst_is_from_a_single_flit_pck[i/V])    ovc_status_next[i]=1'b1; // donot change VC status for single flit packet
-                if((vsa_ctrl_in[i/V].ovc_is_allocated[i%V] & ~granted_dst_is_from_a_single_flit_pck[i/V]) |
-                    (ssa_ctrl_in[i/V].ovc_is_allocated[i%V] & ~ssa_ctrl_in[i/V].ovc_single_flit_pck[i%V])|
-                    (smart_ctrl_in[i/V].ovc_is_allocated[i%V] & ~smart_ctrl_in[i/V].ovc_single_flit_pck[i%V]))  
-                    ovc_status_next[i]=1'b1; // donot change VC status for single flit packet    
-            end
-        end//always
+        );        
     end//for
     endgenerate
+    
+    always_comb begin
+        for(int k=0; k<PV; k++) begin
+            ovc_status_next[k] = ovc_status[k];
+            if(IS_SINGLE_FLIT)  ovc_status_next[k]=1'b0; // donot change VC status for single flit packet
+            else begin 
+                if(ovc_released_all[k])  ovc_status_next[k] =1'b0;
+                //if(ovc_allocated_all[k] & ~granted_dst_is_from_a_single_flit_pck[k/V])    ovc_status_next[k]=1'b1; // donot change VC status for single flit packet
+                if((vsa_ctrl_in[k/V].ovc_is_allocated[k%V] & ~granted_dst_is_from_a_single_flit_pck[k/V]) |
+                    (ssa_ctrl_in[k/V].ovc_is_allocated[k%V] & ~ssa_ctrl_in[k/V].ovc_single_flit_pck[k%V])|
+                    (smart_ctrl_in[k/V].ovc_is_allocated[k%V] & ~smart_ctrl_in[k/V].ovc_single_flit_pck[k%V]))  
+                    ovc_status_next[k]=1'b1; // donot change VC status for single flit packet    
+            end
+        end
+    end//always
 
     pronoc_register #(.W(PV)) reg2 (.D_in(ovc_status_next ), .Q_out(ovc_status), .reset(reset), .clk(clk));
     port_pre_sel_gen #(

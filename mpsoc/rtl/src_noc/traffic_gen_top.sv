@@ -933,13 +933,20 @@ module distance_gen (
     output [DISTw-1 : 0]   distance;
     
     generate 
-    if (IS_MESH | IS_TORUS | IS_RING | IS_LINE) begin : tori_noc 
-        
-        mesh_torus_distance_gen distance_gen (
+    if (IS_MESH | IS_LINE) begin : mesh_noc
+        mesh_line_distance_gen distance_gen (
             .src_e_addr(src_e_addr),
             .dest_e_addr(dest_e_addr),
             .distance(distance)
         );
+    
+    end else if (IS_TORUS | IS_RING) begin : tori_noc 
+        ring_torus_distance_gen distance_gen (
+            .src_e_addr(src_e_addr),
+            .dest_e_addr(dest_e_addr),
+            .distance(distance)
+        );
+        
     end else if (IS_FMESH) begin :fmesh
         fmesh_distance_gen  distance_gen (
             .src_e_addr(src_e_addr),

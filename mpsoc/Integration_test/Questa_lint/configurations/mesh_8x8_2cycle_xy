@@ -1,0 +1,5 @@
+$model = bless( {
+    'noc_param'=> {
+        "ROUTE_NAME" => "\"XY\"",
+    }
+}, 'ProNOC' );

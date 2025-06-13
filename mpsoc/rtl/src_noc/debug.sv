@@ -354,8 +354,8 @@ module  endp_addr_encoder (
 
     import pronoc_pkg::*;
     localparam NEw= log2(NE);
-    input [NEw-1 :0] id;
-    output [EAw-1 : 0] code;
+    input [NEw-1 :0] id_in;
+    output [EAw-1 : 0] code_out;
     
     generate 
     if( IS_FATTREE  | IS_TREE ) begin : tree
@@ -363,8 +363,8 @@ module  endp_addr_encoder (
             .K(T1),
             .L(T2)
         ) addr_encoder (
-        .id(id),
-        .code(code)
+        .id(id_in),
+        .code(code_out)
         );
     end else if  (IS_MESH | IS_TORUS | IS_RING | IS_LINE) begin : tori
         mesh_tori_addr_encoder #(
@@ -375,8 +375,8 @@ module  endp_addr_encoder (
             .EAw(EAw),
             .TOPOLOGY(TOPOLOGY)
         )  addr_encoder  (
-            .id(id),
-            .code(code)
+            .id(id_in),
+            .code(code_out)
         );
     end else if (IS_FMESH) begin :fmesh
         fmesh_addr_encoder #(
@@ -386,16 +386,16 @@ module  endp_addr_encoder (
             .NE(NE),
             .EAw(EAw)
         ) addr_encoder (
-            .id(id),
-            .code(code)
+            .id(id_in),
+            .code(code_out)
         );
     end else if ( IS_MULTI_MESH) begin :mmesh
         multimesh_address_encoder addr_encoder (
-            .rid_in(id),
-            .addr_st_o(code)
+            .rid_in(id_in),
+            .addr_st_o(code_out)
         );
     end else begin :custom
-        assign code =id;
+        assign code_out =id_in;
     end
     endgenerate
 endmodule

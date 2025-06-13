@@ -6,7 +6,7 @@
 
 
 /**********************************************************************
-**    File: /home/alireza/work/git/hca_git/git-hub/ProNoC/mpsoc/rtl/src_topology/custom1/custom1_noc.sv
+**    File: /home/alireza/work/git/ProNoC-repos/github-pronoc/mpsoc/rtl/src_topology/custom1/custom1_noc.sv
 **    
 **    Copyright (C) 2014-2022  Alireza Monemi
 **    

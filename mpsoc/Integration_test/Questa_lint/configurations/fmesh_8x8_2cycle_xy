@@ -1,0 +1,6 @@
+$model = bless( {
+    'noc_param'=> {
+        "TOPOLOGY" => "\"FMESH\"",
+        "ROUTE_NAME" => "\"XY\"",
+    }
+}, 'ProNOC' );

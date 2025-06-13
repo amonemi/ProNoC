@@ -118,6 +118,7 @@ module router_top #(
         .reset(reset)
     );
     
+    wire  [V-1  :  0]  credit_out [P-1 : 0];
     generate
     if(SMART_EN) begin : smart  //smart_bypass is enabled
         
@@ -148,17 +149,13 @@ module router_top #(
         );
         
         wire  [RAw-1:  0]  neighbors_r_addr [P-1: 0];
-        wire  [V-1  :  0]  credit_out [P-1 : 0];
+        
         wire  [V-1  :  0]  ivc_smart_en [P-1 : 0];
         for(i=0;i<P;i=i+1)begin : Port_
             localparam SS_PORT = strieght_port(P,i);
+            
             if(SS_PORT == DISABLED) begin: smart_dis
-                always_comb begin
-                    r2_chan_in[i]   =  chan_in[i].flit_chanel;
-                    chan_out[i].flit_chanel     =  r2_chan_out[i];
-                    chan_out[i].ctrl_chanel= ctrl_out [i];
-                    smart_ctrl[i]={SMART_CTRL_w{1'b0}};
-                end
+                assign smart_ctrl[i]={SMART_CTRL_w{1'b0}};
             end
             else begin :smart_en
                 assign neighbors_r_addr [i] = chan_in[i].ctrl_chanel.router_addr;
@@ -192,15 +189,12 @@ module router_top #(
                     .smart_ivc_granted_ovc_num_o(smart_ctrl[i].ivc_granted_ovc_num),
                     .smart_ovc_single_flit_pck_o(smart_ctrl[SS_PORT].ovc_single_flit_pck),
                     .smart_ss_ovc_is_allocated_o(smart_ctrl[SS_PORT].ovc_is_allocated),
-                    .smart_ss_ovc_is_released_o    (smart_ctrl[SS_PORT].ovc_is_released),
+                    .smart_ss_ovc_is_released_o (smart_ctrl[SS_PORT].ovc_is_released),
                     .smart_mask_available_ss_ovc_o(smart_ctrl[SS_PORT].mask_available_ovc)
                 );
+                assign smart_ctrl[i].ivc_smart_en = ivc_smart_en[i];
+                assign smart_ctrl[i].smart_en = |ivc_smart_en[i];
                 
-                always_comb begin
-                    smart_ctrl[i].ivc_smart_en = ivc_smart_en[i];
-                    smart_ctrl[i].smart_en = |ivc_smart_en[i];
-                    smart_chanel_in[i] =   chan_in[i].smart_chanel;
-                end
                 `ifdef SIMULATION
                 //assign chan_out[i].smart_chanel =(smart_chanel[i].requests[0]) ? smart_chanel_new[i] : take ss shifted smart;    
                 smart_chanel_check check (
@@ -209,33 +203,7 @@ module router_top #(
                     .reset(reset),
                     .clk(clk)
                 );
-                `endif //SIMULATION
-                
-                //r2 demux
-                // flit_in_wr demux
-                always_comb begin
-                    //mask only flit_wr if smart_en is asserted
-                    r2_chan_in[i]   =  chan_in[i].flit_chanel;
-                    //can replace destport here and remove lk rout from internal router
-                    if(smart_ctrl[i].smart_en) r2_chan_in[i].flit_wr = 1'b0;
-                    
-                    //send flit_in to straight out port. Replace lk destport in header flit
-                    ss_flit_chanel[SS_PORT] = chan_in[i].flit_chanel;
-                    if(smart_ctrl[i].hdr_flit_req) ss_flit_chanel[SS_PORT].flit[DST_P_MSB : DST_P_LSB] =  smart_ctrl[i].lk_destport;   
-                end
-                
-                always_comb begin
-                    chan_out[i].smart_chanel = smart_chanel_out[i];
-                    chan_out[i].smart_chanel.flit_in_bypassed =smart_ctrl[i].smart_en & chan_in[i].flit_chanel.flit_wr ;
-                    // mux out flit channel
-                    chan_out[i].flit_chanel = r2_chan_out[i];
-                    chan_out[i].flit_chanel.credit    =  credit_out[i] ;
-                    if(smart_ctrl[SS_PORT].smart_en) begin
-                        chan_out[i].flit_chanel.flit    =  ss_flit_chanel[i].flit;
-                        chan_out[i].flit_chanel.flit_wr =  ss_flit_chanel[i].flit_wr;
-                    end
-                    chan_out[i].ctrl_chanel= ctrl_out [i];
-                end
+                `endif //SIMULATION        
                 
                 smart_credit_manage #(
                     .V(V),
@@ -250,19 +218,42 @@ module router_top #(
                 
             end //smart_en
         end//for Port_
-        
-    end else begin :no_smart
-        always_comb begin
-            for( int k=0;k<P;k++) begin 
-                r2_chan_in[k] = chan_in[k].flit_chanel;
-                chan_out[k].flit_chanel = r2_chan_out[k];
-                chan_out[k].ctrl_chanel= ctrl_out [k];
-                smart_ctrl[k]={SMART_CTRL_w{1'b0}};
+    end
+    endgenerate
+
+    always_comb begin
+        for(int k=0;k<P;k++) begin 
+            r2_chan_in[k] = chan_in[k].flit_chanel;
+            chan_out[k].flit_chanel = r2_chan_out[k];
+            chan_out[k].ctrl_chanel = ctrl_out [k];
+            smart_chanel_in[k] =   chan_in[k].smart_chanel;
+            chan_out[k].smart_chanel = smart_chanel_out[k];
+            if( SMART_EN & (strieght_port(P,k) != DISABLED)) begin
+                //mask only flit_wr if smart_en is asserted
+                if(smart_ctrl[k].smart_en)r2_chan_in[k].flit_wr = 1'b0;
+                // mux out flit channel
+                chan_out[k].flit_chanel.credit = credit_out[k] ;
+                if(smart_ctrl[strieght_port(P,k)].smart_en) begin
+                    chan_out[k].flit_chanel.flit  =  ss_flit_chanel[k].flit;
+                    chan_out[k].flit_chanel.flit_wr =  ss_flit_chanel[k].flit_wr;
+                end
+                chan_out[k].smart_chanel.flit_in_bypassed =smart_ctrl[k].smart_en & chan_in[k].flit_chanel.flit_wr ;
             end
         end
-    end //:no_smart
-    endgenerate
-    
+    end
+
+    //r2 demux
+    // flit_in_wr demux
+    always_comb begin
+        for(int k=0;k<P;k++) begin 
+            //can replace destport here and remove lk rout from internal router
+            //send flit_in to straight out port. Replace lk destport in header flit
+            ss_flit_chanel[strieght_port(P,k)] = chan_in[k].flit_chanel;
+            if( SMART_EN )
+            if(smart_ctrl[k].hdr_flit_req) ss_flit_chanel[strieght_port(P,k)].flit[DST_P_MSB : DST_P_LSB] =  smart_ctrl[k].lk_destport;   
+        end
+    end
+
 /**************************************
 *        Validating Parameters 
 *        /Simulation

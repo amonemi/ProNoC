@@ -662,88 +662,87 @@ endmodule
 /********************
 *    distance_gen 
 ********************/
-module mesh_torus_distance_gen (
+module mesh_line_distance_gen (
     src_e_addr,
     dest_e_addr,
     distance
 );
     import pronoc_pkg::*;
-    
     input [EAw-1 : 0] src_e_addr;
     input [EAw-1 : 0] dest_e_addr;
     output[DISTw-1: 0]distance;
     wire [NXw-1 : 0]src_x,dest_x;
     wire [NYw-1 : 0]src_y,dest_y;
-    mesh_tori_endp_addr_decode src_addr_decode (
-        .e_addr(src_e_addr),
-        .ex(src_x),
-        .ey(src_y),
-        .el(),
-        .valid()
-    );
-    
-    mesh_tori_endp_addr_decode  dest_addr_decode (
-        .e_addr(dest_e_addr),
-        .ex(dest_x),
-        .ey(dest_y),
-        .el(),
-        .valid()
-    );
-    
-    reg [NXw-1 : 0] x_offset;
-    reg [NYw-1 : 0] y_offset;
-    generate 
-    if( IS_MESH | IS_LINE) begin : oneD
-        always_comb begin 
-            x_offset = (src_x> dest_x)? src_x - dest_x : dest_x - src_x;
-            y_offset = (src_y> dest_y)? src_y - dest_y : dest_y - src_y;
+    mesh_tori_endp_addr_decode src_addr_decode (.e_addr(src_e_addr), .ex(src_x), .ey(src_y), .el(), .valid());
+    mesh_tori_endp_addr_decode dst_addr_decode (.e_addr(dest_e_addr), .ex(dest_x), .ey(dest_y), .el(), .valid());
+    logic [NXw-1 : 0] x_offset;
+    logic [NYw-1 : 0] y_offset;
+    always_comb begin 
+        x_offset = (src_x > dest_x) ? src_x - dest_x : dest_x - src_x;
+        y_offset = (src_y > dest_y) ? src_y - dest_y : dest_y - src_y;
+    end
+    /* verilator lint_off WIDTH */ 
+    assign distance = x_offset+y_offset+1'b1;
+    /* verilator lint_on WIDTH */ 
+endmodule
+
+module ring_torus_distance_gen (
+    src_e_addr,
+    dest_e_addr,
+    distance
+);
+    import pronoc_pkg::*;
+    input [EAw-1 : 0] src_e_addr;
+    input [EAw-1 : 0] dest_e_addr;
+    output[DISTw-1: 0]distance;
+    wire [NXw-1 : 0]src_x,dest_x;
+    wire [NYw-1 : 0]src_y,dest_y;
+    mesh_tori_endp_addr_decode src_addr_decode (.e_addr(src_e_addr), .ex(src_x), .ey(src_y), .el(), .valid());
+    mesh_tori_endp_addr_decode  dest_addr_decode (.e_addr(dest_e_addr), .ex(dest_x), .ey(dest_y), .el(), .valid());
+    logic [NXw-1 : 0] x_offset;
+    logic [NYw-1 : 0] y_offset;
+    wire tranc_x_plus,tranc_x_min,tranc_y_plus,tranc_y_min,same_x,same_y;
+    /* verilator lint_off WIDTH */
+    always_comb begin 
+        x_offset= {NXw{1'b0}};
+        y_offset= {NYw{1'b0}};
+        //x_offset
+        if(same_x) x_offset= {NXw{1'b0}};
+        else if(tranc_x_plus) begin 
+            if(dest_x   > src_x)    x_offset= dest_x-src_x; 
+            else                    x_offset= (NX-src_x)+dest_x;
         end
-    end else begin : twoD //torus ring
-        wire tranc_x_plus,tranc_x_min,tranc_y_plus,tranc_y_min,same_x,same_y;
-        /* verilator lint_off WIDTH */
-        always_comb begin 
-            x_offset= {NXw{1'b0}};
-            y_offset= {NYw{1'b0}};
-            //x_offset
-            if(same_x) x_offset= {NXw{1'b0}};
-            else if(tranc_x_plus) begin 
-                if(dest_x   > src_x)    x_offset= dest_x-src_x; 
-                else                    x_offset= (NX-src_x)+dest_x;
-            end
-            else if(tranc_x_min)  begin 
-                if(dest_x   <  src_x)    x_offset= src_x-dest_x; 
-                else                     x_offset= src_x+(NX-dest_x);
-            end
-            //y_offset
-            if(same_y) y_offset= {NYw{1'b0}};
-            else if(tranc_y_plus) begin 
-                if(dest_y   > src_y)    y_offset= dest_y-src_y; 
-                else                    y_offset= (NY-src_y)+dest_y;
-            end
-            else if(tranc_y_min)  begin 
-                if(dest_y   <  src_y)    y_offset= src_y-dest_y; 
-                else                     y_offset= src_y+(NY-dest_y);
-            end
-        end      
-        /* verilator lint_on WIDTH */
-        
-        tranc_dir #(
-            .NX(NX),
-            .NY(NY)
-        ) tranc_dir (
-            .tranc_x_plus(tranc_x_plus),
-            .tranc_x_min(tranc_x_min),
-            .tranc_y_plus(tranc_y_plus),
-            .tranc_y_min(tranc_y_min),
-            .same_x(same_x),
-            .same_y(same_y),
-            .current_x(src_x),
-            .current_y(src_y),
-            .dest_x(dest_x),
-            .dest_y(dest_y)
-        );
-    end    
-    endgenerate
+        else if(tranc_x_min)  begin 
+            if(dest_x   <  src_x)    x_offset= src_x-dest_x; 
+            else                     x_offset= src_x+(NX-dest_x);
+        end
+        //y_offset
+        if(same_y) y_offset= {NYw{1'b0}};
+        else if(tranc_y_plus) begin 
+            if(dest_y   > src_y)    y_offset= dest_y-src_y; 
+            else                    y_offset= (NY-src_y)+dest_y;
+        end
+        else if(tranc_y_min)  begin 
+            if(dest_y   <  src_y)    y_offset= src_y-dest_y; 
+            else                     y_offset= src_y+(NY-dest_y);
+        end
+    end      
+    /* verilator lint_on WIDTH */    
+    tranc_dir #(
+        .NX(NX),
+        .NY(NY)
+    ) tranc_dir (
+        .tranc_x_plus(tranc_x_plus),
+        .tranc_x_min(tranc_x_min),
+        .tranc_y_plus(tranc_y_plus),
+        .tranc_y_min(tranc_y_min),
+        .same_x(same_x),
+        .same_y(same_y),
+        .current_x(src_x),
+        .current_y(src_y),
+        .dest_x(dest_x),
+        .dest_y(dest_y)
+    );
     /* verilator lint_off WIDTH */ 
     assign distance = x_offset+y_offset+1'b1;
     /* verilator lint_on WIDTH */ 
@@ -1166,32 +1165,22 @@ module mesh_torus_destp_decoder #(
     
     wire [NL-1 : 0] endp_localp_onehot;
     reg [4:0] portout;
-    generate 
-    if( ROUTE_TYPE == "DETERMINISTIC") begin :dtrmn
-        wire x,y,a,b;
-        assign {x,y,a,b} = dest_port_coded;
-        always_comb begin 
-            case({a,b})
-                2'b10 : portout = {1'b0,~x,1'b0,x,1'b0};
-                2'b01 : portout = {~y,1'b0,y,1'b0,1'b0};
-                2'b00 : portout = 5'b00001;
-                2'b11 : portout = {~y,1'b0,y,1'b0,1'b0}; //invalid condition in determinstic routing
-            endcase
-        end //always
-    end else begin : adpv
-        wire x,y,a,b;
-        assign {x,y,a,b} = dest_port_coded;        
-        wire [PPSw-1:0] port_pre_sel_final;
-        assign port_pre_sel_final= (swap_port_presel)? ~port_pre_sel: port_pre_sel;
-        always_comb begin 
-            case({a,b})
-                2'b10 : portout = {1'b0,~x,1'b0,x,1'b0};
-                2'b01 : portout = {~y,1'b0,y,1'b0,1'b0};
-                2'b11 : portout = (port_pre_sel_final[{x,y}])?  {~y,1'b0,y,1'b0,1'b0} : {1'b0,~x,1'b0,x,1'b0};
-                2'b00 : portout = 5'b00001;
-            endcase
-        end //always
-    end 
+    wire x,y,a,b;
+    assign {x,y,a,b} = dest_port_coded;
+    wire [PPSw-1:0] port_pre_sel_final;
+    assign port_pre_sel_final = 
+        ( ROUTE_TYPE == "DETERMINISTIC") ? {PPSw{1'b1}}:
+        (swap_port_presel) ? ~port_pre_sel : port_pre_sel;
+    always_comb begin 
+        case({a,b})
+            2'b10 : portout = {1'b0,~x,1'b0,x,1'b0};
+            2'b01 : portout = {~y,1'b0,y,1'b0,1'b0};
+            2'b00 : portout = 5'b00001;
+            2'b11 : portout = (port_pre_sel_final[{x,y}]) ?  {~y,1'b0,y,1'b0,1'b0} : {1'b0,~x,1'b0,x,1'b0};
+        endcase
+    end //always
+    
+    generate     
     if(NL==1) begin :slp
         if(SELF_LOOP_EN == 0) begin :nslp
             remove_sw_loc_one_hot #(

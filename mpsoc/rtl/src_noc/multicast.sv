@@ -331,6 +331,12 @@ module mcast_dest_list_decode  (
     output [NX-1 : 0] row_has_any_dest;
     output is_unicast;
     wire   [MCASTw-1 : 0] mcast_dst_coded;
+    reg  [NE-1 : 0]  dest_o_uni;
+    wire [NEw-1 : 0] unicast_id;
+    always_comb begin 
+        dest_o_uni = {NE{1'b0}};
+        dest_o_uni[unicast_id]=1'b1;
+    end
     
     genvar i;
     generate
@@ -339,43 +345,32 @@ module mcast_dest_list_decode  (
         end else begin :no_star
             assign {row_has_any_dest,mcast_dst_coded}=dest_e_addr;
         end
-    /* verilator lint_off WIDTH */     
-    if(CAST_TYPE == "MULTICAST_FULL") begin : full
-    /* verilator lint_on WIDTH */ 
+    if(IS_MULTICAST_FULL) begin : full
         assign dest_o = mcast_dst_coded;
         assign is_unicast = 1'b0;
-    /* verilator lint_off WIDTH */     
-    end else if (CAST_TYPE == "MULTICAST_PARTIAL") begin : partial
-    /* verilator lint_on WIDTH */ 
+        assign unicast_id= {NEw{1'b0}};
+
+    end else if (IS_MULTICAST_PARTIAL) begin : partial
         wire not_in_cast_list ;
         wire [EAw-1 : 0] unicast_code;
         assign {unicast_code,not_in_cast_list} = mcast_dst_coded  [EAw : 0];
         wire [NE-1 : 0]  dest_o_multi;
-        reg  [NE-1 : 0]  dest_o_uni;
-        wire [NEw-1 : 0] unicast_id;
         assign is_unicast = not_in_cast_list;
         endp_addr_decoder decoder (
             .code_in(unicast_code),
             .id_out(unicast_id)
         );
-        
-        always_comb begin 
-            dest_o_uni = {NE{1'b0}};
-            dest_o_uni[unicast_id]=1'b1;
-        end
-        
         for(i=0; i< NE; i=i+1) begin : endpoints
             localparam MCAST_ID = endp_id_to_mcast_id(i);
             assign dest_o_multi [i] = (MCAST_ENDP_LIST[i]==1'b1)? mcast_dst_coded[MCAST_ID+1] : 1'b0;                
         end
         assign dest_o = (not_in_cast_list)? dest_o_uni : dest_o_multi;
-    /* verilator lint_off WIDTH */     
-    end else if (CAST_TYPE == "BROADCAST_FULL") begin : bcast_full
-    /* verilator lint_on WIDTH */ 
+
+    end else if (IS_BROADCAST_FULL) begin : bcast_full
         wire not_broad_casted;
         wire [EAw-1 : 0] unicast_code;
         assign {unicast_code,not_broad_casted} = mcast_dst_coded;
-        assign is_unicast =not_broad_casted;
+        assign is_unicast = not_broad_casted;
         wire [NE-1 : 0]  dest_o_multi;
         reg  [NE-1 : 0]  dest_o_uni;
         wire [NEw-1 : 0] unicast_id;
@@ -383,13 +378,8 @@ module mcast_dest_list_decode  (
             .code_in(unicast_code),
             .id_out(unicast_id)
         );
-        
-        always_comb begin 
-            dest_o_uni = {NE{1'b0}};
-            dest_o_uni[unicast_id]=1'b1;
-        end
-        
         assign dest_o = (not_broad_casted)? dest_o_uni : {NE{1'b1}};
+
     end else begin //BCAST_PARTIAL
         wire not_broad_casted;
         wire [EAw-1 : 0] unicast_code;
@@ -398,16 +388,10 @@ module mcast_dest_list_decode  (
         wire [NE-1 : 0]  dest_o_multi;
         reg  [NE-1 : 0]  dest_o_uni;
         wire [NEw-1 : 0] unicast_id;
-        
         endp_addr_decoder decoder (
             .code_in(unicast_code),
             .id_out(unicast_id)
-        );
-        
-        always_comb begin 
-            dest_o_uni = {NE{1'b0}};
-            dest_o_uni[unicast_id]=1'b1;
-        end
+        );        
         assign dest_o = (not_broad_casted)? dest_o_uni : MCAST_ENDP_LIST;
     end
     endgenerate

@@ -157,10 +157,11 @@ module  tree_noc_top (
             localparam PORT2= pos % K;  
             localparam FATTREE_EQ_POS2 = POS2*(K**L2);
             localparam ADR_CODE2=addrencode(FATTREE_EQ_POS2,K,L,Kw);
-            // node_connection('Router[id1][k] to router[id2][pos%k];  
+            // node_connection('Router[id1][k] to router[id2][pos%k]; 
+            if(IS_TREE) begin
             assign  router_chan_in [ID1][K] = router_chan_out [ID2][PORT2];
             assign  router_chan_in [ID2][PORT2] = router_chan_out [ID1][K];  
-            
+            end
             assign current_layer_addr [ID1] = L1[Lw-1 : 0];
             assign current_pos_addr [ID1] = ADR_CODE1 [LKw-1 : 0];
             assign router_config_in[ID1].router_addr =  {current_layer_addr [ID1],current_pos_addr[ID1]};

@@ -317,6 +317,19 @@ module smart_bypass_chanels #(
     wire [P-1 :0] smart_forwardable;
     logic [P-1 :0] outport_is_granted;
     reg [P-1 : 0] rq;
+
+    always_comb begin
+        for (int k=0;k<P;k++) begin
+            smart_chanel_shifted[k].requests={{SMART_NUM{1'b0}}};
+            rq[k]=1'b0;
+            if(strieght_port (P,k) != DISABLE) begin
+                smart_chanel_shifted[k] = smart_chanel_in [k];
+                {smart_chanel_shifted[k].requests,rq[k]} =(smart_forwardable[k])? {1'b0,smart_chanel_in[k].requests}:{{SMART_NUM{1'b0}},smart_chanel_in[k].requests[0]};
+                smart_chanel_shifted[k].bypassed_num =   smart_chanel_in [k].bypassed_num +1'b1;
+            end 
+        end
+    end
+
     genvar i;
     generate
     for (i=0;i<P;i=i+1) begin: P_
@@ -332,16 +345,11 @@ module smart_bypass_chanels #(
         if(SS_PORT != DISABLE) begin: ssp 
             //smart_chanel_shifter
             assign smart_forwardable[i] = |  (ivc_forwardable[i] & smart_chanel_in[i].ovc);
-            always_comb begin 
-                smart_chanel_shifted[i] = smart_chanel_in [i];
-                {smart_chanel_shifted[i].requests,rq[i]} =(smart_forwardable[i])? {1'b0,smart_chanel_in[i].requests}:{{SMART_NUM{1'b0}},smart_chanel_in[i].requests[0]};
-                smart_chanel_shifted[i].bypassed_num =   smart_chanel_in [i].bypassed_num +1'b1;
-            end
             assign smart_req[i]=rq[i];
             // mux out smart chanel
             assign smart_chanel_out[i] = (outport_is_granted[i])? smart_chanel_new[i] : smart_chanel_shifted[SS_PORT];
         end else begin
-            assign {smart_chanel_shifted[i].requests,smart_req[i]} = {(SMART_NUM+1){1'b0}};
+            assign smart_req[i] = 1'b0;
             assign smart_chanel_out[i] = {SMART_CHANEL_w{1'b0}};
         end
     end

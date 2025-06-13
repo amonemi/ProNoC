@@ -34,7 +34,7 @@ module mesh_torus_noc_top  (
     router_event
 );
     
-     import pronoc_pkg::*;
+    import pronoc_pkg::*;
 
     input   clk,reset;
     //Endpoints ports 
@@ -72,14 +72,12 @@ module mesh_torus_noc_top  (
                 .clk(clk), 
                 .reset(reset)
             );
-            
+            localparam XFWD=(x < NX-1)? x+1 : 0;
             assign router_chan_in[x][FORWARD] = 
-                (x < NX-1) ?  router_chan_out[x+1][BACKWARD] : 
-                (IS_LINE) ?   is_grounded : router_chan_out[0][BACKWARD];
-            
-            assign router_chan_in[x][BACKWARD] = 
-                (x > 0) ? router_chan_out[x-1][FORWARD] : 
-                (IS_LINE) ? is_grounded : router_chan_out[NX-1][FORWARD];
+                (IS_LINE & (x == NX-1))? is_grounded : router_chan_out[XFWD][BACKWARD];
+            localparam XBCK=(x > 0)? x-1 : NX-1;
+            assign router_chan_in[x][BACKWARD] =  
+                (IS_LINE & (x==0))? is_grounded : router_chan_out[XBCK][FORWARD];
             
             // connect other local ports
             for  (l=0;   l<NL; l=l+1) begin :locals

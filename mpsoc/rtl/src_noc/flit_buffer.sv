@@ -148,6 +148,25 @@ module flit_buffer
         end
     end//for
     
+    always_comb begin
+        for(int k=0;k<V;k=k+1) begin
+            rd_ptr_next [k] = rd_ptr  [k];
+            wr_ptr_next [k] = wr_ptr  [k];
+            depth_next  [k] = depth   [k];
+            if((2**Bw)==B) begin
+                if (wr[k]  ) wr_ptr_next [k] = wr_ptr [k]+ 1'h1;
+                if (rd[k]  ) rd_ptr_next [k] = rd_ptr [k]+ 1'h1;
+            end else begin 
+                /* verilator lint_off WIDTH */ 
+                if (wr[k] ) wr_ptr_next[k] =(wr_ptr[k]==(B*(k+1))-1)? (B*k) : wr_ptr [k]+ 1'h1;
+                if (rd[k] ) rd_ptr_next[k] =(rd_ptr[k]==(B*(k+1))-1)? (B*k) : rd_ptr [k]+ 1'h1;
+                /* verilator lint_on WIDTH */ 
+            end
+            if (wr[k] & ~rd[k]) depth_next [k] = depth[k] + 1'h1;
+            else if (~wr[k] & rd[k]) depth_next [k] = depth[k] - 1'h1;
+        end
+    end//always
+    
 /*****************
     Buffer width is
     power of 2
@@ -220,15 +239,6 @@ module flit_buffer
             pronoc_register #(.W(Bw    )) reg2 (.D_in(wr_ptr_next[i]), .Q_out(wr_ptr[i]), .reset(reset), .clk(clk));
             pronoc_register #(.W(DEPTHw)) reg3 (.D_in(depth_next[i] ), .Q_out(depth [i]), .reset(reset), .clk(clk));
             
-            always_comb begin
-                rd_ptr_next [i] = rd_ptr  [i];
-                wr_ptr_next [i] = wr_ptr  [i];
-                depth_next  [i] = depth   [i];
-                if (wr[i]  ) wr_ptr_next [i] = wr_ptr [i]+ 1'h1;
-                if (rd[i]  ) rd_ptr_next [i] = rd_ptr [i]+ 1'h1;
-                if (wr[i] & ~rd[i]) depth_next [i] = depth[i] + 1'h1;
-                else if (~wr[i] & rd[i]) depth_next [i] = depth[i] - 1'h1;
-            end//always
 
             if (~IS_UNICAST) begin :multicast
                 always_comb begin
@@ -254,24 +264,12 @@ module flit_buffer
             pronoc_register #(.W(BVw),.RESET_TO(B*i)) reg1 (.D_in(rd_ptr_next[i]), .Q_out(rd_ptr[i]), .reset(reset), .clk(clk));
             pronoc_register #(.W(BVw),.RESET_TO(B*i)) reg2 (.D_in(wr_ptr_next[i]), .Q_out(wr_ptr[i]), .reset(reset), .clk(clk));
             pronoc_register #(.W(DEPTHw)) reg3 (.D_in(depth_next[i]), .Q_out(depth[i]), .reset(reset), .clk(clk));
-
             always @(posedge clk) begin
                 /* verilator lint_off WIDTH */ 
                 if(wr[i]) tail_fifo[i][wr_ptr[i]-(B*i)] <= din[Fw-2];
                 /* verilator lint_on WIDTH */
             end
             
-            always_comb begin
-                rd_ptr_next [i] = rd_ptr  [i];
-                wr_ptr_next [i] = wr_ptr  [i];
-                depth_next  [i] = depth   [i];
-                /* verilator lint_off WIDTH */ 
-                if (wr[i] ) wr_ptr_next[i] =(wr_ptr[i]==(B*(i+1))-1)? (B*i) : wr_ptr [i]+ 1'h1;
-                if (rd[i] ) rd_ptr_next[i] =(rd_ptr[i]==(B*(i+1))-1)? (B*i) : rd_ptr [i]+ 1'h1;
-                /* verilator lint_on WIDTH */ 
-                if (wr[i] & ~rd[i]) depth_next [i] = depth[i] + 1'h1;
-                else if (~wr[i] & rd[i]) depth_next [i] = depth[i] - 1'h1;
-            end//always
             if (~IS_UNICAST) begin :multicast
                 always_comb begin
                     sub_rd_ptr_next[i] = sub_rd_ptr[i];
@@ -793,15 +791,14 @@ module fwft_fifo_with_output_clear #(
         else if (~wr_en & rd_en) depth_next = depth - 1'h1;
     end//always
     
-    generate
-    for(i=0;i<DATA_WIDTH; i=i+1) begin : lp
-        always_comb begin
-            dout_next_ld[i] = dout[i];
-            if (clear[i]) dout_next_ld[i] = 1'b0;
-            else if (out_ld) dout_next_ld[i] = dout_next[i];
-        end//always
+    always_comb begin
+        for(int k=0;k<DATA_WIDTH; k++) begin
+            dout_next_ld[k] = dout[k];
+            if (clear[k]) dout_next_ld[k] = 1'b0;
+            else if (out_ld) dout_next_ld[k] = dout_next[k];
+        end
     end
-    endgenerate
+    
     
 /*********************************************
 *        Validating Parameters/Simulation

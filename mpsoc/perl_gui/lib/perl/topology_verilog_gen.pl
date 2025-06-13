@@ -305,10 +305,11 @@ sub generate_topology_top_genvar_v{
     }    
     #step 2     add routers
     my $Tnum=1;
-    my $routers='
+    my $routers="
     genvar i;
-    generate    
-    ';
+    generate   
+    if (TOPOLOGY == \"$name\" ) begin  
+    ";
     my $offset=0;
     my $assign="";
     my $assign_r2r="";
@@ -375,7 +376,7 @@ sub generate_topology_top_genvar_v{
         $offset+=    $n;
         }
     }
-    $routers.="endgenerate\n";
+ #   $routers.="endgenerate\n";
     print $fd "
 module   ${name}_noc_genvar
 (
@@ -391,6 +392,8 @@ $router_wires
 $endps_wires
 $routers
 $assign
+end // topology
+endgenerate
 endmodule
 ";
     close $fd;
