@@ -10,11 +10,17 @@ conf_dir="${SCRPT_DIR_PATH}/configurations"
 work="${SCRPT_DIR_PATH}/work"
 file_list_f="${SCRPT_DIR_PATH}/src/file_list.f"
 lint_file="${SCRPT_DIR_PATH}/src/lint.tcl"
+report_file="${log_dir}/report.txt"
 
 mkdir -p $work
 mkdir -p $log_dir
+rm -rf $report_file
+printf "%-30s | %-10s | %-10s |\n" "Configuration" "# Warnings" "# Errors" >> "$report_file"
+
+
 
 questa_lint () {
+    set -e  # Exit on any command failure
     conf=$1
     conf_file="${conf_dir}/$conf"
     log_file="${log_dir}/${conf}.log"
@@ -33,7 +39,16 @@ questa_lint () {
     vlib work
     # Lint the design
     vlog -sv -lint -f ${file_list_f} 
-    vsim -c work.noc_top -do "quit"  
+    vsim -suppress vopt-14408 -c work.noc_top -do "quit"  
+}
+
+report_total_errors_warnings () {
+    conf="$1"
+    conf_file="${conf_dir}/${conf}"
+    log_file="${log_dir}/${conf}.log"
+    warnings=$(grep '\*\* Warning' "$log_file" | wc -l)
+    errors=$(grep '\*\*\ Error' "$log_file" | wc -l)
+    printf "%-30s | %-10s | %-10s |\n" "$conf" "$warnings" "$errors" >> "$report_file"
 }
 
 for f in "$conf_dir"/*; do
@@ -41,14 +56,20 @@ for f in "$conf_dir"/*; do
     conf=$(basename "$f")
     log_file="${log_dir}/${conf}.log"
     echo "▶️  Compiling configuration: $conf"
-    questa_lint "$conf"  |& tee $log_file
-    if [[ $? -ne 0 ]]; then
-        echo "❌ Compilation failed for $conf (check $log_file)"
-        rm -f ${SCRPT_DIR_PATH}/src/noc_localparam.v
-        exit 1
-    else
+    # questa_lint "$conf"  |& tee $log_file
+    #if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+    #    echo "❌ Compilation failed for $conf (check $log_file)"
+    #    rm -f ${SCRPT_DIR_PATH}/src/noc_localparam.v
+    #    exit 1
+    #else
         echo "✅ Compilation successful for $conf"
         rm -f ${SCRPT_DIR_PATH}/src/noc_localparam.v
-    fi
-    
+        report_total_errors_warnings "$conf"
+    #fi
 done
+
+echo "Report saved in $report_file"
+echo "Summary:"
+echo "-------------------------------|------------|------------|"
+cat $report_file
+

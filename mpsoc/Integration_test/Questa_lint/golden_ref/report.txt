@@ -1,0 +1,25 @@
+Configuration                  | # Warnings | # Errors   |
+bintree_k3_L3_st               | 4          | 1          |
+custom1_topology               | 0          | 1          |
+Fattree_k3_L3_st               | 0          | 1          |
+fmesh_1x1_openpiton            | 6          | 0          |
+fmesh_2x2_openpiton            | 8          | 0          |
+fmesh_8x8_2cycle_xy            | 20         | 1          |
+fmesh_8x8_openpiton            | 20         | 1          |
+line4_smart3                   | 0          | 0          |
+mesh_2x2_openpiton             | 24         | 0          |
+mesh_3x3_v2_ssa                | 46         | 1          |
+mesh_4x4_2cycle_mcast_f        | 86         | 1          |
+mesh_4x4_smart3                | 12         | 1          |
+mesh_4x4_v1_B15                | 76         | 1          |
+mesh_4x4x3_2cycle_xy           | 76         | 1          |
+mesh_8x8_2cycle_adaptive       | 282        | 1          |
+mesh_8x8_2cycle_west_first     | 276        | 1          |
+mesh_8x8_2cycle_xy             | 276        | 1          |
+mesh_8x8_4vc_4c                | 276        | 1          |
+mesh_8x8_b2                    | 276        | 1          |
+mesh_8x8_sbp6_xy               | 276        | 1          |
+mesh_8x8_single_flit           | 277        | 1          |
+mesh_8x8_ssa_xy                | 276        | 1          |
+star_6                         | 0          | 0          |
+torus_8x8_2cycle_xy            | 274        | 1          |
