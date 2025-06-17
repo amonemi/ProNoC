@@ -17,7 +17,8 @@ mkdir -p $log_dir
 rm -rf $report_file
 printf "%-30s | %-10s | %-10s |\n" "Configuration" "# Warnings" "# Errors" >> "$report_file"
 
-
+# Source the environment variables
+# conf_dir="${SCRPT_DIR_PATH}/conf_small"
 
 questa_lint () {
     set -e  # Exit on any command failure
@@ -76,5 +77,5 @@ cat $report_file
 
 echo "Comparing with golden reference..."
 # Compare the results with the golden reference report  
-perl ${SCRPT_DIR_PATH}/../Altera/src/compare.pl  $report_file ${SCRPT_DIR_PATH}/golden_ref/report.txt
+perl ${SCRPT_DIR_PATH}/../Altera/src/compare.pl   ${SCRPT_DIR_PATH}/golden_ref/report.txt $report_file
 echo "All configurations processed. Results are in $report_file

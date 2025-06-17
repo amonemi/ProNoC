@@ -92,12 +92,12 @@ module flit_buffer
     
     wire [RAM_DATA_WIDTH-1 : 0] fifo_ram_din;
     wire [RAM_DATA_WIDTH-1 : 0] fifo_ram_dout;
-    wire [V-1       : 0] wr;
-    wire [V-1       : 0] rd;  
-    wire [DEPTHw-1  : 0] depth      [V-1 :0];
-    reg [DEPTHw-1  : 0] depth_next [V-1 :0];
-    wire [DEPTHw-1  : 0] sub_depth       [V-1 :0];
-    reg [DEPTHw-1  : 0] sub_depth_next  [V-1 :0];
+    wire [V-1 : 0] wr;
+    wire [V-1 : 0] rd;
+    wire [DEPTHw-1 : 0] depth [V-1 :0];
+    reg [DEPTHw-1 : 0] depth_next [V-1 :0];
+    wire [DEPTHw-1 : 0] sub_depth [V-1 :0];
+    logic [DEPTHw-1 : 0] sub_depth_next  [V-1 :0];
     
     reg [B-1 : 0] tail_fifo [V-1 : 0];
     wire [1 : 0] flgs_in, flgs_out;
@@ -128,6 +128,34 @@ module flit_buffer
         assign dout = {2'b11,{V{1'bX}},fifo_ram_dout};
     end
     
+    always_comb begin
+        for(int k=0;k<V;k++) begin 
+            if (~IS_UNICAST) begin
+                sub_depth_next [k] = sub_depth [k];
+                if(sub_restore[k]) sub_depth_next [k]= depth_next[k];
+                else if (wr[k] & ~sub_rd[k]) sub_depth_next [k] = sub_depth[k] + 1'h1;
+                else if (~wr[k] & sub_rd[k]) sub_depth_next [k] = sub_depth[k] - 1'h1;
+            end else sub_depth_next [k] = '0;
+        end
+    end
+    
+    always_comb begin
+        for(int k=0;k<V;k++) begin 
+            if (~IS_UNICAST) begin 
+                sub_rd_ptr_next[k] = sub_rd_ptr[k];
+                if((2**Bw)==B) begin 
+                    if (sub_restore[k]) sub_rd_ptr_next[k] = rd_ptr_next [k];
+                    else if(sub_rd[k])  sub_rd_ptr_next[k] = sub_rd_ptr[k]+ 1'h1;
+                end else begin 
+                    if (sub_restore[k]) sub_rd_ptr_next[k] = rd_ptr_next [k];
+                    /* verilator lint_off WIDTH */ 
+                    else if(sub_rd[k])  sub_rd_ptr_next[k] = (sub_rd_ptr[k]==(B*(k+1))-1)? (B*k) : sub_rd_ptr [k]+ 1'h1; 
+                    /* verilator lint_on WIDTH */
+                end // Bw
+            end else sub_rd_ptr_next[k] = '0;
+        end //for
+    end //always_comb
+    
     for(i=0;i<V;i=i+1) begin :V_
         assign  wr_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = wr_ptr[i];  
         if (~IS_UNICAST) begin
@@ -135,12 +163,6 @@ module flit_buffer
             localparam RESET_TO = ((2**Bw)==B)? 0 : B*i;
             pronoc_register #(.W(PTRw),.RESET_TO(RESET_TO)) reg4 (.D_in(sub_rd_ptr_next[i]), .Q_out(sub_rd_ptr[i]), .reset(reset), .clk(clk));
             pronoc_register #(.W(DEPTHw)) sub_depth_reg (.D_in(sub_depth_next[i] ), .Q_out(sub_depth [i]), .reset(reset), .clk(clk));
-            always_comb begin
-                sub_depth_next  [i] = sub_depth   [i];
-                if(sub_restore[i]) sub_depth_next  [i]= depth_next[i];
-                else if (wr[i] & ~sub_rd[i]) sub_depth_next [i] = sub_depth[i] + 1'h1;
-                else if (~wr[i] & sub_rd[i]) sub_depth_next [i] = sub_depth[i] - 1'h1;    
-            end//always
             assign  vc_not_empty [i] = (sub_depth[i] > 0);
         end else begin : unicast
             assign  rd_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = rd_ptr[i];   
@@ -239,13 +261,8 @@ module flit_buffer
             pronoc_register #(.W(Bw    )) reg2 (.D_in(wr_ptr_next[i]), .Q_out(wr_ptr[i]), .reset(reset), .clk(clk));
             pronoc_register #(.W(DEPTHw)) reg3 (.D_in(depth_next[i] ), .Q_out(depth [i]), .reset(reset), .clk(clk));
             
-
+            
             if (~IS_UNICAST) begin :multicast
-                always_comb begin
-                    sub_rd_ptr_next[i] = sub_rd_ptr[i];
-                    if (sub_restore[i]) sub_rd_ptr_next[i] = rd_ptr_next [i];
-                    else if(sub_rd[i])  sub_rd_ptr_next[i] = sub_rd_ptr[i]+ 1'h1;
-                end
                 assign  flit_is_tail[i] = (IS_MULTI_FLIT)? tail_fifo[i][sub_rd_ptr[i]] : 1'b1;
             end else begin : unicast
                 assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr[i]] : 1'b1;
@@ -271,14 +288,6 @@ module flit_buffer
             end
             
             if (~IS_UNICAST) begin :multicast
-                always_comb begin
-                    sub_rd_ptr_next[i] = sub_rd_ptr[i];
-                    if (sub_restore[i]) sub_rd_ptr_next[i] = rd_ptr_next [i];
-                    /* verilator lint_off WIDTH */ 
-                    else if(sub_rd[i])  sub_rd_ptr_next[i] = (sub_rd_ptr[i]==(B*(i+1))-1)? (B*i) : sub_rd_ptr [i]+ 1'h1; 
-                    /* verilator lint_on WIDTH */ 
-                end
-                
                 /* verilator lint_off WIDTH */ 
                 assign  ptr_tmp [i] = sub_rd_ptr[i]-(B*i);
                 assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][ptr_tmp [i]] :1'b1;
