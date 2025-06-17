@@ -248,9 +248,11 @@ module router_top #(
         for(int k=0;k<P;k++) begin 
             //can replace destport here and remove lk rout from internal router
             //send flit_in to straight out port. Replace lk destport in header flit
-            ss_flit_chanel[strieght_port(P,k)] = chan_in[k].flit_chanel;
-            if( SMART_EN )
-            if(smart_ctrl[k].hdr_flit_req) ss_flit_chanel[strieght_port(P,k)].flit[DST_P_MSB : DST_P_LSB] =  smart_ctrl[k].lk_destport;   
+            automatic int straight_p= strieght_port(P,k);
+            if ((straight_p != DISABLED) & SMART_EN) begin
+                ss_flit_chanel[straight_p] = chan_in[k].flit_chanel;
+                if(smart_ctrl[k].hdr_flit_req) ss_flit_chanel[straight_p].flit[DST_P_MSB : DST_P_LSB] =  smart_ctrl[k].lk_destport;
+            end
         end
     end
 

@@ -66,8 +66,8 @@ module mesh_torus_noc_top  (
                 .P (MAX_P)
             ) the_router (
                 .router_config_in(router_config_in[RID]),
-                .chan_in(router_chan_in [RID]), 
-                .chan_out(router_chan_out[RID]), 
+                .chan_in(router_chan_in [RID]),
+                .chan_out(router_chan_out[RID]),
                 .router_event(router_event[RID]),
                 .clk(clk), 
                 .reset(reset)
@@ -86,7 +86,7 @@ module mesh_torus_noc_top  (
                     assign router_chan_in[x][LOCALP]= chan_in_all [ENDPID];
                     assign chan_out_all [ENDPID] = router_chan_out[x][LOCALP];
             end// locals
-        end//x    
+        end//x
         
     end else begin :mesh_torus
         for (y=0; y<NY; y=y+1) begin: Y_
@@ -94,10 +94,10 @@ module mesh_torus_noc_top  (
                 localparam R_ADDR = (y<<NXw) + x;
                 localparam RID = (y * NX) + x;
                 //FMESH IDs
-                localparam EAST_ID = NX*NY*NL + 2*NX + NY +y;
-                localparam NORTH_ID = NX*NY*NL + x; 
-                localparam WEST_ID = NX*NY*NL +2*NX + y;
-                localparam SOUTH_ID = NX*NY*NL + NX + x;  
+                localparam EAST_ID  = (IS_FMESH) ? (NX*NY*NL) + (2*NX) + NY + y : 0;
+                localparam NORTH_ID = (IS_FMESH) ? (NX*NY*NL) + x : 0; 
+                localparam WEST_ID  = (IS_FMESH) ? (NX*NY*NL) + (2*NX) + y : 0;
+                localparam SOUTH_ID = (IS_FMESH) ? (NX*NY*NL) + NX + x : 0;  
                 
                 assign router_config_in[RID].router_addr = R_ADDR[RAw-1 :0];
                 assign router_config_in[RID].router_id = RID[NRw-1: 0];
@@ -119,27 +119,27 @@ module mesh_torus_noc_top  (
                 in [x,y][west] <------  out [x-1 ,y  ][east] ;
                 in [x,y][south] <------ out [x   ,y+1][north] ;
                  */
+                localparam EAST_RID = (x < NX-1) ? fmesh_router_id(x+1, y) : fmesh_router_id(0, y);
                 assign router_chan_in[fmesh_router_id(x, y)][EAST] = 
-                    (x < NX-1) ? router_chan_out[fmesh_router_id(x+1, y)][WEST] : //not_last_x
-                    (IS_MESH)  ? is_grounded :                     //last_x_mesh
-                    (IS_TORUS) ? router_chan_out[fmesh_router_id(0, y)][WEST] :   //last_x_torus
-                                 chan_in_all[EAST_ID];                            //last_x_fmesh
+                    ((x < NX-1) | IS_TORUS) ? router_chan_out[ EAST_RID][WEST] : //not_last_x
+                    (IS_MESH)  ? is_grounded : chan_in_all[EAST_ID]; //last_x_fmesh
+                
+                localparam NORTH_RID = (y > 0) ? fmesh_router_id(x, y-1) : fmesh_router_id(x, NY-1);
                 assign router_chan_in[fmesh_router_id(x, y)][NORTH] = 
-                    (y > 0  ) ? router_chan_out[fmesh_router_id(x, y-1)][SOUTH] :  //not_first_y
-                    (IS_MESH) ? is_grounded :                       //first_y_mesh
-                    (IS_TORUS)? router_chan_out[fmesh_router_id(x, NY-1)][SOUTH] : //first_y_torus
-                                chan_in_all[NORTH_ID];                            //first_y_fmesh
+                    ((y > 0) | IS_TORUS ) ? router_chan_out[NORTH_RID][SOUTH] : //not_first_y
+                    (IS_MESH) ? is_grounded : chan_in_all[NORTH_ID]; //first_y_fmesh
+                
+                localparam WEST_RID = (x > 0) ? fmesh_router_id(x-1, y) : fmesh_router_id(NX-1, y);  //not_first_x
                 assign router_chan_in[fmesh_router_id(x, y)][WEST] = 
-                    (x > 0)   ? router_chan_out[fmesh_router_id(x-1, y)][EAST] :  //not_first_x
-                    (IS_MESH) ? is_grounded :                      //first_x_mesh
-                    (IS_TORUS)? router_chan_out[fmesh_router_id(NX-1, y)][EAST] : //first_x_torus
-                                chan_in_all[WEST_ID];                             //first_x_fmesh
+                    ((x > 0) | IS_TORUS) ? router_chan_out[WEST_RID][EAST] :  //not_first_x
+                    (IS_MESH) ? is_grounded :  chan_in_all[WEST_ID]; //first_x_fmesh
+                
+                localparam SOUTH_RID = (y < NY-1) ? fmesh_router_id(x, y+1) : fmesh_router_id(x, 0);
                 assign router_chan_in[fmesh_router_id(x, y)][SOUTH] = 
-                    (y < NY-1)? router_chan_out[fmesh_router_id(x, y+1)][NORTH] : //not_last_y
-                    (IS_MESH)?  is_grounded :                      //last_y_mesh
-                    (IS_TORUS)? router_chan_out[fmesh_router_id(x, 0)][NORTH] :   //last_y_torus
-                                chan_in_all[SOUTH_ID];                   //last_y_fmesh
-                if(IS_FMESH) begin :fmesh //connect to endpoints
+                    (y < NY-1 || IS_TORUS)? router_chan_out[SOUTH_RID][NORTH] : //not_last_y
+                    (IS_MESH)?  is_grounded : chan_in_all[SOUTH_ID];  //last_y_fmesh
+                
+                if(IS_FMESH) begin : fmesh //connect to endpoints
                     if(x == NX-1)  assign chan_out_all [EAST_ID] = router_chan_out [fmesh_router_id(x,y)][EAST];
                     if(y ==0 )     assign chan_out_all [NORTH_ID] = router_chan_out [fmesh_router_id(x,y)][NORTH];
                     if (x ==0 )    assign chan_out_all [WEST_ID] = router_chan_out[fmesh_router_id(x, y)][WEST];
@@ -152,12 +152,12 @@ module mesh_torus_noc_top  (
                     localparam LOCALP = (l==0) ? l : l + R2R_CHANELS_MESH_TORI; // first local port is connected to router port 0. The rest are connected at the end  
                     localparam ENDP_ADDR = {l,R_ADDR[RAw-1: 0]};
                     assign router_chan_in [fmesh_router_id(x,y)][LOCALP] =    chan_in_all [ENDPID];
-                    assign chan_out_all [ENDPID] = router_chan_out [fmesh_router_id(x,y)][LOCALP];            
+                    assign chan_out_all [ENDPID] = router_chan_out [fmesh_router_id(x,y)][LOCALP];
                     assign router_config_in[RID].endp_addrs[(l+1)*EAw -1 :  l*EAw] = ENDP_ADDR[EAw-1:0];
                     assign router_config_in[RID].endp_ids[(l+1)*NEw -1 :  l*NEw] =ENDPID[NEw-1:0];
-                end// locals                 
+                end// locals
             end //y
         end //x
-    end// mesh_torus        
+    end// mesh_torus
     endgenerate
 endmodule

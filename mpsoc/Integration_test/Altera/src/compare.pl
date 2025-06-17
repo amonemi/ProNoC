@@ -46,11 +46,12 @@ sub parse_file {
 
     while (<$fh>) {
         chomp;
-        next if /^\s*$/;
-        if (/^File\|/) {
+        next if /^\s*$/; #skip empty line
+        next if /^---$/; #skip separtion lines
+        if (scalar @fields ==0) {
             s/^\s+|\s+$//g;
             @fields = split /\|/;
-            shift @fields;  # remove "File"
+            shift @fields;  # remove first column name
             s/^\s+|\s+$//g for @fields;
             next;
         }

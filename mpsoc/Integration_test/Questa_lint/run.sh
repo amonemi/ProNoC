@@ -39,7 +39,7 @@ questa_lint () {
     vlib work
     # Lint the design
     vlog -sv -lint -f ${file_list_f} 
-    vsim -suppress vopt-14408 -c work.noc_top -do "quit"  
+    vsim -suppress vopt-14408,vsim-16154 -c work.noc_top -do "quit"  
 }
 
 report_total_errors_warnings () {
@@ -51,21 +51,22 @@ report_total_errors_warnings () {
     printf "%-30s | %-10s | %-10s |\n" "$conf" "$warnings" "$errors" >> "$report_file"
 }
 
+
 for f in "$conf_dir"/*; do
     [[ -d "$f" ]] && continue
     conf=$(basename "$f")
     log_file="${log_dir}/${conf}.log"
     echo "▶️  Compiling configuration: $conf"
-    # questa_lint "$conf"  |& tee $log_file
-    #if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
-    #    echo "❌ Compilation failed for $conf (check $log_file)"
-    #    rm -f ${SCRPT_DIR_PATH}/src/noc_localparam.v
-    #    exit 1
-    #else
+    questa_lint "$conf"  |& tee $log_file
+    if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+        echo "❌ Compilation failed for $conf (check $log_file)"
+        rm -f ${SCRPT_DIR_PATH}/src/noc_localparam.v
+        exit 1
+    else
         echo "✅ Compilation successful for $conf"
         rm -f ${SCRPT_DIR_PATH}/src/noc_localparam.v
         report_total_errors_warnings "$conf"
-    #fi
+    fi
 done
 
 echo "Report saved in $report_file"
@@ -73,3 +74,7 @@ echo "Summary:"
 echo "-------------------------------|------------|------------|"
 cat $report_file
 
+echo "Comparing with golden reference..."
+# Compare the results with the golden reference report  
+perl ${SCRPT_DIR_PATH}/../Altera/src/compare.pl  $report_file ${SCRPT_DIR_PATH}/golden_ref/report.txt
+echo "All configurations processed. Results are in $report_file
