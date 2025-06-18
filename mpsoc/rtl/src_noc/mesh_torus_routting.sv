@@ -870,3 +870,40 @@ module mesh_tori_decode_dstport (
         endcase
    end //always
 endmodule 
+
+module mesh_tori_full_adapt_ovc_avail #(
+    parameter P = 4
+) (
+    reset,clk,
+    empty_all_next,
+    full_all_next,
+    nearly_full_all_next,
+    ovc_status,
+    ovc_avalable_all
+);
+    import pronoc_pkg::*;
+    localparam PV = P * V;
+    localparam [V-1 : 0] ADAPTIVE_VC_MASK = ~ ESCAP_VC_MASK;
+    input [PV-1 : 0] empty_all_next, full_all_next,  nearly_full_all_next,ovc_status;
+    output [PV-1 : 0]ovc_avalable_all;
+    input reset,clk;
+    reg [PV-1 : 0] full_adaptive_ovc_mask,full_adaptive_ovc_mask_next; 
+    always_comb begin
+        for( int k=0; k<PV; k=k+1) begin
+        //in full adaptive routing, adaptive VCs located in y axies can not be reallocated non-atomicly
+            if( AVC_ATOMIC_EN == 0) begin :avc_atomic
+                if((((k/V) == NORTH ) || ((k/V) == SOUTH )) && (  ADAPTIVE_VC_MASK[k%V]))  
+                    full_adaptive_ovc_mask_next[k] = empty_all_next[k];
+                else 
+                    full_adaptive_ovc_mask_next[k] = (OVC_ALLOC_MODE)? ~full_all_next[k] : ~nearly_full_all_next[k];
+            end else begin :avc_nonatomic
+                if(  ADAPTIVE_VC_MASK[k%V])  
+                    full_adaptive_ovc_mask_next[k] = empty_all_next[k];
+                else    
+                    full_adaptive_ovc_mask_next[k] = (OVC_ALLOC_MODE)? ~full_all_next[k] :~nearly_full_all_next[k];
+            end
+         end // for  
+    end//always
+    pronoc_register #(.W(PV)) reg2 ( .D_in(full_adaptive_ovc_mask_next), .reset(reset), .clk(clk), .Q_out(full_adaptive_ovc_mask));
+    assign ovc_avalable_all   = ~ovc_status & full_adaptive_ovc_mask;
+endmodule

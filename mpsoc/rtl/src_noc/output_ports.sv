@@ -65,10 +65,8 @@ module output_ports #(
         P_1 = (SELF_LOOP_EN )?  P : P-1,
         VP_1 = V * P_1,
         PP_1 = P_1 * P,
-        PVP_1 = PV * P_1;
-    
-    localparam [V-1 : 0] ADAPTIVE_VC_MASK = ~ ESCAP_VC_MASK;
-    localparam  CONG_ALw= CONGw * P;   //  congestion width per router;
+        PVP_1 = PV * P_1,
+        CONG_ALw = CONGw * P;   //  congestion width per router;
     
     input [PV-1 : 0] vsa_ovc_allocated_all;
     input [PV-1 : 0] flit_is_tail_all;   
@@ -124,36 +122,28 @@ module output_ports #(
     generate
         /* verilator lint_off WIDTH */
         if(VC_REALLOCATION_TYPE=="ATOMIC") begin :atomic
-        /* verilator lint_on WIDTH */               
+        /* verilator lint_on WIDTH */
             // in atomic architecture an OVC is available if its not allocated and its empty
             assign ovc_avalable_all      = ~ovc_status & empty_all;
         end else begin :nonatomic //NONATOMIC
             /* verilator lint_off WIDTH */
             if(ROUTE_TYPE == "FULL_ADAPTIVE") begin :full_adpt
             /* verilator lint_on WIDTH */
-                reg [PV-1 : 0] full_adaptive_ovc_mask,full_adaptive_ovc_mask_next; 
-                always_comb begin
-                    for( int k=0; k<PV; k=k+1) begin
-                     //in full adaptive routing, adaptive VCs located in y axies can not be reallocated non-atomicly   
-                        if( AVC_ATOMIC_EN== 0) begin :avc_atomic
-                            if((((k/V) == NORTH ) || ((k/V) == SOUTH )) && (  ADAPTIVE_VC_MASK[k%V]))  
-                                full_adaptive_ovc_mask_next[k] = empty_all_next[k];
-                            else 
-                                full_adaptive_ovc_mask_next[k] = (OVC_ALLOC_MODE)? ~full_all_next[k] : ~nearly_full_all_next[k];
-                        end else begin :avc_nonatomic
-                            if(  ADAPTIVE_VC_MASK[k%V])  
-                                full_adaptive_ovc_mask_next[k] = empty_all_next[k];
-                            else    
-                                full_adaptive_ovc_mask_next[k] = (OVC_ALLOC_MODE)? ~full_all_next[k] :~nearly_full_all_next[k];    
-                        end                       
-                     end // for  
-                end//always
-                pronoc_register #(.W(PV)) reg2 ( .D_in(full_adaptive_ovc_mask_next), .reset(reset), .clk(clk), .Q_out(full_adaptive_ovc_mask));
-                assign ovc_avalable_all   = ~ovc_status & full_adaptive_ovc_mask;
+                mesh_tori_full_adapt_ovc_avail #(
+                    .P(P)
+                ) ovc_avb (
+                    .reset(reset),
+                    .clk(clk),
+                    .empty_all_next(empty_all_next),
+                    .full_all_next(full_all_next),
+                    .nearly_full_all_next(nearly_full_all_next),
+                    .ovc_status(ovc_status),
+                    .ovc_avalable_all(ovc_avalable_all)
+                );
             end else begin : par_adpt //par adaptive
                 assign ovc_avalable_all = (OVC_ALLOC_MODE)? ~(ovc_status | full_all) : ~(ovc_status | nearly_full_all);
             end
-        end //NONATOMIC    
+        end //NONATOMIC
     endgenerate
     
     assign credit_increased_all = credit_in_all;
@@ -356,7 +346,7 @@ module output_ports #(
                 .NUM(PV) 
             ) cnt2 (
                 .in_all(ovc_is_assigned_all),
-                .sum_o(num2)         
+                .sum_o(num2)
             );
             always @(posedge clk) begin
                 if(num1    != num2 )begin 
