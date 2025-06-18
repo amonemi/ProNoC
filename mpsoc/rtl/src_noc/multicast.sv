@@ -361,7 +361,7 @@ module mcast_dest_list_decode  (
             .id_out(unicast_id)
         );
         for(i=0; i< NE; i=i+1) begin : endpoints
-            localparam MCAST_ID = endp_id_to_mcast_id(i);
+            localparam MCAST_ID = (MCAST_ENDP_LIST[i]==1'b1) ? endp_id_to_mcast_id(i): 0;
             assign dest_o_multi [i] = (MCAST_ENDP_LIST[i]==1'b1)? mcast_dst_coded[MCAST_ID+1] : 1'b0;                
         end
         assign dest_o = (not_in_cast_list)? dest_o_uni : dest_o_multi;
@@ -438,6 +438,11 @@ module multicast_chan_in_process #(
     localparam MCASTw_= (MCASTw < DAw ) ? MCASTw : DAw;
     assign mcast_dst_coded = hdr_flit.dest_e_addr[MCASTw_-1:0];    
     wire [DAw-1 : 0] dest_e_addr;
+    logic[DSTPw-1 : 0] destport_tmp;
+    always_comb begin 
+        destport_tmp = destport;
+        if(SELF_LOOP_EN == 0) destport_tmp [ SW_LOC ] = 1'b0; 
+    end
     genvar i;
     generate 
     if(IS_MESH) begin : mesh_
@@ -456,11 +461,6 @@ module multicast_chan_in_process #(
             end
             for(i=0;i<NX; i++) begin : X_
                 assign row_has_any_dest[i] =| endp_mask[i];
-            end    
-            reg   [DSTPw-1 : 0] destport_tmp;
-            always_comb begin 
-                destport_tmp = destport;
-                if(SELF_LOOP_EN   == 0) destport_tmp [ SW_LOC ] = 1'b0; 
             end
             assign destport_o = destport_tmp;
         end else begin : no_endp
@@ -497,11 +497,6 @@ module multicast_chan_in_process #(
             if(i==0) assign row_has_any_dest_endp_port[i] =(| endp_mask[i]) | ( |west_endps)  | north_endps[i] | south_endps[i];
             else if (i==NX-1) assign row_has_any_dest_endp_port[i] =(| endp_mask[i]) | ( |east_endps)  | north_endps[i] | south_endps[i];
             else assign row_has_any_dest_endp_port[i] =(| endp_mask[i]) |  north_endps[i] | south_endps[i];
-        end    
-        reg   [DSTPw-1 : 0] destport_tmp;
-        always_comb begin 
-            destport_tmp = destport;
-            if(SELF_LOOP_EN   == 0) destport_tmp [ SW_LOC ] = 1'b0;
         end
         assign  destport_o = (endp_port) ?    destport : destport_tmp ;
         assign  row_has_any_dest = (endp_port) ? row_has_any_dest_endp_port : row_has_any_dest_in;

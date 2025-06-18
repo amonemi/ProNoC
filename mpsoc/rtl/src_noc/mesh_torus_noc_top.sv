@@ -88,7 +88,7 @@ module mesh_torus_noc_top  (
             end// locals
         end//x
         
-    end else begin :mesh_torus
+    end else if (IS_MESH | IS_FMESH | IS_TORUS ) begin : mesh_torus
         for (y=0; y<NY; y=y+1) begin: Y_
             for (x=0; x<NX; x=x+1) begin :X_
                 localparam R_ADDR = (y<<NXw) + x;

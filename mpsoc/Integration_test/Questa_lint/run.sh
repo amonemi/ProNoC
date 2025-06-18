@@ -53,22 +53,49 @@ report_total_errors_warnings () {
 }
 
 
-for f in "$conf_dir"/*; do
-    [[ -d "$f" ]] && continue
-    conf=$(basename "$f")
+run_config () {
+    conf="$1"
     log_file="${log_dir}/${conf}.log"
     echo "▶️  Compiling configuration: $conf"
-    questa_lint "$conf"  |& tee $log_file
+    questa_lint "$conf" |& tee "$log_file"
     if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
         echo "❌ Compilation failed for $conf (check $log_file)"
-        rm -f ${SCRPT_DIR_PATH}/src/noc_localparam.v
+        rm -f "${SCRPT_DIR_PATH}/src/noc_localparam.v"
         exit 1
     else
         echo "✅ Compilation successful for $conf"
-        rm -f ${SCRPT_DIR_PATH}/src/noc_localparam.v
+        rm -f "${SCRPT_DIR_PATH}/src/noc_localparam.v"
         report_total_errors_warnings "$conf"
     fi
-done
+}
+
+
+# === Main ===
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: bash run.sh [config_name]"
+    echo
+    echo "If [config_name] is provided, only that configuration will be processed."
+    echo "If no argument is given, all configurations in the 'configurations/' directory will be processed."
+    echo
+    echo "Examples:"
+    echo "  bash run.sh         # Run all configurations"
+    echo "  bash run.sh conf1   # Run only conf1"
+    exit 0
+fi
+
+if [[ $# -eq 1 ]]; then
+    # Run only the specified configuration
+    conf_name="$1"
+    run_config "$conf_name"
+else
+    # Run all configurations
+    for f in "$conf_dir"/*; do
+        [[ -d "$f" ]] && continue
+        conf=$(basename "$f")
+        run_config "$conf"
+    done
+fi
+
 
 echo "Report saved in $report_file"
 echo "Summary:"
