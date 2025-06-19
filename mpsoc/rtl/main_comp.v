@@ -162,28 +162,6 @@ module one_hot_demux    #(
     endgenerate
 endmodule
 
-/**************************
-*    reduction_or
-***************************/
-module reduction_or #(
-    parameter W = 5,//out width
-    parameter N = 4 //array lenght 
-)(
-    D_in,
-    Q_out
-);
-    input  [W-1 : 0] D_in [N-1 : 0];
-    output reg [W-1 : 0] Q_out;
-    
-    // assign Q_out = D_in.or(); //it is not synthesizable able by some compiler
-    always_comb begin
-        Q_out = {W{1'b0}};
-        for (int i = 0; i < N; i++)
-            Q_out |=   D_in[i];
-    end
-endmodule
-
-
 /*****************************************
 * sum the output of all ports 
 * except the output of  port itself

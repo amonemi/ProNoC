@@ -61,6 +61,12 @@
     localparam CLASS_SETTING={CVw{1'b1}};
     localparam CAST_TYPE = "UNICAST";
     localparam MCAST_ENDP_LIST = 'b11110011;
+    
+    localparam MAX_ROUTER=1;
+    localparam MAX_PORT=1;
+    localparam int VC_CONFIG_TABLE [MAX_ROUTER][MAX_PORT]='{'{0}};
+    localparam HETERO_VC=0;
+    
 //    localparam MCAST_PRTLw=6;
     
     //simulation parameter

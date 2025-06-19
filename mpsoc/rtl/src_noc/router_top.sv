@@ -218,6 +218,10 @@ module router_top #(
                 
             end //smart_en
         end//for Port_
+    end else begin 
+        for(i=0;i<P;i=i+1) begin : Port_
+            assign smart_ctrl[i]={SMART_CTRL_w{1'b0}};
+        end
     end
     endgenerate
 

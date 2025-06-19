@@ -720,3 +720,24 @@ module smart_credit_manage_per_vc #(
     assign credit_out = credit_in |     smart_credit_in | (counter > 0);
     pronoc_register #(.W(Bw+1)) reg1 (.D_in(counter_next), .reset(reset), .clk(clk), .Q_out(counter));
 endmodule
+
+/**************************
+*    reduction_or
+***************************/
+module reduction_or #(
+    parameter W = 5,//out width
+    parameter N = 4 //array lenght 
+)(
+    D_in,
+    Q_out
+);
+    input  [W-1 : 0] D_in [N-1 : 0];
+    output reg [W-1 : 0] Q_out;
+    
+    // assign Q_out = D_in.or(); //it is not synthesizable able by some compiler
+    always_comb begin
+        Q_out = {W{1'b0}};
+        for (int i = 0; i < N; i++)
+            Q_out |=   D_in[i];
+    end
+endmodule
