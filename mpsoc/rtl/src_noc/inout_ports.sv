@@ -516,9 +516,9 @@ module  vc_alloc_request_gen #(
             .candidate_ovc_all(candidate_ovc_all)
         );
         
-        assign swap_port_presel = {PV{1'bx}};
+        assign swap_port_presel = {PV{1'b0}};
         assign destport_clear_all={PVDSTPw{1'b0}};
-        assign sel = {PV{1'bx}};
+        assign sel = {PV{1'b0}};
         
     end else begin: adptv
         

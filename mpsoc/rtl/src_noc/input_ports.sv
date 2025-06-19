@@ -828,10 +828,10 @@ module input_queue_per_port #(
                 .recieve_more_than_1(),
                 .reset(reset),
                 .clk(clk) 
-            );       
+            );
             
         end else begin : single_local 
-            assign endp_localp_num[(i+1)*PLw-1 : i*PLw] = {PLw{1'bx}}; 
+            assign endp_localp_num[(i+1)*PLw-1 : i*PLw] = {PLw{1'b0}}; 
         end
         
         /* verilator lint_off WIDTH */

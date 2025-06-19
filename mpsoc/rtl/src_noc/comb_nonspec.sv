@@ -530,12 +530,12 @@ module nonspec_sw_alloc #(
             end
             
         end else begin 
-            assign single_flit_pck_local_grant[i] = 1'bx;
-            assign single_flit_granted_dst[i] = {P_1{1'bx}};
+            assign single_flit_pck_local_grant[i] = 1'b0;
+            assign single_flit_granted_dst[i] = {P_1{1'b0}};
             assign single_flit_granted_dst_all[i] = {P{1'b0}};
         end
         //second arbiter input/output generate
-        for(j=0;j<P;    j=j+1)begin: P_
+        for(j=0;j<P; j=j+1)begin: P_
             if (SELF_LOOP_EN == 0) begin 
                 if(i<j) begin
                     assign second_arbiter_request[i][j-1]  = dest_port[j][i];
@@ -635,7 +635,7 @@ module swa_input_port_arbiter #(
             .priority_en(priority_en)
         );
     end else begin : rra_m //RRA
-        assign winner_weight_consumed = 1'bx;
+        assign winner_weight_consumed = 1'b0;
         if(EXT_P_EN==1) begin : arbiter_ext_en
             
             arbiter_priority_en #(

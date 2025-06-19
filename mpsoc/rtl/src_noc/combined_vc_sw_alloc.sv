@@ -152,8 +152,8 @@ module combined_vc_sw_alloc #(
             .reset(reset)
         );        
         
-        assign spec_granted_dest_port_all = {PP_1{1'bx}};
-        assign spec_ovc_num_all = {PVV{1'bx}};
+        assign spec_granted_dest_port_all = {PP_1{1'b0}};
+        assign spec_ovc_num_all = {PVV{1'b0}};
     end else if (IS_COMB_SPEC2) begin : spec2
         comb_spec2_allocator #(
             .P(P)
@@ -179,8 +179,8 @@ module combined_vc_sw_alloc #(
             .clk(clk), 
             .reset(reset)
         );   
-        assign spec_granted_dest_port_all = {PP_1{1'bx}};
-        assign spec_ovc_num_all = {PVV{1'bx}};
+        assign spec_granted_dest_port_all = {PP_1{1'b0}};
+        assign spec_ovc_num_all = {PVV{1'b0}};
     end else begin :   nonspec
         if(V>7)begin : cmb_v2
             comb_nonspec_v2_allocator #(
@@ -230,8 +230,8 @@ module combined_vc_sw_alloc #(
             );
         end
         assign nonspec_granted_dest_port_all = granted_dest_port_all;
-        assign spec_granted_dest_port_all  = {PP_1{1'bx}};
-        assign spec_ovc_num_all = {PVV{1'bx}};
+        assign spec_granted_dest_port_all  = {PP_1{1'b0}};
+        assign spec_ovc_num_all = {PVV{1'b0}};
         assign spec_first_arbiter_granted_ivc_all =  nonspec_first_arbiter_granted_ivc_all ;
     end
 endgenerate

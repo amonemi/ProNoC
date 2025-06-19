@@ -1014,7 +1014,7 @@ localparam
                 .V(V)
             ) the_congestion_out_gen (
                 .ovc_avalable_all(ovc_avalable_all),
-                .congestion_out_all(congestion_out_all_next)   
+                .congestion_out_all(congestion_out_all_next)
             );
         end  else if  (CONGESTION_INDEX==11 || CONGESTION_INDEX==12) begin :indx11
             congestion_out_based_avb_ovc_not_granted_ivc #(
@@ -1027,19 +1027,19 @@ localparam
                 .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant),
                 .clk(clk),
                 .reset(reset),    
-                .congestion_out_all(congestion_out_all_next)   
+                .congestion_out_all(congestion_out_all_next)
             );
-        end  else begin :nocong assign  congestion_out_all_next = {CONG_ALw{1'bx}};   end
+        end  else begin :nocong assign  congestion_out_all_next = {CONG_ALw{1'b0}};   end
     end else begin :dtrmn
-        assign  congestion_out_all_next = {CONG_ALw{1'bx}};   
+        assign  congestion_out_all_next = {CONG_ALw{1'b0}};
     end
     endgenerate
     pronoc_register #(
-        .W(CONG_ALw)          
+        .W(CONG_ALw)
     ) reg1 ( 
         .D_in(congestion_out_all_next),
-        .reset(reset),    
-        .clk(clk),      
+        .reset(reset),
+        .clk(clk),
         .Q_out(congestion_out_all)
     );
 endmodule
