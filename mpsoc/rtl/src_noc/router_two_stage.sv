@@ -193,7 +193,7 @@ module router_two_stage #(
         end
         for (i=0; i<P; i=i+1 ) begin :p_
             
-            if(CAST_TYPE == "UNICAST") begin : uni 
+            if(IS_UNICAST) begin : uni 
                 assign chan_in_tmp[i] = chan_in[i];
             end else begin : multi
                 multicast_chan_in_process #(
@@ -455,7 +455,7 @@ module router_two_stage #(
         always @(posedge clk) begin
             if(`pronoc_reset)begin 
                 t1[i]<=1'b0;
-                t2[i]<=1'b0;             
+                t2[i]<=1'b0;
             end else begin 
                 if(flit_out_wr_all[i]>0 && t2[i]==0)begin 
                     $display("%t :Out router (id=%d, addr=%h, port=%d), flitout=%h",$time,current_r_id,current_r_addr,i,flit_out_all[(i+1)*Fw-1 : i*Fw]);

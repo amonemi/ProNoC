@@ -516,7 +516,7 @@ module check_pck_size #(
         if(CAST_TYPE!="UNICAST") begin
         /* verilator lint_on WIDTH */   
         //Check that the size of multicast/broadcast packets <= buffer size
-            assign vc_hdr_wr_en [i] = flit_in_wr & hdr_flg_in & (vc_num_in == i);
+            assign vc_hdr_wr_en [i] = flit_in_wr & hdr_flg_in & (vc_num_in == VC);
             pronoc_register_ld_en #(.W(DAw)) reg2(
                 .D_in     (dest_e_addr_in), 
                 .reset  (reset ), 
@@ -539,7 +539,7 @@ module check_pck_size #(
                 .result(onehot[i])
             );
             always @(posedge clk) begin 
-                if (vc_num_in == i)begin 
+                if (vc_num_in == VC) begin 
                     if(flit_in_wr & ~onehot[i])begin 
                         if(pck_size_counter_next[i]>MIN_B) begin 
                             $display ( "%t\t  ERROR: A multicast packet is injected to the router with packet size (%d flits) that is larger than the minimum router buffer size (%d flits) parameter  %m",$time,pck_size_counter_next[i],MIN_B);

@@ -518,15 +518,13 @@ module multicast_chan_in_process #(
         chan_out=chan_in;
         if(chan_in.flit.hdr_flag == 1'b1) begin
             chan_out.flit [E_DST_MSB : E_DST_LSB] = dest_e_addr;
-            chan_out.flit [DST_P_MSB : DST_P_LSB] = destport_o;                
+            chan_out.flit [DST_P_MSB : DST_P_LSB] = destport_o;
         end
-    end    
-    `ifdef SIMULATION    
+    end
+    `ifdef SIMULATION
     if(DEBUG_EN) begin :debg
         always @(posedge clk) begin 
-            /* verilator lint_off WIDTH */ 
-            if(CAST_TYPE == "MULTICAST_FULL" || CAST_TYPE == "MULTICAST_PARTIAL")
-            /* verilator lint_on WIDTH */ 
+            if(IS_MULTICAST_FULL | IS_MULTICAST_PARTIAL)
             if(chan_in.flit_wr  == 1'b1 && chan_in.flit.hdr_flag == 1'b1 && mcast_dst_coded == {MCASTw{1'b0}}) begin 
                 $display ("%t: ERROR: A multicast packet is injected to the NoC with zero mcast_dst_coded filed %m ",$time);
                 $finish;
