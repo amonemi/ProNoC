@@ -1,8 +1,8 @@
 `include "pronoc_def.v"
 /**************************************
 * Module: localparameter
-* Date:2019-04-08  
-* Author: alireza     
+* Date:2019-04-08
+* Author: alireza
 *
 * Description: 
 ***************************************/
@@ -18,7 +18,9 @@
         IS_FATTREE=(TOPOLOGY == "FATTREE"),
         IS_TREE=   (TOPOLOGY == "TREE"),
         IS_STAR=   (TOPOLOGY == "STAR"),
-        IS_MULTI_MESH=(TOPOLOGY == "MULTI_MESH");
+        IS_MULTI_MESH=(TOPOLOGY == "MULTI_MESH"),
+        IS_REGULAR_TOPO = (IS_RING | IS_LINE | IS_MESH | IS_TORUS),
+        IS_MULTI_ENDP_ROUTER = (T3 > 1) ;
         /* verilator lint_on WIDTH */ 
     
     localparam [0:0]
@@ -29,12 +31,14 @@
         IS_MULTI_FLIT = (PCK_TYPE == "MULTI_FLIT"),
         IS_COMB_SPEC2 = (COMBINATION_TYPE == "COMB_SPEC2"),
         IS_COMB_SPEC1 = (COMBINATION_TYPE == "COMB_SPEC1"),
+        IS_COMB_NONSPEC = (COMBINATION_TYPE == "COMB_NONSPEC"),
         IS_MULTICAST_FULL = (CAST_TYPE == "MULTICAST_FULL"),
         IS_MULTICAST_PARTIAL = (CAST_TYPE == "MULTICAST_PARTIAL"),
         IS_BROADCAST_PARTIAL = (CAST_TYPE == "BROADCAST_PARTIAL"),
         IS_UNICAST = (CAST_TYPE == "UNICAST"),
         IS_BROADCAST_FULL = (CAST_TYPE == "BROADCAST_FULL"),
-        IS_ONE_HOT_MUX = (MUX_TYPE=="ONE_HOT");
+        IS_ONE_HOT_MUX = (MUX_TYPE == "ONE_HOT"),
+        IS_VCA_ATOMIC = (VC_REALLOCATION_TYPE == "ATOMIC");
         /* verilator lint_on WIDTH */
     
     //MESH, TORUS Topology p=5
@@ -57,11 +61,11 @@
     function automatic integer log2;
     input integer number;
     begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end       
-    end   
+        log2=(number <=1) ? 1: 0;
+        while(2**log2<number) begin
+            log2=log2+1;
+        end
+    end
     endfunction // log2 
     
     function automatic integer powi; // x^y
@@ -91,16 +95,16 @@
     input integer router_port_num;  //router port num
     input integer current_port;
     begin 
-        if(IS_MESH || IS_FMESH || IS_TORUS || IS_MULTI_MESH) begin 
+        if(IS_MESH | IS_FMESH | IS_TORUS | IS_MULTI_MESH) begin 
             strieght_port = 
-                (current_port== EAST)?  WEST:
-                (current_port== WEST)?  EAST:
-                (current_port== SOUTH)? NORTH:
-                (current_port== NORTH)? SOUTH:
+                (current_port == EAST)?  WEST:
+                (current_port == WEST)?  EAST:
+                (current_port == SOUTH)? NORTH:
+                (current_port == NORTH)? SOUTH:
                 (IS_MULTI_MESH && current_port== UP)? DOWN: 
                 (IS_MULTI_MESH && current_port== DOWN)? UP:
                 router_port_num; //DISABLED;
-        end else if (IS_RING || IS_LINE) begin 
+        end else if (IS_RING | IS_LINE) begin 
             strieght_port = 
                 (current_port== FORWARD )? BACKWARD:
                 (current_port== BACKWARD)? FORWARD:
@@ -133,7 +137,7 @@
         end
     end
     endfunction
-
+    
     /*******************
     *   "RING"  "LINE"  "MESH" TORUS" "FMESH"
     ******************/
@@ -141,26 +145,27 @@
     //route type
     localparam 
         NX = T1,
-        NY = (IS_RING || IS_LINE) ? 1 : T2,
+        NY = (IS_RING | IS_LINE) ? 1 : T2,
         NL = T3,
         NXw = log2(NX),
-        NYw= log2(NY),
-        NLw= log2(NL),
-        PPSw_MESH_TORI =4, //port presel width for adaptive routing
+        NYw = log2(NY),
+        NLw = log2(NL),
+        PPSw_MESH_TORI = 4, //port presel width for adaptive routing
         /* verilator lint_off WIDTH */
         ROUTE_TYPE_MESH_TORI = 
             (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
             (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE",
+        /* verilator lint_on WIDTH */
         R2R_CHANELS_MESH_TORI=  (IS_RING || IS_LINE)? 2 : 4,
-        R2E_CHANELS_MESH_TORI= NL,    
-        RAw_MESH_TORI = ( IS_RING || IS_LINE)? NXw : NXw + NYw,
+        R2E_CHANELS_MESH_TORI= NL,
+        RAw_MESH_TORI = ( IS_RING | IS_LINE)? NXw : NXw + NYw,
         EAw_MESH_TORI = (NL==1) ? RAw_MESH_TORI : RAw_MESH_TORI + NLw,
         NR_MESH_TORI = (IS_RING || IS_LINE)? NX : NX*NY,
         NE_MESH_TORI = NR_MESH_TORI * NL,
         MAX_P_MESH_TORI = R2R_CHANELS_MESH_TORI + R2E_CHANELS_MESH_TORI,
         DSTPw_MESH_TORI = R2R_CHANELS_MESH_TORI, // P-1
         NE_PER_R_MESH_TORI = NL;
-        /* verilator lint_on WIDTH */
+    
     
     /****************
     *  FMESH
@@ -209,11 +214,11 @@
         NE_STAR = T1,  //total number of endpoints
         NR_STAR = 1,  // total number of routers  
         RAw_STAR = 1,
-        EAw_STAR  =  log2(NE_STAR),
-        DSTPw_STAR = (CAST_TYPE!= "UNICAST")? NE_STAR :EAw_STAR,
+        EAw_STAR = log2(NE_STAR),
+        DSTPw_STAR = (~IS_UNICAST) ? NE_STAR :EAw_STAR,
         MAX_P_STAR = NE_STAR,
         DAw_MCAST_STAR= NE_STAR,
-        NE_PER_R_STAR = NE_STAR;            
+        NE_PER_R_STAR = NE_STAR;
     /************************
     *  CUSTOM - made by netmaker
     ***********************/
@@ -225,7 +230,7 @@
         RAw_CUSTOM = log2(NR_CUSTOM),
         MAX_P_CUSTOM = T3,
         DSTPw_CUSTOM = log2(MAX_P_CUSTOM),
-        NE_PER_R_CUSTOM=MAX_P_CUSTOM;//just take the max possible value as it can be variable per router
+        NE_PER_R_CUSTOM = MAX_P_CUSTOM;//just take the max possible value as it can be variable per router
     /***********************
     *   MULTI_MESH - made by yaml noc generator
     ************************/
@@ -238,14 +243,14 @@
         EAw_MULTI_MESH = T2,
         MAX_P_MULTI_MESH = 7,
         DSTPw_MULTI_MESH = log2(MAX_P_MULTI_MESH);
-    /* verilator lint_off WIDTH */ 
+    
     localparam
         PPSw = PPSw_MESH_TORI,
         // maximum number of port in a router in the topology
         MAX_P =
             (IS_FATTREE)? MAX_P_FATTREE:
             (IS_TREE)?  MAX_P_TREE:
-            (IS_RING || IS_LINE || IS_MESH || IS_TORUS)? MAX_P_MESH_TORI:
+            (IS_REGULAR_TOPO)? MAX_P_MESH_TORI:
             (IS_FMESH)? MAX_P_MESH_TORI:
             (IS_STAR) ? MAX_P_STAR:
             (IS_MULTI_MESH) ? MAX_P_MULTI_MESH:
@@ -253,19 +258,19 @@
         // destination port width in header flit
         DSTPw =
            // Each asserted bit indicats that the flit should be sent to that port
-            (IS_FATTREE)? DSTPw_FATTREE:
-            (IS_TREE)?  DSTPw_TREE:
-            (CAST_TYPE!= "UNICAST")? MAX_P: 
-            (IS_RING || IS_LINE || IS_MESH || IS_TORUS)? DSTPw_MESH_TORI:
-            (IS_FMESH)? DSTPw_MESH_TORI:
-            (IS_STAR) ? DSTPw_STAR:
-            (IS_MULTI_MESH) ? DSTPw_MULTI_MESH:
+            (IS_FATTREE)? DSTPw_FATTREE :
+            (IS_TREE)?  DSTPw_TREE :
+            (~IS_UNICAST) ? MAX_P : 
+            (IS_REGULAR_TOPO)? DSTPw_MESH_TORI :
+            (IS_FMESH)? DSTPw_MESH_TORI :
+            (IS_STAR) ? DSTPw_STAR :
+            (IS_MULTI_MESH) ? DSTPw_MULTI_MESH :
             DSTPw_CUSTOM,
         //router address width
         RAw =
             (IS_FATTREE)? RAw_FATTREE:
             (IS_TREE)?  RAw_TREE:
-            (IS_RING || IS_LINE || IS_MESH || IS_TORUS)? RAw_MESH_TORI:
+            (IS_REGULAR_TOPO)? RAw_MESH_TORI:
             (IS_FMESH)? RAw_MESH_TORI:
             (IS_STAR) ? RAw_STAR:
             (IS_MULTI_MESH) ? RAw_MULTI_MESH:
@@ -274,16 +279,16 @@
         EAw =
             (IS_FATTREE)? EAw_FATTREE:
             (IS_TREE)?  EAw_TREE:
-            (IS_RING || IS_LINE || IS_MESH || IS_TORUS)? EAw_MESH_TORI:
+            (IS_REGULAR_TOPO)? EAw_MESH_TORI:
             (IS_FMESH)? EAw_FMESH:
             (IS_STAR) ? EAw_STAR:
             (IS_MULTI_MESH) ? EAw_MULTI_MESH:
-            EAw_CUSTOM,           
-        // total number of endpoints         
+            EAw_CUSTOM,
+        // total number of endpoints
         NE =
             (IS_FATTREE)? NE_FATTREE:
             (IS_TREE)?  NE_TREE:
-            (IS_RING || IS_LINE || IS_MESH || IS_TORUS)? NE_MESH_TORI:
+            (IS_REGULAR_TOPO)? NE_MESH_TORI:
             (IS_FMESH)? NE_FMESH: 
             (IS_STAR)? NE_STAR:
             (IS_MULTI_MESH) ? NE_MULTI_MESH:
@@ -293,7 +298,7 @@
         NE_PER_R =
             (IS_FATTREE)? NE_PER_R_FATTREE:
             (IS_TREE)?  NE_PER_R_TREE:
-            (IS_RING || IS_LINE || IS_MESH || IS_TORUS)? NE_PER_R_MESH_TORI:
+            (IS_REGULAR_TOPO)? NE_PER_R_MESH_TORI:
             (IS_FMESH)? NE_PER_R_MESH_TORI: 
             (IS_STAR)? NE_PER_R_STAR:
             (IS_MULTI_MESH) ? 1:
@@ -302,34 +307,35 @@
         DAw_OFFSETw  =  (IS_MESH || IS_TORUS ||  IS_FMESH)?  NX : 0, 
         MCAST_PRTLw = mcast_partial_width( MCAST_ENDP_LIST),
         MCASTw =
-            (CAST_TYPE == "MULTICAST_FULL") ? NE :
-            (CAST_TYPE == "MULTICAST_PARTIAL" && EAw >= MCAST_PRTLw) ? EAw +1 : 
-            (CAST_TYPE == "MULTICAST_PARTIAL" && EAw <  MCAST_PRTLw) ? MCAST_PRTLw +1 :
+            (IS_MULTICAST_FULL) ? NE :
+            ((IS_MULTICAST_PARTIAL==1'b1) && (EAw >= MCAST_PRTLw)) ? EAw +1 : 
+            ((IS_MULTICAST_PARTIAL==1'b1) && (EAw <  MCAST_PRTLw)) ? MCAST_PRTLw +1 :
             EAw +1, //broadcast
         DAw = 
             (IS_MULTI_MESH) ? DAw_MULTI_MESH :
-            (CAST_TYPE == "UNICAST") ?   EAw:
-            MCASTw +  DAw_OFFSETw,            
-        //total number of routers        
+            (IS_UNICAST) ?   EAw:
+            MCASTw +  DAw_OFFSETw,
+        //total number of routers
         NR =
             (IS_FATTREE)? NR_FATTREE:
             (IS_TREE)?  NR_TREE:
-            (IS_RING || IS_LINE || IS_MESH || IS_TORUS)? NR_MESH_TORI:  
+            (IS_REGULAR_TOPO)? NR_MESH_TORI:  
             (IS_FMESH)? NR_FMESH: 
             (IS_STAR) ? NR_STAR:
             (IS_MULTI_MESH) ? NR_MULTI_MESH:
             NR_CUSTOM, 
-        //routing algorithm type    
+        //routing algorithm type
         ROUTE_TYPE =
             (IS_FATTREE)? ROUTE_TYPE_FATTREE:
             (IS_TREE)?  ROUTE_TYPE_TREE:
-            (IS_RING || IS_LINE || IS_MESH || IS_TORUS)? ROUTE_TYPE_MESH_TORI:
+            (IS_REGULAR_TOPO)? ROUTE_TYPE_MESH_TORI:
             (IS_FMESH)? ROUTE_TYPE_MESH_TORI:
             (IS_STAR) ? ROUTE_TYPE_STAR:
             ROUTE_TYPE_CUSTOM;
-
+            /* verilator lint_off WIDTH */
             localparam  [0:0] IS_DETERMINISTIC = (ROUTE_TYPE == "DETERMINISTIC");
-    /* verilator lint_on WIDTH */
+            /* verilator lint_on WIDTH */
+    
     function automatic integer mcast_id_to_endp_id;
     input integer  mcast_id;
     reg [NE-1 : 0] mcast_list;
@@ -338,16 +344,14 @@
         mcast_list =MCAST_ENDP_LIST;
         mcast_id_to_endp_id=0;
         k=0;
-        /* verilator lint_off WIDTH */ 
-        if (CAST_TYPE == "MULTICAST_FULL")begin 
-        /* verilator lint_on WIDTH */ 
+        if (IS_MULTICAST_FULL)begin 
             mcast_id_to_endp_id =mcast_id;
         end else begin
-            while( k!=mcast_id+1) begin              
+            while( k!=mcast_id+1) begin
                 if( mcast_list[mcast_id_to_endp_id]==1'b1) begin 
-                    k=k+1;            
+                    k=k+1;
                 end
-                mcast_id_to_endp_id= mcast_id_to_endp_id+1;       
+                mcast_id_to_endp_id= mcast_id_to_endp_id+1;
             end
         end
     end
@@ -356,11 +360,9 @@
     function automatic integer endp_id_to_mcast_id;
     input integer  endp_id;
     reg [NE-1 : 0] mcast_list;
-    integer i;       
+    integer i;
     begin
-         /* verilator lint_off WIDTH */ 
-        if (CAST_TYPE == "MULTICAST_FULL") begin
-         /* verilator lint_on WIDTH */ 
+        if (IS_MULTICAST_FULL) begin
             endp_id_to_mcast_id = endp_id;
         end else begin
             mcast_list =MCAST_ENDP_LIST;
@@ -415,7 +417,7 @@
         end//else 
             fmesh_addrencode = ( p<<(NXw+NYw) | (y<<NXw) | x);
     end   
-    endfunction // addrencode    
+    endfunction // addrencode
     
     function automatic  integer fmesh_router_id; 
     input integer x,y;
@@ -432,7 +434,6 @@
     endfunction
     
     `ifdef SIMULATION
-    /* verilator lint_off WIDTH */
     task display_noc_parameters;  
     begin
         //print_parameter 
@@ -442,14 +443,14 @@
         $display ("\tVC_per port: %0d", V);
         $display ("\tNon-local port buffer_width per VC: %0d", B);
         $display ("\tLocal port buffer_width per VC: %0d", LB);
-        if(IS_MESH || IS_TORUS || IS_FMESH)begin
+        if(IS_MESH | IS_TORUS | IS_FMESH)begin
             $display ("\tRouter num in row: %0d",T1);
             $display ("\tRouter num in column: %0d",T2);
             $display ("\tEndpoint num per router: %0d",T3);
-        end else if (IS_RING || IS_LINE) begin
+        end else if (IS_RING | IS_LINE) begin
             $display ("\tTotal Router num: %0d",T1);
             $display ("\tEndpoint num per router: %0d",T3);
-        end else if (IS_TREE ||  IS_FATTREE)begin
+        end else if (IS_TREE |  IS_FATTREE)begin
             $display ("\tK: %0d",T1);
             $display ("\tL: %0d",T2);
         end else if (IS_MULTI_MESH)begin 
@@ -473,13 +474,12 @@
         $display ("\tLoop back is enabled:%0d",SELF_LOOP_EN);
         $display ("\tNumber of multihop bypass (SMART max):%0d",SMART_MAX);
         $display ("\tCastying type:%s.",CAST_TYPE);
-        if (CAST_TYPE == "MULTICAST_PARTIAL" || CAST_TYPE == "BROADCAST_PARTIAL")begin
+        if (IS_MULTICAST_PARTIAL  | IS_BROADCAST_PARTIAL)begin
             $display ("\tNumber of nodes in Cast list:%d",   MCAST_PRTLw);
             $display ("\tCAST LIST:%b", MCAST_ENDP_LIST);
         end 
         $display ("NoC parameters:----------------");
     end
     endtask
-    /* verilator lint_on WIDTH */
     `endif //SIMULATION
 `endif

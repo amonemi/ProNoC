@@ -232,13 +232,12 @@ module input_queue_per_port #(
         VP_1 = V * P_1;
     
     localparam
-    /* verilator lint_off WIDTH */
-        OFFSET = (PORT_B % MIN_PCK_SIZE) ? 1 :0,
-        NON_ATOM_PCKS =  (PORT_B>MIN_PCK_SIZE)?  (PORT_B / MIN_PCK_SIZE) + OFFSET : 1,
+        OFFSET = ((PORT_B % MIN_PCK_SIZE)>0) ? 1 : 0,
+        NON_ATOM_PCKS =  (PORT_B > MIN_PCK_SIZE) ? (PORT_B / MIN_PCK_SIZE) + OFFSET : 1,
         MAX_PCK = // min packet size is two hence the max packet number in buffer is (B/2)
-            (VC_REALLOCATION_TYPE== "ATOMIC") ?  1 : 
-            (OVC_ALLOC_MODE) ? NON_ATOM_PCKS + 1 : NON_ATOM_PCKS,
-        IGNORE_SAME_LOC_RD_WR_WARNING = ((SSA_EN==1) || (SMART_EN==1))? 1 : 0;
+            (IS_VCA_ATOMIC) ?  1 : 
+            (OVC_ALLOC_MODE) ? (NON_ATOM_PCKS + 1) : NON_ATOM_PCKS,
+        IGNORE_SAME_LOC_RD_WR_WARNING = ((SSA_EN == 1) || (SMART_EN==1) ) ? 1 : 0;
     
     localparam
         ELw = log2(T3),
@@ -246,7 +245,7 @@ module input_queue_per_port #(
         PLw = (IS_FMESH) ? Pw : ELw,
         VPLw= V * PLw,
         PRAw= P * RAw;
-    /* verilator lint_on WIDTH */
+
     
     input reset, clk;
     input   router_info_t router_info;
@@ -405,7 +404,7 @@ module input_queue_per_port #(
             .clk    (clk   ), 
             .Q_out  (assigned_ovc_num [(i+1)*V-1 : i*V]  ));
     end
-    if (( IS_RING | IS_LINE | IS_MESH | IS_TORUS) & (T3 > 1) & IS_UNICAST) begin : multi_local
+    if (IS_REGULAR_TOPO & IS_MULTI_ENDP_ROUTER & IS_UNICAST) begin 
         mesh_tori_endp_addr_decode endp_addr_decode (
             .e_addr(dest_e_addr_in),
             .ex( ),
@@ -413,7 +412,7 @@ module input_queue_per_port #(
             .el(endp_l_in),
             .valid( )
         );
-    end :multi_local
+    end 
     if ( IS_FMESH & IS_UNICAST ) begin : fmesh
         fmesh_endp_addr_decode  endp_addr_decode (
             .e_addr(dest_e_addr_in),
@@ -658,13 +657,8 @@ module input_queue_per_port #(
             assign class_out[i] = 1'b0;
         end
         
-        //localparam CAST_TYPE = "UNICAST"; // multicast is not yet supported
-        /* verilator lint_off WIDTH */    
-        if(CAST_TYPE!= "UNICAST") begin : muticast
-        /* verilator lint_on WIDTH */
-            
+        if(~IS_UNICAST) begin : muticast
             // for multicast we send one packet to each direction in order. The priority is according to DoR routing dimentions 
-            
             fwft_fifo_with_output_clear #(
                 .DATA_WIDTH(DSTPw),
                 .MAX_DEPTH (MAX_PCK),
@@ -723,9 +717,7 @@ module input_queue_per_port #(
                 .clk (clk)
             );
             
-            /* verilator lint_off WIDTH */    
-            if( ROUTE_TYPE=="DETERMINISTIC") begin : dtrmn_dest
-            /* verilator lint_on WIDTH */
+            if( IS_DETERMINISTIC ) begin : dtrmn_dest
                 //destport_fifo
                 fwft_fifo #(
                     .DATA_WIDTH(DSTPw),
@@ -744,7 +736,7 @@ module input_queue_per_port #(
                     .clk(clk) 
                 );
                 
-            end else begin : adptv_dest   
+            end else begin : adptv_dest
                 
                 fwft_fifo_with_output_clear #(
                     .DATA_WIDTH(DSTPw),
@@ -790,11 +782,8 @@ module input_queue_per_port #(
             .odd_column(odd_column)
         );
         
-        /* verilator lint_off WIDTH */  
-        if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && (T3>1) && (CAST_TYPE== "UNICAST")) begin : multi_local
-        /* verilator lint_on WIDTH */  
+        if ( IS_REGULAR_TOPO & IS_MULTI_ENDP_ROUTER & IS_UNICAST ) begin : multi_local
             // the router has multiple local ports. Save the destination local port
-            
             fwft_fifo #(
                 .DATA_WIDTH(ELw),
                 .MAX_DEPTH (MAX_PCK),
@@ -811,9 +800,7 @@ module input_queue_per_port #(
                 .reset(reset),
                 .clk(clk) 
             );
-        /* verilator lint_off WIDTH */
-        end else if ( TOPOLOGY == "FMESH" && CAST_TYPE== "UNICAST") begin : fmesh
-        /* verilator lint_on WIDTH */
+        end else if ( IS_FMESH & IS_UNICAST) begin : fmesh
             
             fwft_fifo #(
                 .DATA_WIDTH(Pw),
@@ -835,32 +822,11 @@ module input_queue_per_port #(
         end else begin : single_local 
             assign endp_localp_num[(i+1)*PLw-1 : i*PLw] = {PLw{1'b0}}; 
         end
-        
-        /* verilator lint_off WIDTH */
-        if(SWA_ARBITER_TYPE != "RRA")begin  : wrra
-        /* verilator lint_on WIDTH */
-            /*
-            weight_control #(
-                .WEIGHTw(WEIGHTw)
-            )  wctrl_per_vc (   
-                .sw_is_granted(ivc_num_getting_sw_grant[i]),
-                .flit_is_tail(flit_is_tail[i]),
-                .weight_is_consumed_o(vc_weight_is_consumed[i]),
-                .iport_weight(1),  //(iport_weight),
-                .clk(clk),
-                .reset(reset)
-            );
-             */
-            assign vc_weight_is_consumed[i] = 1'b1;
-        end else begin :no_wrra
-            assign vc_weight_is_consumed[i] = 1'bX;
-        end
+        assign vc_weight_is_consumed[i] = (~IS_RRA);
         
     end//for i
     
-    /* verilator lint_off WIDTH */
-    if(SWA_ARBITER_TYPE != "RRA")begin  : wrra
-    /* verilator lint_on WIDTH */
+    if(~IS_RRA) begin  : wrra
         wire granted_flit_is_tail;
         
         onehot_mux_1D #( 
@@ -889,18 +855,15 @@ module input_queue_per_port #(
             .refresh_w_counter(refresh_w_counter),
             .clk(clk),
             .reset(reset)
-        );     
+        );
         
     end else begin :no_wrra
-        assign iport_weight_is_consumed=1'bX;
-        assign oports_weight = {WP{1'bX}};
+        assign iport_weight_is_consumed=1'b0;
+        assign oports_weight = {WP{1'b0}};
     end
-    /* verilator lint_off WIDTH */
-    wire [V-1 : 0] flit_buffer_vc_num_rd = (COMBINATION_TYPE == "COMB_NONSPEC")?
-    /* verilator lint_on WIDTH */
-        nonspec_first_arbiter_granted_ivc:
-        ivc_num_getting_sw_grant;
-        
+    wire [V-1 : 0] flit_buffer_vc_num_rd;
+    assign flit_buffer_vc_num_rd = ( IS_COMB_NONSPEC ) ? nonspec_first_arbiter_granted_ivc : ivc_num_getting_sw_grant;
+    
     flit_buffer #(
         .B(PORT_B),   // buffer space :flit per VC,
         .V(PORT_IVC)
@@ -924,7 +887,7 @@ module input_queue_per_port #(
         assign ivc_not_empty [V-1 : PORT_IVC]={(V-PORT_IVC){1'b0}};
         assign flit_is_tail [V-1 : PORT_IVC]={(V-PORT_IVC){1'b0}};
         for (i=PORT_IVC;i<V; i=i+1) begin: V_
-            assign credit_init_val_out [i] = {CRDTw{1'b0}};            
+            assign credit_init_val_out [i] = {CRDTw{1'b0}};
             assign candidate_ovcs [i] = {V{1'b0}};
             assign class_out[i]={Cw{1'b0}};
             assign dest_port_multi[i]={DSTPw{1'b0}};
@@ -998,10 +961,7 @@ module input_queue_per_port #(
                 end
             end
         end//for
-        
-        /* verilator lint_off WIDTH */
-        if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && CAST_TYPE== "UNICAST") begin : mesh_based
-        /* verilator lint_on WIDTH */
+        if (IS_REGULAR_TOPO & IS_UNICAST) begin : mesh_based
             
             debug_mesh_tori_route_ckeck #(
                 .T1(T1),

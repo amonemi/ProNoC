@@ -17,7 +17,7 @@ module check_flit_chanel_type_is_in_order #(
     hdr_flg_in,
     flit_in_wr,
     tail_flg_in,
-    vc_num_in,    
+    vc_num_in,
     clk,
     reset 
 );
@@ -70,7 +70,7 @@ module check_flit_chanel_type_is_in_order #(
             $display("%t ERROR: A single flit packet is injected while the minimum packet size is set to %d.  %m",$time,MIN_PCK_SIZE);
             $finish;
         end
-        //TODO check that the injected packet size meets the MIN_PCK_SIZE            
+        //TODO check that the injected packet size meets the MIN_PCK_SIZE
     end//always
     `endif
 endmodule
@@ -207,8 +207,8 @@ module debug_mesh_tori_route_ckeck #(
                 if((vc_num_in  & ESCAP_VC_MASK)>0 && (SW_LOC== SOUTH || SW_LOC== NORTH) )  begin // escape vc
                     // if (a & b) $display("%t  :Error EVC allocation violate subfunction routing rules %m",$time);
                     if ((current_x - x_dst_in) !=0 && (current_y- y_dst_in) !=0) $display("%t  :Error EVC allocation violate subfunction routing rules src_x=%d src_y=%d dst_x%d   dst_y=%d %m",$time,x_src_in, y_src_in, x_dst_in,y_dst_in);
-                end                     
-            end//hdr_wr_in            
+                end
+            end//hdr_wr_in
         end//always
     end 
     /* verilator lint_off WIDTH */ 
