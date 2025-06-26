@@ -122,10 +122,10 @@ module flit_buffer
         assign {flgs_in,vc_in,flit_rest_in}=din;
         assign fifo_ram_din = {flgs_in,flit_rest_in};
         assign {flgs_out,flit_rest_out} = fifo_ram_dout;
-        assign dout = {flgs_out,{V{1'bX}},flit_rest_out};
+        assign dout = {flgs_out,{V{1'b0}},flit_rest_out};
     end else begin : single
         assign fifo_ram_din = din[RAM_DATA_WIDTH-1 : 0];
-        assign dout = {2'b11,{V{1'bX}},fifo_ram_dout};
+        assign dout = {2'b11,{V{1'b0}},fifo_ram_dout};
     end
     
     always_comb begin
@@ -148,16 +148,14 @@ module flit_buffer
                     else if(sub_rd[k])  sub_rd_ptr_next[k] = sub_rd_ptr[k]+ 1'h1;
                 end else begin 
                     if (sub_restore[k]) sub_rd_ptr_next[k] = rd_ptr_next [k];
-                    /* verilator lint_off WIDTH */ 
-                    else if(sub_rd[k])  sub_rd_ptr_next[k] = (sub_rd_ptr[k]==(B*(k+1))-1)? (B*k) : sub_rd_ptr [k]+ 1'h1; 
-                    /* verilator lint_on WIDTH */
+                    else if(sub_rd[k])  sub_rd_ptr_next[k] = (sub_rd_ptr[k] == PTRw'((B * (k + 1)) - 1)) ?  PTRw'(B * k) :  sub_rd_ptr[k] + PTRw'(1);
                 end // Bw
             end else sub_rd_ptr_next[k] = '0;
         end //for
     end //always_comb
     
     for(i=0;i<V;i=i+1) begin :V_
-        assign  wr_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = wr_ptr[i];  
+        assign  wr_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = wr_ptr[i];
         if (~IS_UNICAST) begin
             assign  rd_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = sub_rd_ptr[i]; 
             localparam RESET_TO = ((2**Bw)==B)? 0 : B*i;
@@ -179,10 +177,8 @@ module flit_buffer
                 if (wr[k]  ) wr_ptr_next [k] = wr_ptr [k]+ 1'h1;
                 if (rd[k]  ) rd_ptr_next [k] = rd_ptr [k]+ 1'h1;
             end else begin 
-                /* verilator lint_off WIDTH */ 
-                if (wr[k] ) wr_ptr_next[k] =(wr_ptr[k]==(B*(k+1))-1)? (B*k) : wr_ptr [k]+ 1'h1;
-                if (rd[k] ) rd_ptr_next[k] =(rd_ptr[k]==(B*(k+1))-1)? (B*k) : rd_ptr [k]+ 1'h1;
-                /* verilator lint_on WIDTH */ 
+                if (wr[k] ) wr_ptr_next[k] =(wr_ptr[k]==PTRw'(B*(k+1))-1) ? PTRw'(B*k) : wr_ptr [k] + PTRw'(1);
+                if (rd[k] ) rd_ptr_next[k] =(rd_ptr[k]==PTRw'(B*(k+1))-1) ? PTRw'(B*k) : rd_ptr [k] + PTRw'(1);
             end
             if (wr[k] & ~rd[k]) depth_next [k] = depth[k] + 1'h1;
             else if (~wr[k] & rd[k]) depth_next [k] = depth[k] - 1'h1;
@@ -261,7 +257,6 @@ module flit_buffer
             pronoc_register #(.W(Bw    )) reg2 (.D_in(wr_ptr_next[i]), .Q_out(wr_ptr[i]), .reset(reset), .clk(clk));
             pronoc_register #(.W(DEPTHw)) reg3 (.D_in(depth_next[i] ), .Q_out(depth [i]), .reset(reset), .clk(clk));
             
-            
             if (~IS_UNICAST) begin :multicast
                 assign  flit_is_tail[i] = (IS_MULTI_FLIT)? tail_fifo[i][sub_rd_ptr[i]] : 1'b1;
             end else begin : unicast
@@ -278,22 +273,18 @@ module flit_buffer
         wire [BVw- 1 : 0]  wr_addr;
         wire [BVw- 1 : 0]  rd_addr;
         for(i=0;i<V;i=i+1) begin :V_
+            localparam [PTRw-1 : 0] BI = PTRw'(B*i);
             pronoc_register #(.W(BVw),.RESET_TO(B*i)) reg1 (.D_in(rd_ptr_next[i]), .Q_out(rd_ptr[i]), .reset(reset), .clk(clk));
             pronoc_register #(.W(BVw),.RESET_TO(B*i)) reg2 (.D_in(wr_ptr_next[i]), .Q_out(wr_ptr[i]), .reset(reset), .clk(clk));
             pronoc_register #(.W(DEPTHw)) reg3 (.D_in(depth_next[i]), .Q_out(depth[i]), .reset(reset), .clk(clk));
             always @(posedge clk) begin
-                /* verilator lint_off WIDTH */ 
-                if(wr[i]) tail_fifo[i][wr_ptr[i]-(B*i)] <= din[Fw-2];
-                /* verilator lint_on WIDTH */
+                if(wr[i]) tail_fifo[i][wr_ptr[i]-BI] <= din[Fw-2];
             end
-            
             if (~IS_UNICAST) begin :multicast
-                /* verilator lint_off WIDTH */ 
-                assign  ptr_tmp [i] = sub_rd_ptr[i]-(B*i);
-                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][ptr_tmp [i]] :1'b1;
+                assign  ptr_tmp [i] = sub_rd_ptr[i]-BI;
+                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][ptr_tmp [i]] : 1'b1;
             end else begin : unicast
-                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr[i]-(B*i)] : 1'b1;
-                /* verilator lint_on WIDTH */
+                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr[i]-BI] : 1'b1;
             end
         end// for V_
         
@@ -320,13 +311,13 @@ module flit_buffer
             .MEM_SIZE (BV ),
             .SSA_EN(SSA_EN)
         ) the_queue (
-            .wr_data        (fifo_ram_din), 
-            .wr_addr        (wr_addr),
-            .rd_addr        (rd_addr),
-            .wr_en          (wr_en),
-            .rd_en          (rd_en),
-            .clk            (clk),
-            .rd_data        (fifo_ram_dout)
+            .wr_data(fifo_ram_din), 
+            .wr_addr(wr_addr),
+            .rd_addr(rd_addr),
+            .wr_en(wr_en),
+            .rd_en(rd_en),
+            .clk(clk),
+            .rd_data (fifo_ram_dout)
         );  
     end
     endgenerate
@@ -555,7 +546,7 @@ module fwft_fifo #(
     genvar i;
     generate
     
-    if(MAX_DEPTH>2) begin :mwb2
+    if(MAX_DEPTH > 2) begin :mwb2
         wire [MUX_SEL_WIDTH-1 : 0] mux_sel;
         wire [DEPTH_DATA_WIDTH-1 : 0] depth_2;
         wire empty;
@@ -597,10 +588,10 @@ module fwft_fifo #(
         assign nearly_full = depth >= MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0] -1'b1;
         assign empty = depth == {DEPTH_DATA_WIDTH{1'b0}};
         assign recieve_more_than_0 = ~ empty;
-        assign recieve_more_than_1 = ~( depth == {DEPTH_DATA_WIDTH{1'b0}} ||  depth== 1 );
+        assign recieve_more_than_1 = ~( depth == {DEPTH_DATA_WIDTH{1'b0}} ||  depth== DEPTH_DATA_WIDTH'(1) );
         assign out_sel = (recieve_more_than_1)  ? 1'b1 : 1'b0;
-        assign out_ld = (depth !=0 )?  rd_en : wr_en;
-        assign depth_2 = depth - 2;
+        assign out_ld = (depth !=DEPTH_DATA_WIDTH'(0) )?  rd_en : wr_en;
+        assign depth_2 = depth - DEPTH_DATA_WIDTH'(2);
         assign mux_sel = depth_2[MUX_SEL_WIDTH-1 : 0];
         
     end else if  ( MAX_DEPTH == 2) begin :mw2

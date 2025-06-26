@@ -483,40 +483,41 @@ module check_pck_size #(
     wire [DAw-1 : 0] dest_e_addr [V-1:0];
     wire [V-1 : 0] vc_hdr_wr_en;
     wire [V-1 : 0] onehot;
-    localparam MIN_B =  (B<LB)? B : LB;       
+    localparam MIN_B =  (B<LB)? B : LB;
     `ifdef SIMULATION
     genvar i;
     generate 
     for (i=0;i<V;i=i+1) begin :V_
+        localparam logic [V-1:0] VC = V'(i);
         always @(*) begin 
             pck_size_counter_next [i] = pck_size_counter [i];
-            if (vc_num_in == i)begin 
+            if (vc_num_in == VC)begin 
                 if(flit_in_wr) begin  
                     if(hdr_flg_in) pck_size_counter_next[i]= 1;
-                    else pck_size_counter_next[i]=pck_size_counter[i]+1;      
+                    else pck_size_counter_next[i]=pck_size_counter[i]+1;
                 end 
             end
-        end     
+        end
         
         pronoc_register #(.W(32)) reg1(
             .D_in(pck_size_counter_next[i]), 
             .reset  (reset ), 
             .clk    (clk   ), 
-            .Q_out  (pck_size_counter[i]   )
+            .Q_out  (pck_size_counter[i] )
         );
         
         always @(posedge clk) begin 
-            if (vc_num_in == i)begin 
+            if (vc_num_in == VC)begin 
                 if(flit_in_wr & tail_flg_in) begin 
                     if( pck_size_counter_next[i] < MIN_PCK_SIZE) begin 
                         $display ( "%t\t  ERROR: A packet is injected to the router with packet size (%d flits) that is smaller than MIN_PCK_SIZE (%d flits) parameter  %m",$time,pck_size_counter_next[i],MIN_PCK_SIZE);
                         $finish;
                     end
-                end       
+                end
             end
         end
         
-        /* verilator lint_off WIDTH */   
+        /* verilator lint_off WIDTH */ 
         if(CAST_TYPE!="UNICAST") begin
         /* verilator lint_on WIDTH */   
         //Check that the size of multicast/broadcast packets <= buffer size

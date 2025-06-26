@@ -65,16 +65,16 @@ module router_two_stage #(
     output  flit_chanel_t chan_out [P-1 : 0];
     input   ctrl_chanel_t ctrl_in  [P-1 : 0];
     output  ctrl_chanel_t ctrl_out [P-1 : 0];
-    input   clk,reset;    
+    input   clk,reset;
     
     output  ivc_info_t   ivc_info    [P-1 : 0][V-1 : 0];
     output  ovc_info_t   ovc_info    [P-1 : 0][V-1 : 0];
     output  iport_info_t iport_info  [P-1 : 0];
     output  oport_info_t oport_info  [P-1 : 0]; 
     
-    input   smart_ctrl_t   smart_ctrl_in [P-1 : 0];
+    input   smart_ctrl_t  smart_ctrl_in [P-1 : 0];
     
-    vsa_ctrl_t   vsa_ctrl    [P-1 : 0];   
+    vsa_ctrl_t vsa_ctrl [P-1 : 0];
     
     localparam
         PV = V * P,
@@ -638,32 +638,32 @@ module credit_release_gen #(
     clk,
     reset,
     en,
-    credit_out        
+    credit_out
 );
     
     import pronoc_pkg::*;
     
     input  clk, reset;
     input  en;
-    output reg credit_out;        
+    output reg credit_out;
     
     localparam W=log2(CREDIT_NUM +1);
     
     reg [W-1 : 0] counter;
-    wire counter_is_zero = counter=={W{1'b0}};    
-    wire counter_is_max = counter==CREDIT_NUM;
+    wire counter_is_zero = counter=={W{1'b0}};
+    wire counter_is_max = (counter==CREDIT_NUM[W-1 : 0]);
     wire counter_incr = (en & counter_is_zero ) | (~counter_is_zero & ~counter_is_max);
     
     always @ (`pronoc_clk_reset_edge )begin 
         if(`pronoc_reset) begin 
-            counter <= {W{1'b0}};    
+            counter <= {W{1'b0}};
             credit_out<=1'b0;
         end else begin 
             if(counter_incr) begin 
                 counter<= counter +1'b1;
                 credit_out<=1'b1;
             end else begin 
-                credit_out<=1'b0;                
+                credit_out<=1'b0;
             end
         end
     end    

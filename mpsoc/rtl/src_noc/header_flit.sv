@@ -71,16 +71,16 @@ module header_flit_generator #(
     end 
     
     if(~IS_RRA)begin  : wrra_b
-        assign flit_out [WEIGHT_MSB :WEIGHT_LSB] = weight_in;   
+        assign flit_out [WEIGHT_MSB :WEIGHT_LSB] = weight_in;
     end 
     
     if( BYTE_EN ) begin : be_1
-        assign flit_out [BE_MSB : BE_LSB] = be_in;    
+        assign flit_out [BE_MSB : BE_LSB] = be_in;
     end
     
     if (DATA_w ==0) begin :no_data
         if(FPAYw>DATA_LSB) begin: dontcare
-            assign flit_out [FPAYw-1 : DATA_LSB] = {(FPAYw-DATA_LSB){1'bX}};        
+            assign flit_out [FPAYw-1 : DATA_LSB] = {(FPAYw-DATA_LSB){1'b0}};
         end
     end else begin :have_data
         assign flit_out [DATA_MSB : DATA_LSB] = data_in[DATA_MSB-DATA_LSB : 0]; // we have enough space for adding whole of the data                 
@@ -94,10 +94,10 @@ module header_flit_generator #(
     initial begin
         if((DATA_LSB + DATA_w)-1 > FPAYw)begin
             $display("%t: ERROR: The reqired header flit size is %d which is larger than %d payload size   ",$time,(DATA_LSB + DATA_w)-1,FPAYw);
-            $finish;        
+            $finish;
         end
-    end    
-    `endif    
+    end
+    `endif
 endmodule
 
 

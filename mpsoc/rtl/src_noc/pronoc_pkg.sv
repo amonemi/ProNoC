@@ -286,19 +286,24 @@ package pronoc_pkg;
             (HETERO_VC == 0) ? V :
             (HETERO_VC == 1) ? VC_CONFIG_TABLE [router_id][0] :
             VC_CONFIG_TABLE [router_id][router_port_num];   
-        `endif     
+        `endif
         end
     endfunction
     
     function automatic logic [V-1 : 0] hetero_ovc_unary;
-        input integer router_id;
-        input integer router_port_num;  //router port num
-        begin
-        hetero_ovc_unary = 
-            (HETERO_VC == 0) ? {V{1'b1}} :
-            (HETERO_VC == 1) ? (1 << VC_CONFIG_TABLE [router_id][0]) - 1 :
-            (1 << VC_CONFIG_TABLE [router_id][router_port_num]) -1;
+    input integer router_id;
+    input integer router_port_num;  //router port num
+    integer vc_num, i;
+    begin
+        vc_num = 
+            (HETERO_VC == 0) ? V :
+            (HETERO_VC == 1) ? VC_CONFIG_TABLE [router_id][0] :
+            VC_CONFIG_TABLE [router_id][router_port_num];
+        hetero_ovc_unary = '0;  // initialize to zero
+        for (i = 0; i < vc_num; i = i + 1) begin
+            hetero_ovc_unary[i] = 1'b1;
         end
+    end
     endfunction
     
 /***********
