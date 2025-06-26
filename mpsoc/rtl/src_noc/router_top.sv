@@ -265,26 +265,24 @@ module router_top #(
 *        /Simulation
 ***************************************/
 `ifdef SIMULATION
-    /* verilator lint_off WIDTH */
     initial begin
         if((SSA_EN==1)  && (SMART_EN==1))begin
             $display("ERROR: Only one of the SMART or SAA can be enabled at the same time");
             $finish;
         end
-        if((SMART_EN==1'b1) && COMBINATION_TYPE!="COMB_NONSPEC")begin
+        if((SMART_EN==1) && (IS_COMB_NONSPEC==1'b0))begin
             $display("ERROR: SMART only works with non-speculative VSA");
             $finish;
         end
-        if((MIN_PCK_SIZE > 1) && (IS_SINGLE_FLIT)) begin 
+        if((MIN_PCK_SIZE > 1) && (IS_SINGLE_FLIT==1'b1)) begin 
             $display("ERROR: The minimum packet size must be set as one for single-flit packet type NoC");
             $finish;
         end
-        if(((SSA_EN==1) || (SMART_EN==1)) && CAST_TYPE!="UNICAST") begin
+        if(((SSA_EN==1) || (SMART_EN==1)) && (IS_UNICAST==1'b0)) begin
             $display("ERROR: SMART or SAA do not support muticast/braodcast packets");
             $finish;
         end
     end
-    /* verilator lint_on WIDTH */
     generate 
     `ifdef IVC_DEBUG
     wire report_active_ivcs = testbench_noc.report_active_ivcs;
@@ -317,11 +315,7 @@ module router_top #(
         );
         
         if(DEBUG_EN) begin :dbg
-            check_flit_chanel_type_is_in_order #(
-                .V(V),
-                .PCK_TYPE(PCK_TYPE),
-                .MIN_PCK_SIZE(MIN_PCK_SIZE)
-            ) IVC_flit_type_check (
+            check_flit_chanel_type_is_in_order IVC_flit_type_check (
                 .clk(clk),
                 .reset(reset),
                 .hdr_flg_in(chan_in[i].flit_chanel.flit.hdr_flag),

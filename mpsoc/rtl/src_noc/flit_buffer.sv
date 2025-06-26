@@ -86,7 +86,7 @@ module flit_buffer
     reg [PTRw- 1 : 0] wr_ptr_next [V-1 :0];
     reg [PTRw- 1 : 0] sub_rd_ptr_next [V-1 :0];
     wire [PTRw- 1 : 0] sub_rd_ptr [V-1 :0];
-    wire [PTRw-1 : 0] ptr_tmp  [V-1 : 0];
+    
     wire [ARRAYw-1 : 0] rd_ptr_array;
     wire [ARRAYw-1 : 0] wr_ptr_array;
     
@@ -270,21 +270,24 @@ module flit_buffer
     not power of 2
 ******************/
         // memory address
-        wire [BVw- 1 : 0]  wr_addr;
-        wire [BVw- 1 : 0]  rd_addr;
+        wire [BVw- 1 : 0]  wr_addr, rd_addr;
+    wire [PTRw-1 : 0] rd_ptr_tmp  [V-1 : 0];
+    wire [PTRw-1 : 0] wr_ptr_tmp  [V-1 : 0];
         for(i=0;i<V;i=i+1) begin :V_
             localparam [PTRw-1 : 0] BI = PTRw'(B*i);
             pronoc_register #(.W(BVw),.RESET_TO(B*i)) reg1 (.D_in(rd_ptr_next[i]), .Q_out(rd_ptr[i]), .reset(reset), .clk(clk));
             pronoc_register #(.W(BVw),.RESET_TO(B*i)) reg2 (.D_in(wr_ptr_next[i]), .Q_out(wr_ptr[i]), .reset(reset), .clk(clk));
             pronoc_register #(.W(DEPTHw)) reg3 (.D_in(depth_next[i]), .Q_out(depth[i]), .reset(reset), .clk(clk));
+            assign wr_ptr_tmp [i] = wr_ptr[i]-BI;
             always @(posedge clk) begin
-                if(wr[i]) tail_fifo[i][wr_ptr[i]-BI] <= din[Fw-2];
+                if(wr[i]) tail_fifo[i][wr_ptr_tmp[i][Bw-1:0]] <= din[Fw-2];
             end
             if (~IS_UNICAST) begin :multicast
-                assign  ptr_tmp [i] = sub_rd_ptr[i]-BI;
-                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][ptr_tmp [i]] : 1'b1;
+                assign  rd_ptr_tmp [i] = sub_rd_ptr[i]-BI;
+                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr_tmp [i][Bw-1:0]] : 1'b1;
             end else begin : unicast
-                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr[i]-BI] : 1'b1;
+                assign  rd_ptr_tmp [i] =rd_ptr[i]-BI;
+                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr_tmp [i][Bw-1:0]] : 1'b1;
             end
         end// for V_
         

@@ -215,7 +215,7 @@ module ssa_per_vc #(
     localparam  
         SW_LOC = V_GLOBAL/V,
         V_LOCAL = V_GLOBAL%V;
-    localparam logic [V-1:0] MASKED_LOCAL_VC = V'((1 << V_LOCAL) & ~ESCAP_VC_MASK);
+    localparam logic [V-1:0] MASKED_LOCAL_VC = V'((1 << V_LOCAL)) & ~ V'(ESCAP_VC_MASK);
     localparam SSA_EN_IN_PORT = (((IS_MESH | IS_TORUS) & IS_FULL_ADAPTIVE) && (SS_PORT == 2 || SS_PORT == 4) && ( MASKED_LOCAL_VC != {V{1'b0}}) ) ? 1'b0 : 1'b1;
     
     input [Fw-1 : 0]  flit_in;

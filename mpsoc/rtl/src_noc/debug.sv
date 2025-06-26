@@ -9,11 +9,8 @@
 
 //check if flits are recived in correct order in a VC
 
-module check_flit_chanel_type_is_in_order #(
-    parameter V=4,
-    parameter PCK_TYPE = "SINGLE_FLIT",
-    parameter MIN_PCK_SIZE=2
-)(
+module check_flit_chanel_type_is_in_order 
+(
     hdr_flg_in,
     flit_in_wr,
     tail_flg_in,
@@ -21,6 +18,8 @@ module check_flit_chanel_type_is_in_order #(
     clk,
     reset 
 );
+    import pronoc_pkg::*;
+    
     input clk, reset;
     input hdr_flg_in, tail_flg_in, flit_in_wr;
     input [V-1 : 0] vc_num_in;
@@ -34,7 +33,7 @@ module check_flit_chanel_type_is_in_order #(
     assign  vc_num_tail_wr =(tail_flg_in & flit_in_wr)?    vc_num_in : {V{1'b0}};
     assign  vc_num_bdy_wr =({hdr_flg_in,tail_flg_in} == 2'b00 && flit_in_wr)?  vc_num_in : {V{1'b0}};
     assign  single_flit_pck = vc_num_hdr_wr & vc_num_tail_wr;
-    always @(*)begin
+    always_comb begin
         hdr_passed_next = (hdr_passed | vc_num_hdr_wr) & ~vc_num_tail_wr; 
     end
     
@@ -56,16 +55,14 @@ module check_flit_chanel_type_is_in_order #(
             $display("%t ERROR: a tail flit is received in an inactive IVC %m",$time);
             $finish;
         end
-        if ((~hdr_passed & vc_num_bdy_wr    )>0)begin 
+        if ((~hdr_passed & vc_num_bdy_wr )>0)begin 
             $display("%t ERROR: a body flit is received in an inactive IVC %m",$time);
             $finish;
         end
-        /* verilator lint_off WIDTH */
-        if((PCK_TYPE == "SINGLE_FLIT") &  flit_in_wr & ~(hdr_flg_in &  tail_flg_in )) begin 
+        if( IS_SINGLE_FLIT  &  flit_in_wr & ~(hdr_flg_in &  tail_flg_in )) begin 
             $display("%t ERROR: both tail and header flit flags must be asserted in SINGLE_FLIT mode %m",$time);
             $finish;
         end 
-        /* verilator lint_on WIDTH */
         if( (MIN_PCK_SIZE !=1) &  flit_in_wr & hdr_flg_in &  tail_flg_in ) begin 
             $display("%t ERROR: A single flit packet is injected while the minimum packet size is set to %d.  %m",$time,MIN_PCK_SIZE);
             $finish;
@@ -280,12 +277,10 @@ module debug_mesh_edges #(
         SOUTH = 4;
     `ifdef SIMULATION
     always @(posedge clk) begin 
-    /* verilator lint_off WIDTH */ 
-        if(current_rx == {RXw{1'b0}}         && flit_out_wr_all[WEST]) $display ( "%t\t  ERROR: a packet is going to the WEST in a router located in first column in mesh topology %m",$time ); 
-        if(current_rx == T1-1     && flit_out_wr_all[EAST]) $display ( "%t\t   ERROR: a packet is going to the EAST in a router located in last column in mesh topology %m",$time ); 
-        if(current_ry == {RYw{1'b0}}         && flit_out_wr_all[NORTH])$display ( "%t\t  ERROR: a packet is going to the NORTH in a router located in first row in mesh topology %m",$time ); 
-        if(current_ry == T2-1    && flit_out_wr_all[SOUTH])$display ( "%t\t  ERROR: a packet is going to the SOUTH in a router located in last row in mesh topology %m",$time); 
-    /* verilator lint_on WIDTH */ 
+        if(current_rx == {RXw{1'b0}} && flit_out_wr_all[WEST]) $display ( "%t\t  ERROR: a packet is going to the WEST in a router located in first column in mesh topology %m",$time ); 
+        if(current_rx == RXw'(T1-1)  && flit_out_wr_all[EAST]) $display ( "%t\t   ERROR: a packet is going to the EAST in a router located in last column in mesh topology %m",$time ); 
+        if(current_ry == {RYw{1'b0}} && flit_out_wr_all[NORTH])$display ( "%t\t  ERROR: a packet is going to the NORTH in a router located in first row in mesh topology %m",$time ); 
+        if(current_ry == RYw'(T2-1)  && flit_out_wr_all[SOUTH])$display ( "%t\t  ERROR: a packet is going to the SOUTH in a router located in last row in mesh topology %m",$time); 
     end//always
     `endif  
 endmodule

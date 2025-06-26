@@ -120,15 +120,11 @@ module output_ports #(
 
     genvar i,j;
     generate
-        /* verilator lint_off WIDTH */
-        if(VC_REALLOCATION_TYPE=="ATOMIC") begin :atomic
-        /* verilator lint_on WIDTH */
+        if(IS_VCA_ATOMIC) begin :atomic
             // in atomic architecture an OVC is available if its not allocated and its empty
             assign ovc_avalable_all      = ~ovc_status & empty_all;
         end else begin :nonatomic //NONATOMIC
-            /* verilator lint_off WIDTH */
-            if(ROUTE_TYPE == "FULL_ADAPTIVE") begin :full_adpt
-            /* verilator lint_on WIDTH */
+            if(IS_FULL_ADAPTIVE) begin :full_adpt
                 mesh_tori_full_adapt_ovc_avail #(
                     .P(P)
                 ) ovc_avb (
@@ -327,9 +323,7 @@ module output_ports #(
                 end
             end//for
         end//always
-        /* verilator lint_off WIDTH */    
-        if(CAST_TYPE== "UNICAST") begin : unicast
-        /* verilator lint_on WIDTH */
+        if( IS_UNICAST ) begin : unicast
             localparam NUM_WIDTH = log2(PV+1);
             wire [NUM_WIDTH-1 : 0] num1,num2;
             accumulator #(
