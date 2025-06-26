@@ -97,8 +97,8 @@ for my $filename (@param_files){
     # Remove content within quotes
     $file_content =~ s/"(?:[^"\\]|\\.)*"//g;
     # Find all parameters and localparams
-    while ($file_content =~ /\b(parameter|localparam)\s+(.*?);/sg) {
-        my $declaration = $2;
+    while ($file_content =~ /\b(parameter|localparam)\b\s*(\[[^\]]*\]\s*)?(.*?);/sg) {
+        my $declaration = $3;
         # Split the declaration into individual parameter assignments
         my @params = split /,\s*/, $declaration;
         foreach my $param (@params) {
@@ -148,7 +148,8 @@ my @replaces = uniq @param_list;
 
 # Pre-compile regular expressions
 my $before = qr/[%!~,=><:\/\n\s\[\]\{\}\(\)\+\-\*\\\.]/;
-my $after  = qr/[%!~,=><:\/\s;\[\]\(\)\{\}\+\-\*\\\^]/;
+#my $after  = qr/[%!~,=><:\/\s;\[\]\(\)\{\}\+\-\*\\\^]/;
+my $after  = qr/[%!~,=><:\/\s;\[\]\(\)\{\}\+\-\*\\\^']/;
 
 # Compile module replacement regex
 my %module_replacements = map { $_ => "${_}_$noc_id" } @module_names;
