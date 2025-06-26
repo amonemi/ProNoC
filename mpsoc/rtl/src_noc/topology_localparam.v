@@ -333,7 +333,9 @@
             (IS_STAR) ? ROUTE_TYPE_STAR:
             ROUTE_TYPE_CUSTOM;
             /* verilator lint_off WIDTH */
-            localparam  [0:0] IS_DETERMINISTIC = (ROUTE_TYPE == "DETERMINISTIC");
+            localparam  [0:0] 
+                IS_DETERMINISTIC = (ROUTE_TYPE == "DETERMINISTIC"),
+                IS_FULL_ADAPTIVE = (ROUTE_TYPE == "FULL_ADAPTIVE");
             /* verilator lint_on WIDTH */
     
     function automatic integer mcast_id_to_endp_id;
@@ -341,7 +343,7 @@
     reg [NE-1 : 0] mcast_list;
     integer  k;
     begin
-        mcast_list = MCAST_ENDP_LIST [NE-1 : 0];
+        mcast_list = NE'(MCAST_ENDP_LIST);
         mcast_id_to_endp_id=0;
         k=0;
         if (IS_MULTICAST_FULL)begin 
@@ -365,7 +367,7 @@
         if (IS_MULTICAST_FULL) begin
             endp_id_to_mcast_id = endp_id;
         end else begin
-            mcast_list = MCAST_ENDP_LIST [NE-1 : 0];
+            mcast_list =NE'(MCAST_ENDP_LIST);
             endp_id_to_mcast_id=0;
             for (i=0;i<endp_id;i=i+1) begin 
                 if( mcast_list[i]==1'b1) endp_id_to_mcast_id=endp_id_to_mcast_id+1;

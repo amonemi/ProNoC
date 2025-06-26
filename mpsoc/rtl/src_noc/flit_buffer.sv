@@ -177,8 +177,8 @@ module flit_buffer
                 if (wr[k]  ) wr_ptr_next [k] = wr_ptr [k]+ 1'h1;
                 if (rd[k]  ) rd_ptr_next [k] = rd_ptr [k]+ 1'h1;
             end else begin 
-                if (wr[k] ) wr_ptr_next[k] =(wr_ptr[k]==PTRw'(B*(k+1))-1) ? PTRw'(B*k) : wr_ptr [k] + PTRw'(1);
-                if (rd[k] ) rd_ptr_next[k] =(rd_ptr[k]==PTRw'(B*(k+1))-1) ? PTRw'(B*k) : rd_ptr [k] + PTRw'(1);
+                if (wr[k] ) wr_ptr_next[k] =(wr_ptr[k]==PTRw'(B*(k+1)-1)) ? PTRw'(B*k) : wr_ptr [k] + PTRw'(1);
+                if (rd[k] ) rd_ptr_next[k] =(rd_ptr[k]==PTRw'(B*(k+1)-1)) ? PTRw'(B*k) : rd_ptr [k] + PTRw'(1);
             end
             if (wr[k] & ~rd[k]) depth_next [k] = depth[k] + 1'h1;
             else if (~wr[k] & rd[k]) depth_next [k] = depth[k] - 1'h1;

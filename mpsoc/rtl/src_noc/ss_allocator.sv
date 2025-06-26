@@ -216,7 +216,7 @@ module ssa_per_vc #(
         SW_LOC = V_GLOBAL/V,
         V_LOCAL = V_GLOBAL%V;
     /* verilator lint_off WIDTH */ 
-    localparam SSA_EN_IN_PORT = ((IS_MESH | IS_TORUS) && (ROUTE_TYPE == "FULL_ADAPTIVE") && (SS_PORT==2 || SS_PORT == 4) && ((1<<V_LOCAL &  ~ESCAP_VC_MASK ) != {V{1'b0}})) ? 1'b0 :1'b1;
+    localparam SSA_EN_IN_PORT = (((IS_MESH | IS_TORUS) & IS_FULL_ADAPTIVE) && (SS_PORT == 2 || SS_PORT == 4) && ((1<<V_LOCAL &  ~ESCAP_VC_MASK ) != {V{1'b0}})) ? 1'b0 :1'b1;
     /* verilator lint_on WIDTH */
     
     input [Fw-1 : 0]  flit_in;
