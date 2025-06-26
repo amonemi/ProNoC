@@ -567,15 +567,7 @@ module pronoc_to_piton_wrapper #(
     end
     endgenerate
     destp_generator #(
-        .TOPOLOGY(TOPOLOGY),
-        .ROUTE_NAME(ROUTE_NAME),
-        .ROUTE_TYPE(ROUTE_TYPE),
-        .T1(T1),
-        .NL(T3),
         .P(MAX_P),
-        .PLw(PLw),
-        .DSTPw(DSTPw),
-        .SELF_LOOP_EN (SELF_LOOP_EN),
         .SW_LOC(PORT_NUM)
     ) decoder (
         .destport_one_hot (destport_one_hot),

@@ -760,18 +760,8 @@ module input_queue_per_port #(
         end//unicast
         
         destp_generator #(
-            .TOPOLOGY(TOPOLOGY),
-            .ROUTE_NAME(ROUTE_NAME),
-            .ROUTE_TYPE(ROUTE_TYPE),
-            .T1(T1),
-            .NL(T3),
             .P(P),
-            .DSTPw(DSTPw),
-            .PLw(PLw),
-            .PPSw(PPSw),
-            .SELF_LOOP_EN (SELF_LOOP_EN),
-            .SW_LOC(SW_LOC),
-            .CAST_TYPE(CAST_TYPE)
+            .SW_LOC(SW_LOC)
         ) decoder (
             .destport_one_hot (destport_one_hot[i]),
             .dest_port_encoded(dest_port_encoded[i]),
@@ -1024,18 +1014,8 @@ endmodule
 
 // decode and mask the destination port according to routing algorithm and topology
 module destp_generator #(
-    parameter TOPOLOGY="MESH",
-    parameter ROUTE_NAME="XY",
-    parameter ROUTE_TYPE="DETERMINISTIC",
-    parameter T1=3,
-    parameter NL=1,
     parameter P=5,
-    parameter DSTPw=4,
-    parameter PLw=1,
-    parameter PPSw=4,
-    parameter SW_LOC=0,
-    parameter SELF_LOOP_EN=0,
-    parameter CAST_TYPE = "UNICAST"
+    parameter SW_LOC=0
 )(
     destport_one_hot,
     dest_port_encoded,
@@ -1045,20 +1025,24 @@ module destp_generator #(
     port_pre_sel,
     odd_column
 );
-    
+    import pronoc_pkg::*;
+
+    localparam
+        ELw = log2(T3),
+        Pw  = log2(P),
+        PLw = (IS_FMESH) ? Pw : ELw;
+
     localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     input [DSTPw-1 : 0]  dest_port_encoded;
     input [PLw-1 : 0] endp_localp_num;
     output [P_1-1: 0] dest_port_out;
     output [P-1 : 0] destport_one_hot;
-    input             swap_port_presel;
+    input  swap_port_presel;
     input  [PPSw-1 : 0] port_pre_sel;
     input odd_column;
     
     generate
-    /* verilator lint_off WIDTH */
-    if(CAST_TYPE!= "UNICAST") begin : muticast
-    /* verilator lint_on WIDTH */
+    if( ~IS_UNICAST ) begin : muticast
         // destination port is not coded for multicast/broadcast
         if( SELF_LOOP_EN==0) begin : nslp
             remove_sw_loc_one_hot #(
@@ -1071,9 +1055,7 @@ module destp_generator #(
         end else begin : slp
             assign dest_port_out = dest_port_encoded;
         end
-    /* verilator lint_off WIDTH */
-    end else if(TOPOLOGY == "FATTREE" ) begin : fat
-    /* verilator lint_on WIDTH */
+    end else if( IS_FATTREE ) begin : fat
         fattree_destp_generator #(
             .K(T1),
             .P(P),
@@ -1086,9 +1068,7 @@ module destp_generator #(
             .dest_port_in_encoded(dest_port_encoded),
             .dest_port_out(dest_port_out)
         );
-    /* verilator lint_off WIDTH */
-    end else  if (TOPOLOGY == "TREE") begin :tree
-    /* verilator lint_on WIDTH */
+    end else  if ( IS_TREE ) begin :tree
         tree_destp_generator #(
             .K(T1),
             .P(P),
@@ -1099,9 +1079,7 @@ module destp_generator #(
             .dest_port_in_encoded(dest_port_encoded),
             .dest_port_out(dest_port_out)
         );
-    /* verilator lint_off WIDTH */
-    end else if(TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH"|| TOPOLOGY == "TORUS") begin : mesh
-    /* verilator lint_on WIDTH */
+    end else if( IS_REGULAR_TOPO ) begin : reqular
         mesh_torus_destp_generator #(
             .TOPOLOGY(TOPOLOGY),
             .ROUTE_NAME(ROUTE_NAME),
@@ -1121,9 +1099,7 @@ module destp_generator #(
             .port_pre_sel(port_pre_sel),
             .odd_column(odd_column)// only needed for odd even routing
         );
-    /* verilator lint_off WIDTH */
-    end else if (TOPOLOGY == "FMESH") begin :fmesh
-    /* verilator lint_on WIDTH */
+    end else if ( IS_FMESH ) begin :fmesh
         fmesh_destp_generator  #(
             .ROUTE_NAME(ROUTE_NAME),
             .ROUTE_TYPE(ROUTE_TYPE),
@@ -1143,7 +1119,6 @@ module destp_generator #(
             .odd_column(odd_column) // only needed for odd even routing
         );
     end else begin :custom
-        
         custom_topology_destp_decoder #(
             .ROUTE_TYPE(ROUTE_TYPE),
             .DSTPw(DSTPw),
@@ -1155,9 +1130,7 @@ module destp_generator #(
             .dest_port_out(dest_port_out)
         );
     end
-    /* verilator lint_off WIDTH */
     if(SELF_LOOP_EN==0) begin : nslp
-    /* verilator lint_on WIDTH */
         add_sw_loc_one_hot #(
             .P(P),
             .SW_LOC(SW_LOC)

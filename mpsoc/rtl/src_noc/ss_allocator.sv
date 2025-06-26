@@ -215,9 +215,8 @@ module ssa_per_vc #(
     localparam  
         SW_LOC = V_GLOBAL/V,
         V_LOCAL = V_GLOBAL%V;
-    /* verilator lint_off WIDTH */ 
-    localparam SSA_EN_IN_PORT = (((IS_MESH | IS_TORUS) & IS_FULL_ADAPTIVE) && (SS_PORT == 2 || SS_PORT == 4) && ((1<<V_LOCAL &  ~ESCAP_VC_MASK ) != {V{1'b0}})) ? 1'b0 :1'b1;
-    /* verilator lint_on WIDTH */
+    localparam logic [V-1:0] MASKED_LOCAL_VC = V'((1 << V_LOCAL) & ~ESCAP_VC_MASK);
+    localparam SSA_EN_IN_PORT = (((IS_MESH | IS_TORUS) & IS_FULL_ADAPTIVE) && (SS_PORT == 2 || SS_PORT == 4) && ( MASKED_LOCAL_VC != {V{1'b0}}) ) ? 1'b0 : 1'b1;
     
     input [Fw-1 : 0]  flit_in;
     input flit_in_wr;
@@ -407,18 +406,8 @@ module ssa_check_destport #(
         );
         
         destp_generator #(
-            .TOPOLOGY(TOPOLOGY),
-            .ROUTE_NAME(ROUTE_NAME),
-            .ROUTE_TYPE(ROUTE_TYPE),
-            .T1(T1),
-            .NL(T3),
             .P(P),
-            .DSTPw(DSTPw),
-            .PLw(PLw),
-            .PPSw(PPSw),
-            .SELF_LOOP_EN (SELF_LOOP_EN),
-            .SW_LOC(SW_LOC),
-            .CAST_TYPE(CAST_TYPE)
+            .SW_LOC(SW_LOC)
         ) decoder (
             .destport_one_hot (destport_one_hot_in),
             .dest_port_encoded(destport_in_encoded),
@@ -428,7 +417,6 @@ module ssa_check_destport #(
             .port_pre_sel({PPSw{1'b0}}),
             .odd_column(1'b0)
         );
-        
         assign ss_port_nonhdr_flit = destport_one_hot [SS_PORT];
         assign ss_port_hdr_flit    = destport_one_hot_in [SS_PORT]; 
     end else begin : line
