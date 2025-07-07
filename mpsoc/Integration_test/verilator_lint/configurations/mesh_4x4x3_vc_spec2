@@ -1,0 +1,10 @@
+$model = bless( {
+    'noc_param'=> {
+		"T1" => "4",
+		"T2" => "4",	
+		"T3" => "3",							
+		"TOPOLOGY" => "\"MESH\"",						
+		"ROUTE_NAME" => "\"XY\"",
+		"COMBINATION_TYPE" => "\"COMB_SPEC2\"",  						  					
+	}
+}, 'ProNOC' );

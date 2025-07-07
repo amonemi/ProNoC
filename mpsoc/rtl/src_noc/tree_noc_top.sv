@@ -61,8 +61,8 @@ module  tree_noc_top (
     output  router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];
     
     //all routers port 
-    smartflit_chanel_t    router_chan_in   [NR-1 :0][MAX_P-1 : 0];
-    smartflit_chanel_t    router_chan_out  [NR-1 :0][MAX_P-1 : 0]; 
+    smartflit_chanel_t  router_chan_in   [NR-1 :0][MAX_P-1 : 0];
+    smartflit_chanel_t  router_chan_out  [NR-1 :0][MAX_P-1 : 0]; 
     
     function integer addrencode;
         input integer pos,k,n,kw;
@@ -79,17 +79,8 @@ module  tree_noc_top (
         end   
     endfunction 
     
-    localparam
-        PV = V * MAX_P,
-        PFw = MAX_P * Fw,
-        CONG_ALw = CONGw * MAX_P,
-        PLKw = MAX_P * LKw,
-        PLw = MAX_P * Lw,
-        PRAw = MAX_P * RAw; // {layer , Pos} width   
-    
     wire [LKw-1 : 0] current_pos_addr [NR-1 :0];
     wire [Lw-1  : 0] current_layer_addr [NR-1 :0];   
-    wire [RAw-1 : 0] current_r_addr [NR-1 : 0];
     router_config_t router_config_in [NR-1 :0];
     
     /****************
@@ -101,7 +92,6 @@ module  tree_noc_top (
     
     assign current_layer_addr [ROOT_ID] = ROOT_L;
     assign current_pos_addr [ROOT_ID] = {LKw{1'b0}};
-    assign current_r_addr[ROOT_ID] = {current_layer_addr [ROOT_ID],current_pos_addr[ROOT_ID]};
     assign router_config_in[ROOT_ID].router_id = ROOT_ID [NRw-1:0];
     assign router_config_in[ROOT_ID].router_addr = {current_layer_addr [ROOT_ID],current_pos_addr[ROOT_ID]};
     router_top # (
@@ -109,11 +99,11 @@ module  tree_noc_top (
         .P(K)
     ) root_router (
         .router_config_in(router_config_in[ROOT_ID]),
-        .chan_in         (router_chan_in [ROOT_ID][BOUND-1:0]), 
-        .chan_out        (router_chan_out[ROOT_ID][BOUND-1:0]), 
-        .router_event    (router_event[ROOT_ID][BOUND-1 : 0]),
-        .clk             (clk), 
-        .reset           (reset)
+        .chan_in(router_chan_in [ROOT_ID][BOUND-1:0]), 
+        .chan_out(router_chan_out[ROOT_ID][BOUND-1:0]), 
+        .router_event(router_event[ROOT_ID][BOUND-1 : 0]),
+        .clk(clk), 
+        .reset(reset)
     );
     
     genvar pos,level;
@@ -156,11 +146,10 @@ module  tree_noc_top (
             localparam ID2 = sum_powi ( K,level-1) + (pos/K);
             localparam PORT2= pos % K;  
             localparam FATTREE_EQ_POS2 = POS2*(K**L2);
-            localparam ADR_CODE2=addrencode(FATTREE_EQ_POS2,K,L,Kw);
             // node_connection('Router[id1][k] to router[id2][pos%k]; 
             if(IS_TREE) begin
-            assign  router_chan_in [ID1][K] = router_chan_out [ID2][PORT2];
-            assign  router_chan_in [ID2][PORT2] = router_chan_out [ID1][K];  
+                assign  router_chan_in [ID1][K] = router_chan_out [ID2][PORT2];
+                assign  router_chan_in [ID2][PORT2] = router_chan_out [ID1][K];
             end
             assign current_layer_addr [ID1] = L1[Lw-1 : 0];
             assign current_pos_addr [ID1] = ADR_CODE1 [LKw-1 : 0];

@@ -402,7 +402,6 @@ module endp_addr_decoder  (
 );
     import pronoc_pkg::*;
     
-    localparam NEw= log2(NE);
     output [NEw-1 :0] id_out;
     input  [EAw-1 : 0] code_in;
     generate 

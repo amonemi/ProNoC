@@ -483,7 +483,7 @@ module  wrra_contention_gen #(
             .P(P),
             .SW_LOC(i),
             .SELF_LOOP_EN(SELF_LOOP_EN)
-        ) destports_sum (
+        ) accumulator (
             .weight_is_valid(weight_is_valid[(i+1)*V-1  : i*V]),
             .dest_ports(dest_port_all [(i+1)*VP_1-1  : i*VP_1]),
             .destports_sum(destport_sum[i])

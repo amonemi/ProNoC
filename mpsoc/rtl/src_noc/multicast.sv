@@ -340,11 +340,11 @@ module mcast_dest_list_decode  (
     
     genvar i;
     generate
-        if(IS_STAR) begin :star
-            assign mcast_dst_coded=dest_e_addr;
-        end else begin :no_star
-            assign {row_has_any_dest,mcast_dst_coded}=dest_e_addr;
-        end
+    if(IS_STAR) begin :star
+        assign mcast_dst_coded=dest_e_addr;
+    end else begin :no_star
+        assign {row_has_any_dest,mcast_dst_coded}=dest_e_addr;
+    end
     if(IS_MULTICAST_FULL) begin : full
         assign dest_o = mcast_dst_coded;
         assign is_unicast = 1'b0;
@@ -362,36 +362,30 @@ module mcast_dest_list_decode  (
         );
         for(i=0; i< NE; i=i+1) begin : endpoints
             localparam MCAST_ID = (MCAST_ENDP_LIST[i]==1'b1) ? endp_id_to_mcast_id(i): 0;
-            assign dest_o_multi [i] = (MCAST_ENDP_LIST[i]==1'b1)? mcast_dst_coded[MCAST_ID+1] : 1'b0;                
+            assign dest_o_multi [i] = (MCAST_ENDP_LIST[i]==1'b1)? mcast_dst_coded[MCAST_ID+1] : 1'b0;
         end
         assign dest_o = (not_in_cast_list)? dest_o_uni : dest_o_multi;
-
     end else if (IS_BROADCAST_FULL) begin : bcast_full
         wire not_broad_casted;
         wire [EAw-1 : 0] unicast_code;
         assign {unicast_code,not_broad_casted} = mcast_dst_coded;
         assign is_unicast = not_broad_casted;
         wire [NE-1 : 0]  dest_o_multi;
-        reg  [NE-1 : 0]  dest_o_uni;
-        wire [NEw-1 : 0] unicast_id;
         endp_addr_decoder  decoder (
             .code_in(unicast_code),
             .id_out(unicast_id)
         );
         assign dest_o = (not_broad_casted)? dest_o_uni : {NE{1'b1}};
-
     end else begin //BCAST_PARTIAL
         wire not_broad_casted;
         wire [EAw-1 : 0] unicast_code;
         assign {unicast_code,not_broad_casted} = mcast_dst_coded;
         assign is_unicast =not_broad_casted;
         wire [NE-1 : 0]  dest_o_multi;
-        reg  [NE-1 : 0]  dest_o_uni;
-        wire [NEw-1 : 0] unicast_id;
         endp_addr_decoder decoder (
             .code_in(unicast_code),
             .id_out(unicast_id)
-        );        
+        );
         assign dest_o = (not_broad_casted)? dest_o_uni : MCAST_ENDP_LIST;
     end
     endgenerate
@@ -399,7 +393,7 @@ endmodule
 
 
 module multicast_chan_in_process #(
-    parameter SW_LOC=0,    
+    parameter SW_LOC=0,
     parameter P=5
 )(
     endp_port,

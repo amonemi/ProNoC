@@ -169,6 +169,9 @@ module router_two_stage #(
         current_r_addr = router_config_in.router_addr;
         current_r_id = 0;
         current_r_id [NRw-1 : 0] = router_config_in.router_id;
+    end
+    
+    always_comb begin 
         router_info.router_id=current_r_id;
         router_info.router_addr=current_r_addr;
         router_info.neighbors_r_addr[PRAw-1  :  0] = neighbors_r_addr;

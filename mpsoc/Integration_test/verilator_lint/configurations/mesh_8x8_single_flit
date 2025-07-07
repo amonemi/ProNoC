@@ -1,0 +1,8 @@
+$model = bless( {
+    'noc_param'=> {
+        "B" => "5",
+        "LB" => "5",
+        "MIN_PCK_SIZE" => "1",
+        "PCK_TYPE" => "  \"SINGLE_FLIT\"",
+    }
+}, 'ProNOC' );

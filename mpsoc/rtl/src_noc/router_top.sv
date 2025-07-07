@@ -51,7 +51,7 @@ module router_top #(
     output router_event_t router_event [P-1 : 0];
     input   clk,reset;
     
-    genvar i,j;
+    genvar i;
     
     flit_chanel_t r2_chan_in  [P-1 : 0];
     flit_chanel_t r2_chan_out [P-1 : 0];
@@ -60,23 +60,16 @@ module router_top #(
     ovc_info_t ovc_info  [P-1 : 0][V-1 : 0];
     iport_info_t iport_info  [P-1 : 0];
     oport_info_t oport_info  [P-1 : 0];
-    smart_chanel_t smart_chanel_new  [P-1 : 0];
+    
     smart_chanel_t smart_chanel_in   [P-1 : 0];
-    smart_chanel_t smart_chanel_out  [P-1 : 0];
     smart_ctrl_t   smart_ctrl        [P-1 : 0];
     
     ctrl_chanel_t ctrl_in  [P-1 : 0];
     ctrl_chanel_t ctrl_out [P-1 : 0];
     
-    logic [RAw-1 :  0]  current_r_addr;
-    logic [31 : 0] current_r_id;
-    
     always_comb begin 
-        current_r_addr = router_config_in.router_addr;
-        current_r_id = 0;
-        current_r_id [NRw-1 : 0] = router_config_in.router_id;
         for( int k=0; k<P; k++) begin 
-            ctrl_in [k] = chan_in[k].ctrl_chanel;            
+            ctrl_in [k] = chan_in[k].ctrl_chanel;
         end
     end
     
@@ -97,7 +90,7 @@ module router_top #(
         end
     end
     
-    wire [V-1 : 0] ovc_locally_requested [P-1 : 0];
+    
     flit_chanel_t ss_flit_chanel [P-1 : 0]; //flit  bypass link goes to straight port
     
     router_two_stage  #(//r2
@@ -119,8 +112,13 @@ module router_top #(
     );
     
     wire  [V-1  :  0]  credit_out [P-1 : 0];
+    smart_chanel_t smart_chanel_out  [P-1 : 0];
     generate
     if(SMART_EN) begin : smart  //smart_bypass is enabled
+        smart_chanel_t smart_chanel_new  [P-1 : 0];
+        logic [RAw-1 :  0]  current_r_addr;
+        wire [V-1 : 0] ovc_locally_requested [P-1 : 0];
+        assign current_r_addr = router_config_in.router_addr;
         
         smart_forward_ivc_info #(
             .P(P)
@@ -203,7 +201,7 @@ module router_top #(
                     .reset(reset),
                     .clk(clk)
                 );
-                `endif //SIMULATION        
+                `endif //SIMULATION
                 
                 smart_credit_manage #(
                     .V(V),
@@ -285,6 +283,7 @@ module router_top #(
     end
     generate 
     `ifdef IVC_DEBUG
+    genvar j;
     wire report_active_ivcs = testbench_noc.report_active_ivcs;
     for(i=0; i<P; i=i+1) begin :P1_
         for(j=0; j<V; j=j+1) begin :V_
@@ -297,11 +296,11 @@ module router_top #(
     end
     `endif
     //header flit info, it is useful for debugin
-    hdr_flit_t hdr_flit_i [P-1 : 0]; // the received packet header flit info
-    hdr_flit_t hdr_flit_o [P-1 : 0]; // the sent packet header flit info
+    // hdr_flit_t hdr_flit_i [P-1 : 0]; // the received packet header flit info
+    // hdr_flit_t hdr_flit_o [P-1 : 0]; // the sent packet header flit info
     
     for(i=0; i<P; i=i+1) begin :Port_
-        
+        /*
         header_flit_info  in_extract(
             .flit(chan_in[i].flit_chanel.flit),
             .hdr_flit( hdr_flit_i[i]),
@@ -313,7 +312,7 @@ module router_top #(
             .hdr_flit( hdr_flit_o[i]),
             .data_o()
         );
-        
+        */
         if(DEBUG_EN) begin :dbg
             check_flit_chanel_type_is_in_order IVC_flit_type_check (
                 .clk(clk),
