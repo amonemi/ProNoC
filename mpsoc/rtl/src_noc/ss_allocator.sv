@@ -204,7 +204,7 @@ module ssa_per_vc #(
     decreased_credit_in_ss_ovc,
     single_flit_pck,
     destport_one_hot,
-    ivc_reset      
+    ivc_reset
     `ifdef SIMULATION
     ,clk
     `endif
@@ -391,8 +391,7 @@ module ssa_check_destport #(
     end else if (IS_FMESH) begin :fmesh
         localparam 
             ELw = log2(T3),
-            Pw  = log2(P),
-            PLw = (IS_FMESH) ? Pw : ELw;
+            Pw  = log2(P);
             
         wire [Pw-1 : 0] endp_p_in;
         wire [MAX_P-1 : 0] destport_one_hot_in;

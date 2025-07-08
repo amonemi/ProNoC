@@ -126,7 +126,7 @@ module router_two_stage #(
     wire  [PV-1 : 0] ovc_is_assigned_all;
     wire  [PV-1 : 0] ivc_request_all;
     wire  [PV-1 : 0] assigned_ovc_not_full_all;
-    wire  [PVV-1: 0] masked_ovc_request_all;    
+    wire  [PVV-1: 0] masked_ovc_request_all;
     wire  [PV-1 : 0] vc_weight_is_consumed_all;
     wire  [P-1  : 0] iport_weight_is_consumed_all;
     wire  [PV-1 : 0] vsa_ovc_released_all;  
@@ -440,8 +440,6 @@ module router_two_stage #(
         debug_mesh_edges #(
             .T1(T1),
             .T2(T2),
-            .T3(T3),
-            .T4(T4),
             .RAw(RAw),
             .P(P)
         ) debug_edges (

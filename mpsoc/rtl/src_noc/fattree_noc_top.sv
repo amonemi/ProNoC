@@ -60,13 +60,7 @@ module  fattree_noc_top (
     smartflit_chanel_t    router_chan_out  [NR-1 :0][MAX_P-1 : 0];
     
     localparam
-        PV = V * MAX_P,
-        PFw = MAX_P * Fw,       
-        NRL= NE/K, //number of router in  each layer
-        CONG_ALw = CONGw * MAX_P,
-        PLKw = MAX_P * LKw,
-        PLw = MAX_P * Lw,       
-        PRAw = MAX_P * RAw; // {layer , Pos} width
+        NRL= NE/K;
         
     function integer addrencode;
         input integer pos,k,n,kw;
@@ -165,8 +159,8 @@ module  fattree_noc_top (
                 localparam ID1 =NRL*level+pos;
                 localparam ID2 =NRL*L2 + POS2;
                 localparam POS_ADR_CODE2= addrencode(POS2,K,L,Kw);
-                localparam POS_ADR_CODE1= addrencode(pos,K,L,Kw);
-               // $dotfile=$dotfile.node_connection('R',$id1,undef,$port,'R',$connect_id,undef,$connect_port);
+                //localparam POS_ADR_CODE1= addrencode(pos,K,L,Kw);
+                //$dotfile=$dotfile.node_connection('R',$id1,undef,$port,'R',$connect_id,undef,$connect_port);
                 assign  router_chan_in [ID1][port ] = router_chan_out [ID2][PORT2];
                 assign  router_chan_in [ID2][PORT2] = router_chan_out [ID1][port ];
                 assign current_layer_addr [ID1] = LEAVE_L;

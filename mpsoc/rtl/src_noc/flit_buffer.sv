@@ -58,8 +58,6 @@ module flit_buffer
         BVw = log2(BV),
         Vw = (V==1)? 1 : log2(V),
         DEPTHw = log2(B+1),
-        BwV = Bw * V,
-        BVwV = BVw * V,
         RESTw = Fw -2-V , 
         PTRw = ((2**Bw)==B)? Bw : BVw, // if B is power of 2 PTRw is Bw else is BVw
         ARRAYw = PTRw * V,

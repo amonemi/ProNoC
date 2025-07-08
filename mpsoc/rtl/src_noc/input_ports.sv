@@ -72,18 +72,13 @@ module input_ports #(
     
     localparam
         PV = V * P,
-        VV = V * V,
-        PVV = PV * V,    
         P_1 = (SELF_LOOP_EN )?  P : P-1,
         PP_1 = P * P_1, 
-        VP_1 = V * P_1,
         PVP_1 = PV * P_1,
         PFw = P*Fw,
         W= WEIGHTw,
         WP= W * P,
-        WPP = WP * P,
-        PVDSTPw= PV * DSTPw,
-        PRAw= P * RAw;    
+        WPP = WP * P;
     
     input   reset,clk;
     input   router_info_t router_info;
@@ -219,7 +214,6 @@ module input_queue_per_port #(
     
     localparam 
         PORT_B = port_buffer_size(SW_LOC),
-        PORT_Bw= log2(PORT_B),
         //PORT_IVC is equal to V if HETERO_VC=0
         PORT_IVC = hetero_ivc_decimal(ROUTER_ID, SW_LOC);
     
@@ -954,19 +948,9 @@ module input_queue_per_port #(
         if (IS_REGULAR_TOPO & IS_UNICAST) begin : mesh_based
             
             debug_mesh_tori_route_ckeck #(
-                .T1(T1),
-                .T2(T2),
-                .T3(T3),
-                .ROUTE_TYPE(ROUTE_TYPE),
-                .V(V),
-                .AVC_ATOMIC_EN(AVC_ATOMIC_EN),
-                .SW_LOC(SW_LOC),
-                .ESCAP_VC_MASK(ESCAP_VC_MASK),
-                .TOPOLOGY(TOPOLOGY),
-                .DSTPw(DSTPw),
-                .RAw(RAw),
-                .EAw(EAw)
-            ) route_ckeck (
+                .SW_LOC(SW_LOC)
+                )
+                route_ckeck (
                 .reset(reset),
                 .clk(clk),
                 .hdr_flg_in(hdr_flg_in),

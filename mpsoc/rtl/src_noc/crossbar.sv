@@ -37,14 +37,8 @@ module crossbar #(
     import pronoc_pkg::*;
     
     localparam 
-        PV = V * P,
-        VV = V * V,
-        PP = P * P,
-        PVV = PV * V,
         P_1 = (SELF_LOOP_EN )?  P : P-1,
-        VP_1 = V * P_1,
         PP_1 = P_1 * P,
-        PVP_1 = PV * P_1,
         PFw = P*Fw,
         P_1Fw = P_1 * Fw,
         P_1w = log2(P_1);

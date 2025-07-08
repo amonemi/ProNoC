@@ -136,16 +136,16 @@ module  tree_noc_top (
     for (level = 1; level<L; level=level+1) begin : level_c
         localparam  NPOS = powi(K,level); // number of routers in this level
         localparam L1 = L-1-level;
-        localparam level2= level - 1;
-        localparam L2 = L-1-level2;
+        //localparam level2= level - 1;
+        //localparam L2 = L-1-level2;
         for ( pos = 0; pos < NPOS; pos=pos+1 ) begin : pos_c
             localparam ID1 = sum_powi ( K,level) + pos;
             localparam FATTREE_EQ_POS1 = pos*(K**L1);
             localparam ADR_CODE1=addrencode(FATTREE_EQ_POS1,K,L,Kw);
-            localparam POS2 = pos /K ;
+            //localparam POS2 = pos /K ;
             localparam ID2 = sum_powi ( K,level-1) + (pos/K);
             localparam PORT2= pos % K;  
-            localparam FATTREE_EQ_POS2 = POS2*(K**L2);
+            //localparam FATTREE_EQ_POS2 = POS2*(K**L2);
             // node_connection('Router[id1][k] to router[id2][pos%k]; 
             if(IS_TREE) begin
                 assign  router_chan_in [ID1][K] = router_chan_out [ID2][PORT2];

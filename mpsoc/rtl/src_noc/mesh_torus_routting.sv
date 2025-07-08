@@ -5,9 +5,7 @@
 *
 *************************************/
 
-module mesh_torus_look_ahead_routing #(
-    parameter SW_LOC = 0 
-)(
+module mesh_torus_look_ahead_routing (
     current_x,  //current router x address
     current_y,  //current router y address
     dest_x,  // destination router x address
@@ -36,8 +34,7 @@ module mesh_torus_look_ahead_routing #(
     generate 
     if( IS_DETERMINISTIC ) begin :dtrmst
         mesh_torus_deterministic_look_ahead_routing #(
-            .P(P),
-            .SW_LOC(SW_LOC)
+            .P(P)
         ) deterministic_look_ahead(
             .current_x(current_x),
             .current_y(current_y),
@@ -71,14 +68,13 @@ endmodule
 **********************************************/
 
 module  mesh_torus_deterministic_look_ahead_routing #(
-    parameter P =5,
-    parameter SW_LOC =0
+    parameter P =5
 ) (
     current_x,  //current router x address
     current_y,  //current router y address
-    dest_x,  // destination router x address          
-    dest_y,  // destination router y address                  
-    destport,   // current router destination port number       
+    dest_x,  // destination router x address
+    dest_y,  // destination router y address
+    destport,   // current router destination port number
     lkdestport // look ahead destination port number
 );
     import pronoc_pkg::*;

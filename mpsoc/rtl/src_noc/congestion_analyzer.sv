@@ -337,7 +337,6 @@ module port_pre_sel_gen #(
 );
     import pronoc_pkg::*;
     localparam 
-        P_1 = P-1,
         PV = P * V,
         CONG_ALw = CONGw * P;
     output [PPSw-1 : 0] port_pre_sel;
@@ -399,8 +398,8 @@ module port_pre_sel_gen #(
                 .V(V),
                 .CONGw(CONGw)
             ) port_presel_gen (
-                .port_pre_sel(port_pre_sel),    
-                .congestion_in_all(congestion_in_all)   
+                .port_pre_sel(port_pre_sel),
+                .congestion_in_all(congestion_in_all)
             );
         end 
     end 

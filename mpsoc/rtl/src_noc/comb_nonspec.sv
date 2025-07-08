@@ -88,7 +88,6 @@ module comb_nonspec_allocator # (
     //internal wires switch allocator
     wire  [PV-1 : 0] first_arbiter_granted_ivc_all;
     wire  [PV-1 : 0] ivc_request_masked_all;
-    wire  [P-1 : 0] any_cand_ovc_exsit;    
     wire  [PV-1 : 0] ivc_request_all;
     wire  [PV-1 : 0] ovc_is_assigned_all;
     wire  [PV-1 : 0] assigned_ovc_not_full_all;    
@@ -128,14 +127,13 @@ module comb_nonspec_allocator # (
     wire   [V-1 : 0] granted_ovc_local_num_per_port [P-1 : 0];
     wire   [V-1 : 0] ivc_local_num_getting_ovc_grant[P-1 : 0];
     wire   [V : 0] summ_in [PV-1 : 0];
-    wire   [V-1 : 0]  vc_pririty [PV-1 : 0] ;
     
     assign assigned_ovc_request_all =   ivc_request_all &   ovc_is_assigned_all;
         
-    genvar i,j;    
+    genvar i,j;
     generate 
     // IVC loop
-    for(i=0;i< PV;i=i+1) begin :PV_      
+    for(i=0;i< PV;i=i+1) begin :PV_
         // mask unavailable ovc from requests
         assign masked_non_assigned_request [i] = masked_ovc_request_all [(i+1)*V-1 : i*V ];
         assign masked_assigned_request [i] = assigned_ovc_not_full_all [i] & assigned_ovc_request_all [i]; 
@@ -429,8 +427,7 @@ module nonspec_sw_alloc #(
         PV = V * P,
         VP_1 = V * P_1,
         PP_1 = P_1 * P,
-        PVP_1 = PV * P_1,
-        PP = P*P;  
+        PVP_1 = PV * P_1;
     
     output [PV-1 : 0] ivc_granted_all;
     output [P-1 : 0] granted_dst_is_from_a_single_flit_pck;

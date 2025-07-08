@@ -74,20 +74,8 @@ endmodule
 
 
 module debug_mesh_tori_route_ckeck #(
-    parameter T1=4,
-    parameter T2=4,
-    parameter T3=4,
-    parameter ROUTE_TYPE = "FULL_ADAPTIVE",
-    parameter V=4,
-    parameter AVC_ATOMIC_EN=1,
-    parameter SW_LOC = 0,
-    parameter [V-1 : 0] ESCAP_VC_MASK= 4'b0001,
-    parameter TOPOLOGY="MESH",
-    parameter DSTPw=4,
-    parameter RAw=4,
-    parameter EAw=4,
-    parameter DAw=EAw
-)(
+    parameter SW_LOC=0
+    )(
     reset,
     clk,
     hdr_flg_in,
@@ -100,15 +88,7 @@ module debug_mesh_tori_route_ckeck #(
     src_e_addr_in,
     destport_in  
 );
-
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
+    import pronoc_pkg::*;
     
     input reset,clk;
     input hdr_flg_in , flit_in_wr;
@@ -119,8 +99,6 @@ module debug_mesh_tori_route_ckeck #(
     input [DSTPw-1 : 0]  destport_in; 
     
     localparam
-        NX = T1,
-        NY = T2,
         RXw = log2(NX),    // number of node in x axis
         RYw = (TOPOLOGY=="RING" || TOPOLOGY == "LINE") ? 1 : log2(NY),
         EXw = log2(NX),    // number of node in x axis
@@ -154,16 +132,9 @@ module debug_mesh_tori_route_ckeck #(
         .valid()
     );
     
-    localparam  
-        LOCAL =  0, 
-        NORTH =  2,  
-        SOUTH =  4; 
-
     `ifdef SIMULATION 
     generate
-    /* verilator lint_off WIDTH */
-    if(ROUTE_TYPE == "DETERMINISTIC")begin :dtrmn
-    /* verilator lint_on WIDTH */  
+    if(IS_DETERMINISTIC)begin :dtrmn
         always@( posedge clk) begin 
             if(flit_in_wr & hdr_flg_in )   
                 if( destport_in[1:0]==2'b11) begin 
@@ -172,20 +143,18 @@ module debug_mesh_tori_route_ckeck #(
                 end
             end//if
         end//always
-    /* verilator lint_off WIDTH */
-    if(ROUTE_TYPE == "FULL_ADAPTIVE") begin :full_adpt
-    /* verilator lint_on WIDTH */    
+    if(IS_FULL_ADAPTIVE) begin :full_adpt
         wire [V-1 : 0] not_empty;
         reg  [V-1 : 0] not_empty_next;
         pronoc_register #(
-            .W(V)          
+            .W(V)
         ) reg2 ( 
             .D_in(not_empty_next),
-            .reset(reset),    
-            .clk(clk),      
+            .reset(reset),
+            .clk(clk),
             .Q_out(not_empty)
         );
-        always@(*) begin
+        always @ (*) begin
             not_empty_next = not_empty;
             if(hdr_flg_in & flit_in_wr) begin
                 not_empty_next = not_empty | vc_num_in;
@@ -196,7 +165,7 @@ module debug_mesh_tori_route_ckeck #(
         end//always
         always@( posedge clk ) begin
             if(hdr_flg_in & flit_in_wr) begin
-                if( ((AVC_ATOMIC_EN==1)&& (SW_LOC!= LOCAL)) || (SW_LOC== NORTH) || (SW_LOC== SOUTH) )begin   
+                if( ((AVC_ATOMIC_EN==1)&& (SW_LOC != LOCAL)) || (SW_LOC == NORTH) || (SW_LOC == SOUTH) )begin
                     if((vc_num_in  & ~ESCAP_VC_MASK)>0) begin // adaptive VCs
                         if( (not_empty & vc_num_in)>0) $display("%t  :Error AVC allocated nonatomicly in %d port %m",$time,SW_LOC);
                     end
@@ -208,11 +177,9 @@ module debug_mesh_tori_route_ckeck #(
             end//hdr_wr_in
         end//always
     end 
-    /* verilator lint_off WIDTH */ 
-    if(TOPOLOGY=="MESH")begin :mesh
-    /* verilator lint_on WIDTH */
+    if( IS_MESH )begin :mesh
         wire  [EXw-1 : 0] low_x,high_x;
-        wire  [EYw-1 : 0] low_y,high_y;    
+        wire  [EYw-1 : 0] low_y,high_y;
         assign low_x = (x_src_in < x_dst_in)?  x_src_in : x_dst_in;
         assign low_y = (y_src_in < y_dst_in)?  y_src_in : y_dst_in;
         assign high_x = (x_src_in < x_dst_in)?  x_dst_in : x_src_in;
@@ -234,8 +201,6 @@ endmodule
 module debug_mesh_edges #(
     parameter T1=2,
     parameter T2=2,
-    parameter T3=3,
-    parameter T4=3,
     parameter RAw=4,
     parameter P=5
 )(
@@ -245,9 +210,9 @@ module debug_mesh_edges #(
 );
 
     function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
+    input integer number; begin
+        log2=(number <=1) ? 1: 0;
+        while(2**log2<number) begin
             log2=log2+1;    
         end        
     end   
@@ -278,7 +243,7 @@ module debug_mesh_edges #(
     `ifdef SIMULATION
     always @(posedge clk) begin 
         if(current_rx == {RXw{1'b0}} && flit_out_wr_all[WEST]) $display ( "%t\t  ERROR: a packet is going to the WEST in a router located in first column in mesh topology %m",$time ); 
-        if(current_rx == RXw'(T1-1)  && flit_out_wr_all[EAST]) $display ( "%t\t   ERROR: a packet is going to the EAST in a router located in last column in mesh topology %m",$time ); 
+        if(current_rx == RXw'(T1-1)  && flit_out_wr_all[EAST]) $display ( "%t\t  ERROR: a packet is going to the EAST in a router located in last column in mesh topology %m",$time ); 
         if(current_ry == {RYw{1'b0}} && flit_out_wr_all[NORTH])$display ( "%t\t  ERROR: a packet is going to the NORTH in a router located in first row in mesh topology %m",$time ); 
         if(current_ry == RYw'(T2-1)  && flit_out_wr_all[SOUTH])$display ( "%t\t  ERROR: a packet is going to the SOUTH in a router located in last row in mesh topology %m",$time); 
     end//always
@@ -448,16 +413,7 @@ module endp_addr_decoder  (
 endmodule  
 
 
-module check_pck_size #(
-    parameter V=2,
-    parameter MIN_PCK_SIZE=2,
-    parameter Fw=36,
-    parameter DAw=4,
-    parameter CAST_TYPE="UNICAST",
-    parameter NE=4,
-    parameter B=4,
-    parameter LB=4
-)(
+module check_pck_size (
     hdr_flg_in,
     flit_in_wr,
     tail_flg_in,
@@ -466,7 +422,7 @@ module check_pck_size #(
     clk,
     reset  
 );
-
+    import pronoc_pkg::*;
     input clk, reset;
     input hdr_flg_in, tail_flg_in, flit_in_wr;
     input [V-1 : 0] vc_num_in;
@@ -494,10 +450,10 @@ module check_pck_size #(
         end
         
         pronoc_register #(.W(32)) reg1(
-            .D_in(pck_size_counter_next[i]), 
-            .reset  (reset ), 
-            .clk    (clk   ), 
-            .Q_out  (pck_size_counter[i] )
+            .D_in(pck_size_counter_next[i]),
+            .reset(reset), 
+            .clk(clk ), 
+            .Q_out (pck_size_counter[i])
         );
         
         always @(posedge clk) begin 
@@ -511,19 +467,17 @@ module check_pck_size #(
             end
         end
         
-        /* verilator lint_off WIDTH */ 
-        if(CAST_TYPE!="UNICAST") begin
-        /* verilator lint_on WIDTH */   
+        if(!IS_UNICAST) begin
         //Check that the size of multicast/broadcast packets <= buffer size
             assign vc_hdr_wr_en [i] = flit_in_wr & hdr_flg_in & (vc_num_in == VC);
             pronoc_register_ld_en #(.W(DAw)) reg2(
-                .D_in     (dest_e_addr_in), 
-                .reset  (reset ), 
-                .clk    (clk   ), 
-                .ld     (vc_hdr_wr_en [i] ),
-                .Q_out    (dest_e_addr[i])
+                .D_in (dest_e_addr_in), 
+                .reset (reset), 
+                .clk (clk), 
+                .ld(vc_hdr_wr_en [i] ),
+                .Q_out(dest_e_addr[i])
             );
-
+            
             mcast_dest_list_decode decode (
                 .dest_e_addr(dest_e_addr[i]),
                 .dest_o(dest_mcast_all_endp[i]),

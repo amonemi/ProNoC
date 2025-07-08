@@ -219,9 +219,7 @@ module look_ahead_routing #(
                 .valid()
             );
         end
-        mesh_torus_look_ahead_routing #(
-            .SW_LOC(SL_SW_LOC)
-        ) look_ahead_route  (
+        mesh_torus_look_ahead_routing lkh_route  (
             .current_x(current_rx),
             .current_y(current_ry),
             .dest_x(dest_ex),

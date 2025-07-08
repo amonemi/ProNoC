@@ -323,16 +323,7 @@ module router_top #(
                 .vc_num_in(chan_in[i].flit_chanel.flit.vc)
             );
             
-            check_pck_size #(
-                .V(V),
-                .MIN_PCK_SIZE(MIN_PCK_SIZE),
-                .Fw(Fw),
-                .DAw(DAw),
-                .CAST_TYPE(CAST_TYPE),
-                .NE(NE),
-                .B(B),
-                .LB(LB)
-            ) check_pck_siz (
+            check_pck_size check_pck_siz (
                 .clk(clk),
                 .reset(reset),
                 .hdr_flg_in(chan_in[i].flit_chanel.flit.hdr_flag),

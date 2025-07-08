@@ -27,12 +27,11 @@ module multicast_routing # (
     generate
     if(IS_MESH) begin: mesh
         multicast_routing_mesh #(
-            .P(P) ,
-            .SW_LOC(SW_LOC)        
+            .SW_LOC(SW_LOC)
         ) routing (
             .current_r_addr(current_r_addr),  //current router  address
-            .dest_e_addr(dest_e_addr),  // destination endpoint address        
-            .destport(destport)        
+            .dest_e_addr(dest_e_addr),  // destination endpoint address
+            .destport(destport)
         );
     end else if (IS_FMESH) begin : fmesh 
         multicast_routing_fmesh #(
@@ -40,7 +39,7 @@ module multicast_routing # (
             .SW_LOC(SW_LOC)        
         ) routing (
             .current_r_addr(current_r_addr),  //current router  address
-            .dest_e_addr(dest_e_addr),  // destination endpoint address        
+            .dest_e_addr(dest_e_addr),  // destination endpoint address
             .destport(destport)        
         );
     end else if (IS_STAR) begin : star
@@ -65,13 +64,12 @@ module multicast_routing # (
 endmodule
 
 
-module multicast_routing_mesh    #(
-    parameter SW_LOC=0,   
-    parameter P=5
+module multicast_routing_mesh #(
+    parameter SW_LOC=0
 )(
     current_r_addr,  //current router  address
-    dest_e_addr,  // destination endpoint address        
-    destport        
+    dest_e_addr,  // destination endpoint address
+    destport
 );   
     
     import pronoc_pkg::*;
@@ -81,10 +79,8 @@ module multicast_routing_mesh    #(
     output  [DSTPw-1 : 0] destport;
     
     localparam
-        RXw = log2(NX),   
-        RYw = log2(NY),  
-        EXw = RXw,
-        EYw = RYw;
+        RXw = log2(NX),
+        RYw = log2(NY);
     
     //mask gen. x_plus: all rows larger than current router x address are asserted.
     wire [NX-1 : 0] x_plus,x_minus;
@@ -146,30 +142,30 @@ module multicast_routing_mesh    #(
     reg [4 : 0] destport_tmp;
     always_comb begin 
         destport_tmp = {5{1'b0}};
-        destport_tmp[LOCAL]=goto_local[LOCAL];                
+        destport_tmp[LOCAL]=goto_local[LOCAL];
         if     (SW_LOC == SOUTH) destport_tmp [NORTH] = goto_north;
         else if(SW_LOC == NORTH) destport_tmp [SOUTH] = goto_south;
         else if(SW_LOC == WEST)begin 
             destport_tmp [NORTH] = goto_north;
             destport_tmp [SOUTH] = goto_south;
-            destport_tmp [EAST ] = goto_east;                    
+            destport_tmp [EAST ] = goto_east;
         end
         else if(SW_LOC == EAST) begin 
             destport_tmp [NORTH] = goto_north;
             destport_tmp [SOUTH] = goto_south;
-            destport_tmp [WEST ] = goto_west;                    
+            destport_tmp [WEST ] = goto_west;
         end
         else if(SW_LOC == LOCAL || SW_LOC > SOUTH) begin
             destport_tmp [NORTH] = goto_north;
             destport_tmp [SOUTH] = goto_south;
             destport_tmp [EAST]  = goto_east;
             destport_tmp [WEST]  = goto_west;
-        end                            
+        end
     end
     localparam MSB_DSTP = (DSTPw-1 < SOUTH)? DSTPw-1: SOUTH;
     assign destport [MSB_DSTP : 0] =destport_tmp;
     for(i=1;i<NL;i++) begin :other_local
-        assign destport[MSB_DSTP+i]=goto_local[i];            
+        assign destport[MSB_DSTP+i]=goto_local[i];
     end    
     endgenerate
 endmodule
@@ -211,11 +207,9 @@ module multicast_routing_fmesh #(
     output  [DSTPw-1 : 0]  destport;
     localparam Pw = log2(MAX_P_FMESH);
     
-    localparam        
-        RXw = log2(NX),   
-        RYw = log2(NY),  
-        EXw = RXw,
-        EYw = RYw;
+    localparam
+        RXw = log2(NX),
+        RYw = log2(NY);
     wire   [RXw-1 : 0]  current_rx;
     wire   [RYw-1 : 0]  current_ry;   
     //mask gen. x_plus: all rows larger than current router x address are asserted.

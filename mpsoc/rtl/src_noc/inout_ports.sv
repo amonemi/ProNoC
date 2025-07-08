@@ -83,14 +83,14 @@ module inout_ports #(
     ovc_info,
     oport_info,
     vsa_ctrl_in,
-    smart_ctrl_in    
+    smart_ctrl_in
 );
     
     import pronoc_pkg::*;
     
     localparam
         PV = V * P,
-        PVV = PV * V,    
+        PVV = PV * V,
         P_1 = (SELF_LOOP_EN )?  P : P-1,
         PP_1 = P_1 * P,
         PVP_1 = PV * P_1,
@@ -98,9 +98,7 @@ module inout_ports #(
         CONG_ALw = CONGw*P,    //  congestion width per router 
         W = WEIGHTw,
         WP = W * P,
-        WPP = WP * P,
-        PVDSTPw= PV * DSTPw,
-        PRAw= P * RAw;
+        WPP = WP * P;
     
     input router_info_t router_info;
     input [PFw-1 : 0] flit_in_all;
@@ -207,26 +205,25 @@ module inout_ports #(
     );   
     
     output_ports #(
-        .P (P)               
-    ) output_ports (        
-        .vsa_ovc_allocated_all                      (vsa_ovc_allocated_all),
-        .flit_is_tail_all                           (flit_is_tail_all),
-        .dest_port_all                              (dest_port_all),
-        .nonspec_granted_dest_port_all              (nonspec_granted_dest_port_all),
-        .credit_in_all                              (credit_in_all),
-        .nonspec_first_arbiter_granted_ivc_all      (nonspec_first_arbiter_granted_ivc_all),
-        .ivc_num_getting_sw_grant                   (ivc_num_getting_sw_grant ),
-        .ovc_avalable_all                           (ovc_avalable_all),
-        .assigned_ovc_not_full_all                  (assigned_ovc_not_full_all),
-        .port_pre_sel                               (port_pre_sel),//only valid for adaptive routing
-        .congestion_in_all                          (congestion_in_all),//only valid for adaptive routing
-        .granted_ovc_num_all                         (granted_ovc_num_all),                  
-        
-        .granted_dst_is_from_a_single_flit_pck      (granted_dst_is_from_a_single_flit_pck),
-        .reset                                      (reset),
-        .clk                                        (clk),
-        .crossbar_flit_out_wr_all                    (crossbar_flit_out_wr_all),
-        .any_ovc_granted_in_outport_all ( any_ovc_granted_in_outport_all),  
+        .P (P)
+    ) output_ports (
+        .vsa_ovc_allocated_all(vsa_ovc_allocated_all),
+        .flit_is_tail_all(flit_is_tail_all),
+        .dest_port_all(dest_port_all),
+        .nonspec_granted_dest_port_all(nonspec_granted_dest_port_all),
+        .credit_in_all(credit_in_all),
+        .nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all),
+        .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant ),
+        .ovc_avalable_all(ovc_avalable_all),
+        .assigned_ovc_not_full_all(assigned_ovc_not_full_all),
+        .port_pre_sel(port_pre_sel),//only valid for adaptive routing
+        .congestion_in_all(congestion_in_all),//only valid for adaptive routing
+        .granted_ovc_num_all(granted_ovc_num_all),
+        .granted_dst_is_from_a_single_flit_pck(granted_dst_is_from_a_single_flit_pck),
+        .reset(reset),
+        .clk(clk),
+        .crossbar_flit_out_wr_all(crossbar_flit_out_wr_all),
+        .any_ovc_granted_in_outport_all(any_ovc_granted_in_outport_all),
         .vsa_ovc_released_all (vsa_ovc_released_all),
         .vsa_credit_decreased_all(vsa_credit_decreased_all),
         .oport_info (oport_info),
@@ -500,13 +497,12 @@ module  vc_alloc_request_gen #(
     
     /* verilator lint_off WIDTH */
     if(ROUTE_TYPE == "DETERMINISTIC") begin : dtrmn
-    /* verilator lint_on WIDTH */          
+    /* verilator lint_on WIDTH */
         
         vc_alloc_request_gen_determinstic #(
             .P(P),
             .V(V),
-            .SELF_LOOP_EN(SELF_LOOP_EN),
-            .CAST_TYPE(CAST_TYPE)
+            .SELF_LOOP_EN(SELF_LOOP_EN)
         ) vc_request_gen (
             .ovc_avalable_all(ovc_avalable_all_masked),
             .ivc_request_all(ivc_request_all),
@@ -595,11 +591,10 @@ module  vc_alloc_request_gen #(
 endmodule
 
 
-module  vc_alloc_request_gen_determinstic #(    
+module  vc_alloc_request_gen_determinstic #(
     parameter P = 5,
     parameter V = 4,
-    parameter SELF_LOOP_EN=0,
-    parameter CAST_TYPE = "UNICAST" 
+    parameter SELF_LOOP_EN=0
 )(
     ovc_avalable_all,
     candidate_ovc_all,
@@ -611,10 +606,10 @@ module  vc_alloc_request_gen_determinstic #(
 
     localparam  
         P_1 = (SELF_LOOP_EN )?  P : P-1,
-        PV      =   V       *   P,
-        PVV     =   PV      *   V,
-        PVP_1   =   PV      *   P_1,
-        VP_1    =   V       *   P_1;
+        PV = V * P,
+        PVV = PV * V,
+        PVP_1 = PV * P_1,
+        VP_1 = V * P_1;
     
     input   [PV-1       :   0]  ovc_avalable_all;
     input   [PV-1       :   0]  ivc_request_all;
@@ -655,16 +650,16 @@ module  vc_alloc_request_gen_determinstic #(
         
         //available ovc multiplexer
         onehot_mux_1D #(
-            .W       (V),
-            .N      (P_1)
+            .W(V),
+            .N(P_1)
         ) multiplexer (
-            .D_in(ovc_avalable_ivc   [i]),
-            .Q_out(ovc_avb_muxed      [i]),
-            .sel    (dest_port_ivc      [i])
+            .D_in(ovc_avalable_ivc[i]),
+            .Q_out(ovc_avb_muxed[i]),
+            .sel(dest_port_ivc[i])
         );  
         
         // mask unavailable ovc from requests
-        assign masked_ovc_request_all  [(i+1)*V-1   :   i*V ]     =   ovc_avb_muxed[i] & ovc_request_ivc [i];
+        assign masked_ovc_request_all  [(i+1)*V-1 : i*V ] = ovc_avb_muxed[i] & ovc_request_ivc [i];
         
     end
     endgenerate
