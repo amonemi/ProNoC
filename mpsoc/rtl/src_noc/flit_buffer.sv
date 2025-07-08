@@ -53,8 +53,10 @@ module flit_buffer
     
     
     localparam
+        Bw = (B==1)? 1 : log2(B),
         BV = B   *   V,
         BVw = log2(BV),
+        Vw = (V==1)? 1 : log2(V),
         DEPTHw = log2(B+1),
         BwV = Bw * V,
         BVwV = BVw * V,
