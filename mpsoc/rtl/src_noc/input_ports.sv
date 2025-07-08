@@ -884,8 +884,7 @@ module input_queue_per_port #(
     
     if( IS_UNICAST ) begin : unicast
         look_ahead_routing #(
-            .P(P),
-            .SW_LOC(SW_LOC)
+            .P(P)
         ) lk_routing (
             .current_r_addr(current_r_addr),
             .neighbors_r_addr(neighbors_r_addr),

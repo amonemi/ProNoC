@@ -157,8 +157,7 @@ endmodule
 *     look_ahead_routing
 *************************************/
 module look_ahead_routing #(
-    parameter P = 5,
-    parameter SW_LOC = 0
+    parameter P = 5
 )(
     current_r_addr,  //current router  address
     neighbors_r_addr,
@@ -185,7 +184,7 @@ module look_ahead_routing #(
     
     genvar i;
     generate
-    if(IS_MESH | IS_FMESH | IS_TORUS | IS_RING | IS_LINE) begin : mesh_torus
+    if(IS_REGULAR_TOPO | IS_FMESH ) begin : regular_fmesh
         localparam
             RXw = log2(NX),
             RYw = (IS_RING | IS_LINE) ? 1 : log2(NY),
@@ -195,7 +194,6 @@ module look_ahead_routing #(
         wire   [RYw-1   :   0]  current_ry;
         wire   [EXw-1   :   0]  dest_ex;
         wire   [EYw-1   :   0]  dest_ey;
-        localparam SL_SW_LOC = ( SW_LOC > P-T3) ? 0 : SW_LOC; //single_local
         mesh_tori_router_addr_decode router_addr_decode (
             .r_addr(current_r_addr),
             .rx(current_rx),
@@ -210,7 +208,7 @@ module look_ahead_routing #(
                 .ep( ),
                 .valid()
             );
-        end else begin :mesh
+        end else begin :regular
             mesh_tori_endp_addr_decode end_addr_decode (
                 .e_addr(dest_e_addr),
                 .ex(dest_ex),
