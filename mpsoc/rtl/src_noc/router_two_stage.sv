@@ -153,7 +153,7 @@ module router_two_stage #(
     wire [CRDTw-1 : 0 ] credit_init_val_out [P-1 : 0][V-1 : 0];    
     logic [31:0] current_r_id;
     logic [RAw-1 :  0]  current_r_addr;
-    router_info_t router_info;
+    router_info_t router_info,router_info_next;
     wire [P-1 : 0] granted_oport_one_hot [P-1 : 0];
     wire [EAw-1 : 0] endp_addrs [NE_PER_R-1 : 0];
     
@@ -171,10 +171,13 @@ module router_two_stage #(
         current_r_id [NRw-1 : 0] = router_config_in.router_id;
     end
     
+    //To avoid false loopback reports in Verilator
+    pronoc_register #(.W(ROUTER_INFO_w)) tmp_reg (.D_in(router_info_next ), .Q_out(router_info), .reset(reset), .clk(clk));
+    
     always_comb begin 
-        router_info.router_id=current_r_id;
-        router_info.router_addr=current_r_addr;
-        router_info.neighbors_r_addr[PRAw-1  :  0] = neighbors_r_addr;
+        router_info_next.router_id=current_r_id;
+        router_info_next.router_addr=current_r_addr;
+        router_info_next.neighbors_r_addr[PRAw-1  :  0] = neighbors_r_addr;
         for (int port=0; port<P; port++ ) begin 
             ctrl_out[port].router_addr = current_r_addr;
             ctrl_out[port].endp_port =1'b0; 
