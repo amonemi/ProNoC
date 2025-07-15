@@ -151,7 +151,7 @@ module mesh_torus_noc_top  (
                     localparam ENDPID = fmesh_endp_id(x,y,l); 
                     localparam LOCALP = (l==0) ? l : l + R2R_CHANELS_MESH_TORI; // first local port is connected to router port 0. The rest are connected at the end  
                     localparam LL = l;
-                    localparam [EAw-1 :0] ENDP_ADDR = {LL[NLw-1: 0],R_ADDR[RAw-1: 0]};
+                    localparam [RAw+NLw-1 : 0] ENDP_ADDR =  {LL[NLw-1: 0],R_ADDR[RAw-1: 0]};
                     assign router_chan_in [fmesh_router_id(x,y)][LOCALP] =    chan_in_all [ENDPID];
                     assign chan_out_all [ENDPID] = router_chan_out [fmesh_router_id(x,y)][LOCALP];
                     assign router_config_in[RID].endp_addrs[(l+1)*EAw -1 :  l*EAw] = ENDP_ADDR[EAw-1:0];

@@ -157,7 +157,8 @@ sub get_model_parameter {
 }
 
 sub gen_noc_localparam_v {
-    my ($m,$ref) = @_;
+    my ($m,$ref,$flat) = @_;
+    $flat//0; #if flat is 1, it use noc_top as top level modules otherwise it split verilator over internal modules
     my %model = %{$ref};
     my %temp;
     
@@ -176,9 +177,16 @@ sub gen_noc_localparam_v {
     }
     $param_v.="`endif\n";
     my ($nr,$ne,$router_p,$ref_tops,$includ_h) = get_noc_verilator_top_modules_info($m);
-    my %tops = %{$ref_tops};
-    $tops{Vtraffic} = "--top-module traffic_gen_top";
-    $tops{Vpck_inj} = "--top-module packet_injector_verilator";
+    my %tops = (
+       Vtraffic  => "--top-module traffic_gen_top",
+       Vpck_inj  => "--top-module packet_injector_verilator",
+    );
+
+    if ($flat) {
+        $tops{Vnoc} = "--top-module noc_top_v";
+    } else {
+        %tops = (%{$ref_tops}, %tops);  # Merge ref_tops first so Vtraffic/Vpck_inj override if needed
+    }
     my $param_h=gen_noc_param_h($m);
     $includ_h = gen_sim_parameter_h($param_h,$includ_h,$ne,$nr,$router_p,'16');
     return ($param_v,$includ_h,\%tops);
@@ -245,7 +253,7 @@ sub gen_file_list{
 }
 
 sub gen_verilator_sh{
-    my ($ref,$file)=@_;
+    my ($ref,$file,$flat)=@_;
     my %tops = %{$ref};
     my $make_lib="";
     my $jobs=0;
@@ -281,9 +289,9 @@ sub gen_verilator_sh{
 cd \$SCRPT_DIR_PATH/obj_dir/
 $make_lib
 wait
-
-make sim
 ";
+    $cmd.=($flat)? "make sim_flat\n" : "make sim\n";
+
     save_file("$file",$cmd);
 }
 
@@ -322,6 +330,7 @@ sub check_models_are_exsited {
 sub gen_models {
     my ($mref, $inref) = @_;
     my @models = get_model_names(@_);
+    my ($paralel_run,$MIN,$MAX,$STEP,$model_dir,$flat) = @{$inref};
     mkdir("$work", 0700);
     $work=realpath($work);
     foreach my $m (@models){
@@ -337,7 +346,7 @@ sub gen_models {
         my ($fname,$fpath,$fsuffix) = fileparse("$m",qr"\..[^.]*$");
         my $name = $fname;
         my $make =$o->{'makefile'};
-        my ($param_v,$include_h,$tops)=   gen_noc_localparam_v( $o,$param);
+        my ($param_v,$include_h,$tops)=   gen_noc_localparam_v($o,$param,$flat);
         mkdir("$work/$name", 0700);
         rmtree("$work/$name/obj_dir");
         mkdir("$work/$name/obj_dir", 0700);
@@ -345,7 +354,7 @@ sub gen_models {
         
         #generate file list
         gen_file_list("$work/$name");
-        gen_verilator_sh($tops,"$work/$name/verilator.sh");
+        gen_verilator_sh($tops,"$work/$name/verilator.sh",$flat);
         #copy C files
         my @files = File::Find::Rule->file()
             ->name( '*.h' )
@@ -685,6 +694,10 @@ endif
 
 
 sim:\ttestbench.o \$(VK_GLOBAL_OBJS) $p \$(SLIB)
+\t\$(LINK) \$(LDFLAGS) -g \$^ \$(LOADLIBES) \$(LDLIBS) -o testbench \$(LIBS) -Wall -O3 -lpthread 2>&1 | c++filt
+
+sim_flat:\tCPPFLAGS += -DFLAT_MODE
+sim_flat:\ttestbench.o \$(VK_GLOBAL_OBJS)  $p \$(SLIB)
 \t\$(LINK) \$(LDFLAGS) -g \$^ \$(LOADLIBES) \$(LDLIBS) -o testbench \$(LIBS) -Wall -O3 -lpthread 2>&1 | c++filt
 
 testbench.o: testbench.cpp $h  \$(HLIB)

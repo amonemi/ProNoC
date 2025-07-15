@@ -15,6 +15,10 @@
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
+#ifdef FLAT_MODE
+#include "Vnoc_top.h"
+#endif
+
 #include "simulator.h"
 
 int main(int argc, char** argv) {
@@ -29,8 +33,11 @@ int main(int argc, char** argv) {
             class_percentage =   (int *) malloc(sizeof(int));
             class_percentage[0]=100;
     }
-    
+    #ifdef FLAT_MODE
+    noc_top = new Vnoc_top;
+    #else 
     Vrouter_new();
+    #endif
     if (ENDP_TYPE == PCK_INJECTOR)    for(i=0;i<NE;i++)    pck_inj[i]  = new Vpck_inj;
     else                            for(i=0;i<NE;i++)    traffic[i]  = new Vtraffic;
     FIXED_SRC_DST_PAIR = strcmp (TRAFFIC,"RANDOM") &  strcmp(TRAFFIC,"HOTSPOT") & strcmp(TRAFFIC,"random") & strcmp(TRAFFIC,"hot spot") & strcmp(TRAFFIC,"TASK");
