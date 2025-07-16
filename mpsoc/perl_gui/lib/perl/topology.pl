@@ -668,7 +668,7 @@ void  inline single_router_reset_clk(int i){
     #define MAX_P  $max_p // The maximum number of ports available in a router in this topology
     #define DAw $DAw // The traffic generator's destination address width
     #define SMART_NUM  ((SMART_MAX==0)? 1 : SMART_MAX) 
-endif //FLAT_MODE
+#endif //FLAT_MODE
 ";
 
 #$includ_h.=" void connect_all_nodes(){\n";

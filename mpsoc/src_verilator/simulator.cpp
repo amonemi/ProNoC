@@ -16,7 +16,7 @@
 #include <cstdlib>
 #include <iostream>
 #ifdef FLAT_MODE
-#include "Vnoc_top.h"
+#include "Vnoc.h"
 #endif
 
 #include "simulator.h"
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
             class_percentage[0]=100;
     }
     #ifdef FLAT_MODE
-    noc_top = new Vnoc_top;
+    noc_top = new Vnoc;
     #else 
     Vrouter_new();
     #endif
@@ -69,7 +69,11 @@ int main(int argc, char** argv) {
     
     while (!Verilated::gotFinish()) {
         if(main_time - saved_time < 50) {//set reset and start
+            #ifdef FLAT_MODE
+            reset_active_high = ((noc_top->router_event[0][0] & ACTIVE_HIGH_RST)!=0) ? 1 : 0;
+            #else
             reset_active_high = ((router1[0]->router_event[0] & ACTIVE_HIGH_RST)!=0) ? 1 : 0;
+            #endif
             if (main_time-saved_time >= 10 ) reset = (reset_active_high)? 0 :1;           
             else reset = reset_active_high;     ;//keep system in reset
             if(main_time == saved_time+21){ count_en=1; start_i=1;}

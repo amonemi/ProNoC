@@ -81,11 +81,11 @@ int get_router_num (int , int );
     #define pck_active_port  packet_injector_verilator__DOT__endp_is_active
     #define traffic_active_port traffic_gen_top__DOT__endp_is_active
 
+    
+#ifndef FLAT_MODE
     #define CHAN_SIZE   sizeof(router1[0]->chan_in[0])
-
     #define conect_r2r(T1,r1,p1,T2,r2,p2)  \
         memcpy(&router##T1 [r1]->chan_in[p1] , &router##T2 [r2]->chan_out[p2], CHAN_SIZE )
-
 //        router_is_active[get_router_num(T1,r1)] |=(( router##T1 [r1]-> ideal_port!=0) |  (router##T2 [r2]-> active_port[p2]==1))
 
     #define connect_r2gnd(T,r,p)\
@@ -99,7 +99,16 @@ int get_router_num (int , int );
         memcpy(&router##T [r]->chan_in[p], addr1, CHAN_SIZE );\
         memcpy(addr2, &router##T [r]->chan_out[p], CHAN_SIZE )
 
-
+#else 
+    #define CHAN_SIZE   sizeof(noc_top->chan_in_all[0])
+    #define conect_r2r(T1,r1,p1,T2,r2,p2) while(0)
+    #define connect_r2e(T,r,p,e) \
+        void * addr1, * addr2;\
+        addr1=(ENDP_TYPE == PCK_INJECTOR)? &pck_inj[e]->chan_out  : &traffic[e]->chan_out;\
+        addr2=(ENDP_TYPE == PCK_INJECTOR)? &pck_inj[e]->chan_in  : &traffic[e]->chan_in;\
+        memcpy(&noc_top->chan_in_all[e], addr1, CHAN_SIZE );\
+        memcpy(addr2, &noc_top->chan_out_all[e], CHAN_SIZE )
+#endif
 
 
 
@@ -122,7 +131,9 @@ int reset,clk;
 
 Vtraffic        *traffic[NE]; // for synthetic and trace traffic pattern
 Vpck_inj        *pck_inj[NE]; // for netrace
-
+#ifdef FLAT_MODE
+Vnoc            *noc_top; // for flat mode
+#endif
 
 
 unsigned char reset_active_high=1;
