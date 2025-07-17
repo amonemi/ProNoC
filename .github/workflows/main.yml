@@ -66,6 +66,7 @@ jobs:
       - name: Compare with previous (non-`-f`) result
         run: |
           set -ex
+          cd $ROOT/Integration_test/synthetic_sim/src
           perl ./check.pl -o $REF_LOG_DIR/tiny_topos -n $LOG_DIR/tiny_topos || {
             echo "❌ flat config differs from non-flat."
             exit 1
