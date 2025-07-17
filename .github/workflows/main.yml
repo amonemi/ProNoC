@@ -19,7 +19,7 @@ jobs:
       LOG_DIR: ${{ github.workspace }}/mpsoc/Integration_test/synthetic_sim/result_logs
     steps:
       - uses: actions/checkout@v4
-      - name: Run NoC simulation - ${{ matrix.conf_name }}
+      - name: Run NoC simulation split mode - ${{ matrix.conf_name }}
         run: |
           set -ex
           verilator --version
@@ -52,18 +52,18 @@ jobs:
     env:
       ROOT: ${{ github.workspace }}/mpsoc
       PRONOC_WORK: ${{ github.workspace }}/mpsoc_work
-      LOG_DIR: ${{ github.workspace }}/mpsoc/Integration_test/synthetic_sim/result_logs_flat
-      REF_LOG_DIR: ${{ github.workspace }}/mpsoc/Integration_test/synthetic_sim/result_logs
+      GOLDEN_REF: ${{ github.workspace }}/mpsoc/Integration_test/synthetic_sim/golden_ref
+      LOG_DIR: ${{ github.workspace }}/mpsoc/Integration_test/synthetic_sim/result_logs
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run simulation for tiny_topos with `-f`
+      - name: Run simulation for tiny_topos flat_mode
         run: |
           set -ex
           cd $ROOT/Integration_test/synthetic_sim/src
           perl ./verify.perl -p 15 -u 80 -l 2 -s 4 -d tiny_topos -f
 
-      - name: Compare with previous (non-`-f`) result
+      - name: Compare with split mode (non-`-f`) result
         run: |
           set -ex
           cd $ROOT/Integration_test/synthetic_sim/src
