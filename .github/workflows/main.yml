@@ -1,6 +1,6 @@
 name: Verilator Test Suite
 
-on: 
+on:
   push:
     branches: [ "**" ]
 
@@ -9,40 +9,71 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: verilator/verilator:4.104
-      #options: --volume ${{ github.workspace }}/mpsoc_work:/mpsoc_work --volume ${{ github.workspace }}/mpsoc:/mpsoc
     strategy:
       matrix:
-        conf_name: [general, line-ring, multicast, vc_alloc]  
+        conf_name: [general, line-ring, multicast, vc_alloc, tiny_topos]
     env:
       ROOT: ${{ github.workspace }}/mpsoc
       PRONOC_WORK: ${{ github.workspace }}/mpsoc_work
       GOLDEN_REF: ${{ github.workspace }}/mpsoc/Integration_test/synthetic_sim/golden_ref
       LOG_DIR: ${{ github.workspace }}/mpsoc/Integration_test/synthetic_sim/result_logs
     steps:
-    - uses: actions/checkout@v4
-    - name: Run NoC simulation - ${{ matrix.conf_name }}
-      run: |
-        set -ex  # Enable exit on error and command tracing
-        verilator --version
-        echo "Running simulation for config: ${{ matrix.conf_name }}"
-        echo "Workspace structure:"
-        ls -lR $ROOT/Integration_test/synthetic_sim/src
-        cd $ROOT/Integration_test/synthetic_sim/src
-        perl ./verify.perl -p 15 -u 80 -l 2 -s 4 -d ${{ matrix.conf_name }}   
-        perl ./check.pl -o $GOLDEN_REF/${{ matrix.conf_name }} -n $LOG_DIR/${{ matrix.conf_name }} || {
-          echo "❌ Verification check failed. Please inspect the simulation logs."
-          exit 1
-        }
-    - name: Upload failures artifact - ${{ matrix.conf_name }}
-      if: failure()  # Only upload if previous step failed
-      uses: actions/upload-artifact@v4
-      with:
-        name: simulation-failures-${{ matrix.conf_name }}
-        path: |
-          ${{ env.PRONOC_WORK }}/failures.txt
-    - name: Upload simulation reports - ${{ matrix.conf_name }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: simulation-reports-${{ matrix.conf_name }}-${{ github.run_id }}
-        path: ${{ env.LOG_DIR }}
-        retention-days: 7
+      - uses: actions/checkout@v4
+      - name: Run NoC simulation - ${{ matrix.conf_name }}
+        run: |
+          set -ex
+          verilator --version
+          echo "Running simulation for config: ${{ matrix.conf_name }}"
+          cd $ROOT/Integration_test/synthetic_sim/src
+          perl ./verify.perl -p 15 -u 80 -l 2 -s 4 -d ${{ matrix.conf_name }}
+          perl ./check.pl -o $GOLDEN_REF/${{ matrix.conf_name }} -n $LOG_DIR/${{ matrix.conf_name }} || {
+            echo "❌ Verification check failed. Please inspect the simulation logs."
+            exit 1
+          }
+      - name: Upload failures artifact - ${{ matrix.conf_name }}
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-failures-${{ matrix.conf_name }}
+          path: |
+            ${{ env.PRONOC_WORK }}/failures.txt
+      - name: Upload simulation reports - ${{ matrix.conf_name }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-reports-${{ matrix.conf_name }}-${{ github.run_id }}
+          path: ${{ env.LOG_DIR }}
+          retention-days: 7
+
+  tiny-topos-flat:
+    needs: synthetic-sim
+    runs-on: ubuntu-latest
+    container:
+      image: verilator/verilator:4.104
+    env:
+      ROOT: ${{ github.workspace }}/mpsoc
+      PRONOC_WORK: ${{ github.workspace }}/mpsoc_work
+      LOG_DIR: ${{ github.workspace }}/mpsoc/Integration_test/synthetic_sim/result_logs_flat
+      REF_LOG_DIR: ${{ github.workspace }}/mpsoc/Integration_test/synthetic_sim/result_logs
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run simulation for tiny_topos with `-f`
+        run: |
+          set -ex
+          cd $ROOT/Integration_test/synthetic_sim/src
+          perl ./verify.perl -p 15 -u 80 -l 2 -s 4 -d tiny_topos -f
+
+      - name: Compare with previous (non-`-f`) result
+        run: |
+          set -ex
+          perl ./check.pl -o $REF_LOG_DIR/tiny_topos -n $LOG_DIR/tiny_topos || {
+            echo "❌ flat config differs from non-flat."
+            exit 1
+          }
+
+      - name: Upload simulation reports - tiny_topos -f
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-reports-tiny_topos-flat-${{ github.run_id }}
+          path: ${{ env.LOG_DIR }}
+          retention-days: 7

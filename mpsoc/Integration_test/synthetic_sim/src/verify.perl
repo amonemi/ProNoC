@@ -132,7 +132,7 @@ unless (-d "$log_dir") {
 
 check_models_are_exsited(\@models,\@inputs);
 
-my @log_report_match =("Error","Warning","fatal error" );
+my @log_report_match =("Error","Warning","fatal error","error:" );
 
 
 save_file ("$log_file","Verification Results:\n");

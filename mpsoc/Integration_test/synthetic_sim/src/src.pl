@@ -257,6 +257,19 @@ sub gen_verilator_sh{
     my %tops = %{$ref};
     my $make_lib="";
     my $jobs=0;
+    
+    # List of Verilator warnings to suppress
+    my @verilator_ignores=(
+    
+    "UNOPTFLAT"
+    );
+    
+    my $ignore_flags="";
+    if($flat){
+        foreach my $warn (@verilator_ignores){
+            $ignore_flags .= " --Wno-${warn}";
+        }
+    }
     my $cmd= '#!/bin/bash
     SCRPT_FULL_PATH=$(realpath ${BASH_SOURCE[0]})
     SCRPT_DIR_PATH=$(dirname $SCRPT_FULL_PATH)
@@ -272,7 +285,7 @@ sub gen_verilator_sh{
     fi
 ';
     foreach my $top (sort keys %tops) {
-        $cmd.= "verilator  -DNO_HETRO_IVC=1 -f \$SCRPT_DIR_PATH/file_list.f --cc $tops{$top}  --prefix \"$top\" \$cmn & \n";
+        $cmd.= "verilator  $ignore_flags -DNO_HETRO_IVC=1 -f \$SCRPT_DIR_PATH/file_list.f --cc $tops{$top}  --prefix \"$top\" \$cmn & \n";
     }
     $cmd.="wait\n";
     foreach my $top (sort keys %tops) {

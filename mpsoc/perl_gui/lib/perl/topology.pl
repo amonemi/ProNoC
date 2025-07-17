@@ -529,7 +529,15 @@ sub get_noc_verilator_top_modules_info {
         $custom_include="#define IS_${topology_name}_noc\n";
     }#else
     
-    my $includ_h="\n#ifndef FLAT_MODE \n";
+    my $includ_h="
+extern void update_router_st (
+    unsigned int,
+    unsigned int, 
+    void * ,
+    size_t
+);
+
+#ifndef FLAT_MODE \n";
     for (my $p=1; $p<=$router_p ; $p++){
         $includ_h=$includ_h."#include \"Vrouter$p.h\" \n";
     }
@@ -650,12 +658,6 @@ void inline single_router_eval(int i){
 
 #define SMART_NUM  ((SMART_MAX==0)? 1 : SMART_MAX)
 
-extern void update_router_st (
-    unsigned int,
-    unsigned int, 
-    void * ,
-    size_t
-);
 
 void  single_router_st_update(int i){
     $st7
@@ -668,6 +670,18 @@ void  inline single_router_reset_clk(int i){
     #define MAX_P  $max_p // The maximum number of ports available in a router in this topology
     #define DAw $DAw // The traffic generator's destination address width
     #define SMART_NUM  ((SMART_MAX==0)? 1 : SMART_MAX) 
+    extern Vnoc     *noc_top;
+
+    void  single_router_st_update(int i){
+        update_router_st(
+            MAX_P ,
+            i,   
+            noc_top->router_event[i],
+            sizeof(noc_top->router_event[0][0])
+        ); 
+        return;
+    }
+
 #endif //FLAT_MODE
 ";
 

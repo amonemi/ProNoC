@@ -1,0 +1,48 @@
+Verification Results:
+****************************Fattree_k3_L2_st : Compile *******************************:
+	 model is generated successfully.
+****************************fmesh_2x2_openpiton : Compile *******************************:
+	 model is generated successfully.
+****************************Line_3x2_v2 : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_2x2_openpiton : Compile *******************************:
+	 model is generated successfully.
+
+****************************star_7 : Compile *******************************:
+	 model is generated successfully.
+****************************torus_3x2_adaptive : Compile *******************************:
+	 model is generated successfully.
+****************************tree_k3_L2_st : Compile *******************************:
+	 model is generated successfully.
+****************************Fattree_k3_L2_st	: random traffic *******************************:
+	 Passed:   zero load (2,10.2953) saturation (70,87.4965)
+ 
+****************************fmesh_2x2_openpiton	: random traffic *******************************:
+	 Passed:   zero load (2,8.27536) saturation (54,67.4686)
+****************************Line_3x2_v2	: random traffic *******************************:
+	 Passed:   zero load (2,9.42564) saturation (50,78.1865)
+****************************mesh_2x2_openpiton	: random traffic *******************************:
+	 Passed:   zero load (2,9.10156) saturation (66,72.3384)
+
+****************************star_7	: random traffic *******************************:
+	 Passed:   zero load (2,7.12609) saturation (62,63.5408)
+****************************torus_3x2_adaptive	: random traffic *******************************:
+	 Passed:   zero load (2,9.92821) saturation (70,66.6712)
+****************************tree_k3_L2_st	: random traffic *******************************:
+	 Passed:   zero load (2,10.5671) saturation (34,57.0081)
+ 
+****************************Fattree_k3_L2_st	: transposed 1 traffic *******************************:
+	 Passed:   zero load (26,9.97316) saturation (100,-)
+****************************fmesh_2x2_openpiton	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,8.99642) saturation (54,71.4902)
+****************************Line_3x2_v2	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,9.73786) saturation (54,94.5769)
+****************************mesh_2x2_openpiton	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,8.7482) saturation (100,-)
+ 
+****************************star_7	: transposed 1 traffic *******************************:
+	 Passed:   zero load (34,6.98688) saturation (100,-)
+****************************torus_3x2_adaptive	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,9.25728) saturation (54,79.8004)
+****************************tree_k3_L2_st	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,10.624) saturation (34,81.5377)

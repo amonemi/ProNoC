@@ -224,11 +224,28 @@ module input_queue_per_port #(
         WP = W * P,
         P_1 = (SELF_LOOP_EN )?  P : P-1,
         VP_1 = V * P_1;
-    
+// -------------------------------------------------------------------------
+// MAX_PCKS calculation explanation for non atomic vc allocation:
+// We want to compute the maximum number of packets that can be present in 
+// a FIFO buffer of size PORT_B flits, where each packet has a minimum size 
+// of MIN_PCK_SIZE flits. Packets are read and written flit by flit.
+//
+// Worst-case scenario:
+// - One packet is partially read (only the tail remains in the FIFO).
+// - One packet may be partially written (only header or part of the body written).
+// - The remaining (PORT_B - 1) flits can be filled with full min-size packets.
+//
+// Formula:
+//   MAX_PCKS = floor((PORT_B - 1) / MIN_PCK_SIZE)  // full packets
+//            + 1                                   // for partially read packet
+//            + (if (PORT_B - 1) % MIN_PCK_SIZE > 0) 1 else 0 // partial write
+//
+// This ensures the FIFO is fully utilized and accounts for partially present packets.
+// -------------------------------------------------------------------------
     localparam
-        OFFSET = ((PORT_B % MIN_PCK_SIZE)>0) ? 1 : 0,
-        NON_ATOM_PCKS =  (PORT_B > MIN_PCK_SIZE) ? (PORT_B / MIN_PCK_SIZE) + OFFSET : 1,
-        MAX_PCK = // min packet size is two hence the max packet number in buffer is (B/2)
+        OFFSET = (((PORT_B-1) % MIN_PCK_SIZE)>0) ? 1 : 0,
+        NON_ATOM_PCKS =  (PORT_B <= MIN_PCK_SIZE) ?  1 : ((PORT_B-1) / MIN_PCK_SIZE) + OFFSET +1,
+        MAX_PCK = 
             (IS_VCA_ATOMIC) ?  1 : 
             (OVC_ALLOC_MODE) ? (NON_ATOM_PCKS + 1) : NON_ATOM_PCKS,
         IGNORE_SAME_LOC_RD_WR_WARNING = ((SSA_EN == 1) || (SMART_EN==1) ) ? 1 : 0;
