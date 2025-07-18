@@ -1,6 +1,6 @@
 `include "pronoc_def.v"
 /**********************************************************************
-**    File: mesh_torus.v
+**    File: regular_topo.v
 **    
 **    Copyright (C) 2014-2017  Alireza Monemi
 **    
@@ -33,7 +33,7 @@
 *        ---------x
 *        0   |   2
 ***************************/
-module  mesh_torus_vc_alloc_request_gen_adaptive #(
+module  regular_topo_vc_alloc_request_gen_adaptive #(
     parameter ROUTE_TYPE = "FULL_ADAPTIVE",    // "FULL_ADAPTIVE", "PAR_ADAPTIVE"  
     parameter V = 4,
     parameter DSTPw=4,
@@ -111,7 +111,7 @@ module  mesh_torus_vc_alloc_request_gen_adaptive #(
     genvar i;
     generate   
     for(i=0;i< PV;i=i+1) begin : PV_
-        mesh_torus_adaptive_avb_ovc_mux #(
+        regular_topo_adaptive_avb_ovc_mux #(
             .V(V)           
         ) ovc_mux (
             .ovc_avalable               (ovc_avalable_perport   [i/V]),
@@ -123,7 +123,7 @@ module  mesh_torus_vc_alloc_request_gen_adaptive #(
             .masked_ovc_request         (masked_ovc_request_all [((i+1)*V)-1 : i*V])
         );
         
-        mesh_torus_port_selector #(
+        regular_topo_port_selector #(
             .SW_LOC     (i/V),
             .PPSw(PPSw)
         ) the_portsel (
@@ -135,7 +135,7 @@ module  mesh_torus_vc_alloc_request_gen_adaptive #(
             .x_evc_forbiden     (x_evc_forbiden[i])
         );
         
-        mesh_tori_dspt_clear_gen #(
+        regular_topo_dspt_clear_gen #(
             .SSA_EN(SSA_EN),
             .DSTPw(DSTPw),
             .SW_LOC(i/V)
@@ -153,7 +153,7 @@ module  mesh_torus_vc_alloc_request_gen_adaptive #(
             assign candidate_ovc_x_all[((i+1)*V)-1 : i*V] = (x_evc_forbiden[i]) ? candidate_ovc_all[((i+1)*V)-1 : i*V] & (~ESCAP_VC_MASK) : candidate_ovc_all[((i+1)*V)-1 : i*V];
             assign avc_unavailable[i] = (masked_ovc_request_all [((i+1)*V)-1 : i*V] & ~ESCAP_VC_MASK) == {V{1'b0}};
             
-            mesh_torus_swap_port_presel_gen #(
+            regular_topo_swap_port_presel_gen #(
                 .V(V),
                 .ESCAP_VC_MASK(ESCAP_VC_MASK),       
                 .VC_NUM(i)
@@ -178,7 +178,7 @@ endgenerate
 endmodule
 
 
-module mesh_tori_dspt_clear_gen #(
+module regular_topo_dspt_clear_gen #(
     parameter SSA_EN = 1,
     parameter DSTPw =4,
     parameter SW_LOC=0
@@ -220,7 +220,7 @@ module mesh_tori_dspt_clear_gen #(
 endmodule
 
 
-module   mesh_torus_mask_non_assignable_destport #(
+module   regular_topo_mask_non_assignable_destport #(
     parameter TOPOLOGY="MESH",
     parameter ROUTE_NAME="XY",
     parameter SW_LOC=0,
@@ -265,7 +265,7 @@ module   mesh_torus_mask_non_assignable_destport #(
     end    
     endgenerate
     
-    mesh_torus_mask_non_assignable_destport_no_self_loop # (
+    regular_topo_mask_non_assignable_destport_no_self_loop # (
         .TOPOLOGY(TOPOLOGY),
         .ROUTE_NAME(ROUTE_NAME),
         .SW_LOC(SW_LOC),
@@ -277,7 +277,7 @@ module   mesh_torus_mask_non_assignable_destport #(
     );
 endmodule
 
-module mesh_torus_mask_non_assignable_destport_no_self_loop #(
+module regular_topo_mask_non_assignable_destport_no_self_loop #(
     parameter TOPOLOGY="MESH",
     parameter ROUTE_NAME="XY",
     parameter SW_LOC=0,
@@ -426,7 +426,7 @@ module mesh_torus_mask_non_assignable_destport_no_self_loop #(
 endmodule
 
 
-module  mesh_torus_swap_port_presel_gen #(
+module  regular_topo_swap_port_presel_gen #(
     parameter V = 4,
     parameter [V-1 : 0] ESCAP_VC_MASK = 4'b1000,   // mask scape vc, valid only for full adaptive       
     parameter VC_NUM=0
@@ -473,7 +473,7 @@ module  mesh_torus_swap_port_presel_gen #(
 endmodule
 
 
-module  mesh_torus_adaptive_avb_ovc_mux #(
+module  regular_topo_adaptive_avb_ovc_mux #(
     parameter V= 4
 )(
     ovc_avalable,
@@ -521,7 +521,7 @@ module  mesh_torus_adaptive_avb_ovc_mux #(
 endmodule
 
 
-module mesh_torus_port_selector #(
+module regular_topo_port_selector #(
     parameter SW_LOC = 0,
     parameter PPSw=4
 )(
@@ -592,9 +592,9 @@ endmodule
 
 
 /*******************
-*    mesh_torus_adaptive_lk_dest_encoder
+*    regular_topo_adaptive_lk_dest_encoder
 ********************/    
-module  mesh_torus_adaptive_lk_dest_encoder #(
+module  regular_topo_adaptive_lk_dest_encoder #(
     parameter V=4,
     parameter P=5,
     parameter DSTPw=P-1,
@@ -636,7 +636,7 @@ module  mesh_torus_adaptive_lk_dest_encoder #(
 endmodule
 
 
-module  mesh_torus_dtrmn_dest_encoder #(
+module  regular_topo_dtrmn_dest_encoder #(
     parameter P=5,
     parameter DSTPw=P-1,
     parameter Fw=37,
@@ -673,8 +673,8 @@ module mesh_line_distance_gen (
     output[DISTw-1: 0]distance;
     wire [NXw-1 : 0]src_x,dest_x;
     wire [NYw-1 : 0]src_y,dest_y;
-    mesh_tori_endp_addr_decode src_addr_decode (.e_addr(src_e_addr), .ex(src_x), .ey(src_y), .el(), .valid());
-    mesh_tori_endp_addr_decode dst_addr_decode (.e_addr(dest_e_addr), .ex(dest_x), .ey(dest_y), .el(), .valid());
+    regular_topo_endp_addr_decode src_addr_decode (.e_addr(src_e_addr), .ex(src_x), .ey(src_y), .el(), .valid());
+    regular_topo_endp_addr_decode dst_addr_decode (.e_addr(dest_e_addr), .ex(dest_x), .ey(dest_y), .el(), .valid());
     logic [NXw-1 : 0] x_offset;
     logic [NYw-1 : 0] y_offset;
     always_comb begin 
@@ -697,8 +697,8 @@ module ring_torus_distance_gen (
     output[DISTw-1: 0]distance;
     wire [NXw-1 : 0]src_x,dest_x;
     wire [NYw-1 : 0]src_y,dest_y;
-    mesh_tori_endp_addr_decode src_addr_decode (.e_addr(src_e_addr), .ex(src_x), .ey(src_y), .el(), .valid());
-    mesh_tori_endp_addr_decode  dest_addr_decode (.e_addr(dest_e_addr), .ex(dest_x), .ey(dest_y), .el(), .valid());
+    regular_topo_endp_addr_decode src_addr_decode (.e_addr(src_e_addr), .ex(src_x), .ey(src_y), .el(), .valid());
+    regular_topo_endp_addr_decode  dest_addr_decode (.e_addr(dest_e_addr), .ex(dest_x), .ey(dest_y), .el(), .valid());
     logic [NXw-1 : 0] x_offset;
     logic [NYw-1 : 0] y_offset;
     wire tranc_x_plus,tranc_x_min,tranc_y_plus,tranc_y_min,same_x,same_y;
@@ -749,7 +749,7 @@ module ring_torus_distance_gen (
 endmodule
 
 
-module mesh_torus_ssa_check_destport #(
+module regular_topo_ssa_check_destport #(
     parameter ROUTE_TYPE="DETERMINISTIC",
     parameter SW_LOC = 0,
     parameter P=5,
@@ -854,7 +854,7 @@ module line_ring_ssa_check_destport #(
 endmodule
 
 
-module mesh_tori_router_addr_decode (
+module regular_topo_router_addr_decode (
     r_addr,
     rx,
     ry,
@@ -889,7 +889,7 @@ module mesh_tori_router_addr_decode (
 endmodule
 
 
-module mesh_tori_endp_addr_decode 
+module regular_topo_endp_addr_decode 
 (
     e_addr,
     ex,
@@ -949,46 +949,16 @@ endmodule
 
 
 /**************
-*    mesh_tori_addr_encoder
+*    Regular_topo_endp_addr_encoder
 *    most probably it is only needed for simulation purposes
 ***************/  
 
-module  mesh_tori_addr_encoder #(
-    parameter   NX=2,
-    parameter   NY=2,
-    parameter   NL=2,
-    parameter   NE=16,
-    parameter   EAw=4,
-    parameter   TOPOLOGY="MESH"
-)(
+module  regular_topo_endp_addr_encoder 
+(    
     id,
     code
 );
-    
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
-    
-    function integer addrencode;
-        input integer addr,nx,nxw,nl,nyw;
-        integer  y, x, l;begin
-            addrencode=0;
-            y = ((addr/nl) / nx ); 
-            x = ((addr/nl) % nx ); 
-            l = (addr % nl);  
-            addrencode =(nl==1)?   (y<<nxw | x) : (l<<(nxw+nyw)|  (y<<nxw) | x);      
-        end   
-    endfunction // addrencode
-    
-    localparam 
-        NXw= log2(NX),
-        NYw= (TOPOLOGY=="RING" || TOPOLOGY=="LINE")? 0 : log2(NY),
-        NEw = log2(NE);    
+    import pronoc_pkg::*;
     input [NEw-1 :0] id;
     output [EAw-1 : 0] code;
     wire [EAw-1 : 0 ] codes [NE-1 : 0];
@@ -996,9 +966,7 @@ module  mesh_tori_addr_encoder #(
     generate 
     for(i=0; i< NE; i=i+1) begin : endpoints
         //Endpoint decoded address
-        /* verilator lint_off WIDTH */
-        localparam [EAw-1 : 0] ENDP= addrencode(i,NX,NXw,NL,NYw);
-        /* verilator lint_on WIDTH */
+        localparam [EAw-1 : 0] ENDP = EAw'(regular_topo_endp_addr(i));
         assign codes[i] = ENDP;            
     end
     endgenerate
@@ -1006,42 +974,11 @@ module  mesh_tori_addr_encoder #(
 endmodule
 
 
-module  mesh_tori_addr_coder #(
-    parameter   TOPOLOGY = "MESH",
-    parameter   NX=2,
-    parameter   NY=2,
-    parameter   NL=2,
-    parameter   NE=16,
-    parameter   EAw=4
-)(
+module  regular_topo_addr_coder (
     id,
     code
 );
-    
-    function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
-        while(2**log2<number) begin    
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
-    
-    function integer addrencode;
-        input integer addr,nx,nxw,nl,nyw;
-        integer  y, x, l;begin
-            addrencode=0;
-            y = ((addr/nl) / nx ); 
-            x = ((addr/nl) % nx ); 
-            l = (addr % nl);  
-            addrencode =(nl==1)?   (y<<nxw | x) : (l<<(nxw+nyw)|  (y<<nxw) | x);      
-        end   
-    endfunction // addrencode
-        
-    localparam 
-        NXw= log2(NX),
-        NYw= (TOPOLOGY=="RING" || TOPOLOGY=="LINE")? 0 : log2(NY),
-        NEw = log2(NE);    
+    import pronoc_pkg::*;    
     output [NEw-1 :0] id;
     input [EAw-1 : 0] code;
     wire   [NEw-1 : 0]  codes   [(2**EAw)-1 : 0 ];
@@ -1049,16 +986,14 @@ module  mesh_tori_addr_coder #(
     generate 
     for(i=0; i< NE; i=i+1) begin : endpoints
         //Endpoint decoded address
-        /* verilator lint_off WIDTH */
-        localparam [EAw-1 : 0] ENDP= addrencode(i,NX,NXw,NL,NYw);
-        /* verilator lint_on WIDTH */
+        localparam [EAw-1 : 0] ENDP= EAw'(regular_topo_endp_addr(i));
         assign codes[ENDP] = i;            
     end
     endgenerate
     assign id = codes[code];
 endmodule
 
-module mesh_torus_destp_generator #(
+module regular_topo_destp_generator #(
     parameter TOPOLOGY = "MESH",
     parameter ROUTE_NAME = "XY",  
     parameter ROUTE_TYPE = "DETERMINISTIC",
@@ -1108,7 +1043,7 @@ module mesh_torus_destp_generator #(
         );
         
     end else begin :two_D
-        mesh_torus_destp_decoder #(
+        regular_topo_destp_decoder #(
             .ROUTE_TYPE(ROUTE_TYPE),
             .P(P),
             .DSTPw(DSTPw),
@@ -1127,7 +1062,7 @@ module mesh_torus_destp_generator #(
     end
     endgenerate     
     
-    mesh_torus_mask_non_assignable_destport #(
+    regular_topo_mask_non_assignable_destport #(
         .TOPOLOGY(TOPOLOGY),
         .ROUTE_NAME(ROUTE_NAME),
         .SW_LOC(SW_LOC),
@@ -1140,7 +1075,7 @@ module mesh_torus_destp_generator #(
     ); 
 endmodule
 
-module mesh_torus_destp_decoder #(
+module regular_topo_destp_decoder #(
     parameter ROUTE_TYPE="DETERMINISTIC",
     parameter P=6,
     parameter DSTPw=4,
@@ -1295,9 +1230,9 @@ module line_ring_destp_decoder #(
 endmodule
 
 /*****************
-*   mesh_torus_dynamic_portsel_control
+*   regular_topo_dynamic_portsel_control
 *****************/
-module  mesh_torus_dynamic_portsel_control #(
+module  regular_topo_dynamic_portsel_control #(
     parameter  P = 5,
     parameter ROUTE_TYPE = "FULL_ADAPTIVE",    // "FULL_ADAPTIVE", "PAR_ADAPTIVE"  
     parameter V = 4,
@@ -1354,7 +1289,7 @@ module  mesh_torus_dynamic_portsel_control #(
     generate   
     for(i=0;i< PV;i=i+1) begin : PV_
         localparam SW_LOC = ((i/V)<5)? i/V : LOCAL;
-        mesh_torus_port_selector #(
+        regular_topo_port_selector #(
             .SW_LOC     (SW_LOC),
             .PPSw(PPSw)
         ) the_portsel (
@@ -1365,7 +1300,7 @@ module  mesh_torus_dynamic_portsel_control #(
             .y_evc_forbiden     (y_evc_forbiden[i]),
             .x_evc_forbiden     (x_evc_forbiden[i])
         );
-        mesh_tori_dspt_clear_gen #(
+        regular_topo_dspt_clear_gen #(
             .SSA_EN(SSA_EN),
             .DSTPw(DSTPw),
             .SW_LOC(SW_LOC)
@@ -1379,7 +1314,7 @@ module  mesh_torus_dynamic_portsel_control #(
         if(ROUTE_TYPE == "FULL_ADAPTIVE") begin: full_adpt
         /* verilator lint_on WIDTH */ 
             assign avc_unavailable[i] = (masked_ovc_request_all [((i+1)*V)-1 : i*V] & ~ESCAP_VC_MASK) == {V{1'b0}};
-            mesh_torus_swap_port_presel_gen #(
+            regular_topo_swap_port_presel_gen #(
                 .V(V),
                 .ESCAP_VC_MASK(ESCAP_VC_MASK),       
                 .VC_NUM(i)

@@ -1,72 +1,12 @@
 `include "pronoc_def.v"
 /************************
  *      fmesh
- * 
- * **********************/
-module  fmesh_addr_encoder #(
-    parameter   NX=2,
-    parameter   NY=2,
-    parameter   NL=2,
-    parameter   NE=16,
-    parameter   EAw=4
-)(
+ ***********************/
+module  fmesh_addr_encoder (
     id,
     code
 );
-    
-    function integer log2;
-        input integer number; begin   
-            log2=(number <=1) ? 1: 0;    
-            while(2**log2<number) begin    
-                log2=log2+1;    
-            end        
-        end   
-    endfunction // log2 
-    
-    localparam  
-        LOCAL   =   0,  
-        EAST    =   1, 
-        NORTH   =   2,  
-        WEST    =   3,  
-        SOUTH   =   4;  
-        
-    function integer addrencode; 
-        input integer addr,nx,nxw,nl,nyw,ny;
-        integer  y, x, l,p, diff,mul;begin
-            mul  = nx*ny*nl;            
-            if(addr < mul) begin 
-                y = ((addr/nl) / nx ); 
-                x = ((addr/nl) % nx ); 
-                l = (addr % nl); 
-                p = (l==0)? LOCAL : 4+l;            
-            end else begin      
-                diff = addr -  mul ;
-                if( diff <  nx) begin //top mesh edge 
-                    y = 0;
-                    x = diff;
-                    p = NORTH;
-                end else if  ( diff < 2* nx) begin //bottom mesh edge 
-                    y = ny-1;
-                    x = diff-nx;
-                    p = SOUTH;
-                end else if  ( diff < (2* nx)+ny ) begin //left mesh edge 
-                    y = diff - (2* nx);
-                    x = 0;
-                    p = WEST;
-                end else begin //right mesh edge 
-                    y = diff - (2* nx) -ny;
-                    x = nx-1;
-                    p = EAST; 
-                end
-            end//else 
-            addrencode = ( p<<(nxw+nyw) | (y<<nxw) | x);      
-        end   
-    endfunction // addrencode    
-    
-    localparam 
-        NXw= log2(NX),
-        NYw= log2(NY),
-        NEw = log2(NE);    
+    import pronoc_pkg::*;
     
     input  [NEw-1 :0] id;
     output [EAw-1 : 0] code;
@@ -76,80 +16,19 @@ module  fmesh_addr_encoder #(
     generate 
         for(i=0; i< NE; i=i+1) begin : endpoints
             //Endpoint decoded address
-            /* verilator lint_off WIDTH */          
-            localparam [EAw-1 : 0] ENDP= addrencode(i,NX,NXw,NL,NYw,NY);
-            /* verilator lint_on WIDTH */
-            assign codes[i] = ENDP;            
+            localparam  ENDP= fmesh_endp_addr(i);
+            assign codes[i] = EAw'(ENDP);
         end
     endgenerate
     assign code = codes[id];
 endmodule
 
 
-module  fmesh_addr_coder #(
-    parameter   NX=2,
-    parameter   NY=2,
-    parameter   NL=2,
-    parameter   NE=16,
-    parameter   EAw=4
-)(
+module  fmesh_addr_coder (
     id,
     code
 );
-    
-    function integer log2;
-        input integer number; begin   
-            log2=(number <=1) ? 1: 0;    
-            while(2**log2<number) begin    
-                log2=log2+1;    
-            end        
-        end   
-    endfunction // log2 
-    
-    localparam  
-        LOCAL   =   0,  
-        EAST    =   1, 
-        NORTH   =   2,  
-        WEST    =   3,  
-        SOUTH   =   4;  
-        
-    function integer addrencode; 
-        input integer addr,nx,nxw,nl,nyw,ny;
-        integer  y, x, l,p, diff,mul;begin
-            mul  = nx*ny*nl;            
-            if(addr < mul) begin 
-                y = ((addr/nl) / nx ); 
-                x = ((addr/nl) % nx ); 
-                l = (addr % nl); 
-                p = (l==0)? LOCAL : 4+l;            
-            end else begin      
-                diff = addr -  mul ;
-                if( diff <  nx) begin //top mesh edge 
-                    y = 0;
-                    x = diff;
-                    p = NORTH;
-                end else if  ( diff < 2* nx) begin //bottom mesh edge 
-                    y = ny-1;
-                    x = diff-nx;
-                    p = SOUTH;
-                end else if  ( diff < (2* nx)+ny ) begin //left mesh edge 
-                    y = diff - (2* nx);
-                    x = 0;
-                    p = WEST;
-                end else begin //right mesh edge 
-                    y = diff - (2* nx) -ny;
-                    x = nx-1;
-                    p = EAST; 
-                end
-            end//else 
-            addrencode = ( p<<(nxw+nyw) | (y<<nxw) | x);      
-        end   
-    endfunction // addrencode   
-    
-    localparam 
-        NXw= log2(NX),
-        NYw= log2(NY),
-        NEw = log2(NE);    
+    import pronoc_pkg::*;
     
     output [NEw-1 :0] id;
     input [EAw-1 : 0] code;
@@ -159,17 +38,12 @@ module  fmesh_addr_coder #(
     generate 
         for(i=0; i< NE; i=i+1) begin : endpoints
             //Endpoint decoded address
-            /* verilator lint_off WIDTH */
-            localparam [EAw-1 : 0] ENDP= addrencode(i,NX,NXw,NL,NYw,NY);
-            /* verilator lint_on WIDTH */
-            assign codes[ENDP] = i;            
+            localparam ENDP= fmesh_endp_addr(i);
+            assign codes[EAw'(ENDP)] = i;            
         end
     endgenerate
     assign id = codes[code];
 endmodule
-
-
-
 
 module fmesh_endp_addr_decode (
     e_addr,

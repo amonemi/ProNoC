@@ -86,9 +86,9 @@ module  tree_noc_top (
     /****************
     *    add roots
     *****************/
-    localparam [Lw-1 : 0] ROOT_L = L-1; 
+    localparam [Lw-1 : 0] ROOT_L = Lw'(L-1); 
     localparam ROOT_ID = 0;
-    localparam BOUND=(MAX_P > K)? K : MAX_P;
+    localparam BOUND = ( MAX_P > K ) ? K : MAX_P;
     
     assign current_layer_addr [ROOT_ID] = ROOT_L;
     assign current_pos_addr [ROOT_ID] = {LKw{1'b0}};

@@ -255,7 +255,7 @@ module header_flit_update_lk_route_ovc #(
     /* verilator lint_off WIDTH */ 
     if((IS_MESH | IS_FMESH | IS_TORUS | IS_RING) && (ROUTE_TYPE != "DETERMINISTIC"))begin :coded
     /* verilator lint_on WIDTH */ 
-        mesh_torus_adaptive_lk_dest_encoder #(
+        regular_topo_adaptive_lk_dest_encoder #(
             .V(V),
             .P(P),
             .DSTPw(DSTPw),
@@ -272,7 +272,7 @@ module header_flit_update_lk_route_ovc #(
     end else begin : dtrmn1
         assign dest_coded = lk_dest;
         /*
-        mesh_torus_dtrmn_dest_encoder #(
+        regular_topo_dtrmn_dest_encoder #(
             .P(P),
             .DSTPw(DSTPw),
             .Fw(Fw),

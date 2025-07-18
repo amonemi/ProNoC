@@ -65,24 +65,22 @@
         unsigned int sum = 0;
         for (i = 0; i < y; i=i+1){
             sum = sum + powi( x, i );
-          }   
+        }   
         return sum;
     }
 
 #if defined (IS_FATTREE) || defined (IS_TREE)
+    #ifndef FLAT_MODE
         inline unsigned int  Ti( unsigned int id){
-          return (id < NR1)? 1 : 2;
+            return (id < NR1)? 1 : 2;
         }
         inline unsigned int Ri(unsigned int id){
             return  (id < NR1)? id : id-NR1;
         }
-        
-        #define     K T1
-        #define     L T2 
-        
-
-
-
+    #endif   //FLAT_MODE
+    #define     K T1
+    #define     L T2 
+    
         inline void fattree_connect ( r2r_cnt_table_t in){
             unsigned int t1 = in.t1;
             unsigned int r1 = in.r1; 
@@ -90,7 +88,6 @@
             unsigned int t2 = in.t2; 
             unsigned int r2 = in.r2;
             unsigned int p2 = in.p2;
-
             if (t1==1 && t2 == 1) {
                 conect_r2r(1,r1,p1,1,r2,p2);
                 conect_r2r(1,r2,p2,1,r1,p1);
@@ -108,16 +105,9 @@
                 conect_r2r(2,r2,p2,2,r1,p1);
             }
         }
-#endif
-
-    
-
+#endif //IS_FATTREE || IS_TREE
 
     #if defined (IS_MESH) || defined (IS_FMESH) || defined (IS_TORUS) || defined (IS_LINE) || defined (IS_RING )
-
-
-
-
         #include "mesh.h"
     #elif  defined (IS_FATTREE)
         #include "fattree.h"
@@ -130,14 +120,10 @@
         unsigned int endp_addr_encoder ( unsigned int id){
             return id;
         }
-
         unsigned int endp_addr_decoder (unsigned int code){
             return code;
         }
         #include "custom.h"
-
-    #endif
-
-
-#endif
+    #endif 
+#endif //TOPOLOGY_TOP_H
 

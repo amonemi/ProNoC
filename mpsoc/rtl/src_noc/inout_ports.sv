@@ -520,7 +520,7 @@ module  vc_alloc_request_gen #(
         
         if(P==5 && SELF_LOOP_EN == 0 )begin : sl_mesh // combine portsel and available VC mux as proposed in ProNoC paper
             
-            mesh_torus_vc_alloc_request_gen_adaptive #(
+            regular_topo_vc_alloc_request_gen_adaptive #(
                 .ROUTE_TYPE(ROUTE_TYPE),
                 .V(V),
                 .DSTPw(DSTPw),
@@ -548,7 +548,7 @@ module  vc_alloc_request_gen #(
           // there are several local ports connected to one router or self loop is enabled 
           //select the port first then select the available vc
             
-            mesh_torus_dynamic_portsel_control #(
+            regular_topo_dynamic_portsel_control #(
                 .P(P),
                 .ROUTE_TYPE(ROUTE_TYPE),
                 .V(V),

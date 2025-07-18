@@ -125,7 +125,7 @@ module output_ports #(
             assign ovc_avalable_all      = ~ovc_status & empty_all;
         end else begin :nonatomic //NONATOMIC
             if(IS_FULL_ADAPTIVE) begin :full_adpt
-                mesh_tori_full_adapt_ovc_avail #(
+                regular_topo_full_adapt_ovc_avail #(
                     .P(P)
                 ) ovc_avb (
                     .reset(reset),

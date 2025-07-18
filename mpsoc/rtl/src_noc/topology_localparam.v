@@ -139,10 +139,8 @@
     endfunction
     
     /*******************
-    *   "RING"  "LINE"  "MESH" TORUS" "FMESH"
+    *   REGULAR_TOPO: "RING"  "LINE"  "MESH" TORUS" "FMESH"
     ******************/
-    /* verilator lint_off WIDTH */
-    //route type
     localparam 
         NX = T1,
         NY = (IS_RING | IS_LINE) ? 1 : T2,
@@ -150,34 +148,34 @@
         NXw = log2(NX),
         NYw = log2(NY),
         NLw = log2(NL),
-        PPSw_MESH_TORI = 4, //port presel width for adaptive routing
+        PPSw_REGULAR = 4, //port presel width for adaptive routing
         /* verilator lint_off WIDTH */
-        ROUTE_TYPE_MESH_TORI = 
+        ROUTE_TYPE_REGULAR = 
             (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
             (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE",
         /* verilator lint_on WIDTH */
-        R2R_CHANELS_MESH_TORI=  (IS_RING || IS_LINE)? 2 : 4,
-        R2E_CHANELS_MESH_TORI= NL,
-        RAw_MESH_TORI = ( IS_RING | IS_LINE)? NXw : NXw + NYw,
-        EAw_MESH_TORI = (NL==1) ? RAw_MESH_TORI : RAw_MESH_TORI + NLw,
-        NR_MESH_TORI = (IS_RING || IS_LINE)? NX : NX*NY,
-        NE_MESH_TORI = NR_MESH_TORI * NL,
-        MAX_P_MESH_TORI = R2R_CHANELS_MESH_TORI + R2E_CHANELS_MESH_TORI,
-        DSTPw_MESH_TORI = R2R_CHANELS_MESH_TORI, // P-1
-        NE_PER_R_MESH_TORI = NL;
-    
+        R2R_CHANELS_REGULAR=  (IS_RING || IS_LINE)? 2 : 4,
+        R2E_CHANELS_REGULAR= NL,
+        RAw_REGULAR = ( IS_RING | IS_LINE)? NXw : NXw + NYw,
+        EAw_REGULAR = (NL==1) ? RAw_REGULAR : RAw_REGULAR + NLw,
+        NR_REGULAR = (IS_RING || IS_LINE)? NX : NX*NY,
+        NE_REGULAR = NR_REGULAR * NL,
+        MAX_P_REGULAR = R2R_CHANELS_REGULAR + R2E_CHANELS_REGULAR,
+        DSTPw_REGULAR = R2R_CHANELS_REGULAR, // P-1
+        NE_PER_R_REGULAR = NL;
     
     /****************
     *  FMESH
     **************/
     localparam    
-        NE_FMESH = NE_MESH_TORI + 2 * (NX+NY),
-        NR_FMESH = NR_MESH_TORI,
+        NE_FMESH = NE_REGULAR + 2 * (NX+NY),
+        NR_FMESH = NR_REGULAR,
         MAX_P_FMESH = 4 + NL, 
-        EAw_FMESH = RAw_MESH_TORI + log2(MAX_P_FMESH);
+        EAw_FMESH = RAw_REGULAR + log2(MAX_P_FMESH),
+        NE_PER_R_FMESH = ((NX == 1) || (NY == 1)) ? NL + 3 : NL + 2; // 2 for the edge ports;
     /******************
-     *     FATTREE
-     * *****************/
+    *     FATTREE
+    ******************/
     localparam 
         K=T1,
         L=T2, 
@@ -245,13 +243,13 @@
         DSTPw_MULTI_MESH = log2(MAX_P_MULTI_MESH);
     
     localparam
-        PPSw = PPSw_MESH_TORI,
+        PPSw = PPSw_REGULAR,
         // maximum number of port in a router in the topology
         MAX_P =
             (IS_FATTREE)? MAX_P_FATTREE:
             (IS_TREE)?  MAX_P_TREE:
-            (IS_REGULAR_TOPO)? MAX_P_MESH_TORI:
-            (IS_FMESH)? MAX_P_MESH_TORI:
+            (IS_REGULAR_TOPO)? MAX_P_REGULAR:
+            (IS_FMESH)? MAX_P_REGULAR:
             (IS_STAR) ? MAX_P_STAR:
             (IS_MULTI_MESH) ? MAX_P_MULTI_MESH:
             MAX_P_CUSTOM, 
@@ -261,8 +259,8 @@
             (IS_FATTREE)? DSTPw_FATTREE :
             (IS_TREE)?  DSTPw_TREE :
             (~IS_UNICAST) ? MAX_P : 
-            (IS_REGULAR_TOPO)? DSTPw_MESH_TORI :
-            (IS_FMESH)? DSTPw_MESH_TORI :
+            (IS_REGULAR_TOPO)? DSTPw_REGULAR :
+            (IS_FMESH)? DSTPw_REGULAR :
             (IS_STAR) ? DSTPw_STAR :
             (IS_MULTI_MESH) ? DSTPw_MULTI_MESH :
             DSTPw_CUSTOM,
@@ -270,8 +268,8 @@
         RAw =
             (IS_FATTREE)? RAw_FATTREE:
             (IS_TREE)?  RAw_TREE:
-            (IS_REGULAR_TOPO)? RAw_MESH_TORI:
-            (IS_FMESH)? RAw_MESH_TORI:
+            (IS_REGULAR_TOPO)? RAw_REGULAR:
+            (IS_FMESH)? RAw_REGULAR:
             (IS_STAR) ? RAw_STAR:
             (IS_MULTI_MESH) ? RAw_MULTI_MESH:
             RAw_CUSTOM,
@@ -279,7 +277,7 @@
         EAw =
             (IS_FATTREE)? EAw_FATTREE:
             (IS_TREE)?  EAw_TREE:
-            (IS_REGULAR_TOPO)? EAw_MESH_TORI:
+            (IS_REGULAR_TOPO)? EAw_REGULAR:
             (IS_FMESH)? EAw_FMESH:
             (IS_STAR) ? EAw_STAR:
             (IS_MULTI_MESH) ? EAw_MULTI_MESH:
@@ -288,7 +286,7 @@
         NE =
             (IS_FATTREE)? NE_FATTREE:
             (IS_TREE)?  NE_TREE:
-            (IS_REGULAR_TOPO)? NE_MESH_TORI:
+            (IS_REGULAR_TOPO)? NE_REGULAR:
             (IS_FMESH)? NE_FMESH: 
             (IS_STAR)? NE_STAR:
             (IS_MULTI_MESH) ? NE_MULTI_MESH:
@@ -298,8 +296,8 @@
         NE_PER_R =
             (IS_FATTREE)? NE_PER_R_FATTREE:
             (IS_TREE)?  NE_PER_R_TREE:
-            (IS_REGULAR_TOPO)? NE_PER_R_MESH_TORI:
-            (IS_FMESH)? NE_PER_R_MESH_TORI: 
+            (IS_REGULAR_TOPO)? NE_PER_R_REGULAR:
+            (IS_FMESH)? NE_PER_R_FMESH: 
             (IS_STAR)? NE_PER_R_STAR:
             (IS_MULTI_MESH) ? 1:
             NE_PER_R_CUSTOM,    
@@ -319,7 +317,7 @@
         NR =
             (IS_FATTREE)? NR_FATTREE:
             (IS_TREE)?  NR_TREE:
-            (IS_REGULAR_TOPO)? NR_MESH_TORI:  
+            (IS_REGULAR_TOPO)? NR_REGULAR:  
             (IS_FMESH)? NR_FMESH: 
             (IS_STAR) ? NR_STAR:
             (IS_MULTI_MESH) ? NR_MULTI_MESH:
@@ -328,8 +326,8 @@
         ROUTE_TYPE =
             (IS_FATTREE)? ROUTE_TYPE_FATTREE:
             (IS_TREE)?  ROUTE_TYPE_TREE:
-            (IS_REGULAR_TOPO)? ROUTE_TYPE_MESH_TORI:
-            (IS_FMESH)? ROUTE_TYPE_MESH_TORI:
+            (IS_REGULAR_TOPO)? ROUTE_TYPE_REGULAR:
+            (IS_FMESH)? ROUTE_TYPE_REGULAR:
             (IS_STAR) ? ROUTE_TYPE_STAR:
             ROUTE_TYPE_CUSTOM;
             /* verilator lint_off WIDTH */
@@ -387,18 +385,29 @@
     end   
     endfunction    
     
-    function automatic  integer fmesh_addrencode; 
-    input integer addr_in;
+    function automatic  integer regular_topo_endp_addr; 
+    input integer endp_id;
+    integer  y, x, l,p, diff,mul;
+    begin
+        y = ((endp_id/NL) / NX ); 
+        x = ((endp_id/NL) % NX ); 
+        l = (endp_id % NL); 
+        regular_topo_endp_addr = ( l << ( NXw+NYw) | (y<<NXw) | x);
+    end
+    endfunction
+    
+    function automatic  integer fmesh_endp_addr; 
+    input integer endp_id;
     integer  y, x, l,p, diff,mul;
     begin
         mul  = NX*NY*NL;
-        if(addr_in < mul) begin 
-            y = ((addr_in/NL) / NX ); 
-            x = ((addr_in/NL) % NX ); 
-            l = (addr_in % NL); 
+        if(endp_id < mul) begin 
+            y = ((endp_id/NL) / NX ); 
+            x = ((endp_id/NL) % NX ); 
+            l = (endp_id % NL); 
             p = (l==0)? LOCAL : 4+l;
         end else begin      
-            diff = addr_in -  mul ;
+            diff = endp_id -  mul ;
             if( diff <  NX) begin //top mesh edge 
                 y = 0;
                 x = diff;
@@ -417,7 +426,7 @@
                 p = EAST; 
             end
         end//else 
-            fmesh_addrencode = ( p<<(NXw+NYw) | (y<<NXw) | x);
+            fmesh_endp_addr = ( p<<(NXw+NYw) | (y<<NXw) | x);
     end   
     endfunction // addrencode
     

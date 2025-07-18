@@ -416,7 +416,7 @@ module input_queue_per_port #(
             .Q_out  (assigned_ovc_num [(i+1)*V-1 : i*V]  ));
     end
     if (IS_REGULAR_TOPO & IS_MULTI_ENDP_ROUTER & IS_UNICAST) begin 
-        mesh_tori_endp_addr_decode endp_addr_decode (
+        regular_topo_endp_addr_decode endp_addr_decode (
             .e_addr(dest_e_addr_in),
             .ex( ),
             .ey( ),
@@ -963,7 +963,7 @@ module input_queue_per_port #(
         end//for
         if (IS_REGULAR_TOPO & IS_UNICAST) begin : mesh_based
             
-            debug_mesh_tori_route_ckeck #(
+            debug_regular_topo_route_ckeck #(
                 .SW_LOC(SW_LOC)
                 )
                 route_ckeck (
@@ -1079,8 +1079,8 @@ module destp_generator #(
             .dest_port_in_encoded(dest_port_encoded),
             .dest_port_out(dest_port_out)
         );
-    end else if( IS_REGULAR_TOPO ) begin : reqular
-        mesh_torus_destp_generator #(
+    end else if( IS_REGULAR_TOPO ) begin : regular
+        regular_topo_destp_generator #(
             .TOPOLOGY(TOPOLOGY),
             .ROUTE_NAME(ROUTE_NAME),
             .ROUTE_TYPE(ROUTE_TYPE),

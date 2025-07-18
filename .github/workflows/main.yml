@@ -5,7 +5,7 @@ on:
     branches: [ "**" ]
 
 jobs:
-  synthetic-sim:
+  synthetic-sim-split-mode:
     runs-on: ubuntu-latest
     container:
       image: verilator/verilator:4.104
@@ -43,9 +43,8 @@ jobs:
           name: simulation-reports-${{ matrix.conf_name }}-${{ github.run_id }}
           path: ${{ env.LOG_DIR }}
           retention-days: 7
-
-  tiny-topos-flat:
-    needs: synthetic-sim
+ tiny-topos-flat-mode:
+    needs: synthetic-sim-split-mode
     runs-on: ubuntu-latest
     container:
       image: verilator/verilator:4.104
@@ -56,25 +55,26 @@ jobs:
       LOG_DIR: ${{ github.workspace }}/mpsoc/Integration_test/synthetic_sim/result_logs
     steps:
       - uses: actions/checkout@v4
-
-      - name: Run simulation for tiny_topos flat_mode
+      - name: Run NoC simulation flat_mode - tiny_topos
         run: |
           set -ex
           cd $ROOT/Integration_test/synthetic_sim/src
-          perl ./verify.perl -p 15 -u 80 -l 2 -s 4 -d tiny_topos -f
-
-      - name: Compare with split mode (non-`-f`) result
-        run: |
-          set -ex
-          cd $ROOT/Integration_test/synthetic_sim/src
-          perl ./check.pl -o $REF_LOG_DIR/tiny_topos -n $LOG_DIR/tiny_topos || {
+          perl ./verify.perl -p 15 -u 80 -l 2 -s 4 -d tiny_topos -f      
+           perl ./check.pl -o $GOLDEN_REF/tiny_topos -n $LOG_DIR/tiny_topos || {
             echo "❌ flat config differs from non-flat."
             exit 1
           }
-
-      - name: Upload simulation reports - tiny_topos -f
+      - name: Upload failures artifact - flat-tiny-tops
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: simulation-reports-tiny_topos-flat-${{ github.run_id }}
+          name: simulation-failures-tiny_topos-flat-${{ github.run_id }}
+          path: |
+            ${{ env.PRONOC_WORK }}/failures.txt
+      - name: Upload simulation reports - flat-tiny-tops
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-reports-flat-tiny-tops-${{ github.run_id }}
           path: ${{ env.LOG_DIR }}
           retention-days: 7
+ 

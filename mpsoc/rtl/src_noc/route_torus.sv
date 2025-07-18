@@ -103,7 +103,7 @@ module tranc_xy_routing #(
         end
     end
     
-    mesh_tori_encode_dstport conv(
+    regular_topo_encode_dstport conv(
         .dstport_one_hot(dstport_one_hot),
         .dstport_encoded(destport_encoded)
     );

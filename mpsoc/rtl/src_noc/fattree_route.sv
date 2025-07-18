@@ -730,7 +730,7 @@ module  fattree_addr_decoder #(
 endmodule
 
 /**************
- * mesh_torus_ssa_check_destport_conflict
+ * regular_topo_ssa_check_destport_conflict
  * check if the incomming flit goes to SS port
  * ************/
 module fattree_ssa_check_destport #(

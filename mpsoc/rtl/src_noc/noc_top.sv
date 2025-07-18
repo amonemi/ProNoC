@@ -46,7 +46,7 @@ module  noc_top (
     
     generate 
     if (IS_MESH | IS_FMESH | IS_TORUS | IS_RING | IS_LINE) begin : tori_noc 
-        mesh_torus_noc_top noc_top (
+        regular_topo_noc_top noc_top (
             .reset         (reset        ), 
             .clk           (clk          ), 
             .chan_in_all   (chan_in_all  ), 
