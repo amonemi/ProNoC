@@ -208,7 +208,7 @@ module smart_forward_ivc_info #(
     smart_ivc_info_t  smart_ivc_info_all_port [P-1 : 0] [P-1 : 0];
     smart_ivc_info_t  smart_vc_info_o [P-1 : 0];
     
-    wire [V-1 : 0] assigned_ovc [P-1:0];
+    logic [V-1 : 0] assigned_ovc [P-1:0];
     wire [V-1 : 0] non_assigned_vc_req [P-1:0];
     wire [P-1 : 0] mask_gen  [P-1 : 0][V-1 :0];
     wire [V-1 : 0] ovc_locally_requested_next [P-1 : 0];
@@ -253,13 +253,6 @@ module smart_forward_ivc_info #(
             .Q_out(smart_vc_info_o[i])
         );
         
-        bin_to_one_hot #(
-            .BIN_WIDTH      (Vw), 
-            .ONE_HOT_WIDTH  (V)
-        ) conv (
-            .bin_code       (smart_vc_info_o[i].assigned_ovc_bin), 
-            .one_hot_code   (assigned_ovc[i])
-        );
         
         assign smart_chanel_next[i].dest_e_addr= smart_vc_info_o[i].dest_e_addr;
         assign smart_chanel_next[i].ovc= (smart_vc_info_o[i].ovc_is_assigned)? assigned_ovc[i] : oport_info[i].non_smart_ovc_is_allocated;
@@ -281,9 +274,15 @@ module smart_forward_ivc_info #(
         end
     end//port_
     endgenerate
+
+    //bin_to_one_hot
+    always_comb begin
+        for (int port=0; port<P; port=port+1) begin
+            assigned_ovc[port] = {V{1'b0}};
+            assigned_ovc[port][smart_vc_info_o[port].assigned_ovc_bin] = 1'b1;
+        end
+    end
 endmodule
-
-
 
 module smart_bypass_chanels #(
     parameter P=5

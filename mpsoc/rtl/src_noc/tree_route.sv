@@ -250,17 +250,14 @@ module tree_destport_decoder #(
         DSPw= log2(MAX_P);     
     
     input  [DSPw-1 : 0] destport_encoded_i;
-    output [MAX_P-1 : 0] destport_decoded_o; 
+    output logic [MAX_P-1 : 0] destport_decoded_o; 
     
-    bin_to_one_hot #(
-        .BIN_WIDTH(DSPw),
-        .ONE_HOT_WIDTH(MAX_P)
-    ) cnvt  (
-        .bin_code(destport_encoded_i),
-        .one_hot_code(destport_decoded_o)
-    );
+    //bin_to_one_hot
+    always_comb begin
+        destport_decoded_o = {MAX_P{1'b0}};
+        destport_decoded_o[destport_encoded_i] = 1'b1;
+    end
 endmodule
-
 
 
 //decode and mask destport  

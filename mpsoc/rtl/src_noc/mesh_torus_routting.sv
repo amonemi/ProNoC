@@ -364,7 +364,7 @@ module remove_receive_port_one_hot #(
         P_1w = log2(P_1);
     input [P-1 : 0]  destport_in;
     input [P-1 : 0]  receiver_port;
-    output [P_1-1 : 0]  destport_out;
+    output logic [P_1-1 : 0]  destport_out;
     wire [Pw-1 : 0]  receiver_port_bin,destport_in_bin;
     wire [P_1w-1 : 0]  destport_out_bin;
     
@@ -388,13 +388,11 @@ module remove_receive_port_one_hot #(
     assign temp = (receiver_port_bin > destport_in_bin ) ? destport_in_bin : destport_in_bin  -1'b1;
     assign destport_out_bin=temp[P_1w-1 : 0];
     
-    bin_to_one_hot #(
-        .BIN_WIDTH(P_1w),
-        .ONE_HOT_WIDTH(P_1)
-    ) convert3 (
-        .bin_code(destport_out_bin),
-        .one_hot_code(destport_out)
-    );
+    //bin_to_one_hot
+    always_comb begin
+        destport_out = {P_1{1'b0}};
+        destport_out[destport_out_bin] = 1'b1;
+    end
 endmodule
 
 /**************************************

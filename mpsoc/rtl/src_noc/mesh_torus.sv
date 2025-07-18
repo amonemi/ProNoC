@@ -1098,7 +1098,7 @@ module regular_topo_destp_decoder #(
     input           swap_port_presel;
     input  [PPSw-1 : 0] port_pre_sel;
     
-    wire [NL-1 : 0] endp_localp_onehot;
+    logic [NL-1 : 0] endp_localp_onehot;
     reg [4:0] portout;
     wire x,y,a,b;
     assign {x,y,a,b} = dest_port_coded;
@@ -1115,6 +1115,11 @@ module regular_topo_destp_decoder #(
         endcase
     end //always
     
+    //bin_to_one_hot
+    always_comb begin
+        endp_localp_onehot = {NL{1'b0}};
+        endp_localp_onehot[endp_localp_num] = 1'b1;
+    end
     generate     
     if(NL==1) begin :slp
         if(SELF_LOOP_EN == 0) begin :nslp
@@ -1130,13 +1135,6 @@ module regular_topo_destp_decoder #(
         end
     end else begin :mlp
         wire [P-1 : 0] destport_onehot;
-        bin_to_one_hot #(
-            .BIN_WIDTH(ELw),
-            .ONE_HOT_WIDTH(NL)
-        ) conv (
-            .bin_code(endp_localp_num),
-            .one_hot_code(endp_localp_onehot)
-        );
         
         assign destport_onehot =(portout[0])? 
             { endp_localp_onehot[NL-1 : 1] ,{(P-NL){1'b0}},endp_localp_onehot[0]}: /*select local destination*/ 
@@ -1178,7 +1176,7 @@ module line_ring_destp_decoder #(
     input  [DSTPw-1 : 0] dest_port_coded;
     input  [ELw-1 : 0] endp_localp_num;
     output [P_1-1 : 0] dest_port_out;
-    wire [NL-1 : 0] endp_localp_onehot;
+    logic [NL-1 : 0] endp_localp_onehot;
     wire [2:0] portout;
     
     line_ring_decode_dstport decoder(
@@ -1186,7 +1184,11 @@ module line_ring_destp_decoder #(
         .dstport_encoded(dest_port_coded)
     );
     
-    
+    //bin_to_one_hot
+    always_comb begin
+        endp_localp_onehot = {NL{1'b0}};
+        endp_localp_onehot[endp_localp_num] = 1'b1;
+    end
     generate
     if(NL==1) begin :_se
         if(SELF_LOOP_EN == 0) begin :nslp
@@ -1202,14 +1204,6 @@ module line_ring_destp_decoder #(
         end
     end else begin :_me
         wire [P-1 : 0] destport_onehot;
-    
-        bin_to_one_hot #(
-            .BIN_WIDTH(ELw),
-            .ONE_HOT_WIDTH(NL)
-        ) conv (
-            .bin_code(endp_localp_num),
-            .one_hot_code(endp_localp_onehot)
-        );
         
         assign destport_onehot =(portout[0])? 
             { endp_localp_onehot[NL-1 : 1] ,{(P-NL){1'b0}},endp_localp_onehot[0]}: /*select local destination*/ 

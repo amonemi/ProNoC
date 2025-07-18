@@ -1167,15 +1167,12 @@ module custom_topology_destp_decoder #(
     input  [DSTPw-1 : 0] dest_port_in_encoded;
     output [P_1-1 : 0] dest_port_out;
     
-    wire [MAXW-1 : 0] dest_port_one_hot;
-    
-    bin_to_one_hot #(
-        .BIN_WIDTH(DSTPw),
-        .ONE_HOT_WIDTH(MAXW)
-    ) conv (
-        .bin_code(dest_port_in_encoded),
-        .one_hot_code(dest_port_one_hot)
-    );
+    logic [MAXW-1 : 0] dest_port_one_hot;
+    //bin_to_one_hot
+    always_comb begin
+        dest_port_one_hot = {MAXW{1'b0}};
+        dest_port_one_hot[dest_port_in_encoded] = 1'b1;
+    end
     
     generate
     if( SELF_LOOP_EN==0) begin : nslp

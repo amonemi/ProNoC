@@ -153,7 +153,7 @@ module fmesh_destp_decoder #(
     input           swap_port_presel;
     input  [PPSw-1 : 0] port_pre_sel;
     
-    wire [P-1 : 0] endp_localp_onehot;
+    logic [P-1 : 0] endp_localp_onehot;
     reg [4:0] portout;
     wire x,y,a,b;
     assign {x,y,a,b} = dest_port_coded;
@@ -170,15 +170,13 @@ module fmesh_destp_decoder #(
         endcase
     end //always
     
-    wire [P-1 : 0] destport_onehot;    
-    bin_to_one_hot #(
-        .BIN_WIDTH(PLw),
-        .ONE_HOT_WIDTH(P)
-    ) conv (
-        .bin_code(endp_localp_num),
-        .one_hot_code(endp_localp_onehot)
-    );
-    
+    logic [P-1 : 0] destport_onehot;    
+    //bin_to_one_hot
+    always_comb begin
+        endp_localp_onehot = {P{1'b0}};
+        endp_localp_onehot[endp_localp_num] = 1'b1;
+    end
+
     generate 
     if(NL>1) begin :multi    
         assign destport_onehot =(portout[0])? endp_localp_onehot : /*select local destination*/ 

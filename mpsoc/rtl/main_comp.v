@@ -30,22 +30,17 @@
 
 module pronoc_register #(
     parameter W=1,
-    parameter  RESET_TO={W{1'b0}}
+    parameter RESET_TO={W{1'b0}}
 )( 
     input [W-1: 0] D_in,
     input reset,    
     input clk,      
-    output [W-1: 0] Q_out
+    output reg [W-1: 0] Q_out
 );
-    pronoc_register_reset_init #(
-        .W(W)           
-    )reg1( 
-        .D_in(D_in),
-        .reset(reset),  
-        .clk(clk),      
-        .Q_out(Q_out),
-        .reset_to(RESET_TO[W-1 : 0])
-    );
+    always @ (`pronoc_clk_reset_edge )begin 
+        if(`pronoc_reset)   Q_out <= W'(RESET_TO);
+        else  Q_out <= D_in;
+    end
 endmodule
 
 
@@ -203,6 +198,7 @@ module outport_sum #(
     endgenerate
 endmodule
 
+
 /***********************************
 *   module bin_to_one_hot 
 ************************************/
@@ -212,14 +208,12 @@ module bin_to_one_hot #(
     
 )(
     input   [BIN_WIDTH-1 : 0]  bin_code,
-    output  [ONE_HOT_WIDTH-1 : 0] one_hot_code
+    output reg [ONE_HOT_WIDTH-1 : 0] one_hot_code
 );
-    genvar i;
-    generate 
-        for(i=0; i<ONE_HOT_WIDTH; i=i+1) begin :one_hot_gen_loop
-                assign one_hot_code[i] = (bin_code == i[BIN_WIDTH-1 : 0]);
-        end
-    endgenerate
+    always @(*) begin
+        one_hot_code = {ONE_HOT_WIDTH{1'b0}};
+        one_hot_code[bin_code] = 1'b1;
+    end
 endmodule
 
 /***********************************

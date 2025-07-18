@@ -84,15 +84,13 @@ module fattree_nca_random_up_routing  #(
     end//for
     endgenerate
     assign current_node_dest_port = dest_addr[current_level];
-    wire [K-1:0] current_node_dest_port_one_hot;
+    logic [K-1:0] current_node_dest_port_one_hot;
     
-    bin_to_one_hot #(
-        .BIN_WIDTH(Kw),
-        .ONE_HOT_WIDTH(K)
-    ) conv (
-    .bin_code(current_node_dest_port),
-    .one_hot_code(current_node_dest_port_one_hot)
-    ); 
+    //bin_to_one_hot
+    always_comb begin
+        current_node_dest_port_one_hot = {K{1'b0}};
+        current_node_dest_port_one_hot[current_node_dest_port] = 1'b1;
+    end
     
     assign destport_encoded = (parrents_node_missmatch != {L{1'b0}}) ? /*go up*/{1'b1,counter} :  /*go down*/{1'b0,current_node_dest_port_one_hot};
 endmodule
@@ -175,14 +173,13 @@ module fattree_nca_destp_up_routing  #(
     end//for
     endgenerate
     assign current_node_dest_port = dest_addr[current_level];
-    wire [K-1:0] current_node_dest_port_one_hot;
-    bin_to_one_hot #(
-        .BIN_WIDTH(Kw),
-        .ONE_HOT_WIDTH(K)
-    ) conv (
-        .bin_code(current_node_dest_port),
-        .one_hot_code(current_node_dest_port_one_hot)
-    ); 
+    logic [K-1:0] current_node_dest_port_one_hot;
+    
+    //bin_to_one_hot
+    always_comb begin
+        current_node_dest_port_one_hot = {K{1'b0}};
+        current_node_dest_port_one_hot[current_node_dest_port] = 1'b1;
+    end
     
     assign destport_encoded = (parrents_node_missmatch != {L{1'b0}}) ? /*go up*/{1'b1,current_node_dest_port_one_hot} :  /*go down*/{1'b0,current_node_dest_port_one_hot};
 endmodule
@@ -265,15 +262,13 @@ module fattree_nca_straight_up_routing  #(
     end//for
     endgenerate
     assign current_node_dest_port = dest_addr[current_level];
-    wire [K-1:0] current_node_dest_port_one_hot;
+    logic [K-1:0] current_node_dest_port_one_hot;
     
-    bin_to_one_hot #(
-        .BIN_WIDTH(Kw),
-        .ONE_HOT_WIDTH(K)
-    ) conv (
-        .bin_code(current_node_dest_port),
-        .one_hot_code(current_node_dest_port_one_hot)
-    ); 
+    //bin_to_one_hot
+    always_comb begin
+        current_node_dest_port_one_hot = {K{1'b0}};
+        current_node_dest_port_one_hot[current_node_dest_port] = 1'b1;
+    end
     
     // if going up the destination port num is statis straigh. It will be filled at reciver port of the next router so leave it empty
     assign destport_encoded = (parrents_node_missmatch != {L{1'b0}}) ? /*go up*/{1'b1,{K{1'b0}}} :  /*go down*/{1'b0,current_node_dest_port_one_hot};
