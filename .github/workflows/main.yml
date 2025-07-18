@@ -43,7 +43,8 @@ jobs:
           name: simulation-reports-${{ matrix.conf_name }}-${{ github.run_id }}
           path: ${{ env.LOG_DIR }}
           retention-days: 7
- tiny-topos-flat-mode:
+
+  tiny-topos-flat-mode:
     needs: synthetic-sim-split-mode
     runs-on: ubuntu-latest
     container:
@@ -59,8 +60,8 @@ jobs:
         run: |
           set -ex
           cd $ROOT/Integration_test/synthetic_sim/src
-          perl ./verify.perl -p 15 -u 80 -l 2 -s 4 -d tiny_topos -f      
-           perl ./check.pl -o $GOLDEN_REF/tiny_topos -n $LOG_DIR/tiny_topos || {
+          perl ./verify.perl -p 15 -u 80 -l 2 -s 4 -d tiny_topos -f
+          perl ./check.pl -o $GOLDEN_REF/tiny_topos -n $LOG_DIR/tiny_topos || {
             echo "❌ flat config differs from non-flat."
             exit 1
           }
@@ -77,4 +78,4 @@ jobs:
           name: simulation-reports-flat-tiny-tops-${{ github.run_id }}
           path: ${{ env.LOG_DIR }}
           retention-days: 7
- 
+
