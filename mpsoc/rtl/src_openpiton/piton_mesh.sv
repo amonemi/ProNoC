@@ -138,12 +138,12 @@ module piton_mesh
             // connect other local ports
             for  (l=0;   l<NL; l=l+1) begin :locals
                 localparam ENDPID = `endp_id(x,0,l);
-                localparam LOCALP = (l==0) ? l : l + R2R_CHANELS_MESH_TORI; // first local port is connected to router port 0. The rest are connected at the end
+                localparam LOCALP = (l==0) ? l : l + R2R_CHANELS_REGULAR; // first local port is connected to router port 0. The rest are connected at the end
                 assign router_chan_in[x][LOCALP]= chan_in_all [ENDPID];
                 assign chan_out_all [ENDPID] = router_chan_out[x][LOCALP];
             end// locals
         end//x
-    end else begin :mesh_torus
+    end else begin :regular_topo
         for (y=0;    y<NY;    y=y+1) begin: y_loop
             for (x=0;    x<NX; x=x+1) begin :x_loop
                 localparam R_ADDR = (y<<NXw) + x;
@@ -218,13 +218,13 @@ module piton_mesh
                 // connect other local ports
                 for  (l=0;   l<NL; l=l+1) begin :locals
                     localparam ENDPID = `endp_id(x,y,l);
-                    localparam LOCALP = (l==0) ? l : l + R2R_CHANELS_MESH_TORI; // first local port is connected to router port 0. The rest are connected at the end
+                    localparam LOCALP = (l==0) ? l : l + R2R_CHANELS_REGULAR; // first local port is connected to router port 0. The rest are connected at the end
                     assign router_chan_in [`router_id(x,y)][LOCALP] =    chan_in_all [ENDPID];
                     assign chan_out_all [ENDPID] = router_chan_out [`router_id(x,y)][LOCALP];
                 end// locals
             end //y
         end //x
-    end// mesh_torus
+    end// regular_topo
     endgenerate
 endmodule
 module piton_mesh_pronoc_wrap (
@@ -263,7 +263,7 @@ module piton_mesh_pronoc_wrap (
     genvar i;
     generate
     for (i=0; i<NE;i++) begin :E_
-        mesh_tori_router_addr_decode  r_addr_decode  (
+        regular_topo_router_addr_decode  r_addr_decode  (
             .r_addr(i[RAw-1:0]),
             .rx(current_x[i]),
             .ry(current_y[i]),

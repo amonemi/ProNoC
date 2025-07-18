@@ -47,7 +47,7 @@ module conventional_routing #(
     output  [DSTPw-1 :0] destport;
     
     generate
-    if( IS_MESH | IS_FMESH | IS_TORUS | IS_RING | IS_LINE ) begin : mesh_torus
+    if( IS_MESH | IS_FMESH | IS_TORUS | IS_RING | IS_LINE ) begin : regular_topo
         localparam
             RXw = log2(NX),
             RYw = (IS_RING | IS_LINE) ? 1 :log2(NY),
@@ -58,7 +58,7 @@ module conventional_routing #(
         wire   [EXw-1   :   0]  dest_ex;
         wire   [EYw-1   :   0]  dest_ey;
         
-        mesh_tori_router_addr_decode router_addr_decode  (
+        regular_topo_router_addr_decode router_addr_decode  (
                 .r_addr(current_r_addr),
                 .rx(current_rx),
                 .ry(current_ry),
@@ -73,7 +73,7 @@ module conventional_routing #(
                     .valid()
             );
         end else begin : mesh
-            mesh_tori_endp_addr_decode end_addr_decode  (
+            regular_topo_endp_addr_decode end_addr_decode  (
                 .e_addr(dest_e_addr),
                 .ex(dest_ex),
                 .ey(dest_ey),
@@ -81,7 +81,7 @@ module conventional_routing #(
                 .valid()
             );
         end//mesh
-        mesh_torus_conventional_routing #(
+        regular_topo_conventional_routing #(
             .LOCATED_IN_NI(LOCATED_IN_NI)
         ) the_conventional_routing  (
             .current_x(current_rx),
@@ -194,7 +194,7 @@ module look_ahead_routing #(
         wire   [RYw-1   :   0]  current_ry;
         wire   [EXw-1   :   0]  dest_ex;
         wire   [EYw-1   :   0]  dest_ey;
-        mesh_tori_router_addr_decode router_addr_decode (
+        regular_topo_router_addr_decode router_addr_decode (
             .r_addr(current_r_addr),
             .rx(current_rx),
             .ry(current_ry),
@@ -209,7 +209,7 @@ module look_ahead_routing #(
                 .valid()
             );
         end else begin :regular
-            mesh_tori_endp_addr_decode end_addr_decode (
+            regular_topo_endp_addr_decode end_addr_decode (
                 .e_addr(dest_e_addr),
                 .ex(dest_ex),
                 .ey(dest_ey),
@@ -217,7 +217,7 @@ module look_ahead_routing #(
                 .valid()
             );
         end
-        mesh_torus_look_ahead_routing lkh_route  (
+        regular_topo_look_ahead_routing lkh_route  (
             .current_x(current_rx),
             .current_y(current_ry),
             .dest_x(dest_ex),

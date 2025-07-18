@@ -83,7 +83,7 @@ module xy_mesh_routing #(
         end
     end
     
-    mesh_tori_encode_dstport conv(
+    regular_topo_encode_dstport conv(
         .dstport_one_hot(dstport_one_hot),
         .dstport_encoded(dstport_encoded)
     );
@@ -681,7 +681,7 @@ module mesh_dir #(
 endmodule
 
 
-module mesh_tori_encode_dstport (
+module regular_topo_encode_dstport (
     dstport_one_hot,
     dstport_encoded
 );

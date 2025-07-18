@@ -258,7 +258,7 @@ generate
     /* verilator lint_off WIDTH */  
     if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && (T3>1)) begin : multi_local
     /* verilator lint_on WIDTH */  
-        mesh_tori_endp_addr_decode endp_addr_decode
+        regular_topo_endp_addr_decode endp_addr_decode
         (
             .e_addr(dest_e_addr_in),
             .ex( ),
@@ -726,7 +726,7 @@ if(DEBUG_EN) begin :dbg
      if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS")) begin : mesh_based
      /* verilator lint_on WIDTH */  
 
-        debug_mesh_tori_route_ckeck #(
+        debug_regular_topo_route_ckeck #(
             .T1(T1),
             .T2(T2),
             .T3(T3),

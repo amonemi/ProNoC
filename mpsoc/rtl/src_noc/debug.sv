@@ -73,7 +73,7 @@ module check_flit_chanel_type_is_in_order
 endmodule
 
 
-module debug_mesh_tori_route_ckeck #(
+module debug_regular_topo_route_ckeck #(
     parameter SW_LOC=0
     )(
     reset,
@@ -109,14 +109,14 @@ module debug_mesh_tori_route_ckeck #(
     wire [RYw-1 : 0] current_y;
     wire [EYw-1 : 0] y_dst_in,y_src_in;
     
-    mesh_tori_router_addr_decode  r_addr_decode  (
+    regular_topo_router_addr_decode  r_addr_decode  (
         .r_addr(current_r_addr),
         .rx(current_x),
         .ry(current_y),
         .valid()
     );
     
-    mesh_tori_endp_addr_decode  dst_addr_decode (
+    regular_topo_endp_addr_decode  dst_addr_decode (
         .e_addr(dest_e_addr_in),
         .ex(x_dst_in),
         .ey(y_dst_in),
@@ -124,7 +124,7 @@ module debug_mesh_tori_route_ckeck #(
         .valid()
     );
     
-    mesh_tori_endp_addr_decode  src_addr_decode  (
+    regular_topo_endp_addr_decode  src_addr_decode  (
         .e_addr(src_e_addr_in),
         .ex(x_src_in),
         .ey(y_src_in),
@@ -228,7 +228,7 @@ module debug_mesh_edges #(
     wire [RXw-1 : 0] current_rx;
     wire [RYw-1 : 0] current_ry;
     
-    mesh_tori_router_addr_decode addr_decode (
+    regular_topo_router_addr_decode addr_decode (
         .r_addr(current_r_addr),
         .rx(current_rx),
         .ry(current_ry),
@@ -292,7 +292,7 @@ module check_destination_addr #(
     /* verilator lint_off WIDTH */ 
     if(TOPOLOGY=="MESH" || TOPOLOGY == "TORUS" || TOPOLOGY=="RING" || TOPOLOGY == "LINE") begin : mesh
    /* verilator lint_on WIDTH */ 
-        mesh_tori_endp_addr_decode  endp_decode (
+        regular_topo_endp_addr_decode  endp_decode (
             .e_addr(dest_e_addr),
             .ex(),
             .ey(),
@@ -326,26 +326,13 @@ module  endp_addr_encoder (
         .id(id_in),
         .code(code_out)
         );
-    end else if  (IS_MESH | IS_TORUS | IS_RING | IS_LINE) begin : tori
-        mesh_tori_addr_encoder #(
-            .NX(T1),
-            .NY(T2),
-            .NL(T3),
-            .NE(NE),
-            .EAw(EAw),
-            .TOPOLOGY(TOPOLOGY)
-        )  addr_encoder  (
+    end else if  (IS_REGULAR_TOPO) begin : regular
+        regular_topo_endp_addr_encoder  addr_encoder  (
             .id(id_in),
             .code(code_out)
         );
     end else if (IS_FMESH) begin :fmesh
-        fmesh_addr_encoder #(
-            .NX(T1),
-            .NY(T2),
-            .NL(T3),
-            .NE(NE),
-            .EAw(EAw)
-        ) addr_encoder (
+        fmesh_addr_encoder addr_encoder (
             .id(id_in),
             .code(code_out)
         );
@@ -378,26 +365,13 @@ module endp_addr_decoder  (
             .id(id_out),
             .code(code_in)
         );
-    end else if  ( IS_MESH | IS_TORUS | IS_RING | IS_LINE ) begin :tori
-        mesh_tori_addr_coder #(
-            .TOPOLOGY(TOPOLOGY),
-            .NX    (T1   ), 
-            .NY    (T2   ), 
-            .NL    (T3   ), 
-            .NE    (NE   ), 
-            .EAw   (EAw  )
-        ) addr_coder (
+    end else if  ( IS_REGULAR_TOPO ) begin : regular
+        regular_topo_addr_coder  addr_coder (
             .id    (id_out), 
             .code  (code_in )
         );
     end else if (IS_FMESH) begin :fmesh
-        fmesh_addr_coder #(
-            .NX(T1),
-            .NY(T2),
-            .NL(T3),
-            .NE(NE),
-            .EAw(EAw)
-        ) addr_coder (
+        fmesh_addr_coder addr_coder (
             .id(id_out),
             .code(code_in)
         );

@@ -373,14 +373,14 @@ module check_straight_oport #(
             assign goes_straight_o = 1'b0; // There is not a next router in this case at all
         end else begin :non_local
             wire [4 : 0 ] destport_one_hot;
-            mesh_tori_decode_dstport decoder(
+            regular_topo_decode_dstport decoder(
                 .dstport_encoded(destport_coded_i),
                 .dstport_one_hot(destport_one_hot)
             );
             
             assign goes_straight_o = destport_one_hot [SS_PORT_LOC];    
         end//else
-    end//mesh_tori
+    end//regular_topo
     else if(IS_RING | IS_LINE) begin :oneD
         if (SS_PORT_LOC == 0 || SS_PORT_LOC > 2) begin : local_ports
             assign goes_straight_o = 1'b0; // There is not a next router in this case at all

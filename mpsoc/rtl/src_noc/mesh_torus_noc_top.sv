@@ -1,6 +1,6 @@
 `include "pronoc_def.v"
 /**********************************************************************
-**    File:  mesh_torus_noc_top.v
+**    File:  regular_topo_noc_top.v
 **    
 **    Copyright (C) 2014-2017  Alireza Monemi
 **    
@@ -26,7 +26,7 @@
 **
 **************************************************************/
 
-module mesh_torus_noc_top  (
+module regular_topo_noc_top  (
     reset,
     clk,
     chan_in_all,
@@ -81,14 +81,14 @@ module mesh_torus_noc_top  (
             
             // connect other local ports
             for  (l=0;   l<NL; l=l+1) begin :locals
-                    localparam ENDPID = fmesh_endp_id(x,0,l); 
-                    localparam LOCALP = (l==0) ? l : l + R2R_CHANELS_MESH_TORI; // first local port is connected to router port 0. The rest are connected at the end  
-                    assign router_chan_in[x][LOCALP]= chan_in_all [ENDPID];
-                    assign chan_out_all [ENDPID] = router_chan_out[x][LOCALP];
+                    localparam ENDP_ID = fmesh_endp_id(x,0,l); 
+                    localparam LOCALP = (l==0) ? l : l + R2R_CHANELS_REGULAR; // first local port is connected to router port 0. The rest are connected at the end  
+                    assign router_chan_in[x][LOCALP]= chan_in_all [ENDP_ID];
+                    assign chan_out_all [ENDP_ID] = router_chan_out[x][LOCALP];
             end// locals
         end//x
         
-    end else if (IS_MESH | IS_FMESH | IS_TORUS ) begin : mesh_torus
+    end else if (IS_MESH | IS_FMESH | IS_TORUS ) begin : regular_topo
         for (y=0; y<NY; y=y+1) begin: Y_
             for (x=0; x<NX; x=x+1) begin :X_
                 localparam R_ADDR = (y<<NXw) + x;
@@ -98,7 +98,6 @@ module mesh_torus_noc_top  (
                 localparam NORTH_ID = (IS_FMESH) ? (NX*NY*NL) + x : 0; 
                 localparam WEST_ID  = (IS_FMESH) ? (NX*NY*NL) + (2*NX) + y : 0;
                 localparam SOUTH_ID = (IS_FMESH) ? (NX*NY*NL) + NX + x : 0;  
-                
                 assign router_config_in[RID].router_addr = R_ADDR[RAw-1 :0];
                 assign router_config_in[RID].router_id = RID[NRw-1: 0];
                 
@@ -140,25 +139,49 @@ module mesh_torus_noc_top  (
                     (IS_MESH)?  is_grounded : chan_in_all[SOUTH_ID];  //last_y_fmesh
                 
                 if(IS_FMESH) begin : fmesh //connect to endpoints
-                    if(x == NX-1)  assign chan_out_all [EAST_ID] = router_chan_out [fmesh_router_id(x,y)][EAST];
-                    if(y ==0 )     assign chan_out_all [NORTH_ID] = router_chan_out [fmesh_router_id(x,y)][NORTH];
-                    if (x ==0 )    assign chan_out_all [WEST_ID] = router_chan_out[fmesh_router_id(x, y)][WEST];
-                    if(y == NY-1 ) assign chan_out_all [SOUTH_ID] = router_chan_out[fmesh_router_id(x, y)][SOUTH];
+                    localparam EAST_ENDP_LOC=NL;
+                    localparam NORTH_ENDP_LOC=NL+1;
+                    localparam WEST_ENDP_LOC= (NX==1) ? (NL+2) : EAST_ENDP_LOC;
+                    localparam SOUTH_ENDP_LOC= (NY==1) ? (NL+2) : NORTH_ENDP_LOC;
+                    
+                    if(x == NX-1)  begin 
+                        localparam [EAw-1 : 0] EAST_ADDR =  EAw'(fmesh_endp_addr(EAST_ID));
+                        assign chan_out_all [EAST_ID] = router_chan_out [fmesh_router_id(x,y)][EAST];
+                        assign router_config_in[RID].endp_addrs[(EAST_ENDP_LOC+1)*EAw -1 :  EAST_ENDP_LOC*EAw] = EAST_ADDR[EAw-1:0];
+                        assign router_config_in[RID].endp_ids[(EAST_ENDP_LOC+1)*NEw -1 :  EAST_ENDP_LOC*NEw] = EAST_ID[NEw-1:0];
+                    end
+                    if(y == 0 ) begin 
+                        localparam [EAw-1 : 0] NORTH_ADDR =  EAw'(fmesh_endp_addr(NORTH_ID));
+                        assign chan_out_all [NORTH_ID] = router_chan_out [fmesh_router_id(x,y)][NORTH];
+                        assign router_config_in[RID].endp_addrs[(NORTH_ENDP_LOC+1)*EAw -1 :  NORTH_ENDP_LOC*EAw] = NORTH_ADDR[EAw-1:0];
+                        assign router_config_in[RID].endp_ids[(NORTH_ENDP_LOC+1)*NEw -1 :  NORTH_ENDP_LOC*NEw] =NORTH_ID[NEw-1:0];
+                    end
+                    if (x == 0 ) begin
+                        localparam [EAw-1 : 0] WEST_ADDR =   EAw'(fmesh_endp_addr(WEST_ID));
+                        assign chan_out_all [WEST_ID] = router_chan_out[fmesh_router_id(x, y)][WEST];
+                        assign router_config_in[RID].endp_addrs[(WEST_ENDP_LOC+1)*EAw -1 :  WEST_ENDP_LOC*EAw] = WEST_ADDR[EAw-1:0];
+                        assign router_config_in[RID].endp_ids[(WEST_ENDP_LOC+1)*NEw -1 :  WEST_ENDP_LOC*NEw] =WEST_ID[NEw-1:0];
+                    end
+                    if(y == NY-1 ) begin 
+                        localparam [EAw-1 : 0] SOUTH_ADDR =  EAw'(fmesh_endp_addr(SOUTH_ID));
+                        assign chan_out_all [SOUTH_ID] = router_chan_out[fmesh_router_id(x, y)][SOUTH];
+                        assign router_config_in[RID].endp_addrs[(SOUTH_ENDP_LOC+1)*EAw -1 :  SOUTH_ENDP_LOC*EAw] = SOUTH_ADDR[EAw-1:0];
+                        assign router_config_in[RID].endp_ids[(SOUTH_ENDP_LOC+1)*NEw -1 :  SOUTH_ENDP_LOC*NEw] =SOUTH_ID[NEw-1:0];
+                    end
                 end
                 // endpoint(s) connection
                 // connect other local ports
                 for  (l=0; l<NL; l=l+1) begin :locals
-                    localparam ENDPID = fmesh_endp_id(x,y,l); 
-                    localparam LOCALP = (l==0) ? l : l + R2R_CHANELS_MESH_TORI; // first local port is connected to router port 0. The rest are connected at the end  
-                    localparam LL = l;
-                    localparam [EAw-1 :0] ENDP_ADDR = {LL[NLw-1: 0],R_ADDR[RAw-1: 0]};
-                    assign router_chan_in [fmesh_router_id(x,y)][LOCALP] =    chan_in_all [ENDPID];
-                    assign chan_out_all [ENDPID] = router_chan_out [fmesh_router_id(x,y)][LOCALP];
-                    assign router_config_in[RID].endp_addrs[(l+1)*EAw -1 :  l*EAw] = ENDP_ADDR[EAw-1:0];
-                    assign router_config_in[RID].endp_ids[(l+1)*NEw -1 :  l*NEw] =ENDPID[NEw-1:0];
+                    localparam ENDP_ID = fmesh_endp_id(x,y,l); 
+                    localparam LOCALP = (l==0) ? l : l + R2R_CHANELS_REGULAR; // first local port is connected to router port 0. The rest are connected at the end  
+                    localparam ENDP_ADDR = (IS_REGULAR_TOPO) ? regular_topo_endp_addr(ENDP_ID): fmesh_endp_addr(ENDP_ID);
+                    assign router_chan_in [fmesh_router_id(x,y)][LOCALP] =    chan_in_all [ENDP_ID];
+                    assign chan_out_all [ENDP_ID] = router_chan_out [fmesh_router_id(x,y)][LOCALP];
+                    assign router_config_in[RID].endp_addrs[(l+1)*EAw -1 :  l*EAw] = EAw'(ENDP_ADDR);
+                    assign router_config_in[RID].endp_ids[(l+1)*NEw -1 :  l*NEw] = NEw'(ENDP_ID);
                 end// locals
             end //y
         end //x
-    end// mesh_torus
+    end// regular_topo
     endgenerate
 endmodule

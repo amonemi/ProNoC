@@ -370,7 +370,7 @@ module ssa_check_destport #(
             .ss_port_nonhdr_flit(ss_port_nonhdr_flit)
         );
     end else if (IS_MESH | IS_TORUS ) begin : mesh
-        mesh_torus_ssa_check_destport #(
+        regular_topo_ssa_check_destport #(
             .ROUTE_TYPE(ROUTE_TYPE),
             .SW_LOC(SW_LOC),
             .P(P),

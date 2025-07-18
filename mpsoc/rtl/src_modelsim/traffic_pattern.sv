@@ -350,7 +350,7 @@ module two_dimension_pck_dst_gen
     wire [NYw-1 : 0] dest_y;
     wire [NLw-1  : 0] dest_l;
     
-    mesh_tori_endp_addr_decode src_addr_decode (
+    regular_topo_endp_addr_decode src_addr_decode (
         .e_addr(current_e_addr),
         .ex(current_x),
         .ey(current_y),

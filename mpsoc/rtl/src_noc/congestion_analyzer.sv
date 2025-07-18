@@ -211,7 +211,7 @@ endmodule
 * port_presel_based_dst_routers_ovc
 * CONGESTION_INDEX==2,3,4,5,6,7,9
 ********************************/ 
-module mesh_torus_port_presel_based_dst_routers_vc #(
+module regular_topo_port_presel_based_dst_routers_vc #(
     parameter PPSw=4,
     parameter P=5,
     parameter CONGw=2 //congestion width per port
@@ -380,7 +380,7 @@ module port_pre_sel_gen #(
             (CONGESTION_INDEX==9) ||
             (CONGESTION_INDEX==11)|| (CONGESTION_INDEX==12))      begin :dst_vc
             
-            mesh_torus_port_presel_based_dst_routers_vc #(
+            regular_topo_port_presel_based_dst_routers_vc #(
                 .PPSw(PPSw),
                 .P(P),
                 .CONGw(CONGw)

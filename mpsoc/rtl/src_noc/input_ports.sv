@@ -224,11 +224,28 @@ module input_queue_per_port #(
         WP = W * P,
         P_1 = (SELF_LOOP_EN )?  P : P-1,
         VP_1 = V * P_1;
-    
+// -------------------------------------------------------------------------
+// MAX_PCKS calculation explanation for non atomic vc allocation:
+// We want to compute the maximum number of packets that can be present in 
+// a FIFO buffer of size PORT_B flits, where each packet has a minimum size 
+// of MIN_PCK_SIZE flits. Packets are read and written flit by flit.
+//
+// Worst-case scenario:
+// - One packet is partially read (only the tail remains in the FIFO).
+// - One packet may be partially written (only header or part of the body written).
+// - The remaining (PORT_B - 1) flits can be filled with full min-size packets.
+//
+// Formula:
+//   MAX_PCKS = floor((PORT_B - 1) / MIN_PCK_SIZE)  // full packets
+//            + 1                                   // for partially read packet
+//            + (if (PORT_B - 1) % MIN_PCK_SIZE > 0) 1 else 0 // partial write
+//
+// This ensures the FIFO is fully utilized and accounts for partially present packets.
+// -------------------------------------------------------------------------
     localparam
-        OFFSET = ((PORT_B % MIN_PCK_SIZE)>0) ? 1 : 0,
-        NON_ATOM_PCKS =  (PORT_B > MIN_PCK_SIZE) ? (PORT_B / MIN_PCK_SIZE) + OFFSET : 1,
-        MAX_PCK = // min packet size is two hence the max packet number in buffer is (B/2)
+        OFFSET = (((PORT_B-1) % MIN_PCK_SIZE)>0) ? 1 : 0,
+        NON_ATOM_PCKS =  (PORT_B <= MIN_PCK_SIZE) ?  1 : ((PORT_B-1) / MIN_PCK_SIZE) + OFFSET +1,
+        MAX_PCK = 
             (IS_VCA_ATOMIC) ?  1 : 
             (OVC_ALLOC_MODE) ? (NON_ATOM_PCKS + 1) : NON_ATOM_PCKS,
         IGNORE_SAME_LOC_RD_WR_WARNING = ((SSA_EN == 1) || (SMART_EN==1) ) ? 1 : 0;
@@ -399,7 +416,7 @@ module input_queue_per_port #(
             .Q_out  (assigned_ovc_num [(i+1)*V-1 : i*V]  ));
     end
     if (IS_REGULAR_TOPO & IS_MULTI_ENDP_ROUTER & IS_UNICAST) begin 
-        mesh_tori_endp_addr_decode endp_addr_decode (
+        regular_topo_endp_addr_decode endp_addr_decode (
             .e_addr(dest_e_addr_in),
             .ex( ),
             .ey( ),
@@ -946,7 +963,7 @@ module input_queue_per_port #(
         end//for
         if (IS_REGULAR_TOPO & IS_UNICAST) begin : mesh_based
             
-            debug_mesh_tori_route_ckeck #(
+            debug_regular_topo_route_ckeck #(
                 .SW_LOC(SW_LOC)
                 )
                 route_ckeck (
@@ -1062,8 +1079,8 @@ module destp_generator #(
             .dest_port_in_encoded(dest_port_encoded),
             .dest_port_out(dest_port_out)
         );
-    end else if( IS_REGULAR_TOPO ) begin : reqular
-        mesh_torus_destp_generator #(
+    end else if( IS_REGULAR_TOPO ) begin : regular
+        regular_topo_destp_generator #(
             .TOPOLOGY(TOPOLOGY),
             .ROUTE_NAME(ROUTE_NAME),
             .ROUTE_TYPE(ROUTE_TYPE),

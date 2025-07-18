@@ -557,7 +557,7 @@ module pronoc_to_piton_wrapper #(
             .valid()
         );
     end else begin : mesh
-        mesh_tori_endp_addr_decode endp_addr_decode (
+        regular_topo_endp_addr_decode endp_addr_decode (
             .e_addr(hdr_flit.dest_e_addr),
             .ex( ),
             .ey( ),

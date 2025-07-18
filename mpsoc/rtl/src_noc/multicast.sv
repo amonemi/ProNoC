@@ -90,7 +90,7 @@ module multicast_routing_mesh #(
     wire [NE-1 : 0] local_p [NL-1 : 0];
     wire   [RXw-1 : 0]  current_rx;
     wire   [RYw-1 : 0]  current_ry;
-    mesh_tori_router_addr_decode  router_addr_decode (
+    regular_topo_router_addr_decode  router_addr_decode (
         .r_addr(current_r_addr),
         .rx(current_rx),
         .ry(current_ry),
@@ -218,7 +218,7 @@ module multicast_routing_fmesh #(
     wire [NE-1 : 0] y_plus,y_min;
     //Only one-bit is asserted for each local_p[i]
     wire [NE-1 : 0] local_p [MAX_P_FMESH-1 : 0];
-    mesh_tori_router_addr_decode router_addr_decode
+    regular_topo_router_addr_decode router_addr_decode
     (
         .r_addr(current_r_addr),
         .rx(current_rx),
@@ -248,7 +248,7 @@ module multicast_routing_fmesh #(
     for(i=0; i< NE; i=i+1) begin : endpoints
         //Endpoint decoded address
         localparam 
-            ADR = fmesh_addrencode(i),            
+            ADR = fmesh_endp_addr(i),            
             XX = ADR [NXw -1 : 0],
             YY = ADR [NXw+NYw-1 : NXw], 
             PP = ADR [NXw+NYw+Pw-1 : NXw+NYw];             
@@ -466,7 +466,7 @@ module multicast_chan_in_process #(
         for(i=0; i< NE; i=i+1) begin : _E
             //Endpoint decoded address
             localparam 
-                ADR = fmesh_addrencode(i),
+                ADR = fmesh_endp_addr(i),
                 XX = ADR [NXw -1 : 0],
                 YY = ADR [NXw+NYw-1 : NXw], 
                 PP = ADR [NXw+NYw+Pw-1 : NXw+NYw]; 
@@ -542,16 +542,16 @@ module multicast_dst_sel  (
     output [DSTPw-1 : 0] destport_out;
     wire  [DSTPw-1 : 0] arb_in, arb_out;
 
-    function integer mesh_tori_pririty_order;
+    function integer regular_topo_pririty_order;
     input integer x;
     begin
         case(x)
-            0 : mesh_tori_pririty_order = EAST;
-            1 : mesh_tori_pririty_order = WEST;
-            2 : mesh_tori_pririty_order = NORTH;
-            3 : mesh_tori_pririty_order = SOUTH;
-            4 : mesh_tori_pririty_order = LOCAL;    
-            default : mesh_tori_pririty_order =x;
+            0 : regular_topo_pririty_order = EAST;
+            1 : regular_topo_pririty_order = WEST;
+            2 : regular_topo_pririty_order = NORTH;
+            3 : regular_topo_pririty_order = SOUTH;
+            4 : regular_topo_pririty_order = LOCAL;    
+            default : regular_topo_pririty_order =x;
         endcase
     end
     endfunction // pririty_order
@@ -572,7 +572,7 @@ module multicast_dst_sel  (
     generate 
     for (i=0; i<DSTPw;i++) begin : lp
         localparam PR = 
-            ( IS_MESH | IS_TORUS | IS_FMESH ) ?  mesh_tori_pririty_order(i):
+            ( IS_MESH | IS_TORUS | IS_FMESH ) ?  regular_topo_pririty_order(i):
             ( IS_RING | IS_LINE ) ? ring_lin_pririty_order(i) : i;
         assign arb_in[i] = destport_in[PR];
         assign destport_out [PR] = arb_out[i];

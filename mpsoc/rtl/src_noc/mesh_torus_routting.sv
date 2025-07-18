@@ -1,11 +1,11 @@
 `include "pronoc_def.v"
 /************************************
 *
-*    mesh_torus_look_ahead_routing
+*    regular_topo_look_ahead_routing
 *
 *************************************/
 
-module mesh_torus_look_ahead_routing (
+module regular_topo_look_ahead_routing (
     current_x,  //current router x address
     current_y,  //current router y address
     dest_x,  // destination router x address
@@ -33,7 +33,7 @@ module mesh_torus_look_ahead_routing (
     // routing algorithm
     generate 
     if( IS_DETERMINISTIC ) begin :dtrmst
-        mesh_torus_deterministic_look_ahead_routing #(
+        regular_topo_deterministic_look_ahead_routing #(
             .P(P)
         ) deterministic_look_ahead(
             .current_x(current_x),
@@ -44,7 +44,7 @@ module mesh_torus_look_ahead_routing (
             .lkdestport(lkdestport_encoded)
         );
     end else begin :adapt
-        mesh_torus_adaptive_look_ahead_routing #(
+        regular_topo_adaptive_look_ahead_routing #(
             .P(P)
         ) adaptive_look_ahead (
             .current_x(current_x),
@@ -67,7 +67,7 @@ endmodule
 *    deterministic_look_ahead_routing
 **********************************************/
 
-module  mesh_torus_deterministic_look_ahead_routing #(
+module  regular_topo_deterministic_look_ahead_routing #(
     parameter P =5
 ) (
     current_x,  //current router x address
@@ -92,7 +92,7 @@ module  mesh_torus_deterministic_look_ahead_routing #(
     wire [P-1 : 0]  destport_one_hot;
     generate 
     if (IS_MESH || IS_TORUS || IS_FMESH ) begin: twoD
-        mesh_tori_decode_dstport decoder(
+        regular_topo_decode_dstport decoder(
             .dstport_encoded(destport),
             .dstport_one_hot(destport_one_hot)
         );
@@ -104,7 +104,7 @@ module  mesh_torus_deterministic_look_ahead_routing #(
     end
     endgenerate 
     
-    mesh_torus_next_router_addr_predictor #(
+    regular_topo_next_router_addr_predictor #(
         .P(P)
     ) addr_predictor(
         .destport(destport_one_hot),
@@ -115,7 +115,7 @@ module  mesh_torus_deterministic_look_ahead_routing #(
     );
     wire [P_1-1 : 0] lkdestport_encoded;
     
-    mesh_torus_conventional_routing #(
+    regular_topo_conventional_routing #(
         .LOCATED_IN_NI(0)
     ) conv_routing (
         .current_x(next_x),
@@ -133,7 +133,7 @@ endmodule
 /************************************************
 *        adaptive_look_ahead_routing
 **********************************************/
-module  mesh_torus_adaptive_look_ahead_routing #(
+module  regular_topo_adaptive_look_ahead_routing #(
     parameter P =5
 )(
     current_x,  //current router x address
@@ -175,7 +175,7 @@ module  mesh_torus_adaptive_look_ahead_routing #(
         endcase
    end //always
     
-    mesh_torus_next_router_addr_predictor #(
+    regular_topo_next_router_addr_predictor #(
         .P(P)
     ) addr_predictor_x (
         .destport(destport_x),
@@ -185,7 +185,7 @@ module  mesh_torus_adaptive_look_ahead_routing #(
         .next_y()
     );
     
-    mesh_torus_next_router_addr_predictor #(
+    regular_topo_next_router_addr_predictor #(
         .P(P)
     )  addr_predictor_y (
         .destport(destport_y),
@@ -195,7 +195,7 @@ module  mesh_torus_adaptive_look_ahead_routing #(
         .next_y(next_y)
     );
     
-    mesh_torus_conventional_routing #(
+    regular_topo_conventional_routing #(
         .LOCATED_IN_NI(0)
     ) conv_route_x (
         .current_x(next_x),
@@ -205,7 +205,7 @@ module  mesh_torus_adaptive_look_ahead_routing #(
         .destport(lkdestport_x)
     );
     
-    mesh_torus_conventional_routing #(
+    regular_topo_conventional_routing #(
         .LOCATED_IN_NI(0)
     ) conv_route_y (
         .current_x(current_x),
@@ -224,7 +224,7 @@ endmodule
 *    on the packet destination port   
 ********************************************************/
 
-module mesh_torus_next_router_addr_predictor #(
+module regular_topo_next_router_addr_predictor #(
     parameter P = 5
 )(
     destport,
@@ -288,7 +288,7 @@ endmodule
 /*******************************************************
 *            next_router_inport_predictor
 *********************************************************/
-module mesh_torus_next_router_inport_predictor #(
+module regular_topo_next_router_inport_predictor #(
     parameter P =5
 )(
     destport,
@@ -451,7 +451,7 @@ endmodule
 /***************************************************
 *            conventional routing 
 ***************************************************/
-module mesh_torus_conventional_routing #(
+module regular_topo_conventional_routing #(
     parameter LOCATED_IN_NI = 0 //used only for odd-even routing
     ) (   
     current_x,
@@ -848,7 +848,7 @@ module line_ring_decode_dstport (
 endmodule
 
 
-module mesh_tori_decode_dstport (
+module regular_topo_decode_dstport (
     dstport_encoded,
     dstport_one_hot
 );
@@ -867,7 +867,7 @@ module mesh_tori_decode_dstport (
    end //always
 endmodule 
 
-module mesh_tori_full_adapt_ovc_avail #(
+module regular_topo_full_adapt_ovc_avail #(
     parameter P = 4
 ) (
     reset,clk,

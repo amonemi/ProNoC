@@ -17,7 +17,7 @@ int custom_traffic_table[NE];
 typedef struct HOTSPOT_NODE {
     int  ip_num;
     char send_enable;
-    int  percentage; // x10    
+    int  percentage; // x10
 } hotspot_st;
 
 hotspot_st * hotspots;

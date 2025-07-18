@@ -1,0 +1,8 @@
+$model = bless( {
+    'noc_param'=> {
+        "TOPOLOGY" => "\"STAR\"",
+        "T1" => "7",
+        "T2" => "1",
+        "B"  => "5",
+    }
+}, 'ProNOC' );

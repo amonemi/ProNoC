@@ -51,13 +51,11 @@ MIN=2
 MAX=80
 STEP=4
 CONFS="general"
+FLAT=""
 
 CONFS_path=$(realpath $SCRPT_DIR_PATH/configurations)
 
-
-
-
-while getopts "h?a:p:u:l:s:d:m:" opt; do
+while getopts "h?a:p:u:l:s:d:m:f" opt; do
   case "$opt" in
     h|\?)
       echo "
@@ -77,6 +75,9 @@ Options:
                     Default: 5.
   -s <int>          Step size for increasing injection ratio in percentage (%). 
                     Default: 25.
+  -f                Enable flat mode. Use NoC_top as the Verilator top module.
+                    If not set, Verilator will be run on internal router modules
+                    and they will be connected manually in testbench.c.
   -d <dir>          Name of the directory where simulation model configuration 
                     files are located. Default: \"$CONFS\".
   -m <models>       Comma-separated list of simulation model names in the 
@@ -123,6 +124,8 @@ Available Configuration Directories for -d Option:
       ;; 
     s) STEP=$OPTARG
       ;;  
+    f) FLAT="-f"
+      ;;
     d) CONFS=$OPTARG
       ;; 
     m) model="-m $OPTARG"
@@ -148,6 +151,9 @@ echo "  Step Size           : $STEP (Simulation starts at MIN and increments by"
 echo "                        STEP to reach MAX)"
 echo "  Target Directory    : $CONFS (The model target directory where simulation"
 echo "                        is running)"
+if  [[ $FLAT == "-f" ]]; then
+    echo "  flat mode is enabled" 
+fi
 if [ -n "$model" ]; then
     echo "  Model Under Test    : $model (The model name under test)"
 fi
@@ -156,7 +162,7 @@ if [ -n "$Leftovers" ]; then
 fi
 echo "---------------------------------------------"
 
-args="-p $PRUN -u $MAX -l $MIN -s $STEP -d $CONFS $model"
+args="-p $PRUN -u $MAX -l $MIN -s $STEP -d $CONFS $model $FLAT "
 
 log_dir="${SCRPT_DIR_PATH}/result_logs"
 log_file="${log_dir}/${CONFS}"

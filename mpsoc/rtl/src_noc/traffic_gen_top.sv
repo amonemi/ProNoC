@@ -51,7 +51,7 @@ module  traffic_gen_top  #(
         /* verilator lint_off WIDTH */
         W=WEIGHTw,
         PORT_B = (TOPOLOGY!="FMESH")?  LB :
-        (ENDP_ID < NE_MESH_TORI)? LB :B; // in FMESH, the buffer size of endpoints connected to edge routers non-local ports are B not LB  
+        (ENDP_ID < NE_REGULAR)? LB :B; // in FMESH, the buffer size of endpoints connected to edge routers non-local ports are B not LB  
         /* verilator lint_on WIDTH */
     
     input   smartflit_chanel_t     chan_in;

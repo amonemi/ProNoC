@@ -15,6 +15,10 @@
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
+#ifdef FLAT_MODE
+#include "Vnoc.h"
+#endif
+
 #include "simulator.h"
 
 int main(int argc, char** argv) {
@@ -29,8 +33,11 @@ int main(int argc, char** argv) {
             class_percentage =   (int *) malloc(sizeof(int));
             class_percentage[0]=100;
     }
-    
+    #ifdef FLAT_MODE
+    noc_top = new Vnoc;
+    #else 
     Vrouter_new();
+    #endif
     if (ENDP_TYPE == PCK_INJECTOR)    for(i=0;i<NE;i++)    pck_inj[i]  = new Vpck_inj;
     else                            for(i=0;i<NE;i++)    traffic[i]  = new Vtraffic;
     FIXED_SRC_DST_PAIR = strcmp (TRAFFIC,"RANDOM") &  strcmp(TRAFFIC,"HOTSPOT") & strcmp(TRAFFIC,"random") & strcmp(TRAFFIC,"hot spot") & strcmp(TRAFFIC,"TASK");
@@ -62,7 +69,11 @@ int main(int argc, char** argv) {
     
     while (!Verilated::gotFinish()) {
         if(main_time - saved_time < 50) {//set reset and start
+            #ifdef FLAT_MODE
+            reset_active_high = ((noc_top->router_event[0][0] & ACTIVE_HIGH_RST)!=0) ? 1 : 0;
+            #else
             reset_active_high = ((router1[0]->router_event[0] & ACTIVE_HIGH_RST)!=0) ? 1 : 0;
+            #endif
             if (main_time-saved_time >= 10 ) reset = (reset_active_high)? 0 :1;           
             else reset = reset_active_high;     ;//keep system in reset
             if(main_time == saved_time+21){ count_en=1; start_i=1;}
@@ -755,6 +766,13 @@ class alignas(64) Vthread
                         traffic[node]->clk    = clk;
                     }
                 }//endp
+                #ifdef FLAT_MODE
+                if(n==0){//
+                    noc_top->reset= reset;
+                    noc_top->clk  = clk;
+                    noc_top->eval();
+                }
+                #else 
                 for(i=0;i<nr_per_thread;i++){
                     node= (n * nr_per_thread)+i;
                     if (node >= NR) break;
@@ -768,6 +786,7 @@ class alignas(64) Vthread
                     //if(router_is_active[node] | (Quick_sim_en==0))
                     single_router_eval(node);
                 }
+                #endif
                 for(i=0;i<ne_per_thread;i++){
                     node= (n * ne_per_thread)+i;
                     if (node >= NE) break;
@@ -856,10 +875,14 @@ void sim_eval_all (void){
     }else{// no thread
         connect_clk_reset_start_all();
         //routers_eval();
+        #ifdef FLAT_MODE
+            noc_top->eval();
+        #else
         for(i=0;i<NR;i++){
             //if(router_is_active[i] | (Quick_sim_en==0))
             single_router_eval(i);
         }
+        #endif
         if(ENDP_TYPE == PCK_INJECTOR) for(i=0;i<NE;i++) pck_inj[i]->eval();
         else for(i=0;i<NE;i++) traffic[i]->eval();
     }
@@ -886,7 +909,11 @@ void topology_connect_all_nodes (void){
 
 void sim_final_all (void){
     int i;
+    #ifdef FLAT_MODE
+    noc_top->final();
+    #else
     routers_final();
+    #endif
     if(ENDP_TYPE == PCK_INJECTOR) for(i=0;i<NE;i++) pck_inj[i]->final();
     else for(i=0;i<NE;i++) traffic[i]->final();
     //noc->final();
@@ -909,7 +936,12 @@ void connect_clk_reset_start_all(void){
             traffic[i]->clk    = clk;
         }
     }
+    #ifdef FLAT_MODE
+    noc_top->reset= reset;
+    noc_top->clk=clk;
+    #else
     connect_routers_reset_clk();
+    #endif
 }
 
 void traffic_clk_negedge_event(void){
