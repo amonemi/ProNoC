@@ -152,8 +152,8 @@ module  port_presel_based_dst_ports_credit #(
     input             reset,clk;
     output [PPSw-1 : 0] port_pre_sel;
     
-    reg [BVw-1 : 0] credit_per_port_next [P_1-1 : 0];
-    wire [BVw-1 : 0] credit_per_port [P_1-1 : 0];
+    logic [BVw-1 : 0] credit_per_port_next [P_1-1 : 0];
+    logic [BVw-1 : 0] credit_per_port [P_1-1 : 0];
     wire [P_1-1 : 0] credit_increased_per_port;
     wire [P_1-1 : 0] credit_decreased_per_port;
     wire [P_1-1 : 0] conjestion_cmp;
@@ -163,15 +163,13 @@ module  port_presel_based_dst_ports_credit #(
     for(i=0;   i<P_1; i=i+1) begin : P_           
         assign  credit_increased_per_port[i]=|credit_increased_all[((i+1)*V)-1 : i*V];
         assign  credit_decreased_per_port[i]=|credit_decreased_all[((i+1)*V)-1 : i*V];
-        pronoc_register #(
-            .W(BVw),
-            .RESET_TO(C_INT)
-        ) reg1 ( 
-            .D_in(credit_per_port_next[i]),
-            .reset(reset),    
-            .clk(clk),      
-            .Q_out(credit_per_port[i])
-        );
+        always_ff @ (`pronoc_clk_reset_edge )begin 
+            if(`pronoc_reset) begin     
+                credit_per_port[i] <= BVw'(C_INT);
+            end else begin
+                credit_per_port[i] <= credit_per_port_next[i];
+            end
+        end
     end//for
 
     for(i=0; i<P; i=i+1) begin :blk1
@@ -231,7 +229,7 @@ module regular_topo_port_presel_based_dst_routers_vc #(
         X_PLUS_Y_MINUS = 2,
         X_MINUS_Y_MINUS= 0;            
     input [CONG_ALw-1 : 0] congestion_in_all;
-    output [PPSw-1 : 0] port_pre_sel;
+    output reg [PPSw-1 : 0] port_pre_sel;
     input reset,clk;
     wire [CONGw-1 : 0] congestion_x_plus,congestion_y_plus,congestion_x_min,congestion_y_min;
     wire [PPSw-1 : 0] conjestion_cmp;
@@ -249,8 +247,14 @@ module regular_topo_port_presel_based_dst_routers_vc #(
     assign conjestion_cmp[X_MINUS_Y_PLUS] = (congestion_x_min   >  congestion_y_plus)? YDIR : XDIR;
     assign conjestion_cmp[X_PLUS_Y_MINUS] = (congestion_x_plus  >  congestion_y_min)?  YDIR : XDIR;
     assign conjestion_cmp[X_MINUS_Y_MINUS]= (congestion_x_min   >  congestion_y_min)?  YDIR : XDIR;
-   // assign port_pre_sel = conjestion_cmp;
-    pronoc_register #(.W(PPSw)) reg1 (.D_in(conjestion_cmp ), .reset(reset), .clk(clk), .Q_out(port_pre_sel));    
+    // assign port_pre_sel = conjestion_cmp;
+    always_ff @ (`pronoc_clk_reset_edge )begin 
+        if(`pronoc_reset) begin
+            port_pre_sel <= {PPSw{1'b0}};
+        end else begin
+            port_pre_sel <= conjestion_cmp;
+        end
+    end
 endmodule
 
 
@@ -474,15 +478,15 @@ module congestion_out_based_ivc_notgrant #(
     
     wire [IVC_CNTw-1 : 0] ivc_req_num;
     reg [CONGw-1 : 0] congestion_out ; 
-    wire [PV-1 : 0] ivc_request_not_granted; 
-    pronoc_register #(
-        .W(PV)          
-    ) reg1 ( 
-        .D_in(ivc_request_all & ~ivc_num_getting_sw_grant),
-        .reset(reset),    
-        .clk(clk),      
-        .Q_out(ivc_request_not_granted)
-    );
+    logic [PV-1 : 0] ivc_request_not_granted; 
+    always_ff @ (`pronoc_clk_reset_edge )begin 
+        if(`pronoc_reset) begin 
+            ivc_request_not_granted <= {PV{1'b0}};
+        end else begin
+            ivc_request_not_granted <= ivc_request_all & ~ivc_num_getting_sw_grant;
+        end
+    end
+    
     accumulator #(
         .INw(PV),
         .OUTw(IVC_CNTw),
@@ -798,19 +802,18 @@ module congestion_out_based_avb_ovc_not_granted_ivc #(
     assign  counter_in[SOUTH] ={ovc_not_avb[EAST] ,ovc_not_avb[NORTH] ,ovc_not_avb[WEST]};
     
     // counting not granted requests
-    wire [PV-1 : 0] ivc_request_not_granted; 
+    logic [PV-1 : 0] ivc_request_not_granted; 
     wire [V-1 : 0] ivc_not_grnt [P_1-1 : 0];
     wire [CNT_Vw-1 : 0] ivc_not_grnt_num [P_1-1 : 0];
     
+    always_ff @ (`pronoc_clk_reset_edge )begin 
+        if(`pronoc_reset) begin 
+            ivc_request_not_granted <= {PV{1'b0}};
+        end else begin
+            ivc_request_not_granted <= ivc_request_all & ~ivc_num_getting_sw_grant;
+        end
+    end
     
-    pronoc_register #(
-        .W(PV)          
-    ) reg1 ( 
-        .D_in(ivc_request_all & ~ivc_num_getting_sw_grant),
-        .reset(reset),    
-        .clk(clk),      
-        .Q_out(ivc_request_not_granted)
-    );
     assign  {ivc_not_grnt[SOUTH], ivc_not_grnt[WEST], ivc_not_grnt[NORTH],ivc_not_grnt[EAST]}= ivc_request_not_granted[PV-1 : V];  
     genvar i;
     generate 
@@ -955,7 +958,7 @@ localparam
     input [PV-1 : 0] ovc_avalable_all; 
     input [PV-1 : 0] ivc_request_all;    
     input [PV-1 : 0] ivc_num_getting_sw_grant; 
-    output [CONG_ALw-1 : 0] congestion_out_all;                 
+    output reg [CONG_ALw-1 : 0] congestion_out_all;                 
     input clk,reset;
     
     wire [CONG_ALw-1 : 0] congestion_out_all_next;  
@@ -1033,14 +1036,13 @@ localparam
         assign  congestion_out_all_next = {CONG_ALw{1'b0}};
     end
     endgenerate
-    pronoc_register #(
-        .W(CONG_ALw)
-    ) reg1 ( 
-        .D_in(congestion_out_all_next),
-        .reset(reset),
-        .clk(clk),
-        .Q_out(congestion_out_all)
-    );
+    always_ff @ (`pronoc_clk_reset_edge )begin 
+        if(`pronoc_reset) begin 
+            congestion_out_all <= {CONG_ALw{1'b0}};
+        end else begin
+            congestion_out_all <= congestion_out_all_next;
+        end
+    end
 endmodule
 
 
@@ -1073,21 +1075,20 @@ module  deadlock_detector #(
     input      reset,clk;
     output       detect;
     
-    wire [CNTw-1 : 0] counter [V-1 : 0];
+    logic [CNTw-1 : 0] counter [V-1 : 0];
     reg [CNTw-1 : 0] counter_next [V-1 : 0];
     wire [P-1 : 0] counter_rst_gen [V-1 : 0];
     wire [P-1 : 0] counter_en_gen [V-1 : 0];
     wire [V-1 : 0] counter_rst,counter_en,detect_gen;
-    wire [PV-1 : 0] ivc_num_getting_sw_grant_reg;
+    logic [PV-1 : 0] ivc_num_getting_sw_grant_reg;
+    always_ff @ (`pronoc_clk_reset_edge )begin 
+        if(`pronoc_reset) begin 
+            ivc_num_getting_sw_grant_reg <= {PV{1'b0}};
+        end else begin
+            ivc_num_getting_sw_grant_reg <= ivc_num_getting_sw_grant;
+        end
+    end
     
-    pronoc_register #(
-        .W(PV)          
-    ) reg1 ( 
-        .D_in(ivc_num_getting_sw_grant),
-        .reset(reset),    
-        .clk(clk),      
-        .Q_out(ivc_num_getting_sw_grant_reg)
-    );
     //seperate all same virtual chanels requests
     genvar i,j;
     generate 
@@ -1106,14 +1107,13 @@ module  deadlock_detector #(
             else if(counter_en[i])  counter_next[i] = counter[i]+1'b1;
         end//always
         
-        pronoc_register #(
-            .W(CNTw)          
-        ) reg2 ( 
-            .D_in(counter_next[i]),
-            .reset(reset),    
-            .clk(clk),      
-            .Q_out(counter[i])
-        );
+        always_ff @ (`pronoc_clk_reset_edge )begin 
+            if(`pronoc_reset) begin 
+                counter[i] <= {CNTw{1'b0}};
+            end else begin
+                counter[i] <= counter_next[i];
+            end
+        end
         // check counters value to detect deadlock
         assign detect_gen[i] = (counter[i]== MAX_CLK-1);
     end//i 

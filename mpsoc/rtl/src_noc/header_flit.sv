@@ -220,8 +220,13 @@ module header_flit_update_lk_route_ovc #(
     wire [V-1 : 0]  ovc_num; 
     wire [DSTPw-1 : 0]  lk_dest,dest_coded;
     wire [DSTPw-1 : 0]  lk_mux_out;
-    
-    pronoc_register #(.W(V)) reg1 (.D_in(vc_num_in), .Q_out(vc_num_delayed), .reset(reset), .clk(clk));   
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            vc_num_delayed <= '0;
+        end else begin
+            vc_num_delayed <= vc_num_in;
+        end
+    end
     assign hdr_flag = (IS_MULTI_FLIT)? flit_in[Fw-1]: 1'b1;
     onehot_mux_1D #(
         .W(DSTPw),
@@ -235,7 +240,13 @@ module header_flit_update_lk_route_ovc #(
     generate 
     if( SSA_EN == 1 ) begin : predict // bypass the lk fifo when no ivc is granted
         logic ivc_any_delayed;
-        pronoc_register #(.W(1)) reg2 (.D_in(any_ivc_sw_request_granted ), .Q_out(ivc_any_delayed), .reset(reset), .clk(clk));
+        always_ff @ (`pronoc_clk_reset_edge) begin
+            if (`pronoc_reset) begin
+                ivc_any_delayed <= 1'b0;
+            end else begin
+                ivc_any_delayed <= any_ivc_sw_request_granted;
+            end
+        end
         assign lk_dest = (ivc_any_delayed == 1'b0)? lk_dest_not_registered : lk_mux_out;
     end else begin : no_predict
         assign lk_dest =lk_mux_out;

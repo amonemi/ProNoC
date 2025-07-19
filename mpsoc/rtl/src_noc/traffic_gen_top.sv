@@ -145,7 +145,13 @@ module  traffic_gen_top  #(
     
     wire [HDR_Dw-1 : 0] hdr_data_in,rd_hdr_data_out;
     
-    pronoc_register #(.W(DAw)) reg2 (.D_in(dest_e_addr ), .Q_out(dest_e_addr_reg), .reset(reset), .clk(clk));
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            dest_e_addr_reg <= '0;
+        end else begin
+            dest_e_addr_reg <= dest_e_addr;
+        end
+    end
     
     wire [DSTPw-1 : 0] destport;   
     wire [V-1 : 0] ovc_wr_in;
@@ -180,13 +186,18 @@ module  traffic_gen_top  #(
     
     logic [DELAYw-1 : 0] start_delay_counter,start_delay_counter_next;
     logic  start_en_next , start_en;
-    
-    pronoc_register #(.W(1)) streg1 (.reset(reset),.clk(clk), .D_in(start_en_next), .Q_out(start_en)    );
-    pronoc_register #(.W(DELAYw)) streg2 (.reset(reset),.clk(clk), .D_in(start_delay_counter_next), .Q_out(start_delay_counter)    );
-    
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            start_en <= 1'b0;
+            start_delay_counter <= '0;  // zero all bits of DELAYw width
+        end else begin
+            start_en <= start_en_next;
+            start_delay_counter <= start_delay_counter_next;
+        end
+    end
     always_comb begin 
-        start_en_next =start_en;
-        start_delay_counter_next= start_delay_counter;
+        start_en_next = start_en;
+        start_delay_counter_next = start_delay_counter;
         if(start)    begin 
             start_en_next=1'b1;
             start_delay_counter_next={DELAYw{1'b0}};

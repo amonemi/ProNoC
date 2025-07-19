@@ -74,7 +74,7 @@ module  ss_allocator #(
     wire [PV-1 : 0] ivc_reset_all;
     wire [PV-1 : 0] single_flit_pck_all,ovc_single_flit_pck_all;
     wire [PV-1 : 0] decreased_credit_in_ss_ovc_all;
-    wire [P-1 : 0] ssa_flit_wr_all;
+    logic [P-1 : 0] ssa_flit_wr_all;
     wire [PV-1 : 0] any_ovc_granted_in_ss_port;
     wire [PV-1 : 0] ovc_avalable_in_ss_port;
     wire [PV-1 : 0] ovc_allocated_in_ss_port;
@@ -157,12 +157,13 @@ module  ss_allocator #(
     end// vc_loop
     
     for(i=0;i<P;i=i+1)begin: P_
-        pronoc_register #(.W(1)) reg1 (
-            .D_in(|ivc_num_getting_sw_grantin_SS_all[(i+1)*V-1 : i*V] ),
-            .Q_out(ssa_flit_wr_all[i]),
-            .reset(reset),
-            .clk(clk)
-        );
+        always_ff @ (`pronoc_clk_reset_edge) begin
+            if (`pronoc_reset) begin
+                ssa_flit_wr_all[i] <= 1'b0;
+            end else begin
+                ssa_flit_wr_all[i] <= |ivc_num_getting_sw_grantin_SS_all[(i+1)*V-1 : i*V];
+            end
+        end
         
         assign ssa_ctrl_o[i].ovc_is_allocated =ovc_allocated_all [(i+1)*V-1 : i*V];
         assign ssa_ctrl_o[i].ovc_is_released = ovc_released_all  [(i+1)*V-1 : i*V];      

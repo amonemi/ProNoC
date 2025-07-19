@@ -25,7 +25,7 @@ module check_flit_chanel_type_is_in_order
     input [V-1 : 0] vc_num_in;
     
     wire [V-1 : 0] vc_num_hdr_wr, vc_num_tail_wr,vc_num_bdy_wr ;
-    wire [V-1 : 0] hdr_passed;
+    logic [V-1 : 0] hdr_passed;
     reg  [V-1 : 0] hdr_passed_next;
     wire [V-1 : 0] single_flit_pck;
     
@@ -38,14 +38,14 @@ module check_flit_chanel_type_is_in_order
     end
     
     `ifdef SIMULATION
-    pronoc_register #(
-        .W(V)
-    ) reg2 ( 
-        .D_in(hdr_passed_next),
-        .reset(reset),
-        .clk(clk),
-        .Q_out(hdr_passed)
-    );
+    always_ff @ (`pronoc_clk_reset_edge )begin 
+        if(`pronoc_reset) begin 
+            hdr_passed <= {V{1'b0}};
+        end else begin
+            hdr_passed <= hdr_passed_next;
+        end
+    end
+    
     always @ (posedge clk ) begin 
         if(( hdr_passed & vc_num_hdr_wr)>0  )begin 
             $display("%t ERROR: a header flit is received in  an active IVC %m",$time);
@@ -144,16 +144,15 @@ module debug_regular_topo_route_ckeck #(
             end//if
         end//always
     if(IS_FULL_ADAPTIVE) begin :full_adpt
-        wire [V-1 : 0] not_empty;
-        reg  [V-1 : 0] not_empty_next;
-        pronoc_register #(
-            .W(V)
-        ) reg2 ( 
-            .D_in(not_empty_next),
-            .reset(reset),
-            .clk(clk),
-            .Q_out(not_empty)
-        );
+        reg [V-1 : 0] not_empty;
+        reg [V-1 : 0] not_empty_next;
+        always_ff @ (`pronoc_clk_reset_edge )begin 
+            if(`pronoc_reset) begin 
+                not_empty <= {V{1'b0}};
+            end else begin
+                not_empty <= not_empty_next;
+            end
+        end
         always @ (*) begin
             not_empty_next = not_empty;
             if(hdr_flg_in & flit_in_wr) begin
@@ -402,7 +401,7 @@ module check_pck_size (
     input [V-1 : 0] vc_num_in;
     input [DAw-1: 0] dest_e_addr_in;
     wire [NE-1 : 0] dest_mcast_all_endp [V-1 : 0];
-    wire [31 : 0] pck_size_counter [V-1: 0];
+    logic [31 : 0] pck_size_counter [V-1: 0];
     reg  [31 : 0] pck_size_counter_next [V-1: 0];
     wire [DAw-1 : 0] dest_e_addr [V-1:0];
     wire [V-1 : 0] vc_hdr_wr_en;
@@ -422,13 +421,13 @@ module check_pck_size (
                 end 
             end
         end
-        
-        pronoc_register #(.W(32)) reg1(
-            .D_in(pck_size_counter_next[i]),
-            .reset(reset), 
-            .clk(clk ), 
-            .Q_out (pck_size_counter[i])
-        );
+        always_ff @ (`pronoc_clk_reset_edge )begin 
+            if(`pronoc_reset) begin
+                pck_size_counter[i] <= 32'b0;
+            end else begin
+                pck_size_counter[i] <= pck_size_counter_next[i];
+            end
+        end
         
         always @(posedge clk) begin 
             if (vc_num_in == VC)begin 

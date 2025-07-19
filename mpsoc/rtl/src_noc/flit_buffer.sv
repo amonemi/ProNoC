@@ -78,12 +78,12 @@ module flit_buffer
     output [V-1 : 0]  flit_is_tail;
     
     //pointers
-    wire [PTRw- 1 : 0] rd_ptr [V-1 :0];
-    wire [PTRw- 1 : 0] wr_ptr [V-1 :0];
+    logic [PTRw- 1 : 0] rd_ptr [V-1 :0];
+    logic [PTRw- 1 : 0] wr_ptr [V-1 :0];
     reg [PTRw- 1 : 0] rd_ptr_next [V-1 :0];
     reg [PTRw- 1 : 0] wr_ptr_next [V-1 :0];
     reg [PTRw- 1 : 0] sub_rd_ptr_next [V-1 :0];
-    wire [PTRw- 1 : 0] sub_rd_ptr [V-1 :0];
+    logic [PTRw- 1 : 0] sub_rd_ptr [V-1 :0];
     
     wire [ARRAYw-1 : 0] rd_ptr_array;
     wire [ARRAYw-1 : 0] wr_ptr_array;
@@ -92,9 +92,9 @@ module flit_buffer
     wire [RAM_DATA_WIDTH-1 : 0] fifo_ram_dout;
     wire [V-1 : 0] wr;
     wire [V-1 : 0] rd;
-    wire [DEPTHw-1 : 0] depth [V-1 :0];
-    reg [DEPTHw-1 : 0] depth_next [V-1 :0];
-    wire [DEPTHw-1 : 0] sub_depth [V-1 :0];
+    logic [DEPTHw-1 : 0] depth [V-1 :0];
+    logic [DEPTHw-1 : 0] depth_next [V-1 :0];
+    logic [DEPTHw-1 : 0] sub_depth [V-1 :0];
     logic [DEPTHw-1 : 0] sub_depth_next  [V-1 :0];
     
     reg [B-1 : 0] tail_fifo [V-1 : 0];
@@ -157,8 +157,15 @@ module flit_buffer
         if (~IS_UNICAST) begin
             assign  rd_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = sub_rd_ptr[i]; 
             localparam RESET_TO = ((2**Bw)==B)? 0 : B*i;
-            pronoc_register #(.W(PTRw),.RESET_TO(RESET_TO)) reg4 (.D_in(sub_rd_ptr_next[i]), .Q_out(sub_rd_ptr[i]), .reset(reset), .clk(clk));
-            pronoc_register #(.W(DEPTHw)) sub_depth_reg (.D_in(sub_depth_next[i] ), .Q_out(sub_depth [i]), .reset(reset), .clk(clk));
+            always_ff @ (`pronoc_clk_reset_edge )begin 
+                if(`pronoc_reset) begin 
+                    sub_rd_ptr[i] <= PTRw'(RESET_TO);
+                    sub_depth[i]  <= {DEPTHw{1'b0}};
+                end else begin
+                    sub_rd_ptr[i] <= sub_rd_ptr_next[i];
+                    sub_depth[i]  <= sub_depth_next[i];
+                end
+            end
             assign  vc_not_empty [i] = (sub_depth[i] > 0);
         end else begin : unicast
             assign  rd_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = rd_ptr[i];   
@@ -246,15 +253,20 @@ module flit_buffer
         );  
         
         for(i=0;i<V;i=i+1) begin :V_
-            
             always @(posedge clk) begin
                 if(wr[i]) tail_fifo[i][wr_ptr[i]] <= din[Fw-2];
             end
-            
-            pronoc_register #(.W(Bw    )) reg1 (.D_in(rd_ptr_next[i]), .Q_out(rd_ptr[i]), .reset(reset), .clk(clk));
-            pronoc_register #(.W(Bw    )) reg2 (.D_in(wr_ptr_next[i]), .Q_out(wr_ptr[i]), .reset(reset), .clk(clk));
-            pronoc_register #(.W(DEPTHw)) reg3 (.D_in(depth_next[i] ), .Q_out(depth [i]), .reset(reset), .clk(clk));
-            
+            always_ff @ (`pronoc_clk_reset_edge )begin 
+                if(`pronoc_reset) begin 
+                    rd_ptr[i] <= {Bw{1'b0}};
+                    wr_ptr[i] <= {Bw{1'b0}};
+                    depth[i]  <= {DEPTHw{1'b0}};
+                end else begin
+                    rd_ptr[i] <= rd_ptr_next[i];
+                    wr_ptr[i] <= wr_ptr_next[i];
+                    depth[i]  <= depth_next[i];
+                end
+            end            
             if (~IS_UNICAST) begin :multicast
                 assign  flit_is_tail[i] = (IS_MULTI_FLIT)? tail_fifo[i][sub_rd_ptr[i]] : 1'b1;
             end else begin : unicast
@@ -273,9 +285,17 @@ module flit_buffer
     wire [PTRw-1 : 0] wr_ptr_tmp  [V-1 : 0];
         for(i=0;i<V;i=i+1) begin :V_
             localparam [PTRw-1 : 0] BI = PTRw'(B*i);
-            pronoc_register #(.W(BVw),.RESET_TO(B*i)) reg1 (.D_in(rd_ptr_next[i]), .Q_out(rd_ptr[i]), .reset(reset), .clk(clk));
-            pronoc_register #(.W(BVw),.RESET_TO(B*i)) reg2 (.D_in(wr_ptr_next[i]), .Q_out(wr_ptr[i]), .reset(reset), .clk(clk));
-            pronoc_register #(.W(DEPTHw)) reg3 (.D_in(depth_next[i]), .Q_out(depth[i]), .reset(reset), .clk(clk));
+            always_ff @ (`pronoc_clk_reset_edge )begin 
+                if(`pronoc_reset) begin
+                    rd_ptr[i] <= BI;
+                    wr_ptr[i] <= BI;
+                    depth[i]  <= {DEPTHw{1'b0}};
+                end else begin
+                    rd_ptr[i] <= rd_ptr_next[i];
+                    wr_ptr[i] <= wr_ptr_next[i];
+                    depth[i]  <= depth_next[i];
+                end
+            end            
             assign wr_ptr_tmp [i] = wr_ptr[i]-BI;
             always @(posedge clk) begin
                 if(wr[i]) tail_fifo[i][wr_ptr_tmp[i][Bw-1:0]] <= din[Fw-2];
@@ -517,7 +537,7 @@ module fwft_fifo #(
     input [DATA_WIDTH-1:0] din,     // Data in
     input wr_en,   // Write enable
     input rd_en,   // Read the next word
-    output [DATA_WIDTH-1:0]  dout,    // Data out
+    output logic [DATA_WIDTH-1:0]  dout,    // Data out
     output full,
     output nearly_full,
     output recieve_more_than_0,
@@ -540,7 +560,7 @@ module fwft_fifo #(
     
     wire    out_ld ;
     wire [DATA_WIDTH-1        : 0] dout_next;
-    wire[DEPTH_DATA_WIDTH-1 : 0]  depth;
+    logic [DEPTH_DATA_WIDTH-1 : 0]  depth;
     reg [DEPTH_DATA_WIDTH-1 : 0]  depth_next;
     reg [DATA_WIDTH-1:0]  dout_next_ld;
     
@@ -619,10 +639,16 @@ module fwft_fifo #(
         assign recieve_more_than_1 = 1'b0;
     end
     endgenerate
-
-    pronoc_register #(.W(DEPTH_DATA_WIDTH)) reg1 (.D_in(depth_next), .Q_out(depth), .reset(reset), .clk(clk));
-    pronoc_register #(.W(DATA_WIDTH))       reg2 (.D_in(dout_next_ld), .Q_out(dout ), .reset(reset), .clk(clk));
-
+    always_ff @ (`pronoc_clk_reset_edge )begin 
+            if(`pronoc_reset) begin
+                depth <= {DEPTH_DATA_WIDTH{1'b0}};
+                dout  <= {DATA_WIDTH{1'b0}};
+            end else begin
+                depth <= depth_next;
+                dout  <= dout_next_ld;
+            end
+        end
+    
     always_comb begin
         depth_next = depth;
         dout_next_ld = dout;
@@ -681,7 +707,7 @@ module fwft_fifo_with_output_clear #(
     input [DATA_WIDTH-1:0] din;
     input wr_en;
     input rd_en;
-    output [DATA_WIDTH-1:0]  dout;
+    output logic [DATA_WIDTH-1:0]  dout;
     output full;
     output nearly_full;
     output recieve_more_than_0;
@@ -704,7 +730,7 @@ module fwft_fifo_with_output_clear #(
     
     wire out_ld;
     wire [DATA_WIDTH-1 : 0] dout_next;
-    wire [DEPTH_DATA_WIDTH-1 : 0]  depth;
+    logic [DEPTH_DATA_WIDTH-1 : 0]  depth;
     reg [DEPTH_DATA_WIDTH-1 : 0]  depth_next;
     reg [DATA_WIDTH-1:0]  dout_next_ld;
     
@@ -782,10 +808,16 @@ module fwft_fifo_with_output_clear #(
         assign recieve_more_than_1 = 1'b0;
     end
     endgenerate
-
-    pronoc_register #(.W(DEPTH_DATA_WIDTH)) reg1 (.D_in(depth_next), .Q_out(depth), .reset(reset), .clk(clk));
-    pronoc_register #(.W(DATA_WIDTH))       reg2 (.D_in(dout_next_ld), .Q_out(dout), .reset(reset), .clk(clk));
-
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            depth <= '0;
+            dout  <= '0;
+        end else begin
+            depth <= depth_next;
+            dout  <= dout_next_ld;
+        end
+    end
+    
     always_comb begin
         depth_next = depth;
         if (wr_en & ~rd_en) depth_next = depth + 1'h1;
@@ -856,15 +888,15 @@ module fwft_fifo_bram #(
     localparam DEPTH_DATA_WIDTH = log2(MAX_DEPTH +1);
     
     reg valid_next;  
-    wire valid;
+    reg valid;
     wire pass_din_to_out_reg, out_reg_wr_en, bram_out_is_valid_next;
-    wire bram_out_is_valid;
+    logic bram_out_is_valid;
     wire bram_empty, bram_rd_en, bram_wr_en;
     wire [DATA_WIDTH-1 : 0] bram_dout;
-    wire [DATA_WIDTH-1 : 0] out_reg;
+    reg [DATA_WIDTH-1 : 0] out_reg;
     reg [DATA_WIDTH-1 : 0] out_reg_next;
     
-    wire [DEPTH_DATA_WIDTH-1 : 0]  depth;
+    logic [DEPTH_DATA_WIDTH-1 : 0]  depth;
     reg [DEPTH_DATA_WIDTH-1 : 0]  depth_next;
     
     assign dout = (bram_out_is_valid)?  bram_dout : out_reg;
@@ -899,11 +931,19 @@ module fwft_fifo_bram #(
         .clk(clk)
     );  
     
-    pronoc_register #(.W(DATA_WIDTH)      ) reg1 (.D_in(out_reg_next           ), .Q_out(out_reg), .reset(reset), .clk(clk));
-    pronoc_register #(.W(1)               ) reg2 (.D_in(valid_next             ), .Q_out(valid), .reset(reset), .clk(clk));
-    pronoc_register #(.W(1)               ) reg3 (.D_in(bram_out_is_valid_next ), .Q_out(bram_out_is_valid), .reset(reset), .clk(clk));
-    pronoc_register #(.W(DEPTH_DATA_WIDTH)) reg4 (.D_in(depth_next             ), .Q_out(depth), .reset(reset), .clk(clk));
-    
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            out_reg            <= '0;
+            valid              <= 1'b0;
+            bram_out_is_valid  <= 1'b0;
+            depth              <= '0;
+        end else begin
+            out_reg            <= out_reg_next;
+            valid              <= valid_next;
+            bram_out_is_valid  <= bram_out_is_valid_next;
+            depth              <= depth_next;
+        end
+    end
     always_comb begin
         out_reg_next = out_reg; 
         depth_next = depth;

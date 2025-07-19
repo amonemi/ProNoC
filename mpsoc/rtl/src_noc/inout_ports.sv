@@ -347,7 +347,7 @@ module output_vc_status #(
     output  [V-1 : 0] nearly_full_vc;
     output  [V-1 : 0] full_vc;
     output  [V-1 : 0] empty_vc;
-    output  [V-1 : 0] cand_vc;
+    output  logic [V-1 : 0] cand_vc;
     input   cand_wr_vc_en;
     input   clk;
     input   reset;
@@ -379,17 +379,13 @@ module output_vc_status #(
     genvar i;
     generate
     for(i=0;i<V;i=i+1) begin : vc_loop
-        
-        pronoc_register_reset_init #(
-            .W(DEPTH_WIDTH)
-        )reg1( 
-            .D_in(credit_next[i]),
-            .reset(reset),
-            .clk(clk),
-            .Q_out(credit[i]),
-            .reset_to(credit_init_val_in[i][DEPTH_WIDTH-1:0])
-        );
-        
+        always_ff @ (`pronoc_clk_reset_edge) begin
+            if (`pronoc_reset) begin
+                credit[i] <= credit_init_val_in[i][DEPTH_WIDTH-1:0];
+            end else begin
+                credit[i] <= credit_next[i];
+            end
+        end
         assign  full_vc[i]   = (credit[i] == {DEPTH_WIDTH{1'b0}});
         assign  nearly_full_vc[i]=  (credit[i] == 1) |  full_vc[i];
         assign  empty_vc[i]  = (credit[i] == credit_init_val_in[i][DEPTH_WIDTH-1:0]);
@@ -409,9 +405,14 @@ module output_vc_status #(
         .any_grant()
     );
     
-    logic [V-1 : 0] cand_vc_ld_next;  
-    pronoc_register #(.W(V)) reg2 (.D_in(cand_vc_ld_next ), .Q_out(cand_vc), .reset(reset), .clk(clk));
-
+    logic [V-1 : 0] cand_vc_ld_next;
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            cand_vc <= '0;
+        end else begin
+            cand_vc <= cand_vc_ld_next;
+        end
+    end
     always_comb begin 
         cand_vc_ld_next = cand_vc;
         if(cand_wr_vc_en)    cand_vc_ld_next  =  cand_vc_next;

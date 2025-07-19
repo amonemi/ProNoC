@@ -194,23 +194,25 @@ module packet_injector  (
     end
     
     logic [V-1 : 0] credit_o, credit_o_next;
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            counter  <= '0;
+            counter2 <= '0;
+            credit_o <= '0;
+            flit_type <= HEADER;
+        end else begin
+            counter  <= counter_next;
+            counter2 <= counter2_next;
+            credit_o <= credit_o_next;
+            flit_type <= flit_type_next;
+        end
+    end
     
-    //pronoc_register #(.W(3),.RESET_TO(HEADER) ) reg1 (.D_in(flit_type_next ), .Q_out(flit_type), .reset(reset), .clk(clk));
-    pronoc_register #(.W(PCK_SIZw)) reg2 (.D_in(counter_next ), .Q_out(counter), .reset(reset), .clk(clk));
-    pronoc_register #(.W(CNTw))     reg3 (.D_in(counter2_next ), .Q_out(counter2), .reset(reset), .clk(clk));
-    pronoc_register #(.W(V))     reg4 (.D_in(credit_o_next ), .Q_out(credit_o), .reset(reset), .clk(clk));
-
     always_comb begin
         credit_o_next = credit_o;
         if (chan_in.flit_chanel.flit_wr) credit_o_next =  chan_in.flit_chanel.flit.vc;
         else credit_o_next = {V{1'b0}};
-    end
-    
-    always @(`pronoc_clk_reset_edge)begin 
-        if(`pronoc_reset) flit_type<=HEADER;
-        else flit_type <= flit_type_next;
-    end
-    
+    end 
     injector_ovc_status #(
         .V(V),
         .B(LB),
@@ -339,13 +341,21 @@ module packet_injector  (
     end//for i
     endgenerate
     
-    wire [V-1 : 0] vc_reg;
-    wire tail_flag_reg, hdr_flag_reg;
+    logic [V-1 : 0] vc_reg;
+    logic tail_flag_reg, hdr_flag_reg;
     logic [DISTw-1:   0] distance;
     
-    pronoc_register #(.W(V))   register1 (.D_in(chan_in.flit_chanel.flit.vc), .reset(reset ), .clk(clk),.Q_out(vc_reg));
-    pronoc_register #(.W(1))   register2 (.D_in(chan_in.flit_chanel.flit.hdr_flag), .reset(reset ), .clk(clk),.Q_out(hdr_flag_reg));
-    pronoc_register #(.W(1))   register3 (.D_in(chan_in.flit_chanel.flit.tail_flag & chan_in.flit_chanel.flit_wr ),.reset(reset ), .clk (clk),.Q_out(tail_flag_reg));
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            vc_reg       <= '0;
+            hdr_flag_reg <= 1'b0;
+            tail_flag_reg<= 1'b0;
+        end else begin
+            vc_reg       <= chan_in.flit_chanel.flit.vc;
+            hdr_flag_reg <= chan_in.flit_chanel.flit.hdr_flag;
+            tail_flag_reg<= chan_in.flit_chanel.flit.tail_flag & chan_in.flit_chanel.flit_wr;
+        end
+    end
     
     wire [Vw-1 : 0] vc_bin;
     

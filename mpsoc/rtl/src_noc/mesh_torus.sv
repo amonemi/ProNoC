@@ -448,7 +448,7 @@ module  regular_topo_swap_port_presel_gen #(
     input clk,reset;
     output swap_port_presel;
     
-    wire swap_reg;
+    logic swap_reg;
     wire swap_port_presel_next;
     wire  evc_forbiden; 
     /************************
@@ -469,7 +469,13 @@ module  regular_topo_swap_port_presel_gen #(
     assign  evc_forbiden = (sel)? y_evc_forbiden : x_evc_forbiden;
     assign  swap_port_presel_next= non_assigned_ovc_request & evc_forbiden & avc_unavailable;
     assign swap_port_presel = swap_reg;
-    pronoc_register #(.W(1)) reg2 (.D_in(swap_port_presel_next ), .Q_out(swap_reg), .reset(reset), .clk(clk));
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            swap_reg <= 1'b0;
+        end else begin
+            swap_reg <= swap_port_presel_next;
+        end
+    end
 endmodule
 
 

@@ -176,8 +176,8 @@ module weight_counter #(
     output  Q_out;
     wire [WEIGHTw-1    :   0]  weight;
     
-    reg  [WEIGHTw-1    :   0] counter_next;
-    wire [WEIGHTw-1    :   0] counter;
+    logic  [WEIGHTw-1    :   0] counter_next;
+    logic [WEIGHTw-1    :   0] counter;
     wire couner_zero, load;
     
     assign couner_zero = counter == {WEIGHTw{1'b0}};
@@ -190,7 +190,13 @@ module weight_counter #(
         if(decr) counter_next  = (couner_zero)? weight-1'b1  : counter - 1'b1; // if the couner has zero value then the load is active not decrese
     end
     
-    pronoc_register #(.W(WEIGHTw)) reg2 (.D_in(counter_next ), .Q_out(counter), .reset(reset), .clk(clk));
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            counter <= '0;  
+        end else begin
+            counter <= counter_next;
+        end
+    end
 endmodule
 
 
@@ -213,8 +219,8 @@ module classic_weight_counter #(
     output  Q_out;
     wire [WEIGHTw-1    :   0]  weight;
     
-    reg  [WEIGHTw-1    :   0] counter_next;
-    wire [WEIGHTw-1    :   0] counter;
+    logic [WEIGHTw-1    :   0] counter_next;
+    logic [WEIGHTw-1    :   0] counter;
     wire counter_zero, load;
     
     assign counter_zero = counter == {WEIGHTw{1'b0}};
@@ -227,10 +233,14 @@ module classic_weight_counter #(
         if(decr && !counter_zero) counter_next  = counter - 1'b1; // if the counter has zero value then the load is active not decrese
     end
     
-    pronoc_register #(.W(WEIGHTw)) reg2 (.D_in(counter_next ), .Q_out(counter), .reset(reset), .clk(clk));
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            counter <= '0; 
+        end else begin
+            counter <= counter_next;
+        end
+    end
 endmodule
-
-
 
 /***************
 *   weight_control

@@ -106,18 +106,24 @@ module output_ports #(
     wire [VP_1-1 : 0]  credit_in_perport [P-1 : 0];
     wire [VP_1-1 : 0]  full_perport [P-1 : 0];
     wire [VP_1-1 : 0]  nearly_full_perport [P-1 : 0];
-    wire [PV-1 : 0]    full_all,nearly_full_all, empty_all;
+    logic [PV-1 : 0]    full_all,nearly_full_all, empty_all;
     wire [PV-1 : 0]    full_all_next,nearly_full_all_next,empty_all_next;
     wire [PV-1 : 0] credit_decreased_all;
     wire [PV-1 : 0] ovc_released_all;
     wire [CREDITw-1 : 0] credit_counter [PV-1 : 0]; 
     wire [PVV-1 : 0] assigned_ovc_num_all;
     wire [PV-1 : 0] ovc_is_assigned_all;
-
-    pronoc_register #(.W(PV)) reg_1 ( .D_in(full_all_next), .reset(reset), .clk(clk), .Q_out(full_all));
-    pronoc_register #(.W(PV)) reg_2 ( .D_in(nearly_full_all_next), .reset(reset), .clk(clk), .Q_out(nearly_full_all));
-    pronoc_register #(.W(PV)) reg_3 ( .D_in(empty_all_next), .reset(reset), .clk(clk), .Q_out(empty_all));
-
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            full_all <= '0;
+            nearly_full_all <= '0;
+            empty_all <= '0;
+        end else begin
+            full_all <= full_all_next;
+            nearly_full_all <= nearly_full_all_next;
+            empty_all <= empty_all_next;
+        end
+    end
     genvar i,j;
     generate
         if(IS_VCA_ATOMIC) begin :atomic
@@ -277,8 +283,14 @@ module output_ports #(
             end
         end
     end//always
-
-    pronoc_register #(.W(PV)) reg2 (.D_in(ovc_status_next ), .Q_out(ovc_status), .reset(reset), .clk(clk));
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            ovc_status <= '0;
+        end else begin
+            ovc_status <= ovc_status_next;
+        end
+    end
+    
     port_pre_sel_gen #(
         .P(P)
     ) port_pre_sel_top (
@@ -415,15 +427,13 @@ module   credit_monitor_per_ovc  #(
     assign     full_all_next = (credit_counter_next == {DEPTHw{1'b0}});
     assign     nearly_full_all_next = (credit_counter_next  <= 1);    
     
-    pronoc_register_reset_init #(
-        .W(DEPTHw)
-    )reg1( 
-        .D_in(credit_counter_next),
-        .reset(reset),
-        .clk(clk),
-        .Q_out(credit_counter),
-        .reset_to(credit_init_val_i [DEPTHw-1 : 0]) // Bint;
-    );
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            credit_counter <= credit_init_val_i[DEPTHw-1:0];
+        end else begin
+            credit_counter <= credit_counter_next;
+        end
+    end
 endmodule
 
 
@@ -538,7 +548,7 @@ module full_ovc_predictor #(
     wire [VP_1-1 : 0]    full_muxin1,nearly_full_muxin1;
     wire [V-1 : 0]    full_muxout1,nearly_full_muxout1;
     wire                                full_muxout2,nearly_full_muxout2;
-    wire   full_reg1,full_reg2;
+    logic  full_reg1,full_reg2;
     wire   full_reg1_next,full_reg2_next;
     
     assign full_muxin1  = full & (~credit_increased);
@@ -582,10 +592,16 @@ module full_ovc_predictor #(
     assign full_reg1_next = full_muxout2;
     assign full_reg2_next = nearly_full_muxout2 & ivc_getting_sw_grant;
     assign assigned_ovc_is_full = (PCK_TYPE == "MULTI_FLIT")? full_reg1 | full_reg2: 1'b0;
-
-    pronoc_register #(.W(1)) reg1 (.D_in(full_reg1_next ), .Q_out(full_reg1), .reset(reset), .clk(clk));
-    pronoc_register #(.W(1)) reg2 (.D_in(full_reg2_next ), .Q_out(full_reg2), .reset(reset), .clk(clk));
-
+    
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            full_reg1 <= 1'b0;
+            full_reg2 <= 1'b0;
+        end else begin
+            full_reg1 <= full_reg1_next;
+            full_reg2 <= full_reg2_next;
+        end
+    end
 endmodule
 
 `ifdef SIMULATION

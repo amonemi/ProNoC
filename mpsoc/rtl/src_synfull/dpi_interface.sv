@@ -77,13 +77,13 @@ module top_dpi_interface (
     logic [NE-1:0] valid_check ;
     logic [NE-1:0] queue_check ;
     // socket connection
-    always_ff @(posedge clk_i) begin 
+    always_ff @ (posedge clk_i) begin 
         connection_init(
             init_i,ready_connection
         );
     end
     // trace injection
-    always_ff @(posedge clk_i) begin 
+    always_ff @ (posedge clk_i) begin 
         c_dpi_interface(
             startCom_i&ready_connection ,
             clk_i                       ,

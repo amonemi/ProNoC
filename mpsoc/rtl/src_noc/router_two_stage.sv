@@ -172,7 +172,13 @@ module router_two_stage #(
     end
     
     //To avoid false loopback reports in Verilator
-    pronoc_register #(.W(ROUTER_INFO_w)) tmp_reg (.D_in(router_info_next ), .Q_out(router_info), .reset(reset), .clk(clk));
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            router_info <= '0;  
+        end else begin
+            router_info <= router_info_next;
+        end
+    end
     
     always_comb begin 
         router_info_next.router_id=current_r_id;
@@ -342,8 +348,13 @@ module router_two_stage #(
         .clk(clk), 
         .reset(reset)
     );
-    
-    pronoc_register #(.W(PP_1)) reg2 (.D_in(granted_dest_port_all ), .Q_out(granted_dest_port_all_delayed), .reset(reset), .clk(clk));
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            granted_dest_port_all_delayed <= '0; // reset to zero vector of width PP_1
+        end else begin
+            granted_dest_port_all_delayed <= granted_dest_port_all;
+        end
+    end
     
     crossbar #(
         .P (P) // router port num
@@ -358,13 +369,17 @@ module router_two_stage #(
     //link reg 
     generate 
     if( ADD_PIPREG_AFTER_CROSSBAR == 1 ) begin :link_reg
-        
         reg [PFw-1 : 0] flit_out_all_pipe;
         reg [P-1 : 0] flit_out_wr_all_pipe;
-        
-        pronoc_register #(.W(PFw)) reg1 (.D_in(crossbar_flit_out_all    ), .Q_out(flit_out_all_pipe), .reset(reset), .clk(clk));
-        pronoc_register #(.W(P)  ) reg2 (.D_in(crossbar_flit_out_wr_all ), .Q_out(flit_out_wr_all_pipe), .reset(reset), .clk(clk));
-        
+        always_ff @ (`pronoc_clk_reset_edge) begin
+            if (`pronoc_reset) begin
+                flit_out_all_pipe    <= '0;
+                flit_out_wr_all_pipe <= '0;
+            end else begin
+                flit_out_all_pipe    <= crossbar_flit_out_all;
+                flit_out_wr_all_pipe <= crossbar_flit_out_wr_all;
+            end
+        end
         assign link_flit_out_all    = flit_out_all_pipe;
         assign link_flit_out_wr_all = flit_out_wr_all_pipe;
         

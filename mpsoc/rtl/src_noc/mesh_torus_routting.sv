@@ -27,9 +27,9 @@ module regular_topo_look_ahead_routing (
     output [P_1-1 : 0]  lkdestport_encoded;
     input          reset,clk;
 
-    wire [NXw-1 : 0]  destx_delayed;
-    wire [NYw-1 : 0]  desty_delayed;
-    wire [P_1-1 : 0]  destport_delayed;
+    logic [NXw-1 : 0]  destx_delayed;
+    logic [NYw-1 : 0]  desty_delayed;
+    logic [P_1-1 : 0]  destport_delayed;
     // routing algorithm
     generate 
     if( IS_DETERMINISTIC ) begin :dtrmst
@@ -56,10 +56,17 @@ module regular_topo_look_ahead_routing (
         );
     end
     endgenerate
-
-    pronoc_register #(.W(NXw) ) reg1 (.D_in(dest_x ), .Q_out(destx_delayed), .reset(reset), .clk(clk));
-    pronoc_register #(.W(NYw) ) reg2 (.D_in(dest_y ), .Q_out(desty_delayed), .reset(reset), .clk(clk));
-    pronoc_register #(.W(P_1)) reg3 (.D_in(destport_encoded ), .Q_out(destport_delayed), .reset(reset), .clk(clk));
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            destx_delayed <= '0;
+            desty_delayed <= '0;
+            destport_delayed <= '0;
+        end else begin
+            destx_delayed <= dest_x;
+            desty_delayed <= dest_y;
+            destport_delayed <= destport_encoded;
+        end
+    end
 endmodule
 
 
@@ -898,6 +905,12 @@ module regular_topo_full_adapt_ovc_avail #(
             end
          end // for  
     end//always
-    pronoc_register #(.W(PV)) reg2 ( .D_in(full_adaptive_ovc_mask_next), .reset(reset), .clk(clk), .Q_out(full_adaptive_ovc_mask));
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            full_adaptive_ovc_mask <= '0;
+        end else begin
+            full_adaptive_ovc_mask <= full_adaptive_ovc_mask_next;
+        end
+    end    
     assign ovc_avalable_all   = ~ovc_status & full_adaptive_ovc_mask;
 endmodule

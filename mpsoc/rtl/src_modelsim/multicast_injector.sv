@@ -194,7 +194,7 @@ module multicast_injector (
                 h2t_counter_next[i]= 16'd0; // reset once header flit is received
             end//hdr flit wr
         end//always
-        always_ff @(`pronoc_clk_reset_edge) begin
+        always_ff @ (`pronoc_clk_reset_edge) begin
             if (`pronoc_reset)  begin
                 rsv_counter[i]<= {PCK_SIZw{1'b0}};
                 h2t_counter[i]<= 16'd0;
@@ -219,7 +219,7 @@ module multicast_injector (
             end//reset
         end//always
         for (k=0;k< REMAIN_DAT_FLIT+1;k++)begin : K_
-            always_ff @(`pronoc_clk_reset_edge) begin
+            always_ff @ (`pronoc_clk_reset_edge) begin
                 if (`pronoc_reset)  begin
                     pck_data_o_gen [i][k] <= {Fpay{1'b0}};
                 end else begin
@@ -248,12 +248,22 @@ module multicast_injector (
     end//for i
     endgenerate
     
-    wire [V-1 : 0] vc_reg;
-    wire tail_flag_reg, hdr_flag_reg;
+    logic [V-1 : 0] vc_reg;
+    logic tail_flag_reg, hdr_flag_reg;
     logic [DISTw-1:   0] distance;
-    pronoc_register #(.W(V))   register1 (.D_in(chan_in.flit_chanel.flit.vc),        .reset (reset ), .clk (clk),.Q_out(vc_reg));
-    pronoc_register #(.W(1))   register2 (.D_in(chan_in.flit_chanel.flit.hdr_flag),    .reset (reset ), .clk (clk),.Q_out(hdr_flag_reg));
-    pronoc_register #(.W(1))   register3 (.D_in(chan_in.flit_chanel.flit.tail_flag & chan_in.flit_chanel.flit_wr ),.reset (reset ), .clk (clk),.Q_out(tail_flag_reg));
+    
+    always_ff @ (`pronoc_clk_reset_edge )begin 
+        if(`pronoc_reset) begin 
+            vc_reg <= {V{1'b0}};
+            hdr_flag_reg  <= 1'b0;
+            tail_flag_reg <= 1'b0;
+        end else begin
+            vc_reg <= chan_in.flit_chanel.flit.vc;
+            hdr_flag_reg <= chan_in.flit_chanel.flit.hdr_flag;
+            tail_flag_reg <= chan_in.flit_chanel.flit.tail_flag & chan_in.flit_chanel.flit_wr;
+        end
+    end
+    
     wire [Vw-1 : 0] vc_bin;
     one_hot_to_bin #(
         .ONE_HOT_WIDTH (V),

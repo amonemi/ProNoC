@@ -260,7 +260,7 @@ module input_queue_per_port #(
     
     input reset, clk;
     input   router_info_t router_info;
-    output  [V-1 : 0] credit_out;
+    output  logic [V-1 : 0] credit_out;
     output  [V-1 : 0] ivc_num_getting_sw_grant;
     input   any_ivc_sw_request_granted;
     input   [Fw-1 : 0] flit_in;
@@ -271,12 +271,12 @@ module input_queue_per_port #(
     output  [VP_1-1 : 0] dest_port;
     output  [Fw-1 : 0] flit_out;
     input   [V-1  : 0] assigned_ovc_not_full;
-    output  [V-1  : 0] ovc_is_assigned;
+    output  logic [V-1  : 0] ovc_is_assigned;
     input   [V-1 : 0] sel;    
     input   [V-1 : 0] nonspec_first_arbiter_granted_ivc;
     
     input   [DSTPw-1 : 0] destport_clear [V-1 : 0];
-    output  [WEIGHTw-1 : 0] iport_weight;
+    output  logic [WEIGHTw-1 : 0] iport_weight;
     output  [V-1 : 0] vc_weight_is_consumed;
     output  iport_weight_is_consumed;
     input   refresh_w_counter;
@@ -312,7 +312,7 @@ module input_queue_per_port #(
     wire [EAw-1 : 0] src_e_addr_in;
     wire [V-1 : 0] vc_num_in;
     wire [V-1 : 0] hdr_flit_wr;
-    wire [VV-1 : 0] assigned_ovc_num;
+    logic [VV-1 : 0] assigned_ovc_num;
     logic [V-1 : 0] assigned_ovc_one_hot [V-1 : 0];
     logic [Vw-1 : 0] assigned_onc_bin [V-1 : 0];
 
@@ -328,8 +328,8 @@ module input_queue_per_port #(
     wire [ELw-1 : 0] endp_l_in;
     wire [Pw-1 : 0] endp_p_in;
     
-    wire [V-1 : 0] rd_hdr_fwft_fifo,wr_hdr_fwft_fifo,rd_hdr_fwft_fifo_delay,wr_hdr_fwft_fifo_delay;
-    
+    wire [V-1 : 0] rd_hdr_fwft_fifo,wr_hdr_fwft_fifo;
+    logic [V-1 : 0] rd_hdr_fwft_fifo_delay,wr_hdr_fwft_fifo_delay;
     logic [V-1  : 0] ovc_is_assigned_next;
     logic [V-1 : 0] assigned_ovc_num_next [V-1 : 0];
     
@@ -349,42 +349,25 @@ module input_queue_per_port #(
     assign ivc_request = ivc_not_empty;
     
     wire  [V-1 : 0] flit_is_tail2;
-    
-    pronoc_register #(.W(V)) reg1(
-        .D_in   (ovc_is_assigned_next), 
-        .reset  (reset ), 
-        .clk    (clk   ), 
-        .Q_out  (ovc_is_assigned   ));
-    
-    pronoc_register #(.W(V)) reg3(
-        .D_in   (rd_hdr_fwft_fifo), 
-        .reset  (reset ), 
-        .clk    (clk   ), 
-        .Q_out  (rd_hdr_fwft_fifo_delay ));
-    
-    pronoc_register #(.W(V)) reg4(
-        .D_in   (wr_hdr_fwft_fifo), 
-        .reset  (reset ), 
-        .clk    (clk   ), 
-        .Q_out  (wr_hdr_fwft_fifo_delay ));
-    
-    pronoc_register #(.W(WEIGHTw), .RESET_TO(1)) reg5(
-        .D_in   (iport_weight_next ), 
-        .reset  (reset ), 
-        .clk    (clk   ), 
-        .Q_out  (iport_weight  ));
-    
-    pronoc_register #(.W(V)) credit_reg (
-        .D_in   (ivc_num_getting_sw_grant & ~ multiple_dest),
-        .reset  (reset),
-        .clk    (clk),
-        .Q_out  (credit_out)); 
-    
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            ovc_is_assigned        <= '0;
+            rd_hdr_fwft_fifo_delay <= '0;
+            wr_hdr_fwft_fifo_delay <= '0;
+            iport_weight           <= WEIGHTw'(1);
+            credit_out             <= '0;
+        end else begin
+            ovc_is_assigned        <= ovc_is_assigned_next;
+            rd_hdr_fwft_fifo_delay <= rd_hdr_fwft_fifo;
+            wr_hdr_fwft_fifo_delay <= wr_hdr_fwft_fifo;
+            iport_weight           <= iport_weight_next;
+            credit_out             <= ivc_num_getting_sw_grant & ~multiple_dest;
+        end
+    end
     always_comb begin 
         iport_weight_next = iport_weight;
         if(hdr_flit_wr != {V{1'b0}})  iport_weight_next = (weight_in=={WEIGHTw{1'b0}})? WEIGHT_INIT : weight_in; // the minimum weight is 1
     end
-    
     
     //extract header flit info
     extract_header_flit_info #(
@@ -409,11 +392,13 @@ module input_queue_per_port #(
     generate
     for (i=0; i<V; i=i+1) begin : O_
         assign assigned_ovc_one_hot [i] = assigned_ovc_num[(i+1)*V-1 : i*V];
-        pronoc_register #(.W(V)) reg2(
-            .D_in   (assigned_ovc_num_next[i]), 
-            .reset  (reset ), 
-            .clk    (clk   ), 
-            .Q_out  (assigned_ovc_num [(i+1)*V-1 : i*V]  ));
+        always_ff @ (`pronoc_clk_reset_edge) begin
+            if (`pronoc_reset) begin
+                assigned_ovc_num[(i+1)*V-1 : i*V] <= '0;
+            end else begin
+                assigned_ovc_num[(i+1)*V-1 : i*V] <= assigned_ovc_num_next[i];
+            end
+        end
     end
     if (IS_REGULAR_TOPO & IS_MULTI_ENDP_ROUTER & IS_UNICAST) begin 
         regular_topo_endp_addr_decode endp_addr_decode (

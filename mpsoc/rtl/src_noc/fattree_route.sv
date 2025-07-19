@@ -54,17 +54,14 @@ module fattree_nca_random_up_routing  #(
     wire  [Kw-1 :0]  current_node_dest_port;
     
     wire [L-1 : 0] parrents_node_missmatch; 
-    wire [K-1 : 0] counter; // a one hot counter. The value of the counter is used as a random destination port number when going to the up ports
-        
-    pronoc_register #(
-        .W(K),
-        .RESET_TO(1)
-    ) reg1 ( 
-        .D_in({counter[0],counter[K-1:1]}),
-        .reset(reset),    
-        .clk(clk),      
-        .Q_out(counter)
-    );
+    logic [K-1 : 0] counter; // a one hot counter. The value of the counter is used as a random destination port number when going to the up ports
+    always_ff @ (`pronoc_clk_reset_edge ) begin 
+        if(`pronoc_reset) begin 
+            counter <= K'(1);
+        end else begin
+            counter <= {counter[0],counter[K-1:1]};
+        end
+    end
     
     assign current_addr [0]={Kw{1'b0}}; 
     assign parrent_dest_addr [0]={Kw{1'b0}}; 
@@ -145,17 +142,14 @@ module fattree_nca_destp_up_routing  #(
     wire  [Kw-1 :0]  dest_addr [L-1 : 0];
     wire  [Kw-1 :0]  current_node_dest_port;    
     wire [L-1 : 0] parrents_node_missmatch; 
-    wire [K-1 : 0] counter; // a one hot counter. The value of the counter is used as a random destination port number when going to the up ports
-    
-    pronoc_register #(
-        .W(K),
-        .RESET_TO(1)
-    ) reg1 ( 
-        .D_in({counter[0],counter[K-1:1]}),
-        .reset(reset),    
-        .clk(clk),      
-        .Q_out(counter)
-    );
+    logic [K-1 : 0] counter; // a one hot counter. The value of the counter is used as a random destination port number when going to the up ports
+    always_ff @ (`pronoc_clk_reset_edge ) begin 
+        if(`pronoc_reset) begin 
+            counter <= K'(1);
+        end else begin
+            counter <= {counter[0],counter[K-1:1]};
+        end
+    end
     
     assign current_addr [0]={Kw{1'b0}}; 
     assign parrent_dest_addr [0]={Kw{1'b0}}; 
@@ -235,16 +229,14 @@ module fattree_nca_straight_up_routing  #(
     wire  [Kw-1 :0]  dest_addr [L-1 : 0];
     wire  [Kw-1 :0]  current_node_dest_port;
     wire [L-1 : 0] parrents_node_missmatch; 
-    wire  [K-1 : 0] counter; // a one hot counter. The value of the counter is used as a random destination port number when going to the up ports
-    pronoc_register #(
-        .W(K),
-        .RESET_TO(1)
-    ) reg1 ( 
-        .D_in({counter[0],counter[K-1:1]}),
-        .reset(reset),    
-        .clk(clk),      
-        .Q_out(counter)
-    );
+    logic [K-1 : 0] counter; // a one hot counter. The value of the counter is used as a random destination port number when going to the up ports
+    always_ff @ (`pronoc_clk_reset_edge )begin 
+        if(`pronoc_reset) begin 
+            counter <= K'(1);
+        end else begin
+            counter <= {counter[0],counter[K-1:1]};
+        end
+    end
     
     assign current_addr [0]={Kw{1'b0}}; 
     assign parrent_dest_addr [0]={Kw{1'b0}}; 
@@ -390,8 +382,8 @@ module fattree_look_ahead_routing #(
     output [K: 0]    lkdestport_encoded;
     input  reset,clk;
     
-    wire  [K :0]    destport_encoded_delayed;
-    wire  [LKw-1 :0]    dest_addr_encoded_delayed;
+    logic [K :0] destport_encoded_delayed;
+    logic [LKw-1 :0] dest_addr_encoded_delayed;
     
     fattree_deterministic_look_ahead_routing #(
         .P(P)
@@ -405,23 +397,16 @@ module fattree_look_ahead_routing #(
         .lkdestport_encoded(lkdestport_encoded)
     );
     
-    pronoc_register #(
-        .W(K+1)
-    ) reg1 ( 
-        .D_in(destport_encoded),
-        .reset(reset),    
-        .clk(clk),      
-        .Q_out(destport_encoded_delayed)
-    );
-    
-    pronoc_register #(
-        .W(LKw)
-    ) reg2 ( 
-        .D_in(dest_addr_encoded),
-        .reset(reset),    
-        .clk(clk),      
-        .Q_out(dest_addr_encoded_delayed)
-    );
+    always_ff @ (`pronoc_clk_reset_edge ) begin
+        if(`pronoc_reset) begin
+            // reset the delayed values
+            destport_encoded_delayed   <= {(K+1){1'b0}};
+            dest_addr_encoded_delayed  <= {LKw{1'b0}};
+        end else begin
+            destport_encoded_delayed   <= destport_encoded;
+            dest_addr_encoded_delayed  <= dest_addr_encoded;
+        end
+    end
 endmodule
 
 

@@ -200,7 +200,7 @@ module smart_forward_ivc_info #(
     input  iport_info_t iport_info  [P-1 : 0];
     input  oport_info_t oport_info  [P-1 : 0]; 
     output smart_chanel_t smart_chanel  [P-1 : 0];
-    output [V-1 : 0] ovc_locally_requested [P-1 : 0];
+    output logic [V-1 : 0] ovc_locally_requested [P-1 : 0];
 
     smart_ivc_info_t  smart_ivc_info [P-1 : 0][V-1 : 0];
     smart_ivc_info_t  smart_ivc_mux  [P-1 : 0];
@@ -236,7 +236,12 @@ module smart_forward_ivc_info #(
             end
             assign ovc_locally_requested_next[i][j]=|mask_gen[i][j];
         end//V
-        pronoc_register #(.W(V)) reg1 (.D_in(ovc_locally_requested_next[i]), .reset(reset), .clk(clk), .Q_out(ovc_locally_requested[i]));
+        always_ff @ (`pronoc_clk_reset_edge) begin
+            if (`pronoc_reset)
+                ovc_locally_requested[i] <= '0;
+            else
+                ovc_locally_requested[i] <= ovc_locally_requested_next[i];
+        end
         
         onehot_mux_2D    #(.W(SMART_IVC_w),.N(V)) mux1 ( .D_in(smart_ivc_info[i]), .sel(iport_info[i].swa_first_level_grant), .Q_out(smart_ivc_mux[i]));
         //demux
@@ -262,13 +267,12 @@ module smart_forward_ivc_info #(
         assign smart_chanel_next[i].flit_in_bypassed=1'b0;
         
         if( ADD_PIPREG_AFTER_CROSSBAR == 1) begin :link_reg
-            pronoc_register #(
-                .W      ( SMART_CHANEL_w)
-            ) pipe_reg (
-                .D_in(smart_chanel_next[i]), 
-                .reset  (reset), 
-                .clk    (clk), 
-                .Q_out(smart_chanel[i]));
+            always_ff @ (`pronoc_clk_reset_edge) begin
+                if (`pronoc_reset)
+                    smart_chanel[i] <= '0;
+                else
+                    smart_chanel[i] <= smart_chanel_next[i];
+            end
         end else begin :no_link_reg
                 assign smart_chanel[i] = smart_chanel_next[i];
         end
@@ -460,17 +464,16 @@ module smart_validity_check_per_ivc  #(
     //output
     output 
     smart_single_flit_pck_o,
-    smart_ivc_smart_en_o,
-    smart_credit_o,
+    smart_ivc_smart_en_o,    
     smart_buff_space_decreased_o,
     smart_ss_ovc_is_allocated_o,
     smart_ss_ovc_is_released_o,
     smart_ivc_num_getting_ovc_grant_o,
     smart_ivc_reset_o,
     smart_mask_available_ss_ovc_o;
-        
-    output reg [V-1 : 0] smart_ivc_granted_ovc_num_o;
     
+    output reg [V-1 : 0] smart_ivc_granted_ovc_num_o;
+    output logic smart_credit_o;
     always_comb begin 
         smart_ivc_granted_ovc_num_o={V{1'b0}};
         smart_ivc_granted_ovc_num_o[IVC_NUM]=smart_ivc_num_getting_ovc_grant_o;
@@ -480,9 +483,16 @@ module smart_validity_check_per_ivc  #(
     logic smart_req_valid;    
     wire  smart_hdr_flit_req_next = smart_req_valid_next  & smart_hdr_flit;
     logic smart_hdr_flit_req;
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            smart_req_valid <= 1'b0;
+            smart_hdr_flit_req <= 1'b0;
+        end else begin
+            smart_req_valid <= smart_req_valid_next;
+            smart_hdr_flit_req <= smart_hdr_flit_req_next;
+        end
+    end
     
-    pronoc_register #(.W(1)) req1 (.D_in(smart_req_valid_next), .reset(reset), .clk(clk), .Q_out(smart_req_valid));
-    pronoc_register #(.W(1)) req2 (.D_in(smart_hdr_flit_req_next), .reset(reset), .clk(clk), .Q_out(smart_hdr_flit_req));
     // condition1: new smart vc allocation condition
     wire hdr_flit_condition    = ~ovc_locally_requested & ss_ovc_avalable_in_ss_port;    
     wire nonhdr_flit_condition = assigned_to_ss_ovc & assigned_ovc_not_full;
@@ -507,7 +517,12 @@ module smart_validity_check_per_ivc  #(
     assign smart_ss_ovc_is_allocated_o = smart_ivc_num_getting_ovc_grant_o & ~smart_single_flit_pck_o;
     //mask the available SS OVC for local requests allocation if the following conditions met
     assign smart_mask_available_ss_ovc_o = smart_hdr_flit_req & ~ovc_locally_requested & condition2;
-    pronoc_register #(.W(1)) credit(.D_in(smart_buff_space_decreased_o), .reset(reset), .clk(clk), .Q_out(smart_credit_o));
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset)
+            smart_credit_o <= 1'b0;
+        else
+            smart_credit_o <= smart_buff_space_decreased_o;
+    end
 endmodule
 
 
@@ -562,8 +577,8 @@ module smart_allocator_per_iport # (
     input ss_port_link_reg_flit_wr;    
     input smart_chanel_t ss_smart_chanel_new;
     //output
-    output [DSTPw-1 : 0] smart_destport_o,smart_lk_destport_o;
-    output smart_hdr_flit_req_o;
+    output logic [DSTPw-1 : 0] smart_destport_o,smart_lk_destport_o;
+    output logic smart_hdr_flit_req_o;
     output [V-1 : 0] 
         smart_ivc_smart_en_o,
         smart_credit_o,
@@ -597,8 +612,12 @@ module smart_allocator_per_iport # (
         .destport (destport)
     ); 
     
-    pronoc_register #(.W(DSTPw)) reg1 (.D_in(destport), .reset(reset), .clk(clk), .Q_out(smart_destport_o));
-    
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset)
+            smart_destport_o <= '0;  // Reset to zero by default, adjust if needed
+        else
+            smart_destport_o <= destport;
+    end
     check_straight_oport #(
         .SS_PORT_LOC   ( SS_PORT_LOC)
     ) check_straight (
@@ -617,8 +636,12 @@ module smart_allocator_per_iport # (
         .dest_e_addr (smart_chanel_i.dest_e_addr), 
         .destport (lkdestport)
     ); 
-    
-    pronoc_register #(.W(DSTPw)) reg2 (.D_in(lkdestport), .reset(reset), .clk(clk), .Q_out(smart_lk_destport_o));
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset)
+            smart_lk_destport_o <= '0;
+        else
+            smart_lk_destport_o <= lkdestport;
+    end    
     
     wire [V-1 : 0] ss_ovc_crossbar_wr;//If asserted, a flit will be injected to ovc at next clk cycle 
     assign ss_ovc_crossbar_wr = (ss_smart_chanel_new.requests[0]) ? ss_smart_chanel_new.ovc : {V{1'b0}};
@@ -661,7 +684,13 @@ module smart_allocator_per_iport # (
         );    
     end//for
     endgenerate    
-    pronoc_register #(.W(1)) reg3 (.D_in(smart_chanel_i.hdr_flit), .reset(reset), .clk(clk), .Q_out(smart_hdr_flit_req_o));
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            smart_hdr_flit_req_o <= 1'b0;
+        end else begin
+            smart_hdr_flit_req_o <= smart_chanel_i.hdr_flit;
+        end
+    end
 endmodule    
 
 
@@ -717,7 +746,13 @@ module smart_credit_manage_per_vc #(
         else if(counter > 0) counter_next = counter -1'b1;
     end
     assign credit_out = credit_in |     smart_credit_in | (counter > 0);
-    pronoc_register #(.W(Bw+1)) reg1 (.D_in(counter_next), .reset(reset), .clk(clk), .Q_out(counter));
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            counter <= '0;
+        end else begin
+            counter <= counter_next;
+        end
+    end
 endmodule
 
 /**************************
