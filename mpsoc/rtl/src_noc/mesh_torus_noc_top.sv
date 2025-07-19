@@ -142,8 +142,9 @@ module regular_topo_noc_top  (
                     localparam EAST_ENDP_LOC=NL;
                     localparam NORTH_ENDP_LOC=NL+1;
                     localparam WEST_ENDP_LOC= (NX==1) ? (NL+2) : EAST_ENDP_LOC;
-                    localparam SOUTH_ENDP_LOC= (NY==1) ? (NL+2) : NORTH_ENDP_LOC;
-                    
+                    localparam SOUTH_ENDP_LOC= 
+                        (NY==1 && NX==1) ? (NL+3) :
+                        (NY==1) ? (NL+2) : NORTH_ENDP_LOC;
                     if(x == NX-1)  begin 
                         localparam [EAw-1 : 0] EAST_ADDR =  EAw'(fmesh_endp_addr(EAST_ID));
                         assign chan_out_all [EAST_ID] = router_chan_out [fmesh_router_id(x,y)][EAST];

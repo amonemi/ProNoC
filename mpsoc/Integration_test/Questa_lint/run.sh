@@ -27,11 +27,11 @@ questa_lint () {
     log_file="${log_dir}/${conf}.log"
 
     if [[ ! -f "$conf_file" ]]; then
-        echo "Configuration file $conf_file does not exist"
+        echo "Configuration file $conf_file does not exist" > $log_file
         exit 1
     fi
 
-    perl "${SCRPT_DIR_PATH}/src/param_gen.pl" "$conf_file"
+    perl "${SCRPT_DIR_PATH}/src/param_gen.pl" "$conf_file" > $log_file
     export REPORT_FILENAME="${log_dir}/${conf}.txt"
     export FILE_LIST=$file_list_f
     
@@ -39,8 +39,8 @@ questa_lint () {
     rm -rf work
     vlib work
     # Lint the design
-    vlog -sv -lint -f ${file_list_f} 
-    vsim -suppress vopt-14408,vsim-16154 -c work.noc_top -do "quit"  
+    vlog -sv -lint -f ${file_list_f} > $log_file
+    vsim -suppress vopt-14408,vsim-16154 -c work.noc_top -do "quit"  > $log_file
 }
 
 report_total_errors_warnings () {
@@ -57,6 +57,7 @@ run_config () {
     conf="$1"
     log_file="${log_dir}/${conf}.log"
     echo "▶️  Compiling configuration: $conf"
+    # Run and redirect stdout/stderr to log file only
     questa_lint "$conf" |& tee "$log_file"
     if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
         echo "❌ Compilation failed for $conf (check $log_file)"

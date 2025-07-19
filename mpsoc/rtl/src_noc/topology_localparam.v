@@ -172,7 +172,9 @@
         NR_FMESH = NR_REGULAR,
         MAX_P_FMESH = 4 + NL, 
         EAw_FMESH = RAw_REGULAR + log2(MAX_P_FMESH),
-        NE_PER_R_FMESH = ((NX == 1) || (NY == 1)) ? NL + 3 : NL + 2; // 2 for the edge ports;
+        NE_PER_R_FMESH = 
+            ((NX == 1) && (NY == 1)) ? NL + 4 :  
+            ((NX == 1) || (NY == 1)) ? NL + 3 : NL + 2; // 2 for the edge ports;
     /******************
     *     FATTREE
     ******************/
