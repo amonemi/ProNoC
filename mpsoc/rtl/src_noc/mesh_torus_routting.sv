@@ -405,7 +405,6 @@ endmodule
 /**************************************
 *        add_sw_loc_one_hot
 ****************************************/
-
 module add_sw_loc_one_hot #(
     parameter P = 5,
     parameter SW_LOC = 1

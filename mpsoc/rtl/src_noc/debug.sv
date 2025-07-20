@@ -336,10 +336,12 @@ module  endp_addr_encoder (
             .code(code_out)
         );
     end else if ( IS_MULTI_MESH) begin :mmesh
+        /*
         multimesh_address_encoder addr_encoder (
             .rid_in(id_in),
             .addr_st_o(code_out)
         );
+        */
     end else begin :custom
         assign code_out =id_in;
     end
@@ -375,10 +377,12 @@ module endp_addr_decoder  (
             .code(code_in)
         );
     end else if ( IS_MULTI_MESH) begin 
+        /*
         multimesh_address_decoder addr_coder (
             .rid_out(id_out),
             .addr_st_i(code_in)
         );
+        */
     end else begin :custom
         assign id_out = code_in;
     end
@@ -403,7 +407,7 @@ module check_pck_size (
     wire [NE-1 : 0] dest_mcast_all_endp [V-1 : 0];
     logic [31 : 0] pck_size_counter [V-1: 0];
     reg  [31 : 0] pck_size_counter_next [V-1: 0];
-    wire [DAw-1 : 0] dest_e_addr [V-1:0];
+    logic [DAw-1 : 0] dest_e_addr [V-1:0];
     wire [V-1 : 0] vc_hdr_wr_en;
     wire [V-1 : 0] onehot;
     localparam MIN_B =  (B<LB)? B : LB;
@@ -443,13 +447,12 @@ module check_pck_size (
         if(!IS_UNICAST) begin
         //Check that the size of multicast/broadcast packets <= buffer size
             assign vc_hdr_wr_en [i] = flit_in_wr & hdr_flg_in & (vc_num_in == VC);
-            pronoc_register_ld_en #(.W(DAw)) reg2(
-                .D_in (dest_e_addr_in), 
-                .reset (reset), 
-                .clk (clk), 
-                .ld(vc_hdr_wr_en [i] ),
-                .Q_out(dest_e_addr[i])
-            );
+            always_ff @ (`pronoc_clk_reset_edge )begin 
+                if(`pronoc_reset)
+                    dest_e_addr[i] <= '0; // or use specific reset value if needed
+                else if (vc_hdr_wr_en[i])
+                    dest_e_addr[i] <= dest_e_addr_in;
+            end
             
             mcast_dest_list_decode decode (
                 .dest_e_addr(dest_e_addr[i]),

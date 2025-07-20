@@ -1,20 +1,19 @@
 #!/bin/bash
 
-SCRPT_FULL_PATH=$(realpath ${BASH_SOURCE[0]})
-SCRPT_DIR_PATH=$(dirname $SCRPT_FULL_PATH)
+set -e  # Global: exit on any failure
 
-# Source the environment variables
+SCRPT_FULL_PATH=$(realpath "${BASH_SOURCE[0]}")
+SCRPT_DIR_PATH=$(dirname "$SCRPT_FULL_PATH")
+
+# Paths
 conf_dir="${SCRPT_DIR_PATH}/configurations"
 log_dir="${SCRPT_DIR_PATH}/result_logs"
-conf_dir="${SCRPT_DIR_PATH}/configurations"
 work="${SCRPT_DIR_PATH}/work"
 file_list_f="${SCRPT_DIR_PATH}/src/file_list.f"
-lint_file="${SCRPT_DIR_PATH}/src/lint.tcl"
 report_file="${log_dir}/report.txt"
 
-mkdir -p $work
-mkdir -p $log_dir
-rm -rf $report_file
+mkdir -p "$work" "$log_dir"
+rm -f "$report_file"
 printf "%-30s | %-10s | %-10s |\n" "Configuration" "# Warnings" "# Errors" >> "$report_file"
 
 # Source the environment variables
@@ -25,13 +24,13 @@ questa_lint () {
     conf=$1
     conf_file="${conf_dir}/$conf"
     log_file="${log_dir}/${conf}.log"
-
+    rm -f $log_file
     if [[ ! -f "$conf_file" ]]; then
-        echo "Configuration file $conf_file does not exist" > $log_file
+        echo "Configuration file $conf_file does not exist" >> $log_file
         exit 1
     fi
 
-    perl "${SCRPT_DIR_PATH}/src/param_gen.pl" "$conf_file" > $log_file
+    perl "${SCRPT_DIR_PATH}/src/param_gen.pl" "$conf_file" >> $log_file
     export REPORT_FILENAME="${log_dir}/${conf}.txt"
     export FILE_LIST=$file_list_f
     
@@ -39,8 +38,8 @@ questa_lint () {
     rm -rf work
     vlib work
     # Lint the design
-    vlog -sv -lint -f ${file_list_f} > $log_file
-    vsim -suppress vopt-14408,vsim-16154 -c work.noc_top -do "quit"  > $log_file
+    vlog -sv -lint -f ${file_list_f} >> $log_file
+    vsim -suppress vopt-14408,vsim-16154 -c work.noc_top -do "quit"  >> $log_file
 }
 
 report_total_errors_warnings () {
@@ -58,7 +57,7 @@ run_config () {
     log_file="${log_dir}/${conf}.log"
     echo "▶️  Compiling configuration: $conf"
     # Run and redirect stdout/stderr to log file only
-    questa_lint "$conf" |& tee "$log_file"
+    questa_lint "$conf" 
     if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
         echo "❌ Compilation failed for $conf (check $log_file)"
         rm -f "${SCRPT_DIR_PATH}/src/noc_localparam.v"

@@ -44,63 +44,6 @@ module pronoc_register #(
 endmodule
 
 
-module pronoc_register_reset_init #(
-    parameter W=1       
-)( 
-    input [W-1: 0] D_in,
-    input reset,    
-    input clk,      
-    output reg [W-1: 0] Q_out,
-    input [W-1 : 0] reset_to
-);
-    always @ (`pronoc_clk_reset_edge )begin 
-        if(`pronoc_reset)   Q_out<=reset_to;
-        else        Q_out<=D_in;
-    end   
-endmodule
-
-
-module pronoc_register_reset_init_ld_en   #(
-    parameter W=1       
-)( 
-    input [W-1: 0] D_in,
-    input reset,    
-    input clk, 
-    input ld,
-    output reg [W-1: 0] Q_out,
-    input [W-1 : 0] reset_to
-);    
-    always @ (`pronoc_clk_reset_edge )begin 
-        if(`pronoc_reset)   Q_out<=reset_to;
-        else  if(ld)      Q_out<=D_in;
-    end        
-endmodule
-
-
-module pronoc_register_ld_en  #(
-    parameter W=1,
-    parameter  RESET_TO={W{1'b0}}
-)( 
-    input [W-1: 0] D_in,
-    input reset,    
-    input clk,  
-    input ld,
-    output [W-1: 0] Q_out
-);
-    pronoc_register_reset_init_ld_en  #(
-        .W(W)           
-    )reg1( 
-        .D_in(D_in),
-        .reset(reset),  
-        .clk(clk),  
-        .ld(ld),
-        .Q_out(Q_out),
-        .reset_to(RESET_TO[W-1 : 0])
-    );
-endmodule
-
-
-
 /*********************************
 *   multiplexer
 ********************************/
@@ -224,29 +167,17 @@ module one_hot_to_bin #(
     parameter BIN_WIDTH = (ONE_HOT_WIDTH > 1) ? $clog2(ONE_HOT_WIDTH) : 1
 )(
     input   [ONE_HOT_WIDTH-1 : 0] one_hot_code,
-    output  [BIN_WIDTH-1 : 0]  bin_code
+    output reg [BIN_WIDTH-1 : 0]  bin_code
 );
-    localparam MUX_IN_WIDTH = BIN_WIDTH * ONE_HOT_WIDTH;
-    wire [MUX_IN_WIDTH-1 : 0]  bin_temp ;
-    genvar i;
-    generate 
-    if(ONE_HOT_WIDTH>1)begin :if1
-        for(i=0; i<ONE_HOT_WIDTH; i=i+1) begin :mux_in_gen_loop
-            assign bin_temp[(i+1)*BIN_WIDTH-1 : i*BIN_WIDTH] = i[BIN_WIDTH-1: 0];
+    integer i;
+    always @(*) begin
+        bin_code = '0;
+        for (i = 0; i < ONE_HOT_WIDTH; i=i+1) begin
+            if (one_hot_code[i]) begin
+                bin_code = BIN_WIDTH'(i); // casting i to BIN_WIDTH
+            end
         end
-        one_hot_mux #(
-            .IN_WIDTH (MUX_IN_WIDTH),
-            .SEL_WIDTH (ONE_HOT_WIDTH)
-        ) mux (
-            .mux_in (bin_temp),
-            .mux_out (bin_code),
-            .sel (one_hot_code)
-        );
-    end else begin :els
-        // assign  bin_code = one_hot_code;
-        assign  bin_code = 1'b0;
     end
-    endgenerate
 endmodule
 
 

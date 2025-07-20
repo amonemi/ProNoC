@@ -1,8 +1,7 @@
 $model = bless( {
     'compile' => "verilate_mesh.sh",
         'noc_param'=> {
-        TOPOLOGY=>"\"RING\"",
-        "TOPOLOGY" => "\"TORUS\"",
+        "TOPOLOGY"=>"\"RING\"",
         "ROUTE_NAME" => "\"TRANC_XY\"",
         "T1" => "3",
         "T2" => "1",

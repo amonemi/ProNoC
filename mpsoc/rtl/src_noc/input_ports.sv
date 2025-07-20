@@ -438,6 +438,7 @@ module input_queue_per_port #(
     logic [1:0] ovc_sel_i;
     logic [1:0] ovc_sel_ivc [V-1 : 0];
     if(IS_MULTI_MESH) begin : mmesh_
+    /*
         multi_mesh_ovc_sel #(
             .SW_LOC(SW_LOC),
             .LOCAL_ADAPT(0)
@@ -446,6 +447,7 @@ module input_queue_per_port #(
             .current_router_addr_i(router_info.router_addr),
             .ovc_sel(ovc_sel_i)
         );
+    */
     end // "MULTI_MESH"
     
     always_comb begin
