@@ -44,7 +44,7 @@ module onehot_mux_1D #(
 )(
     input  [W*N-1 : 0] D_in,
     input  [N-1 : 0] sel,
-    output [W-1 : 0] Q_out    
+    output reg [W-1 : 0] Q_out    
 );
 
     wire  [W-1 : 0] in_array [N-1 : 0];
@@ -55,15 +55,13 @@ module onehot_mux_1D #(
     end
     endgenerate
     
-    onehot_mux_2D #(
-        .W(W), 
-        .N(N)
-    ) onehot_mux_2D (
-        .D_in(in_array), 
-        .sel(sel), 
-        .Q_out(Q_out)
-    );
-endmodule    
+    //onehot_mux_2D
+    always_comb begin
+        Q_out = {W{1'b0}};
+        for (int i = 0; i < N; i++)
+            Q_out |= (sel[i]) ?  in_array[i] :  {W{1'b0}};
+    end
+endmodule
 
 
 module onehot_mux_1D_reverse #(
