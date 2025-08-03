@@ -13,7 +13,7 @@ report_file="${log_dir}/report.txt"
 mkdir -p "$work"
 mkdir -p "$log_dir"
 rm -rf "$report_file"
-printf "%-30s | %-10s | %-10s |\n" "Configuration" "# Warnings" "# Errors" >> "$report_file"
+printf "%-30s | %-10s | %-10s | %-10s |\n" "Configuration" "# Warnings" "# Errors" "# Instants"  >> "$report_file"
 
 
 # List of Verilator warnings to suppress
@@ -29,7 +29,7 @@ verilator_lint () {
     conf=$1
     conf_file="${conf_dir}/$conf"
     log_file="${log_dir}/${conf}.log"
-
+    xml_file="${log_dir}/${conf}.xml"
     if [[ ! -f "$conf_file" ]]; then
         echo "Configuration file $conf_file does not exist"
         exit 1
@@ -44,15 +44,19 @@ verilator_lint () {
     done
 
     # Lint using Verilator
-    verilator --lint-only -Wall $ignore_flags -Wno-fatal -f "$file_list_f" --top-module noc_top_v > "$log_file" 2>&1
+    verilator --xml-output $xml_file --lint-only -Wall $ignore_flags -Wno-fatal -f "$file_list_f" --top-module noc_top_v > "$log_file" 2>&1
+    perl "${SCRPT_DIR_PATH}/src/instant_export.pl" "$xml_file"  >> "$log_file" 
+
 }
+
 
 report_total_errors_warnings () {
     conf="$1"
     log_file="${log_dir}/${conf}.log"
     warnings=$(grep '%Warning' "$log_file" | wc -l)
     errors=$(grep '%Error' "$log_file" | wc -l)
-    printf "%-30s | %-10s | %-10s |\n" "$conf" "$warnings" "$errors" >> "$report_file"
+    instant=$(awk '/Total module instantiations:/ { print $NF }' "$log_file")
+    printf "%-30s | %-10s | %-10s | %-10s |\n" "$conf" "$warnings" "$errors" "$instant" >> "$report_file"
 }
 
 run_config () {
@@ -95,7 +99,7 @@ fi
 
 echo "Report saved in $report_file"
 echo "Summary:"
-echo "-------------------------------|------------|------------|"
+echo "-------------------------------|------------|------------|------------|"
 cat "$report_file"
 
 echo "Comparing with golden reference..."
