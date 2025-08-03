@@ -54,6 +54,10 @@ module router_two_stage #(
 );
     
     import pronoc_pkg::*;
+    import pronoc_pkg::*;
+    import pronoc_pkg::*;
+    import pronoc_pkg::*;
+    import pronoc_pkg::*;
     
     // The current/neighbor routers addresses/port. These values are fixed in each router and they are supposed to be given as parameter. 
     // However, in order to give an identical RTL code to each router, they are given as input ports. The identical RTL code reduces the
@@ -97,7 +101,7 @@ module router_two_stage #(
     wire  [PV-1 :  0]  credit_out_all;
     wire  [CONG_ALw-1 :  0]  congestion_in_all;
     
-    wire  [PFw-1 :  0]  flit_out_all;
+    wire  [Fw-1 :  0]  flit_out_all [P-1 : 0];
     wire  [P-1 :  0]  flit_out_wr_all;
     wire  [PV-1 :  0]  credit_in_all;
     wire  [CONG_ALw-1 :  0]  congestion_out_all;
@@ -113,7 +117,6 @@ module router_two_stage #(
     wire  [PV-1 : 0] ivc_num_getting_ovc_grant;
     wire  [PVV-1 : 0] spec_ovc_num_all;
     wire  [PV-1 : 0] nonspec_first_arbiter_granted_ivc_all;
-    wire  [PV-1 : 0] spec_first_arbiter_granted_ivc_all;
     wire  [PP_1-1 : 0] nonspec_granted_dest_port_all;
     wire  [PP_1-1 : 0] spec_granted_dest_port_all;    
     wire  [PP_1-1 : 0] granted_dest_port_all;
@@ -133,14 +136,14 @@ module router_two_stage #(
     wire  [PV-1 : 0] vsa_credit_decreased_all;
     
     // to/from the crossbar
-    wire  [PFw-1 : 0] iport_flit_out_all;
+    wire  [Fw-1 : 0] iport_flit_out_all [P-1:0];
     wire  [P-1 : 0] ssa_flit_wr_all;
     logic [PP_1-1 : 0] granted_dest_port_all_delayed;
-    wire  [PFw-1 :  0]  crossbar_flit_out_all;
-    wire  [P-1   :  0]  crossbar_flit_out_wr_all;
-    wire  [PFw-1 :  0]  link_flit_out_all;
-    wire  [P-1   :  0]  link_flit_out_wr_all;
-    wire  [PV-1  :  0] flit_is_tail_all;
+    wire  [Fw-1 : 0]  crossbar_flit_out_all [P-1 :0];
+    wire  [P-1 :  0]  crossbar_flit_out_wr_all;
+    wire  [Fw-1 : 0]  link_flit_out_all [P-1 :0];
+    wire  [P-1 :  0]  link_flit_out_wr_all;
+    wire  [PV-1 : 0] flit_is_tail_all;
     
     //to weight control
     wire [WP-1 : 0] iport_weight_all;
@@ -237,7 +240,7 @@ module router_two_stage #(
             assign  credit_in_all     [(i+1)*V-1:  i*V] = chan_in_tmp[i].credit;
             assign  congestion_in_all [(i+1)*CONGw-1:  i*CONGw] = chan_in_tmp[i].congestion; 
             
-            assign  chan_out[i].flit=          flit_out_all       [(i+1)*Fw-1:  i*Fw];
+            assign  chan_out[i].flit=          flit_out_all       [i];
             assign  chan_out[i].flit_wr=       flit_out_wr_all    [i];
             assign  chan_out[i].credit=        credit_out_all     [(i+1)*V-1:  i*V] | credit_release_out [(i+1)*V-1:  i*V];         
             assign  chan_out[i].congestion=    congestion_out_all [(i+1)*CONGw-1:  i*CONGw];
@@ -287,7 +290,6 @@ module router_two_stage #(
         .ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant), 
         .spec_ovc_num_all(spec_ovc_num_all), 
         .nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all), 
-        .spec_first_arbiter_granted_ivc_all(spec_first_arbiter_granted_ivc_all), 
         .nonspec_granted_dest_port_all(nonspec_granted_dest_port_all), 
         .spec_granted_dest_port_all(spec_granted_dest_port_all), 
         .granted_dest_port_all(granted_dest_port_all), 
@@ -318,7 +320,6 @@ module router_two_stage #(
         .credit_init_val_in (credit_init_val_in),
         .credit_init_val_out (credit_init_val_out),
         .flit_is_tail_all(flit_is_tail_all),
-        .crossbar_flit_out_wr_all(crossbar_flit_out_wr_all),
         .vsa_ovc_released_all(vsa_ovc_released_all),
         .vsa_credit_decreased_all(vsa_credit_decreased_all)
     );
@@ -333,7 +334,6 @@ module router_two_stage #(
         .granted_ovc_num_all(granted_ovc_num_all), 
         .ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant), 
         .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant), 
-        .spec_first_arbiter_granted_ivc_all(spec_first_arbiter_granted_ivc_all), 
         .nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all), 
         .nonspec_granted_dest_port_all(nonspec_granted_dest_port_all), 
         .spec_granted_dest_port_all(spec_granted_dest_port_all), 
@@ -369,7 +369,7 @@ module router_two_stage #(
     //link reg 
     generate 
     if( ADD_PIPREG_AFTER_CROSSBAR == 1 ) begin :link_reg
-        reg [PFw-1 : 0] flit_out_all_pipe;
+        reg [Fw-1 : 0] flit_out_all_pipe [P-1 : 0];
         reg [P-1 : 0] flit_out_wr_all_pipe;
         always_ff @ (`pronoc_clk_reset_edge) begin
             if (`pronoc_reset) begin

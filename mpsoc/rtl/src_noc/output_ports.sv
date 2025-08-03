@@ -47,7 +47,6 @@ module output_ports #(
     any_ovc_granted_in_outport_all, 
     vsa_credit_decreased_all,
     vsa_ovc_released_all,
-    crossbar_flit_out_wr_all,
     oport_info,
     ovc_info,  
     ivc_info,
@@ -82,7 +81,6 @@ module output_ports #(
     input [CONG_ALw-1 : 0] congestion_in_all; 
     input [PVV-1 : 0] granted_ovc_num_all;    
     input [P-1 : 0] granted_dst_is_from_a_single_flit_pck;
-    input [P-1 : 0] crossbar_flit_out_wr_all;
     input [P-1 : 0] any_ovc_granted_in_outport_all;    
     output [PV-1 : 0]  vsa_ovc_released_all;
     output [PV-1 : 0]  vsa_credit_decreased_all;

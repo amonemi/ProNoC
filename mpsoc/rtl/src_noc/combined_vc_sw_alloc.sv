@@ -35,7 +35,6 @@ module combined_vc_sw_alloc #(
     granted_ovc_num_all,
     ivc_num_getting_ovc_grant,
     ivc_num_getting_sw_grant,
-    spec_first_arbiter_granted_ivc_all,
     nonspec_first_arbiter_granted_ivc_all,
     granted_dest_port_all,
     nonspec_granted_dest_port_all,
@@ -66,7 +65,6 @@ module combined_vc_sw_alloc #(
     output [PV-1 : 0] ivc_num_getting_ovc_grant;
     output [PV-1 : 0] ivc_num_getting_sw_grant;
     output [PV-1 : 0] nonspec_first_arbiter_granted_ivc_all;
-    output [PV-1 : 0] spec_first_arbiter_granted_ivc_all;
     output [P-1 : 0] any_ivc_sw_request_granted_all;
     output [P-1 :  0] any_ovc_granted_in_outport_all;    
     output [PP_1-1 : 0] granted_dest_port_all;
@@ -139,7 +137,6 @@ module combined_vc_sw_alloc #(
             .granted_ovc_num_all(granted_ovc_num_all), 
             .ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant), 
             .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant), 
-            .spec_first_arbiter_granted_ivc_all(spec_first_arbiter_granted_ivc_all), 
             .nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all), 
             .granted_dest_port_all(granted_dest_port_all), 
             .nonspec_granted_dest_port_all(nonspec_granted_dest_port_all), 
@@ -167,7 +164,6 @@ module combined_vc_sw_alloc #(
             .granted_ovc_num_all(granted_ovc_num_all), 
             .ivc_num_getting_ovc_grant(ivc_num_getting_ovc_grant), 
             .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant), 
-            .spec_first_arbiter_granted_ivc_all(spec_first_arbiter_granted_ivc_all), 
             .nonspec_first_arbiter_granted_ivc_all(nonspec_first_arbiter_granted_ivc_all), 
             .granted_dest_port_all(granted_dest_port_all), 
             .nonspec_granted_dest_port_all(nonspec_granted_dest_port_all), 
@@ -231,8 +227,7 @@ module combined_vc_sw_alloc #(
         end
         assign nonspec_granted_dest_port_all = granted_dest_port_all;
         assign spec_granted_dest_port_all  = {PP_1{1'b0}};
-        assign spec_ovc_num_all = {PVV{1'b0}};
-        assign spec_first_arbiter_granted_ivc_all =  nonspec_first_arbiter_granted_ivc_all ;
+        assign spec_ovc_num_all = {PVV{1'b0}};        
     end
 endgenerate
 endmodule

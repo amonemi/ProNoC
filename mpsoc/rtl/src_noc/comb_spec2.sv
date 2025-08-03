@@ -41,7 +41,6 @@ module  comb_spec2_allocator #(
     granted_ovc_num_all,
     ivc_num_getting_ovc_grant,
     ivc_num_getting_sw_grant,
-    spec_first_arbiter_granted_ivc_all,
     nonspec_first_arbiter_granted_ivc_all,
     granted_dest_port_all,
     nonspec_granted_dest_port_all,
@@ -73,7 +72,6 @@ module  comb_spec2_allocator #(
     output [PV-1 : 0] ivc_num_getting_ovc_grant;
     output [PV-1 : 0] ivc_num_getting_sw_grant;
     output [PV-1 : 0] nonspec_first_arbiter_granted_ivc_all;
-    output [PV-1 : 0] spec_first_arbiter_granted_ivc_all;
     output [PP_1-1 : 0] granted_dest_port_all;
     output [PP_1-1 : 0] nonspec_granted_dest_port_all;
     output [P-1 : 0] any_ivc_sw_request_granted_all;

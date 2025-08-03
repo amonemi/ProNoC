@@ -625,8 +625,8 @@ module weights_update # (
         PROPOGATE_LIMITED = (WRRA_CONFIG_INDEX==1 ),
         INIT_WEIGHT = 1;
     input [WP-1 : 0] contention_all;
-    input [PFw-1 :  0]  flit_in_all;
-    output[PFw-1 :  0]  flit_out_all;
+    input [Fw-1 :  0]  flit_in_all [P-1:0];
+    output[Fw-1 :  0]  flit_out_all [P-1:0];
     input [P-1 :  0]  flit_out_wr_all;
     input [WP-1: 0] iport_weight_all;
     output[WP-1 : 0] limited_oports_weight;  
@@ -651,8 +651,8 @@ module weights_update # (
             .ADD_PIPREG_AFTER_CROSSBAR(ADD_PIPREG_AFTER_CROSSBAR)
         )  update_per_port (
             .contention_in(contention_all[(i+1)*W-1  :   i*W]),
-            .flit_in(flit_in_all[ (i+1)*Fw-1 : i*Fw]),
-            .flit_out(flit_out_all[(i+1)*Fw-1 : i*Fw]),
+            .flit_in(flit_in_all[i]),
+            .flit_out(flit_out_all[i]),
             .flit_out_wr(flit_out_wr_all[i]),
             .clk(clk),
             .reset(reset)
@@ -668,7 +668,7 @@ module weights_update # (
         assign tail_flit_is_sent = (flit_out_wr_all & flit_out_is_tail);
         assign any_tail_is_sent = | tail_flit_is_sent;
         for (i=0; i<P; i=i+1) begin : lp
-            assign flit_out_is_tail[i] = flit_out_all[(i+1)*Fw-2];
+            assign flit_out_is_tail[i] = flit_out_all[i][Fw-2];
             always @ (`pronoc_clk_reset_edge )begin 
                 if(`pronoc_reset) begin 
                     oport_weight_counter[i]<=INIT_WEIGHT;
@@ -722,7 +722,7 @@ module weights_update # (
         wire any_tail_is_sent;
         wire [P-1   :   0] flit_out_is_tail,tail_flit_is_sent;
         for (i=0; i<P; i=i+1) begin : lp2
-            assign flit_out_is_tail[i] = flit_out_all[(i+1)*Fw-2];
+            assign flit_out_is_tail[i] = flit_out_all[i][Fw-2];
         end
         
         assign tail_flit_is_sent = (flit_out_wr_all & flit_out_is_tail);
@@ -751,7 +751,7 @@ module weights_update # (
     endgenerate
     
     // localport 
-    assign flit_out_all[Fw-1 : 0] = flit_in_all [Fw-1 : 0]; 
+    assign flit_out_all[0] = flit_in_all [0]; 
 endmodule
 
 

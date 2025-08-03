@@ -39,19 +39,17 @@ module crossbar #(
     localparam 
         P_1 = (SELF_LOOP_EN )?  P : P-1,
         PP_1 = P_1 * P,
-        PFw = P*Fw,
-        P_1Fw = P_1 * Fw,
         P_1w = log2(P_1);
     
     input [PP_1-1 : 0] granted_dest_port_all;
-    input [PFw-1 : 0] flit_in_all;
-    output [PFw-1 : 0] flit_out_all;
+    input [Fw-1 : 0] flit_in_all[P-1 : 0];
+    output logic [Fw-1 : 0] flit_out_all [P-1 : 0];
     output [P-1 : 0] flit_out_wr_all;
     input  [P-1 : 0] ssa_flit_wr_all;
     
     wire [P-1 : 0]  flit_we_mux_out;
     wire [P_1-1 : 0] granted_dest_port [P-1 : 0];
-    wire [P_1Fw-1 : 0] mux_in [P-1 : 0];
+    wire [Fw-1 : 0] mux_in [P-1 : 0][P_1-1 : 0];
     wire [P_1-1 : 0] mux_sel_pre [P-1 : 0];
     wire [P_1-1 : 0]  mux_sel [P-1 : 0];
     wire [P_1w-1 : 0] mux_sel_bin [P-1 : 0];
@@ -65,15 +63,15 @@ module crossbar #(
             if(SELF_LOOP_EN == 0) begin : nslp
                 //remove sender port flit from flit list
                 if(i>j)    begin 
-                    assign mux_in[i][(j+1)*Fw-1 : j*Fw]=     flit_in_all[(j+1)*Fw-1 : j*Fw];
+                    assign mux_in[i][j]=     flit_in_all[j];
                     assign mux_sel_pre[i][j] =    granted_dest_port[j][i-1];
                 end
                 else if(i<j) begin 
-                    assign mux_in[i][j*Fw-1 : (j-1)*Fw]=     flit_in_all[(j+1)*Fw-1 : j*Fw];
+                    assign mux_in[i][j-1]=     flit_in_all[j];
                     assign mux_sel_pre[i][j-1] =    granted_dest_port[j][i];
                 end
             end else begin : slp
-                assign mux_in[i][(j+1)*Fw-1 : j*Fw]=     flit_in_all[(j+1)*Fw-1 : j*Fw];
+                assign mux_in[i][j]=     flit_in_all[j];
                 assign mux_sel_pre[i][j] =    granted_dest_port[j][i];            
             end
         end//for j
@@ -91,14 +89,12 @@ module crossbar #(
         end
         
         if (IS_ONE_HOT_MUX) begin : one_hot_gen
-            onehot_mux_1D #(
-                .W (Fw),
-                .N (P_1)
-            ) cross_mux (
-                .D_in(mux_in [i]),
-                .Q_out(flit_out_all[(i+1)*Fw-1 : i*Fw]),
-                .sel (mux_sel[i])
-            );
+            // One-hot mux
+            always_comb begin
+                flit_out_all[i] = {Fw{1'b0}};
+                for (int k = 0; k < P_1; k++)
+                    flit_out_all[i] |= (mux_sel[i][k]) ?  mux_in[i][k] :   {Fw{1'b0}};
+            end
         end else begin : binary
             one_hot_to_bin #(
                 .ONE_HOT_WIDTH(P_1),
@@ -107,15 +103,7 @@ module crossbar #(
                 .one_hot_code(mux_sel[i]),
                 .bin_code(mux_sel_bin[i])
             );
-            
-            binary_mux #(
-                .IN_WIDTH(P_1Fw),
-                .OUT_WIDTH(Fw)
-            ) cross_mux (
-                .mux_in(mux_in [i]),
-                .mux_out(flit_out_all[(i+1)*Fw-1 : i*Fw]),
-                .sel(mux_sel_bin[i])
-            );
+            assign flit_out_all[i]= mux_in[i][mux_sel_bin[i]];
         end//binary
         if(SELF_LOOP_EN == 0) begin : nslp
             add_sw_loc_one_hot #(

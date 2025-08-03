@@ -40,7 +40,6 @@ module comb_spec1_allocator #(
     granted_ovc_num_all,
     ivc_num_getting_ovc_grant,
     ivc_num_getting_sw_grant,
-    spec_first_arbiter_granted_ivc_all,
     nonspec_first_arbiter_granted_ivc_all,
     granted_dest_port_all,
     nonspec_granted_dest_port_all, 
@@ -73,7 +72,6 @@ module comb_spec1_allocator #(
     output [PV-1 : 0] ivc_num_getting_ovc_grant;
     output [PV-1 : 0] ivc_num_getting_sw_grant;
     output [PV-1 : 0] nonspec_first_arbiter_granted_ivc_all;
-    output [PV-1 : 0] spec_first_arbiter_granted_ivc_all;
     output [PP_1-1 : 0]  granted_dest_port_all;
     output [PP_1-1 : 0]  nonspec_granted_dest_port_all; 
     output [P-1 : 0] any_ivc_sw_request_granted_all;
@@ -112,26 +110,26 @@ module comb_spec1_allocator #(
         .reset(reset)
     );
     
-    wire    [V-1 : 0]  masked_non_assigned_request [PV-1 : 0]  ;   
-    wire    [VV-1 : 0]  masked_candidate_ovc_per_port   [P-1 : 0]  ;
-    wire    [V-1 : 0]  spec_first_arbiter_granted_ivc_per_port[P-1 : 0]  ;
-    wire    [V-1 : 0]  spec_first_arbiter_ovc_request  [P-1 : 0]  ;
-    wire    [V-1 : 0]  spec_first_arbiter_ovc_granted  [P-1 : 0]  ;
-    wire    [P_1-1 : 0]  spec_granted_dest_port_per_port [P-1 : 0];
-    wire    [VP_1-1 : 0] cand_ovc_granted                     [P-1 : 0];
-    wire    [P_1-1 : 0]  ovc_allocated_all_gen               [PV-1 : 0];
-    wire    [V-1 : 0]  granted_ovc_local_num_per_port  [P-1 : 0];
-    wire    [V-1 : 0]  ivc_local_num_getting_ovc_grant [P-1 : 0];
+    wire [V-1 : 0]  masked_non_assigned_request [PV-1 : 0]  ;   
+    wire [VV-1 : 0]  masked_candidate_ovc_per_port [P-1 : 0]  ;
+    wire [V-1 : 0]  spec_first_arbiter_granted_ivc_per_port[P-1 : 0]  ;
+    wire [V-1 : 0]  spec_first_arbiter_ovc_request [P-1 : 0]  ;
+    wire [V-1 : 0]  spec_first_arbiter_ovc_granted [P-1 : 0]  ;
+    wire [P_1-1 : 0]  spec_granted_dest_port_per_port [P-1 : 0];
+    wire [VP_1-1 : 0] cand_ovc_granted [P-1 : 0];
+    wire [P_1-1 : 0]  ovc_allocated_all_gen [PV-1 : 0];
+    wire [V-1 : 0]  granted_ovc_local_num_per_port  [P-1 : 0];
+    wire [V-1 : 0]  ivc_local_num_getting_ovc_grant [P-1 : 0];
     
     genvar i,j;
     generate 
     for(i=0;i< P;i=i+1) begin :P_
         for(j=0;j< V;j=j+1) begin : V_
             //merge masked_candidate_ovc in each port
-            assign masked_candidate_ovc_per_port[i][(j+1)*V-1 : j*V]    =   masked_non_assigned_request [i*V+j];
+            assign masked_candidate_ovc_per_port[i][(j+1)*V-1 : j*V] = masked_non_assigned_request [i*V+j];
         end//for j
-        assign spec_first_arbiter_granted_ivc_per_port[i]   =spec_first_arbiter_granted_ivc_all[(i+1)*V-1 : i*V];
-        assign spec_granted_dest_port_per_port[i]               =spec_granted_dest_port_all[(i+1)*P_1-1 : i*P_1];
+        assign spec_first_arbiter_granted_ivc_per_port[i] = spec_first_arbiter_granted_ivc_all[(i+1)*V-1 : i*V];
+        assign spec_granted_dest_port_per_port[i] = spec_granted_dest_port_all[(i+1)*P_1-1 : i*P_1];
         // multiplex candidate OVC of first level switch allocatore winner
         one_hot_mux #(
             .IN_WIDTH (VV),

@@ -50,7 +50,6 @@ module inout_ports #(
     ivc_num_getting_ovc_grant,
     spec_ovc_num_all,
     nonspec_first_arbiter_granted_ivc_all,
-    spec_first_arbiter_granted_ivc_all,
     nonspec_granted_dest_port_all,
     spec_granted_dest_port_all,
     granted_dest_port_all,
@@ -74,7 +73,6 @@ module inout_ports #(
     iport_weight_all,
     oports_weight_all,
     refresh_w_counter,
-    crossbar_flit_out_wr_all,
     
     // status
     vsa_credit_decreased_all,
@@ -112,7 +110,6 @@ module inout_ports #(
     input [PV-1 : 0] ivc_num_getting_ovc_grant;
     input [PVV-1 : 0] spec_ovc_num_all;
     input [PV-1 : 0] nonspec_first_arbiter_granted_ivc_all;
-    input [PV-1 : 0] spec_first_arbiter_granted_ivc_all;
     input [PP_1-1 : 0] nonspec_granted_dest_port_all;
     input [PP_1-1 : 0] spec_granted_dest_port_all;    
     input [PP_1-1 : 0] granted_dest_port_all;
@@ -134,12 +131,11 @@ module inout_ports #(
     output [PV-1 : 0] flit_is_tail_all;
     
     // to crossbar
-    output [PFw-1 : 0] flit_out_all;
+    output [Fw-1 : 0] flit_out_all [P-1:0];
     output [P-1 : 0] ssa_flit_wr_all;
     output [WP-1: 0] iport_weight_all;
     output [WPP-1:0] oports_weight_all;
     input refresh_w_counter;
-    input [P-1 : 0] crossbar_flit_out_wr_all;
     
     input clk,reset;
     
@@ -222,7 +218,6 @@ module inout_ports #(
         .granted_dst_is_from_a_single_flit_pck(granted_dst_is_from_a_single_flit_pck),
         .reset(reset),
         .clk(clk),
-        .crossbar_flit_out_wr_all(crossbar_flit_out_wr_all),
         .any_ovc_granted_in_outport_all(any_ovc_granted_in_outport_all),
         .vsa_ovc_released_all (vsa_ovc_released_all),
         .vsa_credit_decreased_all(vsa_credit_decreased_all),

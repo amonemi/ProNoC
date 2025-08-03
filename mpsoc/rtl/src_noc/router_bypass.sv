@@ -58,8 +58,8 @@ module onehot_mux_1D #(
     //onehot_mux_2D
     always_comb begin
         Q_out = {W{1'b0}};
-        for (int i = 0; i < N; i++)
-            Q_out |= (sel[i]) ?  in_array[i] :  {W{1'b0}};
+        for (int k = 0; k < N; k++)
+            Q_out |= (sel[k]) ?  in_array[k] :  {W{1'b0}};
     end
 endmodule
 

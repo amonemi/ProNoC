@@ -92,7 +92,7 @@ module input_ports #(
     output  [PV-1 : 0] credit_out_all;
     
     output  [PVP_1-1 : 0] dest_port_all;
-    output  [PFw-1 : 0] flit_out_all;
+    output  [Fw-1 : 0] flit_out_all [P-1 : 0];
     
     input   [PV-1  : 0] assigned_ovc_not_full_all;
     output  [PV-1  : 0] ovc_is_assigned_all;
@@ -139,7 +139,7 @@ module input_ports #(
             .flit_is_tail(flit_is_tail_all  [(i+1)*V-1 : i*V]),
             .ivc_request(ivc_request_all [(i+1)*V-1 : i*V]),    
             .dest_port(dest_port_all [(i+1)*P_1*V-1 : i*P_1*V]),
-            .flit_out(flit_out_all [(i+1)*Fw-1 : i*Fw]),
+            .flit_out(flit_out_all [i]),
             .assigned_ovc_not_full(assigned_ovc_not_full_all [(i+1)*V-1 : i*V]), 
             .ovc_is_assigned(ovc_is_assigned_all [(i+1)*V-1 : i*V]), 
             .sel(sel [(i+1)*V-1 : i*V]),
