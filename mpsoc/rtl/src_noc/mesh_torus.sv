@@ -623,15 +623,7 @@ module  regular_topo_adaptive_lk_dest_encoder #(
     
     wire [1 : 0]  ab,xy;
     wire sel_muxed;
-    
-    onehot_mux_1D #(
-        .W(1),
-        .N(V) 
-    ) sel_mux (
-        .D_in(sel),
-        .Q_out(sel_muxed),
-        .sel(vc_num_delayed)
-    );
+    assign sel_muxed = |(sel & vc_num_delayed);
     
     //lkdestport = {lkdestport_x[1:0],lkdestport_y[1:0]};
     // sel: 0: xdir     1: ydir

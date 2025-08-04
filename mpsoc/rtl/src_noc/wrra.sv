@@ -85,15 +85,7 @@ module  wrra #(
     endgenerate
     
     // one hot mux
-    onehot_mux_1D #(
-        .W(1),
-        .N(ARBITER_WIDTH)        
-    ) mux  (
-        .D_in(weight_counter_is_reset),
-        .Q_out(winner_weight_consumed),
-        .sel(grant)
-    );
-    
+    assign winner_weight_consumed = |(weight_counter_is_reset & grant);    
     wire priority_en = (EXT_P_EN == 1) ? ext_pr_en_i & winner_weight_consumed : winner_weight_consumed;
     //round robin arbiter with external priority
     arbiter_priority_en #(
@@ -107,9 +99,6 @@ module  wrra #(
         .priority_en(priority_en)
     );
 endmodule
-
-
-
 
 
 module  rra_priority_lock #(
@@ -134,17 +123,8 @@ module  rra_priority_lock #(
     input                                  reset;  
     
     // one hot mux
-    onehot_mux_1D #(
-        .W(1),
-        .N(ARBITER_WIDTH)        
-    )  mux (
-        .D_in(pr_en_array_i),
-        .Q_out(winner_weight_consumed),
-        .sel(grant)
-    );
-    
+    assign winner_weight_consumed = |(pr_en_array_i & grant);
     wire priority_en = ext_pr_en_i & winner_weight_consumed;
-    
     //round robin arbiter with external priority
     arbiter_priority_en #(
         .ARBITER_WIDTH(ARBITER_WIDTH)

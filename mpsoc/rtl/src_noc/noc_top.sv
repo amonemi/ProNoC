@@ -45,7 +45,7 @@ module  noc_top (
     output  router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];
     
     generate 
-    if (IS_MESH | IS_FMESH | IS_TORUS | IS_RING | IS_LINE) begin : tori_noc 
+    if (IS_REGULAR_TOPO | IS_FMESH) begin : regular_ 
         regular_topo_noc_top noc_top (
             .reset         (reset        ), 
             .clk           (clk          ), 
@@ -77,7 +77,7 @@ module  noc_top (
                 .chan_out_all  (chan_out_all ),
                 .router_event  (router_event )
         );
-    end else if (IS_MULTI_MESH) begin : multimesh
+    end else if (IS_MULTI_MESH) begin : multimesh_
     /*
         multi_mesh noc_top ( 
                 .reset         (reset        ), 

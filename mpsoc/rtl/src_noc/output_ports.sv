@@ -485,15 +485,7 @@ module oport_ovc_sig_gen #(
         .sel (first_arbiter_granted_ivc)
     );
     // tail mux 
-    onehot_mux_1D #(
-        .W  (1),
-        .N  (V)
-    )tail_mux (
-        .D_in(flit_is_tail),
-        .Q_out(muxout2),
-        .sel       (first_arbiter_granted_ivc)
-    );
-    
+    assign muxout2 = |(flit_is_tail & first_arbiter_granted_ivc);
     one_hot_demux #(
         .IN_WIDTH (V),
         .SEL_WIDTH (P_1)
@@ -502,7 +494,6 @@ module oport_ovc_sig_gen #(
         .demux_in    (muxout1),//repeated
         .demux_out    (credit_decreased)
     );
-    
     assign ovc_released = (muxout2)? credit_decreased : {VP_1{1'b0}};
 endmodule
 
@@ -569,23 +560,9 @@ module full_ovc_predictor #(
         .sel       (dest_port)
     );
     // assigned ovc mux
-    onehot_mux_1D #(
-        .W (1),
-        .N (V)
-    ) full_mux2 (
-        .D_in(full_muxout1),
-        .Q_out(full_muxout2),
-        .sel (assigned_ovc_num)
-    );
+    assign full_muxout2 = |(full_muxout1 & assigned_ovc_num);    
     wire [V-1 : 0]  nearlyfull_sel = (ovc_is_assigned | ~OVC_ALLOC_MODE)? assigned_ovc_num : granted_ovc_num ;// or (granted_ovc_num | ssa_granted_ovc_num) ?    
-    onehot_mux_1D #(
-        .W (1),
-        .N (V)
-    ) nearlfull_mux2 (
-        .D_in(nearly_full_muxout1),
-        .Q_out(nearly_full_muxout2),
-        .sel (nearlyfull_sel)
-    );
+    assign nearly_full_muxout2 =|(nearly_full_muxout1 & nearlyfull_sel);
     
     assign full_reg1_next = full_muxout2;
     assign full_reg2_next = nearly_full_muxout2 & ivc_getting_sw_grant;

@@ -440,7 +440,6 @@ module multicast_chan_in_process #(
             for(i=0; i< NE; i=i+1) begin : endpoints
                 //Endpoint decoded address
                 localparam 
-                    MCAST_ID = endp_id_to_mcast_id(i),
                     YY = ((i/NL) / NX ), 
                     XX = ((i/NL) % NX ), 
                     LL = (i % NL),

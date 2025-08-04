@@ -177,15 +177,8 @@ module comb_nonspec_allocator # (
             .Q_out(candidate_ovc_local_num[i]),
             .sel(first_arbiter_granted_ivc_per_port[i])
         );
-        
-        onehot_mux_1D #(
-            .W (1),
-            .N (V)
-        ) mux2_1 (
-            .D_in(ovc_is_assigned_all[(i+1)*V-1 : i*V]),
-            .Q_out(ovc_assigned_local[i]),
-            .sel (first_arbiter_granted_ivc_per_port [i])            
-        );
+        //one hot mux to select granted OVC
+        assign ovc_assigned_local[i] = |(ovc_is_assigned_all[(i+1)*V-1 : i*V] & first_arbiter_granted_ivc_per_port [i]);
         
         //demultiplexer        
         one_hot_demux #(
@@ -503,17 +496,9 @@ module nonspec_sw_alloc #(
         if(MIN_PCK_SIZE == 1) begin
             //single_flit req multiplexer
             assign pck_is_single_flit[i] = pck_is_single_flit_all [(i+1)*V-1 : i*V];
-            onehot_mux_1D #(
-                .W (1),
-                .N (V)
-            ) mux2 (
-                .D_in(pck_is_single_flit  [i]),
-                .Q_out(single_flit_pck_local_grant[i]),
-                .sel (first_arbiter_grant[i])
-            );   
-            
+            //one hot mux to select single flit packet
+            assign single_flit_pck_local_grant[i] = |(pck_is_single_flit[i] & first_arbiter_grant[i]);
             assign  single_flit_granted_dst[i] = (single_flit_pck_local_grant[i])?  granted_dest_port[i] : {P_1{1'b0}};
-
             if (SELF_LOOP_EN == 0) begin
                 add_sw_loc_one_hot #(
                     .P(P),
@@ -608,16 +593,8 @@ module swa_input_port_arbiter #(
     
     generate 
     if(IS_WRRA) begin: wrra_
-        // one hot mux    
-        onehot_mux_1D #(
-            .W(1),
-            .N(ARBITER_WIDTH)
-        ) mux (
-            .D_in(vc_weight_is_consumed),
-            .Q_out(winner_weight_consumed),
-            .sel(grant)
-        );
-        
+        // one hot mux
+        assign  winner_weight_consumed = |(vc_weight_is_consumed & grant);
         wire priority_en = (EXT_P_EN == 1) ? ext_pr_en_i & winner_weight_consumed : winner_weight_consumed;
         
         //round robin arbiter with external priority
@@ -688,16 +665,8 @@ module swa_output_port_arbiter #(
     if(IS_WRRA) begin : wrra
         // second level wrra priority is only changed if the granted request weight is consumed 
         wire pr_en;
-        
-        onehot_mux_1D #(
-            .W(1),
-            .N(ARBITER_WIDTH)
-        ) mux (
-            .D_in(weight_consumed),
-            .Q_out(pr_en),
-            .sel(grant)
-        );
-        
+        //one hot mux
+        assign pr_en = |(weight_consumed & grant);
         arbiter_priority_en #(
             .ARBITER_WIDTH (ARBITER_WIDTH)
         ) arb  (   

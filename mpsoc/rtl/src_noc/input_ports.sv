@@ -348,7 +348,6 @@ module input_queue_per_port #(
     assign wr_hdr_fwft_fifo  = hdr_flit_wr | (smart_hdr_en & ~ smart_ctrl_in.ivc_single_flit_pck);
     assign ivc_request = ivc_not_empty;
     
-    wire  [V-1 : 0] flit_is_tail2;
     always_ff @ (`pronoc_clk_reset_edge) begin
         if (`pronoc_reset) begin
             ovc_is_assigned        <= '0;
@@ -816,15 +815,7 @@ module input_queue_per_port #(
     
     if(~IS_RRA) begin  : wrra
         wire granted_flit_is_tail;
-        
-        onehot_mux_1D #( 
-            .W(1),
-            .N(V)
-        )onehot_mux(
-            .D_in(flit_is_tail),
-            .Q_out(granted_flit_is_tail),
-            .sel(ivc_num_getting_sw_grant)
-        );
+        assign granted_flit_is_tail = |(flit_is_tail & ivc_num_getting_sw_grant);        
         
         weight_control#(
             .ARBITER_TYPE(SWA_ARBITER_TYPE),
