@@ -138,7 +138,7 @@ module router_two_stage #(
     // to/from the crossbar
     wire  [Fw-1 : 0] iport_flit_out_all [P-1:0];
     wire  [P-1 : 0] ssa_flit_wr_all;
-    logic [PP_1-1 : 0] granted_dest_port_all_delayed;
+    logic [P_1-1 : 0] granted_dest_port_all_delayed[P-1 : 0];
     wire  [Fw-1 : 0]  crossbar_flit_out_all [P-1 :0];
     wire  [P-1 :  0]  crossbar_flit_out_wr_all;
     wire  [Fw-1 : 0]  link_flit_out_all [P-1 :0];
@@ -207,6 +207,13 @@ module router_two_stage #(
             assign endp_addrs[i] = router_config_in.endp_addrs[ (i+1)*EAw-1 : i*EAw];
         end
         for (i=0; i<P; i=i+1 ) begin :p_
+            always_ff @ (`pronoc_clk_reset_edge) begin
+                if (`pronoc_reset) begin
+                    granted_dest_port_all_delayed[i] <= '0; // reset to zero vector of width PP_1
+                end else begin
+                    granted_dest_port_all_delayed[i] <= granted_dest_port_all [ (i+1)*P_1-1 : i*P_1];
+                end
+            end
             
             if(IS_UNICAST) begin : uni 
                 assign chan_in_tmp[i] = chan_in[i];
@@ -348,13 +355,7 @@ module router_two_stage #(
         .clk(clk), 
         .reset(reset)
     );
-    always_ff @ (`pronoc_clk_reset_edge) begin
-        if (`pronoc_reset) begin
-            granted_dest_port_all_delayed <= '0; // reset to zero vector of width PP_1
-        end else begin
-            granted_dest_port_all_delayed <= granted_dest_port_all;
-        end
-    end
+    
     
     crossbar #(
         .P (P) // router port num

@@ -38,17 +38,15 @@ module crossbar #(
     
     localparam 
         P_1 = (SELF_LOOP_EN )?  P : P-1,
-        PP_1 = P_1 * P,
         P_1w = log2(P_1);
     
-    input [PP_1-1 : 0] granted_dest_port_all;
+    input [P_1-1 : 0] granted_dest_port_all[P-1 : 0];
     input [Fw-1 : 0] flit_in_all[P-1 : 0];
     output logic [Fw-1 : 0] flit_out_all [P-1 : 0];
     output [P-1 : 0] flit_out_wr_all;
     input  [P-1 : 0] ssa_flit_wr_all;
     
     wire [P-1 : 0]  flit_we_mux_out;
-    wire [P_1-1 : 0] granted_dest_port [P-1 : 0];
     wire [Fw-1 : 0] mux_in [P-1 : 0][P_1-1 : 0];
     wire [P_1-1 : 0] mux_sel_pre [P-1 : 0];
     wire [P_1-1 : 0]  mux_sel [P-1 : 0];
@@ -58,21 +56,20 @@ module crossbar #(
     genvar i,j;
     generate
     for(i=0;i<P;i=i+1) begin : P_
-        assign granted_dest_port[i] = granted_dest_port_all[(i+1)*P_1-1 : i*P_1];
         for(j=0;j<P;j=j+1)begin : P_ 
             if(SELF_LOOP_EN == 0) begin : nslp
                 //remove sender port flit from flit list
                 if(i>j)    begin 
-                    assign mux_in[i][j]=     flit_in_all[j];
-                    assign mux_sel_pre[i][j] =    granted_dest_port[j][i-1];
+                    assign mux_in[i][j] = flit_in_all[j];
+                    assign mux_sel_pre[i][j] = granted_dest_port_all[j][i-1];
                 end
                 else if(i<j) begin 
-                    assign mux_in[i][j-1]=     flit_in_all[j];
-                    assign mux_sel_pre[i][j-1] =    granted_dest_port[j][i];
+                    assign mux_in[i][j-1] = flit_in_all[j];
+                    assign mux_sel_pre[i][j-1] = granted_dest_port_all[j][i];
                 end
             end else begin : slp
-                assign mux_in[i][j]=     flit_in_all[j];
-                assign mux_sel_pre[i][j] =    granted_dest_port[j][i];            
+                assign mux_in[i][j] = flit_in_all[j];
+                assign mux_sel_pre[i][j] = granted_dest_port_all[j][i];            
             end
         end//for j
         
@@ -93,7 +90,7 @@ module crossbar #(
             always_comb begin
                 flit_out_all[i] = {Fw{1'b0}};
                 for (int k = 0; k < P_1; k++)
-                    flit_out_all[i] |= (mux_sel[i][k]) ?  mux_in[i][k] :   {Fw{1'b0}};
+                    flit_out_all[i] |= (mux_sel[i][k]) ?  mux_in[i][k] : {Fw{1'b0}};
             end
         end else begin : binary
             one_hot_to_bin #(
@@ -110,11 +107,11 @@ module crossbar #(
                 .P(P),
                 .SW_LOC(i)
             ) add_sw_loc (
-                .destport_in(granted_dest_port_all[(i+1)*P_1-1 : i*P_1]),
+                .destport_in(granted_dest_port_all[i]),
                 .destport_out(flit_out_wr_gen [i])
             );
         end else begin :slp
-            assign flit_out_wr_gen [i] = granted_dest_port_all[(i+1)*P_1-1 : i*P_1];
+            assign flit_out_wr_gen[i] = granted_dest_port_all[i];
         end
     end//for i
     endgenerate
