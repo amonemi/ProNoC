@@ -616,14 +616,14 @@ module  vc_alloc_request_gen_determinstic #(
     
     wire    [PV-1       :   0]  non_assigned_ovc_request_all; 
     wire    [VP_1-1     :   0]  ovc_avalable_perport        [P-1    :   0];
-    wire    [VP_1-1     :   0]  ovc_avalable_ivc            [PV-1   :   0];
+    wire    [V-1        :   0]  ovc_avalable_ivc [PV-1 : 0] [P_1-1:0];
     wire    [P_1-1      :   0]  dest_port_ivc               [PV-1   :   0];
-    wire    [V-1        :   0]  ovc_avb_muxed               [PV-1   :   0];  
+    logic   [V-1        :   0]  ovc_avb_muxed               [PV-1   :   0];  
     wire    [V-1        :   0]  ovc_request_ivc             [PV-1   :   0];
     
     assign non_assigned_ovc_request_all =   ivc_request_all & ~ovc_is_assigned_all;
     
-    genvar i;
+    genvar i,j;
     generate
     if(SELF_LOOP_EN == 0 ) begin :nslp
         //remove available ovc of receiver port 
@@ -638,21 +638,21 @@ module  vc_alloc_request_gen_determinstic #(
         end
     end
     // IVC loop
-    for(i=0;i< PV;i=i+1) begin :total_vc_loop
+    for(i=0;i< PV;i=i+1) begin :PV_
         //separate input/output
-        assign ovc_avalable_ivc[i]  =   ovc_avalable_perport[(i/V)];
+        //assign ovc_avalable_ivc[i]  =   ovc_avalable_perport[(i/V)];
         assign dest_port_ivc   [i]  =   dest_port_in_all [(i+1)*P_1-1  :   i*P_1   ];
         assign ovc_request_ivc [i]  = (non_assigned_ovc_request_all[i])? candidate_ovc_all  [(i+1)*V-1  :   i*V ]: {V{1'b0}};          
-        
-        //available ovc multiplexer
-        onehot_mux_1D #(
-            .W(V),
-            .N(P_1)
-        ) multiplexer (
-            .D_in(ovc_avalable_ivc[i]),
-            .Q_out(ovc_avb_muxed[i]),
-            .sel(dest_port_ivc[i])
-        );  
+        for(j=0;j< P_1;j=j+1) begin :V_
+            assign ovc_avalable_ivc[i][j] = ovc_avalable_perport[i / V][j*V +: V];
+        end//for
+        //Onehot mux to select available ovc
+        always_comb begin
+            ovc_avb_muxed[i] = '0;
+            for (int k = 0; k < P_1; k++) begin
+                ovc_avb_muxed[i] |= (dest_port_ivc[i][k]) ?  ovc_avalable_ivc [i][k] :  '0;
+            end
+        end
         
         // mask unavailable ovc from requests
         assign masked_ovc_request_all  [(i+1)*V-1 : i*V ] = ovc_avb_muxed[i] & ovc_request_ivc [i];

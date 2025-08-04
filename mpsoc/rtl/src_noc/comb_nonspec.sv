@@ -117,9 +117,9 @@ module comb_nonspec_allocator # (
     wire   [V-1 : 0] masked_non_assigned_request [PV-1 : 0] ;    
     wire   [PV-1 : 0] masked_assigned_request;
     wire   [PV-1 : 0] assigned_ovc_request_all ;
-    wire   [VV-1 : 0] masked_candidate_ovc_per_port [P-1 : 0] ;
+    wire   [V-1 : 0] masked_candidate_ovc_per_port [P-1 : 0][V-1:0];
     wire   [V-1 : 0] first_arbiter_granted_ivc_per_port[P-1 : 0] ;
-    wire   [V-1 : 0] candidate_ovc_local_num [P-1 : 0] ;
+    logic  [V-1 : 0] candidate_ovc_local_num [P-1 : 0] ;
     wire   [V-1 : 0] first_arbiter_ovc_granted [PV-1 : 0];
     wire   [P_1-1 : 0] granted_dest_port_per_port [P-1 : 0];
     wire   [VP_1-1 : 0] cand_ovc_granted [P-1 : 0];
@@ -161,22 +161,19 @@ module comb_nonspec_allocator # (
             assign ivc_request_all[i*V+j] = ivc_info[i][j].ivc_req;
             assign ovc_is_assigned_all[i*V+j] = ivc_info[i][j].ovc_is_assigned;  
             assign assigned_ovc_not_full_all[i*V+j] =ivc_info[i][j].assigned_ovc_not_full;           
-            assign masked_candidate_ovc_per_port[i][(j+1)*V-1 : j*V] = first_arbiter_ovc_granted [i*V+j];
+            assign masked_candidate_ovc_per_port[i][j] = first_arbiter_ovc_granted [i*V+j];
             assign granted_ovc_num_all[(i*VV)+((j+1)*V)-1 : (i*VV)+(j*V)]=granted_ovc_local_num_per_port[i];
         end//for j
         
         assign first_arbiter_granted_ivc_per_port[i]=first_arbiter_granted_ivc_all[(i+1)*V-1 : i*V];
         assign granted_dest_port_per_port[i]=granted_dest_port_all[(i+1)*P_1-1 : i*P_1];
         
-        // multiplex candidate OVC of first level switch allocatore winner    
-        onehot_mux_1D #(
-            .W(V),
-            .N(V)
-        ) mux2 (
-            .D_in(masked_candidate_ovc_per_port[i]),
-            .Q_out(candidate_ovc_local_num[i]),
-            .sel(first_arbiter_granted_ivc_per_port[i])
-        );
+        //One-hot multiplex candidate OVC of first level switch allocator winner
+        always_comb begin
+            candidate_ovc_local_num [i] = '0;
+            for (int k = 0; k < V; k++)
+                candidate_ovc_local_num [i] |= (first_arbiter_granted_ivc_per_port[i][k]) ?  masked_candidate_ovc_per_port[i][k] :  '0;
+        end
         //one hot mux to select granted OVC
         assign ovc_assigned_local[i] = |(ovc_is_assigned_all[(i+1)*V-1 : i*V] & first_arbiter_granted_ivc_per_port [i]);
         
@@ -309,16 +306,16 @@ module  comb_nonspec_v2_allocator #(
     wire    [V-1 : 0] masked_non_assigned_request [PV-1 : 0] ;   
     wire    [PV-1 : 0] masked_assigned_request;
     wire    [PV-1 : 0] assigned_ovc_request_all;
-    wire    [VV-1 : 0] masked_non_assigned_request_per_port [P-1 : 0] ;
+    wire    [V-1 : 0] masked_non_assigned_request_per_port [P-1 : 0][V-1 : 0];
     wire    [V-1 : 0] first_arbiter_granted_ivc_per_port[P-1 : 0] ;
-    wire    [V-1 : 0] candidate_ovc_local_num     [P-1 : 0] ;
+    logic    [V-1 : 0] candidate_ovc_local_num [P-1 : 0] ;
     wire    [V-1 : 0] first_arbiter_ovc_granted [P-1:0];
     wire    [P_1-1 : 0] granted_dest_port_per_port  [P-1 : 0];
-    wire    [VP_1-1 : 0] cand_ovc_granted    [P-1 : 0];
-    wire    [P_1-1 : 0] ovc_allocated_all_gen   [PV-1 : 0];
+    wire    [VP_1-1 : 0] cand_ovc_granted [P-1 : 0];
+    wire    [P_1-1 : 0] ovc_allocated_all_gen [PV-1 : 0];
     wire    [V-1 : 0] granted_ovc_local_num_per_port [P-1 : 0];
     wire    [V-1 : 0] ivc_local_num_getting_ovc_grant[P-1 : 0];
-    wire    [V : 0] summ_in   [PV-1 : 0];
+    wire    [V : 0] summ_in [PV-1 : 0];
     
     assign assigned_ovc_request_all =   ivc_request_all &   ovc_is_assigned_all;
     genvar i,j;
@@ -326,8 +323,8 @@ module  comb_nonspec_v2_allocator #(
     // IVC loop
     for(i=0;i< PV;i=i+1) begin :PV_
         // mask unavailable ovc from requests
-        assign masked_non_assigned_request  [i]  =   masked_ovc_request_all [(i+1)*V-1 : i*V ];
-        assign masked_assigned_request      [i]  =   assigned_ovc_not_full_all[i] & assigned_ovc_request_all[i]; 
+        assign masked_non_assigned_request [i] = masked_ovc_request_all [(i+1)*V-1 : i*V ];
+        assign masked_assigned_request [i] = assigned_ovc_not_full_all[i] & assigned_ovc_request_all[i]; 
         // summing assigned and non-assigned VC requests
         assign summ_in[i]  ={masked_non_assigned_request   [i],masked_assigned_request     [i]};
         assign ivc_request_masked_all[i] = | summ_in[i];
@@ -336,20 +333,17 @@ module  comb_nonspec_v2_allocator #(
     for(i=0;i< P;i=i+1) begin : P_
         for(j=0;j< V;j=j+1) begin : V_
             //merge masked_candidate_ovc in each port
-            assign masked_non_assigned_request_per_port[i][(j+1)*V-1 : j*V] =           masked_non_assigned_request [i*V+j];
+            assign masked_non_assigned_request_per_port[i][j] = masked_non_assigned_request [i*V+j];
             assign granted_ovc_num_all[(i*VV)+((j+1)*V)-1 : (i*VV)+(j*V)]=granted_ovc_local_num_per_port[i];
         end//for j
         assign first_arbiter_granted_ivc_per_port[i]=first_arbiter_granted_ivc_all[(i+1)*V-1 : i*V];
         assign granted_dest_port_per_port[i]=granted_dest_port_all[(i+1)*P_1-1 : i*P_1];
-        
-        onehot_mux_1D #(
-            .W(V),
-            .N(V)
-        ) mux2 (
-            .D_in(masked_non_assigned_request_per_port [i]),
-            .Q_out(candidate_ovc_local_num [i]),
-            .sel (first_arbiter_granted_ivc_per_port [i])
-        );
+        //One-hot multiplex candidate OVC of first level switch allocator winner
+        always_comb begin
+            candidate_ovc_local_num [i] = '0;
+            for (int k = 0; k < V; k++)
+                candidate_ovc_local_num [i] |= (first_arbiter_granted_ivc_per_port[i][k]) ?  masked_non_assigned_request_per_port[i][k] :  '0;
+        end
         
         assign any_cand_ovc_exsit[i] = | candidate_ovc_local_num    [i];
         //first level arbiter to candidate only one OVC 
@@ -418,7 +412,6 @@ module nonspec_sw_alloc #(
     localparam
         P_1 = (SELF_LOOP_EN) ? P : P-1,
         PV = V * P,
-        VP_1 = V * P_1,
         PP_1 = P_1 * P,
         PVP_1 = PV * P_1;
     
@@ -439,25 +432,23 @@ module nonspec_sw_alloc #(
     //separte input per port
     wire [V-1 : 0] ivc_granted [P-1 : 0];
     wire [V-1 : 0] pck_is_single_flit [P-1 : 0];
-    wire [VP_1-1 : 0] dest_port_ivc [P-1 : 0];
+    wire [P_1-1 : 0] dest_port_ivc [P-1 : 0][V-1 : 0];
     wire [P_1-1 : 0] granted_dest_port [P-1 : 0];
     wire [P_1-1 : 0] single_flit_granted_dst [P-1 : 0];
     wire [P-1 : 0] single_flit_granted_dst_all [P-1 : 0];
-
     // internal wires
-    wire [V-1 : 0] ivc_masked     [P-1 : 0];//output of mask and  
-    wire [V-1 : 0] first_arbiter_grant     [P-1 : 0];//output of first arbiter 
+    wire [V-1 : 0] ivc_masked [P-1 : 0];//output of mask and  
+    wire [V-1 : 0] first_arbiter_grant [P-1 : 0];//output of first arbiter 
     wire [P-1 : 0] single_flit_pck_local_grant;  
-    wire [P_1-1 : 0] dest_port  [P-1 : 0];//output of multiplexer
-    wire [P_1-1 : 0] second_arbiter_request  [P-1 : 0]; 
-    wire [P_1-1 : 0] second_arbiter_grant    [P-1 : 0]; 
+    logic [P_1-1 : 0] dest_port  [P-1 : 0];//output of multiplexer
+    wire [P_1-1 : 0] second_arbiter_request [P-1 : 0]; 
+    wire [P_1-1 : 0] second_arbiter_grant [P-1 : 0]; 
     wire [P_1-1 : 0] second_arbiter_weight_consumed [P-1 : 0]; 
     wire [V-1 : 0] vc_weight_is_consumed [P-1 : 0]; 
-    wire [P-1    :0] winner_weight_consumed;
+    wire [P-1 : 0] winner_weight_consumed;
     
     genvar i,j;
     generate
-    
     for(i=0;i< P;i=i+1) begin : P_
         //assign in/out to the port based wires
         //output
@@ -466,9 +457,11 @@ module nonspec_sw_alloc #(
         assign first_arbiter_granted_ivc_all[(i+1)*V-1 : i*V] =  first_arbiter_grant[i];
         //input 
         assign ivc_masked[i]  = ivc_request_masked_all [(i+1)*V-1 : i*V];
-        assign dest_port_ivc[i]  = dest_port_all [(i+1)*VP_1-1 : i*VP_1];
+        //assign dest_port_ivc[i]  = dest_port_all [(i+1)*VP_1-1 : i*VP_1];
         assign vc_weight_is_consumed[i]  =  vc_weight_is_consumed_all [(i+1)*V-1 : i*V];
-        
+        for (j=0;j<V;j=j+1) begin : V_
+            assign dest_port_ivc [i][j] = dest_port_all [(i*V+j)*P_1 +: P_1];
+        end //V_
         //first level arbiter
         swa_input_port_arbiter #(
             .ARBITER_WIDTH(V),
@@ -483,22 +476,20 @@ module nonspec_sw_alloc #(
             .vc_weight_is_consumed(vc_weight_is_consumed[i]),
             .winner_weight_consumed(winner_weight_consumed[i])
         );
-        //destination port multiplexer
-        onehot_mux_1D #(
-            .W (P_1),
-            .N (V)
-        ) mux (
-            .D_in(dest_port_ivc [i]),
-            .Q_out(dest_port[i]),
-            .sel(first_arbiter_grant[i])
-        );
+        //onehot_mux to select destination port
+        always_comb begin
+            dest_port[i] = '0;
+            for (int k = 0; k < V; k++) begin
+                dest_port[i] |= (first_arbiter_grant[i][k]) ?  dest_port_ivc [i][k] :  '0;
+            end
+        end
         
         if(MIN_PCK_SIZE == 1) begin
             //single_flit req multiplexer
             assign pck_is_single_flit[i] = pck_is_single_flit_all [(i+1)*V-1 : i*V];
             //one hot mux to select single flit packet
             assign single_flit_pck_local_grant[i] = |(pck_is_single_flit[i] & first_arbiter_grant[i]);
-            assign  single_flit_granted_dst[i] = (single_flit_pck_local_grant[i])?  granted_dest_port[i] : {P_1{1'b0}};
+            assign single_flit_granted_dst[i] = (single_flit_pck_local_grant[i])?  granted_dest_port[i] : {P_1{1'b0}};
             if (SELF_LOOP_EN == 0) begin
                 add_sw_loc_one_hot #(
                     .P(P),
@@ -596,7 +587,6 @@ module swa_input_port_arbiter #(
         // one hot mux
         assign  winner_weight_consumed = |(vc_weight_is_consumed & grant);
         wire priority_en = (EXT_P_EN == 1) ? ext_pr_en_i & winner_weight_consumed : winner_weight_consumed;
-        
         //round robin arbiter with external priority
         arbiter_priority_en #(
             .ARBITER_WIDTH(ARBITER_WIDTH)

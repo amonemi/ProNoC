@@ -196,47 +196,27 @@ module flit_buffer
 ******************/
     if((2**Bw)==B)begin : pow2
         
-        wire [Bw-1 : 0]  vc_wr_addr;
-        wire [Bw-1 : 0]  vc_rd_addr; 
-        wire [Vw-1 : 0]  wr_select_addr;
-        wire [Vw-1 : 0]  rd_select_addr; 
-        wire [Bw+Vw-1 : 0]  wr_addr;
-        wire [Bw+Vw-1 : 0]  rd_addr;
+        logic [Bw-1 : 0]  vc_wr_addr, vc_rd_addr; 
+        logic [Vw-1 : 0]  wr_select_addr, rd_select_addr; 
+        wire [Bw+Vw-1 : 0]  wr_addr, rd_addr;
         
         assign  wr_addr = {wr_select_addr,vc_wr_addr};
         assign  rd_addr = {rd_select_addr,vc_rd_addr};
         
-        onehot_mux_1D #(
-            .W(Bw),
-            .N(V) 
-        ) wr_ptr_mux (
-            .D_in(wr_ptr_array),
-            .Q_out(vc_wr_addr),
-            .sel(vc_num_wr)
-        );
-        
-        onehot_mux_1D #(
-            .W(Bw),
-            .N(V) 
-        ) rd_ptr_mux (
-            .D_in(rd_ptr_array),
-            .Q_out(vc_rd_addr),
-            .sel(vc_num_rd)
-        );    
-        
-        one_hot_to_bin #(
-            .ONE_HOT_WIDTH(V)
-        ) wr_vc_start_addr (
-            .one_hot_code(vc_num_wr),
-            .bin_code(wr_select_addr)
-        );
-        
-        one_hot_to_bin #(
-            .ONE_HOT_WIDTH(V)
-        ) rd_vc_start_addr (
-            .one_hot_code(vc_num_rd),
-            .bin_code(rd_select_addr)
-        );
+        always_comb begin
+            vc_wr_addr = '0;
+            vc_rd_addr = '0;
+            wr_select_addr = '0;
+            rd_select_addr = '0;
+            for (int k = 0; k < V; k++) begin
+                //One-hot_mux
+                vc_wr_addr |= (vc_num_wr[k]) ?  wr_ptr[k] :  '0;
+                vc_rd_addr |= (vc_num_rd[k]) ?  rd_ptr[k] :  '0;
+                //One-hot to binary
+                if (vc_num_wr[k]) wr_select_addr = Vw'(k);
+                if (vc_num_rd[k]) rd_select_addr = Vw'(k);
+            end
+        end
         
         fifo_ram    #(
             .DATA_WIDTH (RAM_DATA_WIDTH),
@@ -279,8 +259,8 @@ module flit_buffer
     Buffer width is
     not power of 2
 ******************/
-        // memory address
-        wire [BVw- 1 : 0]  wr_addr, rd_addr;
+    // memory address
+    logic [BVw- 1 : 0]  wr_addr, rd_addr;
     wire [PTRw-1 : 0] rd_ptr_tmp  [V-1 : 0];
     wire [PTRw-1 : 0] wr_ptr_tmp  [V-1 : 0];
         for(i=0;i<V;i=i+1) begin :V_
@@ -309,23 +289,15 @@ module flit_buffer
             end
         end// for V_
         
-        onehot_mux_1D #(
-            .W(BVw),
-            .N(V)
-        ) wr_mux (
-            .D_in(wr_ptr_array),
-            .Q_out(wr_addr),
-            .sel(vc_num_wr)
-        );
-        
-        onehot_mux_1D #(
-            .W(BVw),
-            .N(V)
-        ) rd_mux (
-            .D_in(rd_ptr_array),
-            .Q_out(rd_addr),
-            .sel(vc_num_rd)
-        );
+        //onehot_mux
+        always_comb begin
+            wr_addr = '0;
+            rd_addr = '0;
+            for (int k = 0; k < V; k++) begin
+                wr_addr |= (vc_num_wr[k]) ?  wr_ptr[k] :  '0;
+                rd_addr |= (vc_num_rd[k]) ?  rd_ptr[k] :  '0;
+            end
+        end
         
         fifo_ram_mem_size #(
             .DATA_WIDTH (RAM_DATA_WIDTH),

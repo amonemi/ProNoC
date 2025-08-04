@@ -369,37 +369,28 @@ module remove_receive_port_one_hot #(
         P_1 = P-1,
         Pw = log2(P),
         P_1w = log2(P_1);
-    input [P-1 : 0]  destport_in;
-    input [P-1 : 0]  receiver_port;
-    output logic [P_1-1 : 0]  destport_out;
-    wire [Pw-1 : 0]  receiver_port_bin,destport_in_bin;
+    input [P-1 : 0] destport_in;
+    input [P-1 : 0] receiver_port;
+    output logic [P_1-1 : 0] destport_out;
+    logic [Pw-1 : 0] receiver_port_bin,destport_in_bin;
     wire [P_1w-1 : 0]  destport_out_bin;
     
-    one_hot_to_bin #(
-        .ONE_HOT_WIDTH(P),
-        .BIN_WIDTH(Pw)
-    ) convert1(
-        .one_hot_code(receiver_port),
-        .bin_code(receiver_port_bin)
-    );
-    
-    one_hot_to_bin #(
-        .ONE_HOT_WIDTH(P),
-        .BIN_WIDTH(Pw)
-    )convert2(
-        .one_hot_code(destport_in),
-        .bin_code(destport_in_bin)
-    );
+    always_comb begin
+        receiver_port_bin = '0;
+        destport_in_bin = '0;
+        destport_out ='0;
+        //bin to one_hot
+        destport_out[destport_out_bin] = 1'b1;
+        //one_hot_to_bin
+        for (int k = 0; k < P; k++) begin
+            if (receiver_port[k]) receiver_port_bin = Pw'(k);
+            if (destport_in[k]) destport_in_bin = Pw'(k);
+        end
+    end
     
     wire [Pw-1 : 0] temp;
     assign temp = (receiver_port_bin > destport_in_bin ) ? destport_in_bin : destport_in_bin  -1'b1;
     assign destport_out_bin=temp[P_1w-1 : 0];
-    
-    //bin_to_one_hot
-    always_comb begin
-        destport_out = {P_1{1'b0}};
-        destport_out[destport_out_bin] = 1'b1;
-    end
 endmodule
 
 /**************************************

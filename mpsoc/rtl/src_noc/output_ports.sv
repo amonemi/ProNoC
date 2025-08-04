@@ -465,25 +465,21 @@ module oport_ovc_sig_gen #(
     output [VP_1-1 : 0] credit_decreased;
     output [VP_1-1 : 0] ovc_released;
     
-    wire [V-1 : 0] muxout1;
+    logic [V-1 : 0] muxout1;
     wire muxout2;
-    wire [VV-1 : 0] assigned_ovc_num_masked;
+    wire [V-1 : 0] assigned_ovc_num_masked[V-1 : 0];
     genvar i;
     generate 
         for (i=0;i<V;i=i+1)begin: V_
-            assign    assigned_ovc_num_masked[(i+1)*V-1 : i*V] = ovc_is_assigned[i]? assigned_ovc_num [(i+1)*V-1 : i*V] : {V{1'b0}};
+            assign assigned_ovc_num_masked[i] = ovc_is_assigned[i]? assigned_ovc_num [(i+1)*V-1 : i*V] : {V{1'b0}};
         end
     endgenerate
-    
-    // assigned ovc mux 
-    onehot_mux_1D #(
-        .W  (V),
-        .N  (V)
-    )ovc_mux (
-        .D_in(assigned_ovc_num_masked),
-        .Q_out(muxout1),
-        .sel (first_arbiter_granted_ivc)
-    );
+    //One-hot mux to select assigned ovc
+    always_comb begin
+        muxout1 = '0;
+        for (int k = 0; k < V; k++)
+            muxout1 |= (first_arbiter_granted_ivc[k]) ?  assigned_ovc_num_masked[k] :  '0;
+    end
     // tail mux 
     assign muxout2 = |(flit_is_tail & first_arbiter_granted_ivc);
     one_hot_demux #(

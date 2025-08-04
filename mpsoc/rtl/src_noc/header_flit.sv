@@ -201,25 +201,21 @@ module header_flit_update_lk_route_ovc #(
 );
     import pronoc_pkg::*;
     
-    localparam  
-        VDSTPw = V * DSTPw,
-        VV = V * V;        
-    
     input [Fw-1 : 0]  flit_in;
     output reg [Fw-1 : 0]  flit_out;
     input [V-1 : 0]  vc_num_in;
-    input [VDSTPw-1 : 0]  lk_dest_all_in;
-    input                           reset,clk;
-    input [VV-1 : 0]  assigned_ovc_num;
+    input [DSTPw-1 : 0]  lk_dest_all_in [V-1:0];
+    input reset,clk;
+    input [V-1 : 0]  assigned_ovc_num[V-1:0];
     input [V-1 : 0]  sel;
-    input                    any_ivc_sw_request_granted;
+    input any_ivc_sw_request_granted;
     input [DSTPw-1 : 0]  lk_dest_not_registered;
     
     wire hdr_flag;
     logic [V-1 : 0]  vc_num_delayed;
-    wire [V-1 : 0]  ovc_num; 
+    logic [V-1 : 0]  ovc_num; 
     wire [DSTPw-1 : 0]  lk_dest,dest_coded;
-    wire [DSTPw-1 : 0]  lk_mux_out;
+    logic [DSTPw-1 : 0]  lk_mux_out;
     always_ff @ (`pronoc_clk_reset_edge) begin
         if (`pronoc_reset) begin
             vc_num_delayed <= '0;
@@ -228,15 +224,15 @@ module header_flit_update_lk_route_ovc #(
         end
     end
     assign hdr_flag = (IS_MULTI_FLIT)? flit_in[Fw-1]: 1'b1;
-    onehot_mux_1D #(
-        .W(DSTPw),
-        .N(V) 
-    ) lkdest_mux (
-        .D_in(lk_dest_all_in),
-        .Q_out(lk_mux_out),
-        .sel(vc_num_delayed)
-    );
-    
+    //One-hot mux
+    always_comb begin
+        lk_mux_out = '0;
+        ovc_num = '0;
+        for (int k = 0; k < V; k++) begin
+            lk_mux_out |= (vc_num_delayed[k]) ?  lk_dest_all_in[k] :  '0;
+            ovc_num |= (vc_num_delayed[k]) ?  assigned_ovc_num[k] :  '0;
+        end
+    end
     generate 
     if( SSA_EN == 1 ) begin : predict // bypass the lk fifo when no ivc is granted
         logic ivc_any_delayed;
@@ -251,21 +247,10 @@ module header_flit_update_lk_route_ovc #(
     end else begin : no_predict
         assign lk_dest =lk_mux_out;
     end 
-    endgenerate
-    
-    onehot_mux_1D #(
-        .W(V),
-        .N(V) 
-    ) ovc_num_mux(
-        .D_in(assigned_ovc_num),
-        .Q_out(ovc_num),
-        .sel(vc_num_delayed)
-    );
+    endgenerate    
     
     generate 
-    /* verilator lint_off WIDTH */ 
-    if((IS_MESH | IS_FMESH | IS_TORUS | IS_RING) && (ROUTE_TYPE != "DETERMINISTIC"))begin :coded
-    /* verilator lint_on WIDTH */ 
+    if(IS_REGULAR_TOPO & (~IS_DETERMINISTIC))begin :coded
         regular_topo_adaptive_lk_dest_encoder #(
             .V(V),
             .P(P),
@@ -296,7 +281,7 @@ module header_flit_update_lk_route_ovc #(
         );
          */
     end
-        
+    
     always_comb begin 
         flit_out = {flit_in[Fw-1 : Fw-2],ovc_num,flit_in[FPAYw-1 :0]};
         if(hdr_flag) flit_out[DST_P_MSB : DST_P_LSB]= dest_coded;

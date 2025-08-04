@@ -50,7 +50,7 @@ module crossbar #(
     wire [Fw-1 : 0] mux_in [P-1 : 0][P_1-1 : 0];
     wire [P_1-1 : 0] mux_sel_pre [P-1 : 0];
     wire [P_1-1 : 0]  mux_sel [P-1 : 0];
-    wire [P_1w-1 : 0] mux_sel_bin [P-1 : 0];
+    logic [P_1w-1 : 0] mux_sel_bin [P-1 : 0];
     wire [P-1 : 0] flit_out_wr_gen [P-1 : 0];
     
     genvar i,j;
@@ -84,7 +84,6 @@ module crossbar #(
         end else begin : nopredict
             assign mux_sel[i]= mux_sel_pre[i];
         end
-        
         if (IS_ONE_HOT_MUX) begin : one_hot_gen
             // One-hot mux
             always_comb begin
@@ -93,13 +92,14 @@ module crossbar #(
                     flit_out_all[i] |= (mux_sel[i][k]) ?  mux_in[i][k] : {Fw{1'b0}};
             end
         end else begin : binary
-            one_hot_to_bin #(
-                .ONE_HOT_WIDTH(P_1),
-                .BIN_WIDTH(P_1w)
-            )  conv (
-                .one_hot_code(mux_sel[i]),
-                .bin_code(mux_sel_bin[i])
-            );
+            //one_hot_to_bin
+            always_comb begin
+                mux_sel_bin[i] = '0;
+                for (int k = 0; k < P_1; k++) begin
+                    //One-hot to binary
+                    if (mux_sel[i][k]) mux_sel_bin[i] = P_1w'(k);
+                end
+            end
             assign flit_out_all[i]= mux_in[i][mux_sel_bin[i]];
         end//binary
         if(SELF_LOOP_EN == 0) begin : nslp
