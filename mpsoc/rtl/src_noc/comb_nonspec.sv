@@ -129,7 +129,14 @@ module comb_nonspec_allocator # (
     wire   [V : 0] summ_in [PV-1 : 0];
     
     assign assigned_ovc_request_all =   ivc_request_all &   ovc_is_assigned_all;
-        
+    //One-hot multiplex candidate OVC of first level switch allocator winner
+    always_comb begin
+        for(int m=0;m< P;m++) begin
+            candidate_ovc_local_num [m] = '0;
+            for (int k = 0; k < V; k++)
+                candidate_ovc_local_num [m] |= (first_arbiter_granted_ivc_per_port[m][k]) ?  masked_candidate_ovc_per_port[m][k] :  '0;
+        end
+    end
     genvar i,j;
     generate 
     // IVC loop
@@ -154,7 +161,6 @@ module comb_nonspec_allocator # (
     end//for
     
     wire [P-1 : 0] ovc_assigned_local;
-    
     for(i=0;i< P;i=i+1) begin :P_
         for(j=0;j< V;j=j+1) begin :V_
             //merge masked_candidate_ovc in each port
@@ -164,19 +170,10 @@ module comb_nonspec_allocator # (
             assign masked_candidate_ovc_per_port[i][j] = first_arbiter_ovc_granted [i*V+j];
             assign granted_ovc_num_all[(i*VV)+((j+1)*V)-1 : (i*VV)+(j*V)]=granted_ovc_local_num_per_port[i];
         end//for j
-        
         assign first_arbiter_granted_ivc_per_port[i]=first_arbiter_granted_ivc_all[(i+1)*V-1 : i*V];
         assign granted_dest_port_per_port[i]=granted_dest_port_all[(i+1)*P_1-1 : i*P_1];
-        
-        //One-hot multiplex candidate OVC of first level switch allocator winner
-        always_comb begin
-            candidate_ovc_local_num [i] = '0;
-            for (int k = 0; k < V; k++)
-                candidate_ovc_local_num [i] |= (first_arbiter_granted_ivc_per_port[i][k]) ?  masked_candidate_ovc_per_port[i][k] :  '0;
-        end
         //one hot mux to select granted OVC
         assign ovc_assigned_local[i] = |(ovc_is_assigned_all[(i+1)*V-1 : i*V] & first_arbiter_granted_ivc_per_port [i]);
-        
         //demultiplexer        
         one_hot_demux #(
             .IN_WIDTH(V),
@@ -186,11 +183,9 @@ module comb_nonspec_allocator # (
             .demux_in(candidate_ovc_local_num[i]),//repeated
             .demux_out(cand_ovc_granted [i])
         );
-        
         assign granted_ovc_local_num_per_port[i] = (any_ivc_sw_request_granted_all[i] )?  candidate_ovc_local_num[i] : {V{1'b0}};
         assign ivc_local_num_getting_ovc_grant [i] = (any_ivc_sw_request_granted_all[i] & ~ovc_assigned_local[i])?     first_arbiter_granted_ivc_per_port [i] : {V{1'b0}};
         assign ivc_num_getting_ovc_grant   [(i+1)*V-1 : i*V] = ivc_local_num_getting_ovc_grant[i];
-        
     end//i
     
     for(i=0;i< PV;i=i+1) begin :_PV
@@ -318,6 +313,15 @@ module  comb_nonspec_v2_allocator #(
     wire    [V : 0] summ_in [PV-1 : 0];
     
     assign assigned_ovc_request_all =   ivc_request_all &   ovc_is_assigned_all;
+    //One-hot multiplex candidate OVC of first level switch allocator winner
+    always_comb begin
+        for(int m=0;m< P;m++) begin
+            candidate_ovc_local_num [m] = '0;
+            for (int k = 0; k < V; k++)
+                candidate_ovc_local_num [m] |= (first_arbiter_granted_ivc_per_port[m][k]) ?  masked_non_assigned_request_per_port[m][k] :  '0;
+        end
+    end
+    
     genvar i,j;
     generate 
     // IVC loop
@@ -338,12 +342,7 @@ module  comb_nonspec_v2_allocator #(
         end//for j
         assign first_arbiter_granted_ivc_per_port[i]=first_arbiter_granted_ivc_all[(i+1)*V-1 : i*V];
         assign granted_dest_port_per_port[i]=granted_dest_port_all[(i+1)*P_1-1 : i*P_1];
-        //One-hot multiplex candidate OVC of first level switch allocator winner
-        always_comb begin
-            candidate_ovc_local_num [i] = '0;
-            for (int k = 0; k < V; k++)
-                candidate_ovc_local_num [i] |= (first_arbiter_granted_ivc_per_port[i][k]) ?  masked_non_assigned_request_per_port[i][k] :  '0;
-        end
+        
         
         assign any_cand_ovc_exsit[i] = | candidate_ovc_local_num    [i];
         //first level arbiter to candidate only one OVC 
@@ -447,6 +446,15 @@ module nonspec_sw_alloc #(
     wire [V-1 : 0] vc_weight_is_consumed [P-1 : 0]; 
     wire [P-1 : 0] winner_weight_consumed;
     
+    //onehot_mux to select destination port
+    always_comb begin
+        for (int m = 0; m < P; m++) begin
+            dest_port[m] = '0;
+            for (int k = 0; k < V; k++) begin
+                dest_port[m] |= (first_arbiter_grant[m][k]) ?  dest_port_ivc [m][k] :  '0;
+            end
+        end
+    end
     genvar i,j;
     generate
     for(i=0;i< P;i=i+1) begin : P_
@@ -476,14 +484,6 @@ module nonspec_sw_alloc #(
             .vc_weight_is_consumed(vc_weight_is_consumed[i]),
             .winner_weight_consumed(winner_weight_consumed[i])
         );
-        //onehot_mux to select destination port
-        always_comb begin
-            dest_port[i] = '0;
-            for (int k = 0; k < V; k++) begin
-                dest_port[i] |= (first_arbiter_grant[i][k]) ?  dest_port_ivc [i][k] :  '0;
-            end
-        end
-        
         if(MIN_PCK_SIZE == 1) begin
             //single_flit req multiplexer
             assign pck_is_single_flit[i] = pck_is_single_flit_all [(i+1)*V-1 : i*V];

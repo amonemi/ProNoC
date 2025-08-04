@@ -194,29 +194,27 @@ module flit_buffer
     Buffer width is
     power of 2
 ******************/
+    logic [PTRw-1 : 0]  vc_wr_addr, vc_rd_addr; 
+    logic [Vw-1 : 0]  wr_select_addr, rd_select_addr; 
+    always_comb begin
+        vc_wr_addr = '0;
+        vc_rd_addr = '0;
+        wr_select_addr = '0;
+        rd_select_addr = '0;
+        for (int k = 0; k < V; k++) begin
+            //One-hot_mux
+            vc_wr_addr |= (vc_num_wr[k]) ?  wr_ptr[k] :  '0;
+            vc_rd_addr |= (vc_num_rd[k]) ?  rd_ptr[k] :  '0;
+            //One-hot to binary
+            if (vc_num_wr[k]) wr_select_addr = Vw'(k);
+            if (vc_num_rd[k]) rd_select_addr = Vw'(k);
+        end
+    end
+    
     if((2**Bw)==B)begin : pow2
-        
-        logic [Bw-1 : 0]  vc_wr_addr, vc_rd_addr; 
-        logic [Vw-1 : 0]  wr_select_addr, rd_select_addr; 
         wire [Bw+Vw-1 : 0]  wr_addr, rd_addr;
-        
         assign  wr_addr = {wr_select_addr,vc_wr_addr};
         assign  rd_addr = {rd_select_addr,vc_rd_addr};
-        
-        always_comb begin
-            vc_wr_addr = '0;
-            vc_rd_addr = '0;
-            wr_select_addr = '0;
-            rd_select_addr = '0;
-            for (int k = 0; k < V; k++) begin
-                //One-hot_mux
-                vc_wr_addr |= (vc_num_wr[k]) ?  wr_ptr[k] :  '0;
-                vc_rd_addr |= (vc_num_rd[k]) ?  rd_ptr[k] :  '0;
-                //One-hot to binary
-                if (vc_num_wr[k]) wr_select_addr = Vw'(k);
-                if (vc_num_rd[k]) rd_select_addr = Vw'(k);
-            end
-        end
         
         fifo_ram    #(
             .DATA_WIDTH (RAM_DATA_WIDTH),
@@ -259,10 +257,12 @@ module flit_buffer
     Buffer width is
     not power of 2
 ******************/
-    // memory address
-    logic [BVw- 1 : 0]  wr_addr, rd_addr;
-    wire [PTRw-1 : 0] rd_ptr_tmp  [V-1 : 0];
-    wire [PTRw-1 : 0] wr_ptr_tmp  [V-1 : 0];
+        // memory address
+        wire [BVw- 1 : 0] wr_addr, rd_addr;
+        wire [PTRw-1 : 0] rd_ptr_tmp  [V-1 : 0];
+        wire [PTRw-1 : 0] wr_ptr_tmp  [V-1 : 0];
+        assign  wr_addr = vc_wr_addr;
+        assign  rd_addr = vc_rd_addr;
         for(i=0;i<V;i=i+1) begin :V_
             localparam [PTRw-1 : 0] BI = PTRw'(B*i);
             always_ff @ (`pronoc_clk_reset_edge )begin 
@@ -288,16 +288,6 @@ module flit_buffer
                 assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr_tmp [i][Bw-1:0]] : 1'b1;
             end
         end// for V_
-        
-        //onehot_mux
-        always_comb begin
-            wr_addr = '0;
-            rd_addr = '0;
-            for (int k = 0; k < V; k++) begin
-                wr_addr |= (vc_num_wr[k]) ?  wr_ptr[k] :  '0;
-                rd_addr |= (vc_num_rd[k]) ?  rd_ptr[k] :  '0;
-            end
-        end
         
         fifo_ram_mem_size #(
             .DATA_WIDTH (RAM_DATA_WIDTH),

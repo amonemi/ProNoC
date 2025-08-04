@@ -637,6 +637,16 @@ module  vc_alloc_request_gen_determinstic #(
             assign ovc_avalable_perport[i]=ovc_avalable_all;
         end
     end
+    
+    //Onehot mux to select available ovc
+    always_comb begin
+        for(int m=0;m< PV;m++) begin 
+            ovc_avb_muxed[m] = '0;
+            for (int k = 0; k < P_1; k++) begin
+                ovc_avb_muxed[m] |= (dest_port_ivc[m][k]) ?  ovc_avalable_ivc [m][k] :  '0;
+            end
+        end
+    end//always
     // IVC loop
     for(i=0;i< PV;i=i+1) begin :PV_
         //separate input/output
@@ -645,18 +655,10 @@ module  vc_alloc_request_gen_determinstic #(
         assign ovc_request_ivc [i]  = (non_assigned_ovc_request_all[i])? candidate_ovc_all  [(i+1)*V-1  :   i*V ]: {V{1'b0}};          
         for(j=0;j< P_1;j=j+1) begin :V_
             assign ovc_avalable_ivc[i][j] = ovc_avalable_perport[i / V][j*V +: V];
-        end//for
-        //Onehot mux to select available ovc
-        always_comb begin
-            ovc_avb_muxed[i] = '0;
-            for (int k = 0; k < P_1; k++) begin
-                ovc_avb_muxed[i] |= (dest_port_ivc[i][k]) ?  ovc_avalable_ivc [i][k] :  '0;
-            end
-        end
+        end//for       
         
         // mask unavailable ovc from requests
         assign masked_ovc_request_all  [(i+1)*V-1 : i*V ] = ovc_avb_muxed[i] & ovc_request_ivc [i];
-        
     end
     endgenerate
 endmodule

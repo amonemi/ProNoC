@@ -498,15 +498,17 @@ module input_queue_per_port #(
         end //for k
     end//always 
     
+    //One-hot to binary
+    always_comb begin
+        for (int m=0;m<PORT_IVC; m++) begin
+            assigned_onc_bin[m] = '0;
+            for (int k = 0; k < V; k++) begin
+                if (assigned_ovc_one_hot[m][k]) assigned_onc_bin[m] = Vw'(k);
+            end
+        end
+    end
     for (i=0;i<PORT_IVC; i=i+1) begin: V_
         assign credit_init_val_out [i] = PORT_B [CRDTw-1 : 0 ];
-        //One-hot to binary
-        always_comb begin
-            assigned_onc_bin[i] = '0;
-            for (int k = 0; k < V; k++) begin
-                if (assigned_ovc_one_hot[i][k]) assigned_onc_bin[i] = Vw'(k);
-            end
-        end        
         
         `ifdef SIMULATION
         //check ivc info
