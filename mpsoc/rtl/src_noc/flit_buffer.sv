@@ -85,9 +85,6 @@ module flit_buffer
     reg [PTRw- 1 : 0] sub_rd_ptr_next [V-1 :0];
     logic [PTRw- 1 : 0] sub_rd_ptr [V-1 :0];
     
-    wire [ARRAYw-1 : 0] rd_ptr_array;
-    wire [ARRAYw-1 : 0] wr_ptr_array;
-    
     wire [RAM_DATA_WIDTH-1 : 0] fifo_ram_din;
     wire [RAM_DATA_WIDTH-1 : 0] fifo_ram_dout;
     wire [V-1 : 0] wr;
@@ -153,9 +150,7 @@ module flit_buffer
     end //always_comb
     
     for(i=0;i<V;i=i+1) begin :V_
-        assign  wr_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = wr_ptr[i];
         if (~IS_UNICAST) begin
-            assign  rd_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = sub_rd_ptr[i]; 
             localparam RESET_TO = ((2**Bw)==B)? 0 : B*i;
             always_ff @ (`pronoc_clk_reset_edge )begin 
                 if(`pronoc_reset) begin 
@@ -168,7 +163,6 @@ module flit_buffer
             end
             assign  vc_not_empty [i] = (sub_depth[i] > 0);
         end else begin : unicast
-            assign  rd_ptr_array[(i+1)*PTRw- 1 : i*PTRw] = rd_ptr[i];   
             assign  vc_not_empty [i] = (depth[i] > 0);
         end
     end//for
@@ -204,7 +198,8 @@ module flit_buffer
         for (int k = 0; k < V; k++) begin
             //One-hot_mux
             vc_wr_addr |= (vc_num_wr[k]) ?  wr_ptr[k] :  '0;
-            vc_rd_addr |= (vc_num_rd[k]) ?  rd_ptr[k] :  '0;
+            if (IS_UNICAST) vc_rd_addr |= (vc_num_rd[k]) ?  rd_ptr[k] :  '0;
+            else vc_rd_addr |= (vc_num_rd[k]) ?  sub_rd_ptr[k] :  '0;
             //One-hot to binary
             if (vc_num_wr[k]) wr_select_addr = Vw'(k);
             if (vc_num_rd[k]) rd_select_addr = Vw'(k);
