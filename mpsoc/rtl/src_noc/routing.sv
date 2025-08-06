@@ -312,8 +312,8 @@ module next_router_addr_selector_onehot #(
     input [P-1   : 0] destport_onehot;
     input [PRXw-1: 0] neighbors_rx;
     input [PRYw-1: 0] neighbors_ry;
-    output[RXw-1 : 0] next_rx;
-    output[RYw-1 : 0] next_ry;
+    output logic [RXw-1 : 0] next_rx;
+    output logic [RYw-1 : 0] next_ry;
     
     wire [RXw-1:0] neighbors_rx_array [P-1: 0];
     wire [RYw-1:0] neighbors_ry_array [P-1: 0];
@@ -328,8 +328,8 @@ module next_router_addr_selector_onehot #(
         next_rx = '0;
         next_ry = '0;
         for (int k = 0; k < P; k++) begin
-            next_rx |= (destport_onehot[k]) ? neighbors_rx_array[k] :  '0;
-            next_ry |= (destport_onehot[k]) ? neighbors_ry_array[k] :  '0;
+            next_rx |= (destport_onehot[k]) ? neighbors_rx_array[k] : '0;
+            next_ry |= (destport_onehot[k]) ? neighbors_ry_array[k] : '0;
         end
     end//always
 endmodule
@@ -346,7 +346,6 @@ module next_router_addr_selector_bin #(
     next_rx,
     next_ry
 );
-
     function integer log2;
     input integer number; begin
         log2=(number <=1) ? 1: 0;
@@ -361,11 +360,11 @@ module next_router_addr_selector_bin #(
         PRXw = P * RXw,
         PRYw = P * RYw;
     
-    input [Pw-1 : 0]  destport_bin;
-    input [PRXw-1: 0]  neighbors_rx;
-    input [PRYw-1: 0]  neighbors_ry;
-    output[RXw-1 : 0]  next_rx;
-    output[RYw-1 : 0]  next_ry;
+    input [Pw-1 : 0] destport_bin;
+    input [PRXw-1: 0] neighbors_rx;
+    input [PRYw-1: 0] neighbors_ry;
+    output [RXw-1 : 0] next_rx;
+    output [RYw-1 : 0] next_ry;
     wire [RXw-1:0] neighbors_rx_array [P-1: 0];
     wire [RYw-1:0] neighbors_ry_array [P-1: 0];
     genvar i;

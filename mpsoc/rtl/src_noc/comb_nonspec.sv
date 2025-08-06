@@ -421,7 +421,7 @@ module nonspec_sw_alloc #(
     wire [P_1-1 : 0] dest_port_ivc [P-1 : 0][V-1 : 0];
     wire [P_1-1 : 0] granted_dest_port [P-1 : 0];
     wire [P_1-1 : 0] single_flit_granted_dst [P-1 : 0];
-    wire [P-1 : 0] single_flit_granted_dst_all [P-1 : 0];
+    logic [P-1 : 0] single_flit_granted_dst_all [P-1 : 0];
     // internal wires
     wire [V-1 : 0] ivc_masked [P-1 : 0];//output of mask and  
     wire [V-1 : 0] first_arbiter_grant [P-1 : 0];//output of first arbiter 
@@ -442,6 +442,22 @@ module nonspec_sw_alloc #(
             end
         end
     end
+    
+    //add_sw_loc_one_hot 
+    always_comb begin 
+        for(int m=0;m< P;m++) begin 
+            if(MIN_PCK_SIZE == 1) begin 
+                if (SELF_LOOP_EN == 0) begin
+                    for(int k=0;k<P; k++) begin 
+                        if (k>m) single_flit_granted_dst_all[m][k] = single_flit_granted_dst[m][k-1];
+                        else if (k==m) single_flit_granted_dst_all[m][k] = 1'b0;
+                        else single_flit_granted_dst_all[m][k] = single_flit_granted_dst[m][k];
+                    end//for 
+                end else single_flit_granted_dst_all[m][P_1-1 : 0] = single_flit_granted_dst[m];
+            end else single_flit_granted_dst_all[m] = {P{1'b0}};
+        end//for
+    end//always
+    
     genvar i,j;
     generate
     for(i=0;i< P;i=i+1) begin : P_
@@ -477,22 +493,9 @@ module nonspec_sw_alloc #(
             //one hot mux to select single flit packet
             assign single_flit_pck_local_grant[i] = |(pck_is_single_flit[i] & first_arbiter_grant[i]);
             assign single_flit_granted_dst[i] = (single_flit_pck_local_grant[i])?  granted_dest_port[i] : {P_1{1'b0}};
-            if (SELF_LOOP_EN == 0) begin
-                add_sw_loc_one_hot #(
-                    .P(P),
-                    .SW_LOC(i)
-                ) add_sw_loc (
-                    .destport_in(single_flit_granted_dst[i]),
-                    .destport_out(single_flit_granted_dst_all[i])
-                );
-            end else begin 
-                assign single_flit_granted_dst_all[i] = single_flit_granted_dst[i];
-            end
-            
         end else begin 
             assign single_flit_pck_local_grant[i] = 1'b0;
             assign single_flit_granted_dst[i] = {P_1{1'b0}};
-            assign single_flit_granted_dst_all[i] = {P{1'b0}};
         end
         //second arbiter input/output generate
         for(j=0;j<P; j=j+1)begin: P_
@@ -529,7 +532,6 @@ module nonspec_sw_alloc #(
         //any ivc 
         assign  any_ivc_granted_all[i] = | granted_dest_port[i];
         assign  ivc_granted[i] =  (any_ivc_granted_all[i]) ? first_arbiter_grant[i] : {V{1'b0}};
-        
     end//for P_
     endgenerate 
     
