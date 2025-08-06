@@ -13,6 +13,9 @@ die "Usage: $0 file1 file2\n" unless $file1 && $file2;
 my %data1 = parse_file($file1);
 my %data2 = parse_file($file2);
 
+sub is_number {
+    return defined $_[0] && $_[0] =~ /^-?\d+(\.\d+)?$/;
+}
 foreach my $design (sort keys %data2) {
     my @fields = sort keys %{$data2{$design}};
     print "=== $design ===\n";
@@ -31,7 +34,12 @@ foreach my $design (sort keys %data2) {
             (($delta < 0 && $i ne 'Maxfrequency') || ($delta > 0 && $i eq 'Maxfrequency'))       ? "\e[32m" :  # green for negative
             "";         # default (0)
         my $reset = "\e[0m";
-        printf "%-25s: %10s -> %10s (%s%s%%%s)\n", $i, $v1, $v2, $color, $delta, $reset;
+        #print only if both $v1 and $v2 are numbers, or one is number the other is 'N/A'
+        my $print_me = 
+        (is_number($v1) && is_number($v2)) ||
+        (is_number($v1) && $v2 eq 'N/A') ||
+        (is_number($v2) && $v1 eq 'N/A');       
+        printf "%-25s: %10s -> %10s (%s%s%%%s)\n", $i, $v1, $v2, $color, $delta, $reset if($print_me);
     }
     print "\n";
 }

@@ -13,7 +13,7 @@ report_file="${log_dir}/report.txt"
 mkdir -p "$work"
 mkdir -p "$log_dir"
 rm -rf "$report_file"
-printf "%-30s | %-10s | %-10s | %-10s |\n" "Configuration" "# Warnings" "# Errors" "# Instants"  >> "$report_file"
+printf "%-30s | %-10s | %-10s | %-10s | %s\n" "Configuration" "# Warnings" "# Errors" "# Instants" "Warning Summary">> "$report_file"
 
 
 # List of Verilator warnings to suppress
@@ -55,8 +55,11 @@ report_total_errors_warnings () {
     log_file="${log_dir}/${conf}.log"
     warnings=$(grep '%Warning' "$log_file" | wc -l)
     errors=$(grep '%Error' "$log_file" | wc -l)
+    warning_sep=$(grep -oP '^%Warning-\K[A-Z0-9_]+' "$log_file" | sort | uniq -c | awk '{printf "%s(%d), ", toupper($2), $1}')
+    # Remove trailing comma and space
+    #warning_sep=${ warning_sep%, }
     instant=$(awk '/Total module instantiations:/ { print $NF }' "$log_file")
-    printf "%-30s | %-10s | %-10s | %-10s |\n" "$conf" "$warnings" "$errors" "$instant" >> "$report_file"
+    printf "%-30s | %-10s | %-10s | %-10s | %s\n" "$conf" "$warnings" "$errors" "$instant" "$warning_sep">> "$report_file"
 }
 
 run_config () {

@@ -305,34 +305,33 @@ module next_router_addr_selector_onehot #(
     next_rx,
     next_ry
 );
-    
     localparam
         PRXw = P * RXw,
         PRYw = P * RYw;
     
-    input [P-1   :  0]  destport_onehot;
-    input [PRXw-1:  0]  neighbors_rx;
-    input [PRYw-1:  0]  neighbors_ry;
-    output[RXw-1  :    0]  next_rx;
-    output[RYw-1  :    0]  next_ry;
+    input [P-1   : 0] destport_onehot;
+    input [PRXw-1: 0] neighbors_rx;
+    input [PRYw-1: 0] neighbors_ry;
+    output[RXw-1 : 0] next_rx;
+    output[RYw-1 : 0] next_ry;
     
-    onehot_mux_1D #(
-        .W(RXw),
-        .N(P)
-    )  next_x_mux (
-        .D_in(neighbors_rx),
-        .Q_out(next_rx),
-        .sel(destport_onehot)
-    );
+    wire [RXw-1:0] neighbors_rx_array [P-1: 0];
+    wire [RYw-1:0] neighbors_ry_array [P-1: 0];
+    genvar i;
+    generate for(i=0;i<P;i++) begin :P_
+        assign neighbors_rx_array[i] = neighbors_rx[(i*RXw)+:RXw];
+        assign neighbors_ry_array[i] = neighbors_ry[(i*RYw)+:RYw];
+    end endgenerate
     
-    onehot_mux_1D #(
-        .W(RYw),
-        .N(P)
-    ) next_y_mux (
-        .D_in(neighbors_ry),
-        .Q_out(next_ry),
-        .sel(destport_onehot)
-    );
+    //Onehot mux to select available ovc
+    always_comb begin
+        next_rx = '0;
+        next_ry = '0;
+        for (int k = 0; k < P; k++) begin
+            next_rx |= (destport_onehot[k]) ? neighbors_rx_array[k] :  '0;
+            next_ry |= (destport_onehot[k]) ? neighbors_ry_array[k] :  '0;
+        end
+    end//always
 endmodule
 
 
@@ -362,27 +361,18 @@ module next_router_addr_selector_bin #(
         PRXw = P * RXw,
         PRYw = P * RYw;
     
-    input [Pw-1   :  0]  destport_bin;
-    input [PRXw-1:  0]  neighbors_rx;
-    input [PRYw-1:  0]  neighbors_ry;
-    output[RXw-1  :    0]  next_rx;
-    output[RYw-1  :    0]  next_ry;
-    
-    binary_mux #(
-        .IN_WIDTH(PRXw),
-        .OUT_WIDTH(RXw)
-    )next_x_mux (
-        .mux_in(neighbors_rx),
-        .mux_out(next_rx),
-        .sel(destport_bin)
-    );
-    
-    binary_mux  #(
-        .IN_WIDTH(PRYw),
-        .OUT_WIDTH(RYw)
-    ) next_y_mux(
-        .mux_in(neighbors_ry),
-        .mux_out(next_ry),
-        .sel(destport_bin)
-    );
+    input [Pw-1 : 0]  destport_bin;
+    input [PRXw-1: 0]  neighbors_rx;
+    input [PRYw-1: 0]  neighbors_ry;
+    output[RXw-1 : 0]  next_rx;
+    output[RYw-1 : 0]  next_ry;
+    wire [RXw-1:0] neighbors_rx_array [P-1: 0];
+    wire [RYw-1:0] neighbors_ry_array [P-1: 0];
+    genvar i;
+    generate for(i=0;i<P;i++) begin :P_
+        assign neighbors_rx_array[i] = neighbors_rx[(i*RXw)+:RXw];
+        assign neighbors_ry_array[i] = neighbors_ry[(i*RYw)+:RYw];
+    end endgenerate
+    assign next_rx = neighbors_rx_array[destport_bin];
+    assign next_ry = neighbors_ry_array[destport_bin];
 endmodule

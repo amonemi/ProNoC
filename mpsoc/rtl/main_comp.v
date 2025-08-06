@@ -89,15 +89,10 @@ module one_hot_demux    #(
     input   [IN_WIDTH-1 : 0] demux_in,//repeated
     output  [OUT_WIDTH-1 : 0]  demux_out
 );
-
-    genvar i,j;
-    generate 
-    for(i=0;i<SEL_WIDTH;i=i+1)begin :loop1
-        for(j=0;j<IN_WIDTH;j=j+1)begin :loop2
-                assign demux_out[i*IN_WIDTH+j] = demux_sel[i]   &   demux_in[j];
-        end//for j
-    end//for i
-    endgenerate
+    genvar i;
+    generate for (i = 0; i < SEL_WIDTH; i=i+1) begin
+        assign demux_out[i*IN_WIDTH +: IN_WIDTH] = (demux_sel[i]==1'b1) ? demux_in : {IN_WIDTH{1'b0}};
+    end endgenerate
 endmodule
 
 /*****************************************

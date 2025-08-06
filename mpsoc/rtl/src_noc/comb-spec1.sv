@@ -149,15 +149,10 @@ module comb_spec1_allocator #(
             .grant (spec_first_arbiter_ovc_granted[i]),
             .any_grant(valid_speculation[i])
         );
-        //demultiplexer
-        one_hot_demux   #(
-            .IN_WIDTH (V),
-            .SEL_WIDTH (P_1)
-        )demux1 (
-            .demux_sel(spec_granted_dest_port_per_port [i]),//selectore
-            .demux_in (spec_first_arbiter_ovc_granted[i]),//repeated
-            .demux_out(cand_ovc_granted[i])
-        );
+        //Onehot demultiplexer
+        for (j = 0; j < P_1; j++) begin
+            assign cand_ovc_granted [i][j*V +: V] = (spec_granted_dest_port_per_port [i][j]==1'b1) ? spec_first_arbiter_ovc_granted[i] : {V{1'b0}};
+        end
         assign granted_ovc_local_num_per_port[i]=(spec_any_ivc_grant_valid[i])?  spec_first_arbiter_ovc_granted[i] : {V{1'b0}};
         assign ivc_local_num_getting_ovc_grant[i]= (spec_any_ivc_grant_valid[i] & valid_speculation[i])?spec_first_arbiter_granted_ivc_per_port [i] : {V{1'b0}};
         assign ivc_num_getting_ovc_grant[(i+1)*V-1 : i*V] = ivc_local_num_getting_ovc_grant[i];

@@ -174,15 +174,10 @@ module comb_nonspec_allocator # (
         assign granted_dest_port_per_port[i]=granted_dest_port_all[(i+1)*P_1-1 : i*P_1];
         //one hot mux to select granted OVC
         assign ovc_assigned_local[i] = |(ovc_is_assigned_all[(i+1)*V-1 : i*V] & first_arbiter_granted_ivc_per_port [i]);
-        //demultiplexer        
-        one_hot_demux #(
-            .IN_WIDTH(V),
-            .SEL_WIDTH(P_1)
-        )demux1 (
-            .demux_sel(granted_dest_port_per_port [i]),//selectore
-            .demux_in(candidate_ovc_local_num[i]),//repeated
-            .demux_out(cand_ovc_granted [i])
-        );
+        //Onehot demultiplexer
+        for (j = 0; j < P_1; j++) begin
+            assign cand_ovc_granted [i][j*V +: V] = (granted_dest_port_per_port [i][j]==1'b1) ? candidate_ovc_local_num[i] : {V{1'b0}};
+        end
         assign granted_ovc_local_num_per_port[i] = (any_ivc_sw_request_granted_all[i] )?  candidate_ovc_local_num[i] : {V{1'b0}};
         assign ivc_local_num_getting_ovc_grant [i] = (any_ivc_sw_request_granted_all[i] & ~ovc_assigned_local[i])?     first_arbiter_granted_ivc_per_port [i] : {V{1'b0}};
         assign ivc_num_getting_ovc_grant   [(i+1)*V-1 : i*V] = ivc_local_num_getting_ovc_grant[i];
@@ -355,21 +350,13 @@ module  comb_nonspec_v2_allocator #(
             .grant (first_arbiter_ovc_granted[i]),
             .any_grant ( )
         );
-        
-        //demultiplexer
-        one_hot_demux   #(
-            .IN_WIDTH (V),
-            .SEL_WIDTH (P_1)
-        ) demux1 (
-            .demux_sel (granted_dest_port_per_port [i]),//selectore
-            .demux_in (first_arbiter_ovc_granted[i]),//repeated
-            .demux_out (cand_ovc_granted [i])
-        );  
-        
-        assign granted_ovc_local_num_per_port   [i]=(any_ivc_sw_request_granted_all[i] )?  first_arbiter_ovc_granted[i] : {V{1'b0}};
-        assign ivc_local_num_getting_ovc_grant  [i]= (any_ivc_sw_request_granted_all[i] & any_cand_ovc_exsit[i])?   first_arbiter_granted_ivc_per_port [i] : {V{1'b0}};
-        assign ivc_num_getting_ovc_grant   [(i+1)*V-1 : i*V] = ivc_local_num_getting_ovc_grant[i];
-        
+        //Onehot demultiplexer
+        for (j = 0; j < P_1; j++) begin
+            assign cand_ovc_granted [i][j*V +: V] = (granted_dest_port_per_port [i][j]==1'b1) ? first_arbiter_ovc_granted[i] : {V{1'b0}};
+        end
+        assign granted_ovc_local_num_per_port [i]=(any_ivc_sw_request_granted_all[i] )?  first_arbiter_ovc_granted[i] : {V{1'b0}};
+        assign ivc_local_num_getting_ovc_grant [i]= (any_ivc_sw_request_granted_all[i] & any_cand_ovc_exsit[i]) ? first_arbiter_granted_ivc_per_port [i] : {V{1'b0}};
+        assign ivc_num_getting_ovc_grant [(i+1)*V-1 : i*V] = ivc_local_num_getting_ovc_grant[i];
     end//i  
     
     for(i=0;i< PV;i=i+1) begin :total_vc_loop2

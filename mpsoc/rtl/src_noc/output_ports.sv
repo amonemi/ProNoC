@@ -482,14 +482,10 @@ module oport_ovc_sig_gen #(
     end
     // tail mux 
     assign muxout2 = |(flit_is_tail & first_arbiter_granted_ivc);
-    one_hot_demux #(
-        .IN_WIDTH (V),
-        .SEL_WIDTH (P_1)
-    ) demux (
-        .demux_sel    (granted_dest_port),//selectore
-        .demux_in    (muxout1),//repeated
-        .demux_out    (credit_decreased)
-    );
+    //Onehot demultiplexer
+    generate for (i = 0; i < P_1; i++) begin
+        assign credit_decreased [i*V +: V] = (granted_dest_port [i] == 1'b1) ? muxout1 : {V{1'b0}};
+    end endgenerate
     assign ovc_released = (muxout2)? credit_decreased : {VP_1{1'b0}};
 endmodule
 
@@ -528,35 +524,35 @@ module full_ovc_predictor #(
     input [VP_1-1 : 0] credit_increased;
     input [VP_1-1 : 0] nearly_full;
     input  ivc_getting_sw_grant;
-    output assigned_ovc_is_full;    
+    output assigned_ovc_is_full;
     
-    wire [VP_1-1 : 0]    full_muxin1,nearly_full_muxin1;
-    wire [V-1 : 0]    full_muxout1,nearly_full_muxout1;
-    wire                                full_muxout2,nearly_full_muxout2;
-    logic  full_reg1,full_reg2;
-    wire   full_reg1_next,full_reg2_next;
+    wire [VP_1-1 : 0] full_muxin1,nearly_full_muxin1;
+    logic [V-1 : 0] full_muxout1,nearly_full_muxout1;
+    wire full_muxout2,nearly_full_muxout2;
+    logic full_reg1,full_reg2;
+    wire  full_reg1_next,full_reg2_next;
+    wire [V-1: 0] full_muxin1_array [P_1-1 : 0];
+    wire [V-1: 0] nearly_full_muxin1_array [P_1-1 : 0];
     
     assign full_muxin1  = full & (~credit_increased);
     assign nearly_full_muxin1 = nearly_full & (~credit_increased);
-    // destport mux 
-    onehot_mux_1D #(
-        .W  (V),
-        .N  (P_1)
-    )full_mux1 (
-        .D_in(full_muxin1),
-        .Q_out(full_muxout1),
-        .sel    (dest_port)
-    );
-    onehot_mux_1D #(
-        .W  (V),
-        .N  (P_1)
-    )nearly_full_mux1 (
-        .D_in(nearly_full_muxin1),
-        .Q_out(nearly_full_muxout1),
-        .sel       (dest_port)
-    );
+    
+    genvar i;
+    generate for(i=0;i<P_1;i++) begin : V_
+        assign full_muxin1_array[i] = full_muxin1[(i*V)+:V];
+        assign nearly_full_muxin1_array[i] = nearly_full_muxin1[(i*V)+:V];
+    end endgenerate
+    //Onehot mux to select full signal
+    always_comb begin
+        full_muxout1 = '0;
+        nearly_full_muxout1 = '0;
+        for (int k = 0; k < P_1; k++) begin
+            full_muxout1 |= (dest_port[k]) ? full_muxin1_array[k] : '0;
+            nearly_full_muxout1 |= (dest_port[k]) ? nearly_full_muxin1_array[k] : '0;
+        end
+    end//always
     // assigned ovc mux
-    assign full_muxout2 = |(full_muxout1 & assigned_ovc_num);    
+    assign full_muxout2 = |(full_muxout1 & assigned_ovc_num);
     wire [V-1 : 0]  nearlyfull_sel = (ovc_is_assigned | ~OVC_ALLOC_MODE)? assigned_ovc_num : granted_ovc_num ;// or (granted_ovc_num | ssa_granted_ovc_num) ?    
     assign nearly_full_muxout2 =|(nearly_full_muxout1 & nearlyfull_sel);
     
@@ -604,7 +600,7 @@ module check_ovc #(
     wire [P_1-1 : 0] destport_sel [PV-1 : 0];
     wire [P-1 : 0]  destport_num [PV-1 : 0];
     wire [PV-1 : 0] ovc_num [PV-1 : 0];
-    genvar i;
+    genvar i,j;
     generate
     for(i=0; i<PV;i=i+1) begin :lp_pv
         assign assigned_ovc_num [i]= (ovc_is_assigned_all[i])? assigned_ovc_num_all[(i+1)*V-1 : i*V]: {V{1'b0}};
@@ -620,16 +616,12 @@ module check_ovc #(
         end else begin :slp
             assign destport_num[i] = destport_sel[i];
         end
-        one_hot_demux #(
-            .IN_WIDTH (V),
-            .SEL_WIDTH (P)
-        ) demux (
-            .demux_sel (destport_num[i]),//selectore
-            .demux_in (assigned_ovc_num[i]),//repeated
-            .demux_out (ovc_num[i])
-        );
+        //Onehot demultiplexer
+        for (j = 0; j < P; j++) begin
+            assign ovc_num[i][j*V +: V] = (destport_num[i][j]==1'b1) ? assigned_ovc_num[i] : {V{1'b0}};
+        end
         always @(posedge clk)begin 
-            if(ovc_status >0 && ovc_num[i] >0 && (ovc_num[i] & ovc_status)==0) $display ("%t :Error: OVC status%d missmatch:%b & %b, %m  ",$time,i,ovc_num[i] , ovc_status);
+            if(ovc_status >0 && ovc_num[i] >0 && (ovc_num[i] & ovc_status)==0) $display ("%t: Error: OVC status%d missmatch:%b & %b, %m  ",$time,i,ovc_num[i] , ovc_status);
         end
     end//for
     endgenerate

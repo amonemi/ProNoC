@@ -162,21 +162,24 @@ module my_one_hot_arbiter #(
     endfunction // log2 
     
     localparam ARBITER_BIN_WIDTH= log2(ARBITER_WIDTH);
-    reg     [ARBITER_BIN_WIDTH-1 : 0] low_pr;
-    wire [ARBITER_BIN_WIDTH-1 : 0] grant_bcd;
+    reg [ARBITER_BIN_WIDTH-1 : 0] low_pr;
+    reg [ARBITER_BIN_WIDTH-1 : 0] grant_bin;
     
-    one_hot_to_bin #(
-        .ONE_HOT_WIDTH(ARBITER_WIDTH)
-    )conv (
-    .one_hot_code(grant),
-    .bin_code(grant_bcd)
-    );
+    integer i;
+    always @(*) begin
+        grant_bin = '0;
+        for (i = 0; i < ARBITER_WIDTH; i=i+1) begin
+            if (grant[i]) begin
+                grant_bin = ARBITER_BIN_WIDTH'(i); // casting i to BIN_WIDTH
+            end
+        end
+    end
     
     always @ (`pronoc_clk_reset_edge )begin 
         if(`pronoc_reset) begin
             low_pr <= {ARBITER_BIN_WIDTH{1'b0}};
         end else begin
-            if(any_grant) low_pr <= grant_bcd;
+            if(any_grant) low_pr <= grant_bin;
         end
     end
     assign any_grant = | request;
@@ -291,22 +294,25 @@ module my_one_hot_arbiter_priority_en #(
     end
     endfunction // log2 
     
-    localparam ARBITER_BIN_WIDTH= log2(ARBITER_WIDTH);
-    reg     [ARBITER_BIN_WIDTH-1 : 0] low_pr;
-    wire [ARBITER_BIN_WIDTH-1 : 0] grant_bcd;
+    localparam ARBITER_BIN_WIDTH = log2(ARBITER_WIDTH);
+    reg [ARBITER_BIN_WIDTH-1 : 0] low_pr;
+    reg [ARBITER_BIN_WIDTH-1 : 0] grant_bin;
     
-    one_hot_to_bin #(
-        .ONE_HOT_WIDTH    (ARBITER_WIDTH)
-    )conv (
-        .one_hot_code(grant),
-        .bin_code(grant_bcd)
-    );
+    integer i;
+    always @(*) begin
+        grant_bin = '0;
+        for (i = 0; i < ARBITER_WIDTH; i=i+1) begin
+            if (grant[i]) begin
+                grant_bin = ARBITER_BIN_WIDTH'(i); // casting i to BIN_WIDTH
+            end
+        end
+    end
     
     always @ (`pronoc_clk_reset_edge )begin 
         if(`pronoc_reset) begin
             low_pr    <=    {ARBITER_BIN_WIDTH{1'b0}};
         end else begin
-            if(priority_en) low_pr <= grant_bcd;
+            if(priority_en) low_pr <= grant_bin;
         end
     end
     
@@ -551,15 +557,19 @@ module my_one_hot_arbiter_ext_priority #(
     endfunction // log2 
     
     localparam ARBITER_BIN_WIDTH= log2(ARBITER_WIDTH);
-    wire [ARBITER_BIN_WIDTH-1 : 0] low_pr;
+    reg [ARBITER_BIN_WIDTH-1 : 0] low_pr;
     wire [ARBITER_WIDTH-1 : 0] low_pr_one_hot = {priority_in[0],priority_in[ARBITER_BIN_WIDTH-1:1]};
+    //onehot to bin
+    integer i;
+    always @(*) begin
+        low_pr = '0;
+        for (i = 0; i < ARBITER_WIDTH; i=i+1) begin
+            if (low_pr_one_hot[i]) begin
+                low_pr = ARBITER_BIN_WIDTH'(i); // casting i to BIN_WIDTH
+            end
+        end
+    end
     
-    one_hot_to_bin #(
-        .ONE_HOT_WIDTH    (ARBITER_WIDTH)
-    )conv (
-        .one_hot_code(low_pr_one_hot),
-        .bin_code(low_pr)
-    );
     assign any_grant = | request;
     generate 
         if(ARBITER_WIDTH    ==2) begin: w2       arbiter_2_one_hot arb( .D_in(request) , .Q_out(grant), .low_pr(low_pr)); end

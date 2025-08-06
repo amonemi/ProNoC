@@ -127,7 +127,7 @@ module  comb_spec2_allocator #(
             //merge masked_candidate_ovc in each port
             assign masked_candidate_ovc_per_port[i][(j+1)*V-1 : j*V] = masked_non_assigned_request    [i*V+j];
             assign granted_ovc_num_all[(i*VV)+((j+1)*V)-1 : (i*VV)+(j*V)]=granted_ovc_local_num_per_port[i];
-        end//for j        
+        end//for j
         assign spec_first_arbiter_granted_ivc_per_port[i]    =spec_first_arbiter_granted_ivc_all[(i+1)*V-1 : i*V];
         assign spec_granted_dest_port_per_port[i]                =spec_granted_dest_port_all[(i+1)*P_1-1 : i*P_1];
         // multiplex candidate OVC of first level switch allocatore winner
@@ -148,23 +148,18 @@ module  comb_spec2_allocator #(
             .request(spec_first_arbiter_ovc_request[i]),
             .grant(spec_first_arbiter_ovc_granted[i]),
             .any_grant( )
-        );        
-        //demultiplexer
-        one_hot_demux #(
-            .IN_WIDTH(V),
-            .SEL_WIDTH(P_1)
-        ) demux1 (
-            .demux_sel(spec_granted_dest_port_per_port [i]),//selectore
-            .demux_in(spec_first_arbiter_ovc_granted[i]),//repeated
-            .demux_out(cand_ovc_granted[i])
         );
-        //assign cand_ovc_granted [i]    =             (spec_any_ivc_grant_valid[i])?  cand_ovc_demuxed[i]: {VP_1{1'b0}};
-        assign granted_ovc_local_num_per_port[i]=(spec_any_ivc_grant_valid[i])?  spec_first_arbiter_ovc_granted[i] : {V{1'b0}};
-        assign ivc_local_num_getting_ovc_grant[i]= (spec_any_ivc_grant_valid[i])? spec_first_arbiter_granted_ivc_per_port [i] : {V{1'b0}};
+        //Onehot demultiplexer
+        for (j = 0; j < P_1; j++) begin
+            assign cand_ovc_granted [i][j*V +: V] = (spec_granted_dest_port_per_port [i][j]==1'b1) ? spec_first_arbiter_ovc_granted[i] : {V{1'b0}};
+        end
+        //assign cand_ovc_granted [i] = (spec_any_ivc_grant_valid[i])?  cand_ovc_demuxed[i]: {VP_1{1'b0}};
+        assign granted_ovc_local_num_per_port[i] = (spec_any_ivc_grant_valid[i]) ?  spec_first_arbiter_ovc_granted[i] : {V{1'b0}};
+        assign ivc_local_num_getting_ovc_grant[i] = (spec_any_ivc_grant_valid[i]) ? spec_first_arbiter_granted_ivc_per_port [i] : {V{1'b0}};
         assign ivc_num_getting_ovc_grant[(i+1)*V-1 : i*V] = ivc_local_num_getting_ovc_grant[i];
     end//i
-    //wire     [PORT_SEL-1 : 0]    ovc_allocated_all_gen    [PV-1 : 0];
-    //wire    [VP_1-1 : 0] cand_ovc_granted    [P-1 : 0];
+    //wire [PORT_SEL-1 : 0]    ovc_allocated_all_gen    [PV-1 : 0];
+    //wire [VP_1-1 : 0] cand_ovc_granted    [P-1 : 0];
     wire [PV-1 : 0] result;
     for(i=0;i< PV;i=i+1) begin : PV_
          // mask unavailable ovc from requests
