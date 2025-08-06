@@ -606,8 +606,8 @@ module check_ovc #(
         for(int m=0; m < PV; m++) begin 
             if (SELF_LOOP_EN == 0) begin
                 for(int k=0; k<P; k++) begin 
-                    if (k>i/V) destport_num[m][k] = destport_sel[m][k-1];
-                    else if (k==i/V)  destport_num[m][k] = 1'b0;
+                    if (k>m/V) destport_num[m][k] = destport_sel[m][k-1];
+                    else if (k==m/V)  destport_num[m][k] = 1'b0;
                     else destport_num[m][k] = destport_sel[m][k];
                 end//for 
             end else destport_num[m][P_1-1 : 0] = destport_sel[m];
