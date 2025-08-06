@@ -90,7 +90,7 @@ module one_hot_demux    #(
     output  [OUT_WIDTH-1 : 0]  demux_out
 );
     genvar i;
-    generate for (i = 0; i < SEL_WIDTH; i=i+1) begin
+    generate for (i = 0; i < SEL_WIDTH; i=i+1) begin : D_
         assign demux_out[i*IN_WIDTH +: IN_WIDTH] = (demux_sel[i]==1'b1) ? demux_in : {IN_WIDTH{1'b0}};
     end endgenerate
 endmodule
@@ -111,10 +111,10 @@ module outport_sum #(
 );
     
     genvar i,j;
-    wire [IN_WIDTH-1 : 0]      in_sep  [IN_NUM-1 : 0];
-    wire [IN_NUM-2 : 0]      gen         [OUT_WIDTH-1 : 0];
+    wire [IN_WIDTH-1 : 0] in_sep  [IN_NUM-1 : 0];
+    wire [IN_NUM-2 : 0] gen [OUT_WIDTH-1 : 0];
     generate 
-        for(i=0;i<IN_NUM; i=i+1      ) begin : lp
+        for(i=0;i<IN_NUM; i=i+1 ) begin : L_
             assign in_sep[i] = D_in[(IN_WIDTH*(i+1))-1 : IN_WIDTH*i];
         end
         for (j=0;j<IN_NUM-1;j=j+1)begin : loop1
@@ -130,7 +130,7 @@ module outport_sum #(
                     end
                 end// for i
             end// for j
-        for(i=0;i<OUT_WIDTH; i=i+1       ) begin : lp2
+        for(i=0;i<OUT_WIDTH; i=i+1 ) begin : lp2
             assign Q_out[i] = |  gen[i];
         end
     endgenerate

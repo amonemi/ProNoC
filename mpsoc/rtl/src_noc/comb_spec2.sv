@@ -150,7 +150,7 @@ module  comb_spec2_allocator #(
             .any_grant( )
         );
         //Onehot demultiplexer
-        for (j = 0; j < P_1; j++) begin
+        for (j = 0; j < P_1; j++) begin : P_
             assign cand_ovc_granted [i][j*V +: V] = (spec_granted_dest_port_per_port [i][j]==1'b1) ? spec_first_arbiter_ovc_granted[i] : {V{1'b0}};
         end
         //assign cand_ovc_granted [i] = (spec_any_ivc_grant_valid[i])?  cand_ovc_demuxed[i]: {VP_1{1'b0}};

@@ -483,7 +483,7 @@ module oport_ovc_sig_gen #(
     // tail mux 
     assign muxout2 = |(flit_is_tail & first_arbiter_granted_ivc);
     //Onehot demultiplexer
-    generate for (i = 0; i < P_1; i++) begin
+    generate for (i = 0; i < P_1; i++) begin : P_
         assign credit_decreased [i*V +: V] = (granted_dest_port [i] == 1'b1) ? muxout1 : {V{1'b0}};
     end endgenerate
     assign ovc_released = (muxout2)? credit_decreased : {VP_1{1'b0}};
@@ -619,7 +619,7 @@ module check_ovc #(
         assign assigned_ovc_num [i]= (ovc_is_assigned_all[i])? assigned_ovc_num_all[(i+1)*V-1 : i*V]: {V{1'b0}};
         assign destport_sel [i]= dest_port_all[(i+1)*P_1-1 : i*P_1];
         //Onehot demultiplexer
-        for (j = 0; j < P; j++) begin
+        for (j = 0; j < P; j++) begin : P_
             assign ovc_num[i][j*V +: V] = (destport_num[i][j]==1'b1) ? assigned_ovc_num[i] : {V{1'b0}};
         end
         always @(posedge clk)begin 

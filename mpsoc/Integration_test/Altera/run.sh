@@ -12,7 +12,7 @@ log_work="${PRONOC_WORK}/verify/logs"
 mkdir -p $log_work
 mkdir -p $log_dir
 
-
+report="report.txt"
 
 
 quartus_get_result () {
@@ -121,7 +121,7 @@ compile () {
 }
 
 report_all_configurations () {
-    output_file="$log_dir/report.csv"
+    output_file="$log_dir/$report"
     > "$output_file"  # Empty the file at start
     # Initialize a set to track unique metric names
     declare -A all_keys
@@ -182,5 +182,7 @@ done
 
 report_all_configurations
 
-perl ${SCRPT_DIR_PATH}/src/compare.pl "$golden_dir/report.csv" "$log_dir/report.csv" 
-echo "All configurations processed. Results are in $log_dir/report.csv"
+perl ${SCRPT_DIR_PATH}/src/compare.pl "$golden_dir/$report" "$log_dir/$report" 
+echo "All configurations processed. Results are in $log_dir/$report"
+
+
