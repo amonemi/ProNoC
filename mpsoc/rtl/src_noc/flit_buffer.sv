@@ -111,6 +111,8 @@ module flit_buffer
         assign  rd = (rd_en)?  vc_num_rd & ~multiple_dest : ssa_rd & ~multiple_dest;
     end else begin : unicast
         assign  rd = (rd_en)?  vc_num_rd : ssa_rd;
+        assign  sub_rd = '0;
+        assign  sub_restore = '0;
     end
     
     if (IS_MULTI_FLIT) begin :multi
@@ -150,17 +152,17 @@ module flit_buffer
     end //always_comb
     
     for(i=0;i<V;i=i+1) begin :V_
-        if (~IS_UNICAST) begin
-            localparam RESET_TO = ((2**Bw)==B)? 0 : B*i;
-            always_ff @ (`pronoc_clk_reset_edge )begin 
-                if(`pronoc_reset) begin 
-                    sub_rd_ptr[i] <= PTRw'(RESET_TO);
-                    sub_depth[i]  <= {DEPTHw{1'b0}};
-                end else begin
-                    sub_rd_ptr[i] <= sub_rd_ptr_next[i];
-                    sub_depth[i]  <= sub_depth_next[i];
-                end
+        localparam RESET_TO = ((2**Bw)==B)? 0 : B*i;
+        always_ff @ (`pronoc_clk_reset_edge )begin 
+            if(`pronoc_reset) begin 
+                sub_rd_ptr[i] <= PTRw'(RESET_TO);
+                sub_depth[i]  <= {DEPTHw{1'b0}};
+            end else begin
+                sub_rd_ptr[i] <= sub_rd_ptr_next[i];
+                sub_depth[i]  <= sub_depth_next[i];
             end
+        end
+        if (~IS_UNICAST) begin
             assign  vc_not_empty [i] = (sub_depth[i] > 0);
         end else begin : unicast
             assign  vc_not_empty [i] = (depth[i] > 0);

@@ -595,7 +595,6 @@ module check_ovc #(
     input [PV-1 : 0] ovc_is_assigned_all;
     input [PVP_1-1 : 0] dest_port_all;
     input clk,reset;
-    
     wire [V-1 : 0] assigned_ovc_num [PV-1 : 0];
     wire [P_1-1 : 0] destport_sel [PV-1 : 0];
     logic [P-1 : 0]  destport_num [PV-1 : 0];

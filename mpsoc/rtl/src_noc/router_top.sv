@@ -219,10 +219,12 @@ module router_top #(
     end else begin 
         for(i=0;i<P;i=i+1) begin : Port_
             assign smart_ctrl[i]={SMART_CTRL_w{1'b0}};
+            assign smart_chanel_out[i] = '0;
+            assign credit_out[i] = '0;
         end
     end
     endgenerate
-
+    
     always_comb begin
         for(int k=0;k<P;k++) begin 
             r2_chan_in[k] = chan_in[k].flit_chanel;

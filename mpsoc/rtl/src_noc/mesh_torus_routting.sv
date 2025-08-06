@@ -407,12 +407,11 @@ module add_sw_loc_one_hot #(
     input [P_1-1 : 0] destport_in;
     output reg [P-1 : 0] destport_out;
     
-    integer i;   
-    always @(*)begin 
-        for(i=0;i<P;i=i+1)begin :port_loop
-            if (i>SW_LOC)      destport_out[i] = destport_in[i-1];
-            else if (i==SW_LOC)     destport_out[i] = 1'b0;
-            else                    destport_out[i] = destport_in[i];
+    always_comb begin 
+        for(int i=0;i<P; i++)begin 
+            if (i>SW_LOC) destport_out[i] = destport_in[i-1];
+            else if (i==SW_LOC) destport_out[i] = 1'b0;
+            else destport_out[i] = destport_in[i];
         end//for 
     end
 endmodule  

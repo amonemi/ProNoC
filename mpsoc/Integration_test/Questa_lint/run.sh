@@ -57,8 +57,7 @@ run_config () {
     log_file="${log_dir}/${conf}.log"
     echo "▶️  Compiling configuration: $conf"
     # Run and redirect stdout/stderr to log file only
-    questa_lint "$conf" 
-    if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+    if ! questa_lint "$conf"; then
         echo "❌ Compilation failed for $conf (check $log_file)"
         rm -f "${SCRPT_DIR_PATH}/src/noc_localparam.v"
         exit 1
