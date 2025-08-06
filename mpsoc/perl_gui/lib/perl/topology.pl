@@ -511,7 +511,7 @@ sub get_noc_verilator_top_modules_info {
         }
         my $topology_name=$self->object_get_attribute('noc_param','CUSTOM_TOPOLOGY_NAME'); 
         my $ref=$param{$topology_name}{'ROUTER_Ps'};
-        print $ref;
+        #print $ref;
         my %router_ps= %{$ref};
         my $i=1;
         #%tops = ("Vnoc" => " --top-module noc_connection");

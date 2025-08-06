@@ -589,7 +589,7 @@ module check_ovc #(
         PVV = PV * V,
         P_1 = (SELF_LOOP_EN )?  P : P-1,
         PVP_1 = PV * P_1;
-
+    
     input [PV-1 : 0] ovc_status;
     input [PVV-1 : 0] assigned_ovc_num_all;
     input [PV-1 : 0] ovc_is_assigned_all;
@@ -598,24 +598,27 @@ module check_ovc #(
     
     wire [V-1 : 0] assigned_ovc_num [PV-1 : 0];
     wire [P_1-1 : 0] destport_sel [PV-1 : 0];
-    wire [P-1 : 0]  destport_num [PV-1 : 0];
+    logic [P-1 : 0]  destport_num [PV-1 : 0];
     wire [PV-1 : 0] ovc_num [PV-1 : 0];
+    
+    //add_sw_loc_one_hot 
+    always_comb begin 
+        for(int m=0; m < PV; m++) begin 
+            if (SELF_LOOP_EN == 0) begin
+                for(int k=0; k<P; k++) begin 
+                    if (k>i/V) destport_num[m][k] = destport_sel[m][k-1];
+                    else if (k==i/V)  destport_num[m][k] = 1'b0;
+                    else destport_num[m][k] = destport_sel[m][k];
+                end//for 
+            end else destport_num[m][P_1-1 : 0] = destport_sel[m];
+        end 
+    end//always
+    
     genvar i,j;
     generate
     for(i=0; i<PV;i=i+1) begin :lp_pv
         assign assigned_ovc_num [i]= (ovc_is_assigned_all[i])? assigned_ovc_num_all[(i+1)*V-1 : i*V]: {V{1'b0}};
         assign destport_sel [i]= dest_port_all[(i+1)*P_1-1 : i*P_1];
-        if(SELF_LOOP_EN==0) begin : nslp
-            add_sw_loc_one_hot #(
-                .P(P),
-                .SW_LOC(i/V)
-            ) add_sw_loc (
-                .destport_in(destport_sel[i]),
-                .destport_out(destport_num[i])
-            );
-        end else begin :slp
-            assign destport_num[i] = destport_sel[i];
-        end
         //Onehot demultiplexer
         for (j = 0; j < P; j++) begin
             assign ovc_num[i][j*V +: V] = (destport_num[i][j]==1'b1) ? assigned_ovc_num[i] : {V{1'b0}};

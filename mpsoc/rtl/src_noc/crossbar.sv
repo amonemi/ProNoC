@@ -51,7 +51,7 @@ module crossbar #(
     wire [P_1-1 : 0] mux_sel_pre [P-1 : 0];
     wire [P_1-1 : 0]  mux_sel [P-1 : 0];
     logic [P_1w-1 : 0] mux_sel_bin [P-1 : 0];
-    wire [P-1 : 0] flit_out_wr_gen [P-1 : 0];
+    logic [P-1 : 0] flit_out_wr_gen [P-1 : 0];
     
     //one_hot_to_bin
     always_comb begin
@@ -62,6 +62,19 @@ module crossbar #(
             end
         end
     end
+    
+    //add_sw_loc_one_hot 
+    always_comb begin 
+        for(int m=0;m< P;m++) begin 
+            if (SELF_LOOP_EN == 0) begin
+                for(int k=0;k<P; k++) begin 
+                    if (k>m) flit_out_wr_gen[m][k] = granted_dest_port_all[m][k-1];
+                    else if (k==m) flit_out_wr_gen[m][k] = 1'b0;
+                    else flit_out_wr_gen[m][k] = granted_dest_port_all[m][k];
+                end//for 
+            end else flit_out_wr_gen[m][P_1-1 : 0] = granted_dest_port_all[m];
+        end//for
+    end//always
     
     genvar i,j;
     generate
@@ -101,20 +114,9 @@ module crossbar #(
                 for (int k = 0; k < P_1; k++)
                     flit_out_all[i] |= (mux_sel[i][k]) ?  mux_in[i][k] : {Fw{1'b0}};
             end
-        end else begin : binary           
+        end else begin : binary
             assign flit_out_all[i]= mux_in[i][mux_sel_bin[i]];
         end//binary
-        if(SELF_LOOP_EN == 0) begin : nslp
-            add_sw_loc_one_hot #(
-                .P(P),
-                .SW_LOC(i)
-            ) add_sw_loc (
-                .destport_in(granted_dest_port_all[i]),
-                .destport_out(flit_out_wr_gen [i])
-            );
-        end else begin :slp
-            assign flit_out_wr_gen[i] = granted_dest_port_all[i];
-        end
     end//for i
     endgenerate
     reduction_or #(

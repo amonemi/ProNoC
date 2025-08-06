@@ -989,17 +989,16 @@ module destp_generator #(
     odd_column
 );
     import pronoc_pkg::*;
-
     localparam
         ELw = log2(T3),
         Pw  = log2(P),
-        PLw = (IS_FMESH) ? Pw : ELw;
+        PLw = (IS_FMESH) ? Pw : ELw,
+        P_1 = (SELF_LOOP_EN )?  P : P-1;
 
-    localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     input [DSTPw-1 : 0]  dest_port_encoded;
     input [PLw-1 : 0] endp_localp_num;
     output [P_1-1: 0] dest_port_out;
-    output [P-1 : 0] destport_one_hot;
+    output logic [P-1 : 0] destport_one_hot;
     input  swap_port_presel;
     input  [PPSw-1 : 0] port_pre_sel;
     input odd_column;
@@ -1093,20 +1092,17 @@ module destp_generator #(
             .dest_port_out(dest_port_out)
         );
     end
-    if(SELF_LOOP_EN==0) begin : nslp
-        add_sw_loc_one_hot #(
-            .P(P),
-            .SW_LOC(SW_LOC)
-        )add (
-            .destport_in(dest_port_out),
-            .destport_out(destport_one_hot)
-        );
-        
-    end else begin : slp
-        assign destport_one_hot = dest_port_out;
-    end
     endgenerate
-    
+    //add_sw_loc_one_hot
+    always_comb begin 
+        if (SELF_LOOP_EN == 0) begin
+            for(int k=0;k<P; k++) begin 
+                if (k>SW_LOC) destport_one_hot[k] = dest_port_out[k-1];
+                else if (k==SW_LOC) destport_one_hot[k] = 1'b0;
+                else destport_one_hot[k] = dest_port_out[k];
+            end//for 
+        end else destport_one_hot[P_1-1 : 0] = dest_port_out;
+    end//always
 endmodule
 
 /******************
