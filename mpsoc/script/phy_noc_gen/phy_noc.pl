@@ -42,12 +42,14 @@ if ($noc_id =~ /[^a-zA-Z0-9_\$]+/){
 }
 
 
-my %replace;
-$replace{"import pronoc_pkg::*;"} = "import pronoc_pkg_${noc_id}::*;";
-$replace{"noc_localparam.v"} = "noc_localparam_${noc_id}.v";
-$replace{"topology_localparam.v"} = "topology_localparam_${noc_id}.v";
-$replace{"pronoc_pkg"} = "pronoc_pkg_${noc_id}";
-$replace{"NOC_ID=0"} = "NOC_ID=\"$ARGV[0]\"";
+#Note that white spaces in replace keys are autumatically translated to \s*
+my %replace = (
+    'import pronoc_pkg::*;'  => "import pronoc_pkg_${noc_id}::*;",
+    'noc_localparam.v'       => "noc_localparam_${noc_id}.v",
+    'topology_localparam.v'  => "topology_localparam_${noc_id}.v",
+    'pronoc_pkg'             => "pronoc_pkg_${noc_id}",
+    'NOC_ID = 0'             => "NOC_ID=\"$ARGV[0]\"",
+);
 
 
 
@@ -104,8 +106,16 @@ for my $filename (@param_files){
         foreach my $param (@params) {
             # Extract the parameter name while skipping 'int', 'signed', 'unsigned'
             if ($param =~ /^\s*(?:int|signed|unsigned)?\s*(\w+)/) {
-                push @param_list ,$1;
-            }
+               my $param_name = $1;
+               $param_name =~ s/^\s+|\s+$//g;   # Trim spaces
+               $param_name =~ s/[,;)\]\s]+$//g; # Strip trailing punctuation/whitespace
+               # Check if valid identifier (standard or escaped)
+               if ($param_name =~ /^(?:[a-zA-Z_]\w*$|\\\S+)$/) {
+                   push @param_list, $param_name;
+               } else {
+                   #print "Ignore: \"$param_name\"\n";
+               }
+            }            
         }
     }
 }
@@ -166,8 +176,19 @@ my $file_regex = join '|', map { quotemeta } @files;
 my %key_replacements = map { $_ => "${_}_${noc_id}" } @replaces;
 my $key_regex = join '|', map { quotemeta } @replaces;
 
-# Compile replace hash regex
-my $replace_regex = join '|', map { quotemeta } keys %replace;
+# Compile replace hash regex (spaces become \s*)
+my $replace_regex = join '|',
+    map {
+        my $pattern = $_;
+
+        # Escape all regex metacharacters except space
+        $pattern =~ s/([^\w\s])/\\$1/g;
+
+        # Convert literal spaces to \s*
+        $pattern =~ s/ /\\s*/g;
+
+        $pattern;
+    } sort keys %replace;
 
 
 foreach my $file (@files) {
@@ -189,7 +210,8 @@ while (my $line = <$input_fh>) {
     $line =~ s/\b($module_regex)\b/$module_replacements{$1}/g;
 
     # Replace keys in %replace hash
-    $line =~ s/($replace_regex)/$replace{$1}/g;
+    $line =~ s/($replace_regex)/$replace{space_match($1)}/g;
+    #print "$line =~ s/($replace_regex)/\$replace{$1}/g;\n";
 
     # Replace file names
     $line =~ s/($file_regex)/$file_replacements{$1}/g;
@@ -202,6 +224,22 @@ while (my $line = <$input_fh>) {
     print $output_fh $line;
 }
 
+sub space_match {
+    my $in = shift;
+
+    # 1. Exact match
+    return $in if exists $replace{$in};
+    # 2. Pattern match (spaces → \s*)
+    foreach my $key (sort keys %replace) {
+        my $new_key = $key;
+        $new_key =~ s/ /\\s*/g;   # replace space with \s*
+        if ($in =~ /^$new_key$/) {
+            return $key;
+        }
+    }
+    # 3. Default return
+    return $in;
+}
 
 # Close the input and output files
 close($input_fh);
