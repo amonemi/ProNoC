@@ -8,6 +8,9 @@
 #add home dir in perl 5.6
 use FindBin;
 use lib $FindBin::Bin;
+
+use lib "$FindBin::Bin/../../Integration_test/synthetic_sim/src/perl_lib";
+
 use constant::boolean;
 
 
@@ -18,9 +21,9 @@ use List::MoreUtils qw(uniq);
 use File::Basename;
 use File::Copy;
 
+use Cwd 'realpath';
 my $dirname = dirname(__FILE__);
-my $noc_dir = "$dirname/../../rtl/src_noc";
-
+my $noc_dir = realpath("$dirname/../../rtl/src_noc");
 
 my $noc_id = $ARGV[0];
 my $out_dir= $ARGV[1];
@@ -223,6 +226,8 @@ while (my $line = <$input_fh>) {
     # Write the modified line to the output file
     print $output_fh $line;
 }
+
+
 
 sub space_match {
     my $in = shift;
