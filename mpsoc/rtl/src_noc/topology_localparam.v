@@ -38,7 +38,8 @@
         IS_UNICAST = (CAST_TYPE == "UNICAST"),
         IS_BROADCAST_FULL = (CAST_TYPE == "BROADCAST_FULL"),
         IS_ONE_HOT_MUX = (MUX_TYPE == "ONE_HOT"),
-        IS_VCA_ATOMIC = (VC_REALLOCATION_TYPE == "ATOMIC");
+        IS_VCA_ATOMIC = (VC_REALLOCATION_TYPE == "ATOMIC"),
+        IS_LOOKAHEAD = ( ROUTE_MODE=="LOOKAHEAD");
         /* verilator lint_on WIDTH */
     
     //MESH, TORUS Topology p=5
@@ -152,7 +153,7 @@
         /* verilator lint_off WIDTH */
         ROUTE_TYPE_REGULAR = 
             (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
-            (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE",
+            (ROUTE_NAME == "FULL_ADPT" || ROUTE_NAME == "TRANC_FULL_ADPT" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE",
         /* verilator lint_on WIDTH */
         R2R_CHANELS_REGULAR=  (IS_RING || IS_LINE)? 2 : 4,
         R2E_CHANELS_REGULAR= NL,

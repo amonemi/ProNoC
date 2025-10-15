@@ -138,7 +138,7 @@ module conventional_routing #(
         );
     */
     end else begin :custom
-        custom_ni_routing  #(
+        custom_conv_routing  #(
             .TOPOLOGY(TOPOLOGY),
             .ROUTE_NAME(ROUTE_NAME),
             .ROUTE_TYPE(ROUTE_TYPE),
@@ -146,6 +146,7 @@ module conventional_routing #(
             .EAw(EAw),
             .DSTPw(DSTPw)
         ) the_conventional_routing (
+            .current_r_addr(current_r_addr),
             .dest_e_addr(dest_e_addr),
             .src_e_addr(src_e_addr),
             .destport(destport)
@@ -374,4 +375,87 @@ module next_router_addr_selector_bin #(
     end endgenerate
     assign next_rx = neighbors_rx_array[destport_bin];
     assign next_ry = neighbors_ry_array[destport_bin];
+endmodule
+
+/******************
+*   local_route_computation
+*   Compute the output port based on the current router address and destination address
+*   Used when lookahead routing is not used or in multicast routing
+*******************/
+module local_route_computation #(
+    parameter P = 5,
+    parameter SW_LOC = 0 // switch location
+)(
+    endp_port,
+    current_r_addr,
+    chan_in,
+    chan_out,
+    clk,
+    reset
+);  
+    import pronoc_pkg::*;
+    input endp_port;
+    input   [RAw-1 : 0]  current_r_addr;
+    input   flit_chanel_t chan_in;
+    input   clk,reset;
+    output  flit_chanel_t chan_out;
+    
+    flit_chanel_t chan_out_tmp;
+    wire [DSTPw-1 :0] destport,destport_out;
+    always_comb begin 
+        chan_out_tmp=chan_in;
+        if(chan_in.flit.hdr_flag == 1'b1) begin
+            chan_out_tmp.flit [DST_P_MSB : DST_P_LSB] = destport_out;
+        end
+    end
+    
+    generate 
+    if(IS_UNICAST) begin : uni
+        localparam LOCATED_IN_NI=
+            (IS_MESH | IS_TORUS | IS_FMESH)? ((SW_LOC==LOCAL) || (SW_LOC > SOUTH) ) : 
+            (IS_RING | IS_LINE) ? ((SW_LOC==LOCAL) || (SW_LOC > BACKWARD) )  : 0;
+        hdr_flit_t hdr_flit_i;
+        wire [DSTPw-1 :0] destport;
+        header_flit_info #(
+            .DATA_w (0)
+        ) extractor (
+            .flit(chan_in.flit),
+            .hdr_flit(hdr_flit_i),
+            .data_o( )
+        );
+        conventional_routing #(
+            .LOCATED_IN_NI(LOCATED_IN_NI) // Only needed for mesh and odd-even routing
+        ) conv_route (
+            .reset(reset),
+            .clk(clk),
+            .current_r_addr(current_r_addr),
+            .src_e_addr(hdr_flit_i.src_e_addr),
+            .dest_e_addr(hdr_flit_i.dest_e_addr),
+            .destport(destport)
+        );
+        if((IS_DETERMINISTIC == 1'b0) && (LOCATED_IN_NI==0) && (IS_REGULAR_TOPO==1'b1)) begin 
+            regular_topo_adaptive_lk_dest_encoder encoder(
+                .sel({V{1'b1}}),
+                .flit_in(chan_in.flit),
+                .dest_coded_out(destport_out),
+                .vc_num_delayed({V{1'b1}}),
+                .lk_dest(destport)
+            );
+        end else begin 
+            assign destport_out = destport;
+        end
+        assign chan_out = chan_out_tmp;
+    end else begin : multi
+        multicast_chan_in_process #(
+            .SW_LOC(SW_LOC),
+            .P(P)
+        )multi_cast(
+            .endp_port(endp_port),
+            .current_r_addr(current_r_addr),
+            .chan_in(chan_in),
+            .chan_out(chan_out),
+            .clk(clk)
+        );
+    end
+    endgenerate
 endmodule

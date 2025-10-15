@@ -1,0 +1,6 @@
+$model = bless( {
+    'noc_param'=> {
+        "SMART_MAX" => "6",
+        "ROUTE_MODE" => "\"CONVENTIONAL\"",
+    }
+}, 'ProNOC' );

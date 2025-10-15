@@ -28,7 +28,7 @@ my $verify  = "$ENV{PRONOC_WORK}/verify";
 my $src_verilator = "$root/src_verilator";
 my $src_c = "$root/src_c";
 my $src = "$script_path";
-my $noc_default_param_file= "$root/Integration_test/deafult_noc_param";
+my $noc_default_param_file= "$root/Integration_test/default_noc_param";
 
 #require "$root/perl_gui/lib/perl/common.pl";
 require "$root/perl_gui/lib/perl/topology.pl";
@@ -144,7 +144,8 @@ sub get_model_parameter {
     my $model =shift;
     my $o;
     $o= do $model;
-    my %new_param=%{$o};
+    my $pp = $o->{'noc_param'};
+    my %new_param=%{$pp};
     die "Error reading: $@" if $@;
     my %temp;
     foreach my $p (@params){

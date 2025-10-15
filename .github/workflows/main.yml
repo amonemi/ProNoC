@@ -5,13 +5,13 @@ on:
     branches: [ "**" ]
 
 jobs:
-  synthetic-sim-split-mode:
+  sim-split-mode:
     runs-on: ubuntu-latest
     container:
       image: verilator/verilator:4.104
     strategy:
       matrix:
-        conf_name: [general, line-ring, multicast, vc_alloc, tiny_topos]
+        conf_name: [general, line-ring, multicast, vc_alloc, conv_route, tiny_topos]
     env:
       ROOT: ${{ github.workspace }}/mpsoc
       PRONOC_WORK: ${{ github.workspace }}/mpsoc_work
@@ -45,7 +45,7 @@ jobs:
           retention-days: 7
 
   tiny-topos-flat-mode:
-    needs: synthetic-sim-split-mode
+    needs: sim-split-mode
     runs-on: ubuntu-latest
     container:
       image: verilator/verilator:4.104

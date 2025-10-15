@@ -16,7 +16,7 @@ module  fmesh_addr_encoder (
     generate 
         for(i=0; i< NE; i=i+1) begin : endpoints
             //Endpoint decoded address
-            localparam  ENDP= fmesh_endp_addr(i);
+            localparam  unsigned ENDP = fmesh_endp_addr(i);
             assign codes[i] = EAw'(ENDP);
         end
     endgenerate
@@ -38,7 +38,7 @@ module  fmesh_addr_coder (
     generate 
         for(i=0; i< NE; i=i+1) begin : endpoints
             //Endpoint decoded address
-            localparam ENDP= fmesh_endp_addr(i);
+            localparam unsigned ENDP= fmesh_endp_addr(i);
             assign codes[EAw'(ENDP)] = i;            
         end
     endgenerate

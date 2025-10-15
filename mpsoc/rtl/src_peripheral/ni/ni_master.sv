@@ -708,19 +708,21 @@ Shared registers for all VCs
         assign send_vc_enable_binary = 1'b0;
         assign receive_vc_enable_binary = 1'b0;
     end
-    endgenerate  
-    
-    conventional_routing #(
-        .LOCATED_IN_NI(1)
-    ) route_compute (
-        .reset(reset),
-        .clk(clk),
-        .current_r_addr(current_r_addr),
-        .src_e_addr(current_e_addr),
-        .dest_e_addr(dest_e_addr),
-        .destport(destport)
-    );
-    
+    if((CAST_TYPE == "UNICAST") && (IS_LOOKAHEAD==1'b1)) begin : uni
+    //The router is configured with lookaheadrouting. 
+    //The header flit is supposed to carry the destinaion output port
+        conventional_routing #(
+            .LOCATED_IN_NI(1)
+        ) route_compute (
+            .reset(reset),
+            .clk(clk),
+            .current_r_addr(current_r_addr),
+            .src_e_addr(current_e_addr),
+            .dest_e_addr(dest_e_addr),
+            .destport(destport)
+        );
+    end
+    endgenerate
     header_flit_generator #(
         .DATA_w(HDw)
     ) hdr_flit_gen (

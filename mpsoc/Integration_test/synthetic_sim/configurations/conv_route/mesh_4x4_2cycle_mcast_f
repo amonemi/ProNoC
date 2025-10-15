@@ -1,0 +1,9 @@
+$model = bless( {
+    'noc_param'=> {
+        "T1" => "4",
+        "T2" => "4",
+        "CAST_TYPE" => "\"MULTICAST_FULL\"",
+        "Fpay" => "64",
+        "ROUTE_MODE" => "\"CONVENTIONAL\"",
+    }
+}, 'ProNOC' );

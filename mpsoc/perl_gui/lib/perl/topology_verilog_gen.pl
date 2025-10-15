@@ -540,21 +540,31 @@ sub get_wires_assignment_genvar_v{
     return ($assign,$r2r_h,$r2e_h,$init_h,$gnd_h,$R_num);
 }
 
-
-
 sub generate_routing_v {
     my ($self,$info,$dir)=@_;
     my @ends=get_list_of_all_endpoints($self);
     my @routers=get_list_of_all_routers($self);
-    #########################    
-    #  conventional_routing
-    #########################
     #create routing file
     my $name=$self->object_get_attribute('save_as');
     my $rname=$self->object_get_attribute('routing_name');
     my $Vname="T${name}R${rname}";
-    my $r; 
-    my $top="$dir/${Vname}_conventional_routing.v";
+    gen_ni_routing_file($self,$info,$dir,$Vname);
+    gen_ni_genvar_route($self,$info,$dir,$Vname);
+    gen_lkhead_genvar_routing_file ($self,$info,$dir,$Vname,'look_ahead');
+    gen_lkhead_conv_routing_file($self,$info,$dir,$Vname,'look_ahead');
+    gen_lkhead_conv_routing_file($self,$info,$dir,$Vname,'conv');
+}
+
+##########
+# ni_genvar_route
+#########
+sub gen_ni_genvar_route{
+    my ($self,$info,$dir,$Vname)=@_;
+    #create routing file
+    my $top="$dir/${Vname}_ni_routing_genvar.v";
+    my $r;
+    my @ends=get_list_of_all_endpoints($self);
+    my @routers=get_list_of_all_routers($self);
     open my $fd, ">$top" or $r = "$!\n";
     if(defined $r) {
         add_colored_info($info,"Error in creating $top: $r",'red');
@@ -562,233 +572,15 @@ sub generate_routing_v {
     } 
     print $fd autogen_warning();
     print $fd get_license_header($top);   
-    my $route_str="    always@(*)begin
-        destport=0;
-        case(src_e_addr) //source address of each individual NI is fixed. So this CASE will be optimized by the synthesizer for each endpoint. 
-";
+    my $route_str="    generate\n";
     foreach my $src (@ends){
         my $PNUM=$self->object_get_attribute($src,"PNUM");
         my $src_num=get_scolar_pos($src,@ends);
-        my %route;        
-        $route_str=$route_str."        $src_num: begin
-            case(dest_e_addr)
-";
-        foreach my $dst (@ends){
-            my $dest_num = get_scolar_pos($dst,@ends);
-            my $ref = $self->object_get_attribute('Route',"${src}::$dst");
-            next if(!defined $ref);
-            my @path = @{$ref};
-            my ($p1,$p2)= get_connection_port_num_between_two_nodes($self,$path[1],$path[2] );
-            #print " ($p1,$p2)= get_connection_port_num_between_two_nodes($self,$path[1],$path[2] );\n";
-            $route{$p1} = (defined $route{$p1})? $route{$p1}.",$dest_num" : "$dest_num";                        
-        }
-        foreach my $q (sort {$a <=> $b} keys %route){
-            $route_str=$route_str."            $route{$q}: begin 
-                destport= $q; 
-            end
-";
-        }
-        $route_str=$route_str."
-            default: begin 
-                destport= {DSTPw{1\'bX}};
-            end
-            endcase\n        end//$src_num\n";
-    }
-    $route_str=$route_str."
-        default: begin 
-            destport= {DSTPw{1\'bX}};
-        end
-        endcase\n    end\n";
-    print $fd "module ${Vname}_conventional_routing  #(
-    parameter RAw = 3,  
-    parameter EAw = 3,   
-    parameter DSTPw=4  
-)
-(
-    dest_e_addr,
-    src_e_addr,
-    destport
-);
-    input   [EAw-1   :0] dest_e_addr;
-    input   [EAw-1   :0] src_e_addr;
-    output reg [DSTPw-1 :0] destport;    
-    
-$route_str
-    
-endmodule  
-";
-close($fd);
-add_info($info,"$top file is created\n  ");
-
-##################
-#   look_ahead_routing
-###################
-
-#create routing file
-    $top="$dir/${Vname}_look_ahead_routing.v";
-    open  $fd, ">$top" or $r = "$!\n";
-    if(defined $r) {
-        add_colored_info($info,"Error in creating $top: $r",'red');
-        return;
-    } 
-    print $fd autogen_warning();
-    print $fd get_license_header($top);   
-    $route_str="    always@(*)begin
-        destport=0;
-        case(current_r_addr) //current_r_addr of each individual router is fixed. So this CASE will be optimized by the synthesizer for each router. 
-";
-
-foreach my $router (@routers){
-    my $PNUM=$self->object_get_attribute($router,"PNUM");
-    my $router_num=get_scolar_pos($router,@routers);
-    my %route;        
-    $route_str=$route_str."        $router_num: begin
-            case({src_e_addr,dest_e_addr})
-";
-    # for each src-dest check if $router include in path 
-    foreach my $src (@ends){
-        foreach my $dst (@ends){
-            my $ref = $self->object_get_attribute('Route',"${src}::$dst");
-            next if(!defined $ref);
-            my @path = @{$ref};
-            my $loc= get_scolar_pos($router,@path);
-            next if(!defined $loc);# this router does not exist in path skip it
-            my $next_router1=$path[$loc+1];
-            my $next_router2=$path[$loc+2];
-            next if(!defined $next_router2);
-            my ($p1,$p2)= get_connection_port_num_between_two_nodes($self,$next_router1,$next_router2);            
-            next if(!defined $p1);
-            my $src_num=get_scolar_pos($src,@ends);
-            my $dest_num = get_scolar_pos($dst,@ends);
-            $route{$p1} = (defined $route{$p1})? $route{$p1}.",{E$src_num,E$dest_num}" : "{E$src_num,E$dest_num}";
-            #print "@path\n";
-            #print "(current_router, next_router1, next_router2)=($router, $next_router1, $next_router2)\n";
-            #print "($p1,$p2)= get_connection_port_num_between_two_nodes(\$self,$next_router1,$next_router2)\n";    
-            #print "\$route{$p1} ={E$src_num,E$dest_num}\n";
-            #print"***************************\n"; 
-        }
-    }
-    foreach my $q (sort {$a <=> $b} keys %route){
-            $route_str=$route_str."            $route{$q}: begin 
-                destport= $q; 
-            end
-";        
-    }                
-    $route_str.="            default: begin 
-                destport= {DSTPw{1\'bX}};
-            end
-            endcase\n        end//$router_num\n";
-    }
-    $route_str.="        default: begin 
-            destport= {DSTPw{1\'bX}};
-        end
-        endcase\n    end\n";
-    
-    my $localparam="";
-    my $i=0;
-    foreach my $src (@ends){
-        $localparam= $localparam."localparam [EAw-1 : 0]    E$i=$i;\n";
-        $i++;
-    }    
-    print $fd "
-    
-`include \"pronoc_def.v\"
-/*******************
-*  ${Vname}_look_ahead_routing
-*******************/  
-module ${Vname}_look_ahead_routing  #(
-    parameter RAw = 3,  
-    parameter EAw = 3,   
-    parameter DSTPw=4  
-)(
-    reset,
-    clk,
-    current_r_addr,
-    dest_e_addr,
-    src_e_addr,
-    destport
-);
-    input   [RAw-1   :0] current_r_addr;
-    input   [EAw-1   :0] dest_e_addr;
-    input   [EAw-1   :0] src_e_addr;
-    output  [DSTPw-1 :0] destport;    
-    input reset,clk;
-    reg [EAw-1   :0] dest_e_addr_delay;
-    reg [EAw-1   :0] src_e_addr_delay;
-    
-    always @ (`pronoc_clk_reset_edge )begin 
-        if(`pronoc_reset)begin 
-            dest_e_addr_delay<={EAw{1'b0}};
-            src_e_addr_delay<={EAw{1'b0}};
-        end else begin 
-            dest_e_addr_delay<=dest_e_addr;
-            src_e_addr_delay<=src_e_addr;
-        end     
-    end
-    
-    ${Vname}_look_ahead_routing_comb  #(
-        .RAw(RAw),  
-        .EAw(EAw),   
-        .DSTPw(DSTPw)  
-    ) lkp_cmb  (
-        .current_r_addr(current_r_addr),
-        .dest_e_addr(dest_e_addr_delay),
-        .src_e_addr(src_e_addr_delay),
-        .destport(destport)        
-    );
-endmodule  
-
-/*******************
-*  ${Vname}_look_ahead_routing_comb
-*******************/ 
-module ${Vname}_look_ahead_routing_comb  #(
-    parameter RAw = 3,  
-    parameter EAw = 3,   
-    parameter DSTPw=4  
-)(
-    current_r_addr,
-    dest_e_addr,
-    src_e_addr,
-    destport
-);
-    input   [RAw-1   :0] current_r_addr;
-    input   [EAw-1   :0] dest_e_addr;
-    input   [EAw-1   :0] src_e_addr;
-    output reg [DSTPw-1 :0] destport;    
-
-$localparam
-
-$route_str  
-
-endmodule
-";
-
-close($fd);
-add_info($info,"$top file is created\n  ");
-
-#########################    
-#  conventional_routing_genvar
-#########################
-    #create routing file
-    $top="$dir/${Vname}_conventional_routing_genvar.v";
-    open $fd, ">$top" or $r = "$!\n";
-    if(defined $r) {
-        add_colored_info($info,"Error in creating $top: $r",'red');
-        return;
-    } 
-    print $fd autogen_warning();
-    print $fd get_license_header($top);   
-    $route_str="    generate
-";
-    foreach my $src (@ends){
-        my $PNUM=$self->object_get_attribute($src,"PNUM");
-        my $src_num=get_scolar_pos($src,@ends);
-        my %route;        
+        my %route;
         $route_str=$route_str."    if(SRC_E_ADDR == $src_num) begin : SRC$src_num
-        always@(*)begin    
+        always@(*)begin
             destport= 0; 
-            case(dest_e_addr)
-";
+            case(dest_e_addr)\n";
         
         foreach my $dst (@ends){
             my $dest_num = get_scolar_pos($dst,@ends);
@@ -802,8 +594,7 @@ add_info($info,"$top file is created\n  ");
         foreach my $q (sort {$a <=> $b} keys %route){
             $route_str=$route_str."            $route{$q}: begin 
                 destport= $q; 
-            end
-";
+            end\n";
         }
         $route_str=$route_str."            default: begin 
                 destport= {DSTPw{1\'bX}};
@@ -811,9 +602,9 @@ add_info($info,"$top file is created\n  ");
             endcase\n        end\n    end//SRC$src_num\n\n";
     }
     $route_str=$route_str."    endgenerate\n";
-    print $fd "module ${Vname}_conventional_routing_genvar  #(
-    parameter RAw = 3,  
-    parameter EAw = 3,   
+    print $fd "module ${Vname}_ni_routing_genvar  #(
+    parameter RAw = 3,
+    parameter EAw = 3,
     parameter DSTPw=4,
     parameter SRC_E_ADDR=0  
 ) (
@@ -821,41 +612,122 @@ add_info($info,"$top file is created\n  ");
     destport
 );
     input   [EAw-1   :0] dest_e_addr;
-    output reg [DSTPw-1 :0] destport;    
+    output reg [DSTPw-1 :0] destport;
     
 $route_str
     
 endmodule
 ";
-close($fd);
-add_info($info,"$top file is created\n  ");
+    close($fd);
+    add_info($info,"$top file is created\n  ");
+}
 
-##################
-#   look_ahead_routing_genvar
-###################
-#create routing file
-    $top="$dir/${Vname}_look_ahead_routing_genvar.v";
-    open  $fd, ">$top" or $r = "$!\n";
+################
+#   ni_route
+###############
+sub gen_ni_routing_file {
+    my ($self,$info,$dir,$Vname)=@_;
+    my @ends=get_list_of_all_endpoints($self);
+    my @routers=get_list_of_all_routers($self);
+    my $r; 
+    my $top="$dir/${Vname}_ni_routing.v";
+    open my $fd, ">$top" or $r = "$!\n";
     if(defined $r) {
         add_colored_info($info,"Error in creating $top: $r",'red');
         return;
     } 
     print $fd autogen_warning();
     print $fd get_license_header($top);   
-    $route_str="    always@(*)begin
+    my $route_str="    always@(*)begin
+        destport=0;
+        case(src_e_addr) //source address of each individual NI is fixed. So this CASE will be optimized by the synthesizer for each endpoint.\n";
+    foreach my $src (@ends){
+        my $PNUM=$self->object_get_attribute($src,"PNUM");
+        my $src_num=get_scolar_pos($src,@ends);
+        my %route;        
+        $route_str=$route_str."        $src_num: begin
+            case(dest_e_addr)\n";
+        foreach my $dst (@ends){
+            my $dest_num = get_scolar_pos($dst,@ends);
+            my $ref = $self->object_get_attribute('Route',"${src}::$dst");
+            next if(!defined $ref);
+            my @path = @{$ref};
+            my ($p1,$p2)= get_connection_port_num_between_two_nodes($self,$path[1],$path[2] );
+            #print " ($p1,$p2)= get_connection_port_num_between_two_nodes($self,$path[1],$path[2] );\n";
+            $route{$p1} = (defined $route{$p1})? $route{$p1}.",$dest_num" : "$dest_num";
+        }
+        foreach my $q (sort {$a <=> $b} keys %route){
+            $route_str=$route_str."            $route{$q}: begin 
+                destport= $q; 
+            end\n";
+        }
+        $route_str=$route_str."
+            default: begin 
+                destport= {DSTPw{1\'bX}};
+            end
+            endcase\n        end//$src_num\n";
+    }
+    $route_str=$route_str."
+        default: begin 
+            destport= {DSTPw{1\'bX}};
+        end
+        endcase\n    end\n";
+    print $fd "module ${Vname}_ni_routing  #(
+    parameter RAw = 3,
+    parameter EAw = 3,
+    parameter DSTPw=4
+)
+(
+    dest_e_addr,
+    src_e_addr,
+    destport
+);
+    input   [EAw-1   :0] dest_e_addr;
+    input   [EAw-1   :0] src_e_addr;
+    output reg [DSTPw-1 :0] destport;
+    
+$route_str
+    
+endmodule
+";
+    close($fd);
+    add_info($info,"$top file is created\n  ");
+}
+####################
+#   gen_lkhead_genvar_routing_file
+####################
+sub gen_lkhead_genvar_routing_file {
+    my ( $self,$info,$dir,$Vname,$mode)=@_; 
+    #conventional or look_ahead
+    my $top="$dir/${Vname}_${mode}_routing_genvar.v";
+    my $r;
+    my @ends=get_list_of_all_endpoints($self);
+    my @routers=get_list_of_all_routers($self);
+    my $localparam="";
+    my $i=0;
+    foreach my $src (@ends){
+        $localparam= $localparam."localparam [EAw-1 : 0]    E$i=$i;\n";
+        $i++;
+    }    
+    open  my $fd, ">$top" or $r = "$!\n";
+    if(defined $r) {
+        add_colored_info($info,"Error in creating $top: $r",'red');
+        return;
+    } 
+    print $fd autogen_warning();
+    print $fd get_license_header($top);
+    my $route_str="    always@(*)begin
         destport=0;
         case(current_r_addr) //current_r_addr of each individual router is fixed. So this CASE will be optimized by the synthesizer for each router. 
 ";
-
     $route_str="    generate\n";
-
     foreach my $router (@routers){
         my $PNUM=$self->object_get_attribute($router,"PNUM");
         my $router_num=get_scolar_pos($router,@routers);
-        my %route;        
+        my %route;
         $route_str=$route_str."    if(CURRENT_R_ADDR == $router_num) begin :R$router_num
-        always@(*)begin    
-            destport= 0; 
+        always@(*)begin
+            destport= 0;
             case({src_e_addr,dest_e_addr})
 ";
     # for each src-dest check if $router include in path 
@@ -866,17 +738,17 @@ add_info($info,"$top file is created\n  ");
             my @path = @{$ref};
             my $loc= get_scolar_pos($router,@path);
             next if(!defined $loc);# this router does not exist in path skip it
-            my $next_router1=$path[$loc+1];
-            my $next_router2=$path[$loc+2];
+            my $next_router1=($mode eq 'look_ahead')? $path[$loc+1] : $path[$loc];
+            my $next_router2=($mode eq 'look_ahead')? $path[$loc+2] : $path[$loc+1];
             next if(!defined $next_router2);
-            my ($p1,$p2)= get_connection_port_num_between_two_nodes($self,$next_router1,$next_router2);            
+            my ($p1,$p2)= get_connection_port_num_between_two_nodes($self,$next_router1,$next_router2);
             next if(!defined $p1);
             my $src_num=get_scolar_pos($src,@ends);
             my $dest_num = get_scolar_pos($dst,@ends);
             $route{$p1} = (defined $route{$p1})? $route{$p1}.",{E$src_num,E$dest_num}" : "{E$src_num,E$dest_num}";
             #print "@path\n";
             #print "(current_router, next_router1, next_router2)=($router, $next_router1, $next_router2)\n";
-            #print "($p1,$p2)= get_connection_port_num_between_two_nodes(\$self,$next_router1,$next_router2)\n";    
+            #print "($p1,$p2)= get_connection_port_num_between_two_nodes(\$self,$next_router1,$next_router2)\n";
             #print "\$route{$p1} ={E$src_num,E$dest_num}\n";
             #print"***************************\n"; 
         }
@@ -893,9 +765,9 @@ add_info($info,"$top file is created\n  ");
     print $fd "
 `include \"pronoc_def.v\"
 /*****************************
-*    ${Vname}_look_ahead_routing_genvar
+*    ${Vname}_${mode}_routing_genvar
 ******************************/ 
-module ${Vname}_look_ahead_routing_genvar  #(
+module ${Vname}_${mode}_routing_genvar  #(
     parameter RAw = 3,  
     parameter EAw = 3,   
     parameter DSTPw=4,
@@ -925,24 +797,24 @@ module ${Vname}_look_ahead_routing_genvar  #(
             src_e_addr_delay<=src_e_addr;
         end
     end
-    ${Vname}_look_ahead_routing_genvar_comb  #(
-        .RAw(RAw),  
-        .EAw(EAw),   
+    ${Vname}_${mode}_routing_genvar_comb  #(
+        .RAw(RAw),
+        .EAw(EAw),
         .DSTPw(DSTPw),
-        .CURRENT_R_ADDR(CURRENT_R_ADDR)  
+        .CURRENT_R_ADDR(CURRENT_R_ADDR)
     ) lkp_cmb (
         .dest_e_addr(dest_e_addr_delay),
         .src_e_addr(src_e_addr_delay),
-        .destport(destport)        
+        .destport(destport)
     );
 endmodule
 
 /*******************
-* ${Vname}_look_ahead_routing_genvar_comb
+* ${Vname}_${mode}_routing_genvar_comb
 ********************/ 
-module ${Vname}_look_ahead_routing_genvar_comb  #(
-    parameter RAw = 3,  
-    parameter EAw = 3,   
+module ${Vname}_${mode}_routing_genvar_comb  #(
+    parameter RAw = 3,
+    parameter EAw = 3,
     parameter DSTPw=4,
     parameter CURRENT_R_ADDR=0
 ) (
@@ -955,16 +827,170 @@ module ${Vname}_look_ahead_routing_genvar_comb  #(
     output  reg [DSTPw-1 :0] destport;
 $localparam
 
-$route_str  
+$route_str
 
-endmodule  
+endmodule
 ";
     close($fd);
     add_info($info,"$top file is created\n  ");
+
 }
 
+###########
+#   gen_lkhead_conv_routing_file
+##########
+sub gen_lkhead_conv_routing_file {
+    my ( $self,$info,$dir,$Vname,$mode)=@_; 
+    #conventional or look_ahead
+    my $r;
+    my @ends=get_list_of_all_endpoints($self);
+    my @routers=get_list_of_all_routers($self);
 
+    my $top="$dir/${Vname}_${mode}_routing.v";
+    open my $fd, ">$top" or $r = "$!\n";
+    if(defined $r) {
+        add_colored_info($info,"Error in creating $top: $r",'red');
+        return;
+    } 
+    print $fd autogen_warning();
+    print $fd get_license_header($top);
+    my $route_str="    always@(*)begin
+        destport=0;
+        case(current_r_addr) //current_r_addr of each individual router is fixed. So this CASE will be optimized by the synthesizer for each router. 
+";
 
+foreach my $router (@routers){
+    my $PNUM=$self->object_get_attribute($router,"PNUM");
+    my $router_num=get_scolar_pos($router,@routers);
+    my %route;        
+    $route_str=$route_str."        $router_num: begin
+            case({src_e_addr,dest_e_addr})
+";
+    # for each src-dest check if $router include in path 
+    foreach my $src (@ends){
+        foreach my $dst (@ends){
+            my $ref = $self->object_get_attribute('Route',"${src}::$dst");
+            next if(!defined $ref);
+            my @path = @{$ref};
+            my $loc= get_scolar_pos($router,@path);
+            next if(!defined $loc);# this router does not exist in path skip it
+            my $next_router1=($mode eq 'look_ahead')? $path[$loc+1] : $path[$loc];
+            my $next_router2=($mode eq 'look_ahead')? $path[$loc+2] : $path[$loc+1];
+            next if(!defined $next_router2);
+            my ($p1,$p2)= get_connection_port_num_between_two_nodes($self,$next_router1,$next_router2);
+            next if(!defined $p1);
+            my $src_num=get_scolar_pos($src,@ends);
+            my $dest_num = get_scolar_pos($dst,@ends);
+            $route{$p1} = (defined $route{$p1})? $route{$p1}.",{E$src_num,E$dest_num}" : "{E$src_num,E$dest_num}";
+            #print "@path\n";
+            #print "(current_router, next_router1, next_router2)=($router, $next_router1, $next_router2)\n";
+            #print "($p1,$p2)= get_connection_port_num_between_two_nodes(\$self,$next_router1,$next_router2)\n";
+            #print "\$route{$p1} ={E$src_num,E$dest_num}\n";
+            #print"***************************\n"; 
+        }
+    }
+    foreach my $q (sort {$a <=> $b} keys %route){
+            $route_str=$route_str."            $route{$q}: begin 
+                destport= $q; 
+            end
+";
+    }
+    $route_str.="            default: begin 
+                destport= {DSTPw{1\'bX}};
+            end
+            endcase\n        end//$router_num\n";
+    }
+    $route_str.="        default: begin 
+            destport= {DSTPw{1\'bX}};
+        end
+        endcase\n    end\n";
+    
+    my $localparam="";
+    my $i=0;
+    foreach my $src (@ends){
+        $localparam= $localparam."localparam [EAw-1 : 0]    E$i=$i;\n";
+        $i++;
+    }    
+    print $fd "
+    
+`include \"pronoc_def.v\"
+/*******************
+*  ${Vname}_${mode}_routing
+*******************/
+module ${Vname}_${mode}_routing  #(
+    parameter RAw = 3,
+    parameter EAw = 3,
+    parameter DSTPw=4
+)(
+    reset,
+    clk,
+    current_r_addr,
+    dest_e_addr,
+    src_e_addr,
+    destport
+);
+    input   [RAw-1   :0] current_r_addr;
+    input   [EAw-1   :0] dest_e_addr;
+    input   [EAw-1   :0] src_e_addr;
+    output  [DSTPw-1 :0] destport;
+    input reset,clk;
+    reg [EAw-1   :0] dest_e_addr_delay;
+    reg [EAw-1   :0] src_e_addr_delay;
+    
+    always @ (`pronoc_clk_reset_edge )begin 
+        if(`pronoc_reset)begin
+            dest_e_addr_delay<={EAw{1'b0}};
+            src_e_addr_delay<={EAw{1'b0}};
+        end else begin 
+            dest_e_addr_delay<=dest_e_addr;
+            src_e_addr_delay<=src_e_addr;
+        end
+    end
+    
+    ${Vname}_${mode}_routing_comb  #(
+        .RAw(RAw),
+        .EAw(EAw),
+        .DSTPw(DSTPw)
+    ) lkp_cmb  (
+        .current_r_addr(current_r_addr),
+        .dest_e_addr(dest_e_addr_delay),
+        .src_e_addr(src_e_addr_delay),
+        .destport(destport)
+    );
+endmodule
+
+/*******************
+*  ${Vname}_${mode}_routing_comb
+*******************/
+module ${Vname}_${mode}_routing_comb  #(
+    parameter RAw = 3,
+    parameter EAw = 3,
+    parameter DSTPw=4
+)(
+    current_r_addr,
+    dest_e_addr,
+    src_e_addr,
+    destport
+);
+    input   [RAw-1   :0] current_r_addr;
+    input   [EAw-1   :0] dest_e_addr;
+    input   [EAw-1   :0] src_e_addr;
+    output reg [DSTPw-1 :0] destport;
+
+$localparam
+
+$route_str
+
+endmodule
+";
+
+close($fd);
+add_info($info,"$top file is created\n  ");
+}
+
+##############
+#generate_connection_v
+##############
 sub generate_connection_v{
     my($self,$info,$dir)=@_;
     #create connection top file
@@ -988,7 +1014,7 @@ sub generate_connection_v{
     my $MAX_P=0;
     foreach my $p (@routers){
         my $Pnum=$self->object_get_attribute("$p",'PNUM');
-        $MAX_P =$Pnum  if($Pnum>$MAX_P );        
+        $MAX_P =$Pnum  if($Pnum>$MAX_P );
     }    
     my $NE= scalar @ends;
     my $NR= scalar @routers;
@@ -1043,7 +1069,7 @@ sub generate_connection_v{
     }
     my $routers='
     genvar i;
-    generate    
+    generate
     ';
     my $offset=0;
     my $assign="";
@@ -1126,6 +1152,9 @@ endmodule
     close $fd;
 }
 
+##############
+#
+##############
 sub add_noc_custom_h{
     my ($self,$info,$dir)=@_;
     my $name=$self->object_get_attribute('save_as');
@@ -1163,11 +1192,11 @@ sub add_routing_instance_v{
     my $str="
     //do not modify this line ===${Vname}===
     if(TOPOLOGY == \"$name\" && ROUTE_NAME== \"$rname\" ) begin : $Vname
-        ${Vname}_conventional_routing  #(
+        ${Vname}_ni_routing  #(
             .RAw(RAw),  
             .EAw(EAw),   
             .DSTPw(DSTPw)  
-        )  the_conventional_routing  (
+        )  the_ni_routing  (
             .dest_e_addr(dest_e_addr),
             .src_e_addr(src_e_addr),
             .destport(destport)
@@ -1184,13 +1213,13 @@ sub add_routing_instance_v{
     }    
     my $r = check_file_has_string($file, "===${Vname}==="); 
     if ($r==1){
-        add_info($info,"The instance  ${Vname}_conventional_routing exists in $file. This file is not modified\n  ",'blue');
+        add_info($info,"The instance  ${Vname}_ni_routing exists in $file. This file is not modified\n  ",'blue');
     
     }else{
         my $text = read_file_cntent($file,' ');
         my @a = split('endgenerate',$text);
         save_file($file,"$a[0] $str $a[1]");
-        add_info($info,"$file has been modified. The  ${Vname}_conventional_routing has been added to the file\n  ",'blue');
+        add_info($info,"$file has been modified. The  ${Vname}_ni_routing has been added to the file\n  ",'blue');
     }
     #####################################
     #            custom_lkh_routing
@@ -1227,6 +1256,40 @@ sub add_routing_instance_v{
         my @a = split('endgenerate',$text);
         save_file($file,"$a[0] $str $a[1]");    
         add_info($info,"$file has been modified. The  ${Vname}_look_ahead_routing has been added to the file\n  ",'blue');
+    }
+    #####################################
+    #            custom_conv_routing
+    ####################################
+    $str="
+    //do not modify this line ===${Vname}===
+    if(TOPOLOGY == \"$name\" && ROUTE_NAME== \"$rname\" ) begin : ${Vname}
+        ${Vname}_conv_routing_comb  #(
+            .RAw(RAw),
+            .EAw(EAw),
+            .DSTPw(DSTPw)
+        ) the_routing (
+            .current_r_addr(current_r_addr),
+            .dest_e_addr(dest_e_addr),
+            .src_e_addr(src_e_addr),
+            .destport(destport)
+        );
+    end
+    endgenerate
+";
+    $file = "$dir/../common/custom_conv_routing.v";
+    unless (-f $file){
+        add_colored_info($info,"$file dose not exist\n",'red');
+        return; 
+    }    
+    $r = check_file_has_string($file, "===${Vname}==="); 
+    if ($r==1){
+        add_info($info,"The instance ${Vname}_conv_routing exist in $file. This file is not modified\n  ",'blue');
+    
+    }else{
+        my $text = read_file_cntent($file,' ');
+        my @a = split('endgenerate',$text);
+        save_file($file,"$a[0] $str $a[1]");
+        add_info($info,"$file has been modified. The  ${Vname}_conv_routing has been added to the file\n  ",'blue');
     }
 }
 

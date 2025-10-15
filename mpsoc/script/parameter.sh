@@ -24,8 +24,8 @@ CORE_NUM(){
     FIRST_ARBITER_EXT_P_EN=0  
     
     ROUTE_NAME="XY" # Routing algorithm
-    #    mesh :  "XY"        , "WEST_FIRST"      , "NORTH_LAST"      , "NEGETIVE_FIRST"      , "DUATO"
-    #   torus:  "TRANC_XY"  , "TRANC_WEST_FIRST", "TRANC_NORTH_LAST", "TRANC_NEGETIVE_FIRST", "TRANC_DUATO"
+    #    mesh :  "XY"        , "WEST_FIRST"      , "NORTH_LAST"      , "NEGETIVE_FIRST"      , "FULL_ADPT"
+    #   torus:  "TRANC_XY"  , "TRANC_WEST_FIRST", "TRANC_NORTH_LAST", "TRANC_NEGETIVE_FIRST", "TRANC_FULL_ADPT"
     
     
     CLASS_SETTING="{CVw{1'b1}}"   
@@ -113,7 +113,7 @@ generate_parameter_v (){
     printf " parameter MAX_PCK_SIZ=$MAX_PCK_SIZ;\n" >> parameter.v    
     printf " parameter TIMSTMP_FIFO_NUM=$TIMSTMP_FIFO_NUM;\n" >> parameter.v    
     printf " parameter ROUTE_TYPE = (ROUTE_NAME == \"XY\" || ROUTE_NAME == \"TRANC_XY\" )?    \"DETERMINISTIC\" : \n" >> parameter.v    
-    printf "                        (ROUTE_NAME == \"DUATO\" || ROUTE_NAME == \"TRANC_DUATO\" )?   \"FULL_ADAPTIVE\": \"PAR_ADAPTIVE\"; \n" >> parameter.v              
+    printf "                        (ROUTE_NAME == \"FULL_ADPT\" || ROUTE_NAME == \"TRANC_FULL_ADPT\" )?   \"FULL_ADAPTIVE\": \"PAR_ADAPTIVE\"; \n" >> parameter.v              
     printf " parameter DEBUG_EN=$DEBUG_EN;\n" >> parameter.v     
     printf " parameter ROUTE_SUBFUNC= \"$ROUTE_SUBFUNC\";\n">> parameter.v     
     printf " parameter AVC_ATOMIC_EN= $AVC_ATOMIC_EN;\n">> parameter.v    

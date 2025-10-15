@@ -599,22 +599,15 @@ endmodule
 
 /*******************
 *    regular_topo_adaptive_lk_dest_encoder
-********************/    
-module  regular_topo_adaptive_lk_dest_encoder #(
-    parameter V=4,
-    parameter P=5,
-    parameter DSTPw=P-1,
-    parameter Fw=37,
-    parameter DST_P_MSB=11, 
-    parameter DST_P_LSB=8
-)(
+********************/
+module  regular_topo_adaptive_lk_dest_encoder (
     sel,
     flit_in,
     dest_coded_out,
     vc_num_delayed,
     lk_dest
 );
-    
+    import pronoc_pkg::*;
     input [V-1 : 0]  sel;
     output [DSTPw-1 : 0]dest_coded_out;
     input [V-1 : 0]  vc_num_delayed;
@@ -624,12 +617,16 @@ module  regular_topo_adaptive_lk_dest_encoder #(
     wire [1 : 0]  ab,xy;
     wire sel_muxed;
     assign sel_muxed = |(sel & vc_num_delayed);
-    
+    localparam 
+        //To avoid warning for Tree topology
+        MSB1 = (DSTPw >= 4)? 3 : 1,
+        LSB1 = (DSTPw >= 4)? 2 : 0,
+        BIT_CHANGE = (DSTPw >= 4)? 2 : 0;
     //lkdestport = {lkdestport_x[1:0],lkdestport_y[1:0]};
     // sel: 0: xdir     1: ydir
-    assign ab = (sel_muxed)? lk_dest[1:0] : lk_dest[3:2];
+    assign ab = (sel_muxed)? lk_dest[1:0] : lk_dest[MSB1:LSB1];
     //if ab==00 change x and y direction
-    assign xy = (ab>0)? flit_in[DST_P_MSB : DST_P_LSB+2] : ~flit_in[DST_P_MSB : DST_P_LSB+2] ;
+    assign xy = (ab>0)? flit_in[DST_P_MSB : DST_P_LSB+BIT_CHANGE] : ~flit_in[DST_P_MSB : DST_P_LSB+BIT_CHANGE] ;
     assign dest_coded_out={xy,ab};
 endmodule
 

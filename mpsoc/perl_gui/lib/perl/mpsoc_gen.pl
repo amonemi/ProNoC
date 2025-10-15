@@ -732,8 +732,8 @@ if($topology ne '"CUSTOM"' ){
     $param="ROUTE_NAME";
     $type="Combo-box";
     if($router_type eq '"VC_BASED"'){
-        $content=($topology eq '"MESH"' || $topology eq '"FMESH"')?  '"XY","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","ODD_EVEN","DUATO"' :
-                 ($topology eq '"TORUS"')? '"TRANC_XY","TRANC_WEST_FIRST","TRANC_NORTH_LAST","TRANC_NEGETIVE_FIRST","TRANC_DUATO"':
+        $content=($topology eq '"MESH"' || $topology eq '"FMESH"')?  '"XY","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","ODD_EVEN","FULL_ADPT"' :
+                 ($topology eq '"TORUS"')? '"TRANC_XY","TRANC_WEST_FIRST","TRANC_NORTH_LAST","TRANC_NEGETIVE_FIRST","TRANC_FULL_ADPT"':
                  ($topology eq '"RING"')? '"TRANC_XY"' :
                  ($topology eq '"LINE"')?  '"XY"':
                  ($topology eq '"FATTREE"')? '"NCA_RND_UP","NCA_STRAIGHT_UP","NCA_DST_UP"':
@@ -751,7 +751,10 @@ if($topology ne '"CUSTOM"' ){
              ($topology eq '"FATTREE"')? '"NCA_STRAIGHT_UP"' :
              ($topology eq '"TREE"')? '"NCA"' : '"UNKNOWN"';
 
-    my $info_mesh="Select the routing algorithm: XY(DoR) , partially adaptive (Turn models). Fully adaptive (Duato) "; 
+    my $info_mesh="Select the routing algorithm. Options are: 
+    - XY: Deterministic routing (Dimension-Order Routing, DoR).
+    - WEST_FIRST, NORTH_LAST, NEGATIVE_FIRST, ODD_EVEN:  Partially adaptive routing algorithms based on turn model restrictions.
+    - FULL_ADPT:  Fully adaptive routing based on Duato's algorithm; requires at least two virtual channels (VCs) per port.";
     my $info_fat="Nearest common ancestor (NCA) where the up port is selected randomly (RND), 
     based on destination endpoint address (DST) or it is the top port that is located in front 
     of the port which has received the packet (STRAIGHT) "; 
@@ -762,6 +765,21 @@ if($topology ne '"CUSTOM"' ){
     options are $content";
     my $show_routing =($topology eq '"STAR"' )? 0 : $show_noc;
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_routing,$noc_param,1);
+    #routing_mode
+    $label='Routing Mode';
+    $param="ROUTE_MODE";
+    $type="Combo-box";
+    $content='"LOOKAHEAD","CONVENTIONAL"';
+    $default='"LOOKAHEAD"';
+    $info = "Select the routing algorithm mode:
+    -CONVENTIONAL: 
+        The destination output port is computed 
+        in the same cycle, prior to VC/SW allocation.
+    -LOOKAHEAD: 
+        The routing decision is performed one router
+        ahead, in parallel with VC/SW allocation.";
+    $noc_param_comment{$param}="$info";
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,1,$noc_param,1);
 }
 
     #PCK_TYPE
@@ -924,7 +942,7 @@ if($topology ne '"CUSTOM"' ){
     $default=  "${default}1";
     $info="Select the escap VC for fully adaptive routing.";
     $noc_param_comment{$param}="$info";
-    if( $route eq '"TRANC_DUATO"' or $route eq '"DUATO"'  ){
+    if( $route eq '"TRANC_FULL_ADPT"' or $route eq '"FULL_ADPT"'  ){
         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set, $noc_param,undef);
     }
     else{

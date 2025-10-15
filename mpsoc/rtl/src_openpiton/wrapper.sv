@@ -356,18 +356,22 @@ module piton_to_pronoc_wrapper  #(
         .piton_end_addr_coded_o(dest_coded)
         
     );
-    
-    conventional_routing #(
-        .LOCATED_IN_NI(1)
-    ) routing_module (
-        .reset(reset),
-        .clk(clk),
-        .current_r_addr(current_r_addr_i),
-        .dest_e_addr(dest_e_addr),
-        .src_e_addr(src_e_addr),
-        .destport(destport)
-    );
-    
+    generate 
+    if((CAST_TYPE == "UNICAST") && (IS_LOOKAHEAD==1'b1)) begin : conv
+    //The router is configured with lookaheadrouting. 
+    //The header flit is supposed to carry the destinaion output port 
+        conventional_routing #(
+            .LOCATED_IN_NI(1)
+        ) routing_module (
+            .reset(reset),
+            .clk(clk),
+            .current_r_addr(current_r_addr_i),
+            .dest_e_addr(dest_e_addr),
+            .src_e_addr(src_e_addr),
+            .destport(destport)
+        );
+    end
+    endgenerate
     //endp_addr_decoder  decod1 ( .id_out(TILE_NUM), .code_in(current_e_addr));
     localparam DATA_w = HEAD_DATw + Fpay - 64; 
     wire [DATA_w-1 : 0] head_data;

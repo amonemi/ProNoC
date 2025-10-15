@@ -24,7 +24,7 @@
 int main(int argc, char** argv) {
     char change_injection_ratio=0;
     int i,j,x,y;//,report_delay_counter=0;
-    char deafult_out[] = {"result"};
+    char default_out[] = {"result"};
     NEw=Log2(NE);
     for(i=0;i<NE;i++)   custom_traffic_table[i]=INJECT_OFF; //off
     Verilated::commandArgs(argc, argv);   // Remember args

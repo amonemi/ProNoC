@@ -247,18 +247,11 @@ module header_flit_update_lk_route_ovc #(
     end else begin : no_predict
         assign lk_dest =lk_mux_out;
     end 
-    endgenerate    
+    endgenerate
     
     generate 
     if(IS_REGULAR_TOPO & (~IS_DETERMINISTIC))begin :coded
-        regular_topo_adaptive_lk_dest_encoder #(
-            .V(V),
-            .P(P),
-            .DSTPw(DSTPw),
-            .Fw(Fw),
-            .DST_P_MSB(DST_P_MSB),
-            .DST_P_LSB(DST_P_LSB)
-        ) dest_encoder  (
+        regular_topo_adaptive_lk_dest_encoder  dest_encoder  (
             .sel(sel),
             .dest_coded_out(dest_coded),
             .vc_num_delayed(vc_num_delayed),
@@ -284,7 +277,7 @@ module header_flit_update_lk_route_ovc #(
     
     always_comb begin 
         flit_out = {flit_in[Fw-1 : Fw-2],ovc_num,flit_in[FPAYw-1 :0]};
-        if(hdr_flag) flit_out[DST_P_MSB : DST_P_LSB]= dest_coded;
+        if(hdr_flag & IS_LOOKAHEAD) flit_out[DST_P_MSB : DST_P_LSB]= dest_coded;
     end
     endgenerate
 endmodule

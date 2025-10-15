@@ -67,7 +67,9 @@ module packet_injector  (
     assign current_r_addr = chan_in.ctrl_chanel.router_addr;
     
     generate 
-    if(CAST_TYPE == "UNICAST") begin : uni
+    if((CAST_TYPE == "UNICAST") && (IS_LOOKAHEAD==1'b1)) begin : uni
+    //The router is configured with lookaheadrouting. 
+    //The header flit is supposed to carry the destinaion output port
         conventional_routing #(
             .LOCATED_IN_NI(1)
         ) routing_module (

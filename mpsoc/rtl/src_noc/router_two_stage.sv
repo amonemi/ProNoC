@@ -167,7 +167,7 @@ module router_two_stage #(
             return LOCAL;
         end else return 0; //TODO complete it for fattree and bin tree
     endfunction
-
+    
     always_comb begin 
         current_r_addr = router_config_in.router_addr;
         current_r_id = 0;
@@ -198,9 +198,7 @@ module router_two_stage #(
             end
         end
     end 
-
-
-
+    
     genvar i,j;
     generate
         for (i=0; i<NE_PER_R; i=i+1 ) begin :Endp_
@@ -215,18 +213,21 @@ module router_two_stage #(
                 end
             end
             
-            if(IS_UNICAST) begin : uni 
-                assign chan_in_tmp[i] = chan_in[i];
-            end else begin : multi
-                multicast_chan_in_process #(
+            if(IS_UNICAST & IS_LOOKAHEAD) begin : lk_route
+                // we are using lookahead routing. So, the destination port is already computed 
+                // in the previous router and is available in the lookahead routing field of the flit.
+                assign chan_in_tmp[i] = chan_in[i];                
+            end else begin : conv_route
+                local_route_computation #(
                     .P(P),
                     .SW_LOC(i)
-                ) multicast_process (
+                ) conv_route (
                     .endp_port(ctrl_in[i].endp_port),
                     .current_r_addr(current_r_addr),
                     .chan_in(chan_in[i]),
                     .chan_out(chan_in_tmp[i]),
-                    .clk(clk)
+                    .clk(clk),
+                    .reset(reset)
                 );
             end
             if(SELF_LOOP_EN == 0) begin :nslp

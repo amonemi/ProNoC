@@ -542,7 +542,7 @@ module regular_topo_conventional_routing #(
             );
         end //ODD_EVEN
         /* verilator lint_off WIDTH */ 
-        else if(ROUTE_NAME == "DUATO") begin : duato_routing_blk
+        else if(ROUTE_NAME == "FULL_ADPT") begin : duato_routing_blk
         /* verilator lint_on WIDTH */ 
             duato_mesh_routing #(
                 .NX (NX),
@@ -554,7 +554,7 @@ module regular_topo_conventional_routing #(
                 .dest_y (dest_y),
                 .destport (destport)
             );
-        end //DUATO
+        end //FULL_ADPT
     `ifdef SIMULATION
         else begin : not_supported initial $display ("Error: %s is an unsupported routing algorithm for %s topology \n",ROUTE_NAME,TOPOLOGY); end
     `endif
@@ -616,7 +616,7 @@ module regular_topo_conventional_routing #(
             );
         end // TRANC_NEGETIVE_FIRST
         /* verilator lint_off WIDTH */ 
-        else if(ROUTE_NAME == "TRANC_DUATO") begin : tranc_duato_routing_blk
+        else if(ROUTE_NAME == "TRANC_FULL_ADPT") begin : tranc_duato_routing_blk
         /* verilator lint_on WIDTH */ 
             tranc_duato_routing #(
                 .NX (NX),
@@ -628,7 +628,7 @@ module regular_topo_conventional_routing #(
                 .dest_y (dest_y),
                 .destport (destport)
             );
-        end //TRANC_DUATO
+        end //TRANC_FULL_ADPT
         `ifdef SIMULATION
         else begin : not_supported2 initial $display("Error: %s is an unsupported routing algorithm for %s topology",ROUTE_NAME,TOPOLOGY); end
         `endif

@@ -2101,9 +2101,9 @@
   Module          : 
   FileName        : ./../../rtl/src_noc/./topology_localparam.v
   LineNumber      : 145
-  Statement       :             (ROUTE_NAME == "DUATO" || ROUTE_NAME == "TRANC_DUATO" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE",
+  Statement       :             (ROUTE_NAME == "FULL_ADPT" || ROUTE_NAME == "TRANC_FULL_ADPT" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE",
   RTL_EXPRESSION  : (Operators == and || used)
-  Node_Value      : (Expr: ((ROUTE_NAME == "DUATO") || (ROUTE_NAME == "TRANC_DUATO")))
+  Node_Value      : (Expr: ((ROUTE_NAME == "FULL_ADPT") || (ROUTE_NAME == "TRANC_FULL_ADPT")))
   -----------------------------------------------------------------------------
   Tag             : ExprParen
   Description     : Use parenthesis in complex expression [RTL_EXPRESSION] [Node_Value]

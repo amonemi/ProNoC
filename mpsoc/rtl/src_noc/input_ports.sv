@@ -209,7 +209,6 @@ module input_queue_per_port #(
     credit_init_val_out,
     ctrl_in
 );
-    
     import pronoc_pkg::*;
     
     localparam 
@@ -254,7 +253,6 @@ module input_queue_per_port #(
         PLw = (IS_FMESH) ? Pw : ELw,
         VPLw= V * PLw,
         PRAw= P * RAw;
-
     
     input reset, clk;
     input   router_info_t router_info;
@@ -289,7 +287,7 @@ module input_queue_per_port #(
     input   ssa_ctrl_t  ssa_ctrl_in;
     output  [CRDTw-1 : 0 ] credit_init_val_out [V-1 : 0];
     input   ctrl_chanel_t ctrl_in  [P-1 : 0];
-
+    
     wire   [RAw-1 : 0] current_r_addr = router_info.router_addr;
     wire   [PRAw-1: 0] neighbors_r_addr = router_info.neighbors_r_addr[PRAw-1: 0];
     
@@ -313,7 +311,7 @@ module input_queue_per_port #(
     logic [V-1 : 0] assigned_ovc_num [V-1:0];
     logic [V-1 : 0] assigned_ovc_one_hot [V-1 : 0];
     logic [Vw-1 : 0] assigned_onc_bin [V-1 : 0];
-
+    
     wire [DSTPw-1 : 0] lk_destination_in_encoded;
     wire [WEIGHTw-1  : 0] weight_in;   
     wire [Fw-1 : 0] buffer_out;
@@ -414,8 +412,8 @@ module input_queue_per_port #(
             .ep(endp_p_in),
             .valid()
         );
-    
     end
+    
     /* verilator lint_off WIDTH */  
     if(IS_FATTREE & (ROUTE_NAME == "NCA_STRAIGHT_UP")) begin : fat
     /* verilator lint_on WIDTH */  
@@ -668,7 +666,6 @@ module input_queue_per_port #(
                 .destport_in(dest_port_multi[i]),
                 .destport_out(dest_port_encoded[i])
             );
-
             //check if we have multiple port to send a packet to 
             is_onehot0 #(
                 .IN_WIDTH(DSTPw)
@@ -680,25 +677,27 @@ module input_queue_per_port #(
             
         end else begin : unicast
             assign multiple_dest[i] = 1'b0;
-            
+            if(IS_LOOKAHEAD) begin 
             //lk_dst_fifo
-            fwft_fifo #(
-                .DATA_WIDTH(DSTPw),
-                .MAX_DEPTH (MAX_PCK),
-                .IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
-            ) lk_dest_fifo (
-                .din (lk_destination_in_encoded),
-                .wr_en (wr_hdr_fwft_fifo_delay [i]),   // Write enable
-                .rd_en (rd_hdr_fwft_fifo_delay [i]),   // Read the next word
-                .dout (lk_destination_encoded  [i]),    // Data out
-                .full (),
-                .nearly_full (),
-                .recieve_more_than_0 (),
-                .recieve_more_than_1 (),
-                .reset (reset),
-                .clk (clk)
-            );
-            
+                fwft_fifo #(
+                    .DATA_WIDTH(DSTPw),
+                    .MAX_DEPTH (MAX_PCK),
+                    .IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
+                ) lk_dest_fifo (
+                    .din (lk_destination_in_encoded),
+                    .wr_en (wr_hdr_fwft_fifo_delay [i]),   // Write enable
+                    .rd_en (rd_hdr_fwft_fifo_delay [i]),   // Read the next word
+                    .dout (lk_destination_encoded  [i]),    // Data out
+                    .full (),
+                    .nearly_full (),
+                    .recieve_more_than_0 (),
+                    .recieve_more_than_1 (),
+                    .reset (reset),
+                    .clk (clk)
+                );
+            end else begin 
+                assign lk_destination_encoded  [i] = {DSTPw{1'b0}};
+            end// IS_LOOKAHEAD
             if( IS_DETERMINISTIC ) begin : dtrmn_dest
                 //destport_fifo
                 fwft_fifo #(
@@ -862,7 +861,7 @@ module input_queue_per_port #(
         end
     end
     
-    if( IS_UNICAST ) begin : unicast
+    if( IS_UNICAST & IS_LOOKAHEAD) begin : unicast
         look_ahead_routing #(
             .P(P)
         ) lk_routing (

@@ -30,11 +30,11 @@
 `include "pronoc_def.v"
 /*******************
 *  Tcustom1Rcustom_look_ahead_routing
-*******************/  
+*******************/
 module Tcustom1Rcustom_look_ahead_routing  #(
-    parameter RAw = 3,  
-    parameter EAw = 3,   
-    parameter DSTPw=4  
+    parameter RAw = 3,
+    parameter EAw = 3,
+    parameter DSTPw=4
 )(
     reset,
     clk,
@@ -46,40 +46,40 @@ module Tcustom1Rcustom_look_ahead_routing  #(
     input   [RAw-1   :0] current_r_addr;
     input   [EAw-1   :0] dest_e_addr;
     input   [EAw-1   :0] src_e_addr;
-    output  [DSTPw-1 :0] destport;    
+    output  [DSTPw-1 :0] destport;
     input reset,clk;
     reg [EAw-1   :0] dest_e_addr_delay;
     reg [EAw-1   :0] src_e_addr_delay;
     
     always @ (`pronoc_clk_reset_edge )begin 
-        if(`pronoc_reset)begin 
+        if(`pronoc_reset)begin
             dest_e_addr_delay<={EAw{1'b0}};
             src_e_addr_delay<={EAw{1'b0}};
         end else begin 
             dest_e_addr_delay<=dest_e_addr;
             src_e_addr_delay<=src_e_addr;
-        end     
+        end
     end
     
     Tcustom1Rcustom_look_ahead_routing_comb  #(
-        .RAw(RAw),  
-        .EAw(EAw),   
-        .DSTPw(DSTPw)  
+        .RAw(RAw),
+        .EAw(EAw),
+        .DSTPw(DSTPw)
     ) lkp_cmb  (
         .current_r_addr(current_r_addr),
         .dest_e_addr(dest_e_addr_delay),
         .src_e_addr(src_e_addr_delay),
-        .destport(destport)        
+        .destport(destport)
     );
-endmodule  
+endmodule
 
 /*******************
 *  Tcustom1Rcustom_look_ahead_routing_comb
-*******************/ 
+*******************/
 module Tcustom1Rcustom_look_ahead_routing_comb  #(
-    parameter RAw = 3,  
-    parameter EAw = 3,   
-    parameter DSTPw=4  
+    parameter RAw = 3,
+    parameter EAw = 3,
+    parameter DSTPw=4
 )(
     current_r_addr,
     dest_e_addr,
@@ -89,7 +89,7 @@ module Tcustom1Rcustom_look_ahead_routing_comb  #(
     input   [RAw-1   :0] current_r_addr;
     input   [EAw-1   :0] dest_e_addr;
     input   [EAw-1   :0] src_e_addr;
-    output reg [DSTPw-1 :0] destport;    
+    output reg [DSTPw-1 :0] destport;
 
 localparam [EAw-1 : 0]    E0=0;
 localparam [EAw-1 : 0]    E1=1;
@@ -433,6 +433,6 @@ localparam [EAw-1 : 0]    E15=15;
         end
         endcase
     end
-  
+
 
 endmodule

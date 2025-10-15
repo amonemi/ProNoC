@@ -1,40 +1,40 @@
 
 /**************************************************************************
-**	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
-**	OVERWRITTEN AND LOST. Rename this file if you wish to do any modification.
+**    WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+**    OVERWRITTEN AND LOST. Rename this file if you wish to do any modification.
 ****************************************************************************/
 
 
 /**********************************************************************
-**	File: noc_localparam.v
+**    File: noc_localparam.v
 **    
-**	Copyright (C) 2014-2022  Alireza Monemi
+**    Copyright (C) 2014-2022  Alireza Monemi
 **    
-**	This file is part of ProNoC 2.2.0 
+**    This file is part of ProNoC 2.2.0 
 **
-**	ProNoC ( stands for Prototype Network-on-chip)  is free software: 
-**	you can redistribute it and/or modify it under the terms of the GNU
-**	Lesser General Public License as published by the Free Software Foundation,
-**	either version 2 of the License, or (at your option) any later version.
+**    ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**    you can redistribute it and/or modify it under the terms of the GNU
+**    Lesser General Public License as published by the Free Software Foundation,
+**    either version 2 of the License, or (at your option) any later version.
 **
-** 	ProNoC is distributed in the hope that it will be useful, but WITHOUT
-** 	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-** 	or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
-** 	Public License for more details.
+**     ProNoC is distributed in the hope that it will be useful, but WITHOUT
+**     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+**     or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General
+**     Public License for more details.
 **
-** 	You should have received a copy of the GNU Lesser General Public
-** 	License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
+**     You should have received a copy of the GNU Lesser General Public
+**     License along with ProNoC. If not, see <http:**www.gnu.org/licenses/>.
 ******************************************************************************/ 
 
-	
-	`ifdef   NOC_LOCAL_PARAM 
+    `ifdef   NOC_LOCAL_PARAM 
  
- 
-	
+
+    
 
 //NoC parameters
-    localparam NOC_ID=0;
+	localparam NOC_ID=0;
             //NOC_ID : Unique identifier for the NoC. Will be modified by phy_noc_gen.pl script
+
 	localparam TOPOLOGY="MESH";
             //TOPOLOGY : Specifies the NoC topology. 
             //    Options include "MESH","FMESH","TORUS","RING","LINE","FATTREE","TREE","STAR","CUSTOM"
@@ -65,8 +65,20 @@
             //Fpay : The packet payload width in bits
 
 	localparam ROUTE_NAME="XY";
-            //ROUTE_NAME : Select the routing algorithm: XY(DoR) , partially adaptive (Turn models). Fully adaptive (Duato) 
-            //    options are "XY","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","ODD_EVEN","DUATO"
+            //ROUTE_NAME : Select the routing algorithm. Options are: 
+            //    - XY: Deterministic routing (Dimension-Order Routing, DoR).
+            //    - WEST_FIRST, NORTH_LAST, NEGATIVE_FIRST, ODD_EVEN:  Partially adaptive routing algorithms based on turn model restrictions.
+            //    - FULL_ADPT:  Fully adaptive routing based on Duato's algorithm; requires at least two virtual channels (VCs) per port.
+            //    options are "XY","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","ODD_EVEN","FULL_ADPT"
+
+	localparam ROUTE_MODE="LOOKAHEAD";
+            //ROUTE_MODE : Select the routing algorithm mode:
+            //    -Conventional: 
+            //        The destination output port is computed 
+            //        in the same cycle, prior to VC/SW allocation.
+            //    -Lookahead: 
+            //        The routing decision is performed one router
+            //        ahead, in parallel with VC/SW allocation.
 
 	localparam PCK_TYPE="MULTI_FLIT";
             //PCK_TYPE : Packet type.
@@ -174,17 +186,15 @@
 
 	localparam CLASS_SETTING={V{1'b1}};
  	localparam  CVw=(C==0)? V : C * V;
-  
-	
-	
-	//simulation parameter	
-	//localparam MAX_RATIO = 1000;
-	localparam MAX_PCK_NUM = 1000000000;
-	localparam MAX_PCK_SIZ = 16383; 
-	localparam MAX_SIM_CLKs=  1000000000;
-	localparam TIMSTMP_FIFO_NUM = 16;	
-	
-		
+
+    
+    //simulation parameter
+    //localparam MAX_RATIO = 1000;
+    localparam MAX_PCK_NUM = 1000000000;
+    localparam MAX_PCK_SIZ = 16383;
+    localparam MAX_SIM_CLKs=  1000000000;
+    localparam TIMSTMP_FIFO_NUM = 16;
+    
 
  
  `endif

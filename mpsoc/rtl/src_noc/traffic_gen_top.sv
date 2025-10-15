@@ -851,7 +851,9 @@ module packet_gen
     assign pck_ready = ~buffer_empty & valid_dst;
     
     generate 
-    if( IS_UNICAST ) begin : uni 
+    if((CAST_TYPE == "UNICAST") && (IS_LOOKAHEAD==1'b1)) begin : conv
+    //The router is configured with lookaheadrouting. 
+    //The header flit is supposed to carry the destinaion output port 
         conventional_routing #(
             .LOCATED_IN_NI(1)
         ) routing_module (
