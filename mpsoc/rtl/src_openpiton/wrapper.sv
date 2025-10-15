@@ -1,18 +1,13 @@
-/****************************************************************************
- * wrapper.sv
- ****************************************************************************/
-
-/**
- * Module: pronoc_to_piton_wrapper
- * 
- * TODO: Add module documentation
- */
-`timescale      1ns/1ps
-
+/**************************************************************
+ * File        : wrapper.sv
+ * Description : Contains the necessary modules for adapting
+ *               ProNoC with OpenPiton dynamic-node integration.
+ *
+ * Author      :  Alireza Monemi
+ * Date        :  2025
+ **************************************************************/
 `include "define.tmp.h"
 `include "pronoc_def.v"
-
-
 
 module piton_to_pronoc_endp_addr_converter
 #(
@@ -26,10 +21,8 @@ module piton_to_pronoc_endp_addr_converter
     pronoc_endp_addr_o,
     piton_end_addr_coded_o
 );
-
     import pronoc_pkg::*;
-
-    localparam  
+    localparam
         PRESERVED_DATw = (`MSG_LENGTH_WIDTH + `MSG_TYPE_WIDTH + `MSG_MSHRID_WIDTH + `MSG_OPTIONS_1_WIDTH ),
         HEAD_DATw      = (64-MSB_BE-1),
         ADDR_CODED     = (HEAD_DATw - PRESERVED_DATw);
@@ -94,7 +87,7 @@ module piton_to_pronoc_endp_addr_converter_diffrent_topology
     input  [`NOC_CHIPID_WIDTH-1:0]  piton_chipid_i;
     input  [`NOC_X_WIDTH-1:0]       piton_coreid_x_i;
     input  [`NOC_Y_WIDTH-1:0]       piton_coreid_y_i;
-    input  [`MSG_SRC_FBITS_WIDTH-1:0]  piton_fbits_i;       
+    input  [`MSG_SRC_FBITS_WIDTH-1:0]  piton_fbits_i;
     output reg [EAw-1 : 0] pronoc_endp_addr_o;
     output reg [ADDR_CODED-1 : 0] piton_end_addr_coded_o;
     localparam [3:0] 
@@ -105,11 +98,11 @@ module piton_to_pronoc_endp_addr_converter_diffrent_topology
         FBIT_N  = 4'b0101;
     localparam       
         Xw = log2(NX),    // number of node in x axis
-        Yw = log2(NY);    // number of node in y axis       
+        Yw = log2(NY);    // number of node in y axis
     localparam 
         PITON_TOPOLOGY = "FMESH",
         PITON_Xw = log2(`PITON_X_TILES),    // number of node in x axis
-        PITON_Yw = log2(`PITON_Y_TILES),    // number of node in y axis         
+        PITON_Yw = log2(`PITON_Y_TILES),    // number of node in y axis
         PITON_NE =(`PITON_X_TILES * `PITON_Y_TILES) + 2 * (`PITON_X_TILES+`PITON_Y_TILES),
         PITON_MAX_P = 5, 
         PITON_NLw= log2(PITON_MAX_P),
@@ -178,7 +171,6 @@ module piton_to_pronoc_endp_addr_converter_same_topology
 );
 
     import pronoc_pkg::*;
-    
     localparam  
         PRESERVED_DATw = (`MSG_LENGTH_WIDTH + `MSG_TYPE_WIDTH + `MSG_MSHRID_WIDTH + `MSG_OPTIONS_1_WIDTH ),
         HEAD_DATw      = (64-MSB_BE-1),
@@ -193,12 +185,12 @@ module piton_to_pronoc_endp_addr_converter_same_topology
     output reg    [ADDR_CODED-1 : 0] piton_end_addr_coded_o;
     
     localparam [3:0] 
-        FBIT_NONE    =4'b0000,
+        FBIT_NONE =4'b0000,
         FBIT_W    =4'b0010,
         FBIT_S    =4'b0011,
         FBIT_E    =4'b0100,
         FBIT_N    =4'b0101;
-    localparam        
+    localparam
         Xw = log2(NX),    // number of node in x axis
         Yw = log2(NY);    // number of node in y axis
     
@@ -210,7 +202,7 @@ module piton_to_pronoc_endp_addr_converter_same_topology
             (piton_fbits_i [3:0] == FBIT_E   ) ? EAST: NORTH;
     
     //coded for FMESH topology
-    generate     
+    generate
     if(TOPOLOGY == "FMESH") begin 
         always_comb begin 
             pronoc_endp_addr_o = {EAw{1'b0}};
@@ -226,7 +218,7 @@ module piton_to_pronoc_endp_addr_converter_same_topology
     end else begin //"mesh" 
         always_comb begin 
             pronoc_endp_addr_o = {EAw{1'b0}};
-            pronoc_endp_addr_o [Yw+Xw-1 : 0] =  {piton_coreid_y_i[Yw-1 : 0],  piton_coreid_x_i[Xw-1 : 0]};            
+            pronoc_endp_addr_o [Yw+Xw-1 : 0] =  {piton_coreid_y_i[Yw-1 : 0],  piton_coreid_x_i[Xw-1 : 0]};
         end    
     end
     endgenerate
@@ -237,8 +229,8 @@ module piton_to_pronoc_endp_addr_converter_same_topology
         if(piton_chipid_i == 8192 ) begin 
             piton_end_addr_coded_o[ADDR_CODED-1]=1'b1;
         end// TODO need to know how chip id coded from zero to max or from 8192 to zero
-    end    
-endmodule    
+    end
+endmodule
 
 
 module pronoc_to_piton_endp_addr_converter (
@@ -258,10 +250,10 @@ module pronoc_to_piton_endp_addr_converter (
         HEAD_DATw      = (64-MSB_BE-1),
         ADDR_CODED     = (HEAD_DATw - PRESERVED_DATw);
     
-output  [`NOC_CHIPID_WIDTH-1:0]  piton_chipid_o;
-output  reg [`NOC_X_WIDTH-1:0]   piton_coreid_x_o;
-output  reg [`NOC_Y_WIDTH-1:0]   piton_coreid_y_o;
-input   [ADDR_CODED-1 : 0] piton_end_addr_coded_i;
+    output  [`NOC_CHIPID_WIDTH-1:0]  piton_chipid_o;
+    output  reg [`NOC_X_WIDTH-1:0]   piton_coreid_x_o;
+    output  reg [`NOC_Y_WIDTH-1:0]   piton_coreid_y_o;
+    input   [ADDR_CODED-1 : 0] piton_end_addr_coded_i;
     
     always_comb begin 
         piton_coreid_x_o = {`MSG_DST_X_WIDTH{1'b0}}; 
@@ -279,12 +271,12 @@ module piton_to_pronoc_wrapper  #(
     parameter CHIP_SET_PORT = 3,
     parameter FLATID_WIDTH=8
 )(
-    default_chipid,  default_coreid_x, default_coreid_y, flat_tileid,    
+    default_chipid,  default_coreid_x, default_coreid_y, flat_tileid,
     reset, clk,
     dataIn, validIn, yummyIn,
     current_r_addr_i,
     chan_out
-);    
+);
     
     import pronoc_pkg::*;
     localparam  
@@ -316,17 +308,17 @@ module piton_to_pronoc_wrapper  #(
     wire [`MSG_OPTIONS_1_WIDTH-1    :0] option1     = dataIn [ `MSG_OPTIONS_1];
     
     wire tail,head;
-    tail_hdr_detect #(
+    piton_tail_hdr_detect #(
         .FLIT_WIDTH(Fpay)
     )piton_hdr(
         .reset(reset),
         .clk(clk),
-        .flit_in(dataIn),
+        .length_in(dataIn[ `MSG_LENGTH ]),
         .valid(validIn),
         .ready(1'b1),
         .is_tail(tail),
         .is_header(head)
-    );    
+    );
     
     wire [EAw-1 : 0] src_e_addr, dest_e_addr;
     wire [DSTPw-1 : 0] destport;
@@ -340,11 +332,9 @@ module piton_to_pronoc_wrapper  #(
         .piton_coreid_x_i  (default_coreid_x),
         .piton_coreid_y_i  (default_coreid_y),
         .piton_fbits_i     (4'd0),
-            
         .pronoc_endp_addr_o (src_e_addr),
         .piton_end_addr_coded_o()
-        
-    );    
+    );
     
     piton_to_pronoc_endp_addr_converter dst_conv (
         .default_chipid_i  (default_chipid),
@@ -421,7 +411,7 @@ module piton_to_pronoc_wrapper  #(
             $display("%t***Tile %d ***NoC %d************payload length =%d*************************",$time,TILE_NUM,NOC_ID,length);
             $display("%t*** src (c=%d,x=%d,y=%d) sends to dst (c=%d,x=%d,y=%d chan_out=%x)",$time,
                     default_chipid, default_coreid_x, default_coreid_y, dest_chipid,dest_x,dest_y,chan_out);
-//$finish;
+            //$finish;
         end
     end
     */
@@ -435,7 +425,7 @@ module piton_to_pronoc_wrapper  #(
         (default_coreid_x != (TILE_NUM % `X_TILES ))) begin 
         $display ("ERROR: Address missmatch! ");
         $finish;
-        end        
+        end
     end
     //synthesis translate_on
     */
@@ -443,7 +433,7 @@ endmodule
 
 
 /********************************
- *         pronoc_to_piton_wrapper  
+ *       pronoc_to_piton_wrapper  
  * ***************************/
 module pronoc_to_piton_wrapper #(
     parameter PORT_NUM=0,
@@ -455,7 +445,7 @@ module pronoc_to_piton_wrapper #(
     dataOut, validOut, yummyOut,
     current_r_addr_o,
     chan_in
-);    
+);
     import pronoc_pkg::*;
     localparam  
         PRESERVED_DATw = (`MSG_LENGTH_WIDTH + `MSG_TYPE_WIDTH + `MSG_MSHRID_WIDTH + `MSG_OPTIONS_1_WIDTH ),
@@ -463,12 +453,12 @@ module pronoc_to_piton_wrapper #(
         ADDR_CODED     = (HEAD_DATw - PRESERVED_DATw);
     //piton out
     input  [`NOC_CHIPID_WIDTH-1:0]  default_chipid;
-    input  [`NOC_X_WIDTH-1:0]       default_coreid_x;
-    input  [`NOC_Y_WIDTH-1:0]       default_coreid_y;
+    input  [`NOC_X_WIDTH-1:0] default_coreid_x;
+    input  [`NOC_Y_WIDTH-1:0] default_coreid_y;
     input  [FLATID_WIDTH-1:0] flat_tileid;
-    output [Fpay-1:0]        dataOut;
-    output                              validOut;
-    output                              yummyOut;
+    output [Fpay-1:0] dataOut;
+    output validOut;
+    output yummyOut;
     output [RAw-1 : 0] current_r_addr_o;
     //pronoc in
     input  smartflit_chanel_t chan_in; 
@@ -476,7 +466,7 @@ module pronoc_to_piton_wrapper #(
     
     assign current_r_addr_o = chan_in.ctrl_chanel.router_addr;
     
-    localparam        
+    localparam
         Xw = log2(NX),    // number of node in x axis
         Yw = log2(NY);    // number of node in y axis
     
@@ -514,26 +504,18 @@ module pronoc_to_piton_wrapper #(
     wire [MAX_P-1:0] destport_one_hot;
     //    FBITS coding
     localparam [3: 0] 
-        FBITS_WEST         =  4'b0010, 
+        FBITS_WEST       =  4'b0010,
         FBITS_SOUTH      =  4'b0011,
         FBITS_EAST       =  4'b0100,
-        FBITS_NORTH      =  4'b0101,   
-        FBITS_PROCESSOR  =  4'b0000;  
-    /*    
-        ProNoC destination port order num
-        LOCAL   =   0
-        EAST    =   1
-        NORTH   =   2 
-        WEST    =   3
-        SOUTH   =   4         
-    */    
+        FBITS_NORTH      =  4'b0101,
+        FBITS_PROCESSOR  =  4'b0000;
         
-    //assign dest_fbits =        (PORT_NUM==0) ? 4'b0000:4'b0010;//offchip    
+    //assign dest_fbits =  (PORT_NUM==0) ? 4'b0000:4'b0010;//offchip
     
     /*
     always @(posedge clk) begin
         if(validOut) begin 
-            $display("********************************************destport_one_hot=%b; dest_fbits=%b",destport_one_hot,dest_fbits);
+            $display("Destport_one_hot=%b; dest_fbits=%b",destport_one_hot,dest_fbits);
             $finish;
         end
     end
@@ -679,7 +661,6 @@ endmodule
 
 
 
-
 module pronoc_noc
     #(
     parameter CHIP_SET_PORT=3,
@@ -698,7 +679,7 @@ module pronoc_noc
         reset,
         clk
     );
-
+    
     import pronoc_pkg::*;
     input clk,reset;
     input [Fpay*NE-1:0] dataIn_flatten;
@@ -724,7 +705,6 @@ module pronoc_noc
     genvar i;
     generate
     for (i=0;i<NE;i++) begin: E_
-        
         assign dataIn [i] = dataIn_flatten [(i+1)* Fpay -1 :  i * Fpay];
         assign dataOut_flatten [(i+1)* Fpay -1 :  i * Fpay] = dataOut [i];
         assign default_coreid_x[i]=default_coreid_x_flatten[(i+1)*`NOC_X_WIDTH-1 : i*`NOC_X_WIDTH];
@@ -777,4 +757,65 @@ module pronoc_noc
         .chan_out_all(pronoc_chan_out),
         .router_event( )
     );
+endmodule
+
+
+module piton_tail_hdr_detect #(
+    parameter FLIT_WIDTH=64
+)(
+    reset,
+    clk,
+    length_in,
+    valid,
+    ready,
+    is_tail,
+    is_header
+);
+    input  wire reset,clk;
+    input  wire valid,ready;
+    input  wire [`MSG_LENGTH_WIDTH-1 : 0] length_in;
+    output wire is_tail, is_header;
+    
+    localparam
+        CHANEL_WORLD_NUM = FLIT_WIDTH/64;
+    localparam  [1:0]
+        HEADER = 1,
+        BODY   = 2;
+    reg [1:0] flit_type,flit_type_next;
+    reg  [`MSG_LENGTH_WIDTH-1  : 0] remain, remain_next;
+    
+    always_comb begin
+        remain_next = remain;
+        flit_type_next = flit_type;
+        if(valid & ready) begin
+            case(flit_type)
+            HEADER: begin
+                if (length_in >= CHANEL_WORLD_NUM ) begin
+                    flit_type_next = BODY;
+                    remain_next = length_in  - CHANEL_WORLD_NUM;
+                end
+            end //HEADER
+            BODY: begin
+                if(remain < CHANEL_WORLD_NUM) begin
+                    flit_type_next = HEADER;   
+                end else if (remain >= CHANEL_WORLD_NUM ) begin
+                    remain_next = remain  - CHANEL_WORLD_NUM;  
+                end
+            end //BODY
+            endcase
+        end
+    end//always
+    
+    always @ (posedge clk) begin
+        if (reset)  begin
+            remain <= {`MSG_LENGTH_WIDTH{1'b0}};
+            flit_type <=HEADER;
+        end else begin
+            remain <= remain_next;
+            flit_type <= flit_type_next;
+        end
+    end
+    
+    assign is_tail = (flit_type == HEADER)? (length_in < CHANEL_WORLD_NUM) : (remain < CHANEL_WORLD_NUM);
+    assign is_header = (flit_type == HEADER);
 endmodule
