@@ -543,7 +543,7 @@ sub noc_topology_setting_gui {
     my  $label='Topology';
     my  $param='TOPOLOGY';
     my  $default='"MESH"';
-    my  $content='"MESH","FMESH","TORUS","RING","LINE","FATTREE","TREE","STAR","CUSTOM"';
+    my  $content='"MESH","FMESH","MESH_3D","TORUS","RING","LINE","FATTREE","TREE","STAR","CUSTOM"';
     my  $type='Combo-box';
     my  $info="Specifies the NoC topology. 
     Options include $content"; 
@@ -560,7 +560,7 @@ sub noc_topology_setting_gui {
         $param= 'T1';
         $default= '2';
         $content=
-        ($topology eq '"MESH"'  || $topology eq '"TORUS"') ? '2,16,1':
+        ($topology eq '"MESH"'  || $topology eq '"TORUS"' || $topology eq '"MESH_3D"') ? '2,16,1':
         ($topology eq '"FMESH"')? '1,16,1':
         ($topology eq '"FATTREE"' || $topology eq '"TREE"' )? '2,6,1':'2,64,1';
         $info= ($topology eq '"FATTREE"' || $topology eq '"TREE"' )? 'number of last level individual router`s endpoints.' :'Number of NoC routers in row (X dimension)';
@@ -570,7 +570,7 @@ sub noc_topology_setting_gui {
 
     
     #Topology T2 parameter
-    if($topology eq '"MESH"' || $topology eq '"FMESH"' || $topology eq '"TORUS"' || $topology eq '"FATTREE"' || $topology eq '"TREE"' ) {
+    if($topology eq '"MESH"' || $topology eq '"FMESH"' || $topology eq '"TORUS"' || $topology eq '"FATTREE"' || $topology eq '"TREE"' ||  $topology eq '"MESH_3D"') {
         $label= ($topology eq '"FATTREE"' || $topology eq '"TREE"')?  'L' :'Routers per column';
         $param= 'T2';
         $default='2';
@@ -584,9 +584,24 @@ sub noc_topology_setting_gui {
     }
     
     #Topology T3 parameter
-    if($topology eq '"MESH"' || $topology eq '"FMESH"' || $topology eq '"TORUS"' || $topology eq '"RING"' || $topology eq '"LINE"') {
-        $label="Router's endpoint number";
+    if($topology eq '"MESH_3D"') {
+        $label= 'Routers per layer';
         $param= 'T3';
+        $default='1';
+        $content=  '1,16,1';
+        $info= 'Number of NoC layers (Z dimension)';
+        $type= 'Spin-button'; 
+        $noc_param_comment{$param}="$info";            
+        ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
+    } else {
+        $mpsoc->object_add_attribute($noc_param,'T4',1);        
+    }
+    
+    
+    #Topology T3/T4 parameter
+    if($topology eq '"MESH"' || $topology eq '"FMESH"' || $topology eq '"TORUS"' || $topology eq '"RING"' || $topology eq '"LINE"' || $topology eq '"MESH_3D"') {
+        $label="Router's endpoint number";
+        $param=  $topology eq '"MESH_3D"' ? 'T4' : 'T3';
         $default='1';
         $content='1,4,1';
         $info= "Number of endpoints per router. In $topology topology, each router
