@@ -53,6 +53,14 @@ module  noc_top (
             .chan_out_all  (chan_out_all ),
             .router_event  (router_event )
         );
+    end else if (IS_MESH_3D) begin : M3D_
+        mesh_3d_noc_top noc_top (
+            .reset         (reset        ), 
+            .clk           (clk          ), 
+            .chan_in_all   (chan_in_all  ), 
+            .chan_out_all  (chan_out_all ),
+            .router_event  (router_event )
+        );
     end else if (IS_FATTREE) begin : fat_
         fattree_noc_top noc_top (
             .reset         (reset        ), 

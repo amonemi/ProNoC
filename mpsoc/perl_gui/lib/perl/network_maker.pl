@@ -217,7 +217,7 @@ sub generate_custom_topology_dot_file{
     graph [layout = twopi, rankdir = RL , splines = true, overlap = false];
     node[shape=record];
     ";
-    #Add endpoints
+    # Add endpoints
     my @nodes=get_list_of_all_endpoints($self);
     my $i=0;
     foreach my $p (@nodes){
@@ -226,7 +226,7 @@ sub generate_custom_topology_dot_file{
         $dotfile.= ($gtype eq 'simple')? endp_node_dot_sim($p,$instance) : endp_node_dot_comp($p,$instance);
         $i++;
     }
-    #add routers
+    # add routers
     @nodes=get_list_of_all_routers($self);
     $i=0;
     foreach my $p (@nodes){
@@ -236,7 +236,7 @@ sub generate_custom_topology_dot_file{
         $dotfile.=($gtype eq 'simple')? router_node_dot_sim($pnum,$p,$instance): router_node_dot_comp($pnum,$p,$instance);
         $i++;
     }
-    #add connections
+    # add connections
     my @all_nodes=get_list_of_all_nodes($self);
     my @draw;
     foreach my $p (@all_nodes){

@@ -19,6 +19,7 @@
         IS_TREE=   (TOPOLOGY == "TREE"),
         IS_STAR=   (TOPOLOGY == "STAR"),
         IS_MULTI_MESH=(TOPOLOGY == "MULTI_MESH"),
+        IS_MESH_3D= (TOPOLOGY == "MESH_3D"),
         IS_REGULAR_TOPO = (IS_RING | IS_LINE | IS_MESH | IS_TORUS),
         IS_MULTI_ENDP_ROUTER = (T3 > 1) ;
         /* verilator lint_on WIDTH */ 
@@ -145,24 +146,27 @@
     localparam 
         NX = T1,
         NY = (IS_RING | IS_LINE) ? 1 : T2,
-        NL = T3,
+        NL = (IS_MESH_3D)? T4 : T3,
+        NZ = (IS_MESH_3D)? T3 : 1,
         NXw = log2(NX),
         NYw = log2(NY),
         NLw = log2(NL),
+        NZw= log2(NZ),
         PPSw_REGULAR = 4, //port presel width for adaptive routing
         /* verilator lint_off WIDTH */
         ROUTE_TYPE_REGULAR = 
-            (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
+            (ROUTE_NAME == "XYZ" )?   "DETERMINISTIC" :
+            (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )? "DETERMINISTIC" :
             (ROUTE_NAME == "FULL_ADPT" || ROUTE_NAME == "TRANC_FULL_ADPT" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE",
         /* verilator lint_on WIDTH */
-        R2R_CHANELS_REGULAR=  (IS_RING || IS_LINE)? 2 : 4,
+        R2R_CHANELS_REGULAR=  (IS_RING || IS_LINE)? 2 : (IS_MESH_3D)? 6 : 4,
         R2E_CHANELS_REGULAR= NL,
-        RAw_REGULAR = ( IS_RING | IS_LINE)? NXw : NXw + NYw,
-        EAw_REGULAR = (NL==1) ? RAw_REGULAR : RAw_REGULAR + NLw,
-        NR_REGULAR = (IS_RING || IS_LINE)? NX : NX*NY,
+        RAw_REGULAR = ( IS_RING | IS_LINE)? NXw :(IS_MESH_3D)? NXw + NYw + NZw : NXw + NYw,
+        EAw_REGULAR = (NL==1 && IS_MESH_3D==1'b0) ? RAw_REGULAR : RAw_REGULAR + NLw,
+        NR_REGULAR = (IS_RING || IS_LINE)? NX :(IS_MESH_3D)? NX*NY*NZ : NX*NY,
         NE_REGULAR = NR_REGULAR * NL,
         MAX_P_REGULAR = R2R_CHANELS_REGULAR + R2E_CHANELS_REGULAR,
-        DSTPw_REGULAR = R2R_CHANELS_REGULAR, // P-1
+        DSTPw_REGULAR = (IS_MESH_3D)? log2(MAX_P_REGULAR) : R2R_CHANELS_REGULAR, // P-1
         NE_PER_R_REGULAR = NL;
     
     /****************
@@ -213,7 +217,7 @@
     localparam 
         ROUTE_TYPE_STAR = "DETERMINISTIC",
         NE_STAR = T1,  //total number of endpoints
-        NR_STAR = 1,  // total number of routers  
+        NR_STAR = 1,  // total number of routers
         RAw_STAR = 1,
         EAw_STAR = log2(NE_STAR),
         DSTPw_STAR = (~IS_UNICAST) ? NE_STAR :EAw_STAR,
@@ -244,6 +248,20 @@
         EAw_MULTI_MESH = T2,
         MAX_P_MULTI_MESH = 7,
         DSTPw_MULTI_MESH = log2(MAX_P_MULTI_MESH);
+    /*************************
+    *   MESH_3D
+    **************************/
+    typedef struct packed {
+        logic [NZw-1 : 0] z;
+        logic [NYw-1 : 0] y;
+        logic [NXw-1 : 0] x;
+    } mesh_3d_router_addr_t;
+    typedef struct packed {
+        logic [NLw-1 : 0] l;
+        logic [NZw-1 : 0] z;
+        logic [NYw-1 : 0] y;
+        logic [NXw-1 : 0] x;
+    } mesh_3d_endp_addr_t;
     
     localparam
         PPSw = PPSw_REGULAR,

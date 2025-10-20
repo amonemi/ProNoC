@@ -23,7 +23,6 @@ package pronoc_pkg;
         SMART_EN = (SMART_MAX !=0),
         SMART_NUM= (SMART_EN) ? SMART_MAX : 1,
         NEV  = NE * V,
-        T4 = 0,
         BEw = (BYTE_EN)? log2(Fpay/8) : 1;
         
     localparam CONGw= 

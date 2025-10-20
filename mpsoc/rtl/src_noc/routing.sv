@@ -137,6 +137,12 @@ module conventional_routing #(
             .router_port_out(destport)
         );
     */
+    end else if (IS_MESH_3D) begin : M3D_
+        mesh_3d_route_xyz the_conventional_routing(
+            .current_router_addr_i(current_r_addr),
+            .destination_endp_addr_i(dest_e_addr),
+            .router_port_out(destport)
+        );
     end else begin :custom
         custom_conv_routing  #(
             .TOPOLOGY(TOPOLOGY),
