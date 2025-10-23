@@ -37,7 +37,7 @@
             NR_num-=1;
             offset += router_NRs[NR_num];
         }
-        return offset + NR_id;    
+        return offset + NR_id;
     }    
     #endif
 
@@ -52,12 +52,12 @@
     }
 
     unsigned int powi (unsigned int x, unsigned int y){ // x^y
-        unsigned int i;        
+        unsigned int i;
         unsigned int pow=1;
         for (int i = 0; i <y; i=i+1 ) {
             pow=pow * x;
         }
-        return pow;    
+        return pow;
     }
 
     unsigned int sum_powi (unsigned int x, unsigned int y){//x^(y-1) + x^(y-2) + ...+ 1;
@@ -107,7 +107,7 @@
         }
 #endif //IS_FATTREE || IS_TREE
 
-    #if defined (IS_MESH) || defined (IS_FMESH) || defined (IS_TORUS) || defined (IS_LINE) || defined (IS_RING )
+    #if defined (IS_MESH) || defined (IS_FMESH) || defined (IS_TORUS) || defined (IS_LINE) || defined (IS_RING ) || defined (IS_MESH_3D)
         #include "mesh.h"
     #elif  defined (IS_FATTREE)
         #include "fattree.h"

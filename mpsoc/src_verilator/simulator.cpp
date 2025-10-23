@@ -371,8 +371,7 @@ int parse_string ( char * str, int * array)
 
 unsigned int pck_dst_gen_unicast (     unsigned int core_num, unsigned char * inject_en) {
     if(TRAFFIC_TYPE==TASK)    return      pck_dst_gen_task_graph ( core_num, inject_en);
-    if((strcmp (TOPOLOGY,"MESH")==0)||(strcmp (TOPOLOGY,"TORUS")==0))    return  pck_dst_gen_2D (core_num, inject_en);
-    return pck_dst_gen_1D (core_num, inject_en);
+    return  pck_dst_gen_synthetic   (core_num, inject_en);
 }
 
 void mcast_full_rnd (unsigned int core_num){
@@ -1238,7 +1237,12 @@ void print_parameter (){
     printf ("\tVC_per port: %d\n", V);
     printf ("\tNon-local port buffer_width per VC: %d\n", B);
     printf ("\tLocal port buffer_width per VC: %d\n", LB);
-    #if defined (IS_MESH) || defined (IS_FMESH) || defined (IS_TORUS)
+    #if defined (IS_MESH_3D)
+        printf ("\tRouter num in row(x): %d \n",T1);
+        printf ("\tRouter num in column(y): %d \n",T2);
+        printf ("\tnumber of layer(z): %d \n",T3);
+        printf ("\tEndpoint num per router: %d\n",T4);
+    #elif defined (IS_MESH) || defined (IS_FMESH) || defined (IS_TORUS)
         printf ("\tRouter num in row: %d \n",T1);
         printf ("\tRouter num in column: %d \n",T2);
         printf ("\tEndpoint num per router: %d\n",T3);

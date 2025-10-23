@@ -546,7 +546,7 @@ module regular_topo_conventional_routing #(
         /* verilator lint_on WIDTH */ 
             duato_mesh_routing #(
                 .NX (NX),
-                .NY (NY)                    
+                .NY (NY)
             ) duato_full_adaptive (
                 .current_x (current_x),
                 .current_y (current_y),
@@ -676,7 +676,7 @@ endmodule
 *        TRANC_ring
 **************************/
 module tranc_ring_routing #(
-    parameter NX = 4    
+    parameter NX = 4
 )(
     current_x,
     dest_x,
@@ -736,8 +736,9 @@ module tranc_ring_routing #(
     assign same_x = (xdiff == 0);
     
     always@(*)begin
+        destport_one_hot= LOCAL;
         if (same_x ) destport_one_hot= LOCAL;
-        else    begin 
+        else begin 
             if (tranc_x_plus)  destport_one_hot= PLUS;
             else if (tranc_x_min)   destport_one_hot= MINUS;
         end
