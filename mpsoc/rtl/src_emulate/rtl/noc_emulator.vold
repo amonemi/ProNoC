@@ -15,7 +15,7 @@ module  noc_emulator #(
     parameter T2   = 4, 
     parameter T3   = 1,
     parameter TOPOLOGY = "MESH",
-    parameter ROUTE_NAME  =   "XY",
+    parameter ROUTE_NAME  =   "DOR",
     parameter C    = 4,
     parameter Fpay = 32,
     parameter MUX_TYPE  = "BINARY", 
@@ -215,7 +215,7 @@ module  Jtag_traffic_gen #(
     parameter Fpay = 32,
     parameter VC_REALLOCATION_TYPE  = "NONATOMIC",// "ATOMIC" , "NONATOMIC"
     parameter TOPOLOGY  = "MESH",
-    parameter ROUTE_NAME    = "XY",
+    parameter ROUTE_NAME    = "DOR",
     parameter C = 4 ,   //  number of flit class
     parameter MIN_PCK_SIZE = 2,
     parameter BYTE_EN=0,    
@@ -475,7 +475,7 @@ module  traffic_gen_ram #(
     parameter Fpay = 32,
     parameter VC_REALLOCATION_TYPE  = "NONATOMIC",// "ATOMIC" , "NONATOMIC"
     parameter TOPOLOGY  = "MESH",
-    parameter ROUTE_NAME    = "XY",
+    parameter ROUTE_NAME    = "DOR",
     parameter C = 4,    //  number of flit class
     parameter RAM_Aw=7,
     parameter STATISTIC_NUM=8,  // the last 8 rows of RAM is reserved for collecting statistic values;   

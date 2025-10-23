@@ -14,7 +14,7 @@
 	localparam B=4;
 	localparam LB=16;
 
-	localparam ROUTE_NAME="XY";
+	localparam ROUTE_NAME="DOR";
 	localparam PCK_TYPE="MULTI_FLIT";
 	localparam MIN_PCK_SIZE=1;
 	localparam BYTE_EN=0;

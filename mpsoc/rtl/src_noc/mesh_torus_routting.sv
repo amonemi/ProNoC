@@ -471,7 +471,7 @@ module regular_topo_conventional_routing #(
     generate 
     if (IS_MESH || IS_FMESH) begin :mesh
     /* verilator lint_off WIDTH */ 
-        if(ROUTE_NAME == "XY") begin : xy_routing_blk
+        if(ROUTE_NAME == "DOR") begin : xy_routing_blk
     /* verilator lint_on WIDTH */ 
             xy_mesh_routing #(
                 .NX(NX),
@@ -483,7 +483,7 @@ module regular_topo_conventional_routing #(
                 .dest_y(dest_y),
                 .dstport_encoded(destport)
             );        
-        end //"XY"
+        end //"DOR"
         /* verilator lint_off WIDTH */ 
         else if(ROUTE_NAME == "WEST_FIRST") begin : west_first_routing_blk
         /* verilator lint_on WIDTH */ 
@@ -560,7 +560,7 @@ module regular_topo_conventional_routing #(
     `endif
     /* verilator lint_off WIDTH */ 
     end else if (TOPOLOGY == "TORUS" ) begin :torus
-        if(ROUTE_NAME == "TRANC_XY") begin : tranc_routing_blk
+        if(ROUTE_NAME == "TRANC_DOR") begin : tranc_routing_blk
     /* verilator lint_on WIDTH */ 
             tranc_xy_routing #(
                 .NX (NX),
@@ -572,7 +572,7 @@ module regular_topo_conventional_routing #(
                 .dest_y (dest_y),
                 .destport_encoded (destport)
             );
-        end //"TRANC_XY"
+        end //"TRANC_DOR"
         /* verilator lint_off WIDTH */ 
         else if(ROUTE_NAME == "TRANC_WEST_FIRST") begin : tranc_west_first_routing_blk
         /* verilator lint_on WIDTH */ 
@@ -635,7 +635,7 @@ module regular_topo_conventional_routing #(
     end //TORUS
     /* verilator lint_off WIDTH */ 
     else if (TOPOLOGY == "RING" ) begin :ring
-        if(ROUTE_NAME == "TRANC_XY") begin : tranc_ring_blk
+        if(ROUTE_NAME == "TRANC_DOR") begin : tranc_ring_blk
     /* verilator lint_on WIDTH */ 
             tranc_ring_routing #(
                 .NX(NX)       
@@ -651,7 +651,7 @@ module regular_topo_conventional_routing #(
         end //"RING"       
     /* verilator lint_off WIDTH */ 
     else if (TOPOLOGY == "LINE" ) begin :ring
-        if(ROUTE_NAME == "XY") begin : tranc_ring_blk
+        if(ROUTE_NAME == "DOR") begin : tranc_ring_blk
     /* verilator lint_on WIDTH */ 
             xy_line_routing #(
                 .NX(NX)                    
@@ -660,7 +660,7 @@ module regular_topo_conventional_routing #(
                 .dest_x(dest_x),
                 .destport(destport)
             );       
-        end // "XY"
+        end // "DOR"
         `ifdef SIMULATION
         else begin : not_supported2 initial $display("Error: %s is an unsupported routing algorithm for %s topology",ROUTE_NAME,TOPOLOGY); end
         `endif           

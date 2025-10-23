@@ -636,28 +636,30 @@ sub noc_config{
         $type="Combo-box";
         if($router_type eq '"VC_BASED"'){
             $content=
-                ($topology eq '"MESH"' || $topology eq '"FMESH"')?  '"XY","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","ODD_EVEN","FULL_ADPT"' :
-                ($topology eq '"TORUS"')? '"TRANC_XY","TRANC_WEST_FIRST","TRANC_NORTH_LAST","TRANC_NEGETIVE_FIRST","TRANC_FULL_ADPT"':
-                ($topology eq '"RING"')? '"TRANC_XY"' :
-                ($topology eq '"LINE"')?  '"XY"':
+                ($topology eq '"MESH_3D"') ? '"DOR"' :
+                ($topology eq '"MESH"' || $topology eq '"FMESH"')?  '"DOR","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","ODD_EVEN","FULL_ADPT"' :
+                ($topology eq '"TORUS"')? '"TRANC_DOR","TRANC_WEST_FIRST","TRANC_NORTH_LAST","TRANC_NEGETIVE_FIRST","TRANC_FULL_ADPT"':
+                ($topology eq '"RING"')? '"TRANC_DOR"' :
+                ($topology eq '"LINE"')?  '"DOR"':
                 ($topology eq '"FATTREE"')? '"NCA_RND_UP","NCA_STRAIGHT_UP","NCA_DST_UP"':
-                ($topology eq '"TREE"')? '"NCA"' : '"UNKNOWN"';   
+                ($topology eq '"TREE"')? '"NCA"' : '"UNKNOWN"';
         }else{
             $content=
-                ($topology eq '"MESH"' || $topology eq '"FMESH"')?  '"XY","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","ODD_EVEN"' :
-                ($topology eq '"TORUS"')? '"TRANC_XY","TRANC_WEST_FIRST","TRANC_NORTH_LAST","TRANC_NEGETIVE_FIRST"':
-                ($topology eq '"RING"')? '"TRANC_XY"' : 
-                ($topology eq '"LINE"')?  '"XY"':
+                ($topology eq '"MESH_3D"') ? '"DOR"' :
+                ($topology eq '"MESH"' || $topology eq '"FMESH"')?  '"DOR","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","ODD_EVEN"' :
+                ($topology eq '"TORUS"')? '"TRANC_DOR","TRANC_WEST_FIRST","TRANC_NORTH_LAST","TRANC_NEGETIVE_FIRST"':
+                ($topology eq '"RING"')? '"TRANC_DOR"' : 
+                ($topology eq '"LINE"')?  '"DOR"':
                 ($topology eq '"FATTREE"')? '"NCA_RND_UP","NCA_STRAIGHT_UP","NCA_DST_UP"' : 
-                ($topology eq '"TREE"')? '"NCA"' : '"UNKNOWN"';    
+                ($topology eq '"TREE"')? '"NCA"' : '"UNKNOWN"';
         }
         $default=
-            ($topology eq '"MESH"' || $topology eq '"FMESH"' || $topology eq '"LINE"' )? '"XY"':
-            ($topology eq '"TORUS"'|| $topology eq '"RING"')?  '"TRANC_XY"' : 
+            ($topology eq '"MESH"' || $topology eq '"FMESH"' || $topology eq '"LINE"'|| $topology eq '"MESH_3D"' )? '"DOR"':
+            ($topology eq '"TORUS"'|| $topology eq '"RING"')?  '"TRANC_DOR"' : 
             ($topology eq '"FATTREE"')? '"NCA_STRAIGHT_UP"' :
             ($topology eq '"TREE"')? '"NCA"' : '"UNKNOWN"';
     my $info_mesh="Select the routing algorithm. Options are: 
-    - XY: Deterministic routing (Dimension-Order Routing, DoR).
+    - DOR: Dimension-Order Deterministic routing (XY).
     - WEST_FIRST, NORTH_LAST, NEGATIVE_FIRST, ODD_EVEN:  Partially adaptive routing algorithms based on turn model restrictions.
     - FULL_ADPT:  Fully adaptive routing based on Duato's algorithm; requires at least two virtual channels (VCs) per port.";
     my $info_fat="Nearest common ancestor (NCA) where the up port is selected randomly (RND), 
@@ -823,7 +825,7 @@ sub noc_config{
     from neighboring routers. Please refer to the usere manual for more information";
     $noc_param_comment{$param}="$info";
     $default=3;
-    if($topology ne '"CUSTOM"' && $route ne '"XY"' && $route ne '"TRANC_XY"' ){
+    if($topology ne '"CUSTOM"' && $route ne '"DOR"' && $route ne '"TRANC_DOR"' ){
         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$adv_set,$noc_param,undef);
     } else {
         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,0,$noc_param,undef);
@@ -831,7 +833,7 @@ sub noc_config{
     
     #Fully adaptive routing setting
     my $v=$mpsoc->object_get_attribute($noc_param,"V");
-    $label="Select Escap VC";    
+    $label="Select Escap VC";
     $param="ESCAP_VC_MASK";
     $type="Check-box";
     $content=$v;

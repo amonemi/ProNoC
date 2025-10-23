@@ -1517,7 +1517,7 @@ For XILINX FPGAs define it as "XILINX_JTAG_WB". In this case, the UART uses BSCA
                                                                                'value' => '4'
                                                                              },
                                                                      'ROUTE_NAME' => {
-                                                                                       'value' => '"XY"'
+                                                                                       'value' => '"DOR"'
                                                                                      },
                                                                      'SELF_LOOP_EN' => {
                                                                                          'value' => '0'

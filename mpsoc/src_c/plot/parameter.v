@@ -12,7 +12,7 @@
  parameter COMBINATION_TYPE="BASELINE";
  parameter FIRST_ARBITER_EXT_P_EN=0;
  parameter TOPOLOGY="MESH";
- parameter ROUTE_NAME="XY";
+ parameter ROUTE_NAME="DOR";
  parameter CONGESTION_INDEX=3;
  parameter CLASS_CONFIG_NUM=0;
  parameter C0_p=100;
@@ -32,7 +32,7 @@
  parameter MAX_PCK_SIZ=10;
  parameter TIMSTMP_FIFO_NUM=64;
  parameter [V-1	:	0] ESCAP_VC_MASK=1;
- parameter ROUTE_TYPE = (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" || ROUTE_NAME == "TRANC")?    "DETERMINISTIC" : 
+ parameter ROUTE_TYPE = (ROUTE_NAME == "DOR" || ROUTE_NAME == "TRANC_DOR" || ROUTE_NAME == "TRANC")?    "DETERMINISTIC" : 
 			            (ROUTE_NAME == "FULL_ADPT" || ROUTE_NAME == "TRANC_FULL_ADPT" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE"; 
  parameter DEBUG_EN=0;
  parameter ROUTE_SUBFUNC= "NORTH_LAST";

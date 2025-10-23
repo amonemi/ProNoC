@@ -64,12 +64,12 @@
 	localparam Fpay=32;
             //Fpay : The packet payload width in bits
 
-	localparam ROUTE_NAME="XY";
+	localparam ROUTE_NAME="DOR";
             //ROUTE_NAME : Select the routing algorithm. Options are: 
             //    - XY: Deterministic routing (Dimension-Order Routing, DoR).
             //    - WEST_FIRST, NORTH_LAST, NEGATIVE_FIRST, ODD_EVEN:  Partially adaptive routing algorithms based on turn model restrictions.
             //    - FULL_ADPT:  Fully adaptive routing based on Duato's algorithm; requires at least two virtual channels (VCs) per port.
-            //    options are "XY","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","ODD_EVEN","FULL_ADPT"
+            //    options are "DOR","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","ODD_EVEN","FULL_ADPT"
 
 	localparam ROUTE_MODE="LOOKAHEAD";
             //ROUTE_MODE : Select the routing algorithm mode:

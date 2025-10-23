@@ -1,6 +1,6 @@
 $model = bless( {
     'noc_param'=> {
-        "ROUTE_NAME" => "\"XY\"",
+        "ROUTE_NAME" => "\"DOR\"",
         "V" => 4,
         "C" => 4,
         "CLASS_SETTING" => "16'b1000010000100001",

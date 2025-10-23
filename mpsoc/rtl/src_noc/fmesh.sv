@@ -79,7 +79,7 @@ endmodule
 
 
 module fmesh_destp_generator #(
-    parameter ROUTE_NAME = "XY",  
+    parameter ROUTE_NAME = "DOR",  
     parameter ROUTE_TYPE = "DETERMINISTIC",
     parameter P=5,
     parameter DSTPw=4,

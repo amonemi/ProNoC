@@ -136,8 +136,6 @@ module  regular_topo_vc_alloc_request_gen_adaptive #(
         );
         
         regular_topo_dspt_clear_gen #(
-            .SSA_EN(SSA_EN),
-            .DSTPw(DSTPw),
             .SW_LOC(i/V)
         ) dspt_clear_gen (
             .destport_clear(destport_clear_all[((i+1)*DSTPw)-1 : i*DSTPw]),
@@ -179,8 +177,6 @@ endmodule
 
 
 module regular_topo_dspt_clear_gen #(
-    parameter SSA_EN = 1,
-    parameter DSTPw =4,
     parameter SW_LOC=0
 )(
     destport_clear,
@@ -188,16 +184,12 @@ module regular_topo_dspt_clear_gen #(
     sel,
     ssa_ivc_num_getting_ovc_grant
 );
-    
+    import pronoc_pkg::*;
     output [DSTPw-1 : 0] destport_clear;
     input ivc_num_getting_ovc_grant;
     input sel;
     input ssa_ivc_num_getting_ovc_grant;
     
-    localparam 
-        LOCAL = 3'd0,
-        EAST = 3'd1,
-        WEST = 3'd3;
     generate
     if ( SSA_EN==1 ) begin :predict_if
         if (SW_LOC == LOCAL ) begin :local_if
@@ -222,7 +214,7 @@ endmodule
 
 module   regular_topo_mask_non_assignable_destport #(
     parameter TOPOLOGY="MESH",
-    parameter ROUTE_NAME="XY",
+    parameter ROUTE_NAME="DOR",
     parameter SW_LOC=0,
     parameter P=5,
     parameter SELF_LOOP_EN=0
@@ -279,7 +271,7 @@ endmodule
 
 module regular_topo_mask_non_assignable_destport_no_self_loop #(
     parameter TOPOLOGY="MESH",
-    parameter ROUTE_NAME="XY",
+    parameter ROUTE_NAME="DOR",
     parameter SW_LOC=0,
     parameter P=5
 )(
@@ -333,7 +325,7 @@ module regular_topo_mask_non_assignable_destport_no_self_loop #(
             assign dest_port_out[P_1-1:4] = dest_port_in[P_1-1:4]; //other local ports
         end    
         /* verilator lint_off WIDTH */ 
-        if ( ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY") begin :xy
+        if ( ROUTE_NAME == "DOR" || ROUTE_NAME == "TRANC_DOR") begin :xy
         /* verilator lint_on WIDTH */ 
             if (SW_LOC == NORTH  ) begin : nort_p // The port located in y axsis does not send packets to x dimension
                 assign dest_port_out[N_LOCAL]= dest_port_in[N_LOCAL]; 
@@ -990,7 +982,7 @@ endmodule
 
 module regular_topo_destp_generator #(
     parameter TOPOLOGY = "MESH",
-    parameter ROUTE_NAME = "XY",  
+    parameter ROUTE_NAME = "DOR",  
     parameter ROUTE_TYPE = "DETERMINISTIC",
     parameter P=5,
     parameter DSTPw=4,
@@ -1290,8 +1282,6 @@ module  regular_topo_dynamic_portsel_control #(
             .x_evc_forbiden     (x_evc_forbiden[i])
         );
         regular_topo_dspt_clear_gen #(
-            .SSA_EN(SSA_EN),
-            .DSTPw(DSTPw),
             .SW_LOC(SW_LOC)
         ) dspt_clear_gen(
             .destport_clear(destport_clear_all[((i+1)*DSTPw)-1 : i*DSTPw]),

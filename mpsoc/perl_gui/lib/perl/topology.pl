@@ -415,9 +415,10 @@ sub get_noc_verilator_top_modules_info {
     my $T1=$self->object_get_attribute('noc_param','T1');
     my $T2=$self->object_get_attribute('noc_param','T2');
     my $T3=$self->object_get_attribute('noc_param','T3');
-    my $cast = $self->object_get_attribute('noc_param','MCAST_ENDP_LIST');        
-    my $CAST_TYPE= $self->object_get_attribute('noc_param','CAST_TYPE');    
-    my $DAw_OFFSETw  =  ($topology eq '"MESH"' || $topology eq '"TORUS"' || $topology eq '"FMESH"')?  $T1 : 0; 
+    my $T4=$self->object_get_attribute('noc_param','T4');
+    my $cast = $self->object_get_attribute('noc_param','MCAST_ENDP_LIST');
+    my $CAST_TYPE= $self->object_get_attribute('noc_param','CAST_TYPE');
+    my $DAw_OFFSETw  =  ($topology eq '"MESH"' || $topology eq '"TORUS"' || $topology eq '"FMESH"' ||  $topology eq '"MESH_3D"')?  $T1 : 0; 
     my %tops;
     my %nr_p; # number of routers have $p port num
     my $router_p; #number of routers with different port number in topology 
@@ -432,8 +433,8 @@ sub get_noc_verilator_top_modules_info {
     my $custom_include="";
     if($topology eq '"FATTREE"') {
         my $K =  $T1;
-        my $L =  $T2;        
-        my $p2 = 2*$K;       
+        my $L =  $T2;
+        my $p2 = 2*$K;
         $router_p=2;
         my $NRL= $ne/$K; #number of router in  each layer
         $nr_p{1}=$NRL;
@@ -449,8 +450,8 @@ sub get_noc_verilator_top_modules_info {
         );
     }elsif ($topology eq '"TREE"'){
         my $K =  $T1;
-        my $L =  $T2;        
-        my $p2 = $K+1;       
+        my $L =  $T2;
+        my $p2 = $K+1;
         $router_p=2;# number of router with different port number                        
         $nr_p{1}=1;
         $nr_p{2}=$nr-1;
@@ -484,7 +485,18 @@ sub get_noc_verilator_top_modules_info {
             "Vrouter1" => "--top-module  router_top_v  -GP=${ports}  ",  
             #  "Vnoc" => " --top-module noc_connection",
         );
-    }elsif ($topology eq '"STAR"') { 
+    } elsif ($topology eq '"MESH_3D"') {
+        $router_p=1;
+        $nr_p{1}=$nr;
+        my $ports= 7+$T3-1;
+        $nr_p{p1}=$ports;
+        %tops = (
+            #"Vrouter1" => "router_top_v_p${ports}.v",
+            "Vrouter1" => "--top-module  router_top_v  -GP=${ports}  ",  
+            #  "Vnoc" => " --top-module noc_connection",
+        );
+    }
+    elsif ($topology eq '"STAR"') { 
         $router_p=1;# number of router with different port number
         my $ports= $T1;
         $nr_p{p1}=$ports;
@@ -496,15 +508,15 @@ sub get_noc_verilator_top_modules_info {
         );
     }else {#custom
         my $dir =get_project_dir()."/mpsoc/rtl/src_topology";
-        my $file="$dir/param.obj";    
+        my $file="$dir/param.obj";
         my %param;
         if(-f $file){
             my ($pp,$r,$err) = regen_object($file );
-            if ($r){        
+            if ($r){
                 print "**Error: cannot open $file file: $err\n";
                 return;
             } 
-            %param=%{$pp};        
+            %param=%{$pp};
         }else {
             print "**Error: cannot find $file \n";
             return;
@@ -523,8 +535,8 @@ sub get_noc_verilator_top_modules_info {
             $tops{"Vrouter$i"}= "--top-module  router_top_v  -GP=${p}  ", 
             $i++;
             
-        }    
-        $router_p=$i-1;    
+        }
+        $router_p=$i-1;
         ${topology_name} =~ s/\"+//g;
         $custom_include="#define IS_${topology_name}_noc\n";
     }#else
@@ -709,7 +721,7 @@ void  inline single_router_reset_clk(int i){
 #    }
 #} 
 #$includ_h.="\n}\n";
-    return ($nr,$ne,$router_p,\%tops,$includ_h);    
+    return ($nr,$ne,$router_p,\%tops,$includ_h);
 }
 
 sub connect_sim_nodes{
@@ -760,7 +772,7 @@ sub gen_tiles_physical_addrsses_header_file{
         $txt=$txt."\t#define PHY_ADDR_ENDP_$id  $hex\n";    
     }    
     $txt=$txt."#endif\n";
-    save_file($file,$txt);        
+    save_file($file,$txt);
 }
 
 sub get_endpoints_mah_distance {
@@ -775,7 +787,7 @@ sub get_endpoints_mah_distance {
     }elsif ($topology eq '"STAR"'){
         return 1;
     }else { #custom
-        return undef;        
+        return undef;
     }    
 }
 
@@ -803,13 +815,13 @@ sub fattree_mah_distance {
     $pow=1;
     for (my $i = 0; $i <$l; $i=$i+1 ) {
         $tmp1=int($router1/$pow);
-        $tmp2=int($router2/$pow);        
+        $tmp2=int($router2/$pow);
         $tmp1=$tmp1 % $k;
-        $tmp2=$tmp2 % $k;        
-        $pow=$pow * $k;        
+        $tmp2=$tmp2 % $k;
+        $pow=$pow * $k;
         $distance= ($i+1)*2-1 if($tmp1!=$tmp2); # distance obtained based on the highest level index which differ 
         
     }
-    return $distance;    
+    return $distance;
 }    
 1

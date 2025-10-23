@@ -52,7 +52,7 @@ module iport_reg_base  #(
     parameter VC_REALLOCATION_TYPE =  "ATOMIC",
     parameter COMBINATION_TYPE= "BASELINE",// "BASELINE", "COMB_SPEC1", "COMB_SPEC2", "COMB_NONSPEC"
     parameter TOPOLOGY =  "MESH",//"MESH","TORUS"
-    parameter ROUTE_NAME="XY",// "XY", "TRANC_XY"
+    parameter ROUTE_NAME="DOR",// "DOR", "TRANC_DOR"
     parameter ROUTE_TYPE="DETERMINISTIC",// "DETERMINISTIC", "FULL_ADAPTIVE", "PAR_ADAPTIVE"
     parameter DEBUG_EN =1,
     parameter AVC_ATOMIC_EN= 0,

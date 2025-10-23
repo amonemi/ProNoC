@@ -229,8 +229,9 @@ void topology_init(void){
                 
                 if(x>0) r2r_cnt_all[num++]=fill_r2r_cnt(1,ROUTER_NUM,WEST,1,router_id((x-1),y,z),EAST);
                 else topology_edge_connect(ROUTER_NUM, router_id((X_MAX-1),y,z), WEST, EAST, FMESH_WEST_ID, R_ADDR, &num);
-                
+                #ifndef IS_FMESH
                 if(Y_MAX==1) continue;
+                #endif
                 if (y < Y_MAX-1) r2r_cnt_all[num++] = fill_r2r_cnt(1, ROUTER_NUM, SOUTH, 1, router_id(x, y + 1, z), NORTH);
                 else topology_edge_connect(ROUTER_NUM, router_id(x, 0, z), SOUTH, NORTH, FMESH_SOUTH_ID, R_ADDR, &num);
                 

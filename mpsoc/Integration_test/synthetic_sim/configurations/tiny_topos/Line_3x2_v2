@@ -8,6 +8,6 @@ $model = bless( {
         "B" => "4",
         "LB" => "4",
         "Fpay" => "32",
-        "ROUTE_NAME"=>"\"XY\""
+        "ROUTE_NAME"=>"\"DOR\""
     }
 }, 'ProNOC' );

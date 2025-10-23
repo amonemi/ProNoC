@@ -155,8 +155,8 @@
         PPSw_REGULAR = 4, //port presel width for adaptive routing
         /* verilator lint_off WIDTH */
         ROUTE_TYPE_REGULAR = 
-            (ROUTE_NAME == "XYZ" )?   "DETERMINISTIC" :
-            (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )? "DETERMINISTIC" :
+            (ROUTE_NAME == "DOR" )?   "DETERMINISTIC" :
+            (ROUTE_NAME == "DOR" || ROUTE_NAME == "TRANC_DOR" )? "DETERMINISTIC" :
             (ROUTE_NAME == "FULL_ADPT" || ROUTE_NAME == "TRANC_FULL_ADPT" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE",
         /* verilator lint_on WIDTH */
         R2R_CHANELS_REGULAR=  (IS_RING || IS_LINE)? 2 : (IS_MESH_3D)? 6 : 4,

@@ -1,7 +1,7 @@
 $model = bless( {
     'noc_param'=> {
         "TOPOLOGY" => "\"TORUS\"",
-        "ROUTE_NAME" => "\"TRANC_XY\"",
+        "ROUTE_NAME" => "\"TRANC_DOR\"",
         "ROUTE_MODE" => "\"CONVENTIONAL\"",
     }
 }, 'ProNOC' );

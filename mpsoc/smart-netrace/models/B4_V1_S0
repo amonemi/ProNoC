@@ -1,6 +1,6 @@
 $model = bless( {
 		'noc_param'=> {
-						"ROUTE_NAME" => "\"XY\"",    					
+						"ROUTE_NAME" => "\"DOR\"",    					
 		"ADD_PIPREG_AFTER_CROSSBAR" => "1'b1",				
 		"V" => "1",
 		"B" => "4",

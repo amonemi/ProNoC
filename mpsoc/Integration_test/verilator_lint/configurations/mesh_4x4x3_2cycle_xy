@@ -4,6 +4,6 @@ $model = bless( {
         "T2" => "4",
         "T3" => "3",
         "TOPOLOGY" => "\"MESH\"",
-        "ROUTE_NAME" => "\"XY\"",
+        "ROUTE_NAME" => "\"DOR\"",
     }
 }, 'ProNOC' );

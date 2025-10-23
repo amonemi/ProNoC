@@ -195,10 +195,10 @@ pronoc_pkg, "(PCK_TYPE == "SINGLE_FLIT")"
 
 Lint-[ULCO] Unequal length in comparison operator
 ./../../rtl/src_noc/./topology_localparam.v, 143
-pronoc_pkg, "(ROUTE_NAME == "TRANC_XY")"
+pronoc_pkg, "(ROUTE_NAME == "TRANC_DOR")"
   A left 16-bit expression is compared to a right 64-bit expression.
   Comparing 'ROUTE_NAME' of type string
-  with '"TRANC_XY"' of type string.
+  with '"TRANC_DOR"' of type string.
 
 
 Lint-[ULCO] Unequal length in comparison operator
