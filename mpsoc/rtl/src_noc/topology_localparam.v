@@ -20,7 +20,7 @@
         IS_STAR=   (TOPOLOGY == "STAR"),
         IS_MULTI_MESH=(TOPOLOGY == "MULTI_MESH"),
         IS_MESH_3D= (TOPOLOGY == "MESH_3D"),
-        IS_REGULAR_TOPO = (IS_RING | IS_LINE | IS_MESH | IS_TORUS),
+        IS_REGULAR_TOPO = (IS_RING | IS_LINE | IS_MESH | IS_TORUS | IS_MESH_3D),
         IS_MULTI_ENDP_ROUTER = (T3 > 1) ;
         /* verilator lint_on WIDTH */ 
     
@@ -97,14 +97,14 @@
     input integer router_port_num;  //router port num
     input integer current_port;
     begin 
-        if(IS_MESH | IS_FMESH | IS_TORUS | IS_MULTI_MESH) begin 
+        if(IS_MESH | IS_FMESH | IS_TORUS | IS_MULTI_MESH | IS_MESH_3D) begin 
             strieght_port = 
                 (current_port == EAST)?  WEST:
                 (current_port == WEST)?  EAST:
                 (current_port == SOUTH)? NORTH:
                 (current_port == NORTH)? SOUTH:
-                (IS_MULTI_MESH && current_port== UP)? DOWN: 
-                (IS_MULTI_MESH && current_port== DOWN)? UP:
+                ((IS_MESH_3D | IS_MULTI_MESH) && current_port== UP)? DOWN: 
+                ((IS_MESH_3D | IS_MULTI_MESH) && current_port== DOWN)? UP:
                 router_port_num; //DISABLED;
         end else if (IS_RING | IS_LINE) begin 
             strieght_port = 
@@ -132,16 +132,16 @@
     input integer router_port_num;  //router port num
     begin
         port_buffer_size = B;
-        if(IS_MESH || IS_FMESH || IS_TORUS || IS_RING || IS_LINE)begin 
+        if(IS_MESH | IS_FMESH | IS_TORUS | IS_RING | IS_LINE)begin 
             if (router_port_num == 0 || router_port_num > 4 ) port_buffer_size = LB;
-        end else if (IS_MULTI_MESH)  begin
+        end else if (IS_MULTI_MESH | IS_MESH_3D)  begin
             if (router_port_num == 0) port_buffer_size = LB;
         end
     end
     endfunction
     
     /*******************
-    *   REGULAR_TOPO: "RING"  "LINE"  "MESH" TORUS" "FMESH"
+    *   REGULAR_TOPO: "RING"  "LINE"  "MESH" TORUS" "FMESH" "MESH_3D"
     ******************/
     localparam 
         NX = T1,
@@ -155,14 +155,13 @@
         PPSw_REGULAR = 4, //port presel width for adaptive routing
         /* verilator lint_off WIDTH */
         ROUTE_TYPE_REGULAR = 
-            (ROUTE_NAME == "DOR" )?   "DETERMINISTIC" :
             (ROUTE_NAME == "DOR" || ROUTE_NAME == "TRANC_DOR" )? "DETERMINISTIC" :
             (ROUTE_NAME == "FULL_ADPT" || ROUTE_NAME == "TRANC_FULL_ADPT" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE",
         /* verilator lint_on WIDTH */
         R2R_CHANELS_REGULAR=  (IS_RING || IS_LINE)? 2 : (IS_MESH_3D)? 6 : 4,
         R2E_CHANELS_REGULAR= NL,
         RAw_REGULAR = ( IS_RING | IS_LINE)? NXw :(IS_MESH_3D)? NXw + NYw + NZw : NXw + NYw,
-        EAw_REGULAR = (NL==1 && IS_MESH_3D==1'b0) ? RAw_REGULAR : RAw_REGULAR + NLw,
+        EAw_REGULAR = (NL==1 ) ? RAw_REGULAR : RAw_REGULAR + NLw,
         NR_REGULAR = (IS_RING || IS_LINE)? NX :(IS_MESH_3D)? NX*NY*NZ : NX*NY,
         NE_REGULAR = NR_REGULAR * NL,
         MAX_P_REGULAR = R2R_CHANELS_REGULAR + R2E_CHANELS_REGULAR,
@@ -249,19 +248,19 @@
         MAX_P_MULTI_MESH = 7,
         DSTPw_MULTI_MESH = log2(MAX_P_MULTI_MESH);
     /*************************
-    *   MESH_3D
+    *   regular_topo address struct
     **************************/
     typedef struct packed {
         logic [NZw-1 : 0] z;
         logic [NYw-1 : 0] y;
         logic [NXw-1 : 0] x;
-    } mesh_3d_router_addr_t;
+    } regular_topo_router_addr_t;
     typedef struct packed {
         logic [NLw-1 : 0] l;
         logic [NZw-1 : 0] z;
         logic [NYw-1 : 0] y;
         logic [NXw-1 : 0] x;
-    } mesh_3d_endp_addr_t;
+    } regular_topo_endp_addr_t;
     
     localparam
         PPSw = PPSw_REGULAR,

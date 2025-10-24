@@ -58,11 +58,11 @@ module mesh_3d_noc_top (
     smartflit_chanel_t is_grounded;
     assign  is_grounded= {SMARTFLIT_CHANEL_w{1'b0}};
     
-    mesh3d_router_addr_t current_r_addr [NR-1:0];
-    mesh3d_endp_addr_t endp_addr [NE-1:0];
+    regular_topo_router_addr_t current_r_addr [NR-1:0];
+    regular_topo_endp_addr_t endp_addr [NE-1:0];
     router_config_t router_config_in [NR-1 : 0];
     
-    genvar x,y,z;
+    genvar x,y,z,l;
     generate
     for (z=0; z<NZ; z=z+1) begin: Z_
         for (y=0; y<NY; y=y+1) begin: Y_
@@ -102,8 +102,8 @@ module mesh_3d_noc_top (
                     localparam LOCALP = (l==0) ? l : l + R2R_CHANELS_REGULAR; // first local port is connected to router port 0. The rest are connected at the end  
                     assign endp_addr[EID]='{x:x,y:y,z:z,l:l};
                     assign router_config_in[RID].endp_addrs=current_r_addr[RID];
-                    assign router_chan_in [z][y][x][LOCALP] = endpoint_chan_in [EID];
-                    assign endpoint_chan_out [EID] = router_chan_out [z][y][x][LOCALP];
+                    assign router_chan_in [z][y][x][LOCALP] = chan_in_all [EID];
+                    assign chan_out_all [EID] = router_chan_out [z][y][x][LOCALP];
                     assign router_config_in[RID].endp_addrs[(l+1)*EAw -1 :  l*EAw] = EAw'(endp_addr[EID]);
                     assign router_config_in[RID].endp_ids[(l+1)*NEw -1 :  l*NEw] = NEw'(EID);
                 end
@@ -121,8 +121,8 @@ module mesh_3d_route_xyz (
     router_port_out
 );
     import pronoc_pkg::*;
-    input mesh_3d_router_addr_t current_router_addr_i;
-    input mesh_3d_endp_addr_t   destination_endp_addr_i;
+    input regular_topo_router_addr_t current_router_addr_i;
+    input regular_topo_endp_addr_t   destination_endp_addr_i;
     output logic [DSTPw-1 : 0] router_port_out;
     
     // Define state type using typedef
@@ -131,22 +131,20 @@ module mesh_3d_route_xyz (
         LESS  = 3'b010,
         EQUAL = 3'b100
     } state_t;
-    state_t Dx,Dy,Dz,Dc;
+    state_t Dx,Dy,Dz;
     assign  Dx = (destination_endp_addr_i.x > current_router_addr_i.x)? MASS:(destination_endp_addr_i.x == current_router_addr_i.x)?EQUAL : LESS;
     assign  Dy = (destination_endp_addr_i.y > current_router_addr_i.y)? MASS:(destination_endp_addr_i.y == current_router_addr_i.y)?EQUAL : LESS;
     assign  Dz = (destination_endp_addr_i.z > current_router_addr_i.z)? MASS:(destination_endp_addr_i.z == current_router_addr_i.z)?EQUAL : LESS;
-    assign  Dc = (destination_endp_addr_i.c > current_router_addr_i.c)? MASS:(destination_endp_addr_i.c == current_router_addr_i.c)?EQUAL : LESS;
+    
     always_comb begin
         router_port_out=0;
-        if(Dx==MASS) router_port_out = EAST;
-        else if(Dx==LESS) router_port_out =WEST;
-        else if(Dy==MASS) router_port_out =SOUTH;
-        else if(Dy==LESS) router_port_out =NORTH;
-        else if(Dz==MASS) router_port_out =UP;
-        else if(Dz==LESS) router_port_out =DOWN;
-        else if(Dc==MASS) router_port_out =UP;
-        else if(Dc==LESS) router_port_out =DOWN;
-        else router_port_out=(destination_endp_addr_i.l==0) ? LOCAL: DOWN + destination_endp_addr_i.l;
+        if(Dx==MASS) router_port_out =DSTPw'(EAST);
+        else if(Dx==LESS) router_port_out =DSTPw'(WEST);
+        else if(Dy==MASS) router_port_out =DSTPw'(SOUTH);
+        else if(Dy==LESS) router_port_out =DSTPw'(NORTH);
+        else if(Dz==MASS) router_port_out =DSTPw'(UP);
+        else if(Dz==LESS) router_port_out =DSTPw'(DOWN);
+        else router_port_out=(destination_endp_addr_i.l==NLw'(0)) ? DSTPw'(LOCAL): DSTPw'(DOWN) + destination_endp_addr_i.l;
     end
 endmodule
 

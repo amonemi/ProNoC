@@ -264,7 +264,7 @@ unsigned int pck_dst_gen_synthetic (unsigned int core_num, unsigned char * injec
             ( Z_MAX==1 ) ? ((X_MAX-current_x-1) % Y_MAX) : 
             ((Z_MAX-current_z-1)  % Y_MAX);
         dest_z = (X_MAX-current_x-1) % Z_MAX;
-        dest_l = L_MAX-current_l-1;
+        dest_l = current_l;
         return pck_dst_gen_return_func(dest_x,dest_y,dest_z,dest_l);
     }
     if(( strcmp(TRAFFIC ,"TRANSPOSE2")==0)|| (strcmp (TRAFFIC,"transposed 2")==0)){
