@@ -117,13 +117,13 @@ endmodule
 
 module mesh_3d_route_xyz (
     current_router_addr_i,
-    destination_endp_addr_i,
-    router_port_out
+    dest_router_addr_i,
+    destport
 );
     import pronoc_pkg::*;
     input regular_topo_router_addr_t current_router_addr_i;
-    input regular_topo_endp_addr_t   destination_endp_addr_i;
-    output logic [DSTPw-1 : 0] router_port_out;
+    input regular_topo_router_addr_t dest_router_addr_i;
+    output logic [DSTPw-1 : 0] destport;
     
     // Define state type using typedef
     typedef enum logic [2:0] {
@@ -132,19 +132,19 @@ module mesh_3d_route_xyz (
         EQUAL = 3'b100
     } state_t;
     state_t Dx,Dy,Dz;
-    assign  Dx = (destination_endp_addr_i.x > current_router_addr_i.x)? MASS:(destination_endp_addr_i.x == current_router_addr_i.x)?EQUAL : LESS;
-    assign  Dy = (destination_endp_addr_i.y > current_router_addr_i.y)? MASS:(destination_endp_addr_i.y == current_router_addr_i.y)?EQUAL : LESS;
-    assign  Dz = (destination_endp_addr_i.z > current_router_addr_i.z)? MASS:(destination_endp_addr_i.z == current_router_addr_i.z)?EQUAL : LESS;
+    assign  Dx = (dest_router_addr_i.x > current_router_addr_i.x)? MASS:(dest_router_addr_i.x == current_router_addr_i.x)?EQUAL : LESS;
+    assign  Dy = (dest_router_addr_i.y > current_router_addr_i.y)? MASS:(dest_router_addr_i.y == current_router_addr_i.y)?EQUAL : LESS;
+    assign  Dz = (dest_router_addr_i.z > current_router_addr_i.z)? MASS:(dest_router_addr_i.z == current_router_addr_i.z)?EQUAL : LESS;
     
     always_comb begin
-        router_port_out=0;
-        if(Dx==MASS) router_port_out =DSTPw'(EAST);
-        else if(Dx==LESS) router_port_out =DSTPw'(WEST);
-        else if(Dy==MASS) router_port_out =DSTPw'(SOUTH);
-        else if(Dy==LESS) router_port_out =DSTPw'(NORTH);
-        else if(Dz==MASS) router_port_out =DSTPw'(UP);
-        else if(Dz==LESS) router_port_out =DSTPw'(DOWN);
-        else router_port_out=(destination_endp_addr_i.l==NLw'(0)) ? DSTPw'(LOCAL): DSTPw'(DOWN) + destination_endp_addr_i.l;
+        destport=0;
+        if(Dx==MASS) destport =DSTPw'(EAST);
+        else if(Dx==LESS) destport =DSTPw'(WEST);
+        else if(Dy==MASS) destport =DSTPw'(SOUTH);
+        else if(Dy==LESS) destport =DSTPw'(NORTH);
+        else if(Dz==MASS) destport =DSTPw'(UP);
+        else if(Dz==LESS) destport =DSTPw'(DOWN);
+        else destport =  DSTPw'(LOCAL);
     end
 endmodule
 

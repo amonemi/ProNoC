@@ -14,7 +14,7 @@ module regular_topo_look_ahead_routing (
     clk
 );
     import pronoc_pkg::*;
-    localparam  P = ( IS_MESH || IS_FMESH || IS_TORUS ) ? 5 : 3;
+    localparam  P = (IS_MESH_3D)? 7 : ( IS_MESH || IS_FMESH || IS_TORUS ) ? 5 : 3;
     
     localparam  P_1 = P-1;
     input regular_topo_router_addr_t dest_router_addr_i;
@@ -71,37 +71,32 @@ module  regular_topo_deterministic_look_ahead_routing #(
     lkdestport // look ahead destination port number
 );
     import pronoc_pkg::*;
-    localparam  P_1 = P-1;
+    localparam  
+        P_1 = P-1,
+        Pw= log2(P);
     
     input regular_topo_router_addr_t dest_router_addr_i;
     input [P_1-1 : 0]  destport;
     input [RAw-1 : 0]  neighbors_r_addr [P-1 : 0];
     output  [P_1-1 : 0]  lkdestport;
-    
-    wire [P-1 : 0]  destport_one_hot;
-    
+    wire [Pw-1 : 0]  dstport_decimal;
     genvar i;
     generate 
-    if (IS_MESH || IS_TORUS || IS_FMESH ) begin: twoD
-        regular_topo_decode_dstport decoder(
-            .dstport_encoded(destport),
-            .dstport_one_hot(destport_one_hot)
-        );
+    if(IS_MESH_3D) begin: threeD
+        assign dstport_decimal = destport;
+    end else if (IS_MESH || IS_TORUS || IS_FMESH ) begin: twoD
+        regular_topo_destport_decode_decimal decoder(
+            .destport_encoded(destport),
+            .destport_decimal(dstport_decimal)
+        );       
     end else begin :oneD
-        line_ring_decode_dstport decoder(
-            .dstport_encoded(destport),
-            .dstport_one_hot(destport_one_hot)
+        line_ring_destport_decode_decimal  decoder(
+            .destport_encoded(destport),
+            .destport_decimal(dstport_decimal)
         );
     end
     endgenerate 
-    //Onehot mux to select next router
-    logic [RAw-1 : 0] next_router_addr;
-    always_comb begin
-        next_router_addr = '0;
-        for(int m=0;m< P;m++) begin
-            next_router_addr |= (destport_one_hot[m]) ?  neighbors_r_addr[m] :  '0;
-        end
-    end
+    wire [RAw-1 : 0] next_router_addr = neighbors_r_addr[dstport_decimal];
     
     wire [P_1-1 : 0] lkdestport_encoded;
     regular_topo_router_addr_t next_router_addr_struct;
@@ -360,7 +355,13 @@ module regular_topo_conventional_routing #(
     output logic [DSTPw-1 : 0] destport;
     
     generate 
-    if (IS_MESH || IS_FMESH) begin :mesh
+    if (IS_MESH_3D) begin 
+        mesh_3d_route_xyz the_conventional_routing(
+            .current_router_addr_i(current_router_addr_i),
+            .dest_router_addr_i(dest_router_addr_i),
+            .destport(destport)
+        );
+    end else if (IS_MESH || IS_FMESH) begin :mesh
     /* verilator lint_off WIDTH */ 
         if(ROUTE_NAME == "DOR") begin : xy_routing_blk
     /* verilator lint_on WIDTH */ 
@@ -733,6 +734,25 @@ module line_ring_decode_dstport (
     end //always
 endmodule
 
+module line_ring_destport_decode_decimal (
+    destport_decimal,
+    destport_encoded
+);
+    import pronoc_pkg::*;
+    output  reg [1 : 0] destport_decimal;
+    input [1 : 0] destport_encoded;
+    localparam Pw=2;
+    
+    always @(*)begin 
+        destport_decimal = Pw'(LOCAL);
+        case(destport_encoded)
+            2'b10 : destport_decimal=Pw'(BACKWARD);
+            2'b01 : destport_decimal=Pw'(FORWARD);
+            2'b00 : destport_decimal=Pw'(LOCAL);
+            2'b11 : destport_decimal=Pw'(LOCAL); //invalid condition in determinstic routing
+        endcase
+    end //always
+endmodule
 
 module regular_topo_decode_dstport (
     dstport_encoded,
@@ -752,6 +772,35 @@ module regular_topo_decode_dstport (
         endcase
    end //always
 endmodule 
+
+module regular_topo_destport_decode_decimal (
+    destport_encoded,
+    destport_decimal
+);
+    import pronoc_pkg::*;
+    input [3 : 0] destport_encoded;
+    output reg [2 : 0] destport_decimal;
+    localparam Pw=3;
+    wire x,y,a,b;
+    assign {x,y,a,b} = destport_encoded;
+    
+    always_comb begin
+    destport_decimal = 0;
+    case ({a, b})   
+        2'b10: destport_decimal = (x) ? Pw'(EAST) : Pw'(WEST); // 1=East, 2=West
+        2'b01: destport_decimal = (y) ? Pw'(NORTH) : Pw'(SOUTH); // 3=North, 4=South
+        2'b11: begin
+            // Both directions is illegal for decimal output
+            destport_decimal = (x) ? Pw'(EAST) : Pw'(WEST);
+        end
+        2'b00: begin
+            // Local node
+            destport_decimal = Pw'(LOCAL);
+        end
+    endcase
+    end
+endmodule
+
 
 module regular_topo_full_adapt_ovc_avail #(
     parameter P = 4

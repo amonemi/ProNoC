@@ -17,16 +17,19 @@
     #define Y_MAX  1
     #define Z_MAX  1
     #define L_MAX  T3
+    #define DIM    1
 #elif defined (IS_MESH_3D)
     #define X_MAX  T1
     #define Y_MAX  T2
     #define Z_MAX  T3
     #define L_MAX  T4
+    #define DIM    3
 #elif defined (IS_TORUS) || defined (IS_MESH) || defined (IS_FMESH)
     #define X_MAX  T1
     #define Y_MAX  T2
     #define Z_MAX  1
     #define L_MAX  T3
+    #define DIM    2
 #endif
 
 #if defined (IS_LINE) || defined (IS_RING )
@@ -51,7 +54,58 @@ unsigned int maskx=0;
 unsigned int masky=0;
 unsigned int maskz=0;
 
+
+
+unsigned int fmesh_l_coords_fix(unsigned int x, unsigned  int y, unsigned int l){
+    if(l == LOCAL) return l;
+    if(l > SOUTH) return l;
+    if(x==0 && l == WEST) return l;
+    if(x== (T1-1) && l == EAST) return l;
+    if(y==0 && l == NORTH) return l;
+    if(y== (T2-1) && l == SOUTH) return l;
+    if(x==0) return WEST;
+    if(x== (T1-1)) return EAST;
+    if(y==0) return NORTH;
+    if(y== (T2-1)) return SOUTH;
+    return  LOCAL;
+}
+
+void fmesh_Eid_to_coords(unsigned int id, unsigned int *x, unsigned int *y, unsigned int *p){
+    unsigned int  l, diff,mul,addrencode;
+    mul  = T1*T2*T3;
+    if(id < mul) {
+        *y = ((id/T3) / T1 );
+        *x = ((id/T3) % T1 );
+        l = (id % T3);
+        *p = (l==0)? LOCAL : 4+l;
+    }else{
+        diff = id -  mul ;
+        if( diff <  T1) { //top mesh edge
+            *y = 0;
+            *x = diff;
+            *p = NORTH;
+        } else if  ( diff < 2* T1) { //bottom mesh edge
+            *y = T2-1;
+            *x = diff-T1;
+            *p = SOUTH;
+        } else if  ( diff < (2* T1) + T2 ) { //left mesh edge
+            *y = diff - (2* T1);
+            *x = 0;
+            *p = WEST;
+        } else { //right mesh edge
+            *y = diff - (2* T1) -T2;
+            *x = T1-1;
+            *p = EAST;
+        }
+    }
+}
+
 void regular_topo_Eid_to_coords(unsigned int EID, unsigned int * x, unsigned int * y, unsigned int * z, unsigned int * l){
+#if defined (IS_FMESH)
+    (*z)=0;
+    fmesh_Eid_to_coords(EID, x, y, l);
+    return;
+#endif
     (*l) = EID % L_MAX;
     unsigned int RID = EID / L_MAX;
     (*x) = RID % X_MAX;
@@ -62,27 +116,28 @@ void regular_topo_Eid_to_coords(unsigned int EID, unsigned int * x, unsigned int
 unsigned int regular_topo_coords_to_Eaddr(unsigned int x, unsigned int y, unsigned int z, unsigned int l){
     unsigned int code=x;
     unsigned int shift =nxw;
-    if(Y_MAX > 1) {
+    if(DIM > 1) {
         code|=y<<shift;
         shift+=nyw;
     } 
-    if(Z_MAX > 1) {
+    if(DIM > 2) {
         code|=z<<shift;
         shift+=nzw;
-    }if(L_MAX > 1) {
-        code|=l<<shift;
     }
+    code|=l<<shift;
     return code;
 }
+
+
 
 void regular_topo_Eaddr_to_coords(unsigned int code, unsigned int *x, unsigned int *y, unsigned int *z, unsigned int *l){
     (*x) = code &  maskx;
     code>>=nxw;
-    if(Y_MAX > 1) {
+    if(DIM > 1) {
         (*y) = code &  masky;
         code>>=nyw;
     } else (*y)=0;
-    if(Z_MAX > 1) {
+    if(DIM > 2) {
         (*z) = code &  maskz;
         code>>=nzw;
     } else (*z)=0;
@@ -113,39 +168,9 @@ unsigned int fmesh_endp_addr_decoder (unsigned int code){
     return 0;//should not reach here
 }
 
-void fmesh_addrencod_sep(unsigned int id, unsigned int *x, unsigned int *y, unsigned int *p){
-    unsigned int  l, diff,mul,addrencode;
-    mul  = T1*T2*T3;
-    if(id < mul) {
-        *y = ((id/T3) / T1 );
-        *x = ((id/T3) % T1 );
-        l = (id % T3);
-        *p = (l==0)? LOCAL : 4+l;
-    }else{
-        diff = id -  mul ;
-        if( diff <  T1) { //top mesh edge
-            *y = 0;
-            *x = diff;
-            *p = NORTH;
-        } else if  ( diff < 2* T1) { //bottom mesh edge
-            *y = T2-1;
-            *x = diff-T1;
-            *p = SOUTH;
-        } else if  ( diff < (2* T1) + T2 ) { //left mesh edge
-            *y = diff - (2* T1);
-            *x = 0;
-            *p = WEST;
-        } else { //right mesh edge
-            *y = diff - (2* T1) -T2;
-            *x = T1-1;
-            *p = EAST;
-        }
-    }
-}
-
 unsigned int fmesh_addrencode(unsigned int id){
     unsigned int  y, x, p, addrencode;
-    fmesh_addrencod_sep(id, &x, &y, &p);
+    fmesh_Eid_to_coords(id, &x, &y, &p);
     addrencode = ( p<<(nxw+nyw) | (y<<nxw) | x);
     return addrencode;
 }
@@ -229,15 +254,13 @@ void topology_init(void){
                 
                 if(x>0) r2r_cnt_all[num++]=fill_r2r_cnt(1,ROUTER_NUM,WEST,1,router_id((x-1),y,z),EAST);
                 else topology_edge_connect(ROUTER_NUM, router_id((X_MAX-1),y,z), WEST, EAST, FMESH_WEST_ID, R_ADDR, &num);
-                #ifndef IS_FMESH
-                if(Y_MAX==1) continue;
-                #endif
+                if(DIM==1) continue;
                 if (y < Y_MAX-1) r2r_cnt_all[num++] = fill_r2r_cnt(1, ROUTER_NUM, SOUTH, 1, router_id(x, y + 1, z), NORTH);
                 else topology_edge_connect(ROUTER_NUM, router_id(x, 0, z), SOUTH, NORTH, FMESH_SOUTH_ID, R_ADDR, &num);
                 
                 if (y>0) r2r_cnt_all[num++] = fill_r2r_cnt(1, ROUTER_NUM, NORTH, 1, router_id(x, y - 1, z), SOUTH);
                 else topology_edge_connect(ROUTER_NUM, router_id(x, (Y_MAX-1), z), NORTH, SOUTH, FMESH_NORTH_ID, R_ADDR, &num);
-                if(Z_MAX==1) continue;
+                if(DIM==2) continue;
                 if (z < Z_MAX-1) r2r_cnt_all[num++] = fill_r2r_cnt(1, router_id(x, y, z), UP, 1, router_id(x, y, z + 1), DOWN);
                 else    connect_r2gnd(1,ROUTER_NUM,UP);
                 if (z > 0)  r2r_cnt_all[num++] = fill_r2r_cnt(1, ROUTER_NUM, DOWN, 1, router_id(x, y, z - 1), UP);
@@ -253,8 +276,8 @@ void topology_init(void){
 unsigned int get_mah_distance ( unsigned int id1, unsigned int id2){
     #if defined (IS_FMESH)
         unsigned int x1,y1,p1,x2,y2,p2;
-        fmesh_addrencod_sep       ( id1, &x1, &y1, &p1);
-        fmesh_addrencod_sep       ( id2, &x2, &y2, &p2);
+        fmesh_Eid_to_coords       ( id1, &x1, &y1, &p1);
+        fmesh_Eid_to_coords       ( id2, &x2, &y2, &p2);
         unsigned int z1=0;
         unsigned int z2=0;
     #else
