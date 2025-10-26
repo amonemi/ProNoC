@@ -279,7 +279,7 @@ sub gen_emulation_column {
                 my $temp = __PACKAGE__->new();
                 my $st = ($mode eq "simulate" )?  check_sim_sample($emulate,$sample,$info)   : check_sample($emulate,$sample,$info);
                 return if $st==0;
-                my ($topology, $T1, $T2, $T3, $V, $Fpay) = get_sample_emulation_param($emulate,$sample);
+                my ($topology, $T1, $T2, $T3, $T4, $V, $Fpay) = get_sample_emulation_param($emulate,$sample);
                 my $ref=$emulate->object_get_attribute($sample,"noc_info");
                 if (defined $ref){
                     my %noc_info= %$ref;
@@ -293,10 +293,11 @@ sub gen_emulation_column {
             $traffic-> signal_connect("clicked" => sub{
                 my $st = ($mode eq "simulate" )?  check_sim_sample($emulate,$sample,$info)   : check_sample($emulate,$sample,$info);
                 return if $st==0;
-                my ($topology, $T1, $T2, $T3, $V, $Fpay) = get_sample_emulation_param($emulate,$sample);
+                my ($topology, $T1, $T2, $T3, $T4, $V, $Fpay) = get_sample_emulation_param($emulate,$sample);
                 $emulate->object_add_attribute('noc_param','T1',$T1);
                 $emulate->object_add_attribute('noc_param','T2',$T2);
                 $emulate->object_add_attribute('noc_param','T3',$T3);
+                $emulate->object_add_attribute('noc_param','T4',$T4);
                 $emulate->object_add_attribute('noc_param','TOPOLOGY',$topology);
                 my $pattern="";
                 my $traffictype=$emulate->object_get_attribute($sample,"TRAFFIC_TYPE");

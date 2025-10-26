@@ -247,6 +247,35 @@ module remove_sw_loc_one_hot #(
     endgenerate
 endmodule
 
+module destport_non_selfloop_fix #(
+    parameter SELF_LOOP_EN = 0,
+    parameter P = 5,
+    parameter SW_LOC = 0
+)(
+    destport_in,
+    destport_out
+);
+    localparam P_1 = (SELF_LOOP_EN)?  P : P-1;
+    
+    input [P-1 : 0] destport_in;
+    output [P_1-1 : 0] destport_out;
+    
+    generate 
+    if (SELF_LOOP_EN) begin
+        assign destport_out = destport_in;
+    end else begin
+        if(SW_LOC==0)begin :local_p
+            assign destport_out= destport_in[P-1 : 1];
+        end else if (SW_LOC==P_1)begin :last_p
+            assign destport_out= destport_in[P_1-1 : 0];
+        end else begin :midle_p
+            assign destport_out= {destport_in[P-1 : SW_LOC+1],destport_in[SW_LOC-1 :  0]};
+        end
+    end 
+    endgenerate
+endmodule
+
+
 
 /***********************************
 *     remove_receive_port_one_hot

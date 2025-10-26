@@ -14,9 +14,17 @@ sub get_sample_emulation_param {
     my $T1=$noc_info{'T1'};
     my $T2=$noc_info{'T2'};
     my $T3=$noc_info{'T3'};
+    my $T4=$noc_info{'T4'};
     my $V =$noc_info{'V'};
     my $Fpay = $noc_info{'Fpay'};    
-    return ($topology, $T1, $T2, $T3, $V, $Fpay);        
+    return ($topology, $T1, $T2, $T3, $T4, $V, $Fpay);        
+}
+
+sub get_sample_topology_info{
+    my ($self,$sample)= @_;
+    my ($topology, $T1, $T2, $T3, $T4, $V, $Fpay) = get_sample_emulation_param($self,$sample);
+    my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info_sub ($topology, $T1, $T2, $T3, $T4, $V, $Fpay);
+    return ($NE, $NR, $RAw, $EAw, $Fw);
 }
 
 sub getBit{
@@ -38,8 +46,8 @@ sub setBit{
 
 sub pck_dst_gen_2D {
     my ($self,$sample,$traffic,$core_num,$line_num,$rnd)=@_;
-    my ($topology, $T1, $T2, $T3, $V, $Fpay) = get_sample_emulation_param($self,$sample);
-    my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info_sub ($topology, $T1, $T2, $T3, $V, $Fpay);
+    my ($topology, $T1, $T2, $T3, $T4, $V, $Fpay) = get_sample_emulation_param($self,$sample);
+    my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info_sub ($topology, $T1, $T2, $T3, $T4, $V, $Fpay);
     my $NEw=log2($NE);      
     #for mesh-tori
     my  ($current_l,$current_x, $current_y);
@@ -127,8 +135,8 @@ sub pck_dst_gen_2D {
 
 sub pck_dst_gen_1D {
     my ($self,$sample,$traffic,$core_num,$line_num,$rnd)=@_;
-    my ($topology, $T1, $T2, $T3, $V, $Fpay) = get_sample_emulation_param($self,$sample);
-    my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info_sub ($topology, $T1, $T2, $T3, $V, $Fpay);
+    my ($topology, $T1, $T2, $T3, $T4, $V, $Fpay) = get_sample_emulation_param($self,$sample);
+    my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info_sub ($topology, $T1, $T2, $T3, $T4, $V, $Fpay);
     my $NEw=log2($NE);      
     if( $traffic eq "random") {                
         my @randoms=@{$rnd};        
@@ -186,7 +194,7 @@ sub pck_dst_gen_1D {
 
 sub pck_dst_gen{ 
     my ($self,$sample,$traffic,$core_num,$line_num,$rnd)=@_;
-    my ($topology, $T1, $T2, $T3, $V, $Fpay) = get_sample_emulation_param($self,$sample);
+    my ($topology, $T1, $T2, $T3, $T4, $V, $Fpay) = get_sample_emulation_param($self,$sample);
     return  pck_dst_gen_2D ($self,$sample,$traffic,$core_num,$line_num,$rnd) if(( $topology eq '"MESH"') ||( $topology eq '"TORUS"'));
     return  pck_dst_gen_1D ($self,$sample,$traffic,$core_num,$line_num,$rnd);
 }

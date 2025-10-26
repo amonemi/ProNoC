@@ -154,7 +154,7 @@ module look_ahead_routing #(
     input   [DSTPw-1  :   0]  destport_encoded;
     output  [DSTPw-1  :   0]  lkdestport_encoded;
     input   reset,clk;
-    localparam  PP = ( IS_MESH || IS_FMESH || IS_TORUS ) ? 5 : 3;
+    localparam  PP = ( IS_MESH | IS_FMESH | IS_TORUS ) ? 5 : (IS_MESH_3D) ? 7 : 3;
     logic [RAw-1 : 0]  neighbors_r_addr_array [PP-1 : 0];
     
     genvar i;

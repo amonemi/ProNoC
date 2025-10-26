@@ -17,9 +17,10 @@ sub get_topology_info {
     my $T1=$self->object_get_attribute($noc_param,'T1');
     my $T2=$self->object_get_attribute($noc_param,'T2');
     my $T3=$self->object_get_attribute($noc_param,'T3');
+    my $T4=$self->object_get_attribute($noc_param,'T4');
     my $V = $self->object_get_attribute($noc_param,'V');
     my $Fpay = $self->object_get_attribute($noc_param,'Fpay');
-    return get_topology_info_sub($topology, $T1, $T2, $T3,$V, $Fpay);    
+    return get_topology_info_sub($topology, $T1, $T2, $T3, $T4, $V, $Fpay);    
 }    
 
 sub get_topology_info_from_parameters {
@@ -30,13 +31,14 @@ sub get_topology_info_from_parameters {
     my $T1  =$param{'T1'};
     my $T2  =$param{'T2'};
     my $T3  =$param{'T3'};
+    my $T4  =$param{'T4'};
     my $V   =$param{'V'};
     my $Fpay=$param{'Fpay'};    
-    return get_topology_info_sub($topology, $T1, $T2, $T3,$V, $Fpay);    
+    return get_topology_info_sub($topology, $T1, $T2, $T3, $T4,$V, $Fpay);    
 }
 
 sub get_topology_info_sub {
-    my ($topology, $T1, $T2, $T3,$V, $Fpay)=@_;
+    my ($topology, $T1, $T2, $T3, $T4,$V, $Fpay)=@_;
     my $NE;    # Total number of end points (local ports) in the NoC
     my $NR;    # Total number of routers in NoC
     my $RAw;   # Routers address width
@@ -89,6 +91,20 @@ sub get_topology_info_sub {
         $RAw = $Xw + $Yw;
         $EAw = ($NL==1) ? $RAw : $RAw + $Lw;
         $MAX_P =  4 + $NL;
+    }elsif ($topology eq '"MESH_3D"' ) {
+        my $NX=$T1;
+        my $NY=$T2;
+        my $NL=$T3;
+        my $NZ=$T4;
+        $NE = $NX*$NY*$NL*$NZ;
+        $NR = $NX*$NY*$NZ;    
+        my $Xw=log2($NX);
+        my $Yw=log2($NY); 
+        my $Lw=log2($NL);
+        my $Zw=log2($NZ);
+        $RAw = $Xw + $Yw + $Zw;
+        $EAw = ($NL==1) ? $RAw : $RAw + $Lw;
+        $MAX_P =  6 + $NL;
     }elsif ($topology eq '"FMESH"'){
         my $NX=$T1;
         my $NY=$T2;

@@ -981,16 +981,10 @@ module  regular_topo_addr_coder (
 endmodule
 
 module regular_topo_destp_generator #(
-    parameter TOPOLOGY = "MESH",
-    parameter ROUTE_NAME = "DOR",  
-    parameter ROUTE_TYPE = "DETERMINISTIC",
     parameter P=5,
-    parameter DSTPw=4,
-    parameter NL=1,
     parameter PLw=1,
     parameter PPSw=4,
-    parameter SW_LOC=0,
-    parameter SELF_LOOP_EN=0 
+    parameter SW_LOC=0
 )(
     dest_port_out,
     dest_port_coded,
@@ -999,6 +993,7 @@ module regular_topo_destp_generator #(
     port_pre_sel,
     odd_column
 );
+    import pronoc_pkg::*;
     localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     
     input  [DSTPw-1 : 0] dest_port_coded;
@@ -1011,9 +1006,7 @@ module regular_topo_destp_generator #(
     wire [P_1-1 : 0] dest_port_in;
     
     generate 
-    /* verilator lint_off WIDTH */
-    if (TOPOLOGY == "RING" || TOPOLOGY == "LINE" ) begin : one_D
-    /* verilator lint_on WIDTH */
+    if (IS_RING | IS_LINE ) begin : one_D
         line_ring_destp_decoder #(
             .ROUTE_TYPE(ROUTE_TYPE),
             .P(P),
@@ -1024,11 +1017,24 @@ module regular_topo_destp_generator #(
             .SW_LOC(SW_LOC),
             .SELF_LOOP_EN(SELF_LOOP_EN)
         ) decoder (
-            .dest_port_coded(dest_port_coded),             
+            .dest_port_coded(dest_port_coded),
             .dest_port_out(dest_port_in),
-            .endp_localp_num(endp_localp_num)               
+            .endp_localp_num(endp_localp_num)       
         );
-        
+    end else if (IS_MESH_3D) begin : three_D
+        logic [P-1  : 0] mesh_3d_one_hot_dest_port;
+        always @(*) begin
+            mesh_3d_one_hot_dest_port = {P{1'b0}};
+            mesh_3d_one_hot_dest_port[dest_port_coded] = 1'b1;
+        end
+        destport_non_selfloop_fix #(
+            .SELF_LOOP_EN(SELF_LOOP_EN),
+            .P(P),
+            .SW_LOC(SW_LOC)
+        ) remove_sw_loc (
+            .destport_in(mesh_3d_one_hot_dest_port[P-1 : 0]),
+            .destport_out(dest_port_out)
+        );
     end else begin :two_D
         regular_topo_destp_decoder #(
             .ROUTE_TYPE(ROUTE_TYPE),
@@ -1109,34 +1115,27 @@ module regular_topo_destp_decoder #(
     end
     generate     
     if(NL==1) begin :slp
-        if(SELF_LOOP_EN == 0) begin :nslp
-            remove_sw_loc_one_hot #(
-                .P(5),
-                .SW_LOC(SW_LOC)
-            ) conv (
-                .destport_in(portout),
-                .destport_out(dest_port_out)
-            ); 
-        end else begin : slp
-            assign dest_port_out = portout;  
-        end
+        destport_non_selfloop_fix #(
+            .SELF_LOOP_EN(SELF_LOOP_EN),
+            .P(5),
+            .SW_LOC(SW_LOC)
+        ) conv (
+            .destport_in(portout),
+            .destport_out(dest_port_out)
+        ); 
     end else begin :mlp
         wire [P-1 : 0] destport_onehot;
-        
         assign destport_onehot =(portout[0])? 
             { endp_localp_onehot[NL-1 : 1] ,{(P-NL){1'b0}},endp_localp_onehot[0]}: /*select local destination*/ 
             { {(NL-1){1'b0}} ,portout};
-        if(SELF_LOOP_EN == 0) begin :nslp
-            remove_sw_loc_one_hot #(
-                .P(P),
-                .SW_LOC(SW_LOC)
-            ) remove_sw_loc (
-                .destport_in(destport_onehot),
-                .destport_out(dest_port_out)
-            );
-        end else begin: slp
-            assign dest_port_out = destport_onehot;            
-        end
+        destport_non_selfloop_fix #(
+            .SELF_LOOP_EN(SELF_LOOP_EN),
+            .P(P),
+            .SW_LOC(SW_LOC)
+        ) remove_sw_loc (
+            .destport_in(destport_onehot),
+            .destport_out(dest_port_out)
+        );
     end
     endgenerate
 endmodule
@@ -1178,34 +1177,27 @@ module line_ring_destp_decoder #(
     end
     generate
     if(NL==1) begin :_se
-        if(SELF_LOOP_EN == 0) begin :nslp
-            remove_sw_loc_one_hot #(
-                .P(3),
-                .SW_LOC(SW_LOC)
-            ) conv (
-                .destport_in(portout),
-                .destport_out(dest_port_out)
-            ); 
-        end else begin : slp 
-            assign dest_port_out = portout;
-        end
+        destport_non_selfloop_fix #(
+            .SELF_LOOP_EN(SELF_LOOP_EN),
+            .P(3),
+            .SW_LOC(SW_LOC)
+        ) conv (
+            .destport_in(portout),
+            .destport_out(dest_port_out)
+        ); 
     end else begin :_me
         wire [P-1 : 0] destport_onehot;
-        
         assign destport_onehot =(portout[0])? 
             { endp_localp_onehot[NL-1 : 1] ,{(P-NL){1'b0}},endp_localp_onehot[0]}: /*select local destination*/ 
             { {(NL-1){1'b0}} ,portout};
-        if(SELF_LOOP_EN == 0) begin :nslp
-            remove_sw_loc_one_hot #(
-                .P(P),
-                .SW_LOC(SW_LOC)
-            ) remove_sw_loc (
-                .destport_in(destport_onehot),
-                .destport_out(dest_port_out)
-            ); 
-        end else begin :slp
-            assign dest_port_out = destport_onehot;
-        end
+        destport_non_selfloop_fix #(
+            .SELF_LOOP_EN(SELF_LOOP_EN),
+            .P(P),
+            .SW_LOC(SW_LOC)
+        ) remove_sw_loc (
+            .destport_in(destport_onehot),
+            .destport_out(dest_port_out)
+        ); 
     end
     endgenerate
 endmodule

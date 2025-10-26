@@ -1004,18 +1004,14 @@ module destp_generator #(
     
     generate
     if( ~IS_UNICAST ) begin : muticast
-        // destination port is not coded for multicast/broadcast
-        if( SELF_LOOP_EN==0) begin : nslp
-            remove_sw_loc_one_hot #(
-                .P(P),
-                .SW_LOC(SW_LOC)
-            ) remove_sw_loc (
-                .destport_in(dest_port_encoded),
-                .destport_out(dest_port_out)
-            );
-        end else begin : slp
-            assign dest_port_out = dest_port_encoded;
-        end
+        destport_non_selfloop_fix #(
+            .SELF_LOOP_EN(SELF_LOOP_EN),
+            .P(P),
+            .SW_LOC(SW_LOC)
+        ) fix_sw_loc (
+            .destport_in(dest_port_encoded),
+            .destport_out(dest_port_out)
+        );
     end else if( IS_FATTREE ) begin : fat
         fattree_destp_generator #(
             .K(T1),
@@ -1042,16 +1038,10 @@ module destp_generator #(
         );
     end else if( IS_REGULAR_TOPO ) begin : regular
         regular_topo_destp_generator #(
-            .TOPOLOGY(TOPOLOGY),
-            .ROUTE_NAME(ROUTE_NAME),
-            .ROUTE_TYPE(ROUTE_TYPE),
             .P(P),
-            .DSTPw(DSTPw),
-            .NL(NL),
             .PLw(PLw),
             .PPSw(PPSw),
-            .SW_LOC(SW_LOC),
-            .SELF_LOOP_EN(SELF_LOOP_EN)
+            .SW_LOC(SW_LOC)
         ) destp_generator (
             .dest_port_coded(dest_port_encoded),
             .endp_localp_num(endp_localp_num),

@@ -293,17 +293,12 @@ module  tree_destp_generator #(
         .destport_decoded_o(destport_decoded)
     );
     
-    generate 
-    if(SELF_LOOP_EN == 0) begin : nslp
-        remove_sw_loc_one_hot #(
-            .P(P),
-            .SW_LOC(SW_LOC)
-        ) conv (
-            .destport_in(destport_decoded[P-1 : 0]),
-            .destport_out(dest_port_out[P_1-1 : 0 ])
-        );  
-    end else begin : slp
-        assign dest_port_out = destport_decoded;
-    end
-    endgenerate
+    destport_non_selfloop_fix #(
+        .SELF_LOOP_EN(SELF_LOOP_EN),
+        .P(P),
+        .SW_LOC(SW_LOC)
+    ) conv (
+        .destport_in(destport_decoded[P-1 : 0]),
+        .destport_out(dest_port_out[P_1-1 : 0 ])
+    );  
 endmodule

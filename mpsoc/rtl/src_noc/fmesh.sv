@@ -176,7 +176,7 @@ module fmesh_destp_decoder #(
         endp_localp_onehot = {P{1'b0}};
         endp_localp_onehot[endp_localp_num] = 1'b1;
     end
-
+    
     generate 
     if(NL>1) begin :multi    
         assign destport_onehot =(portout[0])? endp_localp_onehot : /*select local destination*/ 
@@ -184,19 +184,17 @@ module fmesh_destp_decoder #(
     end else begin 
         assign destport_onehot =(portout[0])? endp_localp_onehot : /*select local destination*/ 
             portout;
-    end    
-    if(SELF_LOOP_EN == 0) begin :nslp
-        remove_sw_loc_one_hot #(
-            .P(P),
-            .SW_LOC(SW_LOC)
-        ) remove_sw_loc (
-            .destport_in(destport_onehot),
-            .destport_out(dest_port_out)
-        );
-    end else begin: slp
-        assign dest_port_out = destport_onehot;            
-    end
-    endgenerate
+    end 
+    endgenerate   
+
+    destport_non_selfloop_fix #(
+        .SELF_LOOP_EN(SELF_LOOP_EN),
+        .P(P),
+        .SW_LOC(SW_LOC)
+    ) fix (
+        .destport_in(destport_onehot),
+        .destport_out(dest_port_out)
+    );
 endmodule
 
 

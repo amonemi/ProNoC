@@ -829,17 +829,12 @@ module  fattree_destp_generator #(
         .destport_out(destport_masked)
     );
     
-    generate 
-    if(SELF_LOOP_EN == 0) begin : nslp
-        remove_sw_loc_one_hot #(
-            .P(P),
-            .SW_LOC(SW_LOC)
-        ) conv (
-            .destport_in(destport_masked[P-1 : 0]),
-            .destport_out(dest_port_out[P_1-1  :   0 ])
-        );  
-    end else begin : slp 
-        assign dest_port_out= destport_masked [P_1-1  :   0 ];
-    end
-    endgenerate
+    destport_non_selfloop_fix #(
+        .SELF_LOOP_EN(SELF_LOOP_EN),
+        .P(P),
+        .SW_LOC(SW_LOC)
+    ) conv (
+        .destport_in(destport_masked[P-1 : 0]),
+        .destport_out(dest_port_out[P_1-1  :   0 ])
+    );  
 endmodule
