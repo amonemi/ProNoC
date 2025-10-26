@@ -101,7 +101,6 @@ module mesh_3d_noc_top (
                     localparam EID = RID*NL+l;
                     localparam LOCALP = (l==0) ? l : l + R2R_CHANELS_REGULAR; // first local port is connected to router port 0. The rest are connected at the end  
                     assign endp_addr[EID]='{x:x,y:y,z:z,l:l};
-                    assign router_config_in[RID].endp_addrs=current_r_addr[RID];
                     assign router_chan_in [z][y][x][LOCALP] = chan_in_all [EID];
                     assign chan_out_all [EID] = router_chan_out [z][y][x][LOCALP];
                     assign router_config_in[RID].endp_addrs[(l+1)*EAw -1 :  l*EAw] = EAw'(endp_addr[EID]);

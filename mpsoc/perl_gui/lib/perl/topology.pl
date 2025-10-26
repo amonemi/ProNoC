@@ -33,12 +33,12 @@ sub get_topology_info_from_parameters {
     my $T3  =$param{'T3'};
     my $T4  =$param{'T4'};
     my $V   =$param{'V'};
-    my $Fpay=$param{'Fpay'};    
+    my $Fpay=$param{'Fpay'};   
     return get_topology_info_sub($topology, $T1, $T2, $T3, $T4,$V, $Fpay);    
 }
 
 sub get_topology_info_sub {
-    my ($topology, $T1, $T2, $T3, $T4,$V, $Fpay)=@_;
+    my ($topology, $T1, $T2, $T3, $T4, $V, $Fpay)=@_;
     my $NE;    # Total number of end points (local ports) in the NoC
     my $NR;    # Total number of routers in NoC
     my $RAw;   # Routers address width
@@ -94,8 +94,8 @@ sub get_topology_info_sub {
     }elsif ($topology eq '"MESH_3D"' ) {
         my $NX=$T1;
         my $NY=$T2;
-        my $NL=$T3;
-        my $NZ=$T4;
+        my $NZ=$T3;
+        my $NL=$T4;
         $NE = $NX*$NY*$NL*$NZ;
         $NR = $NX*$NY*$NZ;    
         my $Xw=log2($NX);
@@ -504,11 +504,11 @@ sub get_noc_verilator_top_modules_info {
     } elsif ($topology eq '"MESH_3D"') {
         $router_p=1;
         $nr_p{1}=$nr;
-        my $ports= 7+$T3-1;
+        my $ports= 7+$T4-1;
         $nr_p{p1}=$ports;
         %tops = (
             #"Vrouter1" => "router_top_v_p${ports}.v",
-            "Vrouter1" => "--top-module  router_top_v  -GP=${ports}  ",  
+            "Vrouter1" => "--top-module  router_top_v  -GP=${ports} ",  
             #  "Vnoc" => " --top-module noc_connection",
         );
     }

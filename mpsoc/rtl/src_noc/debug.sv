@@ -121,7 +121,7 @@ module debug_regular_topo_route_ckeck #(
     
     `ifdef SIMULATION 
     generate
-    if(IS_DETERMINISTIC)begin :dtrmn
+    if(IS_DETERMINISTIC & ~IS_MESH_3D)begin :dtrmn
         always@( posedge clk) begin 
             if(flit_in_wr & hdr_flg_in )   
                 if( destport_in[1:0]==2'b11) begin 
