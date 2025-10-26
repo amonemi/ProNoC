@@ -18,13 +18,13 @@ module regular_topo_look_ahead_routing (
     
     localparam  P_1 = P-1;
     input regular_topo_router_addr_t dest_router_addr_i;
-    input [P_1-1 : 0]  destport_encoded;
-    output [P_1-1 : 0]  lkdestport_encoded;
+    input  [DSTPw-1  :   0] destport_encoded;
+    output [DSTPw-1  :   0] lkdestport_encoded;
     input  [RAw-1:  0]  neighbors_r_addr [P-1 : 0];
     input  reset,clk;
     
     regular_topo_router_addr_t dest_router_addr_f;
-    logic [P_1-1 : 0]  destport_delayed;
+    logic [DSTPw-1  :   0]  destport_delayed;
     // routing algorithm
     generate 
     if( IS_DETERMINISTIC ) begin :dtrmst
@@ -76,9 +76,9 @@ module  regular_topo_deterministic_look_ahead_routing #(
         Pw= log2(P);
     
     input regular_topo_router_addr_t dest_router_addr_i;
-    input [P_1-1 : 0]  destport;
+    input [DSTPw-1  :   0]  destport;
     input [RAw-1 : 0]  neighbors_r_addr [P-1 : 0];
-    output  [P_1-1 : 0]  lkdestport;
+    output [DSTPw-1  :   0] lkdestport;
     wire [Pw-1 : 0]  dstport_decimal;
     genvar i;
     generate 
@@ -98,7 +98,7 @@ module  regular_topo_deterministic_look_ahead_routing #(
     endgenerate 
     wire [RAw-1 : 0] next_router_addr = neighbors_r_addr[dstport_decimal];
     
-    wire [P_1-1 : 0] lkdestport_encoded;
+    wire [DSTPw-1  :   0] lkdestport_encoded;
     regular_topo_router_addr_t next_router_addr_struct;
     assign next_router_addr_struct = regular_topo_router_addr_t'(next_router_addr);
     regular_topo_conventional_routing #(
