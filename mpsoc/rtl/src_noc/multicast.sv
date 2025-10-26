@@ -78,24 +78,18 @@ module multicast_routing_mesh #(
     input   [DAw-1 : 0]  dest_e_addr;
     output  [DSTPw-1 : 0] destport;
     
-    localparam
-        RXw = log2(NX),
-        RYw = log2(NY);
-    
     //mask gen. x_plus: all rows larger than current router x address are asserted.
     wire [NX-1 : 0] x_plus,x_minus;
     //mask generation. Only the corresponding bits to destination located in current column are asserted in each mask     
     wire [NE-1 : 0] y_plus,y_min;
     //Only one-bit is asserted for each local_p[i]
     wire [NE-1 : 0] local_p [NL-1 : 0];
-    wire   [RXw-1 : 0]  current_rx;
-    wire   [RYw-1 : 0]  current_ry;
-    regular_topo_router_addr_decode  router_addr_decode (
-        .r_addr(current_r_addr),
-        .rx(current_rx),
-        .ry(current_ry),
-        .valid( )
-    );
+    wire   [NXw-1 : 0]  current_rx;
+    wire   [NYw-1 : 0]  current_ry;
+    regular_topo_router_addr_t current_router_addr_struct;
+    assign current_router_addr_struct = regular_topo_router_addr_t'(current_r_addr);
+    assign current_rx = current_router_addr_struct.x;
+    assign current_ry = current_router_addr_struct.y;
     wire [NX-1 : 0] row_has_any_dest;
     wire [NE-1 : 0] dest_mcast_all_endp;
     mcast_dest_list_decode decode (
@@ -119,8 +113,8 @@ module multicast_routing_mesh #(
             Y_LOC = ((i/NL) / NX ), 
             X_LOC = ((i/NL) % NX ), 
             LL = (i % NL);
-        localparam [RYw-1 : 0] YY = Y_LOC [RYw-1 : 0];
-        localparam [RXw-1 : 0] XX = X_LOC [RXw-1 : 0];
+        localparam [NYw-1 : 0] YY = Y_LOC [NYw-1 : 0];
+        localparam [NXw-1 : 0] XX = X_LOC [NXw-1 : 0];
         /* verilator lint_off CMPCONST */
         assign y_plus[i]  = (current_rx    ==    XX) && (current_ry >  YY);
         /* verilator lint_on CMPCONST */
@@ -218,13 +212,10 @@ module multicast_routing_fmesh #(
     wire [NE-1 : 0] y_plus,y_min;
     //Only one-bit is asserted for each local_p[i]
     wire [NE-1 : 0] local_p [MAX_P_FMESH-1 : 0];
-    regular_topo_router_addr_decode router_addr_decode
-    (
-        .r_addr(current_r_addr),
-        .rx(current_rx),
-        .ry(current_ry),
-        .valid( )
-    );
+    regular_topo_router_addr_t current_router_addr_struct;
+    assign current_router_addr_struct = regular_topo_router_addr_t'(current_r_addr);
+    assign current_rx = current_router_addr_struct.x;
+    assign current_ry = current_router_addr_struct.y;
     
     wire [NX-1 : 0] row_has_any_dest;
     wire [NE-1 : 0] dest_mcast_all_endp;

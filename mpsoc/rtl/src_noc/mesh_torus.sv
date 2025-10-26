@@ -658,15 +658,15 @@ module mesh_line_distance_gen (
     input [EAw-1 : 0] src_e_addr;
     input [EAw-1 : 0] dest_e_addr;
     output[DISTw-1: 0]distance;
-    wire [NXw-1 : 0]src_x,dest_x;
-    wire [NYw-1 : 0]src_y,dest_y;
-    regular_topo_endp_addr_decode src_addr_decode (.e_addr(src_e_addr), .ex(src_x), .ey(src_y), .el(), .valid());
-    regular_topo_endp_addr_decode dst_addr_decode (.e_addr(dest_e_addr), .ex(dest_x), .ey(dest_y), .el(), .valid());
+    regular_topo_router_addr_t src_router_addr, dest_router_addr;
+    assign src_router_addr = regular_topo_router_addr_t'(src_e_addr);
+    assign dest_router_addr = regular_topo_router_addr_t'(dest_e_addr);
+    
     logic [NXw-1 : 0] x_offset;
     logic [NYw-1 : 0] y_offset;
     always_comb begin 
-        x_offset = (src_x > dest_x) ? src_x - dest_x : dest_x - src_x;
-        y_offset = (src_y > dest_y) ? src_y - dest_y : dest_y - src_y;
+        x_offset = (src_router_addr.x > dest_router_addr.x) ? src_router_addr.x - dest_router_addr.x : dest_router_addr.x - src_router_addr.x;
+        y_offset = (src_router_addr.y > dest_router_addr.y) ? src_router_addr.y - dest_router_addr.y : dest_router_addr.y - src_router_addr.y;
     end
     /* verilator lint_off WIDTH */ 
     assign distance = x_offset+y_offset+1'b1;
@@ -684,8 +684,13 @@ module ring_torus_distance_gen (
     output[DISTw-1: 0]distance;
     wire [NXw-1 : 0]src_x,dest_x;
     wire [NYw-1 : 0]src_y,dest_y;
-    regular_topo_endp_addr_decode src_addr_decode (.e_addr(src_e_addr), .ex(src_x), .ey(src_y), .el(), .valid());
-    regular_topo_endp_addr_decode  dest_addr_decode (.e_addr(dest_e_addr), .ex(dest_x), .ey(dest_y), .el(), .valid());
+    regular_topo_router_addr_t src_router_addr, dest_router_addr;
+    assign src_router_addr = regular_topo_router_addr_t'(src_e_addr);
+    assign dest_router_addr = regular_topo_router_addr_t'(dest_e_addr);
+    assign src_x = src_router_addr.x;
+    assign src_y = src_router_addr.y;
+    assign dest_x = dest_router_addr.x;
+    assign dest_y = dest_router_addr.y;
     logic [NXw-1 : 0] x_offset;
     logic [NYw-1 : 0] y_offset;
     wire tranc_x_plus,tranc_x_min,tranc_y_plus,tranc_y_min,same_x,same_y;

@@ -458,9 +458,6 @@ module router_two_stage #(
     generate 
     if(DEBUG_EN & IS_MESH)begin :dbg
         debug_mesh_edges #(
-            .T1(T1),
-            .T2(T2),
-            .RAw(RAw),
             .P(P)
         ) debug_edges (
             .clk(clk),

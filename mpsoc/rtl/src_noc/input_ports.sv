@@ -319,10 +319,7 @@ module input_queue_per_port #(
     wire [V-1 : 0] ivc_not_empty;
     wire [Cw-1 : 0] class_out [V-1 : 0];
     wire [VPLw-1 : 0] endp_localp_num;
-    
     wire [V-1 : 0] smart_hdr_en;
-    wire [ELw-1 : 0] endp_l_in;
-    wire [Pw-1 : 0] endp_p_in;
     
     wire [V-1 : 0] rd_hdr_fwft_fifo,wr_hdr_fwft_fifo;
     logic [V-1 : 0] rd_hdr_fwft_fifo_delay,wr_hdr_fwft_fifo_delay;
@@ -394,24 +391,6 @@ module input_queue_per_port #(
                 assigned_ovc_num[i] <= assigned_ovc_num_next[i];
             end
         end
-    end
-    if (IS_REGULAR_TOPO & IS_MULTI_ENDP_ROUTER & IS_UNICAST) begin 
-        regular_topo_endp_addr_decode endp_addr_decode (
-            .e_addr(dest_e_addr_in),
-            .ex( ),
-            .ey( ),
-            .el(endp_l_in),
-            .valid( )
-        );
-    end 
-    if ( IS_FMESH & IS_UNICAST ) begin : fmesh
-        fmesh_endp_addr_decode  endp_addr_decode (
-            .e_addr(dest_e_addr_in),
-            .ex(),
-            .ey(),
-            .ep(endp_p_in),
-            .valid()
-        );
     end
     
     /* verilator lint_off WIDTH */  
@@ -760,7 +739,7 @@ module input_queue_per_port #(
                 .MAX_DEPTH (MAX_PCK),
                 .IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
             ) local_dest_fifo (
-                .din(endp_l_in),
+                .din(dest_e_addr_in[DAw-1 : DAw-ELw]),// local endpoint number
                 .wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
                 .rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
                 .dout(endp_localp_num[(i+1)*PLw-1 : i*PLw]),    // Data out
@@ -772,13 +751,12 @@ module input_queue_per_port #(
                 .clk(clk) 
             );
         end else if ( IS_FMESH & IS_UNICAST) begin : fmesh
-            
             fwft_fifo #(
                 .DATA_WIDTH(Pw),
                 .MAX_DEPTH (MAX_PCK),
                 .IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
             ) local_dest_fifo (
-                .din(endp_p_in),
+                .din(dest_e_addr_in[DAw-1 : DAw-Pw]),// local endpoint number
                 .wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
                 .rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
                 .dout(endp_localp_num[(i+1)*PLw-1 : i*PLw]),    // Data out
@@ -1122,19 +1100,14 @@ module custom_topology_destp_decoder #(
         dest_port_one_hot[dest_port_in_encoded] = 1'b1;
     end
     
-    generate
-    if( SELF_LOOP_EN==0) begin : nslp
-        remove_sw_loc_one_hot #(
-            .P(P),
-            .SW_LOC(SW_LOC)
-        ) remove_sw_loc (
-            .destport_in(dest_port_one_hot[P-1 : 0]),
-            .destport_out(dest_port_out)
-        );
-    end else begin : slp
-        assign dest_port_out = dest_port_one_hot;
-    end
-    endgenerate
+    destport_non_selfloop_fix #(
+        .SELF_LOOP_EN(SELF_LOOP_EN),
+        .P(P),
+        .SW_LOC(SW_LOC)
+    ) remove_sw_loc (
+        .destport_in(dest_port_one_hot[P-1 : 0]),
+        .destport_out(dest_port_out)
+    );
     
     `ifdef SIMULATION
     initial begin
