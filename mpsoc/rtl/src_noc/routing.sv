@@ -357,8 +357,9 @@ module local_route_computation #(
     generate 
     if(IS_UNICAST) begin : uni
         localparam LOCATED_IN_NI=
-            (IS_MESH | IS_TORUS | IS_FMESH)? ((SW_LOC==LOCAL) || (SW_LOC > SOUTH) ) : 
-            (IS_RING | IS_LINE) ? ((SW_LOC==LOCAL) || (SW_LOC > BACKWARD) )  : 0;
+            (IS_3D_TOPO)? ((SW_LOC==LOCAL) || (SW_LOC > DOWN) ) :
+            (IS_2D_TOPO)? ((SW_LOC==LOCAL) || (SW_LOC > SOUTH) ) : 
+            (IS_1D_TOPO) ? ((SW_LOC==LOCAL) || (SW_LOC > BACKWARD) )  : 0;
         hdr_flit_t hdr_flit_i;
         wire [DSTPw-1 :0] destport;
         header_flit_info #(

@@ -369,8 +369,20 @@ module check_straight_oport #(
     output  goes_straight_o;
     
     generate 
-    if(IS_MESH | IS_TORUS | IS_FMESH) begin :twoD
-        if (SS_PORT_LOC == 0 || SS_PORT_LOC > 4) begin : local_ports
+    if(IS_3D_TOPO) begin : D3_
+        if (SS_PORT_LOC == 0 || SS_PORT_LOC > DOWN) begin : local_ports
+            assign goes_straight_o = 1'b0; // There is not a next router in this case at all
+        end else begin :non_local
+            wire [6 : 0 ] destport_one_hot;
+            regular_topo_decode_dstport decoder(
+                .dstport_encoded(destport_coded_i),
+                .dstport_one_hot(destport_one_hot)
+            );
+            assign goes_straight_o = destport_one_hot [SS_PORT_LOC];    
+        end//else
+    end//regular_topo
+    if(IS_2D_TOPO) begin : D2_
+        if (SS_PORT_LOC == 0 || SS_PORT_LOC > SOUTH) begin : local_ports
             assign goes_straight_o = 1'b0; // There is not a next router in this case at all
         end else begin :non_local
             wire [4 : 0 ] destport_one_hot;
@@ -378,12 +390,11 @@ module check_straight_oport #(
                 .dstport_encoded(destport_coded_i),
                 .dstport_one_hot(destport_one_hot)
             );
-            
             assign goes_straight_o = destport_one_hot [SS_PORT_LOC];    
         end//else
     end//regular_topo
-    else if(IS_RING | IS_LINE) begin :oneD
-        if (SS_PORT_LOC == 0 || SS_PORT_LOC > 2) begin : local_ports
+    else if(IS_1D_TOPO) begin : D1_
+        if (SS_PORT_LOC == 0 || SS_PORT_LOC > BACKWARD) begin : local_ports
             assign goes_straight_o = 1'b0; // There is not a next router in this case at all
         end else begin :non_local
             wire [2: 0 ] destport_one_hot;
@@ -394,7 +405,6 @@ module check_straight_oport #(
             assign goes_straight_o = destport_one_hot [SS_PORT_LOC];
         end    //non_local
     end// oneD
-    
     //TODO Add fattree & custom 
 endgenerate
 endmodule
@@ -595,8 +605,8 @@ module smart_allocator_per_iport # (
     wire  goes_straight;
     
     localparam  LOCATED_IN_NI =  
-        (IS_RING | IS_LINE) ? (SW_LOC == 0 || SW_LOC > 2) :
-        (IS_MESH | IS_TORUS | IS_FMESH) ? (SW_LOC == 0 || SW_LOC > 4 ) : 0;
+        (IS_1D_TOPO) ? (SW_LOC == 0 || SW_LOC > 2) :
+        (IS_2D_TOPO) ? (SW_LOC == 0 || SW_LOC > 4 ) : 0;
     
     // does the route computation for the current router
     conventional_routing #(

@@ -161,8 +161,12 @@ module router_two_stage #(
     wire [EAw-1 : 0] endp_addrs [NE_PER_R-1 : 0];
     
     function automatic int get_enp_num(input int i);
-        if(IS_LINE | IS_RING |  IS_MESH | IS_FMESH | IS_TORUS) begin 
-                return (i > SOUTH) ? i - SOUTH : LOCAL;
+        if(IS_1D_TOPO) begin
+            return (i > BACKWARD) ? i - BACKWARD : LOCAL;
+        end else if(IS_2D_TOPO) begin
+            return (i > SOUTH) ? i - SOUTH : LOCAL;
+        end else if(IS_3D_TOPO) begin
+            return (i > DOWN) ? i - DOWN : LOCAL;
         end else if (IS_MULTI_MESH) begin
             return LOCAL;
         end else return 0; //TODO complete it for fattree and bin tree

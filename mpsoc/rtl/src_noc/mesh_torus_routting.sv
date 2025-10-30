@@ -187,42 +187,9 @@ module  regular_topo_adaptive_look_ahead_routing #(
     assign lkdestport_encoded = {lkdestport_x[1: 0],lkdestport_y[1: 0]};
 endmodule
 
-
-/*******************************************************
-*            next_router_inport_predictor
-*********************************************************/
-module regular_topo_next_router_inport_predictor #(
-    parameter P =5
-)(
-    destport,
-    receive_port
-);
-    import pronoc_pkg::*;
-    input  [P-1 : 0] destport;
-    output [P-1 : 0] receive_port;    
-    
-    generate
-    if(IS_MESH || IS_TORUS || IS_FMESH) begin : mesh
-        assign  receive_port[LOCAL] = destport[LOCAL];
-        assign  receive_port[WEST] = destport[EAST];
-        assign  receive_port[EAST] = destport[WEST];
-        assign  receive_port[NORTH] = destport[SOUTH];
-        assign  receive_port[SOUTH] = destport[NORTH];
-    end else  if(IS_RING || IS_LINE) begin : ring
-        assign  receive_port[0] = destport[0];
-        assign  receive_port[1] = destport[2];
-        assign  receive_port[2] = destport[1];
-    end
-    `ifdef SIMULATION
-            else begin : wrong_topology initial $display("Error: next router inport is not predicted for %s   topology",TOPOLOGY); end
-    `endif
-    endgenerate
-endmodule 
-
 /***********************************
 *            remove_sw_loc_one_hot
-*remove port number that is holdind the packet               
-*
+*remove port number that is holding the packet
 ************************************/
 module remove_sw_loc_one_hot #(
     parameter P = 5,

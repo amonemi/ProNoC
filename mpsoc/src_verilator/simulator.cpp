@@ -644,7 +644,7 @@ void traffic_gen_init( void ){
     unsigned int dest_e_addr;
     for (i=0;i<NE;i++){
         unsigned char inject_en;
-        random_var[i] = 100;
+        random_var[i] = 100;        
         traffic[i]->current_e_addr        = endp_addr_encoder(i);
         traffic[i]->start=0;
         traffic[i]->pck_class_in=  pck_class_in_gen( i);

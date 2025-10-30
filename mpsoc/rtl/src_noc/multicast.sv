@@ -531,29 +531,45 @@ module multicast_dst_sel  (
     input  [DSTPw-1 : 0] destport_in;
     output [DSTPw-1 : 0] destport_out;
     wire  [DSTPw-1 : 0] arb_in, arb_out;
-
-    function integer regular_topo_pririty_order;
+    
+    function integer three_dim_topo_priority_order;
     input integer x;
     begin
         case(x)
-            0 : regular_topo_pririty_order = EAST;
-            1 : regular_topo_pririty_order = WEST;
-            2 : regular_topo_pririty_order = NORTH;
-            3 : regular_topo_pririty_order = SOUTH;
-            4 : regular_topo_pririty_order = LOCAL;    
-            default : regular_topo_pririty_order =x;
+            0 : three_dim_topo_priority_order = DOWN;
+            1 : three_dim_topo_priority_order = UP;
+            2 : three_dim_topo_priority_order = EAST;
+            3 : three_dim_topo_priority_order = WEST;
+            4 : three_dim_topo_priority_order = NORTH;
+            5 : three_dim_topo_priority_order = SOUTH;
+            6 : three_dim_topo_priority_order = LOCAL;    
+            default : three_dim_topo_priority_order =x;
+        endcase
+    end
+    endfunction // pririty_order
+
+    function integer two_dim_topo_priority_order;
+    input integer x;
+    begin
+        case(x)
+            0 : two_dim_topo_priority_order = EAST;
+            1 : two_dim_topo_priority_order = WEST;
+            2 : two_dim_topo_priority_order = NORTH;
+            3 : two_dim_topo_priority_order = SOUTH;
+            4 : two_dim_topo_priority_order = LOCAL;    
+            default : two_dim_topo_priority_order =x;
         endcase
     end
     endfunction // pririty_order
     
-    function integer ring_lin_pririty_order;
+    function integer one_dim_topo_priority_order;
     input integer x;
     begin
         case(x)
-            0 : ring_lin_pririty_order = FORWARD;
-            1 : ring_lin_pririty_order = BACKWARD;
-            2 : ring_lin_pririty_order = LOCAL;                
-            default : ring_lin_pririty_order =x;
+            0 : one_dim_topo_priority_order = FORWARD;
+            1 : one_dim_topo_priority_order = BACKWARD;
+            2 : one_dim_topo_priority_order = LOCAL;                
+            default : one_dim_topo_priority_order =x;
         endcase
     end
     endfunction // pririty_order
@@ -562,8 +578,9 @@ module multicast_dst_sel  (
     generate 
     for (i=0; i<DSTPw;i++) begin : lp
         localparam PR = 
-            ( IS_MESH | IS_TORUS | IS_FMESH ) ?  regular_topo_pririty_order(i):
-            ( IS_RING | IS_LINE ) ? ring_lin_pririty_order(i) : i;
+            ( IS_3D_TOPO ) ?  three_dim_topo_priority_order(i):
+            ( IS_2D_TOPO ) ?  two_dim_topo_priority_order(i):
+            ( IS_1D_TOPO ) ? one_dim_topo_priority_order(i) : i;
         assign arb_in[i] = destport_in[PR];
         assign destport_out [PR] = arb_out[i];
     end

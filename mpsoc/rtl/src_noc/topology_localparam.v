@@ -21,6 +21,9 @@
         IS_MULTI_MESH=(TOPOLOGY == "MULTI_MESH"),
         IS_MESH_3D= (TOPOLOGY == "MESH_3D"),
         IS_REGULAR_TOPO = (IS_RING | IS_LINE | IS_MESH | IS_TORUS | IS_MESH_3D),
+        IS_1D_TOPO = (IS_LINE | IS_RING),
+        IS_2D_TOPO = (IS_MESH | IS_TORUS | IS_FMESH),
+        IS_3D_TOPO = (IS_MESH_3D | IS_MULTI_MESH),
         IS_MULTI_ENDP_ROUTER = (T3 > 1) ;
         /* verilator lint_on WIDTH */ 
     
@@ -97,16 +100,16 @@
     input integer router_port_num;  //router port num
     input integer current_port;
     begin 
-        if(IS_MESH | IS_FMESH | IS_TORUS | IS_MULTI_MESH | IS_MESH_3D) begin 
+        if(IS_2D_TOPO | IS_3D_TOPO) begin 
             strieght_port = 
                 (current_port == EAST)?  WEST:
                 (current_port == WEST)?  EAST:
                 (current_port == SOUTH)? NORTH:
                 (current_port == NORTH)? SOUTH:
-                ((IS_MESH_3D | IS_MULTI_MESH) && current_port== UP)? DOWN: 
-                ((IS_MESH_3D | IS_MULTI_MESH) && current_port== DOWN)? UP:
+                (IS_3D_TOPO && current_port== UP)? DOWN: 
+                (IS_3D_TOPO && current_port== DOWN)? UP:
                 router_port_num; //DISABLED;
-        end else if (IS_RING | IS_LINE) begin 
+        end else if (IS_1D_TOPO) begin 
             strieght_port = 
                 (current_port== FORWARD )? BACKWARD:
                 (current_port== BACKWARD)? FORWARD:
@@ -132,10 +135,12 @@
     input integer router_port_num;  //router port num
     begin
         port_buffer_size = B;
-        if(IS_MESH | IS_FMESH | IS_TORUS | IS_RING | IS_LINE)begin 
-            if (router_port_num == 0 || router_port_num > 4 ) port_buffer_size = LB;
-        end else if (IS_MULTI_MESH | IS_MESH_3D)  begin
-            if (router_port_num == 0) port_buffer_size = LB;
+        if(IS_1D_TOPO) begin 
+            if (router_port_num == 0 || router_port_num > BACKWARD ) port_buffer_size = LB;
+        end else if (IS_2D_TOPO) begin
+            if (router_port_num == 0 || router_port_num > SOUTH ) port_buffer_size = LB;
+        end else if (IS_3D_TOPO)  begin
+            if (router_port_num == 0 || router_port_num > DOWN) port_buffer_size = LB;
         end
     end
     endfunction
@@ -145,9 +150,9 @@
     ******************/
     localparam 
         NX = T1,
-        NY = (IS_RING | IS_LINE) ? 1 : T2,
-        NL = (IS_MESH_3D)? T4 : T3,
-        NZ = (IS_MESH_3D)? T3 : 1,
+        NY = (IS_1D_TOPO) ? 1 : T2,
+        NL = (IS_3D_TOPO)? T4 : T3,
+        NZ = (IS_3D_TOPO)? T3 : 1,
         NXw = log2(NX),
         NYw = log2(NY),
         NLw = log2(NL),
@@ -158,14 +163,14 @@
             (ROUTE_NAME == "DOR" || ROUTE_NAME == "TRANC_DOR" )? "DETERMINISTIC" :
             (ROUTE_NAME == "FULL_ADPT" || ROUTE_NAME == "TRANC_FULL_ADPT" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE",
         /* verilator lint_on WIDTH */
-        R2R_CHANELS_REGULAR=  (IS_RING || IS_LINE)? 2 : (IS_MESH_3D)? 6 : 4,
+        R2R_CHANELS_REGULAR=  (IS_1D_TOPO)? 2 : (IS_3D_TOPO)? 6 : 4,
         R2E_CHANELS_REGULAR= NL,
-        RAw_REGULAR = ( IS_RING | IS_LINE)? NXw :(IS_MESH_3D)? NXw + NYw + NZw : NXw + NYw,
+        RAw_REGULAR = ( IS_1D_TOPO )? NXw : (IS_3D_TOPO)? NXw + NYw + NZw : NXw + NYw,
         EAw_REGULAR = (NL==1 ) ? RAw_REGULAR : RAw_REGULAR + NLw,
-        NR_REGULAR = (IS_RING || IS_LINE)? NX :(IS_MESH_3D)? NX*NY*NZ : NX*NY,
+        NR_REGULAR = (IS_1D_TOPO)? NX :(IS_3D_TOPO)? NX*NY*NZ : NX*NY,
         NE_REGULAR = NR_REGULAR * NL,
         MAX_P_REGULAR = R2R_CHANELS_REGULAR + R2E_CHANELS_REGULAR,
-        DSTPw_REGULAR = (IS_MESH_3D)? log2(MAX_P_REGULAR) : R2R_CHANELS_REGULAR, // P-1
+        DSTPw_REGULAR = (IS_3D_TOPO)? log2(MAX_P_REGULAR) : R2R_CHANELS_REGULAR, // P-1
         NE_PER_R_REGULAR = NL;
     
     /****************
@@ -407,12 +412,17 @@
     
     function automatic  integer regular_topo_endp_addr; 
     input integer endp_id;
-    integer  y, x, l,p, diff,mul;
+    integer  y, x, z, l,rid;
     begin
-        y = ((endp_id/NL) / NX ); 
-        x = ((endp_id/NL) % NX ); 
-        l = (endp_id % NL); 
-        regular_topo_endp_addr = ( l << ( NXw+NYw) | (y<<NXw) | x);
+        rid = endp_id / NL;
+        x = rid % NX;
+        y = (rid / NX) % NY;
+        z = rid / (NX * NY);
+        l = endp_id % NL;
+        regular_topo_endp_addr = 
+            (IS_3D_TOPO) ?( l << ( NXw+NYw+NZw) | (z<<NXw+NYw) | (y<<NXw) | x) : 
+            (IS_2D_TOPO) ?( l << ( NXw+NYw) | (y<<NXw) | x):
+            ( l << NXw | x);
     end
     endfunction
     
@@ -465,51 +475,56 @@
     endfunction
     
     `ifdef SIMULATION
-    task display_noc_parameters;  
+    task automatic display_noc_parameters;
     begin
-        //print_parameter 
-        $display ("NoC parameters:----------------");
-        $display ("\tTopology: %s",TOPOLOGY);
-        $display ("\tRouting algorithm: %s",ROUTE_NAME);
-        $display ("\tVC_per port: %0d", V);
-        $display ("\tNon-local port buffer_width per VC: %0d", B);
-        $display ("\tLocal port buffer_width per VC: %0d", LB);
-        if(IS_MESH | IS_TORUS | IS_FMESH)begin
-            $display ("\tRouter num in row: %0d",T1);
-            $display ("\tRouter num in column: %0d",T2);
-            $display ("\tEndpoint num per router: %0d",T3);
-        end else if (IS_RING | IS_LINE) begin
-            $display ("\tTotal Router num: %0d",T1);
-            $display ("\tEndpoint num per router: %0d",T3);
-        end else if (IS_TREE |  IS_FATTREE)begin
-            $display ("\tK: %0d",T1);
-            $display ("\tL: %0d",T2);
-        end else if (IS_MULTI_MESH)begin 
-            $display ("\tTotal Endpoints number: %0d",T1);
-            $display ("\tTotal Routers number: %0d",T1);
-            $display ("\tRouter Address width: %0d",T2);
-        end else begin //CUSTOM
-            $display ("\tTotal Endpoints number: %0d",T1);
-            $display ("\tTotal Routers number: %0d",T2);
-        end
-        $display ("\tNumber of Class: %0d", C);
-        $display ("\tFlit data width: %0d", Fpay);
-        $display ("\tVC reallocation mechanism: %s",  VC_REALLOCATION_TYPE);
-        $display ("\tVC/sw combination mechanism: %s", COMBINATION_TYPE);
-        $display ("\tAVC_ATOMIC_EN:%0d", AVC_ATOMIC_EN);
-        $display ("\tCongestion Index:%0d",CONGESTION_INDEX);
-        $display ("\tADD_PIPREG_AFTER_CROSSBAR:%0d",ADD_PIPREG_AFTER_CROSSBAR);
-        $display ("\tSSA_EN enabled:%0d",SSA_EN);
-        $display ("\tSwitch allocator arbitration type:%s",SWA_ARBITER_TYPE);
-        $display ("\tMinimum supported packet size:%0d flit(s)",MIN_PCK_SIZE);
-        $display ("\tLoop back is enabled:%0d",SELF_LOOP_EN);
-        $display ("\tNumber of multihop bypass (SMART max):%0d",SMART_MAX);
-        $display ("\tCastying type:%s.",CAST_TYPE);
-        if (IS_MULTICAST_PARTIAL  | IS_BROADCAST_PARTIAL)begin
-            $display ("\tNumber of nodes in Cast list:%d",   MCAST_PRTLw);
-            $display ("\tCAST LIST:%b", MCAST_ENDP_LIST);
-        end 
-        $display ("NoC parameters:----------------");
+    // Print NoC parameters
+    $display ("NoC parameters:----------------");
+    $display("\tTopology: %s", TOPOLOGY);
+    $display("\tRouting algorithm: %s", ROUTE_NAME);
+    $display("\tVC per port: %0d", V);
+    $display("\tNon-local port buffer width per VC: %0d", B);
+    $display("\tLocal port buffer width per VC: %0d", LB);
+    if (IS_2D_TOPO) begin
+        $display("\tRouters per row: %0d", T1);
+        $display("\tRouters per column: %0d", T2);
+        $display("\tEndpoints per router: %0d", T3);
+    end else if (IS_1D_TOPO) begin
+        $display("\tTotal routers: %0d", T1);
+        $display("\tEndpoints per router: %0d", T3);
+    end else if (IS_MESH_3D) begin
+        $display("\tRouters per row: %0d", T1);
+        $display("\tRouters per column: %0d", T2);
+        $display("\tRouters per depth: %0d", T3);
+        $display("\tEndpoints per router: %0d", T4);
+    end else if (IS_MULTI_MESH) begin 
+        $display("\tTotal endpoints: %0d", T1);
+        $display("\tTotal routers: %0d", T1); 
+        $display("\tRouter address width: %0d", T2);
+    end else if (IS_TREE | IS_FATTREE) begin
+        $display("\tK: %0d", T1);
+        $display("\tL: %0d", T2);
+    end else begin // CUSTOM topology
+        $display("\tTotal endpoints: %0d", T1);
+        $display("\tTotal routers: %0d", T2);
+    end
+    $display("\tNumber of classes: %0d", C);
+    $display("\tFlit data width: %0d", Fpay);
+    $display("\tVC reallocation mechanism: %s", VC_REALLOCATION_TYPE);
+    $display("\tVC/SW combination mechanism: %s", COMBINATION_TYPE);
+    $display("\tAVC_ATOMIC_EN: %0d", AVC_ATOMIC_EN);
+    $display("\tCongestion index: %0d", CONGESTION_INDEX);
+    $display("\tADD_PIPREG_AFTER_CROSSBAR: %0d", ADD_PIPREG_AFTER_CROSSBAR);
+    $display("\tSSA_EN: %0d", SSA_EN);
+    $display("\tSwitch allocator arbiter type: %s", SWA_ARBITER_TYPE);
+    $display("\tMinimum packet size: %0d flit(s)", MIN_PCK_SIZE);
+    $display("\tLoopback enabled: %0d", SELF_LOOP_EN);
+    $display("\tMax multihop bypass (SMART): %0d", SMART_MAX);
+    $display("\tCasting type: %s", CAST_TYPE);
+    if (IS_MULTICAST_PARTIAL | IS_BROADCAST_PARTIAL) begin
+        $display("\tNumber of nodes in cast list: %0d", MCAST_PRTLw);
+        $display("\tCast list: %b", MCAST_ENDP_LIST);
+    end 
+    $display ("NoC parameters:----------------");
     end
     endtask
     `endif //SIMULATION

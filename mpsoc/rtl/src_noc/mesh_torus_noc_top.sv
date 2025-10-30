@@ -56,7 +56,7 @@ module regular_topo_noc_top  (
     
     genvar x,y,l;
     generate 
-    if( IS_RING | IS_LINE) begin : D1_
+    if( IS_1D_TOPO ) begin : D1_
         for  (x=0; x<NX; x=x+1) begin :R_
             localparam RID =  x;
             assign router_config_in[x].router_addr = RID[RAw-1: 0];
@@ -88,7 +88,7 @@ module regular_topo_noc_top  (
             end// locals
         end//x
         
-    end else if (IS_MESH | IS_FMESH | IS_TORUS ) begin : D2_
+    end else if (IS_2D_TOPO) begin : D2_
         for (y=0; y<NY; y=y+1) begin: Y_
             for (x=0; x<NX; x=x+1) begin :X_
                 localparam R_ADDR = (y<<NXw) + x;

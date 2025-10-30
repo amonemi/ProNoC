@@ -856,7 +856,7 @@ module regular_topo_router_addr_decode (
     
     localparam
         RXw = log2(NX),    // number of node in x axis
-        RYw = (IS_RING | IS_LINE) ? 1 : log2(NY);    // number of node in y axis
+        RYw = (IS_1D_TOPO) ? 1 : log2(NY);    // number of node in y axis
     /* verilator lint_off WIDTH */ 
     localparam [RXw-1 : 0]    MAXX = (NX-1); 
     localparam [RYw-1 : 0]    MAXY = (NY-1); 
@@ -868,7 +868,7 @@ module regular_topo_router_addr_decode (
     output valid;
     
     generate 
-    if (IS_RING | IS_LINE) begin :oneD 
+    if (IS_1D_TOPO) begin :D1_
         assign rx = r_addr;
         assign ry = 1'b0;
     end else begin : twoD
@@ -892,7 +892,7 @@ module regular_topo_endp_addr_decode
     import pronoc_pkg::*;
     localparam
         EXw = log2(NX),    // number of node in x axis
-        EYw = (IS_RING | IS_LINE) ? 1 : log2(NY),
+        EYw = (IS_1D_TOPO) ? 1 : log2(NY),
         ELw = log2(NL);    // number of node in y axis
     /* verilator lint_off WIDTH */ 
     localparam [EXw-1 : 0]    MAXX = (NX-1); 
@@ -907,7 +907,7 @@ module regular_topo_endp_addr_decode
     output valid;
     
     generate 
-    if (IS_RING | IS_LINE) begin :oneD 
+    if (IS_1D_TOPO) begin : D1_
         if(NL==1) begin:one_local
             assign ex = e_addr;
             assign ey = 1'b0;
@@ -999,7 +999,9 @@ module regular_topo_destp_generator #(
     odd_column
 );
     import pronoc_pkg::*;
-    localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
+    localparam 
+        P_1 = (SELF_LOOP_EN )?  P : P-1,
+        Pw = log2(P);
     
     input  [DSTPw-1 : 0] dest_port_coded;
     input  [PLw-1 : 0] endp_localp_num;
@@ -1011,7 +1013,7 @@ module regular_topo_destp_generator #(
     wire [P_1-1 : 0] dest_port_in;
     
     generate 
-    if (IS_RING | IS_LINE ) begin : one_D
+    if (IS_1D_TOPO) begin : D1_
         line_ring_destp_decoder #(
             .ROUTE_TYPE(ROUTE_TYPE),
             .P(P),
@@ -1028,9 +1030,12 @@ module regular_topo_destp_generator #(
         );
     end else if (IS_MESH_3D) begin : three_D
         logic [P-1  : 0] mesh_3d_one_hot_dest_port;
+        logic [Pw-1 : 0] local_dest_port;
         always @(*) begin
+            local_dest_port =Pw'(endp_localp_num) + Pw'(DOWN);
             mesh_3d_one_hot_dest_port = {P{1'b0}};
-            mesh_3d_one_hot_dest_port[dest_port_coded] = 1'b1;
+            if(dest_port_coded == 0 && endp_localp_num!=0 && NL >1) mesh_3d_one_hot_dest_port[local_dest_port] = 1'b1;
+            else mesh_3d_one_hot_dest_port[dest_port_coded] = 1'b1;
         end
         destport_non_selfloop_fix #(
             .SELF_LOOP_EN(SELF_LOOP_EN),
