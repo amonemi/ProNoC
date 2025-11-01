@@ -7,30 +7,30 @@
 //#include "topology.h"
 
 #if defined (IS_LINE) || defined (IS_RING )
-    #define X_MAX  T1
-    #define Y_MAX  1
-    #define Z_MAX  1
-    #define L_MAX  T3
+    #define NX  T1
+    #define NY  1
+    #define NZ  1
+    #define NL  T3
 #elif defined (IS_MESH_3D)
-    #define X_MAX  T1
-    #define Y_MAX  T2
-    #define Z_MAX  T3
-    #define L_MAX  T4
+    #define NX  T1
+    #define NY  T2
+    #define NZ  T3
+    #define NL  T4
 #elif defined (IS_TORUS) || defined (IS_MESH) 
-    #define X_MAX  T1
-    #define Y_MAX  T2
-    #define Z_MAX  1
-    #define L_MAX  T3
+    #define NX  T1
+    #define NY  T2
+    #define NZ  1
+    #define NL  T3
 #elif  defined (IS_FMESH)
-    #define X_MAX  T1
-    #define Y_MAX  T2
-    #define Z_MAX  1
-    #define L_MAX  T3+4
+    #define NX  T1
+    #define NY  T2
+    #define NZ  1
+    #define NL  T3+4
 #else 
-    #define X_MAX  NE
-    #define Y_MAX  1
-    #define Z_MAX  1
-    #define L_MAX  1
+    #define NX  NE
+    #define NY  1
+    #define NZ  1
+    #define NL  1
     #define UNREGULAR_TOPO
 #endif
 
@@ -264,39 +264,39 @@ unsigned int pck_dst_gen_synthetic (unsigned int core_num, unsigned char * injec
 #endif
     if(( strcmp(TRAFFIC ,"TRANSPOSE1")==0) || (strcmp (TRAFFIC,"transposed 1")==0)){
         dest_x =
-            (Z_MAX==1 && Y_MAX==1) ? (X_MAX-current_x-1) :
-            (Y_MAX-current_y-1) % X_MAX;
+            (NZ==1 && NY==1) ? (NX-current_x-1) :
+            (NY-current_y-1) % NX;
         dest_y =
-            ( Z_MAX==1 ) ? ((X_MAX-current_x-1) % Y_MAX) : 
-            ((Z_MAX-current_z-1)  % Y_MAX);
-        dest_z = (X_MAX-current_x-1) % Z_MAX;
-        dest_l = L_MAX-current_l-1;
+            ( NZ==1 ) ? ((NX-current_x-1) % NY) : 
+            ((NZ-current_z-1)  % NY);
+        dest_z = (NX-current_x-1) % NZ;
+        dest_l = NL-current_l-1;
         return pck_dst_gen_return_func(dest_x,dest_y,dest_z,dest_l);
     }
     if(( strcmp(TRAFFIC ,"TRANSPOSE2")==0) || (strcmp (TRAFFIC,"transposed 2")==0)){
         dest_x =
-            (Z_MAX==1 && Y_MAX==1)? X_MAX-current_x-1:  //same as transposed 1
-            current_y % X_MAX;
+            (NZ==1 && NY==1)? NX-current_x-1:  //same as transposed 1
+            current_y % NX;
         dest_y =
-            ( Z_MAX==1)? (current_x % Y_MAX) : 
-            current_z  % Y_MAX;
-        dest_z = dest_x % Z_MAX;
-        dest_l = L_MAX-current_l-1;
+            ( NZ==1)? (current_x % NY) : 
+            current_z  % NY;
+        dest_z = dest_x % NZ;
+        dest_l = NL-current_l-1;
         return pck_dst_gen_return_func(dest_x,dest_y,dest_z,dest_l);
     }
     if(( strcmp(TRAFFIC ,"TORNADO") == 0)|| (strcmp (TRAFFIC,"tornado")==0)){
         //[(x+(k/2-1)) mod k, (y+(k/2-1)) mod k],
-        dest_x = ((current_x + ((X_MAX/2)-1))%X_MAX);
-        dest_y =(Y_MAX==1)? 0 : ((current_y + ((Y_MAX/2)-1))%Y_MAX);
-        dest_z =(Z_MAX==1)? 0 : ((current_z + ((Z_MAX/2)-1))%Z_MAX);
-        dest_l =(L_MAX==1)? 0 : ((current_l + ((L_MAX/2)-1))%L_MAX);
+        dest_x = ((current_x + ((NX/2)-1))%NX);
+        dest_y =(NY==1)? 0 : ((current_y + ((NY/2)-1))%NY);
+        dest_z =(NZ==1)? 0 : ((current_z + ((NZ/2)-1))%NZ);
+        dest_l =(NL==1)? 0 : ((current_l + ((NL/2)-1))%NL);
         return pck_dst_gen_return_func(dest_x,dest_y,dest_z,dest_l);
     }
     if(( strcmp(TRAFFIC ,"NEIGHBOR") == 0)|| (strcmp (TRAFFIC,"neighbor")==0)){
         //dx = sx + 1 mod k
-        dest_x = (current_x + 1)%X_MAX;
-        dest_y = (current_y + 1)%Y_MAX;
-        dest_z = (current_z + 1)%Z_MAX;
+        dest_x = (current_x + 1)%NX;
+        dest_y = (current_y + 1)%NY;
+        dest_z = (current_z + 1)%NZ;
         dest_l = current_l;
         return pck_dst_gen_return_func(dest_x,dest_y,dest_z,dest_l);
     }

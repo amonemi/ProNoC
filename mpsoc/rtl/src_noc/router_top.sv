@@ -424,4 +424,11 @@ module router_top_v
         .reset(reset)
     );
     
+    `ifdef SIMULATION
+    initial begin
+        if (current_r_addr==0) begin
+            display_noc_parameters();
+        end 
+    end
+    `endif
 endmodule

@@ -880,63 +880,32 @@ module regular_topo_router_addr_decode (
     /* verilator lint_on CMPCONST */
 endmodule
 
-
-module regular_topo_endp_addr_decode 
-(
-    e_addr,
-    ex,
-    ey,
-    el,
+module regular_topo_address_validator (
+    addr,
     valid
 );
     import pronoc_pkg::*;
-    localparam
-        EXw = log2(NX),    // number of node in x axis
-        EYw = (IS_1D_TOPO) ? 1 : log2(NY),
-        ELw = log2(NL);    // number of node in y axis
-    /* verilator lint_off WIDTH */ 
-    localparam [EXw-1 : 0]    MAXX = (NX-1); 
-    localparam [EYw-1 : 0]    MAXY = (NY-1); 
-    localparam [ELw-1 : 0]    MAXL = (NL-1); 
-    /* verilator lint_on WIDTH */ 
-    
-    input  [EAw-1 : 0] e_addr;
-    output [EXw-1 : 0] ex;
-    output [EYw-1 : 0] ey;
-    output [ELw-1 : 0] el;
-    output valid;
-    
-    generate 
-    if (IS_1D_TOPO) begin : D1_
-        if(NL==1) begin:one_local
-            assign ex = e_addr;
-            assign ey = 1'b0;
-            assign el = 1'b0;
-            /* verilator lint_off CMPCONST */
-            assign valid = ex<= MAXX;
-            /* verilator lint_on CMPCONST */
-        end else begin: multi_local 
-            assign {el,ex} = e_addr;   
-            assign ey = 1'b0;
-            /* verilator lint_off CMPCONST */
-            assign valid = ((ex<= MAXX) & (el<=MAXL));
-            /* verilator lint_on CMPCONST */
+    input  [EAw-1 : 0] addr;
+    output logic valid;
+    regular_topo_endp_addr_t endp_addr;
+    always_comb begin 
+        endp_addr = regular_topo_endp_addr_t'(addr);
+        //for 2/1d we need to re-extact the l
+        endp_addr.l=addr[EAw-1: EAw-NLw];
+    end
+    always_comb begin 
+        valid = 1'b1;
+        if(32'(endp_addr.x) >= NX) valid = 1'b0;
+        if((IS_2D_TOPO | IS_3D_TOPO) && ((NY & (NY - 1)) != 0) ) begin
+            if(32'(endp_addr.y) >= NY) valid = 1'b0;
         end
-    end else begin : twoD
-        if(NL==1)begin:one_local 
-            assign {ey,ex} = e_addr; 
-            assign el = 1'b0;  
-            /* verilator lint_off CMPCONST */
-            assign valid = (ex<= MAXX) & (ey <= MAXY);
-            /* verilator lint_on CMPCONST */
-        end else begin :multi_l
-            assign {el,ey,ex} = e_addr; 
-            /* verilator lint_off CMPCONST */
-            assign valid = ( (ex<= MAXX) & (ey <= MAXY) & (el<=MAXL) );
-            /* verilator lint_on CMPCONST */
+        if(IS_3D_TOPO) begin
+            if(32'(endp_addr.z) >= NZ) valid = 1'b0;
+        end
+        if(NL>1) begin
+            if(32'(endp_addr.l) >= NL) valid = 1'b0;
         end
     end
-    endgenerate   
 endmodule
 
 
@@ -944,7 +913,6 @@ endmodule
 *    Regular_topo_endp_addr_encoder
 *    most probably it is only needed for simulation purposes
 ***************/  
-
 module  regular_topo_endp_addr_encoder 
 (    
     id,

@@ -215,30 +215,17 @@ module debug_mesh_edges #(
 endmodule
 
 
-module check_destination_addr #(
-    parameter TOPOLOGY = "MESH",
-    parameter T1=2,
-    parameter T2=2,
-    parameter T3=2,
-    parameter T4=2,
-    parameter EAw=2,
-    parameter DAw=2,
-    parameter SELF_LOOP_EN=0,
-    parameter CAST_TYPE = "UNICAST",
-    parameter NE=8
-)(
+module check_destination_addr(
     dest_is_valid,
     dest_e_addr,
     current_e_addr
 );
-
+    import pronoc_pkg::*;
     input [DAw-1 : 0]  dest_e_addr;
     input [EAw-1 : 0]  current_e_addr;
     output dest_is_valid;
     // general rules
-    /* verilator lint_off WIDTH */
-    wire valid_dst  = (SELF_LOOP_EN == 0)? dest_e_addr  !=  current_e_addr : 1'b1;
-    /* verilator lint_on WIDTH */
+    wire valid_self_loop  = (SELF_LOOP_EN == 0 )? (dest_e_addr[EAw-1 : 0]  !=  current_e_addr) : 1'b1;
     wire valid;
     generate
     if(CAST_TYPE != "UNICAST") begin
@@ -254,18 +241,15 @@ module check_destination_addr #(
         assign  dest_is_valid =  valid_dst_multi_r2;// & valid_dst_multi_r1 ;  
     end else     
     /* verilator lint_off WIDTH */ 
-    if(TOPOLOGY=="MESH" || TOPOLOGY == "TORUS" || TOPOLOGY=="RING" || TOPOLOGY == "LINE") begin : mesh
+    if(IS_REGULAR_TOPO) begin : Regular
    /* verilator lint_on WIDTH */ 
-        regular_topo_endp_addr_decode  endp_decode (
-            .e_addr(dest_e_addr),
-            .ex(),
-            .ey(),
-            .el(),
+        regular_topo_address_validator check (
+            .addr(dest_e_addr),
             .valid(valid)
         );
-        assign  dest_is_valid = valid_dst & valid;
+        assign  dest_is_valid = valid_self_loop & valid;
     end else begin : tree
-        assign  dest_is_valid = valid_dst;
+        assign  dest_is_valid = valid_self_loop;
     end
     endgenerate
 endmodule

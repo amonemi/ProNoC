@@ -211,17 +211,7 @@ module  traffic_gen_top  #(
     
     wire start_injection = (start_delay_counter == start_delay);
     
-    check_destination_addr #(
-        .TOPOLOGY(TOPOLOGY),
-        .T1(T1),
-        .T2(T2),
-        .T3(T3),   
-        .EAw(EAw),
-        .SELF_LOOP_EN(SELF_LOOP_EN),
-        .DAw(DAw),
-        .CAST_TYPE(CAST_TYPE),
-        .NE(NE)
-    ) check_destination_addr (
+    check_destination_addr  check_dest_addr (
         .dest_e_addr(dest_e_addr),
         .current_e_addr(current_e_addr),
         .dest_is_valid(valid_dst)
