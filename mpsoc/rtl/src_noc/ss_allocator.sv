@@ -390,7 +390,7 @@ module ssa_check_destport #(
             
         wire [Pw-1 : 0] endp_p_in;
         wire [MAX_P-1 : 0] destport_one_hot_in;
-        assign endp_p_in = dest_e_addr_in[DAw-1 : DAw-ELw];
+        assign endp_p_in = dest_e_addr_in[DAw-1 : DAw-Pw];
         destp_generator #(
             .P(MAX_P),
             .SW_LOC(SW_LOC)
