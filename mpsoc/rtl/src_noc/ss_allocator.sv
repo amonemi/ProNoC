@@ -282,7 +282,6 @@ module ssa_per_vc #(
     
     ssa_check_destport #(
         .SW_LOC(SW_LOC),
-        .P(P),
         .SS_PORT(SS_PORT)
     ) check_destport (
         .destport_encoded(destport_encoded),
@@ -335,7 +334,6 @@ endmodule
 
 module ssa_check_destport #(
     parameter SW_LOC = 0,
-    parameter P=5,
     parameter SS_PORT=0
 ) (
     destport_encoded, //non header flit dest port
@@ -370,13 +368,9 @@ module ssa_check_destport #(
             .ss_port_hdr_flit(ss_port_hdr_flit),
             .ss_port_nonhdr_flit(ss_port_nonhdr_flit)
         );
-    end else if (IS_MESH | IS_TORUS ) begin : mesh
-        regular_topo_ssa_check_destport #(
-            .ROUTE_TYPE(ROUTE_TYPE),
+    end else if (IS_MESH | IS_TORUS ) begin : D2_
+        two_dim_ssa_check_destport #(
             .SW_LOC(SW_LOC),
-            .P(P),
-            .DEBUG_EN(DEBUG_EN),
-            .DSTPw(DSTPw),
             .SS_PORT(SS_PORT)
         ) destport_check (
             .destport_encoded(destport_encoded),
@@ -392,21 +386,13 @@ module ssa_check_destport #(
     end else if (IS_FMESH) begin :fmesh
         localparam 
             ELw = log2(T3),
-            Pw  = log2(P);
+            Pw  = log2(MAX_P);
             
         wire [Pw-1 : 0] endp_p_in;
         wire [MAX_P-1 : 0] destport_one_hot_in;
-        
-        fmesh_endp_addr_decode  endp_addr_decode (
-            .e_addr(dest_e_addr_in),
-            .ex(),
-            .ey(),
-            .ep(endp_p_in),
-            .valid()
-        );
-        
+        assign endp_p_in = dest_e_addr_in[DAw-1 : DAw-ELw];
         destp_generator #(
-            .P(P),
+            .P(MAX_P),
             .SW_LOC(SW_LOC)
         ) decoder (
             .destport_one_hot (destport_one_hot_in),
@@ -419,13 +405,9 @@ module ssa_check_destport #(
         );
         assign ss_port_nonhdr_flit = destport_one_hot [SS_PORT];
         assign ss_port_hdr_flit    = destport_one_hot_in [SS_PORT]; 
-    end else begin : line
-        line_ring_ssa_check_destport #(
-            .ROUTE_TYPE(ROUTE_TYPE),
+    end else if(IS_LINE | IS_RING) begin : D1_
+        one_dim_ssa_check_destport #(
             .SW_LOC(SW_LOC),
-            .P(P),
-            .DEBUG_EN(DEBUG_EN),
-            .DSTPw(DSTPw),
             .SS_PORT(SS_PORT)
         ) destport_check (
             .destport_encoded(destport_encoded),
@@ -433,6 +415,17 @@ module ssa_check_destport #(
             .ss_port_hdr_flit(ss_port_hdr_flit),
             .ss_port_nonhdr_flit(ss_port_nonhdr_flit)
         );
+    end else begin : other
+        logic [MAX_P-1 : 0] destport_one_hot_in;
+        always @(*) begin 
+            destport_one_hot_in = '0;
+            //for deterministic routing destination port is decimal encoded
+            if(IS_DETERMINISTIC) destport_one_hot_in[destport_in_encoded] = 1'b1;
+            //for non-deterministic routing destination port is one-hot encoded
+            else destport_one_hot_in [DSTPw-1 : 0] = destport_in_encoded;
+        end
+        assign ss_port_nonhdr_flit = destport_one_hot [SS_PORT];
+        assign ss_port_hdr_flit    = destport_one_hot_in [SS_PORT]; 
     end
     endgenerate
 endmodule

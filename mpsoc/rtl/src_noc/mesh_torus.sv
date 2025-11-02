@@ -212,7 +212,7 @@ module regular_topo_dspt_clear_gen #(
 endmodule
 
 
-module   regular_topo_mask_non_assignable_destport #(
+module  regular_topo_mask_non_assignable_destport #(
     parameter TOPOLOGY="MESH",
     parameter ROUTE_NAME="DOR",
     parameter SW_LOC=0,
@@ -741,36 +741,26 @@ module ring_torus_distance_gen (
 endmodule
 
 
-module regular_topo_ssa_check_destport #(
-    parameter ROUTE_TYPE="DETERMINISTIC",
+module two_dim_ssa_check_destport #(
     parameter SW_LOC = 0,
-    parameter P=5,
-    parameter DEBUG_EN = 0,
-    parameter DSTPw = P-1,
     parameter SS_PORT=0
 )(
     destport_encoded, //exsited packet dest port
     destport_in_encoded, // incomming packet dest port
     ss_port_hdr_flit,
-    ss_port_nonhdr_flit     
+    ss_port_nonhdr_flit
     `ifdef SIMULATION 
     ,clk,
     ivc_num_getting_sw_grant,
     hdr_flg
     `endif
 );
-
+    import pronoc_pkg::*;
     input [DSTPw-1 : 0] destport_encoded, destport_in_encoded; 
     output ss_port_hdr_flit, ss_port_nonhdr_flit;
     `ifdef SIMULATION 
     input clk, ivc_num_getting_sw_grant,hdr_flg;
     `endif
-    //MESH, TORUS Topology p=5           
-    localparam   
-        LOCAL = 0,  
-        EAST = 1,
-        WEST = 3;
-
 /*************************
 *        destination port is coded        
 *        destination-port_in
@@ -815,12 +805,8 @@ endgenerate
 endmodule
 
 
-module line_ring_ssa_check_destport #(
-    parameter ROUTE_TYPE="DETERMINISTIC",
+module one_dim_ssa_check_destport #(
     parameter SW_LOC = 0,
-    parameter P=3,
-    parameter DEBUG_EN = 0,
-    parameter DSTPw = P-1,
     parameter SS_PORT=0
 )(
     destport_encoded, //exsited packet dest port
@@ -828,9 +814,10 @@ module line_ring_ssa_check_destport #(
     ss_port_hdr_flit,
     ss_port_nonhdr_flit 
 );
+    import pronoc_pkg::*;
     input [DSTPw-1 : 0] destport_encoded, destport_in_encoded; 
     output ss_port_hdr_flit, ss_port_nonhdr_flit;
-    wire [P-1 : 0] dest_port_num,assigned_dest_port_num;
+    wire [MAX_P-1 : 0] dest_port_num,assigned_dest_port_num;
     
     line_ring_decode_dstport cnv1(
         .dstport_one_hot(dest_port_num),
