@@ -367,17 +367,20 @@ module check_straight_oport #(
     import pronoc_pkg::*;
     input   [DSTPw-1 : 0] destport_coded_i;
     output  goes_straight_o;
-    
+
     generate 
     if(IS_3D_TOPO) begin : D3_
         if (SS_PORT_LOC == 0 || SS_PORT_LOC > DOWN) begin : local_ports
             assign goes_straight_o = 1'b0; // There is not a next router in this case at all
         end else begin :non_local
-            wire [6 : 0 ] destport_one_hot;
-            regular_topo_decode_dstport decoder(
-                .dstport_encoded(destport_coded_i),
-                .dstport_one_hot(destport_one_hot)
-            );
+            logic [MAX_P-1 : 0 ] destport_one_hot;
+            always @(*) begin 
+                destport_one_hot = '0;
+                //for deterministic routing destination port is decimal encoded
+                if(IS_DETERMINISTIC) destport_one_hot[destport_coded_i] = 1'b1;
+                //for non-deterministic routing destination port is one-hot encoded
+                else destport_one_hot [DSTPw-1 : 0] = destport_coded_i;
+            end
             assign goes_straight_o = destport_one_hot [SS_PORT_LOC];    
         end//else
     end//regular_topo
