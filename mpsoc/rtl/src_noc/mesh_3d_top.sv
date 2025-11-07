@@ -64,6 +64,7 @@ module mesh_3d_noc_top (
     
     genvar x,y,z,l;
     generate
+    if(IS_MESH_3D) begin 
     for (z=0; z<NZ; z=z+1) begin: Z_
         for (y=0; y<NY; y=y+1) begin: Y_
             for (x=0; x<NX; x=x+1) begin: X_
@@ -109,6 +110,7 @@ module mesh_3d_noc_top (
             end//X
         end//Y
     end//Z
+    end
     endgenerate
 endmodule
 
