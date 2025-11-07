@@ -265,7 +265,17 @@ package pronoc_pkg;
         ctrl_chanel_t    ctrl_chanel;
     } smartflit_chanel_t;
     localparam SMARTFLIT_CHANEL_w = $bits(smartflit_chanel_t); 
-
+/****************
+*  fifos
+*****************/
+    typedef struct packed {
+        bit full;
+        bit nearly_full;
+        bit empty;
+        bit has_data;
+        bit has_multiple;
+    } fifo_stat_t;
+    localparam FIFO_STAT_w = $bits(fifo_stat_t);
 /****************
 *   functions
 '***************/ 

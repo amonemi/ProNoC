@@ -856,14 +856,11 @@ module packet_gen
         );
     end 
     endgenerate
-    
-    wire timestamp_fifo_nearly_full , timestamp_fifo_full;
-    assign buffer_full = (MIN_PCK_SIZE==1) ? timestamp_fifo_nearly_full : timestamp_fifo_full;
+    fifo_stat_t timestamp_fifo_stat;
+    assign buffer_full = (MIN_PCK_SIZE==1) ? timestamp_fifo_stat.nearly_full : timestamp_fifo_stat.full;
     
     wire  [DAw-1 :0] tmp1;
     wire  [PCK_SIZw-1 : 0] tmp2;
-    
-    wire recieve_more_than_0;
     fwft_fifo_bram #(
         .DATA_WIDTH(CLK_CNTw+PCK_SIZw+DAw),
         .MAX_DEPTH(TIMSTMP_FIFO_NUM)        
@@ -872,10 +869,7 @@ module packet_gen
         .wr_en(pck_wr),
         .rd_en(pck_rd),
         .dout({tmp1,tmp2,pck_timestamp}),
-        .full(timestamp_fifo_full),
-        .nearly_full(timestamp_fifo_nearly_full),
-        .recieve_more_than_0(recieve_more_than_0),
-        .recieve_more_than_1(),
+        .stat_o(timestamp_fifo_stat),
         .reset(reset),
         .clk(clk)
     );
@@ -886,7 +880,7 @@ module packet_gen
     /* verilator lint_off WIDTH */
     assign pck_size_o = (IS_SINGLE_FLIT )?   1 : tmp2;
     /* verilator lint_on WIDTH */
-    assign buffer_empty = ~recieve_more_than_0;
+    assign buffer_empty = timestamp_fifo_stat.empty;
     
     /*
     bram_based_fifo #(
@@ -899,9 +893,7 @@ module packet_gen
         .wr_en(pck_wr),
         .rd_en(pck_rd),
         .dout(pck_timestamp),
-        .full(timestamp_fifo_full),
-        .nearly_full(timestamp_fifo_nearly_full),
-        .empty(buffer_empty),
+        .stat_o(timestamp_fifo_stat),
         .reset(reset),
         .clk(clk)
     );

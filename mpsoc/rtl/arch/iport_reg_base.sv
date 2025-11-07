@@ -315,10 +315,7 @@ generate
             .wr_en (flit_wr[i]),   // Write enable
             .rd_en (ivc_num_getting_sw_grant[i]),   // Read the next word
             .dout (flit_is_tail[i]),    // Data out
-            .full ( ),
-            .nearly_full ( ),
-            .recieve_more_than_0 ( ),
-            .recieve_more_than_1 ( ),
+            .status_o(),
             .reset (reset),
             .clk (clk)            
         );
@@ -335,10 +332,7 @@ generate
                 .wr_en (hdr_flit_wr[i]),   // Write enable
                 .rd_en (class_rd_fifo[i]),   // Read the next word
                 .dout (class_out[i]),    // Data out
-                .full ( ),
-                .nearly_full ( ),
-                .recieve_more_than_0 ( ),
-                .recieve_more_than_1 ( ),
+                .status_o(),
                 .reset (reset),
                 .clk (clk)
             
@@ -358,10 +352,7 @@ generate
              .wr_en (hdr_flit_wr_delayed [i]),   // Write enable
              .rd_en (lk_dst_rd_fifo [i]),   // Read the next word
              .dout (lk_destination_encoded  [(i+1)*DSTPw-1 : i*DSTPw]),    // Data out
-             .full (),
-             .nearly_full (),
-             .recieve_more_than_0 (),
-             .recieve_more_than_1 (),
+             .status_o(),
              .reset (reset),
              .clk (clk)
              
@@ -381,10 +372,7 @@ generate
                  .wr_en(hdr_flit_wr[i]),   // Write enable
                  .rd_en(dst_rd_fifo[i]),   // Read the next word
                  .dout(dest_port_encoded[(i+1)*DSTPw-1 : i*DSTPw]),    // Data out
-                 .full(),
-                 .nearly_full(),
-                 .recieve_more_than_0(),
-                 .recieve_more_than_1(),
+                 .status_o(),
                  .reset(reset),
                  .clk(clk) 
             );               
@@ -401,10 +389,7 @@ generate
                 .wr_en(hdr_flit_wr[i]),   // Write enable
                 .rd_en(dst_rd_fifo[i]),   // Read the next word
                 .dout(dest_port_encoded[(i+1)*DSTPw-1 : i*DSTPw]),    // Data out
-                .full(),
-                .nearly_full(),
-                .recieve_more_than_0(),
-                .recieve_more_than_1(),
+                .status_o(),
                 .reset(reset),
                 .clk(clk),
                 .clear(destport_clear[(i+1)*DSTPw-1 : i*DSTPw])   // clear other destination ports once one of them is selected
@@ -455,10 +440,7 @@ generate
                  .wr_en(hdr_flit_wr[i]),   // Write enable
                  .rd_en(dst_rd_fifo[i]),   // Read the next word
                  .dout(endp_localp_num[(i+1)*ELw-1 : i*ELw]),    // Data out
-                 .full( ),
-                 .nearly_full( ),
-                 .recieve_more_than_0(),
-                 .recieve_more_than_1(),
+                 .status_o(),
                  .reset(reset),
                  .clk(clk) 
             );       

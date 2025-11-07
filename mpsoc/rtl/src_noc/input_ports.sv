@@ -254,7 +254,7 @@ module input_queue_per_port #(
         VPLw= V * PLw,
         PRAw= P * RAw;
     
-    input reset, clk;
+    input   reset, clk;
     input   router_info_t router_info;
     output  logic [V-1 : 0] credit_out;
     output  [V-1 : 0] ivc_num_getting_sw_grant;
@@ -325,7 +325,6 @@ module input_queue_per_port #(
     wire [V-1 : 0] mux_out[V-1 : 0];
     
     wire [V-1 : 0] dstport_fifo_not_empty;
-    
     logic  [WEIGHTw-1 : 0] iport_weight_next;
     hdr_flit_t hdr_flit_i;
     
@@ -497,10 +496,7 @@ module input_queue_per_port #(
                 .wr_en (wr_hdr_fwft_fifo[i]),   // Write enable
                 .rd_en (rd_hdr_fwft_fifo[i]),   // Read the next word
                 .dout (ovc_sel_ivc[i]),    // Data out
-                .full ( ),
-                .nearly_full ( ),
-                .recieve_more_than_0 ( ),
-                .recieve_more_than_1 ( ),
+                .status_o(),
                 .reset (reset),
                 .clk (clk)
             );
@@ -533,7 +529,6 @@ module input_queue_per_port #(
         end
         //dest_e_addr_in fifo
         if(SMART_EN) begin : smart_
-            
             fwft_fifo #(
                 .DATA_WIDTH(EAw),
                 .MAX_DEPTH (MAX_PCK),
@@ -543,14 +538,10 @@ module input_queue_per_port #(
                 .wr_en (wr_hdr_fwft_fifo[i]),   // Write enable
                 .rd_en (rd_hdr_fwft_fifo[i]),   // Read the next word
                 .dout (dest_e_addr_out[i]),    // Data out
-                .full ( ),
-                .nearly_full ( ),
-                .recieve_more_than_0 ( ),
-                .recieve_more_than_1 ( ),
+                .status_o(),
                 .reset (reset),
                 .clk (clk)
             );
-            
         end else begin : no_smart
             assign dest_e_addr_out[i]= {EAw{1'b0}};
         end    
@@ -566,10 +557,7 @@ module input_queue_per_port #(
                 .wr_en (wr_hdr_fwft_fifo[i]),   // Write enable
                 .rd_en (rd_hdr_fwft_fifo[i]),   // Read the next word
                 .dout (class_out[i]),    // Data out
-                .full ( ),
-                .nearly_full ( ),
-                .recieve_more_than_0 ( ),
-                .recieve_more_than_1 ( ),
+                .status_o(),
                 .reset (reset),
                 .clk (clk)
             
@@ -589,10 +577,7 @@ module input_queue_per_port #(
                 .wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
                 .rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
                 .dout(dest_port_multi[i]),    // Data out
-                .full(),
-                .nearly_full(),
-                .recieve_more_than_0(),
-                .recieve_more_than_1(),
+                .status_o(),
                 .reset(reset),
                 .clk(clk),
                 .clear(clear_dspt_mulicast [i])   // clear the  destination port once it got  the entire packet
@@ -629,10 +614,7 @@ module input_queue_per_port #(
                     .wr_en (wr_hdr_fwft_fifo_delay [i]),   // Write enable
                     .rd_en (rd_hdr_fwft_fifo_delay [i]),   // Read the next word
                     .dout (lk_destination_encoded  [i]),    // Data out
-                    .full (),
-                    .nearly_full (),
-                    .recieve_more_than_0 (),
-                    .recieve_more_than_1 (),
+                    .status_o(),
                     .reset (reset),
                     .clk (clk)
                 );
@@ -650,10 +632,7 @@ module input_queue_per_port #(
                     .wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
                     .rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
                     .dout(dest_port_encoded[i]),    // Data out
-                    .full(),
-                    .nearly_full(),
-                    .recieve_more_than_0(),
-                    .recieve_more_than_1(),
+                    .status_o(),
                     .reset(reset),
                     .clk(clk) 
                 );
@@ -669,10 +648,7 @@ module input_queue_per_port #(
                     .wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
                     .rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
                     .dout(dest_port_encoded[i]),    // Data out
-                    .full(),
-                    .nearly_full(),
-                    .recieve_more_than_0(),
-                    .recieve_more_than_1(),
+                    .status_o(),
                     .reset(reset),
                     .clk(clk),
                     .clear(destport_clear[i])   // clear other destination ports once one of them is selected
@@ -705,10 +681,7 @@ module input_queue_per_port #(
                 .wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
                 .rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
                 .dout(endp_localp_num[(i+1)*PLw-1 : i*PLw]),    // Data out
-                .full( ),
-                .nearly_full( ),
-                .recieve_more_than_0(),
-                .recieve_more_than_1(),
+                .status_o(),
                 .reset(reset),
                 .clk(clk) 
             );
@@ -722,10 +695,7 @@ module input_queue_per_port #(
                 .wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
                 .rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
                 .dout(endp_localp_num[(i+1)*PLw-1 : i*PLw]),    // Data out
-                .full( ),
-                .nearly_full( ),
-                .recieve_more_than_0(),
-                .recieve_more_than_1(),
+                .status_o(),
                 .reset(reset),
                 .clk(clk) 
             );
@@ -734,7 +704,6 @@ module input_queue_per_port #(
             assign endp_localp_num[(i+1)*PLw-1 : i*PLw] = {PLw{1'b0}}; 
         end
         assign vc_weight_is_consumed[i] = (~IS_RRA);
-        
     end//for i
     
     if(~IS_RRA) begin  : wrra
@@ -901,7 +870,7 @@ module input_queue_per_port #(
             if(`pronoc_reset)begin
                 t1[j]<=1'b0;
             end else begin
-                if(flit_in_wr >0 && flit_in.vc[j] && t1[j]==0)begin
+                if(flit_in_wr > 0 && flit_in.vc[j] && t1[j]==0)begin
                     $display("%t : Parser:current_r=%h, hdr_info:%p, vc_num_in=%h,hdr_flit_wr=%h",$time,current_r_addr, hdr_flit_i, flit_in.vc,hdr_flit_wr);
                     t1[j]<=1;
                 end
@@ -933,7 +902,7 @@ module destp_generator #(
         Pw  = log2(P),
         PLw = (IS_FMESH) ? Pw : ELw,
         P_1 = (SELF_LOOP_EN )?  P : P-1;
-
+    
     input [DSTPw-1 : 0]  dest_port_encoded;
     input [PLw-1 : 0] endp_localp_num;
     output [P_1-1: 0] dest_port_out;
