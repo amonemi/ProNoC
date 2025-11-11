@@ -83,6 +83,9 @@ module header_flit_generator #(
             assign flit_out [FPAYw-1 : DATA_LSB] = {(FPAYw-DATA_LSB){1'b0}};
         end
     end else begin :have_data
+        if (FPAYw > DATA_MSB+1) begin
+            assign flit_out [FPAYw-1 : DATA_MSB+1] = {(FPAYw-DATA_MSB-1){1'b0}};
+        end
         assign flit_out [DATA_MSB : DATA_LSB] = data_in[DATA_MSB-DATA_LSB : 0]; // we have enough space for adding whole of the data                 
     end    
     endgenerate    
