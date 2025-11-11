@@ -167,8 +167,6 @@ module router_two_stage #(
             return (i > SOUTH) ? i - SOUTH : LOCAL;
         end else if(IS_3D_TOPO) begin
             return (i > DOWN) ? i - DOWN : LOCAL;
-        end else if (IS_MULTI_MESH) begin
-            return LOCAL;
         end else return 0; //TODO complete it for fattree and bin tree
     endfunction
     
@@ -217,9 +215,11 @@ module router_two_stage #(
                 end
             end
             
-            if(IS_UNICAST & IS_LOOKAHEAD) begin : lk_route
-                // we are using lookahead routing. So, the destination port is already computed 
-                // in the previous router and is available in the lookahead routing field of the flit.
+            if(IS_UNICAST & (IS_LOOKAHEAD | IS_MULTI_MESH)) begin : lk_dp_route
+                // we are using lookahead routing or depth-first (DP) routing. So, the destination
+                // port is already computed in the previous router (computed externally in the
+                // same router for DP) and is available in the lookahead routing field of the flit
+                // (destport field for DP).
                 assign chan_in_tmp[i] = chan_in[i];                
             end else begin : conv_route
                 local_route_computation #(

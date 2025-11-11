@@ -285,12 +285,10 @@ module  endp_addr_encoder (
             .code(code_out)
         );
     end else if ( IS_MULTI_MESH) begin :mmesh
-        /*
         multimesh_address_encoder addr_encoder (
             .rid_in(id_in),
             .addr_st_o(code_out)
         );
-        */
     end else begin :custom
         assign code_out =id_in;
     end
@@ -326,12 +324,10 @@ module endp_addr_decoder  (
             .code(code_in)
         );
     end else if ( IS_MULTI_MESH) begin 
-        /*
         multimesh_address_decoder addr_coder (
             .rid_out(id_out),
             .addr_st_i(code_in)
         );
-        */
     end else begin :custom
         assign id_out = code_in;
     end

@@ -395,7 +395,15 @@ module   credit_monitor_per_ovc  #(
     
     import pronoc_pkg::*;
     localparam 
-        PORT_B = port_buffer_size(SW_LOC),    
+        // NOTE: For multi-mesh, B is the buffer size in the current
+        // chip/cluster and LB is the maximal buffer size across the whole
+        // topology. The size of the neighboring buffers is given by the
+        // credit_init_val_i signal. With the current implementation, if
+        // credit_init_val_i < LB (== Bint), the empty_all_next signal is never
+        // asserted as the value Bint is never reached. This is not an issue
+        // with a deterministic algorithm (such as Depth-First) but would need
+        // to be changed to support an adaptive variant.
+        PORT_B = (IS_MULTI_MESH) ? LB : port_buffer_size(SW_LOC),
         DEPTHw = log2(PORT_B+1);
     localparam [DEPTHw-1 : 0] Bint = PORT_B [DEPTHw-1 : 0];
     
