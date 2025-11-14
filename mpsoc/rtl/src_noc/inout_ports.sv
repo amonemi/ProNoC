@@ -251,11 +251,7 @@ module inout_ports #(
     );    
     
     congestion_out_gen #(
-        .P(P),
-        .V(V),
-        .ROUTE_TYPE(ROUTE_TYPE),
-        .CONGESTION_INDEX(CONGESTION_INDEX),
-        .CONGw(CONGw)
+        .P(P)
     ) congestion_out (
         .ovc_avalable_all(ovc_avalable_all),
         .ivc_request_all(ivc_request_all),
@@ -267,7 +263,7 @@ module inout_ports #(
     
     genvar i;
     generate  
-
+    
     if( SSA_EN == 1 ) begin : ssa
         ss_allocator #(
             .P(P)
