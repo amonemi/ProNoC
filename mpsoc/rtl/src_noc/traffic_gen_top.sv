@@ -234,9 +234,7 @@ module  traffic_gen_top  #(
     
     output_vc_status #(
         .CRDTw(CRDTw),
-        .V(V),
-        .B(PORT_B),
-        .HETERO_VC(HETERO_VC)
+        .PORT_B(PORT_B)
     ) nic_ovc_status (
         .credit_init_val_in( chan_in.ctrl_chanel.credit_init_val),
         .ovc_presence(chan_in.ctrl_chanel.hetero_ovc_presence),

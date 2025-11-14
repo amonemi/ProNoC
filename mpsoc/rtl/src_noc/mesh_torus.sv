@@ -33,14 +33,7 @@
 *        ---------x
 *        0   |   2
 ***************************/
-module  regular_topo_vc_alloc_request_gen_adaptive #(
-    parameter ROUTE_TYPE = "FULL_ADAPTIVE",    // "FULL_ADAPTIVE", "PAR_ADAPTIVE"  
-    parameter V = 4,
-    parameter DSTPw=4,
-    parameter SSA_EN = 0,
-    parameter PPSw=4,
-    parameter [V-1 : 0] ESCAP_VC_MASK = 4'b1000   // mask scape vc, valid only for full adaptive       
-)(
+module  regular_topo_vc_alloc_request_gen_adaptive (
     ovc_avalable_all,
     dest_port_coded_all,
     candidate_ovc_all,
@@ -56,6 +49,7 @@ module  regular_topo_vc_alloc_request_gen_adaptive #(
     reset,
     clk    
 );
+    import pronoc_pkg::*;
     localparam  
         P = 5,
         P_1 = P-1,
@@ -64,13 +58,6 @@ module  regular_topo_vc_alloc_request_gen_adaptive #(
         VP_1 = V * P_1,
         PVDSTPw = PV * DSTPw;
         
-    localparam 
-        LOCAL = 3'd0,  
-        EAST = 3'd1, 
-        NORTH = 3'd2,  
-        WEST = 3'd3,  
-        SOUTH = 3'd4;  
-
     input   [PV-1 : 0]  ovc_avalable_all;
     input   [PVDSTPw-1 : 0]  dest_port_coded_all;
     input   [PV-1 : 0]  ivc_request_all;
@@ -85,14 +72,12 @@ module  regular_topo_vc_alloc_request_gen_adaptive #(
     input   [PV-1 : 0] ssa_ivc_num_getting_ovc_grant_all;       
     input                       reset,clk;  
     
-    
     wire    [PV-1 : 0]  non_assigned_ovc_request_all; 
     wire    [PV-1 : 0]  y_evc_forbiden,x_evc_forbiden;
     wire    [V-1 : 0]  ovc_avb_x_plus,ovc_avb_x_minus,ovc_avb_y_plus,ovc_avb_y_minus,ovc_avb_local;
     wire    [VP_1-1 : 0]  ovc_avalable_perport            [P-1 : 0];
     wire    [PPSw-1 : 0]  port_pre_sel_perport            [P-1 : 0];
     wire    [PVV-1 : 0]  candidate_ovc_x_all, candidate_ovc_y_all;
-    
     
     assign non_assigned_ovc_request_all = ivc_request_all & ~ovc_is_assigned_all;   
     assign {ovc_avb_y_minus,ovc_avb_x_minus,ovc_avb_y_plus,ovc_avb_x_plus,ovc_avb_local} = ovc_avalable_all;
@@ -124,8 +109,7 @@ module  regular_topo_vc_alloc_request_gen_adaptive #(
         );
         
         regular_topo_port_selector #(
-            .SW_LOC     (i/V),
-            .PPSw(PPSw)
+            .SW_LOC     (i/V)
         ) the_portsel (
             .port_pre_sel       (port_pre_sel_perport[i/V]),
             .swap_port_presel   (swap_port_presel[i]),
@@ -152,8 +136,6 @@ module  regular_topo_vc_alloc_request_gen_adaptive #(
             assign avc_unavailable[i] = (masked_ovc_request_all [((i+1)*V)-1 : i*V] & ~ESCAP_VC_MASK) == {V{1'b0}};
             
             regular_topo_swap_port_presel_gen #(
-                .V(V),
-                .ESCAP_VC_MASK(ESCAP_VC_MASK),       
                 .VC_NUM(i)
             ) swap_presel (
                 .avc_unavailable(avc_unavailable[i]),
@@ -213,17 +195,14 @@ endmodule
 
 
 module  regular_topo_mask_non_assignable_destport #(
-    parameter TOPOLOGY="MESH",
-    parameter ROUTE_NAME="DOR",
     parameter SW_LOC=0,
-    parameter P=5,
-    parameter SELF_LOOP_EN=0
+    parameter P=5
 ) (
     odd_column,// use only for odd even routing
     dest_port_in,
     dest_port_out
 );
-    
+    import pronoc_pkg::*;
     localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     input  [P_1-1 : 0 ] dest_port_in;
     output [P_1-1 : 0 ] dest_port_out;
@@ -258,8 +237,6 @@ module  regular_topo_mask_non_assignable_destport #(
     endgenerate
     
     regular_topo_mask_non_assignable_destport_no_self_loop # (
-        .TOPOLOGY(TOPOLOGY),
-        .ROUTE_NAME(ROUTE_NAME),
         .SW_LOC(SW_LOC),
         .P(P)    
     ) mask_no_self_loop (
@@ -270,8 +247,6 @@ module  regular_topo_mask_non_assignable_destport #(
 endmodule
 
 module regular_topo_mask_non_assignable_destport_no_self_loop #(
-    parameter TOPOLOGY="MESH",
-    parameter ROUTE_NAME="DOR",
     parameter SW_LOC=0,
     parameter P=5
 )(
@@ -279,12 +254,7 @@ module regular_topo_mask_non_assignable_destport_no_self_loop #(
     dest_port_in,
     dest_port_out
 );
-    
-    localparam
-        EAST = 1, 
-        NORTH = 2, 
-        WEST = 3,
-        SOUTH = 4; 
+    import pronoc_pkg::*;
     //port number in north port 
     localparam 
         N_LOCAL = 0, 
@@ -419,8 +389,6 @@ endmodule
 
 
 module  regular_topo_swap_port_presel_gen #(
-    parameter V = 4,
-    parameter [V-1 : 0] ESCAP_VC_MASK = 4'b1000,   // mask scape vc, valid only for full adaptive       
     parameter VC_NUM=0
 )(
     avc_unavailable,
@@ -432,7 +400,7 @@ module  regular_topo_swap_port_presel_gen #(
     clk,
     reset
 );
-    
+    import pronoc_pkg::*;
     localparam LOCAL_VC_NUM= VC_NUM % V;    
     input avc_unavailable;
     input y_evc_forbiden,x_evc_forbiden;
@@ -520,8 +488,7 @@ endmodule
 
 
 module regular_topo_port_selector #(
-    parameter SW_LOC = 0,
-    parameter PPSw=4
+    parameter SW_LOC = 0
 )(
     port_pre_sel,
     dest_port_in,
@@ -530,7 +497,7 @@ module regular_topo_port_selector #(
     y_evc_forbiden,
     x_evc_forbiden
 );
-
+    import pronoc_pkg::*;
     /************************
     *
     *        destination-port_in
@@ -943,7 +910,6 @@ endmodule
 module regular_topo_destp_generator #(
     parameter P=5,
     parameter PLw=1,
-    parameter PPSw=4,
     parameter SW_LOC=0
 )(
     dest_port_out,
@@ -961,7 +927,7 @@ module regular_topo_destp_generator #(
     input  [DSTPw-1 : 0] dest_port_coded;
     input  [PLw-1 : 0] endp_localp_num;
     output [P_1-1 : 0] dest_port_out;
-    input           swap_port_presel;
+    input  swap_port_presel;
     input  [PPSw-1 : 0] port_pre_sel;
     input odd_column;
     
@@ -970,14 +936,9 @@ module regular_topo_destp_generator #(
     generate 
     if (IS_1D_TOPO) begin : D1_
         line_ring_destp_decoder #(
-            .ROUTE_TYPE(ROUTE_TYPE),
             .P(P),
-            .DSTPw(DSTPw),
-            .NL(NL),
             .ELw(PLw),
-            .PPSw(PPSw),
-            .SW_LOC(SW_LOC),
-            .SELF_LOOP_EN(SELF_LOOP_EN)
+            .SW_LOC(SW_LOC)
         ) decoder (
             .dest_port_coded(dest_port_coded),
             .dest_port_out(dest_port_in),
@@ -1002,14 +963,9 @@ module regular_topo_destp_generator #(
         );
     end else begin :two_D
         regular_topo_destp_decoder #(
-            .ROUTE_TYPE(ROUTE_TYPE),
             .P(P),
-            .DSTPw(DSTPw),
-            .NL(NL),
             .ELw(PLw),
-            .PPSw(PPSw),
-            .SW_LOC(SW_LOC),
-            .SELF_LOOP_EN(SELF_LOOP_EN)
+            .SW_LOC(SW_LOC)
         ) decoder (
             .dest_port_coded(dest_port_coded),             
             .dest_port_out(dest_port_in),
@@ -1021,11 +977,8 @@ module regular_topo_destp_generator #(
     endgenerate     
     
     regular_topo_mask_non_assignable_destport #(
-        .TOPOLOGY(TOPOLOGY),
-        .ROUTE_NAME(ROUTE_NAME),
         .SW_LOC(SW_LOC),
-        .P(P),
-        .SELF_LOOP_EN(SELF_LOOP_EN)
+        .P(P)
     ) mask_destport (
         .dest_port_in(dest_port_in),
         .dest_port_out(dest_port_out),
@@ -1034,14 +987,9 @@ module regular_topo_destp_generator #(
 endmodule
 
 module regular_topo_destp_decoder #(
-    parameter ROUTE_TYPE="DETERMINISTIC",
     parameter P=6,
-    parameter DSTPw=4,
-    parameter NL=2,
     parameter ELw=1,
-    parameter PPSw=4,
-    parameter SW_LOC=0,
-    parameter SELF_LOOP_EN=0
+    parameter SW_LOC=0
 )(
     dest_port_coded,
     endp_localp_num,
@@ -1049,11 +997,12 @@ module regular_topo_destp_decoder #(
     swap_port_presel,
     port_pre_sel
 );
+    import pronoc_pkg::*;
     localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     input  [DSTPw-1 : 0] dest_port_coded;
     input  [ELw-1 : 0] endp_localp_num;
     output [P_1-1 : 0] dest_port_out;
-    input           swap_port_presel;
+    input  swap_port_presel;
     input  [PPSw-1 : 0] port_pre_sel;
     
     logic [NL-1 : 0] endp_localp_onehot;
@@ -1110,19 +1059,15 @@ endmodule
 * line_ring_destp_decoder 
 **************************/
 module line_ring_destp_decoder #(
-    parameter ROUTE_TYPE="DETERMINISTIC",
     parameter P=4,
-    parameter DSTPw=2,
-    parameter NL=2,
     parameter ELw=1,
-    parameter PPSw=4,
-    parameter SW_LOC=0,
-    parameter SELF_LOOP_EN= 0
+    parameter SW_LOC=0
 )(
     dest_port_coded,
     endp_localp_num,
     dest_port_out   
 );
+    import pronoc_pkg::*;
     localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     input  [DSTPw-1 : 0] dest_port_coded;
     input  [ELw-1 : 0] endp_localp_num;
@@ -1171,13 +1116,7 @@ endmodule
 *   regular_topo_dynamic_portsel_control
 *****************/
 module  regular_topo_dynamic_portsel_control #(
-    parameter  P = 5,
-    parameter ROUTE_TYPE = "FULL_ADAPTIVE",    // "FULL_ADAPTIVE", "PAR_ADAPTIVE"  
-    parameter V = 4,
-    parameter DSTPw=4,
-    parameter SSA_EN = 0, // 1: SSA enabled, 0: SSA disabled
-    parameter PPSw=4,
-    parameter [V-1 : 0] ESCAP_VC_MASK = 4'b1000   // mask scape vc, valid only for full adaptive       
+    parameter  P = 5
 )(   
     dest_port_coded_all,
     ivc_request_all,
@@ -1192,15 +1131,12 @@ module  regular_topo_dynamic_portsel_control #(
     reset,
     clk    
 );
+    import pronoc_pkg::*;
     localparam
         PV = V * P,
         PVV= PV * V,    
         PVDSTPw = PV * DSTPw;
-    localparam LOCAL = 0,  
-        EAST = 1, 
-        NORTH = 2,  
-        WEST = 3,  
-            SOUTH = 4;  
+    
     input   [PVDSTPw-1 : 0]  dest_port_coded_all;
     input   [PV-1 : 0]  ivc_request_all;
     input   [PV-1 : 0]  ovc_is_assigned_all;  
@@ -1211,11 +1147,11 @@ module  regular_topo_dynamic_portsel_control #(
     output  [PVDSTPw-1 : 0] destport_clear_all;
     input   [PV-1 : 0] ivc_num_getting_ovc_grant; 
     input   [PV-1 : 0] ssa_ivc_num_getting_ovc_grant_all;       
-    input                       reset,clk;  
+    input   reset,clk;  
     
-    wire    [PV-1 : 0]  non_assigned_ovc_request_all; 
-    wire    [PV-1 : 0]  y_evc_forbiden,x_evc_forbiden;  
-    wire    [PPSw-1 : 0]  port_pre_sel_perport            [P-1 : 0];
+    wire [PV-1 : 0]  non_assigned_ovc_request_all; 
+    wire [PV-1 : 0]  y_evc_forbiden,x_evc_forbiden;  
+    wire [PPSw-1 : 0]  port_pre_sel_perport [P-1 : 0];
     assign non_assigned_ovc_request_all = ivc_request_all & ~ovc_is_assigned_all;  
     assign port_pre_sel_perport[LOCAL] = port_pre_sel;
     assign port_pre_sel_perport[EAST] = {2'b00,port_pre_sel[1:0]};
@@ -1228,8 +1164,7 @@ module  regular_topo_dynamic_portsel_control #(
     for(i=0;i< PV;i=i+1) begin : PV_
         localparam SW_LOC = ((i/V)<5)? i/V : LOCAL;
         regular_topo_port_selector #(
-            .SW_LOC     (SW_LOC),
-            .PPSw(PPSw)
+            .SW_LOC (SW_LOC)
         ) the_portsel (
             .port_pre_sel       (port_pre_sel_perport[SW_LOC]),
             .swap_port_presel   (swap_port_presel[i]),
@@ -1251,8 +1186,6 @@ module  regular_topo_dynamic_portsel_control #(
         /* verilator lint_on WIDTH */ 
             assign avc_unavailable[i] = (masked_ovc_request_all [((i+1)*V)-1 : i*V] & ~ESCAP_VC_MASK) == {V{1'b0}};
             regular_topo_swap_port_presel_gen #(
-                .V(V),
-                .ESCAP_VC_MASK(ESCAP_VC_MASK),       
                 .VC_NUM(i)
             ) the_swap_port_presel (
                 .avc_unavailable(avc_unavailable[i]),

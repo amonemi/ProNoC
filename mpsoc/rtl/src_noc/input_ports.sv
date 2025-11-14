@@ -67,9 +67,7 @@ module input_ports #(
     reset,
     clk
 );  
-    
     import pronoc_pkg::*;
-    
     localparam
         PV = V * P,
         P_1 = (SELF_LOOP_EN )?  P : P-1,
@@ -90,23 +88,19 @@ module input_ports #(
     output  [PV-1 : 0] flit_is_tail_all;
     output  [PV-1 : 0] ivc_request_all;
     output  [PV-1 : 0] credit_out_all;
-    
     output  [PVP_1-1 : 0] dest_port_all;
     output  [Fw-1 : 0] flit_out_all [P-1 : 0];
-    
     input   [PV-1  : 0] assigned_ovc_not_full_all;
     output  [PV-1  : 0] ovc_is_assigned_all;
     input   [PV-1 : 0] sel;
     input   [PPSw-1 : 0] port_pre_sel;
     input   [PV-1  : 0]  swap_port_presel;
     input   [PV-1 : 0] nonspec_first_arbiter_granted_ivc_all;    
-    
     output  [WP-1 : 0] iport_weight_all;
     output  [PV-1 : 0] vc_weight_is_consumed_all;
     output  [P-1 : 0] iport_weight_is_consumed_all;
     input   [PP_1-1 : 0] granted_dest_port_all;
     output  [WPP-1 : 0] oports_weight_all;    
-    
     output  ivc_info_t ivc_info [P-1 : 0][V-1 : 0]; 
     input   vsa_ctrl_t  vsa_ctrl_in [P-1: 0];
     input   ssa_ctrl_t  ssa_ctrl_in [P-1: 0];
@@ -164,13 +158,12 @@ module input_ports #(
         );
     end//for
     endgenerate
-    
 endmodule 
 
 
 /**************************
-    input_queue_per_port
- **************************/
+*    input_queue_per_port
+**************************/
 module input_queue_per_port #(
     parameter ROUTER_ID=0,
     parameter P = 5,     // router port num
@@ -948,7 +941,6 @@ module destp_generator #(
         regular_topo_destp_generator #(
             .P(P),
             .PLw(PLw),
-            .PPSw(PPSw),
             .SW_LOC(SW_LOC)
         ) destp_generator (
             .dest_port_coded(dest_port_encoded),
@@ -960,15 +952,9 @@ module destp_generator #(
         );
     end else if ( IS_FMESH ) begin :fmesh
         fmesh_destp_generator  #(
-            .ROUTE_NAME(ROUTE_NAME),
-            .ROUTE_TYPE(ROUTE_TYPE),
             .P(P),
-            .DSTPw(DSTPw),
-            .NL(NL),
             .PLw(PLw),
-            .PPSw(PPSw),
-            .SW_LOC(SW_LOC),
-            .SELF_LOOP_EN(SELF_LOOP_EN)
+            .SW_LOC(SW_LOC)
         ) destp_generator (
             .dest_port_coded(dest_port_encoded),
             .endp_localp_num(endp_localp_num),

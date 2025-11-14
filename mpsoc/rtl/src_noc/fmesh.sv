@@ -79,15 +79,9 @@ endmodule
 
 
 module fmesh_destp_generator #(
-    parameter ROUTE_NAME = "DOR",  
-    parameter ROUTE_TYPE = "DETERMINISTIC",
     parameter P=5,
-    parameter DSTPw=4,
-    parameter NL=1,
     parameter PLw=1,
-    parameter PPSw=4,
-    parameter SW_LOC=0,
-    parameter SELF_LOOP_EN=0 
+    parameter SW_LOC=0
 )(
     dest_port_out,
     dest_port_coded,
@@ -96,7 +90,7 @@ module fmesh_destp_generator #(
     port_pre_sel,
     odd_column
     );
-    
+    import pronoc_pkg::*;
     localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     
     input  [DSTPw-1 : 0] dest_port_coded;
@@ -109,14 +103,9 @@ module fmesh_destp_generator #(
     wire [P_1-1 : 0] dest_port_in;
     
     fmesh_destp_decoder #(
-        .ROUTE_TYPE(ROUTE_TYPE),
         .P(P),
-        .DSTPw(DSTPw),
-        .NL(NL),
         .PLw(PLw),
-        .PPSw(PPSw),
-        .SW_LOC(SW_LOC),
-        .SELF_LOOP_EN(SELF_LOOP_EN)
+        .SW_LOC(SW_LOC)
     ) decoder  (
         .dest_port_coded(dest_port_coded),
         .dest_port_out(dest_port_in),
@@ -130,14 +119,9 @@ endmodule
 
 
 module fmesh_destp_decoder #(
-    parameter ROUTE_TYPE="DETERMINISTIC",
     parameter P=6,
-    parameter DSTPw=4,
-    parameter NL=2,
     parameter PLw=1,
-    parameter PPSw=4,
-    parameter SW_LOC=0,
-    parameter SELF_LOOP_EN=0
+    parameter SW_LOC=0
 )(
     dest_port_coded,
     endp_localp_num,
@@ -145,6 +129,7 @@ module fmesh_destp_decoder #(
     swap_port_presel,
     port_pre_sel
 );
+    import pronoc_pkg::*;
     localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     
     input  [DSTPw-1 : 0] dest_port_coded;
@@ -159,7 +144,7 @@ module fmesh_destp_decoder #(
     assign {x,y,a,b} = dest_port_coded;
     wire [PPSw-1:0] port_pre_sel_final;
     assign port_pre_sel_final = 
-        ( ROUTE_TYPE == "DETERMINISTIC") ? {PPSw{1'b1}}:
+        ( IS_DETERMINISTIC ) ? {PPSw{1'b1}}:
         (swap_port_presel) ? ~port_pre_sel : port_pre_sel;
     always_comb begin 
         case({a,b})
@@ -186,7 +171,7 @@ module fmesh_destp_decoder #(
             portout;
     end 
     endgenerate   
-
+    
     destport_non_selfloop_fix #(
         .SELF_LOOP_EN(SELF_LOOP_EN),
         .P(P),
