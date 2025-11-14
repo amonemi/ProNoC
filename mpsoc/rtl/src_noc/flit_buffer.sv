@@ -27,10 +27,9 @@
  **************************************************************/
 
 
-module flit_buffer
-#(
-    parameter V=  1,
-    parameter B = 4
+module flit_buffer #(
+    parameter PORT_IVC = 1,
+    parameter PORT_B = 4
 )(
     din,  // Data in
     vc_num_wr,//write virtual channel
@@ -42,7 +41,6 @@ module flit_buffer
     reset,
     clk,
     ssa_rd,
-    
     //for multicast
     multiple_dest, // incr rd-sub
     sub_rd_ptr_ld,  // load rd_ptr to sub_rd_pt
@@ -50,58 +48,56 @@ module flit_buffer
 );
     
     import pronoc_pkg::*;
-    
-    
     localparam
-        Bw = (B==1)? 1 : log2(B),
-        BV = B   *   V,
+        PORT_Bw = (PORT_B==1)? 1 : log2(PORT_B),
+        BV = PORT_B   *   PORT_IVC,
         BVw = log2(BV),
-        Vw = (V==1)? 1 : log2(V),
-        DEPTHw = log2(B+1),
-        RESTw = Fw -2-V , 
-        PTRw = ((2**Bw)==B)? Bw : BVw, // if B is power of 2 PTRw is Bw else is BVw
-        ARRAYw = PTRw * V,
-        RAM_DATA_WIDTH = (IS_MULTI_FLIT)? Fw - V : Fw - V -2;
+        PORT_Vw = (PORT_IVC==1)? 1 : log2(PORT_IVC),
+        DEPTHw = log2(PORT_B+1),
+        RESTw = Fw -2-PORT_IVC , 
+        PTRw = ((2**PORT_Bw)==PORT_B)? PORT_Bw : BVw, // if B is power of 2 PTRw is Bw else is BVw
+        ARRAYw = PTRw * PORT_IVC,
+        RAM_DATA_WIDTH = (IS_MULTI_FLIT)? Fw - PORT_IVC : Fw - PORT_IVC -2;
     
     input [Fw-1 :0]   din;     // Data in
-    input [V-1 :0]   vc_num_wr;//write virtual chanel
-    input [V-1 :0]   vc_num_rd;//read virtual chanel
-    input      wr_en;   // Write enable
-    input      rd_en;   // Read the next word
+    input [PORT_IVC-1 :0]   vc_num_wr;//write virtual chanel
+    input [PORT_IVC-1 :0]   vc_num_rd;//read virtual chanel
+    input wr_en;   // Write enable
+    input rd_en;   // Read the next word
     output [Fw-1 :0]  dout;    // Data out
-    output [V-1 :0]  vc_not_empty;
-    input      reset;
-    input      clk;
-    input [V-1 :0]  ssa_rd;
-    input [V-1 :0]  multiple_dest;
-    input [V-1 :0]  sub_rd_ptr_ld;
-    output [V-1 : 0]  flit_is_tail;
+    output [PORT_IVC-1 :0]  vc_not_empty;
+    input  reset;
+    input  clk;
+    input [PORT_IVC-1 :0]  ssa_rd;
+    input [PORT_IVC-1 :0]  multiple_dest;
+    input [PORT_IVC-1 :0]  sub_rd_ptr_ld;
+    output [PORT_IVC-1 : 0]  flit_is_tail;
     
     //pointers
-    logic [PTRw- 1 : 0] rd_ptr [V-1 :0];
-    logic [PTRw- 1 : 0] wr_ptr [V-1 :0];
-    reg [PTRw- 1 : 0] rd_ptr_next [V-1 :0];
-    reg [PTRw- 1 : 0] wr_ptr_next [V-1 :0];
-    reg [PTRw- 1 : 0] sub_rd_ptr_next [V-1 :0];
-    logic [PTRw- 1 : 0] sub_rd_ptr [V-1 :0];
+    logic [PTRw- 1 : 0] rd_ptr [PORT_IVC-1 :0];
+    logic [PTRw- 1 : 0] wr_ptr [PORT_IVC-1 :0];
+    reg [PTRw- 1 : 0] rd_ptr_next [PORT_IVC-1 :0];
+    reg [PTRw- 1 : 0] wr_ptr_next [PORT_IVC-1 :0];
+    reg [PTRw- 1 : 0] sub_rd_ptr_next [PORT_IVC-1 :0];
+    logic [PTRw- 1 : 0] sub_rd_ptr [PORT_IVC-1 :0];
     
     wire [RAM_DATA_WIDTH-1 : 0] fifo_ram_din;
     wire [RAM_DATA_WIDTH-1 : 0] fifo_ram_dout;
-    wire [V-1 : 0] wr;
-    wire [V-1 : 0] rd;
-    logic [DEPTHw-1 : 0] depth [V-1 :0];
-    logic [DEPTHw-1 : 0] depth_next [V-1 :0];
-    logic [DEPTHw-1 : 0] sub_depth [V-1 :0];
-    logic [DEPTHw-1 : 0] sub_depth_next  [V-1 :0];
+    wire [PORT_IVC-1 : 0] wr;
+    wire [PORT_IVC-1 : 0] rd;
+    logic [DEPTHw-1 : 0] depth [PORT_IVC-1 :0];
+    logic [DEPTHw-1 : 0] depth_next [PORT_IVC-1 :0];
+    logic [DEPTHw-1 : 0] sub_depth [PORT_IVC-1 :0];
+    logic [DEPTHw-1 : 0] sub_depth_next  [PORT_IVC-1 :0];
     
-    reg [B-1 : 0] tail_fifo [V-1 : 0];
+    reg [PORT_B-1 : 0] tail_fifo [PORT_IVC-1 : 0];
     wire [1 : 0] flgs_in, flgs_out;
-    wire [V-1: 0] vc_in;
+    wire [PORT_IVC-1: 0] vc_in;
     wire [RESTw-1 :0      ] flit_rest_in,flit_rest_out;
-    wire [V-1 : 0] sub_rd;
-    wire [V-1 : 0] sub_restore;
+    wire [PORT_IVC-1 : 0] sub_rd;
+    wire [PORT_IVC-1 : 0] sub_restore;
     
-    assign  wr = (wr_en)?  vc_num_wr : {V{1'b0}};
+    assign  wr = (wr_en)?  vc_num_wr : {PORT_IVC{1'b0}};
     
     genvar i;
     generate
@@ -137,22 +133,22 @@ module flit_buffer
     end
     
     always_comb begin
-        for(int k=0;k<V;k++) begin 
+        for(int k=0;k<PORT_IVC;k++) begin 
             if (~IS_UNICAST) begin 
                 sub_rd_ptr_next[k] = sub_rd_ptr[k];
-                if((2**Bw)==B) begin 
+                if((2**PORT_Bw)==PORT_B) begin 
                     if (sub_restore[k]) sub_rd_ptr_next[k] = rd_ptr_next [k];
                     else if(sub_rd[k])  sub_rd_ptr_next[k] = sub_rd_ptr[k]+ 1'h1;
                 end else begin 
                     if (sub_restore[k]) sub_rd_ptr_next[k] = rd_ptr_next [k];
-                    else if(sub_rd[k])  sub_rd_ptr_next[k] = (sub_rd_ptr[k] == PTRw'((B * (k + 1)) - 1)) ?  PTRw'(B * k) :  sub_rd_ptr[k] + PTRw'(1);
-                end // Bw
+                    else if(sub_rd[k])  sub_rd_ptr_next[k] = (sub_rd_ptr[k] == PTRw'((PORT_B * (k + 1)) - 1)) ?  PTRw'(PORT_B * k) :  sub_rd_ptr[k] + PTRw'(1);
+                end // PORT_Bw
             end else sub_rd_ptr_next[k] = '0;
         end //for
     end //always_comb
     
-    for(i=0;i<V;i=i+1) begin :V_
-        localparam RESET_TO = ((2**Bw)==B)? 0 : B*i;
+    for(i=0;i<PORT_IVC;i=i+1) begin :V_
+        localparam RESET_TO = ((2**PORT_Bw)==PORT_B)? 0 : PORT_B*i;
         always_ff @ (`pronoc_clk_reset_edge )begin 
             if(`pronoc_reset) begin 
                 sub_rd_ptr[i] <= PTRw'(RESET_TO);
@@ -170,28 +166,24 @@ module flit_buffer
     end//for
     
     always_comb begin
-        for(int k=0;k<V;k=k+1) begin
+        for(int k=0;k<PORT_IVC;k=k+1) begin
             rd_ptr_next [k] = rd_ptr  [k];
             wr_ptr_next [k] = wr_ptr  [k];
             depth_next  [k] = depth   [k];
-            if((2**Bw)==B) begin
+            if((2**PORT_Bw)==PORT_B) begin
                 if (wr[k]  ) wr_ptr_next [k] = wr_ptr [k]+ 1'h1;
                 if (rd[k]  ) rd_ptr_next [k] = rd_ptr [k]+ 1'h1;
             end else begin 
-                if (wr[k] ) wr_ptr_next[k] =(wr_ptr[k]==PTRw'(B*(k+1)-1)) ? PTRw'(B*k) : wr_ptr [k] + PTRw'(1);
-                if (rd[k] ) rd_ptr_next[k] =(rd_ptr[k]==PTRw'(B*(k+1)-1)) ? PTRw'(B*k) : rd_ptr [k] + PTRw'(1);
+                if (wr[k] ) wr_ptr_next[k] =(wr_ptr[k]==PTRw'(PORT_B*(k+1)-1)) ? PTRw'(PORT_B*k) : wr_ptr [k] + PTRw'(1);
+                if (rd[k] ) rd_ptr_next[k] =(rd_ptr[k]==PTRw'(PORT_B*(k+1)-1)) ? PTRw'(PORT_B*k) : rd_ptr [k] + PTRw'(1);
             end
             if (wr[k] & ~rd[k]) depth_next [k] = depth[k] + 1'h1;
             else if (~wr[k] & rd[k]) depth_next [k] = depth[k] - 1'h1;
         end
     end//always
     
-/*****************
-    Buffer width is
-    power of 2
-******************/
     logic [PTRw-1 : 0]  vc_wr_addr, vc_rd_addr; 
-    logic [Vw-1 : 0]  wr_select_addr, rd_select_addr; 
+    logic [PORT_Vw-1 : 0]  wr_select_addr, rd_select_addr; 
     always_comb begin
         vc_wr_addr = '0;
         vc_rd_addr = '0;
@@ -203,13 +195,16 @@ module flit_buffer
             if (IS_UNICAST) vc_rd_addr |= (vc_num_rd[k]) ?  rd_ptr[k] :  '0;
             else vc_rd_addr |= (vc_num_rd[k]) ?  sub_rd_ptr[k] :  '0;
             //One-hot to binary
-            if (vc_num_wr[k]) wr_select_addr = Vw'(k);
-            if (vc_num_rd[k]) rd_select_addr = Vw'(k);
+            if (vc_num_wr[k]) wr_select_addr = PORT_Vw'(k);
+            if (vc_num_rd[k]) rd_select_addr = PORT_Vw'(k);
         end
     end
     
-    if((2**Bw)==B)begin : pow2
-        wire [Bw+Vw-1 : 0]  wr_addr, rd_addr;
+    if((2**PORT_Bw)==PORT_B)begin : pow2
+    /***************************
+    * Buffer width is power of 2
+    ***************************/
+        wire [PORT_Bw+PORT_Vw-1 : 0]  wr_addr, rd_addr;
         assign  wr_addr = {wr_select_addr,vc_wr_addr};
         assign  rd_addr = {rd_select_addr,vc_rd_addr};
         
@@ -227,14 +222,14 @@ module flit_buffer
             .rd_data(fifo_ram_dout)
         );  
         
-        for(i=0;i<V;i=i+1) begin :V_
+        for(i=0;i<PORT_IVC;i=i+1) begin :V_
             always @(posedge clk) begin
                 if(wr[i]) tail_fifo[i][wr_ptr[i]] <= din[Fw-2];
             end
             always_ff @ (`pronoc_clk_reset_edge )begin 
                 if(`pronoc_reset) begin 
-                    rd_ptr[i] <= {Bw{1'b0}};
-                    wr_ptr[i] <= {Bw{1'b0}};
+                    rd_ptr[i] <= {PORT_Bw{1'b0}};
+                    wr_ptr[i] <= {PORT_Bw{1'b0}};
                     depth[i]  <= {DEPTHw{1'b0}};
                 end else begin
                     rd_ptr[i] <= rd_ptr_next[i];
@@ -250,18 +245,17 @@ module flit_buffer
         end//for V_
         
     end  else begin :no_pow2
-/*****************
-    Buffer width is
-    not power of 2
-******************/
+    /***************************
+    * Buffer width is not power of 2
+    ***************************/
         // memory address
         wire [BVw- 1 : 0] wr_addr, rd_addr;
-        wire [PTRw-1 : 0] rd_ptr_tmp  [V-1 : 0];
-        wire [PTRw-1 : 0] wr_ptr_tmp  [V-1 : 0];
+        wire [PTRw-1 : 0] rd_ptr_tmp  [PORT_IVC-1 : 0];
+        wire [PTRw-1 : 0] wr_ptr_tmp  [PORT_IVC-1 : 0];
         assign  wr_addr = vc_wr_addr;
         assign  rd_addr = vc_rd_addr;
-        for(i=0;i<V;i=i+1) begin :V_
-            localparam [PTRw-1 : 0] BI = PTRw'(B*i);
+        for(i=0;i<PORT_IVC;i=i+1) begin :V_
+            localparam [PTRw-1 : 0] BI = PTRw'(PORT_B*i);
             always_ff @ (`pronoc_clk_reset_edge )begin 
                 if(`pronoc_reset) begin
                     rd_ptr[i] <= BI;
@@ -275,14 +269,14 @@ module flit_buffer
             end            
             assign wr_ptr_tmp [i] = wr_ptr[i]-BI;
             always @(posedge clk) begin
-                if(wr[i]) tail_fifo[i][wr_ptr_tmp[i][Bw-1:0]] <= din[Fw-2];
+                if(wr[i]) tail_fifo[i][wr_ptr_tmp[i][PORT_Bw-1:0]] <= din[Fw-2];
             end
             if (~IS_UNICAST) begin :multicast
                 assign  rd_ptr_tmp [i] = sub_rd_ptr[i]-BI;
-                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr_tmp [i][Bw-1:0]] : 1'b1;
+                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr_tmp [i][PORT_Bw-1:0]] : 1'b1;
             end else begin : unicast
                 assign  rd_ptr_tmp [i] =rd_ptr[i]-BI;
-                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr_tmp [i][Bw-1:0]] : 1'b1;
+                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr_tmp [i][PORT_Bw-1:0]] : 1'b1;
             end
         end// for V_
         
@@ -302,29 +296,29 @@ module flit_buffer
     end
     endgenerate
     
-/*********************************************
-*        Validating Parameters/Simulation
-*********************************************/
+    /*********************************************
+    *        Validating Parameters/Simulation
+    *********************************************/
     `ifdef SIMULATION
     generate
     if(DEBUG_EN) begin :dbg 
         always @(posedge clk) begin
-        if(wr_en && vc_num_wr == {V{1'b0}})begin
+        if(wr_en && vc_num_wr == {PORT_IVC{1'b0}})begin
             $display("%t: ERROR: Attempt to write when no wr VC is asserted: %m",$time);
             $finish;
         end
-        if(rd_en && vc_num_rd == {V{1'b0}})begin
+        if(rd_en && vc_num_rd == {PORT_IVC{1'b0}})begin
             $display("%t: ERROR: Attempt to read when no rd VC is asserted: %m",$time);
             $finish;
         end
         end
     end //DEBUG_EN
     
-    for(i=0;i<V;i=i+1) begin :VC_
+    for(i=0;i<PORT_IVC;i=i+1) begin :VC_
         if (~IS_UNICAST) begin :multicast
             always @(posedge clk) begin
-                if (wr[i] && (sub_depth[i] == B [DEPTHw-1 : 0]) && !sub_rd[i]) begin
-                $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,B);
+                if (wr[i] && (sub_depth[i] == PORT_B [DEPTHw-1 : 0]) && !sub_rd[i]) begin
+                $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,PORT_B);
                 $finish;
                 end
                 if (sub_rd[i] && (sub_depth[i] == {DEPTHw{1'b0}} &&  (SSA_EN != 1) ))begin 
@@ -337,9 +331,8 @@ module flit_buffer
                 end
             end//always
         end    //multicast
-        
         always @(posedge clk) begin
-            if (wr[i] && (depth[i] == B [DEPTHw-1 : 0]) && !rd[i])begin
+            if (wr[i] && (depth[i] == PORT_B [DEPTHw-1 : 0]) && !rd[i])begin
                 $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,B);
                 $finish;
             end
@@ -356,16 +349,12 @@ module flit_buffer
     end//for
     endgenerate 
     `endif //SIMULATION
-    
 endmodule
 
 
-
 /****************************
-
-        fifo_ram
-
- *****************************/
+*       fifo_ram
+*****************************/
 module fifo_ram #(
     parameter DATA_WIDTH = 32,
     parameter ADDR_WIDTH = 8,
@@ -482,12 +471,11 @@ endmodule
     
     
 /**********************************
-    
-    An small  First Word Fall Through FIFO. 
-    The code will use LUTs and  optimized
-    for low LUTs utilization.
- **********************************/
-
+*    fwft_fifo
+*    An small  First Word Fall Through FIFO. 
+*    The code will use LUTs and  optimized
+*    for low LUTs utilization.
+**********************************/
 module fwft_fifo #(
     parameter DATA_WIDTH = 2,
     parameter MAX_DEPTH = 2,
@@ -616,13 +604,13 @@ module fwft_fifo #(
     `endif//SIMULATION
 endmodule
 
-/*********************
-    
-    fwft_fifo_with_output_clear
-    each individual output bit has
-    its own clear signal
-    
- **********************/
+/***************************
+ *    
+ *    fwft_fifo_with_output_clear
+ *    each individual output bit has
+ *    its own clear signal
+ *    
+ ***************************/
 module fwft_fifo_with_output_clear #(
     parameter DATA_WIDTH = 2,
     parameter MAX_DEPTH = 2,
@@ -715,7 +703,6 @@ module fwft_fifo_with_output_clear #(
         end
     end
     
-    
     always_comb begin
         depth_next = depth;
         if (wr_en & ~rd_en) depth_next = depth + 1'h1;
@@ -739,10 +726,9 @@ module fwft_fifo_with_output_clear #(
         end
     end
     
-    
-/*********************************************
-*        Validating Parameters/Simulation
-*********************************************/
+    /*********************************************
+    *        Validating Parameters/Simulation
+    *********************************************/
     `ifdef SIMULATION
     always @(posedge clk) begin
         if(`pronoc_reset==0)begin
@@ -763,14 +749,16 @@ module fwft_fifo_with_output_clear #(
     `endif // SIMULATION
 endmodule
 
-/***************
-fwft_fifo_bram
-****************/
+/***************************
+*fwft_fifo_bram
+* An FWFT FIFO implementation based on BRAMs
+* optimized for low LUTs utilization.
+***************************/
 module fwft_fifo_bram #(
     parameter DATA_WIDTH = 2,
     parameter MAX_DEPTH = 2,
     parameter IGNORE_SAME_LOC_RD_WR_WARNING=1 // 1 : "YES" , 0: "NO"
-    ) (
+    )(
     din,     // Data in
     wr_en,   // Write enable
     rd_en,   // Read the next word
@@ -779,7 +767,6 @@ module fwft_fifo_bram #(
     reset,
     clk
 );
-    
     import pronoc_pkg::*;
     input [DATA_WIDTH-1:0] din;     // Data in
     input wr_en;   // Write enable
@@ -878,7 +865,6 @@ module fwft_fifo_bram #(
         end
     end // always
     `endif // SIMULATION
-    
 endmodule
 
 /**********************************

@@ -737,8 +737,8 @@ module input_queue_per_port #(
     assign flit_buffer_vc_num_rd = ( IS_COMB_NONSPEC ) ? nonspec_first_arbiter_granted_ivc : ivc_num_getting_sw_grant;
     
     flit_buffer #(
-        .B(PORT_B),   // buffer space :flit per VC,
-        .V(PORT_IVC)
+        .PORT_B(PORT_B),   // buffer space :flit per VC,
+        .PORT_IVC(PORT_IVC)
     ) the_flit_buffer (
         .din(flit_in),     // Data in
         .vc_num_wr(flit_in.vc [PORT_IVC-1 : 0]),//write virtual channel
@@ -836,8 +836,7 @@ module input_queue_per_port #(
             
             debug_regular_topo_route_ckeck #(
                 .SW_LOC(SW_LOC)
-                )
-                route_ckeck (
+            ) route_ckeck (
                 .reset(reset),
                 .clk(clk),
                 .hdr_flg_in(flit_in.hdr_flag),
