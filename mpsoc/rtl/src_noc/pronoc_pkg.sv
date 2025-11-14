@@ -320,7 +320,8 @@ package pronoc_pkg;
     function automatic logic [V-1 : 0] hetero_ovc_unary;
     input integer router_id;
     input integer router_port_num;  //router port num
-    integer vc_num, i;
+    integer i;
+    logic [V-1:0] vc_num;
     begin
         vc_num = 
             (HETERO_VC == 0) ? V :
