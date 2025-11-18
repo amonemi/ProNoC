@@ -45,8 +45,16 @@ module  noc_top (
     output  router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];
     
     generate 
-    if (IS_REGULAR_TOPO | IS_FMESH) begin : regular_ 
+    if ((IS_REGULAR_TOPO | IS_FMESH) & ~IS_MESH_3D) begin : regular_ 
         regular_topo_noc_top noc_top (
+            .reset         (reset        ), 
+            .clk           (clk          ), 
+            .chan_in_all   (chan_in_all  ), 
+            .chan_out_all  (chan_out_all ),
+            .router_event  (router_event )
+        );
+    end else if (IS_MESH_3D) begin : M3D_
+        mesh_3d_noc_top noc_top (
             .reset         (reset        ), 
             .clk           (clk          ), 
             .chan_in_all   (chan_in_all  ), 

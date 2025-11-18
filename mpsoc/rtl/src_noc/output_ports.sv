@@ -294,7 +294,6 @@ module output_ports #(
     ) port_pre_sel_top (
         .port_pre_sel(port_pre_sel),
         .ovc_status(ovc_status),
-        .ovc_avalable_all(ovc_avalable_all),
         .credit_decreased_all(credit_decreased_all),
         .credit_increased_all(credit_increased_all),
         .congestion_in_all(congestion_in_all),

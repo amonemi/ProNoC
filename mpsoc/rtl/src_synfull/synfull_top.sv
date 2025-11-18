@@ -70,17 +70,18 @@ module synfull_top;
     wire [31:0] fifo_id [NE-1 : 0];
     wire [PCK_SIZw-1 : 0]  fifo_size [NE-1 :0];
     wire [NEw-1 : 0] fifo_dest [NE-1 : 0];
-    wire [NE-1 : 0] fifo_wr,fifo_rd ,fifo_full,fifo_not_empty;
+    fifo_stat_t fifo_stat [NE-1 : 0];
+    wire [NE-1 : 0] fifo_wr,fifo_rd;
     
     genvar i;
     generate 
     for(i=0; i< NE; i=i+1) begin 
         assign fifo_wr[i] = 
             (pck_injct_out[i].ready == 1'b0 &&  synfull_pronoc_req_all[i].valid==1'b1) ||  
-            (fifo_not_empty[i]==1'b1  &&  synfull_pronoc_req_all[i].valid==1'b1);
+            (fifo_stat[i].has_data  &&  synfull_pronoc_req_all[i].valid==1'b1);
         
         assign fifo_rd[i] = 
-            (pck_injct_out[i].ready == 1'b1 && fifo_not_empty[i]==1'b1 );
+            (pck_injct_out[i].ready == 1'b1 && fifo_stat[i].has_data==1'b1 );
         
         fwft_fifo_bram #(
             .DATA_WIDTH(32+PCK_SIZw+NEw),
@@ -91,20 +92,17 @@ module synfull_top;
             .wr_en(fifo_wr[i]),   // Write enable
             .rd_en(fifo_rd[i]),   // Read the next word
             .dout({fifo_id[i],fifo_size[i],fifo_dest[i]}),    // Data out
-            .full( fifo_full[i]),
-            .nearly_full(),
-            .recieve_more_than_0(fifo_not_empty[i]),
-            .recieve_more_than_1(),
+            .stat_o(fifo_stat[i]),
             .reset(reset),
             .clk (clk)
         );
         
         //from synfull 
-        assign pck_injct_in[i].data = (fifo_not_empty[i])?  fifo_id[i] : synfull_pronoc_req_all[i].id;
-        assign pck_injct_in[i].size = (fifo_not_empty[i])?  fifo_size[i] : synfull_pronoc_req_all[i].size;
-        assign pck_injct_in[i].pck_wr =  (fifo_not_empty[i])?   fifo_rd[i] :  (  synfull_pronoc_req_all[i].valid & pck_injct_out[i].ready == 1'b1);  
+        assign pck_injct_in[i].data = (fifo_stat[i].has_data)?  fifo_id[i] : synfull_pronoc_req_all[i].id;
+        assign pck_injct_in[i].size = (fifo_stat[i].has_data)?  fifo_size[i] : synfull_pronoc_req_all[i].size;
+        assign pck_injct_in[i].pck_wr =  (fifo_stat[i].has_data)?   fifo_rd[i] :  (  synfull_pronoc_req_all[i].valid & pck_injct_out[i].ready == 1'b1);
         assign pck_injct_in[i].ready = 1'b1;
-        assign dest_id[i] =(fifo_not_empty[i])? fifo_dest[i] : synfull_pronoc_req_all[i].dest;             
+        assign dest_id[i] =(fifo_stat[i].has_data)? fifo_dest[i] : synfull_pronoc_req_all[i].dest;
         //to synfull
         assign pronoc_synfull_del_all[i].id    = pck_injct_out[i].data   ; 
         assign pronoc_synfull_del_all[i].valid = pck_injct_out[i].pck_wr ;

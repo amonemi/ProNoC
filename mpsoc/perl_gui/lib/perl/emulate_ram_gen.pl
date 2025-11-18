@@ -97,8 +97,7 @@ sub synthetic_destination{
 
 sub gen_synthetic_traffic_ram_line{
     my ($emulate,  $endp,  $sample,$ratio ,$line_num,$rnd)=@_;
-    my ($topology, $T1, $T2, $T3, $V, $Fpay) = get_sample_emulation_param($emulate,$sample);
-    my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info_sub ($topology, $T1, $T2, $T3, $V, $Fpay);
+    my ($NE, $NR, $RAw, $EAw, $Fw) = get_sample_topology_info ($emulate,$sample);
     my $traffic=$emulate->object_get_attribute($sample,"traffic");
     my $pck_num_to_send=$emulate->object_get_attribute($sample,"PCK_NUM_LIMIT");
     my $pck_size=$emulate->object_get_attribute($sample,"PCK_SIZE");
@@ -127,8 +126,7 @@ sub gen_synthetic_traffic_ram_line{
 
 sub get_synthetic_traffic_pattern{
     my ($self, $sample)=@_;
-    my ($topology, $T1, $T2, $T3, $V, $Fpay) = get_sample_emulation_param($self,$sample);
-    my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info_sub ($topology, $T1, $T2, $T3, $V, $Fpay);
+    my ($NE, $NR, $RAw, $EAw, $Fw) = get_sample_topology_info ($self,$sample);
     my $rnd=random_dest_gen_no_shuffle($NE);
     my $traffic=$self->object_get_attribute($sample,"traffic");
     my @traffics=("tornado", "transposed 1", "transposed 2", "bit reverse", "bit complement","random", "hot spot", "shuffle", "neighbor", "bit rotation"  );
@@ -184,8 +182,7 @@ sub print_32_bit {
 
 sub generate_emulator_ram {
     my ($emulate, $sample,$ratio_in,$info)=@_;
-    my ($topology, $T1, $T2, $T3, $V, $Fpay) = get_sample_emulation_param($emulate,$sample);
-    my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info_sub ($topology, $T1, $T2, $T3, $V, $Fpay);
+    my ($NE, $NR, $RAw, $EAw, $Fw) = get_sample_topology_info ($emulate,$sample);
     my $rnd=random_dest_gen($NE); # generate a matrix of sudo random number
     my $traffic=$emulate->object_get_attribute($sample,"traffic");
     my @traffics=("tornado", "transposed 1", "transposed 2", "bit reverse", "bit complement","random", "hot spot", "shuffle", "neighbor", "bit rotation"   );
@@ -324,8 +321,7 @@ sub read_statistic_mem_fast {
 sub read_pack_gen{
     my ($emulate,$sample,$info,$jtag_intfc,$ratio_in)= @_;
     my $ref=$emulate->object_get_attribute($sample,"noc_info");
-    my ($topology, $T1, $T2, $T3, $V, $Fpay) = get_sample_emulation_param($emulate,$sample);
-    my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info_sub ($topology, $T1, $T2, $T3, $V, $Fpay);
+    my ($NE, $NR, $RAw, $EAw, $Fw) = get_sample_topology_info ($emulate,$sample);
 #wait for done
     add_info($info, "wait for done\n");
     my $done=0;

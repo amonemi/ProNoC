@@ -108,33 +108,20 @@ module debug_regular_topo_route_ckeck #(
     wire [EXw-1 : 0] x_dst_in,x_src_in;
     wire [RYw-1 : 0] current_y;
     wire [EYw-1 : 0] y_dst_in,y_src_in;
-    
-    regular_topo_router_addr_decode  r_addr_decode  (
-        .r_addr(current_r_addr),
-        .rx(current_x),
-        .ry(current_y),
-        .valid()
-    );
-    
-    regular_topo_endp_addr_decode  dst_addr_decode (
-        .e_addr(dest_e_addr_in),
-        .ex(x_dst_in),
-        .ey(y_dst_in),
-        .el( ),
-        .valid()
-    );
-    
-    regular_topo_endp_addr_decode  src_addr_decode  (
-        .e_addr(src_e_addr_in),
-        .ex(x_src_in),
-        .ey(y_src_in),
-        .el( ),
-        .valid()
-    );
+    regular_topo_router_addr_t src_router_addr, dest_router_addr, current_router_addr;
+    assign src_router_addr = regular_topo_router_addr_t'(src_e_addr_in);
+    assign dest_router_addr = regular_topo_router_addr_t'(dest_e_addr_in);
+    assign current_router_addr = regular_topo_router_addr_t'(current_r_addr);
+    assign x_src_in = src_router_addr.x;
+    assign y_src_in = src_router_addr.y;
+    assign x_dst_in = dest_router_addr.x;
+    assign y_dst_in = dest_router_addr.y;
+    assign current_x = current_router_addr.x;
+    assign current_y = current_router_addr.y;   
     
     `ifdef SIMULATION 
     generate
-    if(IS_DETERMINISTIC)begin :dtrmn
+    if(IS_DETERMINISTIC & ~IS_MESH_3D)begin :dtrmn
         always@( posedge clk) begin 
             if(flit_in_wr & hdr_flg_in )   
                 if( destport_in[1:0]==2'b11) begin 
@@ -198,82 +185,47 @@ endmodule
 
 
 module debug_mesh_edges #(
-    parameter T1=2,
-    parameter T2=2,
-    parameter RAw=4,
     parameter P=5
 )(
     clk,
     current_r_addr,
     flit_out_wr_all
 );
-
-    function integer log2;
-    input integer number; begin
-        log2=(number <=1) ? 1: 0;
-        while(2**log2<number) begin
-            log2=log2+1;    
-        end        
-    end   
-    endfunction // log2 
+    import pronoc_pkg::*;
+    
     input clk;
     input  [RAw-1 :  0]  current_r_addr;
     input  [P-1 :  0]  flit_out_wr_all;
     
-    localparam 
-        RXw = log2(T1),    // number of node in x axis
-        RYw = log2(T2);    // number of node in y axis
+    wire [NXw-1 : 0] current_rx;
+    wire [NYw-1 : 0] current_ry;
+    regular_topo_router_addr_t current_router_addr_struct;
+    assign current_router_addr_struct = regular_topo_router_addr_t'(current_r_addr);
+    assign current_rx = current_router_addr_struct.x;
+    assign current_ry = current_router_addr_struct.y;
     
-    wire [RXw-1 : 0] current_rx;
-    wire [RYw-1 : 0] current_ry;
-    
-    regular_topo_router_addr_decode addr_decode (
-        .r_addr(current_r_addr),
-        .rx(current_rx),
-        .ry(current_ry),
-        .valid()
-    );
-    
-    localparam
-        EAST = 1,
-        NORTH = 2,
-        WEST = 3,
-        SOUTH = 4;
     `ifdef SIMULATION
     always @(posedge clk) begin 
-        if(current_rx == {RXw{1'b0}} && flit_out_wr_all[WEST]) $display ( "%t\t  ERROR: a packet is going to the WEST in a router located in first column in mesh topology %m",$time ); 
-        if(current_rx == RXw'(T1-1)  && flit_out_wr_all[EAST]) $display ( "%t\t  ERROR: a packet is going to the EAST in a router located in last column in mesh topology %m",$time ); 
-        if(current_ry == {RYw{1'b0}} && flit_out_wr_all[NORTH])$display ( "%t\t  ERROR: a packet is going to the NORTH in a router located in first row in mesh topology %m",$time ); 
-        if(current_ry == RYw'(T2-1)  && flit_out_wr_all[SOUTH])$display ( "%t\t  ERROR: a packet is going to the SOUTH in a router located in last row in mesh topology %m",$time); 
+        if(current_rx == {NXw{1'b0}} && flit_out_wr_all[WEST]) $display ( "%t\t  ERROR: a packet is going to the WEST in a router located in first column in mesh topology %m",$time ); 
+        if(current_rx == NXw'(T1-1)  && flit_out_wr_all[EAST]) $display ( "%t\t  ERROR: a packet is going to the EAST in a router located in last column in mesh topology %m",$time ); 
+        if(current_ry == {NYw{1'b0}} && flit_out_wr_all[NORTH])$display ( "%t\t  ERROR: a packet is going to the NORTH in a router located in first row in mesh topology %m",$time ); 
+        if(current_ry == NYw'(T2-1)  && flit_out_wr_all[SOUTH])$display ( "%t\t  ERROR: a packet is going to the SOUTH in a router located in last row in mesh topology %m",$time); 
     end//always
     `endif  
 endmodule
 
 
-module check_destination_addr #(
-    parameter TOPOLOGY = "MESH",
-    parameter T1=2,
-    parameter T2=2,
-    parameter T3=2,
-    parameter T4=2,
-    parameter EAw=2,
-    parameter DAw=2,
-    parameter SELF_LOOP_EN=0,
-    parameter CAST_TYPE = "UNICAST",
-    parameter NE=8
-)(
+module check_destination_addr(
     dest_is_valid,
     dest_e_addr,
     current_e_addr
 );
-
+    import pronoc_pkg::*;
     input [DAw-1 : 0]  dest_e_addr;
     input [EAw-1 : 0]  current_e_addr;
     output dest_is_valid;
     // general rules
-    /* verilator lint_off WIDTH */
-    wire valid_dst  = (SELF_LOOP_EN == 0)? dest_e_addr  !=  current_e_addr : 1'b1;
-    /* verilator lint_on WIDTH */
+    wire valid_self_loop  = (SELF_LOOP_EN == 0 )? (dest_e_addr[EAw-1 : 0]  !=  current_e_addr) : 1'b1;
     wire valid;
     generate
     if(CAST_TYPE != "UNICAST") begin
@@ -289,18 +241,15 @@ module check_destination_addr #(
         assign  dest_is_valid =  valid_dst_multi_r2;// & valid_dst_multi_r1 ;  
     end else     
     /* verilator lint_off WIDTH */ 
-    if(TOPOLOGY=="MESH" || TOPOLOGY == "TORUS" || TOPOLOGY=="RING" || TOPOLOGY == "LINE") begin : mesh
+    if(IS_REGULAR_TOPO) begin : Regular
    /* verilator lint_on WIDTH */ 
-        regular_topo_endp_addr_decode  endp_decode (
-            .e_addr(dest_e_addr),
-            .ex(),
-            .ey(),
-            .el(),
+        regular_topo_address_validator check (
+            .addr(dest_e_addr),
             .valid(valid)
         );
-        assign  dest_is_valid = valid_dst & valid;
+        assign  dest_is_valid = valid_self_loop & valid;
     end else begin : tree
-        assign  dest_is_valid = valid_dst;
+        assign  dest_is_valid = valid_self_loop;
     end
     endgenerate
 endmodule

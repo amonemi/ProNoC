@@ -3,6 +3,6 @@ $model = bless( {
         'noc_param'=> {
         TOPOLOGY=>"\"RING\"",
         "TOPOLOGY" => "\"TORUS\"",
-        "ROUTE_NAME" => "\"TRANC_XY\"",
+        "ROUTE_NAME" => "\"TRANC_DOR\"",
     }
 }, 'ProNOC' );

@@ -27,10 +27,9 @@
  **************************************************************/
 
 
-module flit_buffer
-#(
-    parameter V=  1,
-    parameter B = 4
+module flit_buffer #(
+    parameter PORT_IVC = 1,
+    parameter PORT_B = 4
 )(
     din,  // Data in
     vc_num_wr,//write virtual channel
@@ -42,7 +41,6 @@ module flit_buffer
     reset,
     clk,
     ssa_rd,
-    
     //for multicast
     multiple_dest, // incr rd-sub
     sub_rd_ptr_ld,  // load rd_ptr to sub_rd_pt
@@ -50,58 +48,56 @@ module flit_buffer
 );
     
     import pronoc_pkg::*;
-    
-    
     localparam
-        Bw = (B==1)? 1 : log2(B),
-        BV = B   *   V,
+        PORT_Bw = (PORT_B==1)? 1 : log2(PORT_B),
+        BV = PORT_B   *   PORT_IVC,
         BVw = log2(BV),
-        Vw = (V==1)? 1 : log2(V),
-        DEPTHw = log2(B+1),
-        RESTw = Fw -2-V , 
-        PTRw = ((2**Bw)==B)? Bw : BVw, // if B is power of 2 PTRw is Bw else is BVw
-        ARRAYw = PTRw * V,
-        RAM_DATA_WIDTH = (IS_MULTI_FLIT)? Fw - V : Fw - V -2;
+        PORT_Vw = (PORT_IVC==1)? 1 : log2(PORT_IVC),
+        DEPTHw = log2(PORT_B+1),
+        RESTw = Fw -2-PORT_IVC , 
+        PTRw = ((2**PORT_Bw)==PORT_B)? PORT_Bw : BVw, // if B is power of 2 PTRw is Bw else is BVw
+        ARRAYw = PTRw * PORT_IVC,
+        RAM_DATA_WIDTH = (IS_MULTI_FLIT)? Fw - PORT_IVC : Fw - PORT_IVC -2;
     
     input [Fw-1 :0]   din;     // Data in
-    input [V-1 :0]   vc_num_wr;//write virtual chanel
-    input [V-1 :0]   vc_num_rd;//read virtual chanel
-    input      wr_en;   // Write enable
-    input      rd_en;   // Read the next word
+    input [PORT_IVC-1 :0]   vc_num_wr;//write virtual chanel
+    input [PORT_IVC-1 :0]   vc_num_rd;//read virtual chanel
+    input wr_en;   // Write enable
+    input rd_en;   // Read the next word
     output [Fw-1 :0]  dout;    // Data out
-    output [V-1 :0]  vc_not_empty;
-    input      reset;
-    input      clk;
-    input [V-1 :0]  ssa_rd;
-    input [V-1 :0]  multiple_dest;
-    input [V-1 :0]  sub_rd_ptr_ld;
-    output [V-1 : 0]  flit_is_tail;
+    output [PORT_IVC-1 :0]  vc_not_empty;
+    input  reset;
+    input  clk;
+    input [PORT_IVC-1 :0]  ssa_rd;
+    input [PORT_IVC-1 :0]  multiple_dest;
+    input [PORT_IVC-1 :0]  sub_rd_ptr_ld;
+    output [PORT_IVC-1 : 0]  flit_is_tail;
     
     //pointers
-    logic [PTRw- 1 : 0] rd_ptr [V-1 :0];
-    logic [PTRw- 1 : 0] wr_ptr [V-1 :0];
-    reg [PTRw- 1 : 0] rd_ptr_next [V-1 :0];
-    reg [PTRw- 1 : 0] wr_ptr_next [V-1 :0];
-    reg [PTRw- 1 : 0] sub_rd_ptr_next [V-1 :0];
-    logic [PTRw- 1 : 0] sub_rd_ptr [V-1 :0];
+    logic [PTRw- 1 : 0] rd_ptr [PORT_IVC-1 :0];
+    logic [PTRw- 1 : 0] wr_ptr [PORT_IVC-1 :0];
+    reg [PTRw- 1 : 0] rd_ptr_next [PORT_IVC-1 :0];
+    reg [PTRw- 1 : 0] wr_ptr_next [PORT_IVC-1 :0];
+    reg [PTRw- 1 : 0] sub_rd_ptr_next [PORT_IVC-1 :0];
+    logic [PTRw- 1 : 0] sub_rd_ptr [PORT_IVC-1 :0];
     
     wire [RAM_DATA_WIDTH-1 : 0] fifo_ram_din;
     wire [RAM_DATA_WIDTH-1 : 0] fifo_ram_dout;
-    wire [V-1 : 0] wr;
-    wire [V-1 : 0] rd;
-    logic [DEPTHw-1 : 0] depth [V-1 :0];
-    logic [DEPTHw-1 : 0] depth_next [V-1 :0];
-    logic [DEPTHw-1 : 0] sub_depth [V-1 :0];
-    logic [DEPTHw-1 : 0] sub_depth_next  [V-1 :0];
+    wire [PORT_IVC-1 : 0] wr;
+    wire [PORT_IVC-1 : 0] rd;
+    logic [DEPTHw-1 : 0] depth [PORT_IVC-1 :0];
+    logic [DEPTHw-1 : 0] depth_next [PORT_IVC-1 :0];
+    logic [DEPTHw-1 : 0] sub_depth [PORT_IVC-1 :0];
+    logic [DEPTHw-1 : 0] sub_depth_next  [PORT_IVC-1 :0];
     
-    reg [B-1 : 0] tail_fifo [V-1 : 0];
+    reg [PORT_B-1 : 0] tail_fifo [PORT_IVC-1 : 0];
     wire [1 : 0] flgs_in, flgs_out;
-    wire [V-1: 0] vc_in;
+    wire [PORT_IVC-1: 0] vc_in;
     wire [RESTw-1 :0      ] flit_rest_in,flit_rest_out;
-    wire [V-1 : 0] sub_rd;
-    wire [V-1 : 0] sub_restore;
+    wire [PORT_IVC-1 : 0] sub_rd;
+    wire [PORT_IVC-1 : 0] sub_restore;
     
-    assign  wr = (wr_en)?  vc_num_wr : {V{1'b0}};
+    assign  wr = (wr_en)?  vc_num_wr : {PORT_IVC{1'b0}};
     
     genvar i;
     generate
@@ -137,22 +133,22 @@ module flit_buffer
     end
     
     always_comb begin
-        for(int k=0;k<V;k++) begin 
+        for(int k=0;k<PORT_IVC;k++) begin 
             if (~IS_UNICAST) begin 
                 sub_rd_ptr_next[k] = sub_rd_ptr[k];
-                if((2**Bw)==B) begin 
+                if((2**PORT_Bw)==PORT_B) begin 
                     if (sub_restore[k]) sub_rd_ptr_next[k] = rd_ptr_next [k];
                     else if(sub_rd[k])  sub_rd_ptr_next[k] = sub_rd_ptr[k]+ 1'h1;
                 end else begin 
                     if (sub_restore[k]) sub_rd_ptr_next[k] = rd_ptr_next [k];
-                    else if(sub_rd[k])  sub_rd_ptr_next[k] = (sub_rd_ptr[k] == PTRw'((B * (k + 1)) - 1)) ?  PTRw'(B * k) :  sub_rd_ptr[k] + PTRw'(1);
-                end // Bw
+                    else if(sub_rd[k])  sub_rd_ptr_next[k] = (sub_rd_ptr[k] == PTRw'((PORT_B * (k + 1)) - 1)) ?  PTRw'(PORT_B * k) :  sub_rd_ptr[k] + PTRw'(1);
+                end // PORT_Bw
             end else sub_rd_ptr_next[k] = '0;
         end //for
     end //always_comb
     
-    for(i=0;i<V;i=i+1) begin :V_
-        localparam RESET_TO = ((2**Bw)==B)? 0 : B*i;
+    for(i=0;i<PORT_IVC;i=i+1) begin :V_
+        localparam RESET_TO = ((2**PORT_Bw)==PORT_B)? 0 : PORT_B*i;
         always_ff @ (`pronoc_clk_reset_edge )begin 
             if(`pronoc_reset) begin 
                 sub_rd_ptr[i] <= PTRw'(RESET_TO);
@@ -170,28 +166,24 @@ module flit_buffer
     end//for
     
     always_comb begin
-        for(int k=0;k<V;k=k+1) begin
+        for(int k=0;k<PORT_IVC;k=k+1) begin
             rd_ptr_next [k] = rd_ptr  [k];
             wr_ptr_next [k] = wr_ptr  [k];
             depth_next  [k] = depth   [k];
-            if((2**Bw)==B) begin
+            if((2**PORT_Bw)==PORT_B) begin
                 if (wr[k]  ) wr_ptr_next [k] = wr_ptr [k]+ 1'h1;
                 if (rd[k]  ) rd_ptr_next [k] = rd_ptr [k]+ 1'h1;
             end else begin 
-                if (wr[k] ) wr_ptr_next[k] =(wr_ptr[k]==PTRw'(B*(k+1)-1)) ? PTRw'(B*k) : wr_ptr [k] + PTRw'(1);
-                if (rd[k] ) rd_ptr_next[k] =(rd_ptr[k]==PTRw'(B*(k+1)-1)) ? PTRw'(B*k) : rd_ptr [k] + PTRw'(1);
+                if (wr[k] ) wr_ptr_next[k] =(wr_ptr[k]==PTRw'(PORT_B*(k+1)-1)) ? PTRw'(PORT_B*k) : wr_ptr [k] + PTRw'(1);
+                if (rd[k] ) rd_ptr_next[k] =(rd_ptr[k]==PTRw'(PORT_B*(k+1)-1)) ? PTRw'(PORT_B*k) : rd_ptr [k] + PTRw'(1);
             end
             if (wr[k] & ~rd[k]) depth_next [k] = depth[k] + 1'h1;
             else if (~wr[k] & rd[k]) depth_next [k] = depth[k] - 1'h1;
         end
     end//always
     
-/*****************
-    Buffer width is
-    power of 2
-******************/
     logic [PTRw-1 : 0]  vc_wr_addr, vc_rd_addr; 
-    logic [Vw-1 : 0]  wr_select_addr, rd_select_addr; 
+    logic [PORT_Vw-1 : 0]  wr_select_addr, rd_select_addr; 
     always_comb begin
         vc_wr_addr = '0;
         vc_rd_addr = '0;
@@ -203,13 +195,16 @@ module flit_buffer
             if (IS_UNICAST) vc_rd_addr |= (vc_num_rd[k]) ?  rd_ptr[k] :  '0;
             else vc_rd_addr |= (vc_num_rd[k]) ?  sub_rd_ptr[k] :  '0;
             //One-hot to binary
-            if (vc_num_wr[k]) wr_select_addr = Vw'(k);
-            if (vc_num_rd[k]) rd_select_addr = Vw'(k);
+            if (vc_num_wr[k]) wr_select_addr = PORT_Vw'(k);
+            if (vc_num_rd[k]) rd_select_addr = PORT_Vw'(k);
         end
     end
     
-    if((2**Bw)==B)begin : pow2
-        wire [Bw+Vw-1 : 0]  wr_addr, rd_addr;
+    if((2**PORT_Bw)==PORT_B)begin : pow2
+    /***************************
+    * Buffer width is power of 2
+    ***************************/
+        wire [PORT_Bw+PORT_Vw-1 : 0]  wr_addr, rd_addr;
         assign  wr_addr = {wr_select_addr,vc_wr_addr};
         assign  rd_addr = {rd_select_addr,vc_rd_addr};
         
@@ -227,14 +222,14 @@ module flit_buffer
             .rd_data(fifo_ram_dout)
         );  
         
-        for(i=0;i<V;i=i+1) begin :V_
+        for(i=0;i<PORT_IVC;i=i+1) begin :V_
             always @(posedge clk) begin
                 if(wr[i]) tail_fifo[i][wr_ptr[i]] <= din[Fw-2];
             end
             always_ff @ (`pronoc_clk_reset_edge )begin 
                 if(`pronoc_reset) begin 
-                    rd_ptr[i] <= {Bw{1'b0}};
-                    wr_ptr[i] <= {Bw{1'b0}};
+                    rd_ptr[i] <= {PORT_Bw{1'b0}};
+                    wr_ptr[i] <= {PORT_Bw{1'b0}};
                     depth[i]  <= {DEPTHw{1'b0}};
                 end else begin
                     rd_ptr[i] <= rd_ptr_next[i];
@@ -250,18 +245,17 @@ module flit_buffer
         end//for V_
         
     end  else begin :no_pow2
-/*****************
-    Buffer width is
-    not power of 2
-******************/
+    /***************************
+    * Buffer width is not power of 2
+    ***************************/
         // memory address
         wire [BVw- 1 : 0] wr_addr, rd_addr;
-        wire [PTRw-1 : 0] rd_ptr_tmp  [V-1 : 0];
-        wire [PTRw-1 : 0] wr_ptr_tmp  [V-1 : 0];
+        wire [PTRw-1 : 0] rd_ptr_tmp  [PORT_IVC-1 : 0];
+        wire [PTRw-1 : 0] wr_ptr_tmp  [PORT_IVC-1 : 0];
         assign  wr_addr = vc_wr_addr;
         assign  rd_addr = vc_rd_addr;
-        for(i=0;i<V;i=i+1) begin :V_
-            localparam [PTRw-1 : 0] BI = PTRw'(B*i);
+        for(i=0;i<PORT_IVC;i=i+1) begin :V_
+            localparam [PTRw-1 : 0] BI = PTRw'(PORT_B*i);
             always_ff @ (`pronoc_clk_reset_edge )begin 
                 if(`pronoc_reset) begin
                     rd_ptr[i] <= BI;
@@ -275,14 +269,14 @@ module flit_buffer
             end            
             assign wr_ptr_tmp [i] = wr_ptr[i]-BI;
             always @(posedge clk) begin
-                if(wr[i]) tail_fifo[i][wr_ptr_tmp[i][Bw-1:0]] <= din[Fw-2];
+                if(wr[i]) tail_fifo[i][wr_ptr_tmp[i][PORT_Bw-1:0]] <= din[Fw-2];
             end
             if (~IS_UNICAST) begin :multicast
                 assign  rd_ptr_tmp [i] = sub_rd_ptr[i]-BI;
-                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr_tmp [i][Bw-1:0]] : 1'b1;
+                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr_tmp [i][PORT_Bw-1:0]] : 1'b1;
             end else begin : unicast
                 assign  rd_ptr_tmp [i] =rd_ptr[i]-BI;
-                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr_tmp [i][Bw-1:0]] : 1'b1;
+                assign  flit_is_tail[i] = (IS_MULTI_FLIT)?  tail_fifo[i][rd_ptr_tmp [i][PORT_Bw-1:0]] : 1'b1;
             end
         end// for V_
         
@@ -302,29 +296,29 @@ module flit_buffer
     end
     endgenerate
     
-/*********************************************
-*        Validating Parameters/Simulation
-*********************************************/
+    /*********************************************
+    *        Validating Parameters/Simulation
+    *********************************************/
     `ifdef SIMULATION
     generate
     if(DEBUG_EN) begin :dbg 
         always @(posedge clk) begin
-        if(wr_en && vc_num_wr == {V{1'b0}})begin
+        if(wr_en && vc_num_wr == {PORT_IVC{1'b0}})begin
             $display("%t: ERROR: Attempt to write when no wr VC is asserted: %m",$time);
             $finish;
         end
-        if(rd_en && vc_num_rd == {V{1'b0}})begin
+        if(rd_en && vc_num_rd == {PORT_IVC{1'b0}})begin
             $display("%t: ERROR: Attempt to read when no rd VC is asserted: %m",$time);
             $finish;
         end
         end
     end //DEBUG_EN
     
-    for(i=0;i<V;i=i+1) begin :VC_
+    for(i=0;i<PORT_IVC;i=i+1) begin :VC_
         if (~IS_UNICAST) begin :multicast
             always @(posedge clk) begin
-                if (wr[i] && (sub_depth[i] == B [DEPTHw-1 : 0]) && !sub_rd[i]) begin
-                $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,B);
+                if (wr[i] && (sub_depth[i] == PORT_B [DEPTHw-1 : 0]) && !sub_rd[i]) begin
+                $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,PORT_B);
                 $finish;
                 end
                 if (sub_rd[i] && (sub_depth[i] == {DEPTHw{1'b0}} &&  (SSA_EN != 1) ))begin 
@@ -337,9 +331,8 @@ module flit_buffer
                 end
             end//always
         end    //multicast
-        
         always @(posedge clk) begin
-            if (wr[i] && (depth[i] == B [DEPTHw-1 : 0]) && !rd[i])begin
+            if (wr[i] && (depth[i] == PORT_B [DEPTHw-1 : 0]) && !rd[i])begin
                 $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,B);
                 $finish;
             end
@@ -356,16 +349,12 @@ module flit_buffer
     end//for
     endgenerate 
     `endif //SIMULATION
-    
 endmodule
 
 
-
 /****************************
-
-        fifo_ram
-
- *****************************/
+*       fifo_ram
+*****************************/
 module fifo_ram #(
     parameter DATA_WIDTH = 32,
     parameter ADDR_WIDTH = 8,
@@ -482,60 +471,51 @@ endmodule
     
     
 /**********************************
-    
-    An small  First Word Fall Through FIFO. 
-    The code will use LUTs and  optimized
-    for low LUTs utilization.
- **********************************/
-
+*    fwft_fifo
+*    An small  First Word Fall Through FIFO. 
+*    The code will use LUTs and  optimized
+*    for low LUTs utilization.
+**********************************/
 module fwft_fifo #(
     parameter DATA_WIDTH = 2,
     parameter MAX_DEPTH = 2,
     parameter IGNORE_SAME_LOC_RD_WR_WARNING=1 //  1 : "YES", 0: "NO"
     ) (
-    input [DATA_WIDTH-1:0] din,     // Data in
-    input wr_en,   // Write enable
-    input rd_en,   // Read the next word
-    output logic [DATA_WIDTH-1:0]  dout,    // Data out
-    output full,
-    output nearly_full,
-    output recieve_more_than_0,
-    output recieve_more_than_1,
-    input reset,
-    input clk
+    din,     // Data in
+    wr_en,   // Write enable
+    dout,    // Data out
+    rd_en,   // Read the next word
+    status_o,// fifo status
+    reset,
+    clk
 );
+    import pronoc_pkg::*;
+    input [DATA_WIDTH-1:0] din;    // Data in
+    input wr_en;   // Write enable
+    input rd_en;   // Read the next word
+    output logic [DATA_WIDTH-1:0]  dout;   // Data out
+    input reset, clk;
+    output fifo_stat_t status_o;
     
-    function integer log2;
-    input integer number; begin
-        log2=(number <=1) ? 1: 0;
-        while(2**log2<number) begin
-        log2=log2+1;
-        end
-    end
-    endfunction // log2
-    
-    localparam DEPTH_DATA_WIDTH = log2(MAX_DEPTH +1);
+    localparam DEPTHw = log2(MAX_DEPTH +1);
     localparam MUX_SEL_WIDTH = log2(MAX_DEPTH-1);
     
-    wire    out_ld ;
-    wire [DATA_WIDTH-1        : 0] dout_next;
-    logic [DEPTH_DATA_WIDTH-1 : 0]  depth;
-    reg [DEPTH_DATA_WIDTH-1 : 0]  depth_next;
+    wire out_ld ;
+    wire [DATA_WIDTH-1 : 0] dout_next;
+    logic [DEPTHw-1 : 0]  depth;
+    reg [DEPTHw-1 : 0]  depth_next;
     reg [DATA_WIDTH-1:0]  dout_next_ld;
     
     genvar i;
     generate
-    
     if(MAX_DEPTH > 2) begin :mwb2
         wire [MUX_SEL_WIDTH-1 : 0] mux_sel;
-        wire [DEPTH_DATA_WIDTH-1 : 0] depth_2;
-        wire empty;
+        wire [DEPTHw-1 : 0] depth_2;
         wire out_sel ;
         if(DATA_WIDTH>1) begin :wb1
             wire [MAX_DEPTH-2 : 0] mux_in  [DATA_WIDTH-1 :0];
             wire [DATA_WIDTH-1 : 0] mux_out;
             reg [MAX_DEPTH-2 : 0] shiftreg [DATA_WIDTH-1 :0];
-            
             for(i=0;i<DATA_WIDTH; i=i+1) begin : lp
                 always @(posedge clk ) begin
                 //if (`pronoc_reset) begin
@@ -544,69 +524,47 @@ module fwft_fifo #(
                     if(wr_en) shiftreg[i] <= {shiftreg[i][MAX_DEPTH-3 : 0]  ,din[i]};
                 //end
                 end
-                
                 assign mux_in[i] = shiftreg[i];
                 assign mux_out[i] = mux_in[i][mux_sel];
                 assign dout_next[i] = (out_sel) ? mux_out[i] : din[i];
             end //for
-            
         end else begin :w1
             wire [MAX_DEPTH-2 : 0] mux_in;
             wire mux_out;
             reg [MAX_DEPTH-2 : 0] shiftreg;
-            
             always @(posedge clk ) begin
                 if(wr_en) shiftreg <= {shiftreg[MAX_DEPTH-3 : 0]  ,din};
             end
-            
             assign mux_in = shiftreg;
             assign mux_out = mux_in[mux_sel];
             assign dout_next = (out_sel) ? mux_out : din;
         end
-        
-        assign full = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0];
-        assign nearly_full = depth >= MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0] -1'b1;
-        assign empty = depth == {DEPTH_DATA_WIDTH{1'b0}};
-        assign recieve_more_than_0 = ~ empty;
-        assign recieve_more_than_1 = ~( depth == {DEPTH_DATA_WIDTH{1'b0}} ||  depth== DEPTH_DATA_WIDTH'(1) );
-        assign out_sel = (recieve_more_than_1)  ? 1'b1 : 1'b0;
-        assign out_ld = (depth !=DEPTH_DATA_WIDTH'(0) )?  rd_en : wr_en;
-        assign depth_2 = depth - DEPTH_DATA_WIDTH'(2);
+        assign out_sel = (status_o.has_multiple)  ? 1'b1 : 1'b0;
+        assign out_ld = (depth !=DEPTHw'(0) )?  rd_en : wr_en;
+        assign depth_2 = depth - DEPTHw'(2);
         assign mux_sel = depth_2[MUX_SEL_WIDTH-1 : 0];
-        
     end else if  ( MAX_DEPTH == 2) begin :mw2
-        
         reg [DATA_WIDTH-1 : 0] din_f;
-        
         always @(posedge clk ) begin
             if(wr_en) din_f <= din;
         end //always
-        
-        assign full = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0];
-        assign nearly_full = depth >= MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0] -1'b1;
         assign out_ld = (depth !=0 )?  rd_en : wr_en;
-        assign recieve_more_than_0 = (depth != {DEPTH_DATA_WIDTH{1'b0}});
-        assign recieve_more_than_1 = ~( depth == 0 ||  depth== 1 );
-        assign dout_next = (recieve_more_than_1) ? din_f : din;
-        
+        assign dout_next = (status_o.has_multiple) ? din_f : din;
     end else begin :mw1 // MAX_DEPTH == 1
         assign out_ld = wr_en;
         assign dout_next = din;
-        assign full = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0];
-        assign nearly_full= 1'b1;
-        assign recieve_more_than_0 = full;
-        assign recieve_more_than_1 = 1'b0;
     end
     endgenerate
-    always_ff @ (`pronoc_clk_reset_edge )begin 
-            if(`pronoc_reset) begin
-                depth <= {DEPTH_DATA_WIDTH{1'b0}};
-                dout  <= {DATA_WIDTH{1'b0}};
-            end else begin
-                depth <= depth_next;
-                dout  <= dout_next_ld;
-            end
+    
+    always_ff @ (`pronoc_clk_reset_edge ) begin 
+        if(`pronoc_reset) begin
+            depth <= {DEPTHw{1'b0}};
+            dout  <= {DATA_WIDTH{1'b0}};
+        end else begin
+            depth <= depth_next;
+            dout  <= dout_next_ld;
         end
+    end
     
     always_comb begin
         depth_next = depth;
@@ -614,22 +572,31 @@ module fwft_fifo #(
         if (wr_en & ~rd_en) depth_next = depth + 1'h1;
         else if (~wr_en & rd_en) depth_next = depth - 1'h1;
         if (out_ld) dout_next_ld = dout_next;
+        status_o.full = (depth == MAX_DEPTH [DEPTHw-1 : 0]);
+        status_o.nearly_full = 
+            (MAX_DEPTH == 1)? 1'b1 : 
+            (depth >= MAX_DEPTH [DEPTHw-1 : 0] -1'b1);
+        status_o.empty = (depth == {DEPTHw{1'b0}});
+        status_o.has_data = ~ status_o.empty;
+        status_o.has_multiple =  
+            (MAX_DEPTH == 1)? 1'b0 : 
+            ~( depth == DEPTHw'(0) ||  depth== DEPTHw'(1) );
     end//always
     
-/*********************************************
-*        Validating Parameters/Simulation
-*********************************************/
+    /*********************************************
+    *        Validating Parameters/Simulation
+    *********************************************/
     `ifdef SIMULATION
     always @(posedge clk) begin
-        if (wr_en & ~rd_en & full) begin
+        if (wr_en & ~rd_en & status_o.full) begin
             $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,MAX_DEPTH);
             $finish;
         end
-        if (rd_en & !recieve_more_than_0 & IGNORE_SAME_LOC_RD_WR_WARNING == 0) begin
+        if (rd_en & status_o.empty & IGNORE_SAME_LOC_RD_WR_WARNING == 0) begin
             $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
             $finish;
         end
-        if (rd_en & ~wr_en & !recieve_more_than_0 & (IGNORE_SAME_LOC_RD_WR_WARNING == 1)) begin
+        if (rd_en & ~wr_en & status_o.empty & (IGNORE_SAME_LOC_RD_WR_WARNING == 1)) begin
             $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
             $finish;
         end
@@ -637,14 +604,13 @@ module fwft_fifo #(
     `endif//SIMULATION
 endmodule
 
-/*********************
-    
-    fwft_fifo_with_output_clear
-    each individual output bit has
-    its own clear signal
-    
- **********************/
-
+/***************************
+ *    
+ *    fwft_fifo_with_output_clear
+ *    each individual output bit has
+ *    its own clear signal
+ *    
+ ***************************/
 module fwft_fifo_with_output_clear #(
     parameter DATA_WIDTH = 2,
     parameter MAX_DEPTH = 2,
@@ -652,59 +618,42 @@ module fwft_fifo_with_output_clear #(
     ) (
     din,     // Data in
     wr_en,   // Write enable
-    rd_en,   // Read the next word
     dout,    // Data out
-    full,
-    nearly_full,
-    recieve_more_than_0,
-    recieve_more_than_1,
+    rd_en,   // Read the next word
+    status_o,// fifo status
     reset,
     clk,
     clear
 );
     
-    input [DATA_WIDTH-1:0] din;
-    input wr_en;
-    input rd_en;
-    output logic [DATA_WIDTH-1:0]  dout;
-    output full;
-    output nearly_full;
-    output recieve_more_than_0;
-    output recieve_more_than_1;
-    input reset;
-    input clk;
+    import pronoc_pkg::*;
+    input [DATA_WIDTH-1:0] din;     // Data in
+    input wr_en;   // Write enable
+    input rd_en;   // Read the next word
+    output logic [DATA_WIDTH-1:0]  dout;    // Data out
+    input reset, clk;
+    output fifo_stat_t status_o;
     input [DATA_WIDTH-1:0]  clear;
     
-    function integer log2;
-    input integer number; begin
-        log2=(number <=1) ? 1: 0;
-        while(2**log2<number) begin
-            log2=log2+1;
-        end
-    end
-    endfunction // log2
-    
-    localparam DEPTH_DATA_WIDTH = log2(MAX_DEPTH +1);
+    localparam DEPTHw = log2(MAX_DEPTH +1);
     localparam MUX_SEL_WIDTH = log2(MAX_DEPTH-1);
     
     wire out_ld;
     wire [DATA_WIDTH-1 : 0] dout_next;
-    logic [DEPTH_DATA_WIDTH-1 : 0]  depth;
-    reg [DEPTH_DATA_WIDTH-1 : 0]  depth_next;
+    logic [DEPTHw-1 : 0]  depth;
+    reg [DEPTHw-1 : 0]  depth_next;
     reg [DATA_WIDTH-1:0]  dout_next_ld;
     
     genvar i;
     generate
     if(MAX_DEPTH>2) begin :mwb2
         wire [MUX_SEL_WIDTH-1 : 0] mux_sel;
-        wire [DEPTH_DATA_WIDTH-1 : 0] depth_2;
-        wire empty;
+        wire [DEPTHw-1 : 0] depth_2;
         wire out_sel ;
         if(DATA_WIDTH>1) begin :wb1
             wire [MAX_DEPTH-2 : 0] mux_in  [DATA_WIDTH-1 :0];
             wire [DATA_WIDTH-1 : 0] mux_out;
             reg [MAX_DEPTH-2 : 0] shiftreg [DATA_WIDTH-1 :0];
-            
             for(i=0;i<DATA_WIDTH; i=i+1) begin : D_
                 always @(posedge clk ) begin
                 //if (`pronoc_reset) begin
@@ -713,58 +662,35 @@ module fwft_fifo_with_output_clear #(
                     if(wr_en) shiftreg[i] <= {shiftreg[i][MAX_DEPTH-3 : 0]  ,din[i]};
                 //end
                 end
-                
                 assign mux_in[i] = shiftreg[i];
                 assign mux_out[i] = mux_in[i][mux_sel];
                 assign dout_next[i] = (out_sel) ? mux_out[i] : din[i];
             end //D_
-            
         end else begin : w1
             wire [MAX_DEPTH-2 : 0] mux_in;
             wire mux_out;
             reg [MAX_DEPTH-2 : 0] shiftreg;
-            
             always @(posedge clk ) begin
                 if(wr_en) shiftreg <= {shiftreg[MAX_DEPTH-3 : 0]  ,din};
             end
-            
             assign mux_in = shiftreg;
             assign mux_out = mux_in[mux_sel];
             assign dout_next = (out_sel) ? mux_out : din;
         end //w1
-        
-        assign full = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0];
-        assign nearly_full = depth >= MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0] -1'b1;
-        assign empty = depth == {DEPTH_DATA_WIDTH{1'b0}};
-        assign recieve_more_than_0 = ~ empty;
-        assign recieve_more_than_1 = ~( depth == {DEPTH_DATA_WIDTH{1'b0}} ||  depth== 1 );
-        assign out_sel = (recieve_more_than_1)  ? 1'b1 : 1'b0;
+        assign out_sel = (status_o.has_multiple)  ? 1'b1 : 1'b0;
         assign out_ld = (depth !=0 )?  rd_en : wr_en;
         assign depth_2 = depth-'d2;
         assign mux_sel = depth_2[MUX_SEL_WIDTH-1 : 0];
-        
     end else if  ( MAX_DEPTH == 2) begin :mw2
-        
         reg [DATA_WIDTH-1 : 0] din_f;
-        
         always @(posedge clk ) begin
             if(wr_en) din_f <= din;
         end //always
-        
-        assign full = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0];
-        assign nearly_full = depth >= MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0] -1'b1;
         assign out_ld = (depth !=0 )?  rd_en : wr_en;
-        assign recieve_more_than_0 = (depth != {DEPTH_DATA_WIDTH{1'b0}});
-        assign recieve_more_than_1 = ~( depth == 0 ||  depth== 1 );
-        assign dout_next = (recieve_more_than_1) ? din_f : din;
-
+        assign dout_next = (status_o.has_multiple) ? din_f : din;
     end else begin :mw1 // MAX_DEPTH == 1
         assign out_ld = wr_en;
         assign dout_next = din;
-        assign full = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0];
-        assign nearly_full= 1'b1;
-        assign recieve_more_than_0 = full;
-        assign recieve_more_than_1 = 1'b0;
     end
     endgenerate
     always_ff @ (`pronoc_clk_reset_edge) begin
@@ -781,6 +707,15 @@ module fwft_fifo_with_output_clear #(
         depth_next = depth;
         if (wr_en & ~rd_en) depth_next = depth + 1'h1;
         else if (~wr_en & rd_en) depth_next = depth - 1'h1;
+        status_o.full = (depth == MAX_DEPTH [DEPTHw-1 : 0]);
+        status_o.nearly_full = 
+            (MAX_DEPTH == 1)? 1'b1 : 
+            (depth >= MAX_DEPTH [DEPTHw-1 : 0] -1'b1);
+        status_o.empty = (depth == {DEPTHw{1'b0}});
+        status_o.has_data = ~ status_o.empty;
+        status_o.has_multiple =  
+            (MAX_DEPTH == 1)? 1'b0 : 
+            ~( depth == DEPTHw'(0) ||  depth== DEPTHw'(1) );
     end//always
     
     always_comb begin
@@ -791,22 +726,21 @@ module fwft_fifo_with_output_clear #(
         end
     end
     
-    
-/*********************************************
-*        Validating Parameters/Simulation
-*********************************************/
+    /*********************************************
+    *        Validating Parameters/Simulation
+    *********************************************/
     `ifdef SIMULATION
     always @(posedge clk) begin
         if(`pronoc_reset==0)begin
-            if (wr_en && ~rd_en && full) begin
+            if (wr_en && ~rd_en && status_o.full) begin
             $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,MAX_DEPTH);
             $finish;
             end
-            if (rd_en && !recieve_more_than_0 && (IGNORE_SAME_LOC_RD_WR_WARNING == 0)) begin
+            if (rd_en && status_o.empty && (IGNORE_SAME_LOC_RD_WR_WARNING == 0)) begin
             $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
             $finish;
             end
-            if (rd_en && ~wr_en && !recieve_more_than_0 && (IGNORE_SAME_LOC_RD_WR_WARNING == 1)) begin
+            if (rd_en && ~wr_en && status_o.empty && (IGNORE_SAME_LOC_RD_WR_WARNING == 1)) begin
             $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
             $finish;
             end
@@ -815,64 +749,63 @@ module fwft_fifo_with_output_clear #(
     `endif // SIMULATION
 endmodule
 
-/***************
-fwft_fifo_bram
-****************/
+/***************************
+*fwft_fifo_bram
+* An FWFT FIFO implementation based on BRAMs
+* optimized for low LUTs utilization.
+***************************/
 module fwft_fifo_bram #(
     parameter DATA_WIDTH = 2,
     parameter MAX_DEPTH = 2,
     parameter IGNORE_SAME_LOC_RD_WR_WARNING=1 // 1 : "YES" , 0: "NO"
-    ) (
-    input [DATA_WIDTH-1:0] din,     // Data in
-    input wr_en,   // Write enable
-    input rd_en,   // Read the next word
-    output [DATA_WIDTH-1:0]  dout,    // Data out
-    output full,
-    output nearly_full,
-    output recieve_more_than_0,
-    output recieve_more_than_1,
-    input reset,
-    input clk
+    )(
+    din,     // Data in
+    wr_en,   // Write enable
+    rd_en,   // Read the next word
+    dout,    // Data out
+    stat_o,
+    reset,
+    clk
 );
+    import pronoc_pkg::*;
+    input [DATA_WIDTH-1:0] din;     // Data in
+    input wr_en;   // Write enable
+    input rd_en;   // Read the next word
+    output [DATA_WIDTH-1:0]  dout;    // Data out
+    output fifo_stat_t stat_o;
+    input reset;
+    input clk;
     
-    function integer log2;
-    input integer number; begin
-        log2=(number <=1) ? 1: 0;
-        while(2**log2<number) begin
-            log2=log2+1;
-        end
-    end
-    endfunction // log2
-    
-    localparam DEPTH_DATA_WIDTH = log2(MAX_DEPTH +1);
+    localparam DEPTHw = log2(MAX_DEPTH +1);
     
     reg valid_next;  
     reg valid;
     wire pass_din_to_out_reg, out_reg_wr_en, bram_out_is_valid_next;
     logic bram_out_is_valid;
-    wire bram_empty, bram_rd_en, bram_wr_en;
+    wire bram_rd_en, bram_wr_en;
+    fifo_stat_t brams_stat_o;
     wire [DATA_WIDTH-1 : 0] bram_dout;
     reg [DATA_WIDTH-1 : 0] out_reg;
     reg [DATA_WIDTH-1 : 0] out_reg_next;
     
-    logic [DEPTH_DATA_WIDTH-1 : 0]  depth;
-    reg [DEPTH_DATA_WIDTH-1 : 0]  depth_next;
+    logic [DEPTHw-1 : 0]  depth;
+    reg [DEPTHw-1 : 0]  depth_next;
     
     assign dout = (bram_out_is_valid)?  bram_dout : out_reg;
     assign  pass_din_to_out_reg = (wr_en & ~valid)| // a write has been recived while the reg_flit is not valid
-    (wr_en & valid & bram_empty & rd_en); //or its valid but bram is empty and its got a read request
+    (wr_en & valid & brams_stat_o.empty & rd_en); //or its valid but bram is empty and its got a read request
     
-    assign bram_rd_en = (rd_en & ~bram_empty);
+    assign bram_rd_en = (rd_en & brams_stat_o.has_data);
     assign bram_wr_en = (pass_din_to_out_reg)?  1'b0 :wr_en ; //make sure not write on the Bram if the reg fifo is empty 
     
     assign  out_reg_wr_en = pass_din_to_out_reg | bram_out_is_valid;
-    assign  bram_out_is_valid_next = (bram_rd_en )? (rd_en &  ~bram_empty): 1'b0;
+    assign  bram_out_is_valid_next = (bram_rd_en )? (rd_en &  brams_stat_o.has_data): 1'b0;
     
     always_comb begin
         valid_next = valid;
-        if(depth_next == {DEPTH_DATA_WIDTH{1'b0}}) valid_next =1'b0;
+        if(depth_next == {DEPTHw{1'b0}}) valid_next =1'b0;
         else if(out_reg_wr_en) valid_next =1'b1;
-        else if(bram_empty & rd_en) valid_next =1'b0;
+        else if(brams_stat_o.empty & rd_en) valid_next =1'b0;
     end
     
     bram_based_fifo  #(
@@ -883,9 +816,7 @@ module fwft_fifo_bram #(
         .wr_en(bram_wr_en), 
         .rd_en(bram_rd_en), 
         .dout(bram_dout),  
-        .full(),
-        .nearly_full(),
-        .empty(bram_empty),
+        .stat_o(brams_stat_o),
         .reset(reset),
         .clk(clk)
     );  
@@ -912,35 +843,33 @@ module fwft_fifo_bram #(
         else if(bram_out_is_valid)   out_reg_next = bram_dout; 
     end
     
-    wire empty;    
-    assign full = depth == MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0];
-    assign nearly_full = depth >= MAX_DEPTH [DEPTH_DATA_WIDTH-1 : 0] -1'b1;
-    assign empty = depth == {DEPTH_DATA_WIDTH{1'b0}};
-    assign recieve_more_than_0 = ~ empty;
-    assign recieve_more_than_1 = ~( depth == {DEPTH_DATA_WIDTH{1'b0}} ||  depth== 1 );
+    assign stat_o.full = (depth == MAX_DEPTH [DEPTHw-1 : 0]);
+    assign stat_o.nearly_full = (depth >= MAX_DEPTH [DEPTHw-1 : 0] -1'b1);
+    assign stat_o.empty = (depth == {DEPTHw{1'b0}});
+    assign stat_o.has_data = ~(depth == {DEPTHw{1'b0}});
+    assign stat_o.has_multiple = ~((depth == DEPTHw'(0)) ||  (depth == DEPTHw'(1)));
     
     `ifdef SIMULATION
     always @(posedge clk) begin
-        if (wr_en & ~rd_en & full) begin
+        if (wr_en & ~rd_en & stat_o.full) begin
             $display("%t: ERROR: Attempt to write to full FIFO:FIFO size is %d. %m",$time,MAX_DEPTH);
             $finish;
         end
-        if (rd_en & !recieve_more_than_0 & (IGNORE_SAME_LOC_RD_WR_WARNING == 0)) begin
+        if (rd_en & stat_o.empty & (IGNORE_SAME_LOC_RD_WR_WARNING == 0)) begin
             $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
             $finish;
         end
-        if (rd_en & ~wr_en & !recieve_more_than_0 & (IGNORE_SAME_LOC_RD_WR_WARNING == 1)) begin
+        if (rd_en & ~wr_en & stat_o.empty & (IGNORE_SAME_LOC_RD_WR_WARNING == 1)) begin
             $display("%t ERROR: Attempt to read an empty FIFO: %m", $time);
             $finish;
         end
     end // always
     `endif // SIMULATION
-    
 endmodule
 
 /**********************************
-        bram_based_fifo
- *********************************/
+*        bram_based_fifo
+*********************************/
 module bram_based_fifo  #(
     parameter Dw = 72,//data_width
     parameter B = 10// buffer num
@@ -949,22 +878,11 @@ module bram_based_fifo  #(
     wr_en,
     rd_en,
     dout,
-    full,
-    nearly_full,
-    empty,
+    stat_o,
     reset,
     clk
 );
-    
-    function integer log2;
-    input integer number; begin
-        log2=(number <=1) ? 1: 0;
-        while(2**log2<number) begin
-        log2=log2+1;
-        end
-    end
-    endfunction // log2
-    
+    import pronoc_pkg::*;
     localparam
         B_1 = B-1,
         Bw = log2(B),
@@ -974,12 +892,8 @@ module bram_based_fifo  #(
     input [Dw-1:0] din; // Data in
     input wr_en;   // Write enable
     input rd_en;   // Read the next word
-    
     output reg [Dw-1:0]  dout;    // Data out
-    output full;
-    output nearly_full;
-    output empty;
-    
+    output fifo_stat_t stat_o;
     input reset;
     input clk;
     
@@ -1006,7 +920,6 @@ module bram_based_fifo  #(
         else if (~wr_en & rd_en) depth_next = depth - 1'b1;
     end
     
-    
     always @(`pronoc_clk_reset_edge) begin
         if (`pronoc_reset) begin
             rd_ptr <= {Bw{1'b0}};
@@ -1022,11 +935,13 @@ module bram_based_fifo  #(
     
     //assign dout = queue[rd_ptr];
     localparam  [DEPTHw-1 : 0] Bint2 = B_1[DEPTHw-1 : 0];
-    
-    assign full = depth == B [DEPTHw-1 : 0];
-    assign nearly_full = depth >=Bint2; //  B-1
-    assign empty = depth == {DEPTHw{1'b0}};
-    
+    always_comb begin
+        stat_o.full = depth == B [DEPTHw-1 : 0];
+        stat_o.nearly_full = depth >=Bint2; //  B-1
+        stat_o.empty = depth == {DEPTHw{1'b0}};
+        stat_o.has_data = ~(depth == {DEPTHw{1'b0}});
+        stat_o.has_multiple = ~((depth == DEPTHw'(0)) ||  (depth == DEPTHw'(1)));
+    end
     `ifdef SIMULATION
     always @(posedge clk) begin
         if(`pronoc_reset==1'b0)begin
@@ -1041,5 +956,4 @@ module bram_based_fifo  #(
         end//~reset
     end
     `endif
-    
 endmodule 

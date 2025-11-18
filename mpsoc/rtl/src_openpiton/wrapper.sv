@@ -533,25 +533,7 @@ module pronoc_to_piton_wrapper #(
         Pw  = log2(MAX_P),
         PLw = (IS_FMESH) ? Pw : ELw;
     wire [PLw-1 : 0] endp_p_in;
-    generate
-    if(IS_FMESH) begin : fmesh
-        fmesh_endp_addr_decode endp_addr_decode  (
-            .e_addr(hdr_flit.dest_e_addr),
-            .ex(),
-            .ey(),
-            .ep(endp_p_in),
-            .valid()
-        );
-    end else begin : mesh
-        regular_topo_endp_addr_decode endp_addr_decode (
-            .e_addr(hdr_flit.dest_e_addr),
-            .ex( ),
-            .ey( ),
-            .el(endp_p_in),
-            .valid( )
-        );
-    end
-    endgenerate
+    assign endp_p_in = hdr_flit.dest_e_addr [DAw-1 : DAw-PLw];
     destp_generator #(
         .P(MAX_P),
         .SW_LOC(PORT_NUM)

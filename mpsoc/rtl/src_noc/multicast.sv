@@ -78,24 +78,18 @@ module multicast_routing_mesh #(
     input   [DAw-1 : 0]  dest_e_addr;
     output  [DSTPw-1 : 0] destport;
     
-    localparam
-        RXw = log2(NX),
-        RYw = log2(NY);
-    
     //mask gen. x_plus: all rows larger than current router x address are asserted.
     wire [NX-1 : 0] x_plus,x_minus;
     //mask generation. Only the corresponding bits to destination located in current column are asserted in each mask     
     wire [NE-1 : 0] y_plus,y_min;
     //Only one-bit is asserted for each local_p[i]
     wire [NE-1 : 0] local_p [NL-1 : 0];
-    wire   [RXw-1 : 0]  current_rx;
-    wire   [RYw-1 : 0]  current_ry;
-    regular_topo_router_addr_decode  router_addr_decode (
-        .r_addr(current_r_addr),
-        .rx(current_rx),
-        .ry(current_ry),
-        .valid( )
-    );
+    wire   [NXw-1 : 0]  current_rx;
+    wire   [NYw-1 : 0]  current_ry;
+    regular_topo_router_addr_t current_router_addr_struct;
+    assign current_router_addr_struct = regular_topo_router_addr_t'(current_r_addr);
+    assign current_rx = current_router_addr_struct.x;
+    assign current_ry = current_router_addr_struct.y;
     wire [NX-1 : 0] row_has_any_dest;
     wire [NE-1 : 0] dest_mcast_all_endp;
     mcast_dest_list_decode decode (
@@ -119,8 +113,8 @@ module multicast_routing_mesh #(
             Y_LOC = ((i/NL) / NX ), 
             X_LOC = ((i/NL) % NX ), 
             LL = (i % NL);
-        localparam [RYw-1 : 0] YY = Y_LOC [RYw-1 : 0];
-        localparam [RXw-1 : 0] XX = X_LOC [RXw-1 : 0];
+        localparam [NYw-1 : 0] YY = Y_LOC [NYw-1 : 0];
+        localparam [NXw-1 : 0] XX = X_LOC [NXw-1 : 0];
         /* verilator lint_off CMPCONST */
         assign y_plus[i]  = (current_rx    ==    XX) && (current_ry >  YY);
         /* verilator lint_on CMPCONST */
@@ -218,13 +212,10 @@ module multicast_routing_fmesh #(
     wire [NE-1 : 0] y_plus,y_min;
     //Only one-bit is asserted for each local_p[i]
     wire [NE-1 : 0] local_p [MAX_P_FMESH-1 : 0];
-    regular_topo_router_addr_decode router_addr_decode
-    (
-        .r_addr(current_r_addr),
-        .rx(current_rx),
-        .ry(current_ry),
-        .valid( )
-    );
+    regular_topo_router_addr_t current_router_addr_struct;
+    assign current_router_addr_struct = regular_topo_router_addr_t'(current_r_addr);
+    assign current_rx = current_router_addr_struct.x;
+    assign current_ry = current_router_addr_struct.y;
     
     wire [NX-1 : 0] row_has_any_dest;
     wire [NE-1 : 0] dest_mcast_all_endp;
@@ -540,29 +531,45 @@ module multicast_dst_sel  (
     input  [DSTPw-1 : 0] destport_in;
     output [DSTPw-1 : 0] destport_out;
     wire  [DSTPw-1 : 0] arb_in, arb_out;
-
-    function integer regular_topo_pririty_order;
+    
+    function integer three_dim_topo_priority_order;
     input integer x;
     begin
         case(x)
-            0 : regular_topo_pririty_order = EAST;
-            1 : regular_topo_pririty_order = WEST;
-            2 : regular_topo_pririty_order = NORTH;
-            3 : regular_topo_pririty_order = SOUTH;
-            4 : regular_topo_pririty_order = LOCAL;    
-            default : regular_topo_pririty_order =x;
+            0 : three_dim_topo_priority_order = DOWN;
+            1 : three_dim_topo_priority_order = UP;
+            2 : three_dim_topo_priority_order = EAST;
+            3 : three_dim_topo_priority_order = WEST;
+            4 : three_dim_topo_priority_order = NORTH;
+            5 : three_dim_topo_priority_order = SOUTH;
+            6 : three_dim_topo_priority_order = LOCAL;    
+            default : three_dim_topo_priority_order =x;
+        endcase
+    end
+    endfunction // pririty_order
+
+    function integer two_dim_topo_priority_order;
+    input integer x;
+    begin
+        case(x)
+            0 : two_dim_topo_priority_order = EAST;
+            1 : two_dim_topo_priority_order = WEST;
+            2 : two_dim_topo_priority_order = NORTH;
+            3 : two_dim_topo_priority_order = SOUTH;
+            4 : two_dim_topo_priority_order = LOCAL;    
+            default : two_dim_topo_priority_order =x;
         endcase
     end
     endfunction // pririty_order
     
-    function integer ring_lin_pririty_order;
+    function integer one_dim_topo_priority_order;
     input integer x;
     begin
         case(x)
-            0 : ring_lin_pririty_order = FORWARD;
-            1 : ring_lin_pririty_order = BACKWARD;
-            2 : ring_lin_pririty_order = LOCAL;                
-            default : ring_lin_pririty_order =x;
+            0 : one_dim_topo_priority_order = FORWARD;
+            1 : one_dim_topo_priority_order = BACKWARD;
+            2 : one_dim_topo_priority_order = LOCAL;                
+            default : one_dim_topo_priority_order =x;
         endcase
     end
     endfunction // pririty_order
@@ -571,8 +578,9 @@ module multicast_dst_sel  (
     generate 
     for (i=0; i<DSTPw;i++) begin : lp
         localparam PR = 
-            ( IS_MESH | IS_TORUS | IS_FMESH ) ?  regular_topo_pririty_order(i):
-            ( IS_RING | IS_LINE ) ? ring_lin_pririty_order(i) : i;
+            ( IS_3D_TOPO ) ?  three_dim_topo_priority_order(i):
+            ( IS_2D_TOPO ) ?  two_dim_topo_priority_order(i):
+            ( IS_1D_TOPO ) ? one_dim_topo_priority_order(i) : i;
         assign arb_in[i] = destport_in[PR];
         assign destport_out [PR] = arb_out[i];
     end

@@ -42,8 +42,8 @@ CORE_NUM(){
     FIRST_ARBITER_EXT_P_EN=1  
     TOPOLOGY="MESH" #"MESH" or "TORUS"
     ROUTE_NAME="FULL_ADPT" # Routing algorithm
-	#    mesh :  "XY"        , "WEST_FIRST"      , "NORTH_LAST"      , "NEGETIVE_FIRST"      , "FULL_ADPT"
-    #   torus:  "TRANC_XY"  , "TRANC_WEST_FIRST", "TRANC_NORTH_LAST", "TRANC_NEGETIVE_FIRST", "TRANC_FULL_ADPT"
+	#    mesh :  "DOR"        , "WEST_FIRST"      , "NORTH_LAST"      , "NEGETIVE_FIRST"      , "FULL_ADPT"
+    #   torus:  "TRANC_DOR"  , "TRANC_WEST_FIRST", "TRANC_NORTH_LAST", "TRANC_NEGETIVE_FIRST", "TRANC_FULL_ADPT"
     CONGESTION_INDEX="VC" #"CREDIT","VC"  
     CLASS_SETTING="4'b1111"           
 	#0: no class. packets can be sent to any available OVC
@@ -81,7 +81,7 @@ CORE_NUM(){
 
 
 # 	for minimal fully adaptive on 2D mesh paper 
-	ROUTING_SUBFUNCTION= "XY" # "XY" "NORTH_LAST"
+	ROUTING_SUBFUNCTION= "DOR" # "DOR" "NORTH_LAST"
 	AVC_REALLOCATION= "" 	
 
 generate_parameter_v (){
@@ -112,7 +112,7 @@ generate_parameter_v (){
     printf " parameter TOTAL_PKT_PER_ROUTER=$TOTAL_PKT_PER_ROUTER;\n" >> parameter.v	
     printf " parameter MAX_DELAY_BTWN_PCKTS=$MAX_DELAY_BTWN_PCKTS;\n" >> parameter.v	
 	printf " parameter DEBUG_EN=$DEBUG_EN;\n" >> parameter.v	
-	printf " parameter ROUTE_TYPE = (ROUTE_NAME == \"XY\" || ROUTE_NAME == \"TRANC_XY\" )?    \"DETERMINISTIC\" : \n" >> parameter.v	
+	printf " parameter ROUTE_TYPE = (ROUTE_NAME == \"DOR\" || ROUTE_NAME == \"TRANC_DOR\" )?    \"DETERMINISTIC\" : \n" >> parameter.v	
     printf "			            (ROUTE_NAME == \"FULL_ADPT\" || ROUTE_NAME == \"TRANC_FULL_ADPT\" )?   \"FULL_ADAPTIVE\": \"PAR_ADAPTIVE\"; \n" >> parameter.v	          
 	printf " parameter ADD_PIPREG_AFTER_CROSSBAR= $ADD_PIPREG_AFTER_CROSSBAR;\n" >>  parameter.v
 	printf " parameter CVw=(C==0)? V : C * V;\n" >>  parameter.v
@@ -168,7 +168,7 @@ for PACKET_SIZE in  3 2 4 6
 	for  TRAFFIC in  "RANDOM"  "TRANSPOSE1" "TRANSPOSE2"  "HOTSPOT"
 	do
 
-		for  ROUTE_NAME in "XY" "WEST_FIRST" "NORTH_LAST"  "NEGETIVE_FIRST"  "FULL_ADPT"
+		for  ROUTE_NAME in "DOR" "WEST_FIRST" "NORTH_LAST"  "NEGETIVE_FIRST"  "FULL_ADPT"
 		do
 			# regenerate NoC
 			generate_parameter_v
@@ -190,7 +190,7 @@ for PACKET_SIZE in  3 2 4 6
 		#run multiple testbench files in the same time
 		cd $multiple_path
 		
-		for  ROUTE_NAME in "XY" "WEST_FIRST" "NORTH_LAST"  "NEGETIVE_FIRST"  "FULL_ADPT"
+		for  ROUTE_NAME in "DOR" "WEST_FIRST" "NORTH_LAST"  "NEGETIVE_FIRST"  "FULL_ADPT"
 		do	
 			
 			./$ROUTE_NAME$TRAFFIC"_"$PACKET_SIZE $ROUTE_NAME$TRAFFIC"_"$PACKET_SIZE &	
@@ -200,7 +200,7 @@ for PACKET_SIZE in  3 2 4 6
 		wait
 		
 		# merge the result in one file 
-		for  ROUTE_NAME in "XY" "WEST_FIRST" "NORTH_LAST"  "NEGETIVE_FIRST"  "FULL_ADPT"
+		for  ROUTE_NAME in "DOR" "WEST_FIRST" "NORTH_LAST"  "NEGETIVE_FIRST"  "FULL_ADPT"
 		do	
 		data_file=$data_path/$TRAFFIC"_"$PACKET_SIZE"_all.txt"
 		plot_file=$plot_path/$TRAFFIC"_"$PACKET_SIZE".eps"

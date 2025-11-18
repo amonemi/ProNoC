@@ -1005,7 +1005,7 @@ sub generate_tree_dot_file{
     my $hp= join("|",@hp);
     #    my ($NE,$NR)=get_topology_info($self);
     my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info($self);
-    #add endpoints
+    # add endpoints
     for(my $i=0; $i<$NE; $i++){
         $dotfile=$dotfile."T$i\[
     label = \"T$i\"
@@ -1018,12 +1018,12 @@ sub generate_tree_dot_file{
 ];
 ";
     }
-    #add roots
+    # add roots
     my $label = "\{R0\}|\{$bp\}";
     my $x=(($NE-1)/2);
     my $y=    1.5*($nl-1)+1;
     $dotfile.=get_router_dot_file("R0",$label,"$x,$y!",$gtype);
-    #add leaves
+    # add leaves
     my $t=1;
     for(my $l=$nl-1; $l>0; $l--){ 
         my $NL = powi($k,$l);
@@ -1036,7 +1036,7 @@ sub generate_tree_dot_file{
             $dotfile.=get_router_dot_file("R$r",$label,"$x,$y!",$gtype);
         }
     }
-    #add leave connections
+    # add leave connections
     for(my $l=$nl-1; $l>0; $l--){ 
         my $NL = powi($k,$l);
         for(my $pos=0; $pos<$NL; $pos++){ 
@@ -1045,12 +1045,105 @@ sub generate_tree_dot_file{
             $dotfile=$dotfile.node_connection('R',$id1,undef,$k,'R',$id2,undef,$pos % $k,$gtype);    
         }
     }
-    #add endpoints connection
+    # add endpoints connection
     for(my $i=0; $i<$NE; $i++){ 
         my $r= sum_powi($k,$nl-1)+int($i/$k);
         $dotfile=$dotfile.node_connection('T',$i,undef,undef,'R',$r,undef,$i%($k),$gtype);    
     }
     $dotfile=$dotfile."\n}\n";
+    return $dotfile;
+}
+
+sub generate_3d_mesh_dot_file {
+    my $self=shift;
+    my $x_dim=$self->object_get_attribute('noc_param','T1');
+    my $y_dim=$self->object_get_attribute('noc_param','T2');
+    my $z_dim=$self->object_get_attribute('noc_param','T3');
+    my $l_num=$self->object_get_attribute('noc_param','T4');  
+    # print "Generating 3D mesh dot file with dimensions: ${x_dim}x${y_dim}x${z_dim}, L_num=$l_num\n";  
+    my $dotfile.="digraph G {\n";
+    $dotfile.="    graph [ layout = neato, rankdir = LR , splines = true, overlap = false];\n";
+    $dotfile.="    node [shape=parallelogram, style=filled, color=orange, fillcolor=skyblue];\n";
+    $dotfile.="    graph [splines=line, overlap=true];\n\n";
+    my $node_size="width=1, height=.5, fixedsize=true";
+    my $x_shift_per_layer = 0;  # shift each layer slightly right
+    my $x_shift_per_row = .5;  # shift each row slightly right
+    my $x_gap_mulply = 1.3; # increase the gap between two adjacent nodes in x dir
+    my $y_gap_mulply = 1.1; # increase the gap between two adjacent nodes in y dir
+    # Generate nodes with pos attributes
+    my $v=$z_dim*$y_dim*$x_dim;
+    for my $zz (0..$z_dim-1) {
+        for my $yy (0..$y_dim-1) {
+            for my $xx (0..$x_dim-1) {
+                my $x = $xx;
+                my $y = $y_dim-$yy-1;
+                my $z = $z_dim-$zz-1;
+                my $node_name = "N_${xx}_${yy}_${zz}";               
+                # X shifted by layer index, Y shifted by row + layer offset
+                my $x_pos = $x*$x_gap_mulply + $z * $x_shift_per_layer - $y * $x_shift_per_row;
+                my $y_pos = $y*$y_gap_mulply + $z * ($y_dim*$y_gap_mulply +.25);  # space between layers
+                my $len = length("$v");
+                my $Rnum=$xx + ($yy*$x_dim) + ($zz * $x_dim * $y_dim);
+                my $Rlable = sprintf("R%-${len}d", $Rnum);
+                $dotfile.= "    $node_name [label=\"$Rlable\", pos=\"$x_pos,$y_pos!\" $node_size];\n";
+                for my $ll (0..$l_num-1){
+                    my $Tx_pos =($ll==0 || $ll==2)? $x_pos-0.4 : $x_pos+0.3;
+                    my $Ty_pos =($ll==0 || $ll==1)? $y_pos-0.3 : $y_pos+0.3;
+                    my $Tnum = $ll+($Rnum*$l_num);
+                    my $endp_name = "T_${xx}_${yy}_${zz}_$ll";
+                    $dotfile.=
+"   $endp_name [
+    label=\"T$Tnum\", 
+    pos=\"$Tx_pos,$Ty_pos!\",
+    shape=box,
+    style=filled,
+    fillcolor=orange,
+    width=0,       // 0 means auto
+    height=0,      // 0 means auto
+    fixedsize=false,
+    margin=0.01    // small margin around text
+];
+";
+                }             
+            }
+        }
+    }
+    $dotfile.= "\n";
+    # Connect nodes in X, Y, Z directions
+    for my $z (0..$z_dim-1) {
+        for my $y (0..$y_dim-1) {
+            for my $x (0..$x_dim-1) {
+                my $node = "N_${x}_${y}_${z}";
+                # X direction
+                if ($x < $x_dim-1) {
+                    my $neighbor = "N_" . ($x+1) . "_$y\_$z";
+                    $dotfile.= "    $node -> $neighbor [dir=none];\n";
+                }
+                # Y direction
+                if ($y < $y_dim-1) {
+                    my $neighbor = "N_${x}_" . ($y+1) . "_$z";
+                    $dotfile.= "    $node -> $neighbor [dir=none];\n";
+                }
+                # Z direction
+                if ($z < $z_dim-1) {
+                    my $neighbor = "N_${x}_${y}_" . ($z+1);
+                    $dotfile.= "    $node -> $neighbor [dir=none, style=dashed, constraint=false];\n";
+                }
+            }
+        }
+    }
+    $dotfile.= "\n";
+    # Invisible edges for column alignment
+    for my $z (0..$z_dim-1) {
+        for my $x (0..$x_dim-1) {
+            for my $y (0..$y_dim-2) {
+                my $from = "N_${x}_${y}_${z}";
+                my $to   = "N_${x}_" . ($y+1) . "_$z";
+                $dotfile.= "    $from -> $to [style=invis];\n";
+            }
+        }
+    }
+    $dotfile.= "}\n";
     return $dotfile;
 }
 
@@ -1062,6 +1155,7 @@ sub get_topology_dot_file{
     return generate_fattree_dot_file ($self) if($topology eq '"FATTREE"');
     return generate_tree_dot_file($self) if($topology eq '"TREE"');
     return generate_star_dot_file($self) if($topology eq '"STAR"');
+    return generate_3d_mesh_dot_file($self) if($topology eq '"MESH_3D"');
 }
 
 

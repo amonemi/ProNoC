@@ -95,48 +95,6 @@ module onehot_mux_1D_reverse #(
 endmodule
 
 
-
-module header_flit_info #(
-    parameter DATA_w = 0 
-)(
-    flit,
-    hdr_flit,
-    data_o
-);
-    
-    import pronoc_pkg::*;
-    
-    localparam 
-        Dw = (DATA_w==0)? 1 : DATA_w;
-    
-    input flit_t flit;
-    output hdr_flit_t hdr_flit;
-    output [Dw-1 : 0] data_o;
-    
-    localparam
-        DATA_LSB= MSB_BE+1,
-        DATA_MSB= (DATA_LSB + DATA_w)<FPAYw ? DATA_LSB + Dw-1 : FPAYw-1,
-        OFFSETw = DATA_MSB - DATA_LSB +1;
-    
-    always_comb begin
-        hdr_flit.src_e_addr  = flit.payload [E_SRC_MSB : E_SRC_LSB];
-        hdr_flit.dest_e_addr = flit.payload [E_DST_MSB : E_DST_LSB];
-        hdr_flit.destport    = flit.payload [DST_P_MSB : DST_P_LSB];
-        hdr_flit.message_class = (C>1)? flit.payload [CLASS_MSB : CLASS_LSB] :  {Cw{1'b0}};
-        hdr_flit.weight = (IS_WRRA)? flit.payload [WEIGHT_MSB : WEIGHT_LSB] : {WEIGHTw{1'b0}};
-        hdr_flit.be = (BYTE_EN)? flit.payload [BE_MSB : BE_LSB]: {BEw{1'b0}};
-    end
-    
-    wire [OFFSETw-1 : 0 ] offset = flit.payload [DATA_MSB : DATA_LSB];
-    generate
-    if(Dw > OFFSETw) begin : if1
-        assign data_o={{(Dw-OFFSETw){1'b0}},offset};
-    end else begin : if2 
-        assign data_o=offset[Dw-1 : 0];
-    end
-    endgenerate
-endmodule
-
 `ifdef SIMULATION
 module smart_chanel_check (
     flit_chanel,
@@ -367,10 +325,25 @@ module check_straight_oport #(
     import pronoc_pkg::*;
     input   [DSTPw-1 : 0] destport_coded_i;
     output  goes_straight_o;
-    
+
     generate 
-    if(IS_MESH | IS_TORUS | IS_FMESH) begin :twoD
-        if (SS_PORT_LOC == 0 || SS_PORT_LOC > 4) begin : local_ports
+    if(IS_3D_TOPO) begin : D3_
+        if (SS_PORT_LOC == 0 || SS_PORT_LOC > DOWN) begin : local_ports
+            assign goes_straight_o = 1'b0; // There is not a next router in this case at all
+        end else begin :non_local
+            logic [MAX_P-1 : 0 ] destport_one_hot;
+            always @(*) begin 
+                destport_one_hot = '0;
+                //for deterministic routing destination port is decimal encoded
+                if(IS_DETERMINISTIC) destport_one_hot[destport_coded_i] = 1'b1;
+                //for non-deterministic routing destination port is one-hot encoded
+                else destport_one_hot [DSTPw-1 : 0] = destport_coded_i;
+            end
+            assign goes_straight_o = destport_one_hot [SS_PORT_LOC];    
+        end//else
+    end//regular_topo
+    if(IS_2D_TOPO) begin : D2_
+        if (SS_PORT_LOC == 0 || SS_PORT_LOC > SOUTH) begin : local_ports
             assign goes_straight_o = 1'b0; // There is not a next router in this case at all
         end else begin :non_local
             wire [4 : 0 ] destport_one_hot;
@@ -378,12 +351,11 @@ module check_straight_oport #(
                 .dstport_encoded(destport_coded_i),
                 .dstport_one_hot(destport_one_hot)
             );
-            
             assign goes_straight_o = destport_one_hot [SS_PORT_LOC];    
         end//else
     end//regular_topo
-    else if(IS_RING | IS_LINE) begin :oneD
-        if (SS_PORT_LOC == 0 || SS_PORT_LOC > 2) begin : local_ports
+    else if(IS_1D_TOPO) begin : D1_
+        if (SS_PORT_LOC == 0 || SS_PORT_LOC > BACKWARD) begin : local_ports
             assign goes_straight_o = 1'b0; // There is not a next router in this case at all
         end else begin :non_local
             wire [2: 0 ] destport_one_hot;
@@ -394,7 +366,6 @@ module check_straight_oport #(
             assign goes_straight_o = destport_one_hot [SS_PORT_LOC];
         end    //non_local
     end// oneD
-    
     //TODO Add fattree & custom 
 endgenerate
 endmodule
@@ -595,8 +566,8 @@ module smart_allocator_per_iport # (
     wire  goes_straight;
     
     localparam  LOCATED_IN_NI =  
-        (IS_RING | IS_LINE) ? (SW_LOC == 0 || SW_LOC > 2) :
-        (IS_MESH | IS_TORUS | IS_FMESH) ? (SW_LOC == 0 || SW_LOC > 4 ) : 0;
+        (IS_1D_TOPO) ? (SW_LOC == 0 || SW_LOC > 2) :
+        (IS_2D_TOPO) ? (SW_LOC == 0 || SW_LOC > 4 ) : 0;
     
     // does the route computation for the current router
     conventional_routing #(

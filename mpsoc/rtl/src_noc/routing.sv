@@ -47,47 +47,17 @@ module conventional_routing #(
     output  [DSTPw-1 :0] destport;
     
     generate
-    if( IS_MESH | IS_FMESH | IS_TORUS | IS_RING | IS_LINE ) begin : regular_topo
-        localparam
-            RXw = log2(NX),
-            RYw = (IS_RING | IS_LINE) ? 1 :log2(NY),
-            EXw = RXw,
-            EYw =(IS_RING | IS_LINE) ? 1 : RYw;
-        wire   [RXw-1   :   0]  current_rx;
-        wire   [RYw-1   :   0]  current_ry;
-        wire   [EXw-1   :   0]  dest_ex;
-        wire   [EYw-1   :   0]  dest_ey;
-        
-        regular_topo_router_addr_decode router_addr_decode  (
-                .r_addr(current_r_addr),
-                .rx(current_rx),
-                .ry(current_ry),
-                .valid( )
-        );
-        if( IS_FMESH) begin :fmesh
-            fmesh_endp_addr_decode end_addr_decode (
-                    .e_addr(dest_e_addr),
-                    .ex(dest_ex),
-                    .ey(dest_ey),
-                    .ep( ),
-                    .valid()
-            );
-        end else begin : mesh
-            regular_topo_endp_addr_decode end_addr_decode  (
-                .e_addr(dest_e_addr),
-                .ex(dest_ex),
-                .ey(dest_ey),
-                .el( ),
-                .valid()
-            );
-        end//mesh
+    if( IS_REGULAR_TOPO | IS_FMESH ) begin : regular_topo
+        regular_topo_router_addr_t dest_router_addr, current_router_addr;
+        always @(*) begin
+            dest_router_addr = regular_topo_router_addr_t'(dest_e_addr);
+            current_router_addr = regular_topo_router_addr_t'(current_r_addr);
+        end
         regular_topo_conventional_routing #(
             .LOCATED_IN_NI(LOCATED_IN_NI)
         ) the_conventional_routing  (
-            .current_x(current_rx),
-            .current_y(current_ry),
-            .dest_x(dest_ex),
-            .dest_y(dest_ey),
+            .current_router_addr_i(current_router_addr),
+            .dest_router_addr_i(dest_router_addr),
             .destport(destport)
         );
     end else if(IS_FATTREE | IS_TREE ) begin : ftree
@@ -184,48 +154,23 @@ module look_ahead_routing #(
     input   [DSTPw-1  :   0]  destport_encoded;
     output  [DSTPw-1  :   0]  lkdestport_encoded;
     input   reset,clk;
+    localparam  PP = ( IS_MESH | IS_FMESH | IS_TORUS ) ? 5 : (IS_MESH_3D) ? 7 : 3;
+    logic [RAw-1 : 0]  neighbors_r_addr_array [PP-1 : 0];
     
     genvar i;
     generate
+    for (i=0;i<PP;i++)begin :sep 
+        assign neighbors_r_addr_array[i] = neighbors_r_addr[(i+1)*RAw-1 : i*RAw];
+    end
     if(IS_REGULAR_TOPO | IS_FMESH ) begin : regular_fmesh
-        localparam
-            RXw = log2(NX),
-            RYw = (IS_RING | IS_LINE) ? 1 : log2(NY),
-            EXw = RXw,
-            EYw = RYw;
-        wire   [RXw-1   :   0]  current_rx;
-        wire   [RYw-1   :   0]  current_ry;
-        wire   [EXw-1   :   0]  dest_ex;
-        wire   [EYw-1   :   0]  dest_ey;
-        regular_topo_router_addr_decode router_addr_decode (
-            .r_addr(current_r_addr),
-            .rx(current_rx),
-            .ry(current_ry),
-            .valid( )
-        );
-        if(IS_FMESH) begin :fmesh
-            fmesh_endp_addr_decode end_addr_decode  (
-                .e_addr(dest_e_addr),
-                .ex(dest_ex),
-                .ey(dest_ey),
-                .ep( ),
-                .valid()
-            );
-        end else begin :regular
-            regular_topo_endp_addr_decode end_addr_decode (
-                .e_addr(dest_e_addr),
-                .ex(dest_ex),
-                .ey(dest_ey),
-                .el( ),
-                .valid()
-            );
+        regular_topo_router_addr_t dest_router_addr;
+        always @(*) begin
+            dest_router_addr = regular_topo_router_addr_t'(dest_e_addr);
         end
         regular_topo_look_ahead_routing lkh_route  (
-            .current_x(current_rx),
-            .current_y(current_ry),
-            .dest_x(dest_ex),
-            .dest_y(dest_ey),
+            .dest_router_addr_i(dest_router_addr),
             .destport_encoded(destport_encoded),
+            .neighbors_r_addr(neighbors_r_addr_array),
             .lkdestport_encoded(lkdestport_encoded),
             .reset(reset),
             .clk(clk)
@@ -412,8 +357,9 @@ module local_route_computation #(
     generate 
     if(IS_UNICAST) begin : uni
         localparam LOCATED_IN_NI=
-            (IS_MESH | IS_TORUS | IS_FMESH)? ((SW_LOC==LOCAL) || (SW_LOC > SOUTH) ) : 
-            (IS_RING | IS_LINE) ? ((SW_LOC==LOCAL) || (SW_LOC > BACKWARD) )  : 0;
+            (IS_3D_TOPO)? ((SW_LOC==LOCAL) || (SW_LOC > DOWN) ) :
+            (IS_2D_TOPO)? ((SW_LOC==LOCAL) || (SW_LOC > SOUTH) ) : 
+            (IS_1D_TOPO) ? ((SW_LOC==LOCAL) || (SW_LOC > BACKWARD) )  : 0;
         hdr_flit_t hdr_flit_i;
         wire [DSTPw-1 :0] destport;
         header_flit_info #(

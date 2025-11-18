@@ -1,0 +1,22 @@
+
+Verification Results:
+****************************mesh_3d_2x2x2 : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_3d_4x3x2x2 : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_3d_4x3x2x2_smart : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_3d_4x3x2x2_ssa : Compile *******************************:
+	 model is generated successfully.
+****************************mesh_3d_2x2x2	: random traffic *******************************:
+	 Passed:   zero load (6,10.8633) saturation (70,74.3971)
+****************************mesh_3d_4x3x2x2	: random traffic *******************************:
+	 Passed:   zero load (2,12.8413) saturation (38,75.3519)
+****************************mesh_3d_4x3x2x2_smart	: random traffic *******************************:
+	 Passed:   zero load (2,11.3919) saturation (38,73.7525)
+****************************mesh_3d_4x3x2x2_ssa	: random traffic *******************************:
+	 Passed:   zero load (2,12.1337) saturation (38,85.3049)
+****************************mesh_3d_2x2x2	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,9.82014) saturation (54,53.6323)
+****************************mesh_3d_4x3x2x2	: transposed 1 traffic *******************************:
+	 Passed:   zero load (2,12.6931) saturation (14,165.269)

@@ -251,11 +251,7 @@ module inout_ports #(
     );    
     
     congestion_out_gen #(
-        .P(P),
-        .V(V),
-        .ROUTE_TYPE(ROUTE_TYPE),
-        .CONGESTION_INDEX(CONGESTION_INDEX),
-        .CONGw(CONGw)
+        .P(P)
     ) congestion_out (
         .ovc_avalable_all(ovc_avalable_all),
         .ivc_request_all(ivc_request_all),
@@ -267,7 +263,7 @@ module inout_ports #(
     
     genvar i;
     generate  
-
+    
     if( SSA_EN == 1 ) begin : ssa
         ss_allocator #(
             .P(P)
@@ -313,14 +309,12 @@ module inout_ports #(
 endmodule
 
 /******************
-    output_vc_status
+*    output_vc_status
 ******************/
 module output_vc_status #(
-    parameter V =  4,
-    parameter B =  16,
+    parameter PORT_B =  16,
     parameter CAND_VC_SEL_MODE = 0,   // 0: use arbiteration between not full vcs, 1: select the vc with most availble free space
-    parameter CRDTw = 4,
-    parameter HETERO_VC=0
+    parameter CRDTw = 4
 )(
     credit_init_val_in,
     ovc_presence,
@@ -334,7 +328,7 @@ module output_vc_status #(
     clk,
     reset
 );
-    
+    import pronoc_pkg::*;
     input   [V-1 : 0] [CRDTw-1 : 0 ] credit_init_val_in ;
     input   [V-1 : 0] ovc_presence;
     input   [V-1 : 0] wr_in;
@@ -347,16 +341,7 @@ module output_vc_status #(
     input   clk;
     input   reset;
     
-    function integer log2;
-    input integer number; begin
-        log2=(number <=1) ? 1: 0;
-        while(2**log2<number) begin
-            log2=log2+1;
-        end
-    end
-    endfunction // log2 
-    
-    localparam  DEPTH_WIDTH =   log2(B+1);
+    localparam  DEPTH_WIDTH =   log2(PORT_B+1);
     
     logic  [DEPTH_WIDTH-1 : 0] credit    [V-1 : 0];
     logic  [DEPTH_WIDTH-1 : 0] credit_next    [V-1 : 0];
@@ -410,13 +395,13 @@ module output_vc_status #(
     end
     always_comb begin 
         cand_vc_ld_next = cand_vc;
-        if(cand_wr_vc_en)    cand_vc_ld_next  =  cand_vc_next;
+        if(cand_wr_vc_en) cand_vc_ld_next  =  cand_vc_next;
     end
 endmodule
 
 
 /*************************
-    vc_alloc_request_gen
+*    vc_alloc_request_gen
 ************************/
 module  vc_alloc_request_gen #(
     parameter P=5
@@ -496,9 +481,7 @@ module  vc_alloc_request_gen #(
     /* verilator lint_on WIDTH */
         
         vc_alloc_request_gen_determinstic #(
-            .P(P),
-            .V(V),
-            .SELF_LOOP_EN(SELF_LOOP_EN)
+            .P(P)
         ) vc_request_gen (
             .ovc_avalable_all(ovc_avalable_all_masked),
             .ivc_request_all(ivc_request_all),
@@ -516,14 +499,7 @@ module  vc_alloc_request_gen #(
         
         if(P==5 && SELF_LOOP_EN == 0 )begin : sl_mesh // combine portsel and available VC mux as proposed in ProNoC paper
             
-            regular_topo_vc_alloc_request_gen_adaptive #(
-                .ROUTE_TYPE(ROUTE_TYPE),
-                .V(V),
-                .DSTPw(DSTPw),
-                .SSA_EN(SSA_EN),
-                .ESCAP_VC_MASK(ESCAP_VC_MASK),
-                .PPSw(PPSw)          
-            ) vc_alloc_request_gen (
+            regular_topo_vc_alloc_request_gen_adaptive  vc_alloc_request_gen (
                 .ovc_avalable_all(ovc_avalable_all_masked),
                 .dest_port_coded_all(dest_port_encoded_all),
                 .ivc_request_all(ivc_request_all),
@@ -545,13 +521,7 @@ module  vc_alloc_request_gen #(
           //select the port first then select the available vc
             
             regular_topo_dynamic_portsel_control #(
-                .P(P),
-                .ROUTE_TYPE(ROUTE_TYPE),
-                .V(V),
-                .DSTPw(DSTPw),
-                .SSA_EN(SSA_EN),
-                .PPSw(PPSw),
-                .ESCAP_VC_MASK(ESCAP_VC_MASK)
+                .P(P)
             ) dynamic_portsel_control (
                 .dest_port_coded_all(dest_port_encoded_all),
                 .ivc_request_all(ivc_request_all),
@@ -568,9 +538,7 @@ module  vc_alloc_request_gen #(
             );
             
             vc_alloc_request_gen_determinstic #(
-                .P(P),
-                .V(V),
-                .SELF_LOOP_EN(SELF_LOOP_EN)
+                .P(P)
             ) vc_request_gen (
                 .ovc_avalable_all(ovc_avalable_all_masked),
                 .ivc_request_all(ivc_request_all),
@@ -588,9 +556,7 @@ endmodule
 
 
 module  vc_alloc_request_gen_determinstic #(
-    parameter P = 5,
-    parameter V = 4,
-    parameter SELF_LOOP_EN=0
+    parameter P = 5
 )(
     ovc_avalable_all,
     candidate_ovc_all,
@@ -599,7 +565,7 @@ module  vc_alloc_request_gen_determinstic #(
     dest_port_in_all,
     masked_ovc_request_all
 );
-
+    import pronoc_pkg::*;
     localparam  
         P_1 = (SELF_LOOP_EN )?  P : P-1,
         PV = V * P,

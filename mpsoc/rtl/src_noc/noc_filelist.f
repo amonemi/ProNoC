@@ -37,3 +37,4 @@
 ./fmesh.sv
 ./packet_injector.sv
 ./multicast.sv
+./mesh_3d_top.sv

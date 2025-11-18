@@ -6,64 +6,53 @@
 *************************************/
 
 module regular_topo_look_ahead_routing (
-    current_x,  //current router x address
-    current_y,  //current router y address
-    dest_x,  // destination router x address
-    dest_y,  // destination router y address
+    dest_router_addr_i,
     destport_encoded,   // current router destination port number
     lkdestport_encoded, // look ahead destination port number
+    neighbors_r_addr,
     reset,
     clk
 );
     import pronoc_pkg::*;
-    localparam  P = ( IS_MESH || IS_FMESH || IS_TORUS ) ? 5 : 3;
+    localparam  P = (IS_MESH_3D)? 7 : ( IS_MESH || IS_FMESH || IS_TORUS ) ? 5 : 3;
     
     localparam  P_1 = P-1;
-    input [NXw-1 : 0]  current_x;
-    input [NYw-1 : 0]  current_y;
-    input [NXw-1 : 0]  dest_x;
-    input [NYw-1 : 0]  dest_y;
-    input [P_1-1 : 0]  destport_encoded;
-    output [P_1-1 : 0]  lkdestport_encoded;
-    input          reset,clk;
-
-    logic [NXw-1 : 0]  destx_delayed;
-    logic [NYw-1 : 0]  desty_delayed;
-    logic [P_1-1 : 0]  destport_delayed;
+    input regular_topo_router_addr_t dest_router_addr_i;
+    input  [DSTPw-1  :   0] destport_encoded;
+    output [DSTPw-1  :   0] lkdestport_encoded;
+    input  [RAw-1:  0]  neighbors_r_addr [P-1 : 0];
+    input  reset,clk;
+    
+    regular_topo_router_addr_t dest_router_addr_f;
+    logic [DSTPw-1  :   0]  destport_delayed;
     // routing algorithm
     generate 
     if( IS_DETERMINISTIC ) begin :dtrmst
         regular_topo_deterministic_look_ahead_routing #(
             .P(P)
         ) deterministic_look_ahead(
-            .current_x(current_x),
-            .current_y(current_y),
-            .dest_x(destx_delayed),
-            .dest_y(desty_delayed),
+            .dest_router_addr_i(dest_router_addr_f),
             .destport(destport_delayed),
-            .lkdestport(lkdestport_encoded)
+            .lkdestport(lkdestport_encoded),
+            .neighbors_r_addr(neighbors_r_addr)
         );
     end else begin :adapt
         regular_topo_adaptive_look_ahead_routing #(
             .P(P)
         ) adaptive_look_ahead (
-            .current_x(current_x),
-            .current_y(current_y),
-            .dest_x(destx_delayed),
-            .dest_y(desty_delayed),
+            .dest_router_addr_i(dest_router_addr_f),
             .destport_encoded(destport_delayed),
-            .lkdestport_encoded(lkdestport_encoded)
+            .lkdestport_encoded(lkdestport_encoded),
+            .neighbors_r_addr(neighbors_r_addr)
         );
     end
     endgenerate
     always_ff @ (`pronoc_clk_reset_edge) begin
         if (`pronoc_reset) begin
-            destx_delayed <= '0;
-            desty_delayed <= '0;
+            dest_router_addr_f <= '0;
             destport_delayed <= '0;
         end else begin
-            destx_delayed <= dest_x;
-            desty_delayed <= dest_y;
+            dest_router_addr_f <= dest_router_addr_i;
             destport_delayed <= destport_encoded;
         end
     end
@@ -73,62 +62,50 @@ endmodule
 /************************************************
 *    deterministic_look_ahead_routing
 **********************************************/
-
 module  regular_topo_deterministic_look_ahead_routing #(
     parameter P =5
 ) (
-    current_x,  //current router x address
-    current_y,  //current router y address
-    dest_x,  // destination router x address
-    dest_y,  // destination router y address
+    dest_router_addr_i,
     destport,   // current router destination port number
+    neighbors_r_addr,
     lkdestport // look ahead destination port number
 );
     import pronoc_pkg::*;
-    localparam  P_1 = P-1;
+    localparam  
+        P_1 = P-1,
+        Pw= log2(P);
     
-    input [NXw-1 : 0]  current_x;
-    input [NYw-1 : 0]  current_y;
-    input [NXw-1 : 0]  dest_x;
-    input [NYw-1 : 0]  dest_y;
-    input [P_1-1 : 0]  destport;
-    output  [P_1-1 : 0]  lkdestport;
-
-    wire [NXw-1 : 0]  next_x;
-    wire [NYw-1 : 0]  next_y; 
-    wire [P-1 : 0]  destport_one_hot;
+    input regular_topo_router_addr_t dest_router_addr_i;
+    input [DSTPw-1  :   0]  destport;
+    input [RAw-1 : 0]  neighbors_r_addr [P-1 : 0];
+    output [DSTPw-1  :   0] lkdestport;
+    wire [Pw-1 : 0]  dstport_decimal;
+    genvar i;
     generate 
-    if (IS_MESH || IS_TORUS || IS_FMESH ) begin: twoD
-        regular_topo_decode_dstport decoder(
-            .dstport_encoded(destport),
-            .dstport_one_hot(destport_one_hot)
-        );
+    if(IS_MESH_3D) begin: threeD
+        assign dstport_decimal = destport;
+    end else if (IS_MESH || IS_TORUS || IS_FMESH ) begin: twoD
+        regular_topo_destport_decode_decimal decoder(
+            .destport_encoded(destport),
+            .destport_decimal(dstport_decimal)
+        );       
     end else begin :oneD
-        line_ring_decode_dstport decoder(
-            .dstport_encoded(destport),
-            .dstport_one_hot(destport_one_hot)
+        line_ring_destport_decode_decimal  decoder(
+            .destport_encoded(destport),
+            .destport_decimal(dstport_decimal)
         );
     end
     endgenerate 
+    wire [RAw-1 : 0] next_router_addr = neighbors_r_addr[dstport_decimal];
     
-    regular_topo_next_router_addr_predictor #(
-        .P(P)
-    ) addr_predictor(
-        .destport(destport_one_hot),
-        .current_x(current_x),
-        .current_y(current_y),
-        .next_x(next_x),
-        .next_y(next_y)
-    );
-    wire [P_1-1 : 0] lkdestport_encoded;
-    
+    wire [DSTPw-1  :   0] lkdestport_encoded;
+    regular_topo_router_addr_t next_router_addr_struct;
+    assign next_router_addr_struct = regular_topo_router_addr_t'(next_router_addr);
     regular_topo_conventional_routing #(
         .LOCATED_IN_NI(0)
     ) conv_routing (
-        .current_x(next_x),
-        .current_y(next_y),
-        .dest_x(dest_x),
-        .dest_y(dest_y),
+        .current_router_addr_i(next_router_addr_struct),
+        .dest_router_addr_i(dest_router_addr_i),
         .destport(lkdestport_encoded)
     );
     
@@ -143,19 +120,17 @@ endmodule
 module  regular_topo_adaptive_look_ahead_routing #(
     parameter P =5
 )(
-    current_x,  //current router x address
-    current_y,  //current router y address
-    dest_x,  // destination router x address          
-    dest_y,  // destination router y address                  
+    dest_router_addr_i, 
+    neighbors_r_addr,
     destport_encoded,   // current router destination port      
     lkdestport_encoded // look ahead destination port 
 );
     import pronoc_pkg::*;
-    localparam P_1 = P-1;
-    input [NXw-1 : 0]  current_x;
-    input [NYw-1 : 0]  current_y;
-    input [NXw-1 : 0]  dest_x;
-    input [NYw-1 : 0]  dest_y;
+    localparam 
+        P_1 = P-1,
+        Pw = log2(P);
+    input regular_topo_router_addr_t   dest_router_addr_i;
+    input [RAw-1 : 0]  neighbors_r_addr [P-1 : 0];
     input [P_1-1 : 0]  destport_encoded;
     output  [P_1-1 : 0]  lkdestport_encoded;
     /**************************
@@ -165,168 +140,56 @@ module  regular_topo_adaptive_look_ahead_routing #(
     *            ab: 00 : LOCAL, 10: xdir, 01: ydir, 11 x&y dir 
     **************************/       
     wire x,y,a,b;
-    wire [NXw-1 : 0]  next_x;
-    wire [NYw-1 : 0]  next_y; 
     wire [P_1-1 : 0]  lkdestport_x,lkdestport_y;
-    reg [P-1 : 0]  destport_x, destport_y;
+    reg [Pw-1 : 0]  destport_x, destport_y;
     
     assign {x,y,a,b} = destport_encoded;
-    always @(*)begin 
-        destport_x = 5'd0;
-        destport_y = 5'd0;
-        case({a,b})
-            2'b10 : destport_x = {1'b0,~x,1'b0,x,1'b0};
-            2'b01 : destport_y = {~y,1'b0,y,1'b0,1'b0};
-            2'b11 : begin destport_x = {1'b0,~x,1'b0,x,1'b0}; destport_y = {~y,1'b0,y,1'b0,1'b0}; end
-            2'b00 : begin destport_x = 5'b00001;destport_y = 5'b00001; end 
-        endcase
-   end //always
     
-    regular_topo_next_router_addr_predictor #(
-        .P(P)
-    ) addr_predictor_x (
-        .destport(destport_x),
-        .current_x(current_x),
-        .current_y(current_y),
-        .next_x(next_x),
-        .next_y()
-    );
+    always_comb begin
+    destport_x = 0;
+    destport_y = 0;
+    case ({a, b})   
+        2'b10: destport_x = (x) ? Pw'(EAST) : Pw'(WEST); // 1=East, 2=West
+        2'b01: destport_y = (y) ? Pw'(NORTH) : Pw'(SOUTH); // 3=North, 4=South
+        2'b11: begin
+            // Both directions
+            destport_x = (x) ? Pw'(EAST) : Pw'(WEST);
+            destport_y = (y) ? Pw'(NORTH) : Pw'(SOUTH);
+        end
+        2'b00: begin
+            // Local node
+            destport_x = Pw'(LOCAL);
+            destport_y = Pw'(LOCAL);
+        end
+    endcase
+    end
     
-    regular_topo_next_router_addr_predictor #(
-        .P(P)
-    )  addr_predictor_y (
-        .destport(destport_y),
-        .current_x(current_x),
-        .current_y(current_y),
-        .next_x(),
-        .next_y(next_y)
-    );
+    regular_topo_router_addr_t next_router_addr_x, next_router_addr_y;
+    assign next_router_addr_x = regular_topo_router_addr_t'(neighbors_r_addr[destport_x]);
+    assign next_router_addr_y = regular_topo_router_addr_t'(neighbors_r_addr[destport_y]);
     
     regular_topo_conventional_routing #(
         .LOCATED_IN_NI(0)
     ) conv_route_x (
-        .current_x(next_x),
-        .current_y(current_y),
-        .dest_x(dest_x),
-        .dest_y(dest_y),
+        .current_router_addr_i(next_router_addr_x),
+        .dest_router_addr_i(dest_router_addr_i),
         .destport(lkdestport_x)
     );
     
     regular_topo_conventional_routing #(
         .LOCATED_IN_NI(0)
     ) conv_route_y (
-        .current_x(current_x),
-        .current_y(next_y),
-        .dest_x(dest_x),
-        .dest_y(dest_y),
+        .current_router_addr_i(next_router_addr_y),
+        .dest_router_addr_i(dest_router_addr_i),
         .destport(lkdestport_y)
     );
     //take the value of a&b only.  x&y can be obtained from destport in the router
     assign lkdestport_encoded = {lkdestport_x[1: 0],lkdestport_y[1: 0]};
 endmodule
 
-/********************************************************
-*         next_router_addr_predictor
-*    Determine the next router address based 
-*    on the packet destination port   
-********************************************************/
-
-module regular_topo_next_router_addr_predictor #(
-    parameter P = 5
-)(
-    destport,
-    current_x,
-    current_y,
-    next_x,
-    next_y  
-);
-    import pronoc_pkg::*;    
-    localparam [NXw-1 : 0] LAST_X_ADDR =(NX[NXw-1 : 0]-1'b1);
-    localparam [NYw-1 : 0] LAST_Y_ADDR =(NY[NYw-1 : 0]-1'b1);
-    
-    input [P-1 : 0]  destport;
-    input [NXw-1 : 0]  current_x;
-    input [NYw-1 : 0]  current_y;
-    output reg [NXw-1 : 0]  next_x;
-    output reg [NYw-1 : 0]  next_y;
-    
-    generate
-    if( IS_MESH || IS_TORUS || IS_FMESH ) begin : twoD
-        always @(*) begin
-             //default values 
-            next_x= current_x;
-            next_y= current_y;
-            if(destport[EAST]) begin   
-                next_x= (current_x==LAST_X_ADDR ) ? {NXw{1'b0}} : current_x+1'b1;
-                next_y = current_y;
-            end
-            else if(destport[NORTH])  begin
-                next_x= current_x;
-                next_y= (current_y==0)? LAST_Y_ADDR : current_y-1'b1;
-            end
-            else  if(destport[WEST]) begin
-                next_x= (current_x==0) ? LAST_X_ADDR : current_x-1'b1;
-                next_y = current_y;
-            end
-            else  if(destport[SOUTH])  begin
-                next_x= current_x;
-                next_y= (current_y== LAST_Y_ADDR ) ? {NYw{1'b0}}: current_y+1'b1;
-            end
-        end//always
-    end else  if( IS_RING || IS_LINE) begin : OneD
-        always @(*) begin
-             //default values 
-            next_x= current_x;
-            next_y= 1'b0;
-            if(destport[FORWARD]) begin   
-                next_x= (current_x==LAST_X_ADDR ) ? {NXw{1'b0}} : current_x+1'b1;
-            end
-            else if(destport[BACKWARD])  begin
-                next_x= (current_x=={NXw{1'b0}} ) ? LAST_X_ADDR : current_x-1'b1;
-            end
-        end//always
-    end
-    `ifdef SIMULATION
-    else begin : wrong_topology initial $display("Error: next router inport is not predicted for %s   topology",TOPOLOGY); end
-    `endif       
-    endgenerate 
-endmodule       
-
-/*******************************************************
-*            next_router_inport_predictor
-*********************************************************/
-module regular_topo_next_router_inport_predictor #(
-    parameter P =5
-)(
-    destport,
-    receive_port
-);
-    import pronoc_pkg::*;
-    input  [P-1 : 0] destport;
-    output [P-1 : 0] receive_port;    
-    
-    generate
-    if(IS_MESH || IS_TORUS || IS_FMESH) begin : mesh
-        assign  receive_port[LOCAL] = destport[LOCAL];
-        assign  receive_port[WEST] = destport[EAST];
-        assign  receive_port[EAST] = destport[WEST];
-        assign  receive_port[NORTH] = destport[SOUTH];
-        assign  receive_port[SOUTH] = destport[NORTH];
-    end else  if(IS_RING || IS_LINE) begin : ring
-        assign  receive_port[0] = destport[0];
-        assign  receive_port[1] = destport[2];
-        assign  receive_port[2] = destport[1];
-    end
-    `ifdef SIMULATION
-            else begin : wrong_topology initial $display("Error: next router inport is not predicted for %s   topology",TOPOLOGY); end
-    `endif
-    endgenerate
-endmodule 
-
 /***********************************
 *            remove_sw_loc_one_hot
-*remove port number that is holdind the packet               
-*
+*remove port number that is holding the packet
 ************************************/
 module remove_sw_loc_one_hot #(
     parameter P = 5,
@@ -350,6 +213,35 @@ module remove_sw_loc_one_hot #(
     end
     endgenerate
 endmodule
+
+module destport_non_selfloop_fix #(
+    parameter SELF_LOOP_EN = 0,
+    parameter P = 5,
+    parameter SW_LOC = 0
+)(
+    destport_in,
+    destport_out
+);
+    localparam P_1 = (SELF_LOOP_EN)?  P : P-1;
+    
+    input [P-1 : 0] destport_in;
+    output [P_1-1 : 0] destport_out;
+    
+    generate 
+    if (SELF_LOOP_EN) begin
+        assign destport_out = destport_in;
+    end else begin
+        if(SW_LOC==0)begin :local_p
+            assign destport_out= destport_in[P-1 : 1];
+        end else if (SW_LOC==P_1)begin :last_p
+            assign destport_out= destport_in[P_1-1 : 0];
+        end else begin :midle_p
+            assign destport_out= {destport_in[P-1 : SW_LOC+1],destport_in[SW_LOC-1 :  0]};
+        end
+    end 
+    endgenerate
+endmodule
+
 
 
 /***********************************
@@ -448,42 +340,38 @@ endmodule
 module regular_topo_conventional_routing #(
     parameter LOCATED_IN_NI = 0 //used only for odd-even routing
     ) (   
-    current_x,
-    current_y,
-    dest_x,
-    dest_y,
+    current_router_addr_i,
+    dest_router_addr_i,
     destport
     );
     
     import pronoc_pkg::*;   
-    
-    localparam 
-        P = (IS_RING || IS_LINE ) ? 3 : 5,
-        P_1 = P-1,
-        DSTw = P_1;               
-    
-    input [NXw-1 : 0] current_x;
-    input [NYw-1 : 0] current_y;
-    input [NXw-1 : 0] dest_x;
-    input [NYw-1 : 0] dest_y;    
-    output  [DSTw-1 : 0] destport;
+    input regular_topo_router_addr_t current_router_addr_i;
+    input regular_topo_router_addr_t dest_router_addr_i;
+    output logic [DSTPw-1 : 0] destport;
     
     generate 
-    if (IS_MESH || IS_FMESH) begin :mesh
+    if (IS_MESH_3D) begin 
+        mesh_3d_route_xyz the_conventional_routing(
+            .current_router_addr_i(current_router_addr_i),
+            .dest_router_addr_i(dest_router_addr_i),
+            .destport(destport)
+        );
+    end else if (IS_MESH || IS_FMESH) begin :mesh
     /* verilator lint_off WIDTH */ 
-        if(ROUTE_NAME == "XY") begin : xy_routing_blk
+        if(ROUTE_NAME == "DOR") begin : xy_routing_blk
     /* verilator lint_on WIDTH */ 
             xy_mesh_routing #(
                 .NX(NX),
                 .NY(NY)                   
             ) xy_routing (
-                .current_x(current_x),
-                .current_y(current_y),
-                .dest_x(dest_x),
-                .dest_y(dest_y),
+                .current_x(current_router_addr_i.x),
+                .current_y(current_router_addr_i.y),
+                .dest_x(dest_router_addr_i.x),
+                .dest_y(dest_router_addr_i.y),
                 .dstport_encoded(destport)
             );        
-        end //"XY"
+        end //"DOR"
         /* verilator lint_off WIDTH */ 
         else if(ROUTE_NAME == "WEST_FIRST") begin : west_first_routing_blk
         /* verilator lint_on WIDTH */ 
@@ -491,10 +379,10 @@ module regular_topo_conventional_routing #(
                 .NX (NX),
                 .NY (NY)
             ) west_first (
-                .current_x (current_x),
-                .current_y (current_y),
-                .dest_x (dest_x),
-                .dest_y (dest_y),
+                .current_x (current_router_addr_i.x),
+                .current_y (current_router_addr_i.y),
+                .dest_x (dest_router_addr_i.x),
+                .dest_y (dest_router_addr_i.y),
                 .destport (destport)
             );
         end // WEST_FIRST
@@ -505,10 +393,10 @@ module regular_topo_conventional_routing #(
                 .NX (NX),
                 .NY (NY)
             ) north_last (
-                .current_x (current_x),
-                .current_y (current_y),
-                .dest_x (dest_x),
-                .dest_y (dest_y),
+                .current_x (current_router_addr_i.x),
+                .current_y (current_router_addr_i.y),
+                .dest_x (dest_router_addr_i.x),
+                .dest_y (dest_router_addr_i.y),
                 .destport (destport)
             );
         end // NORTH_LAST
@@ -519,10 +407,10 @@ module regular_topo_conventional_routing #(
                 .NX (NX),
                 .NY (NY)
             )  negetive_first (
-                .current_x (current_x),
-                .current_y (current_y),
-                .dest_x (dest_x),
-                .dest_y (dest_y),
+                .current_x (current_router_addr_i.x),
+                .current_y (current_router_addr_i.y),
+                .dest_x (dest_router_addr_i.x),
+                .dest_y (dest_router_addr_i.y),
                 .destport (destport)
             );
         end // NEGETIVE_FIRST           
@@ -534,10 +422,10 @@ module regular_topo_conventional_routing #(
                 .NY (NY),
                 .LOCATED_IN_NI (LOCATED_IN_NI)
             ) odd_even (
-                .current_x (current_x),
-                .current_y (current_y),
-                .dest_x (dest_x),
-                .dest_y (dest_y),
+                .current_x (current_router_addr_i.x),
+                .current_y (current_router_addr_i.y),
+                .dest_x (dest_router_addr_i.x),
+                .dest_y (dest_router_addr_i.y),
                 .destport (destport)
             );
         end //ODD_EVEN
@@ -546,12 +434,12 @@ module regular_topo_conventional_routing #(
         /* verilator lint_on WIDTH */ 
             duato_mesh_routing #(
                 .NX (NX),
-                .NY (NY)                    
+                .NY (NY)
             ) duato_full_adaptive (
-                .current_x (current_x),
-                .current_y (current_y),
-                .dest_x (dest_x),
-                .dest_y (dest_y),
+                .current_x (current_router_addr_i.x),
+                .current_y (current_router_addr_i.y),
+                .dest_x (dest_router_addr_i.x),
+                .dest_y (dest_router_addr_i.y),
                 .destport (destport)
             );
         end //FULL_ADPT
@@ -560,19 +448,19 @@ module regular_topo_conventional_routing #(
     `endif
     /* verilator lint_off WIDTH */ 
     end else if (TOPOLOGY == "TORUS" ) begin :torus
-        if(ROUTE_NAME == "TRANC_XY") begin : tranc_routing_blk
+        if(ROUTE_NAME == "TRANC_DOR") begin : tranc_routing_blk
     /* verilator lint_on WIDTH */ 
             tranc_xy_routing #(
                 .NX (NX),
                 .NY (NY)
             ) tranc_xy (
-                .current_x (current_x),
-                .current_y (current_y),
-                .dest_x (dest_x),
-                .dest_y (dest_y),
+                .current_x (current_router_addr_i.x),
+                .current_y (current_router_addr_i.y),
+                .dest_x (dest_router_addr_i.x),
+                .dest_y (dest_router_addr_i.y),
                 .destport_encoded (destport)
             );
-        end //"TRANC_XY"
+        end //"TRANC_DOR"
         /* verilator lint_off WIDTH */ 
         else if(ROUTE_NAME == "TRANC_WEST_FIRST") begin : tranc_west_first_routing_blk
         /* verilator lint_on WIDTH */ 
@@ -580,10 +468,10 @@ module regular_topo_conventional_routing #(
                 .NX (NX),
                 .NY(NY)
             ) tranc_west_first (
-                .current_x (current_x),
-                .current_y (current_y),
-                .dest_x (dest_x),
-                .dest_y (dest_y),
+                .current_x (current_router_addr_i.x),
+                .current_y (current_router_addr_i.y),
+                .dest_x (dest_router_addr_i.x),
+                .dest_y (dest_router_addr_i.y),
                 .destport (destport)
             );
         end // TRANC_WEST_FIRST
@@ -594,10 +482,10 @@ module regular_topo_conventional_routing #(
                 .NX (NX),
                 .NY (NY)
             ) tranc_north_last (
-                .current_x (current_x),
-                .current_y (current_y),
-                .dest_x (dest_x),
-                .dest_y (dest_y),
+                .current_x (current_router_addr_i.x),
+                .current_y (current_router_addr_i.y),
+                .dest_x (dest_router_addr_i.x),
+                .dest_y (dest_router_addr_i.y),
                 .destport (destport)
             );
         end // TRANC_NORTH_LAST
@@ -608,10 +496,10 @@ module regular_topo_conventional_routing #(
                 .NX (NX),
                 .NY (NY)
             ) tranc_negetive_first(
-                .current_x (current_x),
-                .current_y (current_y),
-                .dest_x (dest_x),
-                .dest_y (dest_y),
+                .current_x (current_router_addr_i.x),
+                .current_y (current_router_addr_i.y),
+                .dest_x (dest_router_addr_i.x),
+                .dest_y (dest_router_addr_i.y),
                 .destport (destport)
             );
         end // TRANC_NEGETIVE_FIRST
@@ -622,10 +510,10 @@ module regular_topo_conventional_routing #(
                 .NX (NX),
                 .NY (NY)
             ) duato_full_adaptive (
-                .current_x (current_x),
-                .current_y (current_y),
-                .dest_x (dest_x),
-                .dest_y (dest_y),
+                .current_x (current_router_addr_i.x),
+                .current_y (current_router_addr_i.y),
+                .dest_x (dest_router_addr_i.x),
+                .dest_y (dest_router_addr_i.y),
                 .destport (destport)
             );
         end //TRANC_FULL_ADPT
@@ -635,13 +523,13 @@ module regular_topo_conventional_routing #(
     end //TORUS
     /* verilator lint_off WIDTH */ 
     else if (TOPOLOGY == "RING" ) begin :ring
-        if(ROUTE_NAME == "TRANC_XY") begin : tranc_ring_blk
+        if(ROUTE_NAME == "TRANC_DOR") begin : tranc_ring_blk
     /* verilator lint_on WIDTH */ 
             tranc_ring_routing #(
                 .NX(NX)       
             ) tranc_ring (
-                .current_x(current_x),
-                .dest_x(dest_x),
+                .current_x(current_router_addr_i.x),
+                .dest_x(dest_router_addr_i.x),
                 .destport(destport)    
             );
         end // "TRANC"
@@ -651,16 +539,16 @@ module regular_topo_conventional_routing #(
         end //"RING"       
     /* verilator lint_off WIDTH */ 
     else if (TOPOLOGY == "LINE" ) begin :ring
-        if(ROUTE_NAME == "XY") begin : tranc_ring_blk
+        if(ROUTE_NAME == "DOR") begin : tranc_ring_blk
     /* verilator lint_on WIDTH */ 
             xy_line_routing #(
                 .NX(NX)                    
             ) xy_routing (
-                .current_x(current_x),
-                .dest_x(dest_x),
+                .current_x(current_router_addr_i.x),
+                .dest_x(dest_router_addr_i.x),
                 .destport(destport)
             );       
-        end // "XY"
+        end // "DOR"
         `ifdef SIMULATION
         else begin : not_supported2 initial $display("Error: %s is an unsupported routing algorithm for %s topology",ROUTE_NAME,TOPOLOGY); end
         `endif           
@@ -676,7 +564,7 @@ endmodule
 *        TRANC_ring
 **************************/
 module tranc_ring_routing #(
-    parameter NX = 4    
+    parameter NX = 4
 )(
     current_x,
     dest_x,
@@ -736,8 +624,9 @@ module tranc_ring_routing #(
     assign same_x = (xdiff == 0);
     
     always@(*)begin
+        destport_one_hot= LOCAL;
         if (same_x ) destport_one_hot= LOCAL;
-        else    begin 
+        else begin 
             if (tranc_x_plus)  destport_one_hot= PLUS;
             else if (tranc_x_min)   destport_one_hot= MINUS;
         end
@@ -841,6 +730,25 @@ module line_ring_decode_dstport (
     end //always
 endmodule
 
+module line_ring_destport_decode_decimal (
+    destport_decimal,
+    destport_encoded
+);
+    import pronoc_pkg::*;
+    output  reg [1 : 0] destport_decimal;
+    input [1 : 0] destport_encoded;
+    localparam Pw=2;
+    
+    always @(*)begin 
+        destport_decimal = Pw'(LOCAL);
+        case(destport_encoded)
+            2'b10 : destport_decimal=Pw'(BACKWARD);
+            2'b01 : destport_decimal=Pw'(FORWARD);
+            2'b00 : destport_decimal=Pw'(LOCAL);
+            2'b11 : destport_decimal=Pw'(LOCAL); //invalid condition in determinstic routing
+        endcase
+    end //always
+endmodule
 
 module regular_topo_decode_dstport (
     dstport_encoded,
@@ -860,6 +768,35 @@ module regular_topo_decode_dstport (
         endcase
    end //always
 endmodule 
+
+module regular_topo_destport_decode_decimal (
+    destport_encoded,
+    destport_decimal
+);
+    import pronoc_pkg::*;
+    input [3 : 0] destport_encoded;
+    output reg [2 : 0] destport_decimal;
+    localparam Pw=3;
+    wire x,y,a,b;
+    assign {x,y,a,b} = destport_encoded;
+    
+    always_comb begin
+    destport_decimal = 0;
+    case ({a, b})   
+        2'b10: destport_decimal = (x) ? Pw'(EAST) : Pw'(WEST); // 1=East, 2=West
+        2'b01: destport_decimal = (y) ? Pw'(NORTH) : Pw'(SOUTH); // 3=North, 4=South
+        2'b11: begin
+            // Both directions is illegal for decimal output
+            destport_decimal = (x) ? Pw'(EAST) : Pw'(WEST);
+        end
+        2'b00: begin
+            // Local node
+            destport_decimal = Pw'(LOCAL);
+        end
+    endcase
+    end
+endmodule
+
 
 module regular_topo_full_adapt_ovc_avail #(
     parameter P = 4

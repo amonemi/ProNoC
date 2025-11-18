@@ -45,7 +45,7 @@ module  ni_slave #(
     parameter DST_ADR_HDR_WIDTH  =8,
     parameter SRC_ADR_HDR_WIDTH   =8,
     parameter TOPOLOGY =    "MESH",//"MESH","TORUS","RING" 
-    parameter ROUTE_NAME    =   "XY",
+    parameter ROUTE_NAME    =   "DOR",
     parameter NX = 4,   // number of node in x axis
     parameter NY = 4,   // number of node in y axis
     parameter C = 4,    //  number of flit class 

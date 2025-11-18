@@ -67,9 +67,7 @@ module input_ports #(
     reset,
     clk
 );  
-    
     import pronoc_pkg::*;
-    
     localparam
         PV = V * P,
         P_1 = (SELF_LOOP_EN )?  P : P-1,
@@ -90,23 +88,19 @@ module input_ports #(
     output  [PV-1 : 0] flit_is_tail_all;
     output  [PV-1 : 0] ivc_request_all;
     output  [PV-1 : 0] credit_out_all;
-    
     output  [PVP_1-1 : 0] dest_port_all;
     output  [Fw-1 : 0] flit_out_all [P-1 : 0];
-    
     input   [PV-1  : 0] assigned_ovc_not_full_all;
     output  [PV-1  : 0] ovc_is_assigned_all;
     input   [PV-1 : 0] sel;
     input   [PPSw-1 : 0] port_pre_sel;
     input   [PV-1  : 0]  swap_port_presel;
     input   [PV-1 : 0] nonspec_first_arbiter_granted_ivc_all;    
-    
     output  [WP-1 : 0] iport_weight_all;
     output  [PV-1 : 0] vc_weight_is_consumed_all;
     output  [P-1 : 0] iport_weight_is_consumed_all;
     input   [PP_1-1 : 0] granted_dest_port_all;
     output  [WPP-1 : 0] oports_weight_all;    
-    
     output  ivc_info_t ivc_info [P-1 : 0][V-1 : 0]; 
     input   vsa_ctrl_t  vsa_ctrl_in [P-1: 0];
     input   ssa_ctrl_t  ssa_ctrl_in [P-1: 0];
@@ -164,13 +158,12 @@ module input_ports #(
         );
     end//for
     endgenerate
-    
 endmodule 
 
 
 /**************************
-    input_queue_per_port
- **************************/
+*    input_queue_per_port
+**************************/
 module input_queue_per_port #(
     parameter ROUTER_ID=0,
     parameter P = 5,     // router port num
@@ -254,12 +247,12 @@ module input_queue_per_port #(
         VPLw= V * PLw,
         PRAw= P * RAw;
     
-    input reset, clk;
+    input   reset, clk;
     input   router_info_t router_info;
     output  logic [V-1 : 0] credit_out;
     output  [V-1 : 0] ivc_num_getting_sw_grant;
     input   any_ivc_sw_request_granted;
-    input   [Fw-1 : 0] flit_in;
+    input   flit_t flit_in;
     input   flit_in_wr;
     output  [V-1 : 0] reset_ivc;
     output  [V-1 : 0] flit_is_tail;
@@ -299,30 +292,21 @@ module input_queue_per_port #(
     
     logic  [V-1 : 0] candidate_ovcs [V-1 : 0];
     
-    wire [Cw-1 : 0] class_in;
-    wire [DSTPw-1 : 0] destport_in,destport_in_encoded;
+    wire [DSTPw-1 : 0] destport_in_encoded;
     wire [DSTPw-1 : 0] lk_destination_encoded [V-1:0];
     
-    wire [DAw-1 : 0] dest_e_addr_in;
     wire [EAw-1 : 0] dest_e_addr_out [V-1 : 0];
-    wire [EAw-1 : 0] src_e_addr_in;
-    wire [V-1 : 0] vc_num_in;
     wire [V-1 : 0] hdr_flit_wr;
     logic [V-1 : 0] assigned_ovc_num [V-1:0];
     logic [V-1 : 0] assigned_ovc_one_hot [V-1 : 0];
     logic [Vw-1 : 0] assigned_onc_bin [V-1 : 0];
     
     wire [DSTPw-1 : 0] lk_destination_in_encoded;
-    wire [WEIGHTw-1  : 0] weight_in;   
     wire [Fw-1 : 0] buffer_out;
-    wire hdr_flg_in,tail_flg_in;  
     wire [V-1 : 0] ivc_not_empty;
     wire [Cw-1 : 0] class_out [V-1 : 0];
     wire [VPLw-1 : 0] endp_localp_num;
-    
     wire [V-1 : 0] smart_hdr_en;
-    wire [ELw-1 : 0] endp_l_in;
-    wire [Pw-1 : 0] endp_p_in;
     
     wire [V-1 : 0] rd_hdr_fwft_fifo,wr_hdr_fwft_fifo;
     logic [V-1 : 0] rd_hdr_fwft_fifo_delay,wr_hdr_fwft_fifo_delay;
@@ -334,8 +318,8 @@ module input_queue_per_port #(
     wire [V-1 : 0] mux_out[V-1 : 0];
     
     wire [V-1 : 0] dstport_fifo_not_empty;
-    
     logic  [WEIGHTw-1 : 0] iport_weight_next;
+    hdr_flit_t hdr_flit_i;
     
     assign smart_hdr_en  = (SMART_EN) ? smart_ctrl_in.ivc_num_getting_ovc_grant: {V{1'b0}};
     assign reset_ivc  = smart_ctrl_in.ivc_reset | ssa_ctrl_in.ivc_reset | vsa_ctrl_in.ivc_reset;
@@ -361,27 +345,17 @@ module input_queue_per_port #(
     end
     always_comb begin 
         iport_weight_next = iport_weight;
-        if(hdr_flit_wr != {V{1'b0}})  iport_weight_next = (weight_in=={WEIGHTw{1'b0}})? WEIGHT_INIT : weight_in; // the minimum weight is 1
+        if(hdr_flit_wr != {V{1'b0}})  iport_weight_next = (hdr_flit_i.weight=={WEIGHTw{1'b0}})? WEIGHT_INIT : hdr_flit_i.weight; // the minimum weight is 1
     end
     
-    //extract header flit info
-    extract_header_flit_info #(
+    header_flit_info #(
         .DATA_w(0)
-    ) header_extractor (
-        .flit_in(flit_in),
-        .flit_in_wr(flit_in_wr),
-        .class_o(class_in),
-        .destport_o(destport_in),
-        .dest_e_addr_o(dest_e_addr_in),
-        .src_e_addr_o(src_e_addr_in),
-        .vc_num_o(vc_num_in),
-        .hdr_flit_wr_o(hdr_flit_wr),
-        .hdr_flg_o(hdr_flg_in),
-        .tail_flg_o(tail_flg_in),
-        .weight_o(weight_in),
-        .be_o( ),
+    ) header_info (
+        .flit(flit_in),
+        .hdr_flit(hdr_flit_i),
         .data_o( )
     );
+    assign hdr_flit_wr = (flit_in_wr & flit_in.hdr_flag) ? flit_in.vc : {V{1'b0}};    
     
     genvar i;
     generate
@@ -395,39 +369,20 @@ module input_queue_per_port #(
             end
         end
     end
-    if (IS_REGULAR_TOPO & IS_MULTI_ENDP_ROUTER & IS_UNICAST) begin 
-        regular_topo_endp_addr_decode endp_addr_decode (
-            .e_addr(dest_e_addr_in),
-            .ex( ),
-            .ey( ),
-            .el(endp_l_in),
-            .valid( )
-        );
-    end 
-    if ( IS_FMESH & IS_UNICAST ) begin : fmesh
-        fmesh_endp_addr_decode  endp_addr_decode (
-            .e_addr(dest_e_addr_in),
-            .ex(),
-            .ey(),
-            .ep(endp_p_in),
-            .valid()
-        );
-    end
     
     /* verilator lint_off WIDTH */  
     if(IS_FATTREE & (ROUTE_NAME == "NCA_STRAIGHT_UP")) begin : fat
     /* verilator lint_on WIDTH */  
-        
         fattree_destport_up_select #(
             .K(T1),
             .SW_LOC(SW_LOC)
         ) static_sel (
-            .destport_in(destport_in),
+            .destport_in(hdr_flit_i.destport),
             .destport_o(destport_in_encoded)
         );
         
     end else begin : other
-        assign destport_in_encoded = destport_in;
+        assign destport_in_encoded = hdr_flit_i.destport;
     end
     
     logic [1:0] ovc_sel_i;
@@ -438,7 +393,7 @@ module input_queue_per_port #(
             .SW_LOC(SW_LOC),
             .LOCAL_ADAPT(0)
         )ovc_sel(
-            .local_dst_icr(dest_e_addr_in[DAw-1 : DAw/2]),// dest_e_addr_in = {local_dst_icr,global_dst}
+            .local_dst_icr(hdr_flit_i.dest_e_addr[DAw-1 : DAw/2]),// hdr_flit_i.dest_e_addr = {local_dst_icr,global_dst}
             .current_router_addr_i(router_info.router_addr),
             .ovc_sel(ovc_sel_i)
         );
@@ -534,10 +489,7 @@ module input_queue_per_port #(
                 .wr_en (wr_hdr_fwft_fifo[i]),   // Write enable
                 .rd_en (rd_hdr_fwft_fifo[i]),   // Read the next word
                 .dout (ovc_sel_ivc[i]),    // Data out
-                .full ( ),
-                .nearly_full ( ),
-                .recieve_more_than_0 ( ),
-                .recieve_more_than_1 ( ),
+                .status_o(),
                 .reset (reset),
                 .clk (clk)
             );
@@ -561,28 +513,6 @@ module input_queue_per_port #(
                 (ssa_ctrl_in.ivc_num_getting_ovc_grant[i]) ? ssa_ctrl_in.ivc_granted_ovc_num[(i+1)*V-1 : i*V] :
                 (smart_ctrl_in.ivc_num_getting_ovc_grant[i]) ? smart_ctrl_in.ivc_granted_ovc_num[(i+1)*V-1 : i*V] :
                 {V{1'b0}};
-            /*
-            //tail fifo
-            fwft_fifo #(
-                .DATA_WIDTH(1),
-                .MAX_DEPTH (PORT_B),
-                .IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
-            )
-            tail_fifo
-            (
-                .din (tail_flg_in),
-                .wr_en (flit_wr[i]),   // Write enable
-                .rd_en (ivc_num_getting_sw_grant[i]),   // Read the next word
-                .dout (flit_is_tail[i]),    // Data out
-                .full ( ),
-                .nearly_full ( ),
-                .recieve_more_than_0 ( ),
-                .recieve_more_than_1 ( ),
-                .reset (reset),
-                .clk (clk)            
-            );
-            */
-            
         end else begin :single_flit
             //assign flit_is_tail[i]=1'b1;
             assign mux_out[i] = 
@@ -592,24 +522,19 @@ module input_queue_per_port #(
         end
         //dest_e_addr_in fifo
         if(SMART_EN) begin : smart_
-            
             fwft_fifo #(
                 .DATA_WIDTH(EAw),
                 .MAX_DEPTH (MAX_PCK),
                 .IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
             ) dest_e_addr_fifo (
-                .din (dest_e_addr_in),
+                .din (hdr_flit_i.dest_e_addr),
                 .wr_en (wr_hdr_fwft_fifo[i]),   // Write enable
                 .rd_en (rd_hdr_fwft_fifo[i]),   // Read the next word
                 .dout (dest_e_addr_out[i]),    // Data out
-                .full ( ),
-                .nearly_full ( ),
-                .recieve_more_than_0 ( ),
-                .recieve_more_than_1 ( ),
+                .status_o(),
                 .reset (reset),
                 .clk (clk)
             );
-            
         end else begin : no_smart
             assign dest_e_addr_out[i]= {EAw{1'b0}};
         end    
@@ -621,14 +546,11 @@ module input_queue_per_port #(
                 .MAX_DEPTH (MAX_PCK),
                 .IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
             ) class_fifo (
-                .din (class_in),
+                .din (hdr_flit_i.message_class),
                 .wr_en (wr_hdr_fwft_fifo[i]),   // Write enable
                 .rd_en (rd_hdr_fwft_fifo[i]),   // Read the next word
                 .dout (class_out[i]),    // Data out
-                .full ( ),
-                .nearly_full ( ),
-                .recieve_more_than_0 ( ),
-                .recieve_more_than_1 ( ),
+                .status_o(),
                 .reset (reset),
                 .clk (clk)
             
@@ -648,10 +570,7 @@ module input_queue_per_port #(
                 .wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
                 .rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
                 .dout(dest_port_multi[i]),    // Data out
-                .full(),
-                .nearly_full(),
-                .recieve_more_than_0(),
-                .recieve_more_than_1(),
+                .status_o(),
                 .reset(reset),
                 .clk(clk),
                 .clear(clear_dspt_mulicast [i])   // clear the  destination port once it got  the entire packet
@@ -688,10 +607,7 @@ module input_queue_per_port #(
                     .wr_en (wr_hdr_fwft_fifo_delay [i]),   // Write enable
                     .rd_en (rd_hdr_fwft_fifo_delay [i]),   // Read the next word
                     .dout (lk_destination_encoded  [i]),    // Data out
-                    .full (),
-                    .nearly_full (),
-                    .recieve_more_than_0 (),
-                    .recieve_more_than_1 (),
+                    .status_o(),
                     .reset (reset),
                     .clk (clk)
                 );
@@ -709,10 +625,7 @@ module input_queue_per_port #(
                     .wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
                     .rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
                     .dout(dest_port_encoded[i]),    // Data out
-                    .full(),
-                    .nearly_full(),
-                    .recieve_more_than_0(),
-                    .recieve_more_than_1(),
+                    .status_o(),
                     .reset(reset),
                     .clk(clk) 
                 );
@@ -728,10 +641,7 @@ module input_queue_per_port #(
                     .wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
                     .rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
                     .dout(dest_port_encoded[i]),    // Data out
-                    .full(),
-                    .nearly_full(),
-                    .recieve_more_than_0(),
-                    .recieve_more_than_1(),
+                    .status_o(),
                     .reset(reset),
                     .clk(clk),
                     .clear(destport_clear[i])   // clear other destination ports once one of them is selected
@@ -760,32 +670,25 @@ module input_queue_per_port #(
                 .MAX_DEPTH (MAX_PCK),
                 .IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
             ) local_dest_fifo (
-                .din(endp_l_in),
+                .din(hdr_flit_i.dest_e_addr[DAw-1 : DAw-ELw]),// local endpoint number
                 .wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
                 .rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
                 .dout(endp_localp_num[(i+1)*PLw-1 : i*PLw]),    // Data out
-                .full( ),
-                .nearly_full( ),
-                .recieve_more_than_0(),
-                .recieve_more_than_1(),
+                .status_o(),
                 .reset(reset),
                 .clk(clk) 
             );
         end else if ( IS_FMESH & IS_UNICAST) begin : fmesh
-            
             fwft_fifo #(
                 .DATA_WIDTH(Pw),
                 .MAX_DEPTH (MAX_PCK),
                 .IGNORE_SAME_LOC_RD_WR_WARNING(IGNORE_SAME_LOC_RD_WR_WARNING)
             ) local_dest_fifo (
-                .din(endp_p_in),
+                .din(hdr_flit_i.dest_e_addr[DAw-1 : DAw-Pw]),// local endpoint number
                 .wr_en(wr_hdr_fwft_fifo[i]),   // Write enable
                 .rd_en(rd_hdr_fwft_fifo[i]),   // Read the next word
                 .dout(endp_localp_num[(i+1)*PLw-1 : i*PLw]),    // Data out
-                .full( ),
-                .nearly_full( ),
-                .recieve_more_than_0(),
-                .recieve_more_than_1(),
+                .status_o(),
                 .reset(reset),
                 .clk(clk) 
             );
@@ -794,7 +697,6 @@ module input_queue_per_port #(
             assign endp_localp_num[(i+1)*PLw-1 : i*PLw] = {PLw{1'b0}}; 
         end
         assign vc_weight_is_consumed[i] = (~IS_RRA);
-        
     end//for i
     
     if(~IS_RRA) begin  : wrra
@@ -828,11 +730,11 @@ module input_queue_per_port #(
     assign flit_buffer_vc_num_rd = ( IS_COMB_NONSPEC ) ? nonspec_first_arbiter_granted_ivc : ivc_num_getting_sw_grant;
     
     flit_buffer #(
-        .B(PORT_B),   // buffer space :flit per VC,
-        .V(PORT_IVC)
+        .PORT_B(PORT_B),   // buffer space :flit per VC,
+        .PORT_IVC(PORT_IVC)
     ) the_flit_buffer (
         .din(flit_in),     // Data in
-        .vc_num_wr(vc_num_in [PORT_IVC-1 : 0]),//write virtual channel
+        .vc_num_wr(flit_in.vc [PORT_IVC-1 : 0]),//write virtual channel
         .vc_num_rd(flit_buffer_vc_num_rd [PORT_IVC-1 : 0]),//read virtual channel
         .wr_en(flit_in_wr),   // Write enable
         .rd_en(any_ivc_sw_request_granted),     // Read the next word
@@ -867,8 +769,8 @@ module input_queue_per_port #(
         ) lk_routing (
             .current_r_addr(current_r_addr),
             .neighbors_r_addr(neighbors_r_addr),
-            .dest_e_addr(dest_e_addr_in),
-            .src_e_addr(src_e_addr_in),
+            .dest_e_addr(hdr_flit_i.dest_e_addr),
+            .src_e_addr(hdr_flit_i.src_e_addr),
             .destport_encoded(destport_in_encoded),
             .lkdestport_encoded(lk_destination_in_encoded),
             .reset(reset),
@@ -927,26 +829,25 @@ module input_queue_per_port #(
             
             debug_regular_topo_route_ckeck #(
                 .SW_LOC(SW_LOC)
-                )
-                route_ckeck (
+            ) route_ckeck (
                 .reset(reset),
                 .clk(clk),
-                .hdr_flg_in(hdr_flg_in),
+                .hdr_flg_in(flit_in.hdr_flag),
                 .flit_in_wr(flit_in_wr),
-                .vc_num_in(vc_num_in),
+                .vc_num_in(flit_in.vc),
                 .flit_is_tail(flit_is_tail),
                 .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant),
                 .current_r_addr(current_r_addr),
-                .dest_e_addr_in(dest_e_addr_in),
-                .src_e_addr_in(src_e_addr_in),
-                .destport_in(destport_in)
+                .dest_e_addr_in(hdr_flit_i.dest_e_addr),
+                .src_e_addr_in(hdr_flit_i.src_e_addr),
+                .destport_in(hdr_flit_i.destport)
             );
         end//mesh
         if (PORT_IVC != V) begin : hetero
             always @(posedge clk) begin
-                if (flit_in_wr &  (|(vc_num_in & ~hetero_ovc_unary(router_info.router_id , SW_LOC)))) begin
+                if (flit_in_wr &  (|flit_in.vc & ~hetero_ovc_unary(router_info.router_id , SW_LOC))) begin
                     $display("%t: ERROR: Input port supports %0d VCs, but received a flit targeting an out-of-bound VC: %b. Module: %m\n", 
-                    $time, PORT_IVC, vc_num_in[V-1 : PORT_IVC]);
+                    $time, PORT_IVC, flit_in.vc[V-1 : PORT_IVC]);
                     $finish;
                 end
             end
@@ -961,8 +862,8 @@ module input_queue_per_port #(
             if(`pronoc_reset)begin
                 t1[j]<=1'b0;
             end else begin
-                if(flit_in_wr >0 && vc_num_in[j] && t1[j]==0)begin
-                    $display("%t : Parser:current_r=%h, class_in=%h, destport_in=%h, dest_e_addr_in=%h, src_e_addr_in=%h, vc_num_in=%h,hdr_flit_wr=%h, hdr_flg_in=%h,tail_flg_in=%h ",$time,current_r_addr, class_in, destport_in, dest_e_addr_in, src_e_addr_in, vc_num_in,hdr_flit_wr, hdr_flg_in,tail_flg_in);
+                if(flit_in_wr > 0 && flit_in.vc[j] && t1[j]==0)begin
+                    $display("%t : Parser:current_r=%h, hdr_info:%p, vc_num_in=%h,hdr_flit_wr=%h",$time,current_r_addr, hdr_flit_i, flit_in.vc,hdr_flit_wr);
                     t1[j]<=1;
                 end
             end
@@ -993,7 +894,7 @@ module destp_generator #(
         Pw  = log2(P),
         PLw = (IS_FMESH) ? Pw : ELw,
         P_1 = (SELF_LOOP_EN )?  P : P-1;
-
+    
     input [DSTPw-1 : 0]  dest_port_encoded;
     input [PLw-1 : 0] endp_localp_num;
     output [P_1-1: 0] dest_port_out;
@@ -1004,18 +905,14 @@ module destp_generator #(
     
     generate
     if( ~IS_UNICAST ) begin : muticast
-        // destination port is not coded for multicast/broadcast
-        if( SELF_LOOP_EN==0) begin : nslp
-            remove_sw_loc_one_hot #(
-                .P(P),
-                .SW_LOC(SW_LOC)
-            ) remove_sw_loc (
-                .destport_in(dest_port_encoded),
-                .destport_out(dest_port_out)
-            );
-        end else begin : slp
-            assign dest_port_out = dest_port_encoded;
-        end
+        destport_non_selfloop_fix #(
+            .SELF_LOOP_EN(SELF_LOOP_EN),
+            .P(P),
+            .SW_LOC(SW_LOC)
+        ) fix_sw_loc (
+            .destport_in(dest_port_encoded),
+            .destport_out(dest_port_out)
+        );
     end else if( IS_FATTREE ) begin : fat
         fattree_destp_generator #(
             .K(T1),
@@ -1042,16 +939,9 @@ module destp_generator #(
         );
     end else if( IS_REGULAR_TOPO ) begin : regular
         regular_topo_destp_generator #(
-            .TOPOLOGY(TOPOLOGY),
-            .ROUTE_NAME(ROUTE_NAME),
-            .ROUTE_TYPE(ROUTE_TYPE),
             .P(P),
-            .DSTPw(DSTPw),
-            .NL(NL),
             .PLw(PLw),
-            .PPSw(PPSw),
-            .SW_LOC(SW_LOC),
-            .SELF_LOOP_EN(SELF_LOOP_EN)
+            .SW_LOC(SW_LOC)
         ) destp_generator (
             .dest_port_coded(dest_port_encoded),
             .endp_localp_num(endp_localp_num),
@@ -1062,15 +952,9 @@ module destp_generator #(
         );
     end else if ( IS_FMESH ) begin :fmesh
         fmesh_destp_generator  #(
-            .ROUTE_NAME(ROUTE_NAME),
-            .ROUTE_TYPE(ROUTE_TYPE),
             .P(P),
-            .DSTPw(DSTPw),
-            .NL(NL),
             .PLw(PLw),
-            .PPSw(PPSw),
-            .SW_LOC(SW_LOC),
-            .SELF_LOOP_EN(SELF_LOOP_EN)
+            .SW_LOC(SW_LOC)
         ) destp_generator (
             .dest_port_coded(dest_port_encoded),
             .endp_localp_num(endp_localp_num),
@@ -1132,19 +1016,14 @@ module custom_topology_destp_decoder #(
         dest_port_one_hot[dest_port_in_encoded] = 1'b1;
     end
     
-    generate
-    if( SELF_LOOP_EN==0) begin : nslp
-        remove_sw_loc_one_hot #(
-            .P(P),
-            .SW_LOC(SW_LOC)
-        ) remove_sw_loc (
-            .destport_in(dest_port_one_hot[P-1 : 0]),
-            .destport_out(dest_port_out)
-        );
-    end else begin : slp
-        assign dest_port_out = dest_port_one_hot;
-    end
-    endgenerate
+    destport_non_selfloop_fix #(
+        .SELF_LOOP_EN(SELF_LOOP_EN),
+        .P(P),
+        .SW_LOC(SW_LOC)
+    ) remove_sw_loc (
+        .destport_in(dest_port_one_hot[P-1 : 0]),
+        .destport_out(dest_port_out)
+    );
     
     `ifdef SIMULATION
     initial begin

@@ -23,9 +23,9 @@ CORE_NUM(){
     COMBINATION_TYPE="COMB_NONSPEC" # "BASELINE" or "COMB_SPEC1" or "COMB_SPEC2" or "COMB_NONSPEC"
     FIRST_ARBITER_EXT_P_EN=0  
     
-    ROUTE_NAME="XY" # Routing algorithm
-    #    mesh :  "XY"        , "WEST_FIRST"      , "NORTH_LAST"      , "NEGETIVE_FIRST"      , "FULL_ADPT"
-    #   torus:  "TRANC_XY"  , "TRANC_WEST_FIRST", "TRANC_NORTH_LAST", "TRANC_NEGETIVE_FIRST", "TRANC_FULL_ADPT"
+    ROUTE_NAME="DOR" # Routing algorithm
+    #    mesh :  "DOR"        , "WEST_FIRST"      , "NORTH_LAST"      , "NEGETIVE_FIRST"      , "FULL_ADPT"
+    #   torus:  "TRANC_DOR"  , "TRANC_WEST_FIRST", "TRANC_NORTH_LAST", "TRANC_NEGETIVE_FIRST", "TRANC_FULL_ADPT"
     
     
     CLASS_SETTING="{CVw{1'b1}}"   
@@ -75,7 +75,7 @@ CORE_NUM(){
 
 
 # 
-    ROUTE_SUBFUNC="NORTH_LAST"  # "NORTH_LAST" ,"XY"
+    ROUTE_SUBFUNC="NORTH_LAST"  # "NORTH_LAST" ,"DOR"
     AVC_ATOMIC_EN=0
     STND_DEV_EN=0 # 1: generate standard devision  
     
@@ -112,7 +112,7 @@ generate_parameter_v (){
     printf " parameter MAX_SIM_CLKs=$MAX_SIM_CLKs;\n" >> parameter.v    
     printf " parameter MAX_PCK_SIZ=$MAX_PCK_SIZ;\n" >> parameter.v    
     printf " parameter TIMSTMP_FIFO_NUM=$TIMSTMP_FIFO_NUM;\n" >> parameter.v    
-    printf " parameter ROUTE_TYPE = (ROUTE_NAME == \"XY\" || ROUTE_NAME == \"TRANC_XY\" )?    \"DETERMINISTIC\" : \n" >> parameter.v    
+    printf " parameter ROUTE_TYPE = (ROUTE_NAME == \"DOR\" || ROUTE_NAME == \"TRANC_DOR\" )?    \"DETERMINISTIC\" : \n" >> parameter.v    
     printf "                        (ROUTE_NAME == \"FULL_ADPT\" || ROUTE_NAME == \"TRANC_FULL_ADPT\" )?   \"FULL_ADAPTIVE\": \"PAR_ADAPTIVE\"; \n" >> parameter.v              
     printf " parameter DEBUG_EN=$DEBUG_EN;\n" >> parameter.v     
     printf " parameter ROUTE_SUBFUNC= \"$ROUTE_SUBFUNC\";\n">> parameter.v     

@@ -11,7 +11,7 @@ jobs:
       image: verilator/verilator:4.104
     strategy:
       matrix:
-        conf_name: [general, line-ring, multicast, vc_alloc, conv_route, tiny_topos]
+        conf_name: [general, line-ring, multicast, vc_alloc, conv_route, tiny_topos, mesh_3d]
     env:
       ROOT: ${{ github.workspace }}/mpsoc
       PRONOC_WORK: ${{ github.workspace }}/mpsoc_work

@@ -1430,9 +1430,9 @@
   Module          : mesh_torus_mask_non_assignable_destport_no_self_loop
   FileName        : ./../../rtl/src_noc/./mesh_torus.sv
   LineNumber      : 336
-  Statement       :         if ( ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY") begin :xy
+  Statement       :         if ( ROUTE_NAME == "DOR" || ROUTE_NAME == "TRANC_DOR") begin :xy
   RTL_EXPRESSION  : (Operators == and || used)
-  Node_Value      : (Expr: ((ROUTE_NAME == "XY") || (ROUTE_NAME == "TRANC_XY")))
+  Node_Value      : (Expr: ((ROUTE_NAME == "DOR") || (ROUTE_NAME == "TRANC_DOR")))
   -----------------------------------------------------------------------------
   Tag             : ExprParen
   Description     : Use parenthesis in complex expression [RTL_EXPRESSION] [Node_Value]
@@ -1727,9 +1727,9 @@
   Module          : 
   FileName        : ./../../rtl/src_noc/./topology_localparam.v
   LineNumber      : 144
-  Statement       :             (ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY" )?    "DETERMINISTIC" : 
+  Statement       :             (ROUTE_NAME == "DOR" || ROUTE_NAME == "TRANC_DOR" )?    "DETERMINISTIC" : 
   RTL_EXPRESSION  : (Operators == and || used)
-  Node_Value      : (Expr: ((ROUTE_NAME == "XY") || (ROUTE_NAME == "TRANC_XY")))
+  Node_Value      : (Expr: ((ROUTE_NAME == "DOR") || (ROUTE_NAME == "TRANC_DOR")))
   -----------------------------------------------------------------------------
   Tag             : ExprParen
   Description     : Use parenthesis in complex expression [RTL_EXPRESSION] [Node_Value]
@@ -4622,7 +4622,7 @@
   Module        : mesh_torus_conventional_routing
   FileName      : ./../../rtl/src_noc/./mesh_torus_routting.v
   LineNumber    : 599
-  Statement     :     parameter ROUTE_NAME = "XY",
+  Statement     :     parameter ROUTE_NAME = "DOR",
   CValue        : ROUTE_NAME
   -----------------------------------------------------------------------------
   Tag           : ConstName
@@ -4642,7 +4642,7 @@
   Module        : mesh_torus_mask_non_assignable_destport
   FileName      : ./../../rtl/src_noc/./mesh_torus.sv
   LineNumber    : 225
-  Statement     :     parameter ROUTE_NAME="XY",
+  Statement     :     parameter ROUTE_NAME="DOR",
   CValue        : ROUTE_NAME
   -----------------------------------------------------------------------------
   Tag           : ConstName
@@ -4732,7 +4732,7 @@
   Module        : conventional_routing
   FileName      : ./../../rtl/src_noc/./routing.v
   LineNumber    : 33
-  Statement     :     parameter ROUTE_NAME        = "XY",
+  Statement     :     parameter ROUTE_NAME        = "DOR",
   CValue        : ROUTE_NAME
   -----------------------------------------------------------------------------
   Tag           : ConstName
@@ -4992,7 +4992,7 @@
   Module        : mesh_torus_deterministic_look_ahead_routing
   FileName      : ./../../rtl/src_noc/./mesh_torus_routting.v
   LineNumber    : 111
-  Statement     :     parameter ROUTE_NAME="XY"// "XY", "TRANC_XY"
+  Statement     :     parameter ROUTE_NAME="DOR"// "DOR", "TRANC_DOR"
   CValue        : ROUTE_NAME
   -----------------------------------------------------------------------------
   Tag           : ConstName
@@ -5212,7 +5212,7 @@
   Module        : mesh_torus_destp_generator
   FileName      : ./../../rtl/src_noc/./mesh_torus.sv
   LineNumber    : 1115
-  Statement     :     parameter ROUTE_NAME = "XY",  
+  Statement     :     parameter ROUTE_NAME = "DOR",  
   CValue        : ROUTE_NAME
   -----------------------------------------------------------------------------
   Tag           : ConstName
@@ -5252,7 +5252,7 @@
   Module        : look_ahead_routing
   FileName      : ./../../rtl/src_noc/./routing.v
   LineNumber    : 244
-  Statement     :     parameter ROUTE_NAME="XY",//
+  Statement     :     parameter ROUTE_NAME="DOR",//
   CValue        : ROUTE_NAME
   -----------------------------------------------------------------------------
   Tag           : ConstName
@@ -5312,7 +5312,7 @@
   Module        : mesh_torus_look_ahead_routing
   FileName      : ./../../rtl/src_noc/./mesh_torus_routting.v
   LineNumber    : 13
-  Statement     :     parameter ROUTE_NAME = "XY",// 
+  Statement     :     parameter ROUTE_NAME = "DOR",// 
   CValue        : ROUTE_NAME
   -----------------------------------------------------------------------------
   Tag           : ConstName
@@ -5422,7 +5422,7 @@
   Module        : destp_generator
   FileName      : ./../../rtl/src_noc/./input_ports.sv
   LineNumber    : 1091
-  Statement     :     parameter ROUTE_NAME="XY",
+  Statement     :     parameter ROUTE_NAME="DOR",
   CValue        : ROUTE_NAME
   -----------------------------------------------------------------------------
   Tag           : ConstName
@@ -5452,7 +5452,7 @@
   Module        : mesh_torus_mask_non_assignable_destport_no_self_loop
   FileName      : ./../../rtl/src_noc/./mesh_torus.sv
   LineNumber    : 282
-  Statement     :     parameter ROUTE_NAME="XY",
+  Statement     :     parameter ROUTE_NAME="DOR",
   CValue        : ROUTE_NAME
   -----------------------------------------------------------------------------
   Tag           : ConstName
@@ -5877,7 +5877,7 @@
   Module        : look_ahead_routing
   FileName      : ./../../rtl/src_noc/./routing.v
   LineNumber    : 244
-  Statement     :     parameter ROUTE_NAME="XY",//
+  Statement     :     parameter ROUTE_NAME="DOR",//
   Param         : ROUTE_NAME
   -----------------------------------------------------------------------------
   Tag           : ParamName
@@ -6067,7 +6067,7 @@
   Module        : destp_generator
   FileName      : ./../../rtl/src_noc/./input_ports.sv
   LineNumber    : 1091
-  Statement     :     parameter ROUTE_NAME="XY",
+  Statement     :     parameter ROUTE_NAME="DOR",
   Param         : ROUTE_NAME
   -----------------------------------------------------------------------------
   Tag           : ParamName
@@ -6377,7 +6377,7 @@
   Module        : mesh_torus_mask_non_assignable_destport_no_self_loop
   FileName      : ./../../rtl/src_noc/./mesh_torus.sv
   LineNumber    : 282
-  Statement     :     parameter ROUTE_NAME="XY",
+  Statement     :     parameter ROUTE_NAME="DOR",
   Param         : ROUTE_NAME
   -----------------------------------------------------------------------------
   Tag           : ParamName
@@ -6437,7 +6437,7 @@
   Module        : mesh_torus_mask_non_assignable_destport
   FileName      : ./../../rtl/src_noc/./mesh_torus.sv
   LineNumber    : 225
-  Statement     :     parameter ROUTE_NAME="XY",
+  Statement     :     parameter ROUTE_NAME="DOR",
   Param         : ROUTE_NAME
   -----------------------------------------------------------------------------
   Tag           : ParamName
@@ -6647,7 +6647,7 @@
   Module        : mesh_torus_conventional_routing
   FileName      : ./../../rtl/src_noc/./mesh_torus_routting.v
   LineNumber    : 599
-  Statement     :     parameter ROUTE_NAME = "XY",
+  Statement     :     parameter ROUTE_NAME = "DOR",
   Param         : ROUTE_NAME
   -----------------------------------------------------------------------------
   Tag           : ParamName

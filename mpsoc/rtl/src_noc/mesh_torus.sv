@@ -33,14 +33,7 @@
 *        ---------x
 *        0   |   2
 ***************************/
-module  regular_topo_vc_alloc_request_gen_adaptive #(
-    parameter ROUTE_TYPE = "FULL_ADAPTIVE",    // "FULL_ADAPTIVE", "PAR_ADAPTIVE"  
-    parameter V = 4,
-    parameter DSTPw=4,
-    parameter SSA_EN = 0,
-    parameter PPSw=4,
-    parameter [V-1 : 0] ESCAP_VC_MASK = 4'b1000   // mask scape vc, valid only for full adaptive       
-)(
+module  regular_topo_vc_alloc_request_gen_adaptive (
     ovc_avalable_all,
     dest_port_coded_all,
     candidate_ovc_all,
@@ -56,6 +49,7 @@ module  regular_topo_vc_alloc_request_gen_adaptive #(
     reset,
     clk    
 );
+    import pronoc_pkg::*;
     localparam  
         P = 5,
         P_1 = P-1,
@@ -64,13 +58,6 @@ module  regular_topo_vc_alloc_request_gen_adaptive #(
         VP_1 = V * P_1,
         PVDSTPw = PV * DSTPw;
         
-    localparam 
-        LOCAL = 3'd0,  
-        EAST = 3'd1, 
-        NORTH = 3'd2,  
-        WEST = 3'd3,  
-        SOUTH = 3'd4;  
-
     input   [PV-1 : 0]  ovc_avalable_all;
     input   [PVDSTPw-1 : 0]  dest_port_coded_all;
     input   [PV-1 : 0]  ivc_request_all;
@@ -85,14 +72,12 @@ module  regular_topo_vc_alloc_request_gen_adaptive #(
     input   [PV-1 : 0] ssa_ivc_num_getting_ovc_grant_all;       
     input                       reset,clk;  
     
-    
     wire    [PV-1 : 0]  non_assigned_ovc_request_all; 
     wire    [PV-1 : 0]  y_evc_forbiden,x_evc_forbiden;
     wire    [V-1 : 0]  ovc_avb_x_plus,ovc_avb_x_minus,ovc_avb_y_plus,ovc_avb_y_minus,ovc_avb_local;
     wire    [VP_1-1 : 0]  ovc_avalable_perport            [P-1 : 0];
     wire    [PPSw-1 : 0]  port_pre_sel_perport            [P-1 : 0];
     wire    [PVV-1 : 0]  candidate_ovc_x_all, candidate_ovc_y_all;
-    
     
     assign non_assigned_ovc_request_all = ivc_request_all & ~ovc_is_assigned_all;   
     assign {ovc_avb_y_minus,ovc_avb_x_minus,ovc_avb_y_plus,ovc_avb_x_plus,ovc_avb_local} = ovc_avalable_all;
@@ -124,8 +109,7 @@ module  regular_topo_vc_alloc_request_gen_adaptive #(
         );
         
         regular_topo_port_selector #(
-            .SW_LOC     (i/V),
-            .PPSw(PPSw)
+            .SW_LOC     (i/V)
         ) the_portsel (
             .port_pre_sel       (port_pre_sel_perport[i/V]),
             .swap_port_presel   (swap_port_presel[i]),
@@ -136,8 +120,6 @@ module  regular_topo_vc_alloc_request_gen_adaptive #(
         );
         
         regular_topo_dspt_clear_gen #(
-            .SSA_EN(SSA_EN),
-            .DSTPw(DSTPw),
             .SW_LOC(i/V)
         ) dspt_clear_gen (
             .destport_clear(destport_clear_all[((i+1)*DSTPw)-1 : i*DSTPw]),
@@ -154,8 +136,6 @@ module  regular_topo_vc_alloc_request_gen_adaptive #(
             assign avc_unavailable[i] = (masked_ovc_request_all [((i+1)*V)-1 : i*V] & ~ESCAP_VC_MASK) == {V{1'b0}};
             
             regular_topo_swap_port_presel_gen #(
-                .V(V),
-                .ESCAP_VC_MASK(ESCAP_VC_MASK),       
                 .VC_NUM(i)
             ) swap_presel (
                 .avc_unavailable(avc_unavailable[i]),
@@ -179,8 +159,6 @@ endmodule
 
 
 module regular_topo_dspt_clear_gen #(
-    parameter SSA_EN = 1,
-    parameter DSTPw =4,
     parameter SW_LOC=0
 )(
     destport_clear,
@@ -188,16 +166,12 @@ module regular_topo_dspt_clear_gen #(
     sel,
     ssa_ivc_num_getting_ovc_grant
 );
-    
+    import pronoc_pkg::*;
     output [DSTPw-1 : 0] destport_clear;
     input ivc_num_getting_ovc_grant;
     input sel;
     input ssa_ivc_num_getting_ovc_grant;
     
-    localparam 
-        LOCAL = 3'd0,
-        EAST = 3'd1,
-        WEST = 3'd3;
     generate
     if ( SSA_EN==1 ) begin :predict_if
         if (SW_LOC == LOCAL ) begin :local_if
@@ -220,18 +194,15 @@ module regular_topo_dspt_clear_gen #(
 endmodule
 
 
-module   regular_topo_mask_non_assignable_destport #(
-    parameter TOPOLOGY="MESH",
-    parameter ROUTE_NAME="XY",
+module  regular_topo_mask_non_assignable_destport #(
     parameter SW_LOC=0,
-    parameter P=5,
-    parameter SELF_LOOP_EN=0
+    parameter P=5
 ) (
     odd_column,// use only for odd even routing
     dest_port_in,
     dest_port_out
 );
-    
+    import pronoc_pkg::*;
     localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     input  [P_1-1 : 0 ] dest_port_in;
     output [P_1-1 : 0 ] dest_port_out;
@@ -266,8 +237,6 @@ module   regular_topo_mask_non_assignable_destport #(
     endgenerate
     
     regular_topo_mask_non_assignable_destport_no_self_loop # (
-        .TOPOLOGY(TOPOLOGY),
-        .ROUTE_NAME(ROUTE_NAME),
         .SW_LOC(SW_LOC),
         .P(P)    
     ) mask_no_self_loop (
@@ -278,8 +247,6 @@ module   regular_topo_mask_non_assignable_destport #(
 endmodule
 
 module regular_topo_mask_non_assignable_destport_no_self_loop #(
-    parameter TOPOLOGY="MESH",
-    parameter ROUTE_NAME="XY",
     parameter SW_LOC=0,
     parameter P=5
 )(
@@ -287,12 +254,7 @@ module regular_topo_mask_non_assignable_destport_no_self_loop #(
     dest_port_in,
     dest_port_out
 );
-    
-    localparam
-        EAST = 1, 
-        NORTH = 2, 
-        WEST = 3,
-        SOUTH = 4; 
+    import pronoc_pkg::*;
     //port number in north port 
     localparam 
         N_LOCAL = 0, 
@@ -333,7 +295,7 @@ module regular_topo_mask_non_assignable_destport_no_self_loop #(
             assign dest_port_out[P_1-1:4] = dest_port_in[P_1-1:4]; //other local ports
         end    
         /* verilator lint_off WIDTH */ 
-        if ( ROUTE_NAME == "XY" || ROUTE_NAME == "TRANC_XY") begin :xy
+        if ( ROUTE_NAME == "DOR" || ROUTE_NAME == "TRANC_DOR") begin :xy
         /* verilator lint_on WIDTH */ 
             if (SW_LOC == NORTH  ) begin : nort_p // The port located in y axsis does not send packets to x dimension
                 assign dest_port_out[N_LOCAL]= dest_port_in[N_LOCAL]; 
@@ -427,8 +389,6 @@ endmodule
 
 
 module  regular_topo_swap_port_presel_gen #(
-    parameter V = 4,
-    parameter [V-1 : 0] ESCAP_VC_MASK = 4'b1000,   // mask scape vc, valid only for full adaptive       
     parameter VC_NUM=0
 )(
     avc_unavailable,
@@ -440,7 +400,7 @@ module  regular_topo_swap_port_presel_gen #(
     clk,
     reset
 );
-    
+    import pronoc_pkg::*;
     localparam LOCAL_VC_NUM= VC_NUM % V;    
     input avc_unavailable;
     input y_evc_forbiden,x_evc_forbiden;
@@ -528,8 +488,7 @@ endmodule
 
 
 module regular_topo_port_selector #(
-    parameter SW_LOC = 0,
-    parameter PPSw=4
+    parameter SW_LOC = 0
 )(
     port_pre_sel,
     dest_port_in,
@@ -538,7 +497,7 @@ module regular_topo_port_selector #(
     y_evc_forbiden,
     x_evc_forbiden
 );
-
+    import pronoc_pkg::*;
     /************************
     *
     *        destination-port_in
@@ -666,15 +625,15 @@ module mesh_line_distance_gen (
     input [EAw-1 : 0] src_e_addr;
     input [EAw-1 : 0] dest_e_addr;
     output[DISTw-1: 0]distance;
-    wire [NXw-1 : 0]src_x,dest_x;
-    wire [NYw-1 : 0]src_y,dest_y;
-    regular_topo_endp_addr_decode src_addr_decode (.e_addr(src_e_addr), .ex(src_x), .ey(src_y), .el(), .valid());
-    regular_topo_endp_addr_decode dst_addr_decode (.e_addr(dest_e_addr), .ex(dest_x), .ey(dest_y), .el(), .valid());
+    regular_topo_router_addr_t src_router_addr, dest_router_addr;
+    assign src_router_addr = regular_topo_router_addr_t'(src_e_addr);
+    assign dest_router_addr = regular_topo_router_addr_t'(dest_e_addr);
+    
     logic [NXw-1 : 0] x_offset;
     logic [NYw-1 : 0] y_offset;
     always_comb begin 
-        x_offset = (src_x > dest_x) ? src_x - dest_x : dest_x - src_x;
-        y_offset = (src_y > dest_y) ? src_y - dest_y : dest_y - src_y;
+        x_offset = (src_router_addr.x > dest_router_addr.x) ? src_router_addr.x - dest_router_addr.x : dest_router_addr.x - src_router_addr.x;
+        y_offset = (src_router_addr.y > dest_router_addr.y) ? src_router_addr.y - dest_router_addr.y : dest_router_addr.y - src_router_addr.y;
     end
     /* verilator lint_off WIDTH */ 
     assign distance = x_offset+y_offset+1'b1;
@@ -692,8 +651,13 @@ module ring_torus_distance_gen (
     output[DISTw-1: 0]distance;
     wire [NXw-1 : 0]src_x,dest_x;
     wire [NYw-1 : 0]src_y,dest_y;
-    regular_topo_endp_addr_decode src_addr_decode (.e_addr(src_e_addr), .ex(src_x), .ey(src_y), .el(), .valid());
-    regular_topo_endp_addr_decode  dest_addr_decode (.e_addr(dest_e_addr), .ex(dest_x), .ey(dest_y), .el(), .valid());
+    regular_topo_router_addr_t src_router_addr, dest_router_addr;
+    assign src_router_addr = regular_topo_router_addr_t'(src_e_addr);
+    assign dest_router_addr = regular_topo_router_addr_t'(dest_e_addr);
+    assign src_x = src_router_addr.x;
+    assign src_y = src_router_addr.y;
+    assign dest_x = dest_router_addr.x;
+    assign dest_y = dest_router_addr.y;
     logic [NXw-1 : 0] x_offset;
     logic [NYw-1 : 0] y_offset;
     wire tranc_x_plus,tranc_x_min,tranc_y_plus,tranc_y_min,same_x,same_y;
@@ -744,36 +708,26 @@ module ring_torus_distance_gen (
 endmodule
 
 
-module regular_topo_ssa_check_destport #(
-    parameter ROUTE_TYPE="DETERMINISTIC",
+module two_dim_ssa_check_destport #(
     parameter SW_LOC = 0,
-    parameter P=5,
-    parameter DEBUG_EN = 0,
-    parameter DSTPw = P-1,
     parameter SS_PORT=0
 )(
     destport_encoded, //exsited packet dest port
     destport_in_encoded, // incomming packet dest port
     ss_port_hdr_flit,
-    ss_port_nonhdr_flit     
+    ss_port_nonhdr_flit
     `ifdef SIMULATION 
     ,clk,
     ivc_num_getting_sw_grant,
     hdr_flg
     `endif
 );
-
+    import pronoc_pkg::*;
     input [DSTPw-1 : 0] destport_encoded, destport_in_encoded; 
     output ss_port_hdr_flit, ss_port_nonhdr_flit;
     `ifdef SIMULATION 
     input clk, ivc_num_getting_sw_grant,hdr_flg;
     `endif
-    //MESH, TORUS Topology p=5           
-    localparam   
-        LOCAL = 0,  
-        EAST = 1,
-        WEST = 3;
-
 /*************************
 *        destination port is coded        
 *        destination-port_in
@@ -818,12 +772,8 @@ endgenerate
 endmodule
 
 
-module line_ring_ssa_check_destport #(
-    parameter ROUTE_TYPE="DETERMINISTIC",
+module one_dim_ssa_check_destport #(
     parameter SW_LOC = 0,
-    parameter P=3,
-    parameter DEBUG_EN = 0,
-    parameter DSTPw = P-1,
     parameter SS_PORT=0
 )(
     destport_encoded, //exsited packet dest port
@@ -831,9 +781,10 @@ module line_ring_ssa_check_destport #(
     ss_port_hdr_flit,
     ss_port_nonhdr_flit 
 );
+    import pronoc_pkg::*;
     input [DSTPw-1 : 0] destport_encoded, destport_in_encoded; 
     output ss_port_hdr_flit, ss_port_nonhdr_flit;
-    wire [P-1 : 0] dest_port_num,assigned_dest_port_num;
+    wire [MAX_P-1 : 0] dest_port_num,assigned_dest_port_num;
     
     line_ring_decode_dstport cnv1(
         .dstport_one_hot(dest_port_num),
@@ -859,7 +810,7 @@ module regular_topo_router_addr_decode (
     
     localparam
         RXw = log2(NX),    // number of node in x axis
-        RYw = (IS_RING | IS_LINE) ? 1 : log2(NY);    // number of node in y axis
+        RYw = (IS_1D_TOPO) ? 1 : log2(NY);    // number of node in y axis
     /* verilator lint_off WIDTH */ 
     localparam [RXw-1 : 0]    MAXX = (NX-1); 
     localparam [RYw-1 : 0]    MAXY = (NY-1); 
@@ -871,7 +822,7 @@ module regular_topo_router_addr_decode (
     output valid;
     
     generate 
-    if (IS_RING | IS_LINE) begin :oneD 
+    if (IS_1D_TOPO) begin :D1_
         assign rx = r_addr;
         assign ry = 1'b0;
     end else begin : twoD
@@ -883,63 +834,32 @@ module regular_topo_router_addr_decode (
     /* verilator lint_on CMPCONST */
 endmodule
 
-
-module regular_topo_endp_addr_decode 
-(
-    e_addr,
-    ex,
-    ey,
-    el,
+module regular_topo_address_validator (
+    addr,
     valid
 );
     import pronoc_pkg::*;
-    localparam
-        EXw = log2(NX),    // number of node in x axis
-        EYw = (IS_RING | IS_LINE) ? 1 : log2(NY),
-        ELw = log2(NL);    // number of node in y axis
-    /* verilator lint_off WIDTH */ 
-    localparam [EXw-1 : 0]    MAXX = (NX-1); 
-    localparam [EYw-1 : 0]    MAXY = (NY-1); 
-    localparam [ELw-1 : 0]    MAXL = (NL-1); 
-    /* verilator lint_on WIDTH */ 
-    
-    input  [EAw-1 : 0] e_addr;
-    output [EXw-1 : 0] ex;
-    output [EYw-1 : 0] ey;
-    output [ELw-1 : 0] el;
-    output valid;
-    
-    generate 
-    if (IS_RING | IS_LINE) begin :oneD 
-        if(NL==1) begin:one_local
-            assign ex = e_addr;
-            assign ey = 1'b0;
-            assign el = 1'b0;
-            /* verilator lint_off CMPCONST */
-            assign valid = ex<= MAXX;
-            /* verilator lint_on CMPCONST */
-        end else begin: multi_local 
-            assign {el,ex} = e_addr;   
-            assign ey = 1'b0;
-            /* verilator lint_off CMPCONST */
-            assign valid = ((ex<= MAXX) & (el<=MAXL));
-            /* verilator lint_on CMPCONST */
+    input  [EAw-1 : 0] addr;
+    output logic valid;
+    regular_topo_endp_addr_t endp_addr;
+    always_comb begin 
+        endp_addr = regular_topo_endp_addr_t'(addr);
+        //for 2/1d we need to re-extact the l
+        endp_addr.l=addr[EAw-1: EAw-NLw];
+    end
+    always_comb begin 
+        valid = 1'b1;
+        if(32'(endp_addr.x) >= NX) valid = 1'b0;
+        if((IS_2D_TOPO | IS_3D_TOPO) && ((NY & (NY - 1)) != 0) ) begin
+            if(32'(endp_addr.y) >= NY) valid = 1'b0;
         end
-    end else begin : twoD
-        if(NL==1)begin:one_local 
-            assign {ey,ex} = e_addr; 
-            assign el = 1'b0;  
-            /* verilator lint_off CMPCONST */
-            assign valid = (ex<= MAXX) & (ey <= MAXY);
-            /* verilator lint_on CMPCONST */
-        end else begin :multi_l
-            assign {el,ey,ex} = e_addr; 
-            /* verilator lint_off CMPCONST */
-            assign valid = ( (ex<= MAXX) & (ey <= MAXY) & (el<=MAXL) );
-            /* verilator lint_on CMPCONST */
+        if(IS_3D_TOPO) begin
+            if(32'(endp_addr.z) >= NZ) valid = 1'b0;
+        end
+        if(NL>1) begin
+            if(32'(endp_addr.l) >= NL) valid = 1'b0;
         end
     end
-    endgenerate   
 endmodule
 
 
@@ -947,7 +867,6 @@ endmodule
 *    Regular_topo_endp_addr_encoder
 *    most probably it is only needed for simulation purposes
 ***************/  
-
 module  regular_topo_endp_addr_encoder 
 (    
     id,
@@ -989,16 +908,9 @@ module  regular_topo_addr_coder (
 endmodule
 
 module regular_topo_destp_generator #(
-    parameter TOPOLOGY = "MESH",
-    parameter ROUTE_NAME = "XY",  
-    parameter ROUTE_TYPE = "DETERMINISTIC",
     parameter P=5,
-    parameter DSTPw=4,
-    parameter NL=1,
     parameter PLw=1,
-    parameter PPSw=4,
-    parameter SW_LOC=0,
-    parameter SELF_LOOP_EN=0 
+    parameter SW_LOC=0
 )(
     dest_port_out,
     dest_port_coded,
@@ -1007,46 +919,53 @@ module regular_topo_destp_generator #(
     port_pre_sel,
     odd_column
 );
-    localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
+    import pronoc_pkg::*;
+    localparam 
+        P_1 = (SELF_LOOP_EN )?  P : P-1,
+        Pw = log2(P);
     
     input  [DSTPw-1 : 0] dest_port_coded;
     input  [PLw-1 : 0] endp_localp_num;
     output [P_1-1 : 0] dest_port_out;
-    input           swap_port_presel;
+    input  swap_port_presel;
     input  [PPSw-1 : 0] port_pre_sel;
     input odd_column;
     
     wire [P_1-1 : 0] dest_port_in;
     
     generate 
-    /* verilator lint_off WIDTH */
-    if (TOPOLOGY == "RING" || TOPOLOGY == "LINE" ) begin : one_D
-    /* verilator lint_on WIDTH */
+    if (IS_1D_TOPO) begin : D1_
         line_ring_destp_decoder #(
-            .ROUTE_TYPE(ROUTE_TYPE),
             .P(P),
-            .DSTPw(DSTPw),
-            .NL(NL),
             .ELw(PLw),
-            .PPSw(PPSw),
-            .SW_LOC(SW_LOC),
-            .SELF_LOOP_EN(SELF_LOOP_EN)
+            .SW_LOC(SW_LOC)
         ) decoder (
-            .dest_port_coded(dest_port_coded),             
+            .dest_port_coded(dest_port_coded),
             .dest_port_out(dest_port_in),
-            .endp_localp_num(endp_localp_num)               
+            .endp_localp_num(endp_localp_num)       
         );
-        
+    end else if (IS_MESH_3D) begin : three_D
+        logic [P-1  : 0] mesh_3d_one_hot_dest_port;
+        logic [Pw-1 : 0] local_dest_port;
+        always @(*) begin
+            local_dest_port =Pw'(endp_localp_num) + Pw'(DOWN);
+            mesh_3d_one_hot_dest_port = {P{1'b0}};
+            if(dest_port_coded == 0 && endp_localp_num!=0 && NL >1) mesh_3d_one_hot_dest_port[local_dest_port] = 1'b1;
+            else mesh_3d_one_hot_dest_port[dest_port_coded] = 1'b1;
+        end
+        destport_non_selfloop_fix #(
+            .SELF_LOOP_EN(SELF_LOOP_EN),
+            .P(P),
+            .SW_LOC(SW_LOC)
+        ) remove_sw_loc (
+            .destport_in(mesh_3d_one_hot_dest_port[P-1 : 0]),
+            .destport_out(dest_port_out)
+        );
     end else begin :two_D
         regular_topo_destp_decoder #(
-            .ROUTE_TYPE(ROUTE_TYPE),
             .P(P),
-            .DSTPw(DSTPw),
-            .NL(NL),
             .ELw(PLw),
-            .PPSw(PPSw),
-            .SW_LOC(SW_LOC),
-            .SELF_LOOP_EN(SELF_LOOP_EN)
+            .SW_LOC(SW_LOC)
         ) decoder (
             .dest_port_coded(dest_port_coded),             
             .dest_port_out(dest_port_in),
@@ -1058,11 +977,8 @@ module regular_topo_destp_generator #(
     endgenerate     
     
     regular_topo_mask_non_assignable_destport #(
-        .TOPOLOGY(TOPOLOGY),
-        .ROUTE_NAME(ROUTE_NAME),
         .SW_LOC(SW_LOC),
-        .P(P),
-        .SELF_LOOP_EN(SELF_LOOP_EN)
+        .P(P)
     ) mask_destport (
         .dest_port_in(dest_port_in),
         .dest_port_out(dest_port_out),
@@ -1071,14 +987,9 @@ module regular_topo_destp_generator #(
 endmodule
 
 module regular_topo_destp_decoder #(
-    parameter ROUTE_TYPE="DETERMINISTIC",
     parameter P=6,
-    parameter DSTPw=4,
-    parameter NL=2,
     parameter ELw=1,
-    parameter PPSw=4,
-    parameter SW_LOC=0,
-    parameter SELF_LOOP_EN=0
+    parameter SW_LOC=0
 )(
     dest_port_coded,
     endp_localp_num,
@@ -1086,11 +997,12 @@ module regular_topo_destp_decoder #(
     swap_port_presel,
     port_pre_sel
 );
+    import pronoc_pkg::*;
     localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     input  [DSTPw-1 : 0] dest_port_coded;
     input  [ELw-1 : 0] endp_localp_num;
     output [P_1-1 : 0] dest_port_out;
-    input           swap_port_presel;
+    input  swap_port_presel;
     input  [PPSw-1 : 0] port_pre_sel;
     
     logic [NL-1 : 0] endp_localp_onehot;
@@ -1117,34 +1029,27 @@ module regular_topo_destp_decoder #(
     end
     generate     
     if(NL==1) begin :slp
-        if(SELF_LOOP_EN == 0) begin :nslp
-            remove_sw_loc_one_hot #(
-                .P(5),
-                .SW_LOC(SW_LOC)
-            ) conv (
-                .destport_in(portout),
-                .destport_out(dest_port_out)
-            ); 
-        end else begin : slp
-            assign dest_port_out = portout;  
-        end
+        destport_non_selfloop_fix #(
+            .SELF_LOOP_EN(SELF_LOOP_EN),
+            .P(5),
+            .SW_LOC(SW_LOC)
+        ) conv (
+            .destport_in(portout),
+            .destport_out(dest_port_out)
+        ); 
     end else begin :mlp
         wire [P-1 : 0] destport_onehot;
-        
         assign destport_onehot =(portout[0])? 
             { endp_localp_onehot[NL-1 : 1] ,{(P-NL){1'b0}},endp_localp_onehot[0]}: /*select local destination*/ 
             { {(NL-1){1'b0}} ,portout};
-        if(SELF_LOOP_EN == 0) begin :nslp
-            remove_sw_loc_one_hot #(
-                .P(P),
-                .SW_LOC(SW_LOC)
-            ) remove_sw_loc (
-                .destport_in(destport_onehot),
-                .destport_out(dest_port_out)
-            );
-        end else begin: slp
-            assign dest_port_out = destport_onehot;            
-        end
+        destport_non_selfloop_fix #(
+            .SELF_LOOP_EN(SELF_LOOP_EN),
+            .P(P),
+            .SW_LOC(SW_LOC)
+        ) remove_sw_loc (
+            .destport_in(destport_onehot),
+            .destport_out(dest_port_out)
+        );
     end
     endgenerate
 endmodule
@@ -1154,19 +1059,15 @@ endmodule
 * line_ring_destp_decoder 
 **************************/
 module line_ring_destp_decoder #(
-    parameter ROUTE_TYPE="DETERMINISTIC",
     parameter P=4,
-    parameter DSTPw=2,
-    parameter NL=2,
     parameter ELw=1,
-    parameter PPSw=4,
-    parameter SW_LOC=0,
-    parameter SELF_LOOP_EN= 0
+    parameter SW_LOC=0
 )(
     dest_port_coded,
     endp_localp_num,
     dest_port_out   
 );
+    import pronoc_pkg::*;
     localparam P_1 = (SELF_LOOP_EN )?  P : P-1;
     input  [DSTPw-1 : 0] dest_port_coded;
     input  [ELw-1 : 0] endp_localp_num;
@@ -1186,34 +1087,27 @@ module line_ring_destp_decoder #(
     end
     generate
     if(NL==1) begin :_se
-        if(SELF_LOOP_EN == 0) begin :nslp
-            remove_sw_loc_one_hot #(
-                .P(3),
-                .SW_LOC(SW_LOC)
-            ) conv (
-                .destport_in(portout),
-                .destport_out(dest_port_out)
-            ); 
-        end else begin : slp 
-            assign dest_port_out = portout;
-        end
+        destport_non_selfloop_fix #(
+            .SELF_LOOP_EN(SELF_LOOP_EN),
+            .P(3),
+            .SW_LOC(SW_LOC)
+        ) conv (
+            .destport_in(portout),
+            .destport_out(dest_port_out)
+        ); 
     end else begin :_me
         wire [P-1 : 0] destport_onehot;
-        
         assign destport_onehot =(portout[0])? 
             { endp_localp_onehot[NL-1 : 1] ,{(P-NL){1'b0}},endp_localp_onehot[0]}: /*select local destination*/ 
             { {(NL-1){1'b0}} ,portout};
-        if(SELF_LOOP_EN == 0) begin :nslp
-            remove_sw_loc_one_hot #(
-                .P(P),
-                .SW_LOC(SW_LOC)
-            ) remove_sw_loc (
-                .destport_in(destport_onehot),
-                .destport_out(dest_port_out)
-            ); 
-        end else begin :slp
-            assign dest_port_out = destport_onehot;
-        end
+        destport_non_selfloop_fix #(
+            .SELF_LOOP_EN(SELF_LOOP_EN),
+            .P(P),
+            .SW_LOC(SW_LOC)
+        ) remove_sw_loc (
+            .destport_in(destport_onehot),
+            .destport_out(dest_port_out)
+        ); 
     end
     endgenerate
 endmodule
@@ -1222,13 +1116,7 @@ endmodule
 *   regular_topo_dynamic_portsel_control
 *****************/
 module  regular_topo_dynamic_portsel_control #(
-    parameter  P = 5,
-    parameter ROUTE_TYPE = "FULL_ADAPTIVE",    // "FULL_ADAPTIVE", "PAR_ADAPTIVE"  
-    parameter V = 4,
-    parameter DSTPw=4,
-    parameter SSA_EN = 0, // 1: SSA enabled, 0: SSA disabled
-    parameter PPSw=4,
-    parameter [V-1 : 0] ESCAP_VC_MASK = 4'b1000   // mask scape vc, valid only for full adaptive       
+    parameter  P = 5
 )(   
     dest_port_coded_all,
     ivc_request_all,
@@ -1243,15 +1131,12 @@ module  regular_topo_dynamic_portsel_control #(
     reset,
     clk    
 );
+    import pronoc_pkg::*;
     localparam
         PV = V * P,
         PVV= PV * V,    
         PVDSTPw = PV * DSTPw;
-    localparam LOCAL = 0,  
-        EAST = 1, 
-        NORTH = 2,  
-        WEST = 3,  
-            SOUTH = 4;  
+    
     input   [PVDSTPw-1 : 0]  dest_port_coded_all;
     input   [PV-1 : 0]  ivc_request_all;
     input   [PV-1 : 0]  ovc_is_assigned_all;  
@@ -1262,11 +1147,11 @@ module  regular_topo_dynamic_portsel_control #(
     output  [PVDSTPw-1 : 0] destport_clear_all;
     input   [PV-1 : 0] ivc_num_getting_ovc_grant; 
     input   [PV-1 : 0] ssa_ivc_num_getting_ovc_grant_all;       
-    input                       reset,clk;  
+    input   reset,clk;  
     
-    wire    [PV-1 : 0]  non_assigned_ovc_request_all; 
-    wire    [PV-1 : 0]  y_evc_forbiden,x_evc_forbiden;  
-    wire    [PPSw-1 : 0]  port_pre_sel_perport            [P-1 : 0];
+    wire [PV-1 : 0]  non_assigned_ovc_request_all; 
+    wire [PV-1 : 0]  y_evc_forbiden,x_evc_forbiden;  
+    wire [PPSw-1 : 0]  port_pre_sel_perport [P-1 : 0];
     assign non_assigned_ovc_request_all = ivc_request_all & ~ovc_is_assigned_all;  
     assign port_pre_sel_perport[LOCAL] = port_pre_sel;
     assign port_pre_sel_perport[EAST] = {2'b00,port_pre_sel[1:0]};
@@ -1279,8 +1164,7 @@ module  regular_topo_dynamic_portsel_control #(
     for(i=0;i< PV;i=i+1) begin : PV_
         localparam SW_LOC = ((i/V)<5)? i/V : LOCAL;
         regular_topo_port_selector #(
-            .SW_LOC     (SW_LOC),
-            .PPSw(PPSw)
+            .SW_LOC (SW_LOC)
         ) the_portsel (
             .port_pre_sel       (port_pre_sel_perport[SW_LOC]),
             .swap_port_presel   (swap_port_presel[i]),
@@ -1290,8 +1174,6 @@ module  regular_topo_dynamic_portsel_control #(
             .x_evc_forbiden     (x_evc_forbiden[i])
         );
         regular_topo_dspt_clear_gen #(
-            .SSA_EN(SSA_EN),
-            .DSTPw(DSTPw),
             .SW_LOC(SW_LOC)
         ) dspt_clear_gen(
             .destport_clear(destport_clear_all[((i+1)*DSTPw)-1 : i*DSTPw]),
@@ -1304,8 +1186,6 @@ module  regular_topo_dynamic_portsel_control #(
         /* verilator lint_on WIDTH */ 
             assign avc_unavailable[i] = (masked_ovc_request_all [((i+1)*V)-1 : i*V] & ~ESCAP_VC_MASK) == {V{1'b0}};
             regular_topo_swap_port_presel_gen #(
-                .V(V),
-                .ESCAP_VC_MASK(ESCAP_VC_MASK),       
                 .VC_NUM(i)
             ) the_swap_port_presel (
                 .avc_unavailable(avc_unavailable[i]),

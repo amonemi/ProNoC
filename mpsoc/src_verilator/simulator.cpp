@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
     
     mcast_init();
     topology_init();
-
+    
     if( TRAFFIC_TYPE == NETRACE){
         netrace_init(netrace_file); // should be called first to initiate header
         pck_inj_init((int)header->num_nodes);
@@ -64,10 +64,9 @@ int main(int argc, char** argv) {
     else     traffic_gen_init();
     
     main_time=0;
-    print_parameter();
     if( thread_num>1) initial_threads();
-    
     while (!Verilated::gotFinish()) {
+        if(main_time == 1) print_parameter();
         if(main_time - saved_time < 50) {//set reset and start
             #ifdef FLAT_MODE
             reset_active_high = ((noc_top->router_event[0][0] & ACTIVE_HIGH_RST)!=0) ? 1 : 0;
@@ -371,8 +370,7 @@ int parse_string ( char * str, int * array)
 
 unsigned int pck_dst_gen_unicast (     unsigned int core_num, unsigned char * inject_en) {
     if(TRAFFIC_TYPE==TASK)    return      pck_dst_gen_task_graph ( core_num, inject_en);
-    if((strcmp (TOPOLOGY,"MESH")==0)||(strcmp (TOPOLOGY,"TORUS")==0))    return  pck_dst_gen_2D (core_num, inject_en);
-    return pck_dst_gen_1D (core_num, inject_en);
+    return  pck_dst_gen_synthetic   (core_num, inject_en);
 }
 
 void mcast_full_rnd (unsigned int core_num){
@@ -645,7 +643,7 @@ void traffic_gen_init( void ){
     unsigned int dest_e_addr;
     for (i=0;i<NE;i++){
         unsigned char inject_en;
-        random_var[i] = 100;
+        random_var[i] = 100;        
         traffic[i]->current_e_addr        = endp_addr_encoder(i);
         traffic[i]->start=0;
         traffic[i]->pck_class_in=  pck_class_in_gen( i);
@@ -1232,45 +1230,6 @@ void print_statistic_new (unsigned long int total_clk){
 }
 
 void print_parameter (){
-    printf ("NoC parameters:---------------- \n");
-    printf ("\tTopology: %s\n",TOPOLOGY);
-    printf ("\tRouting algorithm: %s\n",ROUTE_NAME);
-    printf ("\tVC_per port: %d\n", V);
-    printf ("\tNon-local port buffer_width per VC: %d\n", B);
-    printf ("\tLocal port buffer_width per VC: %d\n", LB);
-    #if defined (IS_MESH) || defined (IS_FMESH) || defined (IS_TORUS)
-        printf ("\tRouter num in row: %d \n",T1);
-        printf ("\tRouter num in column: %d \n",T2);
-        printf ("\tEndpoint num per router: %d\n",T3);
-    #elif defined (IS_LINE) || defined (IS_RING )
-        printf ("\tTotal Router num: %d \n",T1);
-        printf ("\tEndpoint num per router: %d\n",T3);
-    #elif defined (IS_FATTREE) || defined (IS_TREE)
-        printf ("\tK: %d \n",T1);
-        printf ("\tL: %d \n",T2);
-    #elif defined (IS_STAR)
-        printf ("\tTotal Endpoints number: %d \n",T1);
-    #else//CUSTOM
-        printf ("\tTotal Endpoints number: %d \n",T1);
-        printf ("\tTotal Routers number: %d \n",T2);
-    #endif
-    printf ("\tNumber of Class: %d\n", C);
-    printf ("\tFlit data width: %d \n", Fpay);
-    printf ("\tVC reallocation mechanism: %s \n",  VC_REALLOCATION_TYPE);
-    printf ("\tVC/sw combination mechanism: %s \n", COMBINATION_TYPE);
-    printf ("\tAVC_ATOMIC_EN:%d \n", AVC_ATOMIC_EN);
-    printf ("\tCongestion Index:%d \n",CONGESTION_INDEX);
-    printf ("\tADD_PIPREG_AFTER_CROSSBAR:%d\n",ADD_PIPREG_AFTER_CROSSBAR);
-    printf ("\tSSA_EN enabled: %d \n",SSA_EN);
-    printf ("\tSwitch allocator arbitration type:%s \n",SWA_ARBITER_TYPE);
-    printf ("\tMinimum supported packet size:%d flit(s) \n",MIN_PCK_SIZE);
-    printf ("\tLoop back is enabled:%d \n",SELF_LOOP_EN);
-    printf ("\tNumber of multihop bypass (SMART max):%d \n",SMART_MAX);
-    printf ("\tCastying type:%s.\n",CAST_TYPE);
-    if (IS_MCAST_PARTIAL){
-        printf ("\tCAST LIST:%s\n",MCAST_ENDP_LIST);
-    }
-    printf ("NoC parameters:---------------- \n");
     printf ("\nSimulation parameters-------------\n");
     #if(DEBUG_EN)
         printf ("\tDebuging is enabled\n");

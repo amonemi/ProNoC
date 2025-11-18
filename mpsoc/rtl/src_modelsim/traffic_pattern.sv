@@ -270,11 +270,11 @@ module  pck_dst_gen_unicast
     input  custom_traffic_en;
     input hotspot_t  hotspot_info [HOTSPOT_NUM-1 : 0];
     generate 
-    if ( ADDR_DIMENSION == 2) begin :two_dim
-        two_dimension_pck_dst_gen #(
+    if ( IS_2D_TOPO | IS_3D_TOPO) begin : MD_
+        multi_dimension_pck_dst_gen #(
             .TRAFFIC(TRAFFIC),
             .HOTSPOT_NODE_NUM(HOTSPOT_NODE_NUM)
-        ) the_two_dimension_pck_dst_gen (
+        ) the_multi_dim_pck_dst_gen (
             .reset(reset),
             .clk(clk),
             .en(en),
@@ -309,9 +309,9 @@ module  pck_dst_gen_unicast
 endmodule
 
 /**********************************
-*    two_dimension_pck_dst_gen
+*    multi_dimension_pck_dst_gen
 **********************************/
-module two_dimension_pck_dst_gen  
+module multi_dimension_pck_dst_gen  
 #(
     parameter TRAFFIC =   "RANDOM",
     parameter HOTSPOT_NODE_NUM =  4
@@ -332,51 +332,37 @@ module two_dimension_pck_dst_gen
     localparam  
         PCK_CNTw = log2(MAX_PCK_NUM+1),
         HOTSPOT_NUM= (TRAFFIC=="HOTSPOT")? HOTSPOT_NODE_NUM : 1;
-    
     input                       reset,clk,en;
     input   [NEw-1      :   0]  core_num;
     input   [PCK_CNTw-1 :   0]  pck_number; 
     input   [EAw-1 : 0] current_e_addr;
-    output  [EAw-1 : 0]  dest_e_addr;
+    output logic [EAw-1 : 0]  dest_e_addr;
     output                      valid_dst;
     input hotspot_t  hotspot_info [HOTSPOT_NUM-1 : 0];
     input  [NEw-1 : 0] custom_traffic_t;
     input  custom_traffic_en;
     
-    wire [NXw-1 : 0] current_x;
-    wire [NYw-1 : 0] current_y;
-    wire [NLw-1  : 0] current_l;
-    wire [NXw-1 : 0] dest_x;
-    wire [NYw-1 : 0] dest_y;
-    wire [NLw-1  : 0] dest_l;
+    regular_topo_endp_addr_t current_addr, dest_addr;
+    always_comb begin 
+        current_addr = regular_topo_endp_addr_t'(current_e_addr);
+        //for 2d we need to re-extact the l
+        current_addr.l=current_e_addr[EAw-1: EAw-NLw];
+    end
     
-    regular_topo_endp_addr_decode src_addr_decode (
-        .e_addr(current_e_addr),
-        .ex(current_x),
-        .ey(current_y),
-        .el(current_l),
-        .valid( )
-    );
     wire off_flag;
-    wire    [NEw-1  :   0]  dest_ip_num;
+    wire [NEw-1  :   0]  dest_ip_num;
     genvar i;
-    
     generate
     if (TRAFFIC == "RANDOM") begin 
         logic [6 : 0] rnd_reg;
         always @(posedge clk ) begin 
             if(en | `pronoc_reset) begin 
                 rnd_reg =     $urandom_range(NE-1,0);
-                if(SELF_LOOP_EN    == 0)    while(rnd_reg==core_num) rnd_reg =     $urandom_range(NE-1,0);// get a random IP core, make sure its not same as sender core               
-                
+                if(SELF_LOOP_EN == 0)    while(rnd_reg==core_num) rnd_reg =     $urandom_range(NE-1,0);// get a random IP core, make sure its not same as sender core               
             end
         end
         assign dest_ip_num = rnd_reg;
-        endp_addr_encoder addr_encoder (
-            .id_in(dest_ip_num),
-            .code_out(dest_e_addr)
-        );
-        
+        endp_addr_encoder addr_encoder (.id_in(dest_ip_num), .code_out(dest_e_addr));
     end else if (TRAFFIC == "HOTSPOT") begin 
         hot_spot_dest_gen  #(
             .HOTSPOT_NUM(HOTSPOT_NUM),    
@@ -391,110 +377,87 @@ module two_dimension_pck_dst_gen
             .core_num(core_num),
             .off_flag(off_flag)
         );
-        endp_addr_encoder addr_encoder (
-            .id_in(dest_ip_num),
-            .code_out(dest_e_addr)
-        ); 
-    end else if( TRAFFIC == "TRANSPOSE1") begin 
-        assign dest_x   = NX-current_y-1;
-        assign dest_y   = NY-current_x-1;
-        assign dest_l   = NL-current_l-1; 
-        assign dest_e_addr = (T3==1)? {dest_y,dest_x} : {dest_l,dest_y,dest_x};
-        
-        endp_addr_decoder enc
-        (
-            .code_in(dest_e_addr),
-            .id_out(dest_ip_num)
-        );
-        
-    end else if( TRAFFIC == "TRANSPOSE2") begin :transpose2
-        assign dest_x   = current_y;
-        assign dest_y   = current_x;
-        assign dest_l   = current_l;
-        assign dest_e_addr = (T3==1)? {dest_y,dest_x} : {dest_l,dest_y,dest_x};
-        endp_addr_decoder  enc (
-            .code_in(dest_e_addr),
-            .id_out(dest_ip_num)
-        );
-    end  else if( TRAFFIC == "BIT_REVERSE") begin :bitreverse
-        
-        for(i=0; i<(EAw); i=i+1'b1) begin :lp//reverse the address
-            assign dest_ip_num[i]  = current_e_addr [((EAw)-1)-i];
+        endp_addr_encoder addr_encoder (.id_in(dest_ip_num), .code_out(dest_e_addr));
+    end else if( TRAFFIC == "BIT_REVERSE") begin :bitreverse
+        for(i=0; i<(EAw); i=i+1'b1) begin :lp //reverse the address
+            assign dest_e_addr[i]  = current_e_addr [((EAw)-1)-i];
         end
-        
-        endp_addr_encoder  addr_encoder(
-            .id_in(dest_ip_num),
-            .code_out(dest_e_addr)
-        );
-        
-    end  else if( TRAFFIC == "BIT_COMPLEMENT") begin :bitcomp
-        assign dest_x   = ~current_x;
-        assign dest_y   = ~current_y;  
-        assign dest_l   = ~dest_l;
-        assign dest_e_addr = (T3==1)? {dest_y,dest_x} : {dest_l,dest_y,dest_x};
-        endp_addr_decoder  enc (
-            .code_in(dest_e_addr),
-            .id_out(dest_ip_num)
-        );
+        endp_addr_decoder enc (.code_in(dest_e_addr),.id_out(dest_ip_num));
+    end else if( TRAFFIC == "BIT_COMPLEMENT") begin :bitcomp
+        assign dest_e_addr  = ~ current_e_addr;
+        endp_addr_decoder enc (.code_in(dest_e_addr),.id_out(dest_ip_num));
+    end else if( TRAFFIC == "TRANSPOSE1") begin 
+        assign dest_addr.x = (NZ==1 && NY==1)? NX-current_addr.x-1 : NY-current_addr.y-1 ;
+        assign dest_addr.y = (NZ==1)? NX-current_addr.x-1 : NZ-current_addr.z-1 ;
+        assign dest_addr.z = NX-current_addr.x-1;
+        assign dest_addr.l = NL-current_addr.l-1;
+        always @(*) begin
+            dest_e_addr = EAw'(dest_addr);
+            if(NL>1) dest_e_addr[EAw-1: EAw-NLw]=dest_addr.l;
+        end
+        endp_addr_decoder enc (.code_in(dest_e_addr),.id_out(dest_ip_num));
+    end else if( TRAFFIC == "TRANSPOSE2") begin :transpose2
+        assign dest_addr.x = (NZ==1 && NY==1)? NX-current_addr.x-1 : current_addr.y;
+        assign dest_addr.y = ( NZ==1)?  current_addr.x : current_addr.z;
+        assign dest_addr.z   = current_addr.x;
+        assign dest_addr.l = current_addr.l;
+        always @(*) begin 
+            dest_e_addr = EAw'(dest_addr);
+            if(NL>1) dest_e_addr[EAw-1: EAw-NLw]=dest_addr.l;
+        end
+        endp_addr_decoder enc (.code_in(dest_e_addr),.id_out(dest_ip_num));
     end else if( TRAFFIC == "TORNADO" ) begin :tornado
         //[(x+(k/2-1)) mod k, (y+(k/2-1)) mod k],
-        assign dest_x  = (current_x> ((NX+1)/2))? current_x- ((NX+1)/2) -1   :  (NX/2)+current_x-1;  //  = ((current_x + ((NX/2)-1))%NX); 
-        assign dest_y  = (current_y> ((NY+1)/2))? current_y- ((NY+1)/2) -1   :  (NY/2)+current_y-1;  //  = ((current_y + ((NY/2)-1))%NY);
-        assign dest_l   = current_l;
-        assign dest_e_addr = (T3==1)? {dest_y,dest_x} : {dest_l,dest_y,dest_x};
-        
-        endp_addr_decoder enc (
-            .code_in(dest_e_addr),
-            .id_out(dest_ip_num)
-        );
+        assign dest_addr.x  = (current_addr.x> ((NX+1)/2))? current_addr.x- ((NX+1)/2) -1   :  (NX/2)+current_addr.x-1;  //  = ((current_x + ((NX/2)-1))%NX); 
+        assign dest_addr.y  = (current_addr.y> ((NY+1)/2))? current_addr.y- ((NY+1)/2) -1   :  (NY/2)+current_addr.y-1;  //  = ((current_y + ((NY/2)-1))%NY);
+        assign dest_addr.z  = (current_addr.z> ((NZ+1)/2))? current_addr.z- ((NZ+1)/2) -1   :  (NZ/2)+current_addr.z-1;  //  = ((current_z + ((NZ/2)-1))%NZ);
+        assign dest_addr.l  = current_addr.l;
+        always @(*) begin 
+            dest_e_addr = EAw'(dest_addr);
+            if(NL>1) dest_e_addr[EAw-1: EAw-NLw]=dest_addr.l;
+        end
+        endp_addr_decoder enc (.code_in(dest_e_addr),.id_out(dest_ip_num));
     end else if( TRAFFIC == "NEIGHBOR")  begin :neighbor
         //dx = sx + 1 mod k
-        assign dest_x = (current_x + 1) >= NX? 0 : (current_x + 1);
-        assign dest_y = (current_y + 1) >= NY? 0 : (current_y + 1);
-        assign dest_l = current_l;
-        assign dest_e_addr = (T3==1)? {dest_y,dest_x} : {dest_l,dest_y,dest_x};
-        endp_addr_decoder enc(
-            .code_in(dest_e_addr),
-            .id_out(dest_ip_num)
-        );
-    end else if( TRAFFIC == "SHUFFLE") begin: shuffle
-        //di = siÃ¢ÂÂ1 mod b
-        for(i=1; i<(EAw); i=i+1'b1) begin :lp//reverse the address
-            assign dest_ip_num[i]  = current_e_addr [i-1];
+        assign dest_addr.x = ((current_addr.x + 1) >= NX) ? 0 : (current_addr.x + 1);
+        assign dest_addr.y = ((current_addr.y + 1) >= NY) ? 0 : (current_addr.y + 1);
+        assign dest_addr.z = ((current_addr.z + 1) >= NZ) ? 0 : (current_addr.z + 1);
+        assign dest_addr.l = current_addr.l;
+        always @(*) begin 
+            dest_e_addr = EAw'(dest_addr);
+            if(NL>1) dest_e_addr[EAw-1: EAw-NLw]=dest_addr.l;
         end
-        assign dest_ip_num[0]  = current_e_addr [EAw-1];
-        endp_addr_encoder  addr_encoder(
-            .id(dest_ip_num),
-            .code(dest_e_addr)
-        );
+        endp_addr_decoder enc (.code_in(dest_e_addr),.id_out(dest_ip_num));
+    end else if( TRAFFIC == "SHUFFLE") begin: shuffle
+        //di = si-1 mod b
+        for(i=1; i<(EAw); i=i+1'b1) begin :lp//reverse the address
+            assign dest_e_addr[i]  = current_e_addr [i-1];
+        end
+        assign dest_e_addr[0]  = current_e_addr [EAw-1];
+        endp_addr_decoder enc (.code_in(dest_e_addr),.id_out(dest_ip_num));
     end else if(TRAFFIC == "BIT_ROTATION") begin :bitrot
         //di = si+1 mod b
         for(i=0; i<(EAw-1); i=i+1'b1) begin :lp//reverse the address
-            assign dest_ip_num[i]  = current_e_addr [i+1];
+            assign dest_e_addr[i]  = current_e_addr [i+1];
         end
-        assign dest_ip_num[EAw-1]  = current_e_addr [0];
-        endp_addr_encoder addr_encoder(
-            .id_in(dest_ip_num),
-            .code_out(dest_e_addr)
-        ); 
+        assign dest_e_addr[EAw-1]  = current_e_addr [0];
+        endp_addr_decoder enc (.code_in(dest_e_addr),.id_out(dest_ip_num));
     end else if(TRAFFIC == "CUSTOM" )begin 
-        
         assign dest_ip_num = custom_traffic_t;
         endp_addr_encoder addr_encoder (
             .id_in(dest_ip_num),
             .code_out(dest_e_addr)
         );
         assign  off_flag  =  ~custom_traffic_en;    
-        
     end  else begin 
             initial begin 
                 $display("ERROR: Undefined Traffic pattern:%s",TRAFFIC);
                 $stop;
             end
     end
-        
+    
     wire valid_temp  =    (dest_ip_num  <= (NE-1));    
-        
+    
     if (TRAFFIC == "HOTSPOT" || TRAFFIC == "CUSTOM") begin 
         assign valid_dst  = ~off_flag & valid_temp;
     end else begin 

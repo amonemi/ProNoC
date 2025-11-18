@@ -383,6 +383,7 @@ Shared registers for all VCs
     wire [HDATA_PRECAPw-1 : 0 ] precap_din;
     wire [V-1 : 0] precap_hdr_flit_rd = (fifo_rd & received_flit_is_hdr) ?  receive_vc_enable : {V{1'b0}};
     wire [HDATA_PRECAPw-1 : 0 ] precap_dout  [V-1 : 0] ;    
+    fifo_stat_t precap_fifo_stat [V-1 : 0];
     wire [V-1 : 0 ] precap_valid;
     
     //capture data before saving the actual flit in memory
@@ -435,10 +436,7 @@ Shared registers for all VCs
                 .wr_en(precap_hdr_flit_wr[i]),
                 .rd_en(precap_hdr_flit_rd[i]),
                 .dout(precap_dout[i]),
-                .full( ),
-                .nearly_full( ),
-                .recieve_more_than_0(precap_valid[i] ),
-                .recieve_more_than_1( ),
+                .status_o(precap_fifo_stat[i]),
                 .reset(reset),
                 .clk(clk)
             );
@@ -446,7 +444,7 @@ Shared registers for all VCs
             `ifdef SIMULATION  
             always @(posedge clk)begin 
                 if(s_stb_i  &  ~s_we_i &  (vc_addr==i) & (vc_s_addr_i == RECEIVE_PRECAP_DATA_ADDR) )begin
-                    if( precap_valid[i] == 1'b0) $display( "Warning: Reading invalid precap-data %m");    
+                    if( precap_fifo_stat[i].empty) $display( "Warning: Reading invalid precap-data %m");    
                 end
             end
             `endif

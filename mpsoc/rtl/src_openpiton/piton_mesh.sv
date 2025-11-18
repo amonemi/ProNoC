@@ -108,7 +108,7 @@ module piton_mesh
         BACKWARD=  2'd2;
     genvar x,y,l;
     generate
-    if( IS_RING | IS_LINE) begin : ring_line
+    if(IS_1D_TOPO) begin : D1_
         for  (x=0;   x<NX; x=x+1) begin :Router_
             assign current_r_addr [x] = x[RAw-1: 0];
             piton_router_top the_router (
@@ -143,7 +143,7 @@ module piton_mesh
                 assign chan_out_all [ENDPID] = router_chan_out[x][LOCALP];
             end// locals
         end//x
-    end else begin :regular_topo
+    end else begin : D2_
         for (y=0;    y<NY;    y=y+1) begin: y_loop
             for (x=0;    x<NX; x=x+1) begin :x_loop
                 localparam R_ADDR = (y<<NXw) + x;

@@ -445,8 +445,7 @@ sub get_simulator_noc_configuration{
         if ($st==0){
                 $NE=100;
         }else{
-            my ($topology, $T1, $T2, $T3, $V, $Fpay) = get_sample_emulation_param($self,$sample);
-            my ($NEe, $NR, $RAw, $EAw, $Fw) = get_topology_info_sub ($topology, $T1, $T2, $T3, $V, $Fpay);
+            my ($NEe, $NR, $RAw, $EAw, $Fw) = get_sample_topology_info($self,$sample);
             $NE=$NEe;
         }
         if ($traffic eq 'custom'){
@@ -749,8 +748,7 @@ sub run_synthetic_simulation {
             my $dst = $simulate->object_get_attribute($sample,"DST_$i");
             $custom.=($i==0)? "-H \"$src,$dst" : ",$src,$dst";
         }
-        my ($topology, $T1, $T2, $T3, $V, $Fpay) = get_sample_emulation_param($simulate,$sample);
-        my ($NE, $NR, $RAw, $EAw, $Fw) = get_topology_info_sub ($topology, $T1, $T2, $T3, $V, $Fpay);
+        my ($NE, $NR, $RAw, $EAw, $Fw) = get_sample_topology_info ($simulate,$sample);
         for (my $i=0;$i<$NE; $i++){
             my ($src,$dst) = custom_traffic_dest ($simulate,$sample,$i);
             $custom_sv.="\tassign custom_traffic_t[$src]=$dst;\n";
