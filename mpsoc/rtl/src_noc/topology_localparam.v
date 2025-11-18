@@ -161,7 +161,7 @@
         /* verilator lint_off WIDTH */
         ROUTE_TYPE_REGULAR = 
             (ROUTE_NAME == "DOR" || ROUTE_NAME == "TRANC_DOR" )? "DETERMINISTIC" :
-            (ROUTE_NAME == "FULL_ADPT" || ROUTE_NAME == "TRANC_FULL_ADPT" )?   "FULL_ADAPTIVE": "PAR_ADAPTIVE",
+            (ROUTE_NAME == "FULL_ADPT" || ROUTE_NAME == "TRANC_FULL_ADPT" )?   "FULL_ADAPTIVE": "PART_ADAPTIVE",
         /* verilator lint_on WIDTH */
         R2R_CHANELS_REGULAR=  (IS_1D_TOPO)? 2 : (IS_3D_TOPO)? 6 : 4,
         R2E_CHANELS_REGULAR= NL,
@@ -170,7 +170,9 @@
         NR_REGULAR = (IS_1D_TOPO)? NX :(IS_3D_TOPO)? NX*NY*NZ : NX*NY,
         NE_REGULAR = NR_REGULAR * NL,
         MAX_P_REGULAR = R2R_CHANELS_REGULAR + R2E_CHANELS_REGULAR,
-        DSTPw_REGULAR = (IS_3D_TOPO)? log2(MAX_P_REGULAR) : R2R_CHANELS_REGULAR, // P-1
+        DSTPw_REGULAR = 
+            (IS_3D_TOPO && ROUTE_TYPE_REGULAR == "DETERMINISTIC")? log2(R2R_CHANELS_REGULAR+1) : 
+            R2R_CHANELS_REGULAR, 
         NE_PER_R_REGULAR = NL;
     
     /****************
@@ -355,11 +357,9 @@
             (IS_FMESH)? ROUTE_TYPE_REGULAR:
             (IS_STAR) ? ROUTE_TYPE_STAR:
             ROUTE_TYPE_CUSTOM;
-            /* verilator lint_off WIDTH */
             localparam  [0:0] 
                 IS_DETERMINISTIC = (ROUTE_TYPE == "DETERMINISTIC"),
                 IS_FULL_ADAPTIVE = (ROUTE_TYPE == "FULL_ADAPTIVE");
-            /* verilator lint_on WIDTH */
     
     function automatic integer mcast_id_to_endp_id;
     input integer  mcast_id;

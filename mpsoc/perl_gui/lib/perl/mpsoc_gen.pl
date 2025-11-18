@@ -622,7 +622,7 @@ sub noc_config{
     #packet payload width
     $label='Payload width';
     $param='Fpay';
-    $default='32';       
+    $default='32';
     $content='32,256,32';
     $type='Spin-button';
     $info="The packet payload width in bits"; 
@@ -636,7 +636,7 @@ sub noc_config{
         $type="Combo-box";
         if($router_type eq '"VC_BASED"'){
             $content=
-                ($topology eq '"MESH_3D"') ? '"DOR"' :
+                ($topology eq '"MESH_3D"') ? '"DOR" , "FULL_ADPT"' :
                 ($topology eq '"MESH"' || $topology eq '"FMESH"')?  '"DOR","WEST_FIRST","NORTH_LAST","NEGETIVE_FIRST","ODD_EVEN","FULL_ADPT"' :
                 ($topology eq '"TORUS"')? '"TRANC_DOR","TRANC_WEST_FIRST","TRANC_NORTH_LAST","TRANC_NEGETIVE_FIRST","TRANC_FULL_ADPT"':
                 ($topology eq '"RING"')? '"TRANC_DOR"' :

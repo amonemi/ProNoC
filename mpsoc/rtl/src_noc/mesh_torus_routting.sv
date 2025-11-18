@@ -37,14 +37,25 @@ module regular_topo_look_ahead_routing (
             .neighbors_r_addr(neighbors_r_addr)
         );
     end else begin :adapt
-        regular_topo_adaptive_look_ahead_routing #(
-            .P(P)
-        ) adaptive_look_ahead (
-            .dest_router_addr_i(dest_router_addr_f),
-            .destport_encoded(destport_delayed),
-            .lkdestport_encoded(lkdestport_encoded),
-            .neighbors_r_addr(neighbors_r_addr)
-        );
+        if(IS_3D_TOPO) begin 
+            regular_topo_adaptive_look_ahead_routing_3D #(
+                .P(P)
+            ) adaptive_look_ahead (
+                .dest_router_addr_i(dest_router_addr_f),
+                .destport_encoded(destport_delayed),
+                .lkdestport_encoded(lkdestport_encoded),
+                .neighbors_r_addr(neighbors_r_addr)
+            );
+        end else begin 
+            regular_topo_adaptive_look_ahead_routing #(
+                .P(P)
+            ) adaptive_look_ahead (
+                .dest_router_addr_i(dest_router_addr_f),
+                .destport_encoded(destport_delayed),
+                .lkdestport_encoded(lkdestport_encoded),
+                .neighbors_r_addr(neighbors_r_addr)
+            );
+        end
     end
     endgenerate
     always_ff @ (`pronoc_clk_reset_edge) begin
@@ -88,7 +99,7 @@ module  regular_topo_deterministic_look_ahead_routing #(
         regular_topo_destport_decode_decimal decoder(
             .destport_encoded(destport),
             .destport_decimal(dstport_decimal)
-        );       
+        );
     end else begin :oneD
         line_ring_destport_decode_decimal  decoder(
             .destport_encoded(destport),
@@ -114,6 +125,55 @@ module  regular_topo_deterministic_look_ahead_routing #(
 endmodule
 
 
+
+
+/************************************************
+*        adaptive_look_ahead_routing
+**********************************************/
+module  regular_topo_adaptive_look_ahead_routing_3D #(
+    parameter P =5
+)(
+    dest_router_addr_i, 
+    neighbors_r_addr,
+    destport_encoded,   // current router destination port
+    lkdestport_encoded // look ahead destination port 
+);
+    import pronoc_pkg::*;
+    localparam 
+        DIM = (IS_1D_TOPO)? 1 : (IS_2D_TOPO)? 2 : 3,
+        P_1 = P-1,
+        Pw = log2(P);
+    input regular_topo_router_addr_t   dest_router_addr_i;
+    input [RAw-1 : 0]  neighbors_r_addr [P-1 : 0];
+    input [DSTPw-1  :   0]  destport_encoded;
+    output logic [DSTPw-1  :   0]  lkdestport_encoded;
+    regular_topo_router_addr_t next_router_addr [DIM-1 : 0];
+    reg [Pw-1 : 0]  destport [DIM-1 : 0];
+    logic [6 : 0] destport_onehot;
+    //destport_encoded: width is equal to the number of router_to_router port. each asserted bit shows possible route path to that direction. if all bit are zro its destinated to local
+    //lkdestport_encoded:  the first DIM-bits  are valid. each bit shows if nex router in its corespondin dimention is in the same dimention with destination router
+    always_comb begin 
+        destport_onehot='0;
+        destport_onehot [DSTPw:1] = destport_encoded;
+        destport[0] =  destport_onehot[EAST]  ? EAST  : destport_onehot[WEST]  ? WEST  : LOCAL;
+        destport[1] =  destport_onehot[NORTH] ? NORTH : destport_onehot[SOUTH] ? SOUTH : LOCAL;
+        destport[2] =  destport_onehot[UP]    ? UP    : destport_onehot[DOWN]  ? DOWN  : LOCAL;
+        lkdestport_encoded ='0;
+        for (int d=0;d<DIM;d++) begin 
+            next_router_addr[d] = regular_topo_router_addr_t'(neighbors_r_addr[destport[d]]);
+        end
+        lkdestport_encoded[0] = 
+                (destport[0] == LOCAL ) ? 1'b0: 
+                (next_router_addr[0].x !=dest_router_addr_i.x);
+        lkdestport_encoded[1] = 
+                (destport[1] == LOCAL || DIM < 2) ? 1'b0: 
+                next_router_addr[1].y !=dest_router_addr_i.y;
+        lkdestport_encoded[2] = 
+                (destport[2] == LOCAL || DIM < 3 ) ? 1'b0: 
+                next_router_addr[2].z !=dest_router_addr_i.z;
+    end
+endmodule
+
 /************************************************
 *        adaptive_look_ahead_routing
 **********************************************/
@@ -122,7 +182,7 @@ module  regular_topo_adaptive_look_ahead_routing #(
 )(
     dest_router_addr_i, 
     neighbors_r_addr,
-    destport_encoded,   // current router destination port      
+    destport_encoded,   // current router destination port
     lkdestport_encoded // look ahead destination port 
 );
     import pronoc_pkg::*;
@@ -149,8 +209,8 @@ module  regular_topo_adaptive_look_ahead_routing #(
     destport_x = 0;
     destport_y = 0;
     case ({a, b})   
-        2'b10: destport_x = (x) ? Pw'(EAST) : Pw'(WEST); // 1=East, 2=West
-        2'b01: destport_y = (y) ? Pw'(NORTH) : Pw'(SOUTH); // 3=North, 4=South
+        2'b10: destport_x = (x) ? Pw'(EAST) : Pw'(WEST);// 1=East, 2=West
+        2'b01: destport_y = (y) ? Pw'(NORTH) : Pw'(SOUTH);// 3=North, 4=South
         2'b11: begin
             // Both directions
             destport_x = (x) ? Pw'(EAST) : Pw'(WEST);
@@ -274,7 +334,7 @@ module remove_receive_port_one_hot #(
         //bin to one_hot
         destport_out[destport_out_bin] = 1'b1;
         //one_hot_to_bin
-        for (int k = 0; k < P; k++) begin
+        for (int k = 0;k < P;k++) begin
             if (receiver_port[k]) receiver_port_bin = Pw'(k);
             if (destport_in[k]) destport_in_bin = Pw'(k);
         end
@@ -300,7 +360,7 @@ module add_sw_loc_one_hot #(
     output reg [P-1 : 0] destport_out;
     
     always_comb begin 
-        for(int i=0;i<P; i++)begin 
+        for(int i=0;i<P;i++)begin 
             if (i>SW_LOC) destport_out[i] = destport_in[i-1];
             else if (i==SW_LOC) destport_out[i] = 1'b0;
             else destport_out[i] = destport_in[i];
@@ -323,7 +383,7 @@ module add_sw_loc_one_hot_val #(
     input [P_1-1 : 0] destport_in;
     output reg [P-1 : 0] destport_out;
     
-    integer i;   
+    integer i;
     always @(*)begin 
         for(i=0;i<P;i=i+1)begin :port_loop
             if (i>SW_LOC)      destport_out[i] = destport_in[i-1];
@@ -345,7 +405,7 @@ module regular_topo_conventional_routing #(
     destport
     );
     
-    import pronoc_pkg::*;   
+    import pronoc_pkg::*;
     input regular_topo_router_addr_t current_router_addr_i;
     input regular_topo_router_addr_t dest_router_addr_i;
     output logic [DSTPw-1 : 0] destport;
@@ -370,7 +430,7 @@ module regular_topo_conventional_routing #(
                 .dest_x(dest_router_addr_i.x),
                 .dest_y(dest_router_addr_i.y),
                 .dstport_encoded(destport)
-            );        
+            );
         end //"DOR"
         /* verilator lint_off WIDTH */ 
         else if(ROUTE_NAME == "WEST_FIRST") begin : west_first_routing_blk
@@ -444,7 +504,7 @@ module regular_topo_conventional_routing #(
             );
         end //FULL_ADPT
     `ifdef SIMULATION
-        else begin : not_supported initial $display ("Error: %s is an unsupported routing algorithm for %s topology \n",ROUTE_NAME,TOPOLOGY); end
+        else begin : not_supported initial $display ("Error: %s is an unsupported routing algorithm for %s topology \n",ROUTE_NAME,TOPOLOGY);end
     `endif
     /* verilator lint_off WIDTH */ 
     end else if (TOPOLOGY == "TORUS" ) begin :torus
@@ -518,7 +578,7 @@ module regular_topo_conventional_routing #(
             );
         end //TRANC_FULL_ADPT
         `ifdef SIMULATION
-        else begin : not_supported2 initial $display("Error: %s is an unsupported routing algorithm for %s topology",ROUTE_NAME,TOPOLOGY); end
+        else begin : not_supported2 initial $display("Error: %s is an unsupported routing algorithm for %s topology",ROUTE_NAME,TOPOLOGY);end
         `endif
     end //TORUS
     /* verilator lint_off WIDTH */ 
@@ -534,7 +594,7 @@ module regular_topo_conventional_routing #(
             );
         end // "TRANC"
         `ifdef SIMULATION
-        else begin : not_supported2 initial $display("Error: %s is an unsupported routing algorithm for %s topology",ROUTE_NAME,TOPOLOGY); end  
+        else begin : not_supported2 initial $display("Error: %s is an unsupported routing algorithm for %s topology",ROUTE_NAME,TOPOLOGY);end  
         `endif    
         end //"RING"       
     /* verilator lint_off WIDTH */ 
@@ -547,14 +607,14 @@ module regular_topo_conventional_routing #(
                 .current_x(current_router_addr_i.x),
                 .dest_x(dest_router_addr_i.x),
                 .destport(destport)
-            );       
+            );
         end // "DOR"
         `ifdef SIMULATION
-        else begin : not_supported2 initial $display("Error: %s is an unsupported routing algorithm for %s topology",ROUTE_NAME,TOPOLOGY); end
+        else begin : not_supported2 initial $display("Error: %s is an unsupported routing algorithm for %s topology",ROUTE_NAME,TOPOLOGY);end
         `endif           
         end //"LINE" 
     `ifdef SIMULATION
-    else begin : wrong_topology initial $display("Error: %s is an unsupported topology",TOPOLOGY); end
+    else begin : wrong_topology initial $display("Error: %s is an unsupported topology",TOPOLOGY);end
     `endif
     endgenerate
 endmodule
@@ -572,10 +632,10 @@ module tranc_ring_routing #(
     
 );
     function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
+    input integer number;begin   
+        log2=(number <=1) ? 1: 0;
         while(2**log2<number) begin    
-            log2=log2+1;    
+            log2=log2+1;
         end        
     end   
     endfunction // log2 
@@ -592,7 +652,7 @@ module tranc_ring_routing #(
     localparam      
         LOCAL = 3'b001,  
         PLUS = 3'b010,   
-        MINUS = 3'b100;    
+        MINUS = 3'b100;
     
     reg [P-1 : 0] destport_one_hot;
     reg tranc_x_plus;
@@ -651,10 +711,10 @@ module xy_line_routing #(
     destport
 );
     function integer log2;
-    input integer number; begin   
-        log2=(number <=1) ? 1: 0;    
+    input integer number;begin   
+        log2=(number <=1) ? 1: 0;
         while(2**log2<number) begin    
-            log2=log2+1;    
+            log2=log2+1;
         end        
     end   
     endfunction // log2 
@@ -670,15 +730,15 @@ module xy_line_routing #(
     
     localparam      
         LOCAL = (OUT_BIN)?  3'd0 : 3'b001,  
-        PLUS = (OUT_BIN)?  3'd1 : 3'b010,   
-        MINUS = (OUT_BIN)?  3'd2 : 3'b100;         
+        PLUS = (OUT_BIN)?  3'd1 : 3'b010,
+        MINUS = (OUT_BIN)?  3'd2 : 3'b100;
         
     reg [P-1 : 0] destport_one_hot;
     
     always@(*)begin
         destport_one_hot = LOCAL [2 : 0];
         if (dest_x    > current_x)        destport_one_hot = PLUS  [2 : 0];
-        else if (dest_x    < current_x)        destport_one_hot = MINUS [2 : 0];            
+        else if (dest_x    < current_x)        destport_one_hot = MINUS [2 : 0];
     end
     
     line_ring_encode_dstport encode(
@@ -694,7 +754,7 @@ module line_ring_encode_dstport (
     dstport_encoded
 );
     input [2 : 0] dstport_one_hot;
-    output [1 : 0] dstport_encoded; 
+    output [1 : 0] dstport_encoded;
     
     
     localparam  
@@ -725,7 +785,7 @@ module line_ring_decode_dstport (
             2'b10 : dstport_one_hot=3'b100;
             2'b01 : dstport_one_hot=3'b010;
             2'b00 : dstport_one_hot=3'b001;
-            2'b11 : dstport_one_hot=3'b110; //invalid condition in determinstic routing
+            2'b11 : dstport_one_hot=3'b110;//invalid condition in determinstic routing
         endcase
     end //always
 endmodule
@@ -745,7 +805,7 @@ module line_ring_destport_decode_decimal (
             2'b10 : destport_decimal=Pw'(BACKWARD);
             2'b01 : destport_decimal=Pw'(FORWARD);
             2'b00 : destport_decimal=Pw'(LOCAL);
-            2'b11 : destport_decimal=Pw'(LOCAL); //invalid condition in determinstic routing
+            2'b11 : destport_decimal=Pw'(LOCAL);//invalid condition in determinstic routing
         endcase
     end //always
 endmodule
@@ -754,7 +814,7 @@ module regular_topo_decode_dstport (
     dstport_encoded,
     dstport_one_hot
 );
-    input [3 : 0] dstport_encoded; 
+    input [3 : 0] dstport_encoded;
     output  reg [4 : 0] dstport_one_hot;
     wire x,y,a,b;
     assign {x,y,a,b} = dstport_encoded;
@@ -763,7 +823,7 @@ module regular_topo_decode_dstport (
         case({a,b})
             2'b10 : dstport_one_hot = {1'b0,~x,1'b0,x,1'b0};
             2'b01 : dstport_one_hot = {~y,1'b0,y,1'b0,1'b0};
-            2'b11 : dstport_one_hot = {1'b0,~x,1'b0,x,1'b0}; //illegal
+            2'b11 : dstport_one_hot = {1'b0,~x,1'b0,x,1'b0};//illegal
             2'b00 : dstport_one_hot = 5'b00001;
         endcase
    end //always
@@ -783,8 +843,8 @@ module regular_topo_destport_decode_decimal (
     always_comb begin
     destport_decimal = 0;
     case ({a, b})   
-        2'b10: destport_decimal = (x) ? Pw'(EAST) : Pw'(WEST); // 1=East, 2=West
-        2'b01: destport_decimal = (y) ? Pw'(NORTH) : Pw'(SOUTH); // 3=North, 4=South
+        2'b10: destport_decimal = (x) ? Pw'(EAST) : Pw'(WEST);// 1=East, 2=West
+        2'b01: destport_decimal = (y) ? Pw'(NORTH) : Pw'(SOUTH);// 3=North, 4=South
         2'b11: begin
             // Both directions is illegal for decimal output
             destport_decimal = (x) ? Pw'(EAST) : Pw'(WEST);
@@ -814,9 +874,9 @@ module regular_topo_full_adapt_ovc_avail #(
     input [PV-1 : 0] empty_all_next, full_all_next,  nearly_full_all_next,ovc_status;
     output [PV-1 : 0]ovc_avalable_all;
     input reset,clk;
-    reg [PV-1 : 0] full_adaptive_ovc_mask,full_adaptive_ovc_mask_next; 
+    reg [PV-1 : 0] full_adaptive_ovc_mask,full_adaptive_ovc_mask_next;
     always_comb begin
-        for( int k=0; k<PV; k=k+1) begin
+        for( int k=0;k<PV;k=k+1) begin
         //in full adaptive routing, adaptive VCs located in y axies can not be reallocated non-atomicly
             if( AVC_ATOMIC_EN == 0) begin :avc_atomic
                 if((((k/V) == NORTH ) || ((k/V) == SOUTH )) && (  ADAPTIVE_VC_MASK[k%V]))  

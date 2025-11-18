@@ -942,16 +942,25 @@ module regular_topo_destp_generator #(
         ) decoder (
             .dest_port_coded(dest_port_coded),
             .dest_port_out(dest_port_in),
-            .endp_localp_num(endp_localp_num)       
+            .endp_localp_num(endp_localp_num)
         );
     end else if (IS_MESH_3D) begin : three_D
         logic [P-1  : 0] mesh_3d_one_hot_dest_port;
         logic [Pw-1 : 0] local_dest_port;
-        always @(*) begin
-            local_dest_port =Pw'(endp_localp_num) + Pw'(DOWN);
-            mesh_3d_one_hot_dest_port = {P{1'b0}};
-            if(dest_port_coded == 0 && endp_localp_num!=0 && NL >1) mesh_3d_one_hot_dest_port[local_dest_port] = 1'b1;
-            else mesh_3d_one_hot_dest_port[dest_port_coded] = 1'b1;
+        if (IS_DETERMINISTIC) begin 
+            always @(*) begin
+                local_dest_port =Pw'(endp_localp_num) + Pw'(DOWN);
+                mesh_3d_one_hot_dest_port = {P{1'b0}};
+                if(dest_port_coded == 0 && endp_localp_num!=0 && NL >1) mesh_3d_one_hot_dest_port[local_dest_port] = 1'b1;
+                else mesh_3d_one_hot_dest_port[dest_port_coded] = 1'b1;
+            end
+        end else begin 
+            always @(*) begin
+                local_dest_port =Pw'(endp_localp_num) + Pw'(DOWN);
+                mesh_3d_one_hot_dest_port = {P{1'b0}};
+                if(dest_port_coded == 0 && endp_localp_num!=0 && NL >1) mesh_3d_one_hot_dest_port[local_dest_port] = 1'b1;
+                else mesh_3d_one_hot_dest_port [DSTPw:1] = dest_port_coded;
+            end
         end
         destport_non_selfloop_fix #(
             .SELF_LOOP_EN(SELF_LOOP_EN),
