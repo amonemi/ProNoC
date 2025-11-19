@@ -9,7 +9,7 @@ SCRIPT_FULL_PATH=$(realpath "${BASH_SOURCE[0]}")
 SCRIPT_DIR_PATH=$(dirname "$SCRIPT_FULL_PATH")
 
 # OpenPiton target NoC directory
-op_nocs_dir="$SCRIPT_DIR_PATH/../../rtl/src_openpiton"
+op_nocs_dir="$SCRIPT_DIR_PATH/../../rtl/src_ambachi"
 
 # ProNoC RTL dir
 pronoc_dir="$SCRIPT_DIR_PATH/../../rtl/src_noc"
@@ -17,23 +17,25 @@ pronoc_dir="$SCRIPT_DIR_PATH/../../rtl/src_noc"
 # Script to create physical NoCs
 phy_noc_gen="$SCRIPT_DIR_PATH/phy_noc.pl"
 
-cp "$op_nocs_dir/piton_wrapper.sv" "$pronoc_dir/piton_wrapper.sv"
+cp "$op_nocs_dir/chi_wrapper.sv" "$pronoc_dir/chi_wrapper.sv"
 mv "$pronoc_dir/noc_localparam.v" "$pronoc_dir/noc_localparam.v.tmp"
 cp "$op_nocs_dir/noc_localparam.v" "$pronoc_dir/noc_localparam.v"
 
 # Loop to generate three physical NoCs
 IN=""
 LIST=""
-for i in {1..3}; do
-    mkdir -p "$op_nocs_dir/nocs/noc$i"
-    perl "$phy_noc_gen" "N$i" "$op_nocs_dir/nocs/noc$i"
-    IN+="+incdir+./noc${i}\n"
-    LIST+="-F ./noc${i}/noc_filelist_N${i}.f\n"
-    LIST+="./noc${i}/piton_wrapper_N${i}.sv\n"
+arr=("dat" "rsp" "snp" "req")
+
+for i in "${arr[@]}"; do
+    mkdir -p "$op_nocs_dir/nocs/noc_$i"
+    perl "$phy_noc_gen" "$i" "$op_nocs_dir/nocs/noc_$i"
+    IN+="+incdir+./noc_${i}\n"
+    LIST+="-F ./noc_${i}/noc_filelist_${i}.f\n"
+    LIST+="./noc_${i}/chi_wrapper_${i}.sv\n"
 done
 
 # Clean up and restore the original file
-rm "$pronoc_dir/piton_wrapper.sv"
+rm "$pronoc_dir/chi_wrapper.sv"
 mv "$pronoc_dir/noc_localparam.v.tmp" "$pronoc_dir/noc_localparam.v"
 
 # Generate the file list for physical NoCs

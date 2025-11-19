@@ -9,6 +9,7 @@
 	localparam T1=`PITON_X_TILES;
 	localparam T2=`PITON_Y_TILES;
 	localparam T3=1;
+	localparam T4=1;
 	localparam V=1;
 	localparam C=0;
 	localparam B=4;
