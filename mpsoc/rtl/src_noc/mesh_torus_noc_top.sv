@@ -172,7 +172,7 @@ module regular_topo_noc_top  (
                 end
                 // endpoint(s) connection
                 // connect other local ports
-                for  (l=0; l<NL; l=l+1) begin :locals
+                for  (l=0; l<NL; l=l+1) begin : L_
                     localparam ENDP_ID = fmesh_endp_id(x,y,l); 
                     localparam LOCALP = (l==0) ? l : l + R2R_CHANELS_REGULAR; // first local port is connected to router port 0. The rest are connected at the end  
                     localparam ENDP_ADDR = (IS_REGULAR_TOPO) ? regular_topo_endp_addr(ENDP_ID): fmesh_endp_addr(ENDP_ID);

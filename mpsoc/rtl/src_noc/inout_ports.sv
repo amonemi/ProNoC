@@ -27,7 +27,7 @@
 
 module inout_ports #(
     parameter ROUTER_ID=0,
-    parameter P=5    
+    parameter P=5
 )(
     clk,
     reset,
@@ -99,7 +99,7 @@ module inout_ports #(
         WPP = WP * P;
     
     input router_info_t router_info;
-    input [PFw-1 : 0] flit_in_all;
+    input flit_t flit_in_all [P-1 : 0];
     input [P-1 : 0] flit_in_wr_all;
     output[PV-1 : 0] credit_out_all;
     input [PV-1 : 0] credit_in_all;
@@ -132,7 +132,7 @@ module inout_ports #(
     
     // to crossbar
     output [Fw-1 : 0] flit_out_all [P-1:0];
-    output [P-1 : 0] ssa_flit_wr_all;
+    output logic [P-1 : 0] ssa_flit_wr_all;
     output [WP-1: 0] iport_weight_all;
     output [WPP-1:0] oports_weight_all;
     input refresh_w_counter;
@@ -281,16 +281,16 @@ module inout_ports #(
         );
         
     end else begin :non_ssa
-        for(i=0;i< P;i=i+1) begin :p_
+        for(i=0;i< P;i=i+1) begin :P_
             assign  ssa_ctrl[i] = {SSA_CTRL_w{1'b0}};
         end
-    end //ssa   
-    
-    for(i=0;i< P;i=i+1) begin :p_
-        assign ssa_flit_wr_all [i] = ssa_ctrl[i].ssa_flit_wr;
-    end//for    
-    
-    `ifdef SIMULATION     
+    end //ssa
+    always_comb begin
+        for(int k=0;k< P;k++) begin 
+            ssa_flit_wr_all [k] = ssa_ctrl[k].ssa_flit_wr;
+        end//for
+    end
+    `ifdef SIMULATION
     if(DEBUG_EN && MIN_PCK_SIZE >1 )begin :dbg  
         wire [PV-1 : 0] non_vsa_ivc_num_getting_ovc_grant_all;
         integer kk;
@@ -300,12 +300,12 @@ module inout_ports #(
         always @(posedge clk ) begin
             for(kk=0; kk< PV; kk=kk+1'b1 ) if(reset_ivc_all[kk] & (ivc_num_getting_ovc_grant[kk] | non_vsa_ivc_num_getting_ovc_grant_all[kk])) begin 
                 $display("%t: ERROR: the ovc %d released and allocat signal is asserted in the same clock cycle : %m",$time,kk);
-                $finish;    
+                $finish;
             end
             end
     end  
-    `endif// SIMULATION   
-    endgenerate            
+    `endif// SIMULATION
+    endgenerate
 endmodule
 
 /******************

@@ -55,8 +55,7 @@ module  ss_allocator #(
         PVDSTPw= PV * DSTPw,
         PFw = P * Fw,
         DISABLED = P;
-        
-    input [PFw-1 : 0]  flit_in_all;
+    input flit_t  flit_in_all [P-1 : 0];
     input [P-1 : 0]  flit_in_wr_all;
     input [P-1 : 0]  any_ovc_granted_in_outport_all;
     input [P-1 : 0]  any_ivc_sw_request_granted_all;
@@ -131,7 +130,7 @@ module  ss_allocator #(
                 .P(P)
             ) the_ssa_per_vc (
                 .flit_in_wr(flit_in_wr_all[(i/V)]),
-                .flit_in(flit_in_all[((i/V)+1)*Fw-1 : (i/V)*Fw]),
+                .flit_in(flit_in_all[(i/V)]),
                 .any_ivc_sw_request_granted(any_ivc_sw_request_granted_all[(i/V)]),
                 .any_ovc_granted_in_ss_port(any_ovc_granted_in_ss_port[i]),
                 .ovc_avalable_in_ss_port(ovc_avalable_in_ss_port[i]),

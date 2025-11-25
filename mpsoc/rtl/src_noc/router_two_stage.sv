@@ -94,14 +94,14 @@ module router_two_stage #(
         WPP=  WP * P,
         PRAw= P * RAw; 
     
-    flit_chanel_t chan_in_tmp  [P-1 : 0];   
+    flit_chanel_t chan_in_tmp  [P-1 : 0];
     
-    wire  [PFw-1 :  0]  flit_in_all;
+    flit_t  flit_in_all [P-1 : 0];
     wire  [P-1 :  0]  flit_in_wr_all;
     wire  [PV-1 :  0]  credit_out_all;
     wire  [CONG_ALw-1 :  0]  congestion_in_all;
     
-    wire  [Fw-1 :  0]  flit_out_all [P-1 : 0];
+    flit_t flit_out_all [P-1 : 0];
     wire  [P-1 :  0]  flit_out_wr_all;
     wire  [PV-1 :  0]  credit_in_all;
     wire  [CONG_ALw-1 :  0]  congestion_out_all;
@@ -247,8 +247,8 @@ module router_two_stage #(
             end
             
             assign  neighbors_r_addr  [(i+1)*RAw-1:  i*RAw] = ctrl_in[i].router_addr;
-            assign  flit_in_all       [(i+1)*Fw-1:  i*Fw] = chan_in_tmp[i].flit;
-            assign  flit_in_wr_all    [i] = chan_in_tmp[i].flit_wr;   
+            assign  flit_in_all       [i] = chan_in_tmp[i].flit;
+            assign  flit_in_wr_all    [i] = chan_in_tmp[i].flit_wr;
             assign  credit_in_all     [(i+1)*V-1:  i*V] = chan_in_tmp[i].credit;
             assign  congestion_in_all [(i+1)*CONGw-1:  i*CONGw] = chan_in_tmp[i].congestion; 
             
@@ -281,7 +281,7 @@ module router_two_stage #(
                     .en (ctrl_in[i].credit_release_en[j]), 
                     .credit_out(credit_release_out[i*V+j])
                 );
-                assign credit_init_val_in[i][j]       = ctrl_in[i].credit_init_val[j];
+                assign credit_init_val_in[i][j]  = ctrl_in[i].credit_init_val[j];
             end
         end
     endgenerate

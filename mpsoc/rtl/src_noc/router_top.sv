@@ -67,14 +67,10 @@ module router_top #(
     ctrl_chanel_t ctrl_in  [P-1 : 0];
     ctrl_chanel_t ctrl_out [P-1 : 0];
     
-    always_comb begin 
-        for( int k=0; k<P; k++) begin 
-            ctrl_in [k] = chan_in[k].ctrl_chanel;
-        end
-    end
     
     always_comb begin
         for(int k=0; k<P; k++) begin
+            ctrl_in [k] = chan_in[k].ctrl_chanel;
             router_event[k].flit_wr_i = chan_in[k].flit_chanel.flit_wr;
             router_event[k].bypassed_num = chan_in[k].smart_chanel.bypassed_num;
             router_event[k].pck_wr_i  = chan_in[k].flit_chanel.flit_wr & chan_in[k].flit_chanel.flit.hdr_flag;
@@ -301,21 +297,8 @@ module router_top #(
     // hdr_flit_t hdr_flit_i [P-1 : 0]; // the received packet header flit info
     // hdr_flit_t hdr_flit_o [P-1 : 0]; // the sent packet header flit info
     
-    for(i=0; i<P; i=i+1) begin :Port_
-        /*
-        header_flit_info  in_extract(
-            .flit(chan_in[i].flit_chanel.flit),
-            .hdr_flit( hdr_flit_i[i]),
-            .data_o()
-        );
-
-        header_flit_info  out_extract(
-            .flit(chan_out[i].flit_chanel.flit),
-            .hdr_flit( hdr_flit_o[i]),
-            .data_o()
-        );
-        */
-        if(DEBUG_EN) begin :dbg
+    if(DEBUG_EN) begin :dbg
+        for(i=0; i<P; i=i+1) begin : P_
             check_flit_chanel_type_is_in_order IVC_flit_type_check (
                 .clk(clk),
                 .reset(reset),

@@ -82,14 +82,14 @@ module input_ports #(
     input   router_info_t router_info;
     output  [PV-1 : 0] ivc_num_getting_sw_grant;
     input   [P-1 : 0] any_ivc_sw_request_granted_all;
-    input   [PFw-1 : 0] flit_in_all;
+    input   flit_t flit_in_all [P-1 : 0];
     input   [P-1 : 0] flit_in_wr_all;
     output  [PV-1 : 0] reset_ivc_all;
     output  [PV-1 : 0] flit_is_tail_all;
     output  [PV-1 : 0] ivc_request_all;
     output  [PV-1 : 0] credit_out_all;
     output  [PVP_1-1 : 0] dest_port_all;
-    output  [Fw-1 : 0] flit_out_all [P-1 : 0];
+    output  flit_t flit_out_all [P-1 : 0];
     input   [PV-1  : 0] assigned_ovc_not_full_all;
     output  [PV-1  : 0] ovc_is_assigned_all;
     input   [PV-1 : 0] sel;
@@ -127,7 +127,7 @@ module input_ports #(
             .credit_out(credit_out_all [(i+1)*V-1 : i*V]),
             .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant  [(i+1)*V-1 : i*V]),// for non spec ivc_num_getting_first_sw_grant,
             .any_ivc_sw_request_granted(any_ivc_sw_request_granted_all  [i]),
-            .flit_in(flit_in_all[(i+1)*Fw-1 : i*Fw]),
+            .flit_in(flit_in_all[i]),
             .flit_in_wr(flit_in_wr_all[i]),
             .reset_ivc(reset_ivc_all [(i+1)*V-1 : i*V]),
             .flit_is_tail(flit_is_tail_all  [(i+1)*V-1 : i*V]),
