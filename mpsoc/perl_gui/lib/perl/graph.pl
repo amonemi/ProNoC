@@ -145,9 +145,20 @@ sub gen_heat_map{
     my $save = def_image_button('icons/save.png',undef,TRUE);
     my $type_combo=gen_combobox_object ($self,"${graph_id}","type","Table,Image",'Table','ref',2);
     my @samples =$self->object_get_attribute_order("samples");
-    @samples = ('-') if (scalar @samples == 0);
-    my $sample_combx=gen_combobox_object ($self,${graph_id},"sample_sel",join(",", @samples),$samples[0],'ref',2);
+    my @sample_names;
+    for my $i (0..$#samples) {
+        my $name=$self->object_get_attribute($samples[$i],"line_name");
+        $sample_names[$i]=$name if(defined $name);
+    }
+    @sample_names = ('-') if (scalar @samples == 0);
+    my $sample_combx=gen_combobox_object ($self,${graph_id},"sample_sel",join(",", @sample_names),$sample_names[0],'ref',2);
     my $sample = $self->object_get_attribute("${graph_id}","sample_sel");
+    for my $i (0..$#samples) {
+        if ($sample_names[$i] eq $sample){
+            $sample = $samples[$i];
+            last;
+        }
+    }
     my $ref=$self->object_get_attribute ($sample,$result_name);
     my @ratios;
     @ratios = get_uniq_keys($ref,@ratios);
