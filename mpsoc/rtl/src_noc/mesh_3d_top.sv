@@ -69,7 +69,13 @@ module mesh_3d_noc_top (
         for (y=0; y<NY; y=y+1) begin: Y_
             for (x=0; x<NX; x=x+1) begin: X_
                 localparam 
-                    RID =z*(NX * NY) + (y * NX) + x;
+                    RID =z*(NX * NY) + (y * NX) + x,
+                    XP1 = (x+1)%NX,
+                    XM1 = (x-1+NX)%NX,
+                    YP1 = (y+1)%NY,
+                    YM1 = (y-1+NY)%NY,
+                    ZP1 = (z+1)%NZ,
+                    ZM1 = (z-1+NZ)%NZ;
                 assign current_r_addr[RID ]='{x:x,y:y,z:z};
                 router_top #(
                     .ROUTER_ID(RID),
@@ -86,17 +92,17 @@ module mesh_3d_noc_top (
                 assign router_config_in[RID].router_id=RID;
                 // **Mesh Interconnect Logic**
                 assign router_chan_in[z][y][x][EAST]  = (x < NX-1) ?
-                    router_chan_out[z][y][x+1][WEST]  : is_grounded;
+                    router_chan_out[z][y][XP1][WEST]  : is_grounded;
                 assign router_chan_in[z][y][x][NORTH] = (y > 0   ) ?
-                    router_chan_out[z][y-1][x][SOUTH] : is_grounded;
+                    router_chan_out[z][YM1][x][SOUTH] : is_grounded;
                 assign router_chan_in[z][y][x][WEST]  =  (x > 0  ) ?
-                    router_chan_out[z][y][x-1][EAST]  : is_grounded;
+                    router_chan_out[z][y][XM1][EAST]  : is_grounded;
                 assign router_chan_in[z][y][x][SOUTH] = (y < NY-1) ?
-                    router_chan_out[z][y+1][x][NORTH] : is_grounded;
+                    router_chan_out[z][YP1][x][NORTH] : is_grounded;
                 assign router_chan_in[z][y][x][UP]    = (z < NZ-1) ?
-                    router_chan_out[z+1][y][x][DOWN]  : is_grounded;
+                    router_chan_out[ZP1][y][x][DOWN]  : is_grounded;
                 assign router_chan_in[z][y][x][DOWN]  = (z > 0   ) ?
-                    router_chan_out[z-1][y][x][UP]    : is_grounded;
+                    router_chan_out[ZM1][y][x][UP]    : is_grounded;
                 //endpoint connections
                 for (l=0;l<NL;l++) begin 
                     localparam EID = RID*NL+l;
