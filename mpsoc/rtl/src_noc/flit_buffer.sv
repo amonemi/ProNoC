@@ -54,10 +54,10 @@ module flit_buffer #(
         BVw = log2(BV),
         PORT_Vw = (PORT_IVC==1)? 1 : log2(PORT_IVC),
         DEPTHw = log2(PORT_B+1),
-        RESTw = Fw -2-PORT_IVC , 
+        RESTw = Fw - 2 - V,
         PTRw = ((2**PORT_Bw)==PORT_B)? PORT_Bw : BVw, // if B is power of 2 PTRw is Bw else is BVw
         ARRAYw = PTRw * PORT_IVC,
-        RAM_DATA_WIDTH = (IS_MULTI_FLIT)? Fw - PORT_IVC : Fw - PORT_IVC -2;
+        RAM_DATA_WIDTH = (IS_MULTI_FLIT)? Fw - V : Fw - V - 2;
     
     input [Fw-1 :0]   din;     // Data in
     input [PORT_IVC-1 :0]   vc_num_wr;//write virtual chanel
@@ -92,7 +92,7 @@ module flit_buffer #(
     
     reg [PORT_B-1 : 0] tail_fifo [PORT_IVC-1 : 0];
     wire [1 : 0] flgs_in, flgs_out;
-    wire [PORT_IVC-1: 0] vc_in;
+    wire [V-1: 0] vc_in;
     wire [RESTw-1 :0      ] flit_rest_in,flit_rest_out;
     wire [PORT_IVC-1 : 0] sub_rd;
     wire [PORT_IVC-1 : 0] sub_restore;
@@ -189,7 +189,7 @@ module flit_buffer #(
         vc_rd_addr = '0;
         wr_select_addr = '0;
         rd_select_addr = '0;
-        for (int k = 0; k < V; k++) begin
+        for (int k = 0; k < PORT_IVC; k++) begin
             //One-hot_mux
             vc_wr_addr |= (vc_num_wr[k]) ?  wr_ptr[k] :  '0;
             if (IS_UNICAST) vc_rd_addr |= (vc_num_rd[k]) ?  rd_ptr[k] :  '0;
