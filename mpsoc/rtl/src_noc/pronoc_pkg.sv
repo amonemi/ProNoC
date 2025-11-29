@@ -205,9 +205,27 @@ package pronoc_pkg;
         logic [BEw-1     : 0] be;
     } hdr_flit_t;
     localparam HDR_FLIT_w = $bits(hdr_flit_t); 
-    
+
+`ifdef PITON_PRONOC
+    // OpenPiton CHIPID + XPOS + YPOS + FBITS widths
+    // NOTE: this is constant
+    localparam PITON_DESTw = `NOC_CHIPID_WIDTH + `NOC_X_WIDTH + `NOC_Y_WIDTH +
+                             `MSG_DST_FBITS_WIDTH;
+    // Extend the size of the Depth-First payload when necessary.
+    // The issue here is that Depth-First adds additionnal destination fields
+    // (total size is MSB_BE + 1), which might be larger than the regular
+    // 14-bit (chipid) + 8-bit x 2 (dest_x/dest_y) + 4-bit FBIT of OpenPiton.
+    // Hence, we need to increase the payload size to reserve enough room for
+    // this additionnal destination fields.
+    localparam FPAYw = (ROUTE_NAME == "DEPTH_FIRST" && MSB_BE + 1 > PITON_DESTw) ?
+                            Fpay + MSB_BE + 1 - PITON_DESTw :
+                            (PCK_TYPE == "SINGLE_FLIT")?
+                                Fpay + MSB_BE :
+                                Fpay;
+`else
     localparam FPAYw = (IS_SINGLE_FLIT)?   Fpay + MSB_BE: Fpay;
-    
+`endif
+
     typedef struct packed {
         bit hdr_flag;
         bit tail_flag;
@@ -302,7 +320,8 @@ package pronoc_pkg;
     function automatic logic [V-1 : 0] hetero_ovc_unary;
     input integer router_id;
     input integer router_port_num;  //router port num
-    integer vc_num, i;
+    integer i;
+    logic [V-1:0] vc_num;
     begin
         vc_num = 
             (HETERO_VC == 0) ? V :

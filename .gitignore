@@ -46,7 +46,7 @@ mpsoc/src_c/plot/plot
 
 mpsoc/perl_gui/lib/Paths
 mpsoc/src_c/**/*.o
-mpsoc/remove_cycle/__pycache__
+**/__pycache__/*
 
 mpsoc_work/
 mpsoc/rtl/src_openpiton/nocs
@@ -54,3 +54,4 @@ mpsoc/rtl/src_ambachi/nocs
 
 mpsoc/Integration_test/**/work
 mpsoc/Integration_test/**/result_logs/*
+mpsoc/rtl/src_multi_mesh/build

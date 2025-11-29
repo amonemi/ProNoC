@@ -388,16 +388,16 @@ module input_queue_per_port #(
     logic [1:0] ovc_sel_i;
     logic [1:0] ovc_sel_ivc [V-1 : 0];
     if(IS_MULTI_MESH) begin : mmesh_
-    /*
         multi_mesh_ovc_sel #(
-            .SW_LOC(SW_LOC),
-            .LOCAL_ADAPT(0)
-        )ovc_sel(
-            .local_dst_icr(hdr_flit_i.dest_e_addr[DAw-1 : DAw/2]),// hdr_flit_i.dest_e_addr = {local_dst_icr,global_dst}
+            .SW_LOC(SW_LOC)
+        ) ovc_sel(
+            .global_dst_i(hdr_flit_i.dest_e_addr[RAw-1:0]),
             .current_router_addr_i(router_info.router_addr),
-            .ovc_sel(ovc_sel_i)
+            .up_dir_sel_i(hdr_flit_i.dest_e_addr[DAw-2:DAw-2]),
+            .destport_out_i(hdr_flit_i.destport),
+            .vc_num_i(flit_in.vc),
+            .ovc_sel_o(ovc_sel_i)
         );
-    */
     end // "MULTI_MESH"
     
     always_comb begin
@@ -419,6 +419,18 @@ module input_queue_per_port #(
             ivc_info[k].destport_one_hot[P-1 : 0] = destport_one_hot[k];
             ivc_info[k].assigned_ovc_bin = assigned_onc_bin[k];
             ivc_info[k].dest_e_addr = dest_e_addr_out[k];
+`ifdef MULTI_MESH_ASSERTIONS
+            // synthesis translate_off
+            if (IS_MULTI_MESH) begin
+                assert property (@(posedge clk)
+                    ovc_is_assigned[k] |->
+                        k != Z_PLUS_VC_IDX ||
+                        assigned_ovc_one_hot[k] != Z_MIN_VC)
+                    else
+                        $fatal("Z- OVC assigned to a Z+ IVC");
+            end
+            // synthesis translate_on
+`endif // MULTI_MESH_ASSERTIONS
         end //for k
         for (int k=PORT_IVC; k<V; k=k+1) begin 
             ivc_info[k] = {IVC_INFO_w{1'b0}};
@@ -493,7 +505,6 @@ module input_queue_per_port #(
                 .reset (reset),
                 .clk (clk)
             );
-            /*
             multi_mesh_ovc_list_per_ivc #(
                 .IVC_NUM(i), //Input port VC number
                 .P(P) //router IO number
@@ -504,7 +515,6 @@ module input_queue_per_port #(
                 .ovc_sel(ovc_sel_ivc[i]),
                 .ovcs_out(candidate_ovcs [i])
             );
-            */
         end
         if( IS_MULTI_FLIT) begin : multi_flit
             //onehot mux

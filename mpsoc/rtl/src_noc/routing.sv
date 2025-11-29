@@ -100,13 +100,11 @@ module conventional_routing #(
             .destport(destport)
         );
     end else if (IS_MULTI_MESH) begin : multimesh
-    /*
         mesh_cluster_route_xyz  the_conventional_routing  (
             .current_router_addr_i(current_r_addr),
             .destination_router_addr_i(dest_e_addr[EAw-1:0]),
             .router_port_out(destport)
         );
-    */
     end else begin :custom
         custom_conv_routing  #(
             .TOPOLOGY(TOPOLOGY),

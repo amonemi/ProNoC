@@ -139,7 +139,7 @@
             if (router_port_num == 0 || router_port_num > BACKWARD ) port_buffer_size = LB;
         end else if (IS_2D_TOPO) begin
             if (router_port_num == 0 || router_port_num > SOUTH ) port_buffer_size = LB;
-        end else if (IS_3D_TOPO)  begin
+        end else if (IS_3D_TOPO && !IS_MULTI_MESH) begin
             if (router_port_num == 0 || router_port_num > DOWN) port_buffer_size = LB;
         end
     end
@@ -248,10 +248,15 @@
         NE_MULTI_MESH  = T1,  // total number of endpoints
         NR_MULTI_MESH  = T1,  // total number of routers  
         RAw_MULTI_MESH = T2,
-        DAw_MULTI_MESH = 2*T2,  // destination address width
+        // Endpoint (source) Address width
+        // global_src
         EAw_MULTI_MESH = T2,
         MAX_P_MULTI_MESH = 7,
-        DSTPw_MULTI_MESH = log2(MAX_P_MULTI_MESH);
+        DSTPw_MULTI_MESH = log2(MAX_P_MULTI_MESH),
+        // Destination Address width
+        // local_routing_en / next_chip_vdir / destfbits / local_dst / global_dst
+        DAw_MULTI_MESH = 2*T2+log2(MAX_P_MULTI_MESH)+2;
+
     /*************************
     *   regular_topo address struct
     **************************/

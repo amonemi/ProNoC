@@ -86,7 +86,6 @@ module  noc_top (
                 .router_event  (router_event )
         );
     end else if (IS_MULTI_MESH) begin : multimesh_
-    /*
         multi_mesh noc_top ( 
                 .reset         (reset        ), 
                 .clk           (clk          ), 
@@ -94,7 +93,6 @@ module  noc_top (
                 .chan_out_all  (chan_out_all ),
                 .router_event  (router_event )
         );
-    */
     end else begin :custom_
 
         custom_noc_top noc_top ( 

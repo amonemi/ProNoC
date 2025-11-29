@@ -449,19 +449,30 @@ you can add individual numbers or ranges as follow
 sub noc_topology_setting_gui {
     my ($mpsoc,$table,$txview,$row,$show_noc,$noc_id)=@_;
     my $noc_param="noc_param$noc_id";
+    my $noc_type="noc_type$noc_id";
     my $coltmp=0;
     #  topology
     my  $label='Topology';
     my  $param='TOPOLOGY';
     my  $default='"MESH"';
-    my  $content='"MESH","FMESH","MESH_3D","TORUS","RING","LINE","FATTREE","TREE","STAR","CUSTOM"';
+    my  $content='"MESH","FMESH","MESH_3D","TORUS","RING","LINE","FATTREE","TREE","STAR","CUSTOM","MULTI_MESH"';
     my  $type='Combo-box';
     my  $info="Specifies the NoC topology. 
     Options include $content"; 
     $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
     my $topology=$mpsoc->object_get_attribute($noc_param,'TOPOLOGY');
-    if($topology ne '"CUSTOM"' ){
+    if ($topology eq '"MULTI_MESH"') {
+        # Multi-Mesh requires YAML configuration file selection
+        $label= "Select yaml file";
+        $param= 'YAML_FILE';
+        $info= "Select the YAML file containing the Multi-Mesh configuration settings";
+        $type= 'FILE_path';
+        $default = undef;
+        my $dir  = "$ENV{PITON_ROOT}/configs";
+        $content = "yaml:$dir";
+        ($row,$coltmp)= add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_type,1);
+    } elsif ($topology ne '"CUSTOM"') {
     #topology T1 parameter
         $label= 
             ($topology eq '"FATTREE"' || $topology eq '"TREE"')? 'K' :
