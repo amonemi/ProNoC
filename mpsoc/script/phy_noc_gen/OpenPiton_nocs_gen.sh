@@ -119,7 +119,7 @@ for i in "${!chips_name[@]}"; do
     chip_id="${chips_id[i]}"
     for i in {1..3}; do
         mkdir -p "$phy_nocs_out_dir/${chip_name}/noc$i"
-        perl "$phy_noc_gen" "N${i}" "$phy_nocs_out_dir/$chip_name/noc$i" "${chip_name}" "${chip_id}" "$intermediate_pronoc_dir"
+        perl "$phy_noc_gen" "N${i}" "$phy_nocs_out_dir/$chip_name/noc$i" "$intermediate_pronoc_dir" "${chip_name}" "${chip_id}"
         IN+="+incdir+./$chip_name/noc${i}\n"
         LIST+="-F ./$chip_name/noc${i}/noc_filelist_${chip_name}_N${i}.f\n"
         LIST+="./$chip_name/noc${i}/piton_wrapper_${chip_name}_N${i}.sv\n"

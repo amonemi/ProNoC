@@ -26,9 +26,9 @@ my $dirname = dirname(__FILE__);
 
 my $noc_id = $ARGV[0];
 my $out_dir = $ARGV[1];
-my $chip_name = $ARGV[2];
-my $chip_id = $ARGV[3];
-my $noc_dir = $ARGV[4];
+my $noc_dir = $ARGV[2];
+my $chip_name = $ARGV[3];
+my $chip_id = $ARGV[4];
 
 if (!defined $noc_id) {
     print "Error: No NoC_ID is given. You need to give the NoC ID as input. All RTL modules names and parameters are appended with [NOC_ID].
@@ -37,12 +37,13 @@ if (!defined $noc_id) {
 }
 $out_dir = "./$noc_id" if(!defined $out_dir);
 
-$chip_name = "base" if (!defined $chip_name);
-$chip_id   = "0"    if (!defined $chip_id);
-
 if (!defined $noc_dir) {
     $noc_dir = realpath("$dirname/../../rtl/src_noc");
 }
+
+# Build suffix for replacements
+my $suffix = "${noc_id}";
+$suffix = "${chip_name}_" . $suffix if defined $chip_name;
 
 #check that NoC ID is valid verilog syntac
 #Identifiers may contain alphabetic characters, numeric characters, the underscore, and the dollar sign (a-z A-Z 0-9 _ $ )
@@ -56,10 +57,10 @@ if ($noc_id =~ /[^a-zA-Z0-9_\$]+/){
 
 #Note that white spaces in replace keys are autumatically translated to \s*
 my %replace = (
-    'import pronoc_pkg::*;'  => "import pronoc_pkg_${chip_name}_${noc_id}::*;",
-    'noc_localparam.v'       => "noc_localparam_${chip_name}_${noc_id}.v",
-    'topology_localparam.v'  => "topology_localparam_${chip_name}_${noc_id}.v",
-    'pronoc_pkg'             => "pronoc_pkg_${chip_name}_${noc_id}"
+    'import pronoc_pkg::*;'  => "import pronoc_pkg_${suffix}::*;",
+    'noc_localparam.v'       => "noc_localparam_${suffix}.v",
+    'topology_localparam.v'  => "topology_localparam_${suffix}.v",
+    'pronoc_pkg'             => "pronoc_pkg_${suffix}"
 );
 
 
@@ -179,18 +180,18 @@ my $before = qr/[%!~,=><:\/\n\s\[\]\{\}\(\)\+\-\*\\\.]/;
 my $after  = qr/[%!~,=><:\/\s;\[\]\(\)\{\}\+\-\*\\\^']/;
 
 # Compile module replacement regex
-my %module_replacements = map { $_ => "${_}_${chip_name}_$noc_id" } @module_names;
+my %module_replacements = map { $_ => "${_}_${suffix}" } @module_names;
 my $module_regex = join '|', map { quotemeta } @module_names;
 
 # Compile file replacement regex
 my %file_replacements = map { 
     my ($file_name, $extension) = /^(.+)\.(\w+)$/;
-    $_ => "${file_name}_${chip_name}_${noc_id}.$extension"
+    $_ => "${file_name}_${suffix}.$extension"
 } @files;
 my $file_regex = join '|', map { quotemeta } @files;
 
 # Compile key replacement regex
-my %key_replacements = map { $_ => "${_}_${chip_name}_${noc_id}" } @replaces;
+my %key_replacements = map { $_ => "${_}_${suffix}" } @replaces;
 my $key_regex = join '|', map { quotemeta } @replaces;
 
 # Compile replace hash regex (spaces become \s*)
@@ -211,7 +212,7 @@ my $replace_regex = join '|',
 foreach my $file (@files) {
     #print "$file\n";    
     my ($file_name, $extension) = $file =~ /^(.+)\.(\w+)$/;
-    my $output_filename = "$out_dir/${file_name}_${chip_name}_${noc_id}.$extension";
+    my $output_filename = "$out_dir/${file_name}_${suffix}.$extension";
     
     open(my $input_fh, '<', "$noc_dir/$file") or die "Could not open file '$file' $!";
 
@@ -236,7 +237,9 @@ while (my $line = <$input_fh>) {
     # Replace NOC_ID (handle space around '=')
     $line =~ s/NOC_ID\s*=\s*0/NOC_ID = "$ARGV[0]"/g;
 
-    $line =~ s/NOC_CHIP_ID\s*=\s*0/NOC_CHIP_ID = $chip_id/g;
+    if (defined $chip_id) {
+        $line =~ s/NOC_CHIP_ID\s*=\s*0/NOC_CHIP_ID = $chip_id/g;
+    }
 
     # Replace keys with boundary checks
     #$line =~ s/($before)($key_regex)($after)/$1$key_replacements{$2}$3/g;
