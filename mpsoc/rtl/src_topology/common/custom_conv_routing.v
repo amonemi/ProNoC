@@ -23,7 +23,9 @@ module custom_conv_routing  #(
     generate
     
     //do not modify this line ===Tcustom1Rcustom===
+    /* verilator lint_off WIDTH */
     if(TOPOLOGY == "custom1" && ROUTE_NAME== "custom" ) begin : Tcustom1Rcustom
+    /* verilator lint_on WIDTH */
         Tcustom1Rcustom_conv_routing_comb  #(
             .RAw(RAw),
             .EAw(EAw),

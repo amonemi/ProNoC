@@ -9,6 +9,7 @@ use Gtk3::SourceView;
 use Consts;
 require "common.pl";
 use IO::CaptureOutput qw(capture qxx qxy);
+use File::Temp qw/tempfile/;
 #use ColorButton;
 use HexSpin3;
 #use Tk::Animation;
@@ -1744,56 +1745,34 @@ sub file_edit_tree {
 ##########
 #  run external commands
 ##########
-sub run_cmd_in_back_ground
-{
-    my $command = shift;
-    #print "\t$command\n";
-    ### Start running the Background Job:
-    my $proc = Proc::Background->new($command);
-    my $PID = $proc->pid;
-    my $start_time = $proc->start_time;
-    my $alive = $proc->alive;
-    ### While $alive is NOT '0', then keep checking till it is...
-    #  *When $alive is '0', it has finished executing.
-    while($alive ne 0)
-    {
-    $alive = $proc->alive;
-    # This while loop will cause Gtk3 to continue processing events, if
-    # there are events pending... *which there are...
+sub run_cmd_in_back_ground {
+    my ($command, $stdout_file, $stderr_file) = @_;
+    chomp $command; #remove newline 
+    my $cmd =(defined $stdout_file) ? "$command 1>$stdout_file 2>$stderr_file" : "$command";
+    my $proc = Proc::Background->new($cmd);
+    while ($proc->alive) {
     while (Gtk3::events_pending) {
         Gtk3::main_iteration;
     }
     Gtk3::Gdk::flush;
     usleep(1000);
     }
-    my $end_time = $proc->end_time;
-    # print "*Command Completed at $end_time, with PID = $PID\n\n";
-    # Since the while loop has exited, the BG job has finished running:
-    # so close the pop-up window...
-    # $popup_window->hide;
-    # Get the RETCODE from the Background Job using the 'wait' method
-    my $retcode = $proc->wait;
-    $retcode /= 256;
-    #print "\t*RETCODE == $retcode\n\n";
-    Gtk3::Gdk::flush;
-    ### Check if the RETCODE returned with an Error:
-    if ($retcode ne 0) {
-    print "Error: The Background Job ($command) returned with an Error...!\n";
-    return 1;
-    } else {
-    #print "Success: The Background Job Completed Successfully...!\n";
-    return 0;
-    }
+    my $ret = $proc->wait / 256;
+    return $ret;
 }
 
 sub run_cmd_in_back_ground_get_stdout
 {
     my $cmd=shift;
     my $exit;
-    my ($stdout, $stderr);
-    STDOUT->flush();
-    STDERR->flush();
-    capture { $exit=run_cmd_in_back_ground($cmd) } \$stdout, \$stderr;
+    # Create temp files in /dev/shm (RAM)
+    my ($stderr_fh, $stderr_file) = tempfile(DIR => "/dev/shm", UNLINK => 1);
+    my ($stdout_fh, $stdout_file) = tempfile(DIR => "/dev/shm", UNLINK => 1);
+    close $stderr_fh;
+    close $stdout_fh;
+    $exit=run_cmd_in_back_ground($cmd, $stdout_file, $stderr_file) ;
+    my $stderr = do { local (@ARGV, $/) = ($stderr_file); <> };
+    my $stdout = do { local (@ARGV, $/) = ($stdout_file); <> };
     return ($stdout,$exit,$stderr);
 }
 

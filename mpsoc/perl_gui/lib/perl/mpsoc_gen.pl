@@ -1292,10 +1292,15 @@ my $coltmp=0;
     $info="Select the routing algorithm";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,1,$noc_param,1);
     $mpsoc->object_add_attribute($noc_param,'T1',$param{$topology_name}{'T1'});
+    $noc_param_comment{"T1"} = "Total number of endpoints in the CUSTOM topology.";
     $mpsoc->object_add_attribute($noc_param,'T2',$param{$topology_name}{'T2'});
+    $noc_param_comment{"T2"} = "Total number of routers in the CUSTOM topology.";
     $mpsoc->object_add_attribute($noc_param,'T3',$param{$topology_name}{'T3'});
-    $mpsoc->object_add_attribute($noc_param,'T4',$param{$topology_name}{'T4'});
+    $noc_param_comment{"T3"} = "Maximum number of ports in a router in the CUSTOM topology.";
+    $mpsoc->object_add_attribute($noc_param,'T4',0);
+    $noc_param_comment{"T4"} = "Unused in the CUSTOM topology.";
     $mpsoc->object_add_attribute('noc_connection','er_addr',$param{$topology_name}{'er_addr'});
+    $noc_param_comment{"ROUTE_NAME"} = "Source-destination routing name for the CUSTOM topology.";
     return ($row,$coltmp);
 }
 

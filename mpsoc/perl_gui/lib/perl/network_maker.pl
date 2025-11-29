@@ -13,6 +13,9 @@ use lib $FindBin::Bin;
 use tsort;
 use File::Basename;
 use Cwd 'abs_path';
+use YAML::PP;
+use YAML::PP::Common;
+use Data::Dumper;
 
 __PACKAGE__->mk_accessors(qw{
     window
@@ -313,8 +316,8 @@ sub take_node_num_page{
     my $table= def_table(2,10,FALSE);
     my $row=0;
     my $col=4;
-    $table->attach (def_label('Network Element'),$col,$col+1,$row,$row+1,'fill','shrink',2,2);$col+=2;
-    $table->attach (def_label('Number'),$col,$col+1,$row,$row+1,'fill','shrink',2,2);
+    # $table->attach (def_label('Network Element'),$col,$col+1,$row,$row+1,'fill','shrink',2,2);$col+=2;
+    # $table->attach (def_label('Number'),$col,$col+1,$row,$row+1,'fill','shrink',2,2);
     $row++;$col=0;
     $table->attach (def_icon('icons/e.png'),$col,$col+1,$row,$row+1,'fill','shrink',2,2);$col++;
     ($row,$col)=add_param_widget ($self,"# Endpoints","NUM", 0,'Spin-button','0,1024,1',undef, $table,$row,$col,1,'ENDP',10,'redraw');$col=0;
@@ -347,7 +350,7 @@ sub take_instance_page{
         $n=0 if(!defined $n);
         for ( my $j=0;$j<$n; $j++){
             my $d=get_default_instance_name($self,"ROUTER${i}_$j");
-            ($row,$col)=add_param_widget ($self,"Router $Rnum","NAME", "$d",'Entry',undef,"router instance name", $table,$row,$col,1,"ROUTER${i}_$j",10,'redraw');$col=0;
+            ($row,$col)=add_param_widget ($self,"${i}-PortRouter${j}","NAME", "$d",'Entry',undef,"router instance name", $table,$row,$col,1,"ROUTER${i}_$j",10,'redraw');$col=0;
             $Rnum++;
         }
     }
@@ -662,7 +665,7 @@ sub evaluate_eqation{
         }
         else{
             my ($v, $start, $end, $step) = sscanf("%s[%d,%d,%d]", $p);
-            print "($v, $start, $end, $step)\n";
+            #print "($v, $start, $end, $step)\n";
             my @a;
             for (my $i=$start; $i<$end;$i++){
                 push (@a,$i);
@@ -1629,7 +1632,7 @@ sub get_forbiden_turns_old {
                     if (defined $path){
                         #path counting
                         my @a_nodes=     get_adjacent_node_in_a_path($path);#get_adjacent_router_in_a_path($path);
-                        print "@a_nodes = \@a_nodes \n";
+                        #print "@a_nodes = \@a_nodes \n";
                         %edge_graph = get_path_edges_graph_file (\@a_nodes,\%edge_graph);
                         #$graph  =$graph. $str1;
                         #$graph_coded = $graph_coded . $str2;
@@ -2311,6 +2314,135 @@ sub load_nwm{
     add_color_to_gd($self);
 }
 
+sub Get_yaml_noc_conf{
+    my ($self,$info)=@_;
+    my $file;
+    my $dialog =  gen_file_dialog (undef, 'yml');
+    my $dir = Cwd::getcwd();
+    $dialog->set_current_folder ("$dir/../script/noc_yml_gen")    ;
+    if ( "ok" eq $dialog->run ) {
+        $file = $dialog->get_filename;
+        my ($name,$path,$suffix) = fileparse("$file",qr"\..[^.]*$");
+        if($suffix eq '.yml'){
+            #Read yml file 
+            add_info($info,"Loading Custom NoC configuration from $file\n");
+            Read_yaml_noc_conf_file($self,$info,$file);
+        }
+    }
+    $dialog->destroy;
+    set_gui_status($self,"ref",1)
+}
+
+sub Read_yaml_noc_conf_file{
+    my ($self,$info,$file)=@_;
+    my $yp = YAML::PP->new(preserve => YAML::PP::Common->PRESERVE_ORDER);
+    my $data = $yp->load_file($file);
+    my %connections = map { $_->{source} => $_->{dest} } @{$data->{connections}};
+    my %endpoints = map { $_->{id} => $_->{endpoints} } @{$data->{nodes}};
+    my %port_count;
+    my %router_hash;
+    # Track per-port router counters
+    my %port_counters;
+    my $enps_count=0;
+    foreach my $router_id (sort { $a <=> $b } keys %connections) {
+        my $ports = scalar @{$connections{$router_id}};  # number of dest nodes = ports
+        my $eps   = scalar @{$endpoints{$router_id} // []};   # number of endpoints for this router
+        $ports+=$eps;
+        $port_count{$ports}++;
+        $enps_count+=$eps;
+        # assign router name router_${p}_${n}
+        my $n = $port_counters{$ports} // 0;
+        $router_hash{$router_id} = "ROUTER${ports}_${n}";
+        $port_counters{$ports} = $n + 1;
+    }
+    $self->object_add_attribute ("ENDP","NUM",$enps_count);
+    foreach my $p (sort { $a <=> $b } keys %port_count) {
+        add_info($info,"Add $p-Ports Router: $port_count{$p} number\n");
+        $self->object_add_attribute ("ROUTER${p}","NUM",$port_count{$p});
+    }
+    my %port_map;
+    # Track destination port counters (optional simple assumption: dest ports assigned sequentially)
+    my %dest_port_counter;
+    $enps_count=0;
+    # remembers port assignment between router pairs
+    my %link_ports;
+    # track used ports per router
+    my %router_used_ports;
+
+foreach my $src_id (sort { $a <=> $b } keys %connections) {
+
+    my $src_router = $router_hash{$src_id};
+    my @dst_ids    = @{$connections{$src_id}};
+    $port_map{$src_router} = [];
+
+    for my $src_port (0 .. $#dst_ids) {
+
+        my $dst_id     = $dst_ids[$src_port];
+        my $dst_router = $router_hash{$dst_id};
+
+        my ($assigned_src_port, $assigned_dst_port);
+
+        ############################################################
+        # CASE 1: Check if this src–dst link already has port numbers
+        ############################################################
+        if ( exists $link_ports{$src_router}{$dst_router} ) {
+
+            # retrieve the existing pair
+            ($assigned_src_port, $assigned_dst_port) =
+                @{ $link_ports{$src_router}{$dst_router} };
+
+        } else {
+
+            ############################################################
+            # CASE 2: New src/dst link → find free ports
+            ############################################################
+
+            # ---- find first free src port ----
+            my $src_port = 0;
+            $src_port++ while $router_used_ports{$src_router}{$src_port};
+            $assigned_src_port = $src_port;
+
+            # ---- find first free dst port ----
+            my $dst_port = 0;
+            $dst_port++ while $router_used_ports{$dst_router}{$dst_port};
+            $assigned_dst_port = $dst_port;
+
+            # Save symmetric mapping
+            $link_ports{$src_router}{$dst_router} =
+                [ $assigned_src_port, $assigned_dst_port ];
+
+            $link_ports{$dst_router}{$src_router} =
+                [ $assigned_dst_port, $assigned_src_port ];
+
+            # Mark ports as used
+            $router_used_ports{$src_router}{$assigned_src_port} = 1;
+            $router_used_ports{$dst_router}{$assigned_dst_port} = 1;
+        }
+
+        ############################################################
+        # Connect routers with the consistent port numbers
+        ############################################################
+
+        connect_nodes(
+            $self,
+            $src_router, "Port[$assigned_src_port]",
+            $dst_router, "Port[$assigned_dst_port]",
+            $info
+        );
+    }
+        my $eps   = scalar @{$endpoints{$src_id} // []};
+        
+        for (my $e= 0; $e<$eps;$e++ ){
+            my $src_port=$#dst_ids + $e +1;
+            connect_nodes ($self,$src_router,"Port[$src_port]","ENDP_$enps_count","Port[0]",$info);
+        }
+        $enps_count+=$eps;
+    }
+    #print "\nRouter hash mapping:\n";
+    #print Dumper(\%router_hash);
+    set_gui_status($self,"redraw",1)
+}
+
 sub build_network_maker_gui {
     my ($self) = @_;
     set_gui_status($self,"ideal",0);
@@ -2344,6 +2476,8 @@ sub build_network_maker_gui {
     my $v2=gen_vpaned($h1,.65,$infobox);
     my $pronoc_dir      = get_project_dir(); #mpsoc dir addr
     my $target_dir= "$pronoc_dir/mpsoc/rtl/src_topology/";
+    my $yml = def_image_button('icons/yaml.png','Load YAML');
+    set_tip($yml, "Read Custom NoC configuration from yaml file.");
     my ($entrybox,$entry ) =gen_save_load_widget (
         $self, #the object
         "Topology name",#the label shown for setting configuration
@@ -2363,6 +2497,7 @@ sub build_network_maker_gui {
         $self->object_add_attribute ("routing_name",undef,$name);
     });
     $main_table->attach_defaults ($v2  , 0, 12, 0,24);
+    $main_table->attach ($yml,0, 2, 24,25,'expand','shrink',2,2);
     $main_table->attach ($entrybox,2, 4, 24,25,'expand','shrink',2,2);
     $main_table->attach ($entrybox2,4, 6, 24,25,'expand','shrink',2,2);
     $main_table->attach ($generate, 6, 9, 24,25,'expand','shrink',2,2);
@@ -2378,6 +2513,9 @@ sub build_network_maker_gui {
     add_color_to_gd($self);
     $generate->signal_connect("clicked" => sub{
         generate_topology($self,$info);
+    });
+    $yml->signal_connect("clicked" => sub{
+        Get_yaml_noc_conf($self,$info);
     });
     #check soc status every 0.5 second. refresh device table if there is any changes
     Glib::Timeout->add (100, sub{

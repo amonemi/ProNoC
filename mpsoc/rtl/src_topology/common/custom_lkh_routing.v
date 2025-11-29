@@ -25,7 +25,9 @@ module custom_lkh_routing  #(
     generate
      
     //do not modify this line ===Tcustom1Rcustom===
+    /* verilator lint_off WIDTH */
     if(TOPOLOGY == "custom1" && ROUTE_NAME== "custom" ) begin : Tcustom1Rcustom
+    /* verilator lint_on WIDTH */
         Tcustom1Rcustom_look_ahead_routing  #(
             .RAw(RAw),  
             .EAw(EAw),   

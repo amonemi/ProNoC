@@ -965,11 +965,8 @@ module destp_generator #(
         );
     end else begin :custom
         custom_topology_destp_decoder #(
-            .ROUTE_TYPE(ROUTE_TYPE),
-            .DSTPw(DSTPw),
             .P(P),
-            .SW_LOC(SW_LOC),
-            .SELF_LOOP_EN(SELF_LOOP_EN)
+            .SW_LOC(SW_LOC)
         ) destp_generator (
             .dest_port_in_encoded(dest_port_encoded),
             .dest_port_out(dest_port_out)
@@ -992,16 +989,14 @@ endmodule
  *   custom_topology_destp_decoder
  * ***************/
 module custom_topology_destp_decoder #(
-    parameter ROUTE_TYPE="DETERMINISTIC",
-    parameter DSTPw=4,
     parameter P=5,
-    parameter SW_LOC=0,
-    parameter SELF_LOOP_EN=0
+    parameter SW_LOC=0
 )(
     dest_port_in_encoded,
     dest_port_out
 );
     
+    import pronoc_pkg::*;
     localparam
         P_1 = (SELF_LOOP_EN )?  P : P-1,
         MAXW =2**DSTPw;

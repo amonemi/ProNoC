@@ -278,7 +278,7 @@ sub select_parallel_process_num {
     my $col=0;
     my $row=0;
     #get total number of processor in the system
-    my $cmd = "nproc\n";
+    my $cmd = "nproc";
     if(!defined $cpu_num){
         my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($cmd);
         if(length $stderr>1){            
@@ -300,7 +300,7 @@ sub select_parallel_thread_num {
     my $col=0;
     my $row=0;
     #get total number of processor in the system
-    my $cmd = "nproc\n";
+    my $cmd = "nproc";
     if(!defined $cpu_num){
         my ($stdout,$exit,$stderr)=run_cmd_in_back_ground_get_stdout($cmd);
         if(length $stderr>1){

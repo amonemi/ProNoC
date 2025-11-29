@@ -20,7 +20,9 @@ module   custom_noc_top
     generate 
     
     //do not modify this line ===custom1===
+    /* verilator lint_off WIDTH */
     if(TOPOLOGY == "custom1" ) begin : Tcustom1
+    /* verilator lint_on WIDTH */
         custom1_noc_genvar the_noc (
             .reset(reset),
             .clk(clk),

@@ -1191,7 +1191,9 @@ sub add_routing_instance_v{
     ####################################
     my $str="
     //do not modify this line ===${Vname}===
+    /* verilator lint_off WIDTH */
     if(TOPOLOGY == \"$name\" && ROUTE_NAME== \"$rname\" ) begin : $Vname
+    /* verilator lint_on WIDTH */
         ${Vname}_ni_routing  #(
             .RAw(RAw),  
             .EAw(EAw),   
@@ -1226,7 +1228,9 @@ sub add_routing_instance_v{
     ####################################
     $str="
     //do not modify this line ===${Vname}===
+    /* verilator lint_off WIDTH */
     if(TOPOLOGY == \"$name\" && ROUTE_NAME== \"$rname\" ) begin : ${Vname}
+    /* verilator lint_on WIDTH */
         ${Vname}_look_ahead_routing  #(
             .RAw(RAw),  
             .EAw(EAw),   
@@ -1262,7 +1266,9 @@ sub add_routing_instance_v{
     ####################################
     $str="
     //do not modify this line ===${Vname}===
+    /* verilator lint_off WIDTH */
     if(TOPOLOGY == \"$name\" && ROUTE_NAME== \"$rname\" ) begin : ${Vname}
+    /* verilator lint_on WIDTH */
         ${Vname}_conv_routing_comb  #(
             .RAw(RAw),
             .EAw(EAw),
@@ -1312,7 +1318,9 @@ sub add_noc_instance_v{
 ";
     my $str="
     //do not modify this line ===${name}===
+    /* verilator lint_off WIDTH */
     if(TOPOLOGY == \"$name\" ) begin : T$name
+    /* verilator lint_on WIDTH */
         ${name}_connection  connection (
 $ports
         );
@@ -1333,7 +1341,9 @@ $ports
     
     $str="
     //do not modify this line ===${name}===
+    /* verilator lint_off WIDTH */
     if(TOPOLOGY == \"$name\" ) begin : T$name
+    /* verilator lint_on WIDTH */
         ${name}_noc_genvar the_noc (
             .reset(reset),
             .clk(clk),
