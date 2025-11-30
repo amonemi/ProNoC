@@ -397,7 +397,7 @@ module output_vc_status #(
         cand_vc_ld_next = cand_vc;
         if(cand_wr_vc_en) cand_vc_ld_next  =  cand_vc_next;
         // For Depth-First, only inject on VC0 (Z-)
-        if (IS_MULTI_MESH) cand_vc_ld_next = 2'd1;
+        if (IS_MULTI_MESH) cand_vc_ld_next = 'd1;
     end
 endmodule
 

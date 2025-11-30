@@ -1748,8 +1748,13 @@ sub file_edit_tree {
 sub run_cmd_in_back_ground {
     my ($command, $stdout_file, $stderr_file) = @_;
     chomp $command; #remove newline 
-    my $cmd =(defined $stdout_file) ? "$command 1>$stdout_file 2>$stderr_file" : "$command";
-    my $proc = Proc::Background->new($cmd);
+    
+    my $proc = (defined $stdout_file)? 
+    Proc::Background->new({
+        stdout => $stdout_file,  
+        stderr => $stderr_file,  
+    },$command) : Proc::Background->new($command);
+
     while ($proc->alive) {
     while (Gtk3::events_pending) {
         Gtk3::main_iteration;
