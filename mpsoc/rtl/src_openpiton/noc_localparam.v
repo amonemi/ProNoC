@@ -16,6 +16,7 @@
 	localparam LB=16;
 
 	localparam ROUTE_NAME="DOR";
+	localparam ROUTE_MODE="LOOKAHEAD";
 	localparam PCK_TYPE="MULTI_FLIT";
 	localparam MIN_PCK_SIZE=1;
 	localparam BYTE_EN=0;
@@ -36,11 +37,11 @@
 	localparam SELF_LOOP_EN=1;
 	localparam AVC_ATOMIC_EN=0;
 	localparam CLASS_SETTING={V{1'b1}};
- 	localparam  CVw=(C==0)? V : C * V;
-        localparam HETERO_VC=0;
-        localparam MAX_ROUTER=1;
-        localparam MAX_PORT=1;
-        localparam int VC_CONFIG_TABLE [MAX_ROUTER][MAX_PORT]='{'{0}};
+ 	localparam CVw=(C==0)? V : C * V;
+ 	localparam HETERO_VC=0;
+ 	localparam MAX_ROUTER=1;
+ 	localparam MAX_PORT=1;
+ 	localparam int VC_CONFIG_TABLE [MAX_ROUTER][MAX_PORT]='{'{0}};
 
 	localparam Fpay= 
         (NOC_ID=="N1") ? `PITON_NOC1_WIDTH : 
