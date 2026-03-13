@@ -18,7 +18,7 @@ pronoc_dir="$SCRIPT_DIR_PATH/../../rtl/src_noc"
 phy_noc_gen="$SCRIPT_DIR_PATH/phy_noc.pl"
 
 cp "$op_nocs_dir/chi_wrapper.sv" "$pronoc_dir/chi_wrapper.sv"
-mv "$pronoc_dir/noc_localparam.v" "$pronoc_dir/noc_localparam.v.tmp"
+mv -f "$pronoc_dir/noc_localparam.v" "$pronoc_dir/noc_localparam.v.tmp"
 cp "$op_nocs_dir/noc_localparam.v" "$pronoc_dir/noc_localparam.v"
 
 # Loop to generate three physical NoCs
@@ -32,7 +32,14 @@ for i in "${arr[@]}"; do
     IN+="+incdir+./noc_${i}\n"
     LIST+="-F ./noc_${i}/noc_filelist_${i}.f\n"
     LIST+="./noc_${i}/chi_wrapper_${i}.sv\n"
+    #remove common files from noc_filelist_${i}.f
+    sed -i '/arbiter.v/d' "$op_nocs_dir/nocs/noc_$i/noc_filelist_${i}.f"
+    sed -i '/main_comp.v/d' "$op_nocs_dir/nocs/noc_$i/noc_filelist_${i}.f"
 done
+
+# Add common files to the file list
+LIST+="./arbiter.v\n"
+LIST+="./main_comp.v\n"
 
 # Clean up and restore the original file
 rm "$pronoc_dir/chi_wrapper.sv"
