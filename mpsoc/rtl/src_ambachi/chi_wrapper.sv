@@ -89,16 +89,16 @@ module chi_to_pronoc_wrapper (
     //credit release should be asserted externaly via register. For simulation we just use a counter to set it few cycles after reset
     reg [3:0] counter;
     always @(posedge clk or posedge reset)begin 
-    	if(reset)  counter<=0;
-    	else if(counter<4) counter=counter+1'b1;
+        if(reset)  counter<=0;
+        else if(counter<4) counter<=counter+1'b1;
     end
-	
+    
     wire credit_release = counter==4;
     genvar i;
     generate
     for (i=0; i<V;i++) begin :V_
-       assign pronoc_chan_out.ctrl_chanel.credit_init_val[i]= 0;
-       assign pronoc_chan_out.ctrl_chanel.credit_release_en[i]= credit_release;
+        assign pronoc_chan_out.ctrl_chanel.credit_init_val[i]= 0;
+        assign pronoc_chan_out.ctrl_chanel.credit_release_en[i]= credit_release;
     end
     endgenerate
     
@@ -196,7 +196,7 @@ module  snp_chi_to_pronoc_wrapper (
     reg [3:0] counter;
     always @(posedge clk or posedge reset)begin 
         if(reset)  counter<=0;
-        else if(counter<4) counter=counter+1'b1;
+        else if(counter<4) counter<=counter+1'b1;
     end
     wire credit_release = counter==4;
     
