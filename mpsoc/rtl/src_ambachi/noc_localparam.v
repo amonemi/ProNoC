@@ -29,7 +29,7 @@
 `ifdef   NOC_LOCAL_PARAM 
 //TODO: replace it with package
     
-    import amba_5_chi_c_pkg::*;
+    import amba_5_chi_pkg::*;
     `include "pronoc_conf.svh"
     
     

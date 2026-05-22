@@ -20,7 +20,7 @@ module chi_to_pronoc_wrapper (
     reset
 );
     import pronoc_pkg::*;
-    import amba_5_chi_c_pkg::*;
+    import amba_5_chi_pkg::*;
     
     input chi_flitpend_i, chi_flitv_i, chi_lcrdv_i, clk,reset;  
     input [Fpay-1 : 0]  chi_flit_i;
@@ -126,7 +126,7 @@ module  snp_chi_to_pronoc_wrapper (
     reset
 );
     import pronoc_pkg::*;
-    import amba_5_chi_c_pkg::*;
+    import amba_5_chi_pkg::*;
     
     input chi_flitpend_i, chi_flitv_i, chi_lcrdv_i, clk, reset;  
     input [Fpay-1 : 0]  chi_flit_i;
@@ -267,7 +267,7 @@ module  chi_noc (
     );
     
     import pronoc_pkg::*;
-    import amba_5_chi_c_pkg::*;
+    import amba_5_chi_pkg::*;
     
     // Clock and Reset
     input clk,reset;
