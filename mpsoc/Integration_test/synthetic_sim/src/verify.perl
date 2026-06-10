@@ -19,7 +19,7 @@ use FindBin;
 use lib $FindBin::Bin;
 use constant::boolean;
 
-
+use File::Path qw(make_path);
 
 
 use strict;
@@ -31,7 +31,7 @@ use base 'Class::Accessor::Fast';
 
 # declare the perl command line flags/options we want to allow
 my %options=();
-getopts("hp:u:l:s:m:d:", \%options);
+getopts("hp:u:l:s:m:d:f", \%options);
 
 # test for the existence of the options on the command line.
 # in a normal program you'd do more than just print these.
@@ -55,6 +55,9 @@ print " Usage: perl verify.pl [options]
       -l <int number>  : Enter the minimum injection ratio in %. Default is 5
       -s <int number>  : Enter the injection step increase ratio in %.
                          Default value is 25.
+      -f               : Enable flat mode. Use NoC_top as the Verilator top module.
+                         If not set, Verilator will be run on internal router modules
+                         and they will be connected manually in testbench.c.
       -d <dir name>    : The dir name where the simulation models configuration
                          files are located in. The default dir is \"models\"
       -m <simulation model name1,simulation model name2,...> : Enter the
@@ -79,6 +82,7 @@ $MAX = $options{u} if defined $options{u};
 $MIN = $options{l} if defined $options{l};
 $STEP = $options{s} if defined $options{s};
 $model_dir = $options{d} if defined $options{d};
+my $flat= (defined $options{f}) ? 1 : 0;
 
 if (defined $options{m}){
     @models = split(",",$options{m});
@@ -99,14 +103,14 @@ my $app = __PACKAGE__->new();
 
 
 
-my $dirname = dirname(__FILE__);
-require "$dirname/src.pl";
+my $script_path = dirname(__FILE__);
+require "$script_path/src.pl";
 
 
-my @inputs =($paralel_run,$MIN,$MAX,$STEP,$model_dir);
+my @inputs =($paralel_run,$MIN,$MAX,$STEP,$model_dir,$flat);
 
 
-print "Maximum number of parallel simulation is $paralel_run.\n The injection ratio is set as MIN=$MIN,MAX=$MAX,STEP=$STEP.\n";
+print "Maximum number of parallel simulation is $paralel_run.\n The injection ratio is set as MIN=$MIN,MAX=$MAX,STEP=$STEP, flat_mode=$flat.\n";
 print "\t The simulation models are taken from $model_dir\n";
 if (defined $options{m}){
     foreach my $p (@models ){
@@ -114,12 +118,24 @@ if (defined $options{m}){
     }
 }
 
+
+my $dirname = realpath("$script_path/..");
+my $log_dir ="${dirname}/result_logs";
+my $log_file="${log_dir}/$model_dir";
+
+unless (-d "$log_dir") {
+    print "Creating working directory inside $log_dir\n";
+    mkdir("$log_dir", 0700) or die "Failed to create directory $log_dir: $!";
+}
+
+
+
 check_models_are_exsited(\@models,\@inputs);
 
-my @log_report_match =("Error","Warning" );
+my @log_report_match =("Error","Warning","fatal error","error:" );
 
 
-save_file ("$dirname/../report","Verification Results:\n");
+save_file ("$log_file","Verification Results:\n");
 
 recompile_synful();
 
@@ -129,9 +145,9 @@ gen_models(\@models,\@inputs);
 
 compile_models($app,\@inputs,\@models);
 
-check_compilation($app,\@log_report_match,\@inputs,\@models);
+check_compilation($app,\@log_report_match,\@inputs,\@models,$log_file);
 
-run_all_models($app,\@inputs,\@models);
+run_all_models($app,\@inputs,\@models,$log_file);
 
 
 

@@ -1,5 +1,0 @@
-$model = bless( {
-    'noc_param'=> {
-        "SSA_EN" => "\"YES\"",
-    }
-}, 'ProNOC' );

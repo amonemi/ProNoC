@@ -9,10 +9,7 @@ SCRPT_FULL_PATH=$(realpath ${BASH_SOURCE[0]})
 SCRPT_DIR_PATH=$(dirname $SCRPT_FULL_PATH)
 
 #questasim
-LM_LICENSE="1717@epi03.bsc.es"
 VSIM_BIN="vsim"
-
-export LM_LICENSE_FILE=${LM_LICENSE}
 export LM_WORK_PLACE=${PRONOC_WORK}/simulation
 export LM_FILE_LIST="$SCRPT_DIR_PATH/modelsim_filelist.f"
 export PATH=$PATH:$MODELSIM_BIN

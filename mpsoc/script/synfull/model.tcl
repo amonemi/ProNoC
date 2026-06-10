@@ -32,7 +32,7 @@ vmap work $rtl_work
 
 vlog  +acc=rn  -F $::env(LM_FILE_LIST)
 
-vsim -t 1ps  -L $rtl_work -L work -voptargs="+acc"  $top -sv_lib $DPI_LIB
+vsim -suppress vopt-14408 -t 1ps  -L $rtl_work -L work -voptargs="+acc"  $top -sv_lib $DPI_LIB
 
 add wave *
 view structure

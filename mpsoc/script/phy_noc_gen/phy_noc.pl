@@ -8,6 +8,9 @@
 #add home dir in perl 5.6
 use FindBin;
 use lib $FindBin::Bin;
+
+use lib "$FindBin::Bin/../../Integration_test/synthetic_sim/src/perl_lib";
+
 use constant::boolean;
 
 
@@ -18,12 +21,14 @@ use List::MoreUtils qw(uniq);
 use File::Basename;
 use File::Copy;
 
+use Cwd 'realpath';
 my $dirname = dirname(__FILE__);
-my $noc_dir = "$dirname/../../rtl/src_noc";
-
 
 my $noc_id = $ARGV[0];
-my $out_dir= $ARGV[1];
+my $out_dir = $ARGV[1];
+my $noc_dir = $ARGV[2];
+my $chip_name = $ARGV[3];
+my $chip_id = $ARGV[4];
 
 if (!defined $noc_id) {
     print "Error: No NoC_ID is given. You need to give the NoC ID as input. All RTL modules names and parameters are appended with [NOC_ID].
@@ -32,22 +37,31 @@ if (!defined $noc_id) {
 }
 $out_dir = "./$noc_id" if(!defined $out_dir);
 
+if (!defined $noc_dir) {
+    $noc_dir = realpath("$dirname/../../rtl/src_noc");
+}
+
+# Build suffix for replacements
+my $suffix = "${noc_id}";
+$suffix = "${chip_name}_" . $suffix if defined $chip_name;
+
 #check that NoC ID is valid verilog syntac
 #Identifiers may contain alphabetic characters, numeric characters, the underscore, and the dollar sign (a-z A-Z 0-9 _ $ )
 if ($noc_id =~ /[^a-zA-Z0-9_\$]+/){
-		 #print "use of illegal character after\n" ;
-		 my @w= split /([^a-zA-Z0-9_\$]+)/, $noc_id; 
-		 die "NOC_ID ($noc_id) contains the illegal character of \"$w[1]\" after $w[0]. Identifiers may contain alphabetic characters, numeric characters, the underscore, and the dollar sign (a-z A-Z 0-9 _ \$ )\n";
+    #print "use of illegal character after\n" ;
+    my @w= split /([^a-zA-Z0-9_\$]+)/, $noc_id; 
+    die "NOC_ID ($noc_id) contains the illegal character of \"$w[1]\" after $w[0]. Identifiers may contain alphabetic characters, numeric characters, the underscore, and the dollar sign (a-z A-Z 0-9 _ \$ )\n";
 
 }
 
 
-my %replace;
-$replace{"`NOC_CONF"} = "import pronoc_pkg_${noc_id}::*;";
-$replace{"noc_localparam.v"} = "noc_localparam_${noc_id}.v";
-$replace{"topology_localparam.v"} = "topology_localparam_${noc_id}.v";
-$replace{"pronoc_pkg"} = "pronoc_pkg_${noc_id}";
-$replace{"NOC_ID=0"} = "NOC_ID=\"$ARGV[0]\"";
+#Note that white spaces in replace keys are autumatically translated to \s*
+my %replace = (
+    'import pronoc_pkg::*;'  => "import pronoc_pkg_${suffix}::*;",
+    'noc_localparam.v'       => "noc_localparam_${suffix}.v",
+    'topology_localparam.v'  => "topology_localparam_${suffix}.v",
+    'pronoc_pkg'             => "pronoc_pkg_${suffix}"
+);
 
 
 
@@ -68,8 +82,6 @@ my @common_file=  readdir($dir);
 @common_file = grep { $_ ne '.' && $_ ne '..' &&  -f "$noc_dir/../$_" } @common_file;
 closedir($dir);
 
-
-
 #get list of all modules
 my @module_names;
 foreach my $file (@files) {
@@ -78,10 +90,10 @@ foreach my $file (@files) {
     # Read the file line by line
     while (my $line = <$fh>) {
         # Match module keyword followed by name until encountering space, #, ;, or (
-         while ($line =~ /^\s*module\s+(\w+)[\s#;\(]/g) {
-          push @module_names, $1;
+        while ($line =~ /^\s*module\s+(\w+)[\s#;\(]/g) {
+            push @module_names, $1;
         }
-    }   
+    }
 }
 
 #get the list of all parameters/localparam 
@@ -99,14 +111,14 @@ for my $filename (@param_files){
     # Remove content within quotes
     $file_content =~ s/"(?:[^"\\]|\\.)*"//g;
     # Find all parameters and localparams
-    while ($file_content =~ /\b(parameter|localparam)\s+(.*?);/sg) {
-        my $declaration = $2;
+    while ($file_content =~ /\b(parameter|localparam)\b\s*(\[[^\]]*\]\s*)?(.*?);/sg) {
+        my $declaration = $3;
         # Split the declaration into individual parameter assignments
         my @params = split /,\s*/, $declaration;
         foreach my $param (@params) {
-            # Extract the parameter name
-            if ($param =~ /^\s*(\w+)/) {
-                push @param_list ,$1;
+            # Extract the parameter name while skipping 'int', 'signed', 'unsigned'
+            if ($param =~ /^\s*(?:int|signed|unsigned)?\s*([a-zA-Z_]\w*)/) {
+                push @param_list, $1;
             }
         }
     }
@@ -125,8 +137,22 @@ my @replaces = uniq @param_list;
     $file_content =~ s/"(?:[^"\\]|\\.)*"//g;
     # Find all structs
     while ($file_content =~ /typedef\s+struct\s+packed\s*{.*?}\s*(\w+)\s*;/sg) {
-     my $struct_name = $1;
-     push @replaces, $struct_name;    
+        my $struct_name = $1;
+        push @replaces, $struct_name;
+    }
+
+    open $fh, '<', "$noc_dir/noc_localparam.v" or die "Cannot open file noc_localparam.v: $!\n";
+    $file_content = do { local $/; <$fh> };
+    close $fh;
+    # Remove single-line and multi-line comments
+    $file_content =~ s{//.*$}{}mg;  # Remove single-line comments
+    $file_content =~ s{/\*.*?\*/}{}sg;  # Remove multi-line comments
+    # Remove content within quotes
+    $file_content =~ s/"(?:[^"\\]|\\.)*"//g;
+    # Find all structs
+    while ($file_content =~ /typedef\s+struct\s+packed\s*{.*?}\s*(\w+)\s*;/sg) {
+        my $struct_name = $1;
+        push @replaces, $struct_name;
     }
 
 
@@ -141,8 +167,8 @@ my @replaces = uniq @param_list;
     $file_content =~ s/"(?:[^"\\]|\\.)*"//g;
     # Find all structs
     while ($file_content =~ /function\s+automatic\s+integer\s+(\w+)\s*;/sg) {
-       my $func = $1;
-       push @replaces, $func;      
+        my $func = $1;
+        push @replaces, $func;
     }
 
 
@@ -150,40 +176,51 @@ my @replaces = uniq @param_list;
 
 # Pre-compile regular expressions
 my $before = qr/[%!~,=><:\/\n\s\[\]\{\}\(\)\+\-\*\\\.]/;
-my $after  = qr/[%!~,=><:\/\s;\[\]\(\)\{\}\+\-\*\\\^]/;
+#my $after  = qr/[%!~,=><:\/\s;\[\]\(\)\{\}\+\-\*\\\^]/;
+my $after  = qr/[%!~,=><:\/\s;\[\]\(\)\{\}\+\-\*\\\^']/;
 
 # Compile module replacement regex
-my %module_replacements = map { $_ => "${_}_$noc_id" } @module_names;
+my %module_replacements = map { $_ => "${_}_${suffix}" } @module_names;
 my $module_regex = join '|', map { quotemeta } @module_names;
 
 # Compile file replacement regex
 my %file_replacements = map { 
     my ($file_name, $extension) = /^(.+)\.(\w+)$/;
-    $_ => "${file_name}_${noc_id}.$extension"
+    $_ => "${file_name}_${suffix}.$extension"
 } @files;
 my $file_regex = join '|', map { quotemeta } @files;
 
 # Compile key replacement regex
-my %key_replacements = map { $_ => "${_}_${noc_id}" } @replaces;
+my %key_replacements = map { $_ => "${_}_${suffix}" } @replaces;
 my $key_regex = join '|', map { quotemeta } @replaces;
 
-# Compile replace hash regex
-my $replace_regex = join '|', map { quotemeta } keys %replace;
+# Compile replace hash regex (spaces become \s*)
+my $replace_regex = join '|',
+    map {
+        my $pattern = $_;
+
+        # Escape all regex metacharacters except space
+        $pattern =~ s/([^\w\s])/\\$1/g;
+
+        # Convert literal spaces to \s*
+        $pattern =~ s/ /\\s*/g;
+
+        $pattern;
+    } sort keys %replace;
 
 
 foreach my $file (@files) {
     #print "$file\n";    
     my ($file_name, $extension) = $file =~ /^(.+)\.(\w+)$/;
-    my $output_filename = "$out_dir/${file_name}_${noc_id}.$extension";
+    my $output_filename = "$out_dir/${file_name}_${suffix}.$extension";
     
     open(my $input_fh, '<', "$noc_dir/$file") or die "Could not open file '$file' $!";
 
     # Open a new file for writing the modified content
     open(my $output_fh, '>', $output_filename) or die "Could not create file '$output_filename' $!";
     if($file eq "pronoc_pkg.sv"){
-         print $output_fh "`define IMPORT_PRONOC_PCK\n`define PRONOC_PKG\n";
+        print $output_fh "`define IMPORT_PRONOC_PCK\n`define PRONOC_PKG\n";
     }
-   
 
 # Read the input file line by line
 while (my $line = <$input_fh>) {
@@ -191,10 +228,18 @@ while (my $line = <$input_fh>) {
     $line =~ s/\b($module_regex)\b/$module_replacements{$1}/g;
 
     # Replace keys in %replace hash
-    $line =~ s/($replace_regex)/$replace{$1}/g;
+    $line =~ s/($replace_regex)/$replace{space_match($1)}/g;
+    #print "$line =~ s/($replace_regex)/\$replace{$1}/g;\n";
 
     # Replace file names
     $line =~ s/($file_regex)/$file_replacements{$1}/g;
+
+    # Replace NOC_ID (handle space around '=')
+    $line =~ s/NOC_ID\s*=\s*0/NOC_ID = "$ARGV[0]"/g;
+
+    if (defined $chip_id) {
+        $line =~ s/NOC_CHIP_ID\s*=\s*0/NOC_CHIP_ID = $chip_id/g;
+    }
 
     # Replace keys with boundary checks
     #$line =~ s/($before)($key_regex)($after)/$1$key_replacements{$2}$3/g;
@@ -203,7 +248,25 @@ while (my $line = <$input_fh>) {
     # Write the modified line to the output file
     print $output_fh $line;
 }
-  
+
+
+
+sub space_match {
+    my $in = shift;
+
+    # 1. Exact match
+    return $in if exists $replace{$in};
+    # 2. Pattern match (spaces → \s*)
+    foreach my $key (sort keys %replace) {
+        my $new_key = $key;
+        $new_key =~ s/ /\\s*/g;   # replace space with \s*
+        if ($in =~ /^$new_key$/) {
+            return $key;
+        }
+    }
+    # 3. Default return
+    return $in;
+}
 
 # Close the input and output files
 close($input_fh);

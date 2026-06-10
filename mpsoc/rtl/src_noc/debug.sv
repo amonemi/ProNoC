@@ -1,0 +1,429 @@
+`include "pronoc_def.v"
+/**************************************
+* Module: debug
+* Date:2019-04-01  
+* Author: alireza     
+*
+* Description: this file contain modules which are used for error checking/debiging of the NoC. 
+***************************************/
+
+//check if flits are recived in correct order in a VC
+
+module check_flit_chanel_type_is_in_order 
+(
+    hdr_flg_in,
+    flit_in_wr,
+    tail_flg_in,
+    vc_num_in,
+    clk,
+    reset 
+);
+    import pronoc_pkg::*;
+    
+    input clk, reset;
+    input hdr_flg_in, tail_flg_in, flit_in_wr;
+    input [V-1 : 0] vc_num_in;
+    
+    wire [V-1 : 0] vc_num_hdr_wr, vc_num_tail_wr,vc_num_bdy_wr ;
+    logic [V-1 : 0] hdr_passed;
+    reg  [V-1 : 0] hdr_passed_next;
+    wire [V-1 : 0] single_flit_pck;
+    
+    assign  vc_num_hdr_wr =(hdr_flg_in & flit_in_wr) ?    vc_num_in :  {V{1'b0}};
+    assign  vc_num_tail_wr =(tail_flg_in & flit_in_wr)?    vc_num_in : {V{1'b0}};
+    assign  vc_num_bdy_wr =({hdr_flg_in,tail_flg_in} == 2'b00 && flit_in_wr)?  vc_num_in : {V{1'b0}};
+    assign  single_flit_pck = vc_num_hdr_wr & vc_num_tail_wr;
+    always_comb begin
+        hdr_passed_next = (hdr_passed | vc_num_hdr_wr) & ~vc_num_tail_wr; 
+    end
+    
+    `ifdef SIMULATION
+    always_ff @ (`pronoc_clk_reset_edge )begin 
+        if(`pronoc_reset) begin 
+            hdr_passed <= {V{1'b0}};
+        end else begin
+            hdr_passed <= hdr_passed_next;
+        end
+    end
+    
+    always @ (posedge clk ) begin 
+        if(( hdr_passed & vc_num_hdr_wr)>0  )begin 
+            $display("%t ERROR: a header flit is received in  an active IVC %m",$time);
+            $finish;
+        end
+        if((~hdr_passed & vc_num_tail_wr & ~single_flit_pck )>0 ) begin 
+            $display("%t ERROR: a tail flit is received in an inactive IVC %m",$time);
+            $finish;
+        end
+        if ((~hdr_passed & vc_num_bdy_wr )>0)begin 
+            $display("%t ERROR: a body flit is received in an inactive IVC %m",$time);
+            $finish;
+        end
+        if( IS_SINGLE_FLIT  &  flit_in_wr & ~(hdr_flg_in &  tail_flg_in )) begin 
+            $display("%t ERROR: both tail and header flit flags must be asserted in SINGLE_FLIT mode %m",$time);
+            $finish;
+        end 
+        if( (MIN_PCK_SIZE !=1) &  flit_in_wr & hdr_flg_in &  tail_flg_in ) begin 
+            $display("%t ERROR: A single flit packet is injected while the minimum packet size is set to %d.  %m",$time,MIN_PCK_SIZE);
+            $finish;
+        end
+        //TODO check that the injected packet size meets the MIN_PCK_SIZE
+    end//always
+    `endif
+endmodule
+
+
+module debug_regular_topo_route_ckeck #(
+    parameter SW_LOC=0
+    )(
+    reset,
+    clk,
+    hdr_flg_in,
+    flit_in_wr,
+    flit_is_tail,
+    ivc_num_getting_sw_grant,
+    vc_num_in,
+    current_r_addr,
+    dest_e_addr_in,
+    src_e_addr_in,
+    destport_in  
+);
+    import pronoc_pkg::*;
+    
+    input reset,clk;
+    input hdr_flg_in , flit_in_wr;
+    input [V-1 : 0] vc_num_in, flit_is_tail,  ivc_num_getting_sw_grant;
+    input [RAw-1 : 0] current_r_addr;
+    input [DAw-1 : 0] dest_e_addr_in;
+    input [EAw-1 : 0] src_e_addr_in;
+    input [DSTPw-1 : 0]  destport_in; 
+    
+    localparam
+        RXw = log2(NX),    // number of node in x axis
+        RYw = (TOPOLOGY=="RING" || TOPOLOGY == "LINE") ? 1 : log2(NY),
+        EXw = log2(NX),    // number of node in x axis
+        EYw = (TOPOLOGY=="RING" || TOPOLOGY == "LINE") ? 1 : log2(NY);   // number of node in y axis
+    
+    wire [RXw-1 : 0] current_x;
+    wire [EXw-1 : 0] x_dst_in,x_src_in;
+    wire [RYw-1 : 0] current_y;
+    wire [EYw-1 : 0] y_dst_in,y_src_in;
+    regular_topo_router_addr_t src_router_addr, dest_router_addr, current_router_addr;
+    assign src_router_addr = regular_topo_router_addr_t'(src_e_addr_in);
+    assign dest_router_addr = regular_topo_router_addr_t'(dest_e_addr_in);
+    assign current_router_addr = regular_topo_router_addr_t'(current_r_addr);
+    assign x_src_in = src_router_addr.x;
+    assign y_src_in = src_router_addr.y;
+    assign x_dst_in = dest_router_addr.x;
+    assign y_dst_in = dest_router_addr.y;
+    assign current_x = current_router_addr.x;
+    assign current_y = current_router_addr.y;   
+    
+    `ifdef SIMULATION 
+    generate
+    if(IS_DETERMINISTIC & ~IS_MESH_3D)begin :dtrmn
+        always@( posedge clk) begin 
+            if(flit_in_wr & hdr_flg_in )   
+                if( destport_in[1:0]==2'b11) begin 
+                    $display ( "%t\t  ERROR: destport port %x is illegal for determistic routing.  %m",$time,destport_in );                   
+                    $finish;
+                end
+            end//if
+        end//always
+    if(IS_FULL_ADAPTIVE) begin :full_adpt
+        reg [V-1 : 0] not_empty;
+        reg [V-1 : 0] not_empty_next;
+        always_ff @ (`pronoc_clk_reset_edge )begin 
+            if(`pronoc_reset) begin 
+                not_empty <= {V{1'b0}};
+            end else begin
+                not_empty <= not_empty_next;
+            end
+        end
+        always @ (*) begin
+            not_empty_next = not_empty;
+            if(hdr_flg_in & flit_in_wr) begin
+                not_empty_next = not_empty | vc_num_in;
+            end//hdr_wr_in
+            if((flit_is_tail & ivc_num_getting_sw_grant)>0)begin
+                not_empty_next = not_empty & ~ivc_num_getting_sw_grant;
+            end//tail wr out
+        end//always
+        always@( posedge clk ) begin
+            if(hdr_flg_in & flit_in_wr) begin
+                if( ((AVC_ATOMIC_EN==1)&& (SW_LOC != LOCAL)) || (SW_LOC == NORTH) || (SW_LOC == SOUTH) )begin
+                    if((vc_num_in  & ~ESCAP_VC_MASK)>0) begin // adaptive VCs
+                        if( (not_empty & vc_num_in)>0) $display("%t  :Error AVC allocated nonatomicly in %d port %m",$time,SW_LOC);
+                    end
+                end//( AVC_ATOMIC_EN || SW_LOC== NORTH || SW_LOC== SOUTH )
+                if((vc_num_in  & ESCAP_VC_MASK)>0 && (SW_LOC== SOUTH || SW_LOC== NORTH) )  begin // escape vc
+                    // if (a & b) $display("%t  :Error EVC allocation violate subfunction routing rules %m",$time);
+                    if ((current_x - x_dst_in) !=0 && (current_y- y_dst_in) !=0) $display("%t  :Error EVC allocation violate subfunction routing rules src_x=%d src_y=%d dst_x%d   dst_y=%d %m",$time,x_src_in, y_src_in, x_dst_in,y_dst_in);
+                end
+            end//hdr_wr_in
+        end//always
+    end 
+    if( IS_MESH )begin :mesh
+        wire  [EXw-1 : 0] low_x,high_x;
+        wire  [EYw-1 : 0] low_y,high_y;
+        assign low_x = (x_src_in < x_dst_in)?  x_src_in : x_dst_in;
+        assign low_y = (y_src_in < y_dst_in)?  y_src_in : y_dst_in;
+        assign high_x = (x_src_in < x_dst_in)?  x_dst_in : x_src_in;
+        assign high_y = (y_src_in < y_dst_in)?  y_dst_in : y_src_in;
+        always@( posedge clk)begin 
+            if((current_x <low_x) | (current_x > high_x) | (current_y <low_y) | (current_y > high_y) )  begin
+                if(flit_in_wr & hdr_flg_in )begin 
+                    $display ( "%t\t  ERROR: non_minimal routing %m",$time );
+                    $finish;
+                end
+            end
+        end
+    end// mesh  
+    endgenerate
+    `endif  
+endmodule
+
+
+module debug_mesh_edges #(
+    parameter P=5
+)(
+    clk,
+    current_r_addr,
+    flit_out_wr_all
+);
+    import pronoc_pkg::*;
+    
+    input clk;
+    input  [RAw-1 :  0]  current_r_addr;
+    input  [P-1 :  0]  flit_out_wr_all;
+    
+    wire [NXw-1 : 0] current_rx;
+    wire [NYw-1 : 0] current_ry;
+    regular_topo_router_addr_t current_router_addr_struct;
+    assign current_router_addr_struct = regular_topo_router_addr_t'(current_r_addr);
+    assign current_rx = current_router_addr_struct.x;
+    assign current_ry = current_router_addr_struct.y;
+    
+    `ifdef SIMULATION
+    always @(posedge clk) begin 
+        if(current_rx == {NXw{1'b0}} && flit_out_wr_all[WEST]) $display ( "%t\t  ERROR: a packet is going to the WEST in a router located in first column in mesh topology %m",$time ); 
+        if(current_rx == NXw'(T1-1)  && flit_out_wr_all[EAST]) $display ( "%t\t  ERROR: a packet is going to the EAST in a router located in last column in mesh topology %m",$time ); 
+        if(current_ry == {NYw{1'b0}} && flit_out_wr_all[NORTH])$display ( "%t\t  ERROR: a packet is going to the NORTH in a router located in first row in mesh topology %m",$time ); 
+        if(current_ry == NYw'(T2-1)  && flit_out_wr_all[SOUTH])$display ( "%t\t  ERROR: a packet is going to the SOUTH in a router located in last row in mesh topology %m",$time); 
+    end//always
+    `endif  
+endmodule
+
+
+module check_destination_addr(
+    dest_is_valid,
+    dest_e_addr,
+    current_e_addr
+);
+    import pronoc_pkg::*;
+    input [DAw-1 : 0]  dest_e_addr;
+    input [EAw-1 : 0]  current_e_addr;
+    output dest_is_valid;
+    // general rules
+    wire valid_self_loop  = (SELF_LOOP_EN == 0 )? (dest_e_addr[EAw-1 : 0]  !=  current_e_addr) : 1'b1;
+    wire valid;
+    generate
+    if(CAST_TYPE != "UNICAST") begin
+        wire [NE-1 : 0] dest_mcast_all_endp;
+        mcast_dest_list_decode decode (
+            .dest_e_addr(dest_e_addr),
+            .dest_o(dest_mcast_all_endp),
+            .row_has_any_dest( ),
+            .is_unicast()
+        );
+        //wire valid_dst_multi_r1  = (SELF_LOOP_EN   == 0) ? ~(dest_mcast_all_endp[current_e_addr] == 1'b1) : 1'b1;
+        wire valid_dst_multi_r2  = ~(dest_mcast_all_endp == {NE{1'b0}}); // there should be atleast one asserted destination
+        assign  dest_is_valid =  valid_dst_multi_r2;// & valid_dst_multi_r1 ;  
+    end else     
+    /* verilator lint_off WIDTH */ 
+    if(IS_REGULAR_TOPO) begin : Regular
+   /* verilator lint_on WIDTH */ 
+        regular_topo_address_validator check (
+            .addr(dest_e_addr),
+            .valid(valid)
+        );
+        assign  dest_is_valid = valid_self_loop & valid;
+    end else begin : tree
+        assign  dest_is_valid = valid_self_loop;
+    end
+    endgenerate
+endmodule
+
+
+module  endp_addr_encoder (
+    id_in,
+    code_out
+);
+
+    import pronoc_pkg::*;
+    localparam NEw= log2(NE);
+    input [NEw-1 :0] id_in;
+    output [EAw-1 : 0] code_out;
+    
+    generate 
+    if( IS_FATTREE  | IS_TREE ) begin : tree
+        fattree_addr_encoder #(
+            .K(T1),
+            .L(T2)
+        ) addr_encoder (
+        .id(id_in),
+        .code(code_out)
+        );
+    end else if  (IS_REGULAR_TOPO) begin : regular
+        regular_topo_endp_addr_encoder  addr_encoder  (
+            .id(id_in),
+            .code(code_out)
+        );
+    end else if (IS_FMESH) begin :fmesh
+        fmesh_addr_encoder addr_encoder (
+            .id(id_in),
+            .code(code_out)
+        );
+    end else if ( IS_MULTI_MESH) begin :mmesh
+        multimesh_address_encoder addr_encoder (
+            .rid_in(id_in),
+            .addr_st_o(code_out)
+        );
+    end else begin :custom
+        assign code_out =id_in;
+    end
+    endgenerate
+endmodule
+
+
+module endp_addr_decoder  (
+    code_in,
+    id_out
+);
+    import pronoc_pkg::*;
+    
+    output [NEw-1 :0] id_out;
+    input  [EAw-1 : 0] code_in;
+    generate 
+    if(IS_FATTREE | IS_TREE ) begin : tree
+        fattree_addr_decoder #(
+            .K(T1),
+            .L(T2)
+        )decoder(
+            .id(id_out),
+            .code(code_in)
+        );
+    end else if  ( IS_REGULAR_TOPO ) begin : regular
+        regular_topo_addr_coder  addr_coder (
+            .id    (id_out), 
+            .code  (code_in )
+        );
+    end else if (IS_FMESH) begin :fmesh
+        fmesh_addr_coder addr_coder (
+            .id(id_out),
+            .code(code_in)
+        );
+    end else if ( IS_MULTI_MESH) begin 
+        multimesh_address_decoder addr_coder (
+            .rid_out(id_out),
+            .addr_st_i(code_in)
+        );
+    end else begin :custom
+        assign id_out = code_in;
+    end
+    endgenerate
+endmodule  
+
+
+module check_pck_size (
+    hdr_flg_in,
+    flit_in_wr,
+    tail_flg_in,
+    vc_num_in,  
+    dest_e_addr_in,
+    clk,
+    reset  
+);
+    import pronoc_pkg::*;
+    input clk, reset;
+    input hdr_flg_in, tail_flg_in, flit_in_wr;
+    input [V-1 : 0] vc_num_in;
+    input [DAw-1: 0] dest_e_addr_in;
+    wire [NE-1 : 0] dest_mcast_all_endp [V-1 : 0];
+    logic [31 : 0] pck_size_counter [V-1: 0];
+    reg  [31 : 0] pck_size_counter_next [V-1: 0];
+    logic [DAw-1 : 0] dest_e_addr [V-1:0];
+    wire [V-1 : 0] vc_hdr_wr_en;
+    wire [V-1 : 0] onehot;
+    localparam MIN_B =  (B<LB)? B : LB;
+    `ifdef SIMULATION
+    genvar i;
+    generate 
+    for (i=0;i<V;i=i+1) begin :V_
+        localparam logic [V-1:0] VC = V'(i);
+        always @(*) begin 
+            pck_size_counter_next [i] = pck_size_counter [i];
+            if (vc_num_in == VC)begin 
+                if(flit_in_wr) begin  
+                    if(hdr_flg_in) pck_size_counter_next[i]= 1;
+                    else pck_size_counter_next[i]=pck_size_counter[i]+1;
+                end 
+            end
+        end
+        always_ff @ (`pronoc_clk_reset_edge )begin 
+            if(`pronoc_reset) begin
+                pck_size_counter[i] <= 32'b0;
+            end else begin
+                pck_size_counter[i] <= pck_size_counter_next[i];
+            end
+        end
+        
+        always @(posedge clk) begin 
+            if (vc_num_in == VC)begin 
+                if(flit_in_wr & tail_flg_in) begin 
+                    if( pck_size_counter_next[i] < MIN_PCK_SIZE) begin 
+                        $display ( "%t\t  ERROR: A packet is injected to the router with packet size (%d flits) that is smaller than MIN_PCK_SIZE (%d flits) parameter  %m",$time,pck_size_counter_next[i],MIN_PCK_SIZE);
+                        $finish;
+                    end
+                end
+            end
+        end
+        
+        if(!IS_UNICAST) begin
+        //Check that the size of multicast/broadcast packets <= buffer size
+            assign vc_hdr_wr_en [i] = flit_in_wr & hdr_flg_in & (vc_num_in == VC);
+            always_ff @ (`pronoc_clk_reset_edge )begin 
+                if(`pronoc_reset)
+                    dest_e_addr[i] <= '0; // or use specific reset value if needed
+                else if (vc_hdr_wr_en[i])
+                    dest_e_addr[i] <= dest_e_addr_in;
+            end
+            
+            mcast_dest_list_decode decode (
+                .dest_e_addr(dest_e_addr[i]),
+                .dest_o(dest_mcast_all_endp[i]),
+                .row_has_any_dest(),
+                .is_unicast()
+            ); 
+            
+            is_onehot0 #(
+                .IN_WIDTH(NE)
+            ) one_h (
+                .D_in(dest_mcast_all_endp[i]),
+                .result(onehot[i])
+            );
+            always @(posedge clk) begin 
+                if (vc_num_in == VC) begin 
+                    if(flit_in_wr & ~onehot[i])begin 
+                        if(pck_size_counter_next[i]>MIN_B) begin 
+                            $display ( "%t\t  ERROR: A multicast packet is injected to the router with packet size (%d flits) that is larger than the minimum router buffer size (%d flits) parameter  %m",$time,pck_size_counter_next[i],MIN_B);
+                            $finish;
+                        end// size
+                    end//flit_wr
+                end//vc_num
+            end//always
+        end//multicast
+    end  //for
+    endgenerate
+    `endif
+endmodule

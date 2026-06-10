@@ -8,7 +8,6 @@
 `timescale 1ns / 1ps
 
 module  flit_buffer_reg_base #(
-    parameter NOC_ID = 0,
     parameter V        =   4,
     parameter B        =   4,   // buffer space :flit per VC 
     parameter Fpay     =   32,
@@ -16,9 +15,8 @@ module  flit_buffer_reg_base #(
     parameter DEBUG_EN =   1,
     parameter C=1,
     parameter DSTPw=4,
-    parameter SSA_EN="YES", // "YES" , "NO"  
+    parameter SSA_EN=1, // 1,0
     parameter CAST_TYPE="UNI_CAST"
-         
 )(
     din,
     vc_num_wr,
@@ -138,7 +136,7 @@ module  flit_buffer_reg_base #(
     flit_buffer #(
 		.V(V),
         .B(B),
-        .SSA_EN("NO"),// should be "NO" even if SSA is enabled
+        .SSA_EN(0),// should be 0 even if SSA is enabled
         .Fw(Fw),
 		.PCK_TYPE(PCK_TYPE),
 		.CAST_TYPE(CAST_TYPE),
@@ -184,7 +182,6 @@ module  flit_buffer_reg_base #(
         
         
      extract_header_flit_info #(
-        .NOC_ID(NOC_ID),
         .DATA_w(0)
      ) header_extractor (
          .flit_in({flit_reg_mux_out[REGFw-1:REGFw-2],flit_reg_wr_en,flit_reg_mux_out[Fpay-1 : 0]}),
@@ -214,20 +211,20 @@ module  flit_buffer_reg_base #(
       pronoc_register #(
            .W(REGFw)          
       ) reg1 ( 
-           .in(flit_regs_next[i]),
+           .D_in(flit_regs_next[i]),
            .reset(reset),    
            .clk(clk),      
-           .out(flit_regs[i])
+           .Q_out(flit_regs[i])
       );
       
       
        pronoc_register #(
            .W(Cw)           
       ) reg2 ( 
-           .in(class_vc_next[i]),
+           .D_in(class_vc_next[i]),
            .reset(reset),    
            .clk(clk),      
-           .out(class_vc[i])
+           .Q_out(class_vc[i])
       );
         
         

@@ -23,14 +23,14 @@ CORE_NUM(){
     COMBINATION_TYPE="COMB_NONSPEC" # "BASELINE" or "COMB_SPEC1" or "COMB_SPEC2" or "COMB_NONSPEC"
     FIRST_ARBITER_EXT_P_EN=0  
     
-    ROUTE_NAME="XY" # Routing algorithm
-    #    mesh :  "XY"        , "WEST_FIRST"      , "NORTH_LAST"      , "NEGETIVE_FIRST"      , "DUATO"
-    #   torus:  "TRANC_XY"  , "TRANC_WEST_FIRST", "TRANC_NORTH_LAST", "TRANC_NEGETIVE_FIRST", "TRANC_DUATO"
+    ROUTE_NAME="DOR" # Routing algorithm
+    #    mesh :  "DOR"        , "WEST_FIRST"      , "NORTH_LAST"      , "NEGETIVE_FIRST"      , "FULL_ADPT"
+    #   torus:  "TRANC_DOR"  , "TRANC_WEST_FIRST", "TRANC_NORTH_LAST", "TRANC_NEGETIVE_FIRST", "TRANC_FULL_ADPT"
     
     
     CLASS_SETTING="{CVw{1'b1}}"   
     
-    SSA_EN="NO"  # "YES","NO"
+    SSA_EN=0  # 1,0
     SWA_ARBITER_TYPE="RRA" # "RRA"  ,"WRRA"
     WEIGHTw=4
     
@@ -41,8 +41,6 @@ CORE_NUM(){
     C1_p=0
     C2_p=0
     C3_p=0
-     
-    
     
  # Simulation parameters: 
     AVG_LATENCY_METRIC="HEAD_2_TAIL"  
@@ -58,15 +56,11 @@ CORE_NUM(){
     HOTSPOT_CORE_4=$(CORE_NUM 3 3)
     HOTSPOT_CORE_5=$(CORE_NUM 2 2)
     
-                 
-    
-    
     MAX_PCK_NUM=128000
     MAX_SIM_CLKs=100000
     MAX_PCK_SIZ=10  # maximum flit number in a single packet
     TIMSTMP_FIFO_NUM=64
     
-   
     
     ESCAP_VC_MASK="1"  # mask escape vc
     DEBUG_EN=1
@@ -76,14 +70,12 @@ CORE_NUM(){
                             # 2: packets are routed to the ports connected to the routers with less active ivc requests
                         # 3: packets are routed to the ports connected to the routers with less active ivc requests that are not granted 
 
-    
-                         
 # Simulation C file constant:  
     PACKET_SIZE=2    # packet size in flit. Minimum is 2
 
 
 # 
-    ROUTE_SUBFUNC="NORTH_LAST"  # "NORTH_LAST" ,"XY"
+    ROUTE_SUBFUNC="NORTH_LAST"  # "NORTH_LAST" ,"DOR"
     AVC_ATOMIC_EN=0
     STND_DEV_EN=0 # 1: generate standard devision  
     
@@ -101,7 +93,7 @@ generate_parameter_v (){
     printf " parameter VC_REALLOCATION_TYPE=\"$VC_REALLOCATION_TYPE\";\n" >> parameter.v    
     printf " parameter COMBINATION_TYPE=\"$COMBINATION_TYPE\";\n" >> parameter.v    
     printf " parameter FIRST_ARBITER_EXT_P_EN=$FIRST_ARBITER_EXT_P_EN;\n" >> parameter.v     
-       
+    
     printf " parameter ROUTE_NAME=\"$ROUTE_NAME\";\n" >> parameter.v    
     printf " parameter CONGESTION_INDEX=$CONGESTION_INDEX;\n" >> parameter.v
     printf " parameter C0_p=$C0_p;\n" >> parameter.v    
@@ -120,8 +112,8 @@ generate_parameter_v (){
     printf " parameter MAX_SIM_CLKs=$MAX_SIM_CLKs;\n" >> parameter.v    
     printf " parameter MAX_PCK_SIZ=$MAX_PCK_SIZ;\n" >> parameter.v    
     printf " parameter TIMSTMP_FIFO_NUM=$TIMSTMP_FIFO_NUM;\n" >> parameter.v    
-    printf " parameter ROUTE_TYPE = (ROUTE_NAME == \"XY\" || ROUTE_NAME == \"TRANC_XY\" )?    \"DETERMINISTIC\" : \n" >> parameter.v    
-    printf "                        (ROUTE_NAME == \"DUATO\" || ROUTE_NAME == \"TRANC_DUATO\" )?   \"FULL_ADAPTIVE\": \"PAR_ADAPTIVE\"; \n" >> parameter.v              
+    printf " parameter ROUTE_TYPE = (ROUTE_NAME == \"DOR\" || ROUTE_NAME == \"TRANC_DOR\" )?    \"DETERMINISTIC\" : \n" >> parameter.v    
+    printf "                        (ROUTE_NAME == \"FULL_ADPT\" || ROUTE_NAME == \"TRANC_FULL_ADPT\" )?   \"FULL_ADAPTIVE\": \"PAR_ADAPTIVE\"; \n" >> parameter.v              
     printf " parameter DEBUG_EN=$DEBUG_EN;\n" >> parameter.v     
     printf " parameter ROUTE_SUBFUNC= \"$ROUTE_SUBFUNC\";\n">> parameter.v     
     printf " parameter AVC_ATOMIC_EN= $AVC_ATOMIC_EN;\n">> parameter.v    
@@ -130,11 +122,10 @@ generate_parameter_v (){
     printf " parameter CVw=(C==0)? V : C * V;\n" >>  parameter.v
     printf " parameter [CVw-1:   0] CLASS_SETTING = $CLASS_SETTING;\n">>  parameter.v 
     printf " parameter [V-1    :    0] ESCAP_VC_MASK=$ESCAP_VC_MASK;\n" >> parameter.v    
-    printf " parameter SSA_EN= \"$SSA_EN\";\n">> parameter.v  
+    printf " parameter SSA_EN= $SSA_EN;\n">> parameter.v  
     printf " parameter SWA_ARBITER_TYPE=\"$SWA_ARBITER_TYPE\";\n">> parameter.v    
-    printf " parameter WEIGHTw=$WEIGHTw;\n">> parameter.v                    
-    printf " \n\n \`endif " >> parameter.v        
-    
+    printf " parameter WEIGHTw=$WEIGHTw;\n">> parameter.v
+    printf " \n\n \`endif " >> parameter.v
     
 }
 
@@ -180,9 +171,8 @@ generate_parameter_h (){
     printf "\t #define    CVw    (C==0)? V : C * V\n" >>  parameter.h
     printf "\t #define    CLASS_SETTING   \"$CLASS_SETTING\"\n">>  parameter.h 
     printf "\t #define    ESCAP_VC_MASK    $ESCAP_VC_MASK\n">>  parameter.h
-    printf "\t #define    SSA_EN \"$SSA_EN\"\n" >> parameter.h 
-    printf "\t #define    SWA_ARBITER_TYPE \"$SWA_ARBITER_TYPE\"\n">> parameter.h    
-    printf "\t #define    WEIGHTw=$WEIGHTw\n">> parameter.h                                            
-    printf " \n\n #endif " >> parameter.h        
-        
+    printf "\t #define    SSA_EN $SSA_EN\n" >> parameter.h 
+    printf "\t #define    SWA_ARBITER_TYPE \"$SWA_ARBITER_TYPE\"\n">> parameter.h 
+    printf "\t #define    WEIGHTw=$WEIGHTw\n">> parameter.h
+    printf " \n\n #endif " >> parameter.h
 }

@@ -1,0 +1,7 @@
+$model = bless( {
+    'noc_param'=> {
+        "ROUTE_NAME" => "\"FULL_ADPT\"",
+        "ESCAP_VC_MASK" => "2'b01",
+        "ROUTE_MODE" => "\"CONVENTIONAL\"",
+    }
+}, 'ProNOC' );

@@ -18,7 +18,7 @@ use strict;
 use warnings;
 
 my $pp;
-$pp= do "$src/deafult_noc_param";
+$pp= do "$src/default_noc_param";
 die "Error reading: $@" if $@;
 
 my $param = $pp->{'noc_param'};

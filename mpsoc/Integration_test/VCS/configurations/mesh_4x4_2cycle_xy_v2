@@ -1,0 +1,7 @@
+$model = bless( {
+        'noc_param'=> {
+        "T1" => "4",
+        "T2" => "4",
+        "DEBUG_EN" => "0",       
+    }
+}, 'ProNOC' );

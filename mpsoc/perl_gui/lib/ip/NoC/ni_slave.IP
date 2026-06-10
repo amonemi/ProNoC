@@ -101,7 +101,7 @@ The maximum data that can be sent via one packet will be 2 power of MAX_DMA_TRAN
                                                       'global_param' => 'Parameter',
                                                       'redefine_param' => 1,
                                                       'content' => '',
-                                                      'default' => '"XY"   '
+                                                      'default' => '"DOR"   '
                                                     },
                                     'Fpay' => {
                                                 'default' => ' 32',

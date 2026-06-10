@@ -318,7 +318,7 @@ $nwmaker = bless( {
                                                          'value' => '{CVw{1\'b1}}'
                                                        },
                                                        {
-                                                         'value' => '"NO"',
+                                                         'value' => 0,
                                                          'param_name' => 'SSA_EN'
                                                        },
                                                        {

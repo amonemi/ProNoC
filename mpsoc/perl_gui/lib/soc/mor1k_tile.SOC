@@ -1517,10 +1517,10 @@ For XILINX FPGAs define it as "XILINX_JTAG_WB". In this case, the UART uses BSCA
                                                                                'value' => '4'
                                                                              },
                                                                      'ROUTE_NAME' => {
-                                                                                       'value' => '"XY"'
+                                                                                       'value' => '"DOR"'
                                                                                      },
                                                                      'SELF_LOOP_EN' => {
-                                                                                         'value' => '"NO"'
+                                                                                         'value' => '0'
                                                                                        },
                                                                      'RAw' => {
                                                                                 'value' => '16'
@@ -1574,7 +1574,7 @@ For XILINX FPGAs define it as "XILINX_JTAG_WB". In this case, the UART uses BSCA
                                                                                  'value' => '32'
                                                                                },
                                                                      'SSA_EN' => {
-                                                                                   'value' => '"NO"'
+                                                                                   'value' => '0'
                                                                                  },
                                                                      'WEIGHTw' => {
                                                                                     'value' => '4'

@@ -1,0 +1,9 @@
+$model = bless( {
+    'noc_param'=> {
+        "TOPOLOGY" => "\"TREE\"",
+        "T1" => "3",
+        "T2" => "2",
+        "B"  => "6",
+        "ROUTE_NAME" => "\"NCA_STRAIGHT_UP\"",
+    }
+}, 'ProNOC' );

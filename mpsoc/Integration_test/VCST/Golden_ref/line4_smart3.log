@@ -1,0 +1,559 @@
+Use of uninitialized value $ENV{"PRONOC_WORK"} in concatenation (.) or string at /users/amonemi/ProNoC/mpsoc/Integration_test/VCST/src/../../synthetic_sim/src/src.pl line 24.
+Use of uninitialized value $ENV{"PRONOC_WORK"} in concatenation (.) or string at /users/amonemi/ProNoC/mpsoc/Integration_test/VCST/src/../../synthetic_sim/src/src.pl line 25.
+Use of uninitialized value $ENV{"PRONOC_WORK"} in concatenation (.) or string at /users/amonemi/ProNoC/mpsoc/Integration_test/VCST/src/../../synthetic_sim/src/src.pl line 26.
+Script Path: /users/amonemi/ProNoC/mpsoc/Integration_test/VCST/src/../../synthetic_sim/src
+confs_dir: /users/amonemi/ProNoC/mpsoc/Integration_test/synthetic_sim/configurations
+Root: /users/amonemi/ProNoC/mpsoc
+[01m[31mNote:[0m DISPLAY is not set, GUI view commands are disabled.
+
+                                   VC Static 
+
+                Version T-2022.06-SP2 for linux64 - Nov 29, 2022
+
+                    Copyright (c) 2010 - 2022 Synopsys, Inc.
+   This software and the associated documentation are proprietary to Synopsys,
+ Inc. This software may only be used in accordance with the terms and conditions
+ of a written license agreement with Synopsys, Inc. All other use, reproduction,
+   or distribution of this software is strictly prohibited.  Licensed Products
+     communicate with Synopsys servers for the purpose of providing software
+    updates, detecting software piracy and verifying that customers are using
+    Licensed Products in conformity with the applicable License Key for such
+  Licensed Products. Synopsys will use information gathered in connection with
+    this process to deliver software updates and pursue software pirates and
+                                   infringers.
+
+ Inclusivity & Diversity - Visit SolvNetPlus to read the "Synopsys Statement on
+            Inclusivity and Diversity" (Refer to article 000036315 at
+                        https://solvnetplus.synopsys.com)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;34mvc_static_shell> [0m[J[0mset script_dir [file dirname [file normalize [info script]]]
+/users/amonemi/ProNoC/mpsoc/Integration_test/VCST/src
+set DESIGN  noc_top
+noc_top
+set report_filename $::env(REPORT_FILENAME)
+/users/amonemi/ProNoC/mpsoc/Integration_test/VCST/result_logs/line4_smart3_vc_static.txt
+# Waivers:
+#sg_read_waiver -file ${script_dir}/waiver.awl
+#source ${script_dir}/waiver.tcl
+# Reading Intel linting rules 
+source $script_dir/lint_rules.tcl
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W71 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W71 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W71 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W71 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W123 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W123 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W123 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W123 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W123 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W240 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W240 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W240 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W240 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W240 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W240 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W240 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] RDB_CONFIGURE_BAD_TAG: None of the tag pattern(s) 'InferLatch' (/users/amonemi/ProNoC/mpsoc/Integration_test/VCST/src/lint_rules.tcl:242) were found.[0m
+[0;31m	Revise your tag list and try again..[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_tag' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 02041 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W120 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W120 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W120 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W120 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W120 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W120 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name W120 and parameter name REPORT_ONLY_FROM_ONE_HIERARCHY are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60024 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60013 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60117 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60010 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60010 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 54005 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 54005 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 54005 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 54005 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 54006 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 54007 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60701 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60152 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60702 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60702 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60703 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60703 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60704 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60704 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60706 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60706 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60706 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60706 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70600 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70600 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70600 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70601 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70601 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70601 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70601 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70602 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70602 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70602 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70602 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70603 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70603 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70603 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70603 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70604 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70604 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70605 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70605 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70605_Info does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70605_Info does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70606 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70606 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70606 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70607 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70607 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70608 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70608 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70609 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70609 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70609 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70610 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70610 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70611 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70611 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70612 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70612 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70612 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70612 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70612 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W164b_b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W362a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W362a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W362a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W362a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W362a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W362a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W362b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W362b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W362b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W362b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W362b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W362b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W110_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W110_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W110_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W110_b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W110_b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name W110_b does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 70094 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60000_a does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 50520 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 50520 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name ExprParen and parameter name IGNORE_MODULE are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name ExprParen and parameter name IGNORE_MODULE are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD042: In configure_hdl_tag_param, tag name ExprParen and parameter name IGNORE_MODULE are not associated, ignore the command.[0m
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 2216 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 50002 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 50002 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name ParamReDefined does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name ParamReDefined does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name 60130 does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] RDB_CONFIGURE_BAD_TAG: None of the tag pattern(s) 'DetectUnderAndOverFlows-ML' (/users/amonemi/ProNoC/mpsoc/Integration_test/VCST/src/lint_rules.tcl:1298) were found.[0m
+[0;31m	Revise your tag list and try again..[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_tag' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD041: In configure_hdl_tag_param, parameter name DIFFERENTIATE_NESTED_CAST does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] LINT_CMD040: In configure_hdl_tag_param, tag name CheckGuardMacro does not exist.[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_lint_tag_parameter' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[0;31m[Error] RDB_CONFIGURE_BAD_TAG: None of the tag pattern(s) 'AvoidMultiDimParam-ML' (/users/amonemi/ProNoC/mpsoc/Integration_test/VCST/src/lint_rules.tcl:1322) were found.[0m
+[0;31m	Revise your tag list and try again..[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_tag' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[0;31m[Error] RDB_CONFIGURE_BAD_TAG: None of the tag pattern(s) 'VC_WAIVER_ONLY_TAG_GIVEN' (/users/amonemi/ProNoC/mpsoc/Integration_test/VCST/src/lint_rules.tcl:1352) were found.[0m
+[0;31m	Revise your tag list and try again..[0m
+[Warning] TCL_COMMAND_FAILED: 'configure_tag' command failed. [set sh_continue_on_error true] is set. Hence continuing the run.
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+[Info] COM_OPT030: Accepted message severity specification
+# Replace this with the actual path to your .f file
+set filelist_path $::env(FILE_LIST)
+/users/amonemi/ProNoC/mpsoc/Integration_test/VCST/src/file_list.f
+# Loop through lines
+# File handle and storage
+set fp [open $filelist_path r]
+file29
+while {[gets $fp line] >= 0} {
+    set line [string trim $line]
+
+    # Skip empty lines and comments
+    if {$line eq "" || [string match "#*" $line]} {
+        continue
+    }
+
+    # Handle +incdir+<path>
+    #if {[string match "+incdir+*" $line]} {
+    #    set incdir [string range $line 8 end]
+    # set_option include_path $incdir
+    #    continue
+    #}
+
+    # Add source file
+    lappend names_list $line
+}
+close $fp
+analyze -format sverilog    "$names_list"
+
+Warning-[UTSFM] Unspecified `timescale for module
+./../../rtl/src_topology/./common/custom_ni_routing.v, 2
+  Module "custom_ni_routing" has `timescale but previous module(s) do not.
+  Please either remove this module's timescale or add timescale for previous 
+  module(s)to avoid unexpected simulation result.
+
+
+Warning-[UTSFM] Unspecified `timescale for module
+./../../rtl/src_topology/./common/custom_noc_top.sv, 3
+  Module "custom_noc_top" has `timescale but previous module(s) do not.
+  Please either remove this module's timescale or add timescale for previous 
+  module(s)to avoid unexpected simulation result.
+
+
+Warning-[UTSFM] Unspecified `timescale for module
+./../../rtl/src_topology/./common/custom_lkh_routing.v, 3
+  Module "custom_lkh_routing" has `timescale but previous module(s) do not.
+  Please either remove this module's timescale or add timescale for previous 
+  module(s)to avoid unexpected simulation result.
+
+1
+elaborate $DESIGN
+[Warning] COM_OPT009: 'search_path' has not been set.
+[Warning] COM_OPT010: 'link_library' has not been set.
+
+Warning-[LCA_FEATURES_ENABLED] Usage warning
+  LCA features enabled by '-lca' argument on the command line.  For more 
+  information regarding list of LCA features please refer to Chapter "LCA 
+  features" in the VCS Release Notes
+
+Doing common elaboration 
+
+Warning-[UESU] Incorrect -error switch used
+  Message ID 'SM_TUFC' is not an error ID , it is invalid to specify 
+  'noSM_TUFC' only in -error switch without 'all' argument in front of it.
+  If you meant to upgrade all messages to error except for ID 'SM_TUFC', 
+  please use '-error=all,noSM_TUFC'.
+
+
+Warning-[UESU] Incorrect -error switch used
+  Message ID 'SM_PNP' is not an error ID , it is invalid to specify 'noSM_PNP'
+  only in -error switch without 'all' argument in front of it.
+  If you meant to upgrade all messages to error except for ID 'SM_PNP', please
+  use '-error=all,noSM_PNP'.
+
+
+Warning-[UESU] Incorrect -error switch used
+  Message ID 'SM_PCNP' is not an error ID , it is invalid to specify 
+  'noSM_PCNP' only in -error switch without 'all' argument in front of it.
+  If you meant to upgrade all messages to error except for ID 'SM_PCNP', 
+  please use '-error=all,noSM_PCNP'.
+
+
+Warning-[UESU] Incorrect -error switch used
+  Message ID 'SM_FCNF' is not an error ID , it is invalid to specify 
+  'noSM_FCNF' only in -error switch without 'all' argument in front of it.
+  If you meant to upgrade all messages to error except for ID 'SM_FCNF', 
+  please use '-error=all,noSM_FCNF'.
+
+Final timescale is '1ps/1ps'
+
+Warning-[SIOB] Select index out of bounds
+./../../rtl/src_noc/./mesh_torus_noc_top.sv, 83
+"router_chan_out[(0 - 1)][pronoc_pkg::FORWARD]"
+  The select index is out of declared bounds : [3:0].
+  In module instance : tori_noc.noc_top 
+  In module : mesh_torus_noc_top.
+
+
+Warning-[SIOB] Select index out of bounds
+./../../rtl/src_noc/./mesh_torus_noc_top.sv, 79
+"router_chan_out[(3 + 1)][pronoc_pkg::BACKWARD]"
+  The select index is out of declared bounds : [3:0].
+  In module instance : tori_noc.noc_top 
+  In module : mesh_torus_noc_top.
+
+Info: Invoking Simon...
+Info: Simon VCS Start
+=======================================================
+VCS CPU Time(s)     :0.89
+SIMON CPU Time(s)   :2.27
+SIMON Total Time(s) :0.48
+Peak Memory(MB)     :411
+=======================================================
+Info: Simon VCS Finished
+Info: Simon call complete 
+Info: Exiting after Simon Analysis 
+Verdi KDB elaboration done and the database successfully generated: 0 error(s), 0 warning(s)
+# Gate Counts 
+Number of Flat Instances = 65472
+Number of Operator = 65472
+Number of Libcells = 0
+Number of Black-Box Instances = 0
+
+1
+#read_sdc $constraints_path
+# Need to add this waiver in here, otherwise is not applicable
+#source ${script_dir}/waiver.tcl
+check_lint
+[2025-06-05.14:55:11] Queuing for License......
+Waiting to acquire VC-LINT-BASE license in 259200 seconds...
+[Info] Loading Lint Structural Checker Plugin... Success
+Inferring all potential clocks
+Inferring all potential resets
+1
+report_lint -verbose -file ${report_filename}
+1
+report_lint
+
+  -----------------------------------------------------------------------------
+  Management Summary
+  -----------------------------------------------------------------------------
+  Stage             Family      Fatals    Errors  Warnings     Infos  Compressed
+  -----             --------  --------  --------  --------  --------  ----------
+  BUILTIN_CHECK     CODING           0        81         0         0           0
+  LANGUAGE_CHECK    CODING           0      1417      1662         6           0
+  STRUCTURAL_CHECK  CODING           0         8       727         1         463
+  STRUCTURAL_CHECK  CONN             0         0      1656         0           0
+  -----             --------  --------  --------  --------  --------  ----------
+  Total                              0      1506      4045         7         463
+
+
+  -----------------------------------------------------------------------------
+  Tree Summary
+  -----------------------------------------------------------------------------
+  Severity  Stage             Tag                       Count  Compressed
+  --------  -----             ------------------------  -----  ----------
+  error     BUILTIN_CHECK     ExprParen                    81           0
+  error     LANGUAGE_CHECK    AlwaysFalseTrueCond-ML     1157           0
+  error     LANGUAGE_CHECK    NoAssignX-ML                 15           0
+  error     LANGUAGE_CHECK    OneModule-ML                 14           0
+  error     LANGUAGE_CHECK    STARC05-1.1.1.1               8           0
+  error     LANGUAGE_CHECK    STARC05-1.1.1.3             154           0
+  error     LANGUAGE_CHECK    STARC05-2.10.3.7              8           0
+  error     LANGUAGE_CHECK    SignedUnsignedExpr-ML         1           0
+  error     LANGUAGE_CHECK    UseSVAlways-ML               13           0
+  error     LANGUAGE_CHECK    W121                          6           0
+  error     LANGUAGE_CHECK    W123                         37           0
+  error     LANGUAGE_CHECK    W215                          1           0
+  error     LANGUAGE_CHECK    W416                          3           0
+  error     LANGUAGE_CHECK    W504                          1           0
+  error     STRUCTURAL_CHECK  FlopEConst                    1           0
+  error     STRUCTURAL_CHECK  UndrivenOutPort-ML            7           4
+  warning   LANGUAGE_CHECK    ConstName                    95           0
+  warning   LANGUAGE_CHECK    FileHdr                      24           0
+  warning   LANGUAGE_CHECK    ImproperRangeIndex-ML         1           0
+  warning   LANGUAGE_CHECK    ParamName                   178           0
+  warning   LANGUAGE_CHECK    PortName                    155           0
+  warning   LANGUAGE_CHECK    STARC05-1.1.1.2               4           0
+  warning   LANGUAGE_CHECK    SigName                       5           0
+  warning   LANGUAGE_CHECK    W120                        176           0
+  warning   LANGUAGE_CHECK    W175                         40           0
+  warning   LANGUAGE_CHECK    W240                        902           0
+  warning   LANGUAGE_CHECK    W241                         25           0
+  warning   LANGUAGE_CHECK    W287a                        36           0
+  warning   LANGUAGE_CHECK    W287b                        23           0
+  warning   LANGUAGE_CHECK    W468                          1           0
+  warning   STRUCTURAL_CHECK  RegInput-ML                 150         157
+  warning   STRUCTURAL_CHECK  RegOutputs                  160         300
+  warning   STRUCTURAL_CHECK  UndrivenNUnloaded-ML        369           0
+  warning   STRUCTURAL_CHECK  UnloadedInPort-ML           907           0
+  warning   STRUCTURAL_CHECK  UnloadedNet-ML               48           0
+  warning   STRUCTURAL_CHECK  UnloadedOutTerm-ML          749           0
+  info      LANGUAGE_CHECK    NoExprInPort-ML               1           0
+  info      LANGUAGE_CHECK    ReportPortInfo-ML             1           0
+  info      STRUCTURAL_CHECK  AvoidAsync                    1           2
+  --------  -----             ------------------------  -----  ----------
+  Total                                                  5558         463
+
+
+1
+exit 0
+=======================================================
+Total Time(S)  :191.15
+CPU Time(S)    :45.49
+Peak Memory(MB):1264
+=======================================================

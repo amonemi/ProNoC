@@ -36,7 +36,6 @@
 **************************/
 
 module iport_reg_base  #(
-    parameter NOC_ID=0,
     parameter PCK_TYPE = "MULTI_FLIT",
     parameter V = 4,     // vc_num_per_port
     parameter P = 5,     // router port num
@@ -53,7 +52,7 @@ module iport_reg_base  #(
     parameter VC_REALLOCATION_TYPE =  "ATOMIC",
     parameter COMBINATION_TYPE= "BASELINE",// "BASELINE", "COMB_SPEC1", "COMB_SPEC2", "COMB_NONSPEC"
     parameter TOPOLOGY =  "MESH",//"MESH","TORUS"
-    parameter ROUTE_NAME="XY",// "XY", "TRANC_XY"
+    parameter ROUTE_NAME="DOR",// "DOR", "TRANC_DOR"
     parameter ROUTE_TYPE="DETERMINISTIC",// "DETERMINISTIC", "FULL_ADAPTIVE", "PAR_ADAPTIVE"
     parameter DEBUG_EN =1,
     parameter AVC_ATOMIC_EN= 0,
@@ -61,7 +60,7 @@ module iport_reg_base  #(
     parameter [CVw-1: 0] CLASS_SETTING = {CVw{1'b1}}, // shows how each class can use VCs   
     parameter [V-1  : 0] ESCAP_VC_MASK = 4'b1000,  // mask scape vc, valid only for full adaptive
     parameter DSTPw = P-1,
-    parameter SSA_EN="YES", // "YES" , "NO"      
+    parameter SSA_EN=1, // 1: enable SSA, 0: disable SSA 
     parameter SWA_ARBITER_TYPE ="RRA",// "RRA","WRRA"
     parameter WEIGHTw=4,
     parameter WRRA_CONFIG_INDEX=0,
@@ -187,7 +186,6 @@ module iport_reg_base  #(
 
     //extract header flit info
     extract_header_flit_info #(
-        .NOC_ID(NOC_ID),
         .DATA_w(0)
     ) header_extractor (
         .flit_in(flit_in),
@@ -232,13 +230,13 @@ module iport_reg_base  #(
      
 
     pronoc_register #(.W(WEIGHTw), .RESET_TO(1)) reg5(
-    		.in		(iport_weight_next ), 
+    		.D_in(iport_weight_next ), 
     		.reset  (reset ), 
     		.clk    (clk   ), 
-    		.out    (iport_weight  ));
+    		.Q_out(iport_weight  ));
 	
 	
-    always @ (*)begin 
+    always_comb begin 
     	iport_weight_next = iport_weight;
     	if(hdr_flit_wr != {V{1'b0}})  iport_weight_next = (weight_in=={WEIGHTw{1'b0}})? 1 : weight_in; // the minimum weight is 1
     end
@@ -247,10 +245,10 @@ module iport_reg_base  #(
 // genrate write enable for lk_routing result with one clock cycle latency after reciveing the flit
     
     pronoc_register #(.W(V)) reg1(
-    		.in		(hdr_flit_wr ), 
+    		.D_in(hdr_flit_wr ), 
     		.reset  (reset ), 
     		.clk    (clk   ), 
-    		.out    (hdr_flit_wr_delayed  ));
+    		.Q_out(hdr_flit_wr_delayed  ));
 
 
 
@@ -260,14 +258,7 @@ generate
     /* verilator lint_off WIDTH */  
     if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS") && (T3>1)) begin : multi_local
     /* verilator lint_on WIDTH */  
-        mesh_tori_endp_addr_decode #(
-            .TOPOLOGY("MESH"),
-            .T1(T1),
-            .T2(T2),
-            .T3(T3),
-            .EAw(EAw)
-        )
-        endp_addr_decode
+        regular_topo_endp_addr_decode endp_addr_decode
         (
             .e_addr(dest_e_addr_in),
             .ex( ),
@@ -275,7 +266,7 @@ generate
             .el(endp_l_in),
             .valid( )
         );
-   end
+    end
 
     /* verilator lint_off WIDTH */  
     if(TOPOLOGY=="FATTREE" && ROUTE_NAME == "NCA_STRAIGHT_UP") begin : fat
@@ -324,10 +315,7 @@ generate
             .wr_en (flit_wr[i]),   // Write enable
             .rd_en (ivc_num_getting_sw_grant[i]),   // Read the next word
             .dout (flit_is_tail[i]),    // Data out
-            .full ( ),
-            .nearly_full ( ),
-            .recieve_more_than_0 ( ),
-            .recieve_more_than_1 ( ),
+            .status_o(),
             .reset (reset),
             .clk (clk)            
         );
@@ -344,10 +332,7 @@ generate
                 .wr_en (hdr_flit_wr[i]),   // Write enable
                 .rd_en (class_rd_fifo[i]),   // Read the next word
                 .dout (class_out[i]),    // Data out
-                .full ( ),
-                .nearly_full ( ),
-                .recieve_more_than_0 ( ),
-                .recieve_more_than_1 ( ),
+                .status_o(),
                 .reset (reset),
                 .clk (clk)
             
@@ -367,10 +352,7 @@ generate
              .wr_en (hdr_flit_wr_delayed [i]),   // Write enable
              .rd_en (lk_dst_rd_fifo [i]),   // Read the next word
              .dout (lk_destination_encoded  [(i+1)*DSTPw-1 : i*DSTPw]),    // Data out
-             .full (),
-             .nearly_full (),
-             .recieve_more_than_0 (),
-             .recieve_more_than_1 (),
+             .status_o(),
              .reset (reset),
              .clk (clk)
              
@@ -390,10 +372,7 @@ generate
                  .wr_en(hdr_flit_wr[i]),   // Write enable
                  .rd_en(dst_rd_fifo[i]),   // Read the next word
                  .dout(dest_port_encoded[(i+1)*DSTPw-1 : i*DSTPw]),    // Data out
-                 .full(),
-                 .nearly_full(),
-                 .recieve_more_than_0(),
-                 .recieve_more_than_1(),
+                 .status_o(),
                  .reset(reset),
                  .clk(clk) 
             );               
@@ -410,10 +389,7 @@ generate
                 .wr_en(hdr_flit_wr[i]),   // Write enable
                 .rd_en(dst_rd_fifo[i]),   // Read the next word
                 .dout(dest_port_encoded[(i+1)*DSTPw-1 : i*DSTPw]),    // Data out
-                .full(),
-                .nearly_full(),
-                .recieve_more_than_0(),
-                .recieve_more_than_1(),
+                .status_o(),
                 .reset(reset),
                 .clk(clk),
                 .clear(destport_clear[(i+1)*DSTPw-1 : i*DSTPw])   // clear other destination ports once one of them is selected
@@ -464,10 +440,7 @@ generate
                  .wr_en(hdr_flit_wr[i]),   // Write enable
                  .rd_en(dst_rd_fifo[i]),   // Read the next word
                  .dout(endp_localp_num[(i+1)*ELw-1 : i*ELw]),    // Data out
-                 .full( ),
-                 .nearly_full( ),
-                 .recieve_more_than_0(),
-                 .recieve_more_than_1(),
+                 .status_o(),
                  .reset(reset),
                  .clk(clk) 
             );       
@@ -511,8 +484,8 @@ generate
         	.N(V)
         )
         onehot_mux(
-        	.in(flit_is_tail),
-        	.out(granted_flit_is_tail),
+        	.D_in(flit_is_tail),
+        	.Q_out(granted_flit_is_tail),
         	.sel(ivc_num_getting_sw_grant)
         );
     
@@ -582,7 +555,6 @@ generate
         
         
         flit_buffer_reg_base #(           
-            .NOC_ID(NOC_ID),
             .V(V),
             .B(B),
             .SSA_EN(SSA_EN),
@@ -667,18 +639,9 @@ generate
 endgenerate    
 
     look_ahead_routing #(
-    	.T1(T1),
-        .T2(T2),
-        .T3(T3),
-        .T4(T4), 
-        .P(P),       
-        .RAw(RAw),  
-        .EAw(EAw), 
-    	.DSTPw(DSTPw),
-    	.SW_LOC(SW_LOC),
-    	.TOPOLOGY(TOPOLOGY),
-    	.ROUTE_NAME(ROUTE_NAME),
-    	.ROUTE_TYPE(ROUTE_TYPE)
+        .P(P),
+    	.SW_LOC(SW_LOC)
+    	
     ) lk_routing (
         .current_r_addr(current_r_addr),
         .neighbors_r_addr(neighbors_r_addr),
@@ -691,7 +654,6 @@ endgenerate
      );
 
     header_flit_update_lk_route_ovc #(
-        .NOC_ID(NOC_ID),
         .P(P)   
     ) the_flit_update (
         .flit_in (buffer_out),
@@ -710,10 +672,10 @@ endgenerate
         
     
     pronoc_register #(.W(V)) reg2(
-    		.in		(dst_rd_fifo ), 
+    		.D_in(dst_rd_fifo ), 
     		.reset  (reset ), 
     		.clk    (clk   ), 
-    		.out    (lk_dst_rd_fifo  ));
+    		.Q_out(lk_dst_rd_fifo  ));
 
    
     assign    dst_rd_fifo = reset_ivc;
@@ -746,7 +708,7 @@ if(DEBUG_EN) begin :dbg
      if (( TOPOLOGY == "RING" || TOPOLOGY == "LINE" || TOPOLOGY == "MESH" || TOPOLOGY == "TORUS")) begin : mesh_based
      /* verilator lint_on WIDTH */  
 
-        debug_mesh_tori_route_ckeck #(
+        debug_regular_topo_route_ckeck #(
             .T1(T1),
             .T2(T2),
             .T3(T3),

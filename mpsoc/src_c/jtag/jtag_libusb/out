@@ -13,7 +13,7 @@ Router parameters:
 	AVC_ATOMIC_EN:0 
 	Congestion Index:3 
 	ADD_PIPREG_AFTER_CROSSBAR:0
-	SSA_EN enabled:NO 
+	SSA_EN enabled:0 
 	Switch allocator arbitration type:RRA 
 
 Simulation parameters

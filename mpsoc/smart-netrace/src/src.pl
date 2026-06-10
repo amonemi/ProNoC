@@ -21,7 +21,7 @@ use strict;
 use warnings;
 
 my $pp;
-	$pp= do "$src/deafult_noc_param";
+	$pp= do "$src/default_noc_param";
 	die "Error reading: $@" if $@;
 
 	my $param = $pp->{'noc_param'};
@@ -535,7 +535,7 @@ sub check_sim_results{
 	
 		my @errors = unix_grep("$file","ERROR:");
 		if (scalar @errors  ){
-			append_text_to_file($report,"\t Error in running simulation: @errors \n");	
+			append_text_to_file($report,"\t Error in running simulation:\n @errors \n");	
 			$self->{'name'}{"$name"}{'traffic'}{$traffic}{'overal_result'}="Failed";
 			$self->{'name'}{"$name"}{'traffic'}{$traffic}{'message'}="@errors";
 			return;						

@@ -29,7 +29,7 @@ module freq_gen (
 	/* needed to achieve phase lock, by detecting the first rising edge of the clk
 	 * and aligning the output clk to it */
 	input clk,
-	output reg out,
+	output reg Q_out,
 	/* period length is multiplied by 1000 for higher precision */
 	output reg [31:0] out_period_length_1000);
 
@@ -39,11 +39,11 @@ module freq_gen (
 	/* generate the wanted frequency */
 	always begin
 		if (PWRDWN) begin
-			out <= 1'bx;
+			Q_out <= 1'bx;
 			start <= 1'bx;
 			#1;
 		end else if (RST) begin
-			out <= 1'b0;
+			Q_out <= 1'b0;
 			start <= 1'b0;
 			#1;
 		end else if (ref_period_1000 > 0 && start) begin
@@ -54,10 +54,10 @@ module freq_gen (
 			 * easy solution to returning floating point numbers.
 			 */
 			out_period_length_1000 <= ((ref_period_1000 / 1000.0) * ((D * (O_1000 / 1000.0) * 1.0) / (M_1000 / 1000.0)) * 1000);
-			out <= ~out;
+			Q_out <= ~Q_out;
 			#(((ref_period_1000 / 1000.0) * ((D * (O_1000 / 1000.0) * 1.0) / (M_1000 / 1000.0))) / 2.0);
 		end else begin
-			out <= 1'b0;
+			Q_out <= 1'b0;
 			#1;
 		end
 	end
