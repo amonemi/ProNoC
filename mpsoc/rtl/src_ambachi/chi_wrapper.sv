@@ -249,52 +249,47 @@ endmodule
 module  chi_noc (
     reset,
     clk,
-    /*--------- Interface with NoC ---------------------------------*/    
+    /*--------- Interface with NoC ---------------------------------*/
     //TX // snoop tx home node
     // wire   [TGTID_REQ-1 : 0] chi_noc_tx__target_id_all ; // we are not supporting braod casting on snoop chanel so need target ID
-    chi_noc_txflitpend_all, 
-    chi_noc_txflitv_all,
-    chi_noc_txflit_all,
-    noc_chi_txlcrdv_all,
-    
+    chi_noc_txflitpend,
+    chi_noc_txflitv,
+    chi_noc_txflit,
+    noc_chi_txlcrdv,
+
     // /RX
-    noc_chi_rxflitpend_all,
-    noc_chi_rxflitv_all,
-    noc_chi_rxflit_all,
-    chi_noc_rxlcrdv_all,
-    
-    snp_target_id_all //only needed for snp
+    noc_chi_rxflitpend,
+    noc_chi_rxflitv,
+    noc_chi_rxflit,
+    chi_noc_rxlcrdv,
+
+    snp_target_id //only needed for snp
     );
-    
+
     import pronoc_pkg::*;
     import amba_5_chi_pkg::*;
-    
+
     // Clock and Reset
     input clk,reset;
-    input [TGTID_DAT * NE-1 : 0]  snp_target_id_all;
-    
-    
+    input [TGTID_DAT-1 : 0]  snp_target_id [NE-1 : 0];
+
     /*--------- Interface with NoC ---------------------------------*/
     // RX
-    output   [NE-1 : 0] noc_chi_rxflitpend_all ;
-    output   [NE-1 : 0] noc_chi_rxflitv_all ;
-    output   [Fpay*NE-1:0]  noc_chi_rxflit_all ;
-    input  [NE-1 : 0] chi_noc_rxlcrdv_all ;
-    
-    //TX 
-    input   [NE-1 : 0] chi_noc_txflitpend_all ;
-    input   [NE-1 : 0] chi_noc_txflitv_all ;
-    input   [Fpay*NE-1:0]    chi_noc_txflit_all ;
-    output  [NE-1 : 0] noc_chi_txlcrdv_all ;
-    
-    wire  [Fpay-1:0]    noc_chi_rxflit [NE-1 : 0];
-    wire  [Fpay-1:0]    chi_noc_txflit [NE-1 : 0]; 
-    wire  [TGTID_DAT-1  :0]   snp_target_id [NE-1 : 0];
+    output [NE-1 : 0] noc_chi_rxflitpend;
+    output [NE-1 : 0] noc_chi_rxflitv;
+    output [Fpay-1:0] noc_chi_rxflit [NE-1 : 0];
+    input  [NE-1 : 0] chi_noc_rxlcrdv;
+
+    //TX
+    input  [NE-1 : 0] chi_noc_txflitpend;
+    input  [NE-1 : 0] chi_noc_txflitv;
+    input  [Fpay-1:0] chi_noc_txflit [NE-1 : 0];
+    output [NE-1 : 0] noc_chi_txlcrdv;
 
     /*----------------------------------------------------------------------------*/
     /*ProNoC interface */
     /*----------------------------------------------------------------------------*/
-    //local ports 
+    //local ports
     smartflit_chanel_t pronoc_chan_in  [NE-1 : 0];
     smartflit_chanel_t pronoc_chan_out [NE-1 : 0];
     noc_top the_noc (
@@ -303,39 +298,31 @@ module  chi_noc (
         .chan_in_all (pronoc_chan_in),
         .chan_out_all(pronoc_chan_out)
     );
-    
+    wire [RAw-1 : 0] router_current_addr [NE-1 : 0];
     genvar i;
-    generate 
+    generate
     for(i=0;i<NE;i=i+1)begin :ne
      //connected router encoded address
-        localparam CURRENTR=  i/T3;
-        localparam CURRENTX=  CURRENTR%T1;
-        localparam CURRENTY=  CURRENTR/T1;
-        localparam [RAw-1 : 0] CURRENT_ADDR =  (CURRENTY<<NXw) + CURRENTX; 
-        
-        assign snp_target_id [i] = snp_target_id_all[(i+1)* TGTID_DAT-1 : i* TGTID_DAT];
-        assign chi_noc_txflit[i] = chi_noc_txflit_all[(i+1)*Fpay-1 : i*Fpay];
-        assign noc_chi_rxflit_all [(i+1)*Fpay-1 : i*Fpay] = noc_chi_rxflit[i];  
-        
+        assign router_current_addr[i] = pronoc_chan_out[i].ctrl_chanel.router_addr;
         if(NOC_ID == "snp") begin : _snp
             snp_chi_to_pronoc_wrapper chi_to_pronoc (
-                .chi_flitpend_i(chi_noc_txflitpend_all[i]),
-                .chi_flitv_i(chi_noc_txflitv_all[i]),
-                .chi_lcrdv_i(chi_noc_rxlcrdv_all[i]),
+                .chi_flitpend_i(chi_noc_txflitpend[i]),
+                .chi_flitv_i(chi_noc_txflitv[i]),
+                .chi_lcrdv_i(chi_noc_rxlcrdv[i]),
                 .chi_flit_i(chi_noc_txflit[i]),
                 .snp_target_id(snp_target_id[i]),//comes from home nodes
-                .current_r_addr_i(CURRENT_ADDR),
+                .current_r_addr_i(router_current_addr[i]),
                 .pronoc_chan_out(pronoc_chan_in[i]),
                 .clk(clk),
                 .reset(reset)
             );
-        end else begin 
+        end else begin
             chi_to_pronoc_wrapper chi_to_pronoc (
-                .chi_flitpend_i(chi_noc_txflitpend_all[i]),
-                .chi_flitv_i(chi_noc_txflitv_all[i]),
-                .chi_lcrdv_i(chi_noc_rxlcrdv_all[i]),
+                .chi_flitpend_i(chi_noc_txflitpend[i]),
+                .chi_flitv_i(chi_noc_txflitv[i]),
+                .chi_lcrdv_i(chi_noc_rxlcrdv[i]),
                 .chi_flit_i(chi_noc_txflit[i]),
-                .current_r_addr_i(CURRENT_ADDR),
+                .current_r_addr_i(router_current_addr[i]),
                 .pronoc_chan_out(pronoc_chan_in[i]),
                 .clk(clk),
                 .reset(reset)
@@ -343,9 +330,9 @@ module  chi_noc (
         end
         pronoc_to_chi_wrapper pronoc_to_chi (
             .chi_flit_o(noc_chi_rxflit[i]),
-            .chi_flitpend_o(noc_chi_rxflitpend_all[i]),
-            .chi_flitv_o(noc_chi_rxflitv_all[i]),
-            .chi_lcrdv_o(noc_chi_txlcrdv_all[i]),
+            .chi_flitpend_o(noc_chi_rxflitpend[i]),
+            .chi_flitv_o(noc_chi_rxflitv[i]),
+            .chi_lcrdv_o(noc_chi_txlcrdv[i]),
             .pronoc_chan_in(pronoc_chan_out[i])
         );
     end
