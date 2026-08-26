@@ -317,7 +317,6 @@ module  traffic_gen_top  #(
     ) extractor (
         .flit(flit_in),
         .hdr_flit(hdr_flit),
-        .option_o(),
         .data_o(rd_hdr_data_out)
     );
     assign rd_class_hdr = hdr_flit.message_class;

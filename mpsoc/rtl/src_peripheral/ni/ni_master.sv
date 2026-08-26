@@ -396,7 +396,6 @@ Shared registers for all VCs
         ) hdr_extractor (
             .flit(flit_in),
             .hdr_flit(hdr_flit),
-            .option_o(),
             .data_o(precap_din)
         );
         assign src_endp_addr = hdr_flit.src_e_addr;
@@ -807,7 +806,6 @@ Shared registers for all VCs
     ) extractor (
         .flit(fifo_dout),
         .hdr_flit(received_hdr_flit),
-        .option_o(),
         .data_o(received_hdr_dat_next)
     );
 

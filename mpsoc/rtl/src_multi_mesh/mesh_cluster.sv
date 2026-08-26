@@ -453,7 +453,6 @@ module icr_modifier
     ) extractor(
         .flit(chan_in.flit_chanel.flit),
         .hdr_flit(hdr_flit_i),
-        .option_o(),
         .data_o(/* unused */)
     );
 

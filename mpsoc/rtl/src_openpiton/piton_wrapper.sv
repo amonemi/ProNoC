@@ -481,7 +481,6 @@ module pronoc_to_piton_wrapper #(
     )extract(
         .flit(chan_in.flit_chanel.flit),
         .hdr_flit(hdr_flit),
-        .option_o(),
         .data_o(head_dat)
     );
     

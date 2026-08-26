@@ -116,7 +116,6 @@ module header_flit_info #(
 )(
     flit,
     hdr_flit,
-    option_o,
     data_o
 );
     import pronoc_pkg::*;
@@ -126,7 +125,6 @@ module header_flit_info #(
 
     input flit_t flit;
     output hdr_flit_t hdr_flit;
-    output logic [OPTIONw-1 : 0] option_o;
     output logic [Dw-1 : 0] data_o;
 
     localparam
@@ -142,7 +140,6 @@ module header_flit_info #(
         hdr_flit.weight = (IS_WRRA)? flit.payload [WEIGHT_MSB : WEIGHT_LSB] : {WEIGHTw{1'b0}};
         hdr_flit.option = (HDR_OPTION_WIDTH > 0)? flit.payload [OPTN_MSB : OPTN_LSB]: {OPTIONw{1'b0}};
         hdr_flit.be = (BYTE_EN)? flit.payload [BE_MSB : BE_LSB]: {BEw{1'b0}};
-        option_o = hdr_flit.option;
     end
 
     wire [OFFSETw-1 : 0 ] offset = flit.payload [DATA_MSB : DATA_LSB];

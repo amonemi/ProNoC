@@ -404,7 +404,6 @@ module multicast_chan_in_process #(
     header_flit_info extract (
         .flit(chan_in.flit),
         .hdr_flit(hdr_flit),
-        .option_o(),
         .data_o()
     );
 
