@@ -479,6 +479,75 @@
     end
     endfunction
     
+    function automatic integer base_k_addr_encode; // encode pos in base-k with n digits each kw bits (addrencode)
+    input integer pos,k,n,kw;
+    integer pow,tmp,i;
+    begin
+        base_k_addr_encode=0;
+        pow=1;
+        for (i = 0; i < n; i=i+1) begin
+            tmp = (pos/pow) % k;
+            tmp = tmp << (i*kw);
+            base_k_addr_encode = base_k_addr_encode | tmp;
+            pow = pow * k;
+        end
+    end
+    endfunction
+
+    function automatic integer router_id_to_router_addr;
+    input integer rid;
+    integer x, y, z, level, pos, pos_addr, layer_addr, nrl;
+    begin
+        router_id_to_router_addr = 0;
+        if (IS_REGULAR_TOPO) begin
+            if (IS_1D_TOPO) begin // LINE, RING
+                router_id_to_router_addr = rid;
+            end else if (IS_2D_TOPO) begin // MESH, TORUS
+                x = rid % NX;
+                y = rid / NX;
+                router_id_to_router_addr = (y << NXw) + x;
+            end else begin // MESH_3D
+                x = rid % NX;
+                y = (rid / NX) % NY;
+                z = rid / (NX * NY);
+                router_id_to_router_addr = (z << (NXw+NYw)) | (y << NXw) | x;
+            end
+        end else if (IS_FMESH) begin
+            x = rid % NX;
+            y = rid / NX;
+            router_id_to_router_addr = (y << NXw) + x;
+        end else if (IS_FATTREE) begin
+            nrl = powi(K, L-1);
+            level = rid / nrl;
+            pos = rid % nrl;
+            layer_addr = L - 1 - level;
+            pos_addr = base_k_addr_encode(pos, K, L, Kw);
+            router_id_to_router_addr = (layer_addr << LKw) | pos_addr;
+        end else if (IS_TREE) begin
+            if (rid == 0) begin // root
+                layer_addr = L - 1;
+                pos_addr = 0;
+            end else begin
+                level = 0;
+                while (rid >= sum_powi(K, level+1)) level = level + 1;
+                pos = rid - sum_powi(K, level);
+                layer_addr = L - 1 - level;
+                pos_addr = base_k_addr_encode(pos * powi(K, L-1-level), K, L, Kw);
+            end
+            router_id_to_router_addr = (layer_addr << LKw) | pos_addr;
+        end else if (IS_STAR) begin
+            router_id_to_router_addr = 0;
+        end else if (IS_MULTI_MESH) begin
+            // The router address in MULTI_MESH is a per-cluster generated
+            // multimesh_router_addr_t {c,z,y,x}; it cannot be computed in
+            // this generic file, use the generated multimesh_address_encoder.
+            router_id_to_router_addr = rid;
+        end else begin // CUSTOM
+            router_id_to_router_addr = rid;
+        end
+    end
+    endfunction
+
     `ifdef SIMULATION
     task automatic display_noc_parameters;
     begin

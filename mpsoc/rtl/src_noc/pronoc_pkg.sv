@@ -32,12 +32,12 @@ package pronoc_pkg;
         (CONGESTION_INDEX==9)?  3:
         (CONGESTION_INDEX==10)? 4:
         (CONGESTION_INDEX==12)? 3:2;
-        
+
     localparam
         E_SRC_LSB =0,                   E_SRC_MSB = E_SRC_LSB + EAw-1,
-        E_DST_LSB = E_SRC_MSB +1,       E_DST_MSB = E_DST_LSB + DAw-1,  
-        DST_P_LSB = E_DST_MSB + 1,      DST_P_MSB = DST_P_LSB + DSTPw-1, 
-        CLASS_LSB = DST_P_MSB + 1,      CLASS_MSB = CLASS_LSB + Cw -1, 
+        E_DST_LSB = E_SRC_MSB +1,       E_DST_MSB = E_DST_LSB + DAw-1,
+        DST_P_LSB = E_DST_MSB + 1,      DST_P_MSB = DST_P_LSB + DSTPw-1,
+        CLASS_LSB = DST_P_MSB + 1,      CLASS_MSB = CLASS_LSB + Cw-1,
         MSB_CLASS = (C>1)? CLASS_MSB : DST_P_MSB,
         WEIGHT_LSB= MSB_CLASS + 1,      WEIGHT_MSB = WEIGHT_LSB + WEIGHTw -1,
         MSB_W = (IS_WRRA)? WEIGHT_MSB : MSB_CLASS,
@@ -45,7 +45,7 @@ package pronoc_pkg;
         MSB_BE = (BYTE_EN==1)?   BE_MSB  : MSB_W,
         //the maximum data width that can be carried out with header flit
         HDR_MAX_DATw = (IS_SINGLE_FLIT)? Fpay : Fpay - MSB_BE -1;
-        
+
     localparam
         DISTw =  (IS_FATTREE | IS_TREE ) ? log2(2*L+1): log2(NR+1),
         OVC_ALLOC_MODE= ((V==1 || B <= 4) ) ?   1'b1 : 1'b0;
@@ -165,7 +165,7 @@ package pronoc_pkg;
     
     //ovc info
     typedef struct packed {
-        bit avalable; 
+        bit avalable;
         bit status; //1 : is allocated 0 : not_allocated
         logic [CREDITw-1 : 0] credit;//available credit in OVC
         bit full;
@@ -195,7 +195,7 @@ package pronoc_pkg;
 /*********************
 * router_chanels
 *********************/
-    
+
     typedef struct packed {
         logic [EAw-1     : 0] src_e_addr;
         logic [DAw-1     : 0] dest_e_addr;
@@ -204,7 +204,7 @@ package pronoc_pkg;
         logic [WEIGHTw-1: 0] weight;
         logic [BEw-1     : 0] be;
     } hdr_flit_t;
-    localparam HDR_FLIT_w = $bits(hdr_flit_t); 
+    localparam HDR_FLIT_w = $bits(hdr_flit_t);
 
 `ifdef PITON_PRONOC
     // OpenPiton CHIPID + XPOS + YPOS + FBITS widths

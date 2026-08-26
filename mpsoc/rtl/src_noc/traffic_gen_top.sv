@@ -160,7 +160,7 @@ module  traffic_gen_top  #(
     wire [V-1 : 0] cand_vc;
     
     wire [CLK_CNTw-1 : 0] wr_timestamp,pck_timestamp;
-    wire hdr_flit,tail_flit;
+    wire hdr_flag,tail_flag;
     reg [PCK_SIZw-1 : 0] flit_counter;
     reg flit_cnt_rst,flit_cnt_inc;
     wire rd_hdr_flg,rd_tail_flg;
@@ -273,8 +273,8 @@ module  traffic_gen_top  #(
     
     assign wr_timestamp    =pck_timestamp; 
     assign  update      = flit_in_wr & flit_in[Fw-2];
-    assign  hdr_flit    = (flit_counter == 0);
-    assign  tail_flit   = (flit_counter ==  pck_size-1'b1);
+    assign  hdr_flag    = (flit_counter == 0);
+    assign  tail_flag   = (flit_counter ==  pck_size-1'b1);
     
     assign  time_stamp_h2h  = hdr_flit_timestamp - rd_timestamp;
     assign  time_stamp_h2t  = clk_counter - rd_timestamp;
@@ -299,45 +299,40 @@ module  traffic_gen_top  #(
         .data_in(hdr_data_in),
         .be_in({BEw{1'b1}} )// Be is not used in simulation as we dont sent real data
     );
-    
+
     assign flit_out_class = pck_class_in;
-    assign flit_out_hdr = {hdr_flit,tail_flit};    
+    assign flit_out_hdr = {hdr_flag,tail_flag};
     assign flit_out_header_pyload = hdr_flit_out[FPAYw-1 : 0];
-    
-    /* verilator lint_off WIDTH */ 
-    assign flit_out_pyload = (hdr_flit)  ?    flit_out_header_pyload :
-        (tail_flit) ? wr_timestamp : {pck_number,flit_counter};
+
+    /* verilator lint_off WIDTH */
+    assign flit_out_pyload = (hdr_flag)  ?    flit_out_header_pyload :
+        (tail_flag) ? wr_timestamp : {pck_number,flit_counter};
     /* verilator lint_on WIDTH */
-    
-    assign flit_out = {flit_out_hdr, wr_vc, flit_out_pyload };   
-    
-    //extract header flit info
-    extract_header_flit_info #(
+
+    assign flit_out = {flit_out_hdr, wr_vc, flit_out_pyload };
+    hdr_flit_t hdr_flit;
+    header_flit_info #(
         .DATA_w(HDR_DATA_w)
-    ) header_extractor (
-        .flit_in(flit_in),
-        .flit_in_wr(flit_in_wr),
-        .class_o(rd_class_hdr),
-        .destport_o(),
-        .dest_e_addr_o(rd_des_e_addr),
-        .src_e_addr_o(rd_src_e_addr),
-        .vc_num_o(rd_vc),
-        .hdr_flit_wr_o( ),
-        .hdr_flg_o(rd_hdr_flg),
-        .tail_flg_o(rd_tail_flg),
-        .weight_o( ),
-        .be_o( ),
+    ) extractor (
+        .flit(flit_in),
+        .hdr_flit(hdr_flit),
         .data_o(rd_hdr_data_out)
     );
-    
+    assign rd_class_hdr = hdr_flit.message_class;
+    assign rd_des_e_addr = hdr_flit.dest_e_addr;
+    assign rd_src_e_addr = hdr_flit.src_e_addr;
+    assign rd_vc = flit_in [FPAYw+V-1 : FPAYw];
+    assign rd_hdr_flg = (IS_MULTI_FLIT) ? flit_in [Fw-1]  : 1'b1;
+    assign rd_tail_flg = (IS_MULTI_FLIT) ? flit_in [Fw-2]  : 1'b1;
+
     distance_gen the_distance_gen (
         .src_e_addr(src_e_addr),
         .dest_e_addr(current_e_addr),
         .distance(distance)
     );
-    
-    generate 
-    if(MIN_PCK_SIZE == 1) begin : sf_pck    
+
+    generate
+    if(MIN_PCK_SIZE == 1) begin : sf_pck
         assign src_e_addr         = (rd_hdr_flg & rd_tail_flg)? rd_src_e_addr : rsv_pck_src_e_addr[rd_vc_bin];
         assign pck_class_out      = (rd_hdr_flg & rd_tail_flg)? rd_class_hdr : rsv_pck_class_in[rd_vc_bin];
         assign hdr_flit_timestamp = (rd_hdr_flg & rd_tail_flg)?  clk_counter : rsv_time_stamp[rd_vc_bin];
@@ -348,47 +343,47 @@ module  traffic_gen_top  #(
         assign src_e_addr            = rsv_pck_src_e_addr[rd_vc_bin];
         assign pck_class_out    = rsv_pck_class_in[rd_vc_bin];
         assign hdr_flit_timestamp = rsv_time_stamp[rd_vc_bin];
-        assign rd_timestamp=flit_in[CLK_CNTw-1 : 0];        
+        assign rd_timestamp=flit_in[CLK_CNTw-1 : 0];
     end
-    
+
     if(V==1) begin : v1
         assign rd_vc_bin=1'b0;
     // assign wr_vc_bin=1'b0;
-    end else begin :vother  
-        
-        one_hot_to_bin #( .ONE_HOT_WIDTH (V)) conv1 
+    end else begin :vother
+
+        one_hot_to_bin #( .ONE_HOT_WIDTH (V)) conv1
         (
             .one_hot_code (rd_vc),
             .bin_code (rd_vc_bin)
         );
     /*
-    one_hot_to_bin #( .ONE_HOT_WIDTH (V)) conv2 
+    one_hot_to_bin #( .ONE_HOT_WIDTH (V)) conv2
     (
         .one_hot_code   (wr_vc),
         .bin_code       (wr_vc_bin)
     );
      */
-    end 
-    endgenerate
-    
-    assign  ovc_wr_in   = (flit_out_wr ) ?      wr_vc : {V{1'b0}};
-    assign  wr_vc_is_full           = | ( full_vc & wr_vc);
-    
-    generate
-    /* verilator lint_off WIDTH */ 
-    if(VC_REALLOCATION_TYPE ==  "NONATOMIC") begin : nanatom_b
-    /* verilator lint_on WIDTH */  
-        assign wr_vc_avb    =  ~wr_vc_is_full; 
-    end else begin : atomic_b 
-        assign wr_vc_is_empty   =  | ( empty_vc & wr_vc);
-        assign wr_vc_avb        =  wr_vc_is_empty;      
     end
     endgenerate
-    
+
+    assign  ovc_wr_in   = (flit_out_wr ) ?      wr_vc : {V{1'b0}};
+    assign  wr_vc_is_full           = | ( full_vc & wr_vc);
+
+    generate
+    /* verilator lint_off WIDTH */
+    if(VC_REALLOCATION_TYPE ==  "NONATOMIC") begin : nanatom_b
+    /* verilator lint_on WIDTH */
+        assign wr_vc_avb    =  ~wr_vc_is_full;
+    end else begin : atomic_b
+        assign wr_vc_is_empty   =  | ( empty_vc & wr_vc);
+        assign wr_vc_avb        =  wr_vc_is_empty;
+    end
+    endgenerate
+
     reg not_yet_sent_aflit_next,not_yet_sent_aflit;
-    
+
     always_comb begin
-        wr_vc_next          = wr_vc; 
+        wr_vc_next          = wr_vc;
         cand_wr_vc_en       = 1'b0;
         flit_out_wr         = 1'b0;
         flit_cnt_inc        = 1'b0;
@@ -400,28 +395,28 @@ module  traffic_gen_top  #(
         ns                  = ps;
         pck_rd              =1'b0;
         not_yet_sent_aflit_next =not_yet_sent_aflit;
-        case (ps) 
+        case (ps)
             IDEAL: begin
-                if(pck_ready ) begin 
+                if(pck_ready ) begin
                     if(wr_vc_avb && valid_dst)begin
-                        
+
                         hdr_flit_sent=1'b1;
                         flit_out_wr     = 1'b1;//sending header flit
                         not_yet_sent_aflit_next = 1'b0;
-                        flit_cnt_inc = 1'b1;                            
-                        if (MIN_PCK_SIZE>1 || flit_out_hdr!=2'b11) begin 
-                            ns              = SENT;
+                        flit_cnt_inc = 1'b1;
+                        if (MIN_PCK_SIZE>1 || flit_out_hdr!=2'b11) begin
+                            ns = SENT;
                         end else begin
                             pck_rd=1'b1;
                             flit_cnt_rst   = 1'b1;
                             sent_done       =1'b1;
                             cand_wr_vc_en   =1'b1;
-                            if(cand_vc>0) begin 
+                            if(cand_vc>0) begin
                                 wr_vc_next  = cand_vc;
                             end  else ns = WAIT;
                         end  //else
                     end//wr_vc
-                end 
+                end
                 
             end //IDEAL
             SENT: begin  
@@ -579,7 +574,7 @@ module  traffic_gen_top  #(
         /* verilator lint_off WIDTH */
         if(CAST_TYPE == "UNICAST") begin
         /* verilator lint_on WIDTH */
-            if(flit_out_wr && hdr_flit && dest_e_addr_o [EAw-1 : 0]  == current_e_addr  && SELF_LOOP_EN == 0) begin 
+            if(flit_out_wr && hdr_flag && dest_e_addr_o [EAw-1 : 0]  == current_e_addr  && SELF_LOOP_EN == 0) begin 
                 $display("%t: ERROR: The self-loop is not enabled in the router while a packet is injected to the NoC with identical source and destination address in endpoint (%h).: %m",$time, dest_e_addr_o );
                 $finish;
             end
@@ -592,7 +587,7 @@ module  traffic_gen_top  #(
             if((CAST_TYPE == "MULTICAST_FULL") || (CAST_TYPE == "MULTICAST_PARTIAL")) begin
             /* verilator lint_on WIDTH */
                 
-                if(flit_out_wr && hdr_flit && dest_mcast_all_endp1[current_id]  == 1'b1  && SELF_LOOP_EN == 0) begin 
+                if(flit_out_wr && hdr_flag && dest_mcast_all_endp1[current_id]  == 1'b1  && SELF_LOOP_EN == 0) begin 
                     $display("%t: ERROR: The self-loop is not enabled in the router while a packet is injected to the NoC with identical source and destination address in endpoint %d. destination nodes:0X%h. : %m",$time, current_id,dest_mcast_all_endp1 );
                     $finish;
                 end
@@ -602,7 +597,7 @@ module  traffic_gen_top  #(
                 $finish;
             end
             //check multicast packet size to be smaller than B & LB
-            if(flit_out_wr & hdr_flit & (mcast_dst_num_o>1) & (pck_size >B || pck_size> LB))begin 
+            if(flit_out_wr & hdr_flag & (mcast_dst_num_o>1) & (pck_size >B || pck_size> LB))begin 
                 $display("%t: ERROR: A multicast packat is injected to the NoC which has larger size (%d) than router buffer width.  %m",$time, pck_size);
                 $finish;
             end
@@ -617,7 +612,7 @@ module  traffic_gen_top  #(
                 $finish;
             end
         end//update 
-        if(tail_flit & flit_out_wr) begin 
+        if(tail_flag & flit_out_wr) begin 
             if(wr_timestamp > clk_counter) begin 
                 $display("%t: ERROR: In src %d, the current time (%d) should be larger than or equal to the packet timestamp %d.  %m",$time, current_id, clk_counter, wr_timestamp);
                 $finish;

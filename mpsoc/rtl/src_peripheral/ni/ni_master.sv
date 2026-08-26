@@ -332,40 +332,40 @@ Shared registers for all VCs
         end
         endcase
     end
-    
+
     //write wb registers
-    always_comb begin 
+    always_comb begin
         burst_counter_next=burst_counter;
         burst_size_next= burst_size;
         if(burst_counter_ld)    burst_counter_next = burst_size;
         if(burst_counter_dec)   burst_counter_next= burst_counter- 1'b1;
         if((s_stb_i  &    s_we_i) && (vc_s_addr_i == GENERAL_REGS_WB_ADDR)) begin // This is a general address. check the general address filed
             case(genrl_reg_addr)
-            BURST_SIZE_WB_ADDR: begin 
-                if (send_vc_is_busy == {V{1'b0}}) burst_size_next=s_dat_i [BURST_SIZE_w-1 : 0];    
+            BURST_SIZE_WB_ADDR: begin
+                if (send_vc_is_busy == {V{1'b0}}) burst_size_next=s_dat_i [BURST_SIZE_w-1 : 0];
             end //BURST_SIZE_WB_ADDR
             default begin
-            
+
             end
             endcase
         end//  if(s_stb_i  &    s_we_i)
-    end 
-    `ifdef SYNC_RESET_MODE 
-    always @ (posedge clk )begin 
-    `else 
-    always @ (posedge clk or posedge reset)begin 
-    `endif 
-        if(reset) begin 
+    end
+    `ifdef SYNC_RESET_MODE
+    always @ (posedge clk )begin
+    `else
+    always @ (posedge clk or posedge reset)begin
+    `endif
+        if(reset) begin
             burst_counter <= {BURST_SIZE_w{1'b0}};
             burst_size <= {BURST_SIZE_w{1'b1}};
-            s_ack_o <= 1'b0;  
-        end else begin 
-            burst_counter<= burst_counter_next; 
-            burst_size <= burst_size_next; 
-            s_ack_o <= s_ack_o_next;  
-        end 
-    end 
-    
+            s_ack_o <= 1'b0;
+        end else begin
+            burst_counter<= burst_counter_next;
+            burst_size <= burst_size_next;
+            s_ack_o <= s_ack_o_next;
+        end
+    end
+
     bin_to_one_hot #(
         .BIN_WIDTH(CHw),
         .ONE_HOT_WIDTH(V)
@@ -373,54 +373,49 @@ Shared registers for all VCs
         .bin_code(vc_addr),
         .one_hot_code(vc_state_reg_enable)
     );
-    
+
     assign s_ack_o_next    =   s_stb_i & (~s_ack_o);
-    
+
     genvar i;
     generate
-    
-    wire [V-1 : 0 ] precap_hdr_flit_wr;
-    wire [HDATA_PRECAPw-1 : 0 ] precap_din;
+
     wire [V-1 : 0] precap_hdr_flit_rd = (fifo_rd & received_flit_is_hdr) ?  receive_vc_enable : {V{1'b0}};
-    wire [HDATA_PRECAPw-1 : 0 ] precap_dout  [V-1 : 0] ;    
+    wire [HDATA_PRECAPw-1 : 0 ] precap_dout  [V-1 : 0] ;
     fifo_stat_t precap_fifo_stat [V-1 : 0];
     wire [V-1 : 0 ] precap_valid;
-    
+
     //capture data before saving the actual flit in memory
     if(HDATA_PRECAPw > 0 ) begin : precap
         wire [EAw-1 : 0] src_endp_addr;
-        extract_header_flit_info #(
+        wire [V-1 : 0 ] precap_hdr_flit_wr;
+        wire [HDATA_PRECAPw-1 : 0 ] precap_din;
+        wire precap_hdr_flag  = (IS_MULTI_FLIT) ? flit_in [Fw-1]  : 1'b1;
+        hdr_flit_t hdr_flit;
+        header_flit_info #(
             .DATA_w(HDATA_PRECAPw)
-        )  data_extractor   (
-            .flit_in(flit_in),
-            .flit_in_wr(flit_in_wr),
-            .src_e_addr_o(src_endp_addr ),
-            .dest_e_addr_o( ),
-            .destport_o( ),
-            .class_o( ),
-            .weight_o( ),
-            .tail_flg_o( ),
-            .hdr_flg_o( ),
-            .vc_num_o( ),
-            .be_o( ),
-            .hdr_flit_wr_o(precap_hdr_flit_wr),
+        ) hdr_extractor (
+            .flit(flit_in),
+            .hdr_flit(hdr_flit),
             .data_o(precap_din)
-        ); 
+        );
+        assign src_endp_addr = hdr_flit.src_e_addr;
+        assign precap_hdr_flit_wr = (flit_in_wr & precap_hdr_flag) ? flit_in [FPAYw+V-1 : FPAYw] : {V{1'b0}};
+
         `ifdef SIMULATION
-        `ifdef MONITOR_HDR_FLITS 
+        `ifdef MONITOR_HDR_FLITS
         always @(posedge clk) begin
-            if(precap_hdr_flit_wr)begin 
+            if(precap_hdr_flit_wr)begin
                 $display("%t: endp %d got a packet with port address %d from endp %d",$time,current_e_addr,precap_din,src_endp_addr);
             end
 
-            if(send_hdr & flit_out_wr)begin 
+            if(send_hdr & flit_out_wr)begin
                 $display("%t: endp %d sends a packet with port address %d to endp %d",$time,current_e_addr,hdr_data,dest_e_addr);
             end
         end
         `endif
-        `ifdef MONITOR_DAT_FLITS 
+        `ifdef MONITOR_DAT_FLITS
             always @(posedge clk) begin
-                if(flit_out_wr & ~send_hdr) begin 
+                if(flit_out_wr & ~send_hdr) begin
                     $display("%t: endp %u V %u sends %h",$time,current_e_addr,  flit_out [Fpay+V-1 : Fpay],  flit_out [Fpay-1 : 0 ]);    
                 end
             end
@@ -440,19 +435,19 @@ Shared registers for all VCs
                 .reset(reset),
                 .clk(clk)
             );
-            assign recive_vc_precap_data[i] = precap_dout[i]; 
-            `ifdef SIMULATION  
-            always @(posedge clk)begin 
+            assign recive_vc_precap_data[i] = precap_dout[i];
+            `ifdef SIMULATION
+            always @(posedge clk)begin
                 if(s_stb_i  &  ~s_we_i &  (vc_addr==i) & (vc_s_addr_i == RECEIVE_PRECAP_DATA_ADDR) )begin
-                    if( precap_fifo_stat[i].empty) $display( "Warning: Reading invalid precap-data %m");    
+                    if( precap_fifo_stat[i].empty) $display( "Warning: Reading invalid precap-data %m");
                 end
             end
             `endif
         end
     end
     assign chan_out.ctrl_chanel.endp_port =1'b1;
-    
-    for (i=0;i<V; i=i+1) begin : vc_    
+
+    for (i=0;i<V; i=i+1) begin : vc_
         assign chan_out.ctrl_chanel.credit_init_val[i]= LB;
         ni_vc_wb_slave_regs #(
             .MAX_TRANSACTION_WIDTH(MAX_TRANSACTION_WIDTH),
@@ -774,14 +769,14 @@ Shared registers for all VCs
     assign m_receive_cti_o = vc_m_receive_cti_o[receive_vc_enable_binary];
     assign m_receive_stb_o = vc_m_receive_stb_o[receive_vc_enable_binary];
     assign m_receive_cyc_o = vc_m_receive_cyc_o[receive_vc_enable_binary];
-    assign m_receive_we_o  = vc_m_receive_we_o[receive_vc_enable_binary];    
+    assign m_receive_we_o  = vc_m_receive_we_o[receive_vc_enable_binary];
 
-    wire [V-1    :   0]  flit_in_vc_num = flit_in [Fpay+V-1    :   Fpay]; 
-    wire [V-1    :   0]  ififo_vc_not_empty; 
+    wire [V-1    :   0]  flit_in_vc_num = flit_in [Fpay+V-1    :   Fpay];
+    wire [V-1    :   0]  ififo_vc_not_empty;
     assign vc_fifo_empty = ~ ififo_vc_not_empty;
     assign receive_vc_got_packet = ififo_vc_not_empty;
     assign receive_vc_got_hdr_flit_at_head=  ififo_vc_not_empty & receive_vc_fsm_is_ideal;
-    
+
     wire [Fw-1  :   0] fifo_dout;
     localparam LBw = log2(LB);
     flit_buffer #(
@@ -800,44 +795,40 @@ Shared registers for all VCs
         .ssa_rd({V{1'b0}}),
         .multiple_dest(),
         .sub_rd_ptr_ld()
-    ); 
-    
-    extract_header_flit_info #(
-        .DATA_w (HDw)
-    )  extractor (
-        .flit_in(fifo_dout),
-        .flit_in_wr(),
-        .class_o(received_class_next),
-        .destport_o(),
-        .dest_e_addr_o(),
-        .src_e_addr_o(received_src_e_addr_next),
-        .vc_num_o(),
-        .hdr_flit_wr_o( ),
-        .hdr_flg_o( ),
-        .tail_flg_o( ),
-        .weight_o(),
-        .be_o(received_be_next),
+    );
+
+    hdr_flit_t received_hdr_flit;
+    header_flit_info #(
+        .DATA_w(HDw)
+    ) extractor (
+        .flit(fifo_dout),
+        .hdr_flit(received_hdr_flit),
         .data_o(received_hdr_dat_next)
-    );  
+    );
+
+    assign received_class_next = received_hdr_flit.message_class;
+    assign received_src_e_addr_next = received_hdr_flit.src_e_addr;
+    assign received_be_next = received_hdr_flit.be;
+
     assign m_receive_dat_o = fifo_dout[Dw-1   :   0];
     assign received_flit_is_tail = fifo_dout[Fw-2];
-    assign received_flit_is_hdr  = fifo_dout[Fw-1];  
+    assign received_flit_is_hdr  = fifo_dout[Fw-1];
     //  assign any_vc_got_pck = |receive_vc_got_packet;
-    localparam [1:0] 
+    localparam [1:0]
         HDR_FLAG =   2'b10,
         BDY_FLAG =   2'b00,
         TAIL_FLAG =   2'b01;
     assign credit_out = vc_fifo_rd;
-    assign flit_out_wr= fifo_wr;  
-    assign flit_out [Fpay+V-1 : Fpay] = send_vc_enable;    
-    assign flit_out [Fpay-1   : 0   ] = 
+    assign flit_out_wr= fifo_wr;
+    assign flit_out [Fpay+V-1 : Fpay] = send_vc_enable;
+    assign flit_out [Fpay-1   : 0   ] =
         (send_hdr)?  hdr_flit_out [Fpay-1 : 0] :
         (send_tail)? tail_flit_out :  m_send_dat_i [Fpay-1 : 0];
     assign flit_out [Fw-1 : Fw-2] =
-        (send_hdr)?  HDR_FLAG : 
+        (send_hdr)?  HDR_FLAG :
         (send_tail)?  TAIL_FLAG : BDY_FLAG;
 endmodule
-    
+
 /******************
 *   ovc_status
 *******************/

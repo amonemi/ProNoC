@@ -104,107 +104,28 @@ module header_flit_generator #(
 endmodule
 
 
-module extract_header_flit_info # (
-    parameter DATA_w = 0
-) (
-    //inputs
-    flit_in,
-    flit_in_wr,
-    //outputs
-    src_e_addr_o,
-    dest_e_addr_o,
-    destport_o,
-    class_o,
-    weight_o, 
-    data_o,   
-    tail_flg_o,
-    hdr_flg_o,   
-    vc_num_o,  
-    hdr_flit_wr_o,
-    be_o    
-);     
-    
-    import pronoc_pkg::*;
-    
-    localparam       
-        W = WEIGHTw,
-        Dw = (DATA_w==0)? 1 : DATA_w,
-        DATA_LSB= MSB_BE+1,               
-        DATA_MSB= ((DATA_LSB + DATA_w)<FPAYw) ? DATA_LSB + Dw-1 : FPAYw-1,
-        OFFSETw = DATA_MSB - DATA_LSB +1; 
-    
-    input [Fw-1 : 0] flit_in;
-    input flit_in_wr;
-    output [EAw-1 : 0] src_e_addr_o;
-    output [DAw-1 : 0] dest_e_addr_o;
-    output [DSTPw-1 : 0] destport_o;    
-    output [Cw-1 : 0] class_o;
-    output [W-1  : 0] weight_o;
-    output tail_flg_o;
-    output hdr_flg_o;    
-    output [V-1 : 0] vc_num_o;
-    output [V-1 : 0] hdr_flit_wr_o;
-    output [BEw-1 : 0] be_o;
-    output [Dw-1  :   0] data_o;
-    
-    wire [OFFSETw-1 : 0 ] offset;
-    
-    assign src_e_addr_o = flit_in [E_SRC_MSB : E_SRC_LSB];
-    assign dest_e_addr_o = flit_in [E_DST_MSB : E_DST_LSB];
-    assign destport_o = flit_in [DST_P_MSB : DST_P_LSB];
-    
-    generate
-    if(C>1)begin :have_class 
-        assign class_o = flit_in [CLASS_MSB : CLASS_LSB];
-    end else begin : no_class
-        assign class_o = {Cw{1'b0}};
-    end 
-    if(~IS_RRA)begin  : wrra_b
-        assign weight_o =  flit_in [WEIGHT_MSB : WEIGHT_LSB];    
-    end else begin : rra_b
-        assign weight_o = {WEIGHTw{1'bX}};        
-    end 
-    if( BYTE_EN ) begin : be_1
-        assign be_o = flit_in [BE_MSB : BE_LSB];    
-    end else begin : be_0    
-        assign be_o = {BEw{1'bX}};
-    end
-    assign offset = flit_in [DATA_MSB : DATA_LSB];    
-    if(Dw > OFFSETw) begin : if1     
-        assign data_o={{(Dw-OFFSETw){1'b0}},offset};
-    end else begin : if2 
-        assign data_o=offset[Dw-1 : 0];
-    end    
-    endgenerate          
-    
-    assign hdr_flg_o  = (IS_MULTI_FLIT) ? flit_in [Fw-1]  : 1'b1;
-    assign tail_flg_o = (IS_MULTI_FLIT) ? flit_in [Fw-2]  : 1'b1;
-    assign vc_num_o = flit_in [FPAYw+V-1 : FPAYw];
-    assign hdr_flit_wr_o= (flit_in_wr & hdr_flg_o )? vc_num_o : {V{1'b0}};
-endmodule
 
 module header_flit_info #(
-    parameter DATA_w = 0 
+    parameter DATA_w = 0
 )(
     flit,
     hdr_flit,
     data_o
 );
-    
     import pronoc_pkg::*;
-    
-    localparam 
+
+    localparam
         Dw = (DATA_w==0)? 1 : DATA_w;
-    
+
     input flit_t flit;
     output hdr_flit_t hdr_flit;
-    output [Dw-1 : 0] data_o;
-    
+    output logic [Dw-1 : 0] data_o;
+
     localparam
         DATA_LSB= MSB_BE+1,
         DATA_MSB= (DATA_LSB + DATA_w)<FPAYw ? DATA_LSB + Dw-1 : FPAYw-1,
         OFFSETw = DATA_MSB - DATA_LSB +1;
-    
+
     always_comb begin
         hdr_flit.src_e_addr  = flit.payload [E_SRC_MSB : E_SRC_LSB];
         hdr_flit.dest_e_addr = flit.payload [E_DST_MSB : E_DST_LSB];
@@ -213,18 +134,16 @@ module header_flit_info #(
         hdr_flit.weight = (IS_WRRA)? flit.payload [WEIGHT_MSB : WEIGHT_LSB] : {WEIGHTw{1'b0}};
         hdr_flit.be = (BYTE_EN)? flit.payload [BE_MSB : BE_LSB]: {BEw{1'b0}};
     end
-    
+
     wire [OFFSETw-1 : 0 ] offset = flit.payload [DATA_MSB : DATA_LSB];
-    generate
-    if(Dw > OFFSETw) begin : if1
-        assign data_o={{(Dw-OFFSETw){1'b0}},offset};
-    end else begin : if2 
-        assign data_o=offset[Dw-1 : 0];
+    localparam int WIDTH = (Dw > OFFSETw)? OFFSETw : Dw;
+    always_comb begin
+        data_o='0;
+        data_o[WIDTH-1 : 0]=offset[WIDTH-1 : 0];
     end
-    endgenerate
 endmodule
 
-/***********************************    
+/***********************************
 *  flit_update
 *  update the header flit look ahead routing and output VC
 *********************************/
