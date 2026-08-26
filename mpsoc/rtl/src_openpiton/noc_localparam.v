@@ -19,6 +19,7 @@
 	localparam ROUTE_MODE="LOOKAHEAD";
 	localparam PCK_TYPE="MULTI_FLIT";
 	localparam MIN_PCK_SIZE=1;
+	localparam HDR_OPTION_WIDTH=0;
 	localparam BYTE_EN=0;
 	localparam CAST_TYPE="UNICAST";
 	localparam MCAST_ENDP_LIST=10'h3ff;

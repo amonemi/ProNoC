@@ -365,6 +365,7 @@ module local_route_computation #(
         ) extractor (
             .flit(chan_in.flit),
             .hdr_flit(hdr_flit_i),
+            .option_o(),
             .data_o( )
         );
         conventional_routing #(

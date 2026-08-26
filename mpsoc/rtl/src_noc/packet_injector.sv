@@ -114,7 +114,8 @@ module packet_injector  (
         .weight_in(pck_injct_in.init_weight),
         .destport_in(destport),
         .data_in(hdr_data_in),
-        .be_in({BEw{1'b1}} )// Be is not used in simulation as we dont sent real data
+        .be_in({BEw{1'b1}} ),// Be is not used in simulation as we dont sent real data
+        .option_in({OPTIONw{1'b0}})
     );
     
     logic [PCK_SIZw-1 : 0]  counter, counter_next;
@@ -238,6 +239,7 @@ module packet_injector  (
     ) extractor (
         .flit(chan_in.flit_chanel.flit),
         .hdr_flit(hdr_flit_i),
+        .option_o(),
         .data_o(hdr_data_o)
     );
     

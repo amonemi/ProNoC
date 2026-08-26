@@ -46,7 +46,8 @@ sub network_maker_main {
     {param_name=> "SWA_ARBITER_TYPE ", value=>'"RRA"'},
     {param_name=> "WEIGHTw ", value=>7},
     {param_name=> "MIN_PCK_SIZE", value=>2},
-    {param_name=> "BYTE_EN", value=>0}
+    {param_name=> "BYTE_EN", value=>0},
+    {param_name=> "HDR_OPTION_WIDTH", value=>0}
     );
     my @ports =(
     {name=> "flit_in_all", type=>"input", width=>"PFw", connect=>"flit_out_all",  pwidth=>"Fw", pname=> "flit_in", pconnect=>"flit_out", endp=>"yes"},

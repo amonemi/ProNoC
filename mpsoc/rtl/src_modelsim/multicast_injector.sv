@@ -49,7 +49,8 @@ module multicast_injector (
         .weight_in (pck_injct_in.init_weight),
         .destport_in (destport),
         .data_in (hdr_data_in),
-        .be_in({BEw{1'b1}} )// Be is not used in simulation as we dont sent real data
+        .be_in({BEw{1'b1}} ),// Be is not used in simulation as we dont sent real data
+        .option_in({OPTIONw{1'b0}})
     );
     localparam
         REMAIN_DATw =  PCK_INJ_Dw - HDR_DATA_w,
@@ -168,6 +169,7 @@ module multicast_injector (
     ) extractor (
         .flit(chan_in.flit_chanel.flit),
         .hdr_flit(hdr_flit_i),
+        .option_o(),
         .data_o(hdr_data_o)
     );
     wire [PCK_INJ_Dw-1 : 0]  pck_data_o [V-1 : 0];

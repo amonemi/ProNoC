@@ -77,7 +77,8 @@ module chi_to_pronoc_wrapper (
         .vc_num_in(1'b0),
         .weight_in(WINIT),
         .data_in(chi_flit_i),
-        .be_in(1'b0)
+        .be_in(1'b0),
+        .option_in({OPTIONw{1'b0}})
     );
     
     assign  pronoc_chan_out.flit_chanel.flit_wr = chi_flitv_i;
@@ -183,7 +184,8 @@ module  snp_chi_to_pronoc_wrapper (
         .vc_num_in(1'b0),
         .weight_in(WINIT),
         .data_in(chi_flit_i),
-        .be_in(1'b0)
+        .be_in(1'b0),
+        .option_in({OPTIONw{1'b0}})
     );
     
     assign  pronoc_chan_out.flit_chanel.flit_wr  = chi_flitv_i;
@@ -240,6 +242,7 @@ module pronoc_to_chi_wrapper (
     )extr(
         .flit(pronoc_chan_in.flit_chanel.flit),
         .hdr_flit(),
+        .option_o(),
         .data_o(chi_flit_o)
     );
 endmodule

@@ -22,6 +22,7 @@ $phy = bless( {
                                   'C' => 0,
                                   'ADD_PIPREG_AFTER_CROSSBAR' => '1\'b0',
                                   'T3' => '1',
+                                  'HDR_OPTION_WIDTH' => 0,
                                   'BYTE_EN' => 0,
                                   'COMBINATION_TYPE' => '"COMB_NONSPEC"',
                                   'LB' => '4',
@@ -83,6 +84,7 @@ $phy = bless( {
                                                           'ROUTE_NAME',
                                                           'PCK_TYPE',
                                                           'MIN_PCK_SIZE',
+                                                          'HDR_OPTION_WIDTH',
                                                           'BYTE_EN',
                                                           'CAST_TYPE',
                                                           'MCAST_ENDP_LIST',
@@ -114,6 +116,7 @@ $phy = bless( {
                                                           'ROUTE_NAME',
                                                           'PCK_TYPE',
                                                           'MIN_PCK_SIZE',
+                                                          'HDR_OPTION_WIDTH',
                                                           'BYTE_EN',
                                                           'CAST_TYPE',
                                                           'MCAST_ENDP_LIST',
@@ -145,6 +148,7 @@ $phy = bless( {
                                                           'ROUTE_NAME',
                                                           'PCK_TYPE',
                                                           'MIN_PCK_SIZE',
+                                                          'HDR_OPTION_WIDTH',
                                                           'BYTE_EN',
                                                           'CAST_TYPE',
                                                           'MCAST_ENDP_LIST',
@@ -184,6 +188,7 @@ $phy = bless( {
                 'noc_param0' => {
                                   'CONGESTION_INDEX' => 3,
                                   'V' => 2,
+                                  'HDR_OPTION_WIDTH' => 0,
                                   'BYTE_EN' => 0,
                                   'T3' => '1',
                                   'COMBINATION_TYPE' => '"COMB_NONSPEC"',
@@ -218,6 +223,7 @@ $phy = bless( {
                 'noc_param2' => {
                                   'MUX_TYPE' => '"BINARY"',
                                   'LB' => '4',
+                                  'HDR_OPTION_WIDTH' => 0,
                                   'BYTE_EN' => 0,
                                   'COMBINATION_TYPE' => '"COMB_NONSPEC"',
                                   'T3' => '1',
@@ -319,6 +325,10 @@ $phy = bless( {
                                                    {
                                                      'param_name' => 'MIN_PCK_SIZE',
                                                      'value' => 2
+                                                   },
+                                                   {
+                                                     'value' => 0,
+                                                     'param_name' => 'HDR_OPTION_WIDTH'
                                                    },
                                                    {
                                                      'value' => 0,

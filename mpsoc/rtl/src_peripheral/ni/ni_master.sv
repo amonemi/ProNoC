@@ -396,6 +396,7 @@ Shared registers for all VCs
         ) hdr_extractor (
             .flit(flit_in),
             .hdr_flit(hdr_flit),
+            .option_o(),
             .data_o(precap_din)
         );
         assign src_endp_addr = hdr_flit.src_e_addr;
@@ -461,7 +462,8 @@ Shared registers for all VCs
             .Dw(Dw),
             .S_Aw(chanel_REGw),
             .WEIGHTw(WEIGHTw),
-            .BYTE_EN(BYTE_EN)
+            .BYTE_EN(BYTE_EN),
+            .HDR_OPTION_WIDTH(HDR_OPTION_WIDTH)
         )  wb_slave_registers (
             `ifdef SIMULATION
             .current_e_addr(current_e_addr),
@@ -515,7 +517,8 @@ Shared registers for all VCs
             .TAGw(TAGw),
             .SELw(SELw),
             .Fpay(Fpay),
-            .BYTE_EN(BYTE_EN)
+            .BYTE_EN(BYTE_EN),
+            .HDR_OPTION_WIDTH(HDR_OPTION_WIDTH)
         )   vc_dma   (
             .reset(reset),
             .clk(clk),
@@ -727,6 +730,7 @@ Shared registers for all VCs
         .vc_num_in(send_vc_enable),
         .weight_in(weight),
         .be_in(be_in),
+        .option_in({OPTIONw{1'b0}}),
         .data_in(hdr_data)
     );
     
@@ -803,6 +807,7 @@ Shared registers for all VCs
     ) extractor (
         .flit(fifo_dout),
         .hdr_flit(received_hdr_flit),
+        .option_o(),
         .data_o(received_hdr_dat_next)
     );
 

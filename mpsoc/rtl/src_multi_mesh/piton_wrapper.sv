@@ -321,6 +321,7 @@ module piton_to_pronoc_multimesh_wrapper
         .weight_in(pronoc_win),
         .vc_num_in(pronoc_vc_num_in),
         .be_in(1'b0),
+        .option_in({OPTIONw{1'b0}}),
         .data_in(pronoc_hdr_data)
     );
 
@@ -429,6 +430,7 @@ module pronoc_to_piton_multimesh_wrapper
     ) extract(
         .flit(chan_in.flit_chanel.flit),
         .hdr_flit(pronoc_hdr_flit),
+        .option_o(),
         .data_o(pronoc_hdr_data)
     );
 

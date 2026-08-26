@@ -115,6 +115,7 @@ module smart_chanel_check (
     header_flit_info extract (
         .flit(flit_chanel.flit),
         .hdr_flit(hdr_flit),
+        .option_o(),
         .data_o()
     );
     

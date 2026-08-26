@@ -297,7 +297,8 @@ module  traffic_gen_top  #(
         .weight_in(init_weight),
         .destport_in(destport),
         .data_in(hdr_data_in),
-        .be_in({BEw{1'b1}} )// Be is not used in simulation as we dont sent real data
+        .be_in({BEw{1'b1}} ),// Be is not used in simulation as we dont sent real data
+        .option_in({OPTIONw{1'b0}})
     );
 
     assign flit_out_class = pck_class_in;
@@ -316,6 +317,7 @@ module  traffic_gen_top  #(
     ) extractor (
         .flit(flit_in),
         .hdr_flit(hdr_flit),
+        .option_o(),
         .data_o(rd_hdr_data_out)
     );
     assign rd_class_hdr = hdr_flit.message_class;

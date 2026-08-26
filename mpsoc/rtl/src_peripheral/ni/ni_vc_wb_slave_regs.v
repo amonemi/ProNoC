@@ -45,6 +45,7 @@ module ni_vc_wb_slave_regs #(
     parameter DSTPw=4,
     parameter WEIGHTw=4, 
     parameter BYTE_EN=0,
+    parameter HDR_OPTION_WIDTH=0,
     parameter HDw = 8,  
     parameter CTRL_FLGw=14,
     //wishbones  bus  slave  port parameters

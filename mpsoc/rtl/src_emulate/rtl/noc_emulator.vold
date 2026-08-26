@@ -34,6 +34,7 @@ module  noc_emulator #(
     parameter WEIGHTw = 4, 
     parameter MIN_PCK_SIZE = 2, 
     parameter BYTE_EN=0,
+    parameter HDR_OPTION_WIDTH=0,
     
     
     // simulation
@@ -120,7 +121,8 @@ module  noc_emulator #(
     	.SWA_ARBITER_TYPE(SWA_ARBITER_TYPE), 
     	.WEIGHTw(WEIGHTw),
     	.MIN_PCK_SIZE(MIN_PCK_SIZE),
-        .BYTE_EN(BYTE_EN)
+        .BYTE_EN(BYTE_EN),
+        .HDR_OPTION_WIDTH(HDR_OPTION_WIDTH)
     )
     the_noc
     (
@@ -151,6 +153,7 @@ module  noc_emulator #(
         .C(C),
         .MIN_PCK_SIZE(MIN_PCK_SIZE),
         .BYTE_EN(BYTE_EN),
+        .HDR_OPTION_WIDTH(HDR_OPTION_WIDTH),
         .RAM_Aw(RAM_Aw),
         .STATISTIC_NUM(STATISTIC_NUM),  // the last 8 rows of RAM is reserved for collecting statistic values;
         .MAX_SIM_CLKs(MAX_SIM_CLKs),
@@ -219,6 +222,7 @@ module  Jtag_traffic_gen #(
     parameter C = 4 ,   //  number of flit class
     parameter MIN_PCK_SIZE = 2,
     parameter BYTE_EN=0,    
+    parameter HDR_OPTION_WIDTH=0,    
     parameter RAM_Aw=7,
     parameter STATISTIC_NUM=8, 
     parameter MAX_RATIO = 100,
@@ -426,6 +430,7 @@ module  Jtag_traffic_gen #(
             .WEIGHTw(WEIGHTw),
             .MIN_PCK_SIZE(MIN_PCK_SIZE),
             .BYTE_EN(BYTE_EN),        
+            .HDR_OPTION_WIDTH(HDR_OPTION_WIDTH),        
             .RAw(RAw),
             .EAw(EAw)          	
           )
@@ -490,6 +495,7 @@ module  traffic_gen_ram #(
     parameter WEIGHTw  =4,
     parameter MIN_PCK_SIZE=2,
     parameter BYTE_EN=0,    
+    parameter HDR_OPTION_WIDTH=0,    
     parameter RAw = 4,
     parameter EAw=4    
 )
@@ -697,7 +703,8 @@ module  traffic_gen_ram #(
     	.SWA_ARBITER_TYPE(SWA_ARBITER_TYPE),
         .WEIGHTw(WEIGHTw),
         .MIN_PCK_SIZE(MIN_PCK_SIZE),
-        .BYTE_EN(BYTE_EN)
+        .BYTE_EN(BYTE_EN),
+        .HDR_OPTION_WIDTH(HDR_OPTION_WIDTH)
     )
     the_traffic_gen
     (

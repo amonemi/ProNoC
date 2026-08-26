@@ -353,6 +353,7 @@ module input_queue_per_port #(
     ) header_info (
         .flit(flit_in),
         .hdr_flit(hdr_flit_i),
+        .option_o(),
         .data_o( )
     );
     assign hdr_flit_wr = (flit_in_wr & flit_in.hdr_flag) ? flit_in.vc : {V{1'b0}};    

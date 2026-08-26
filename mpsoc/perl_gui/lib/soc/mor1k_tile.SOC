@@ -1528,10 +1528,13 @@ For XILINX FPGAs define it as "XILINX_JTAG_WB". In this case, the UART uses BSCA
                                                                      'SMART_MAX' => {
                                                                                       'value' => '0'
                                                                                     },
-                                                                     'BYTE_EN' => {
-                                                                                    'value' => '1'
-                                                                                  },
-                                                                     'COMBINATION_TYPE' => {
+                                                                      'HDR_OPTION_WIDTH' => {
+                                                                                     'value' => 0
+                                                                                   },
+                                                                      'BYTE_EN' => {
+                                                                                     'value' => '1'
+                                                                                   },
+                                                                      'COMBINATION_TYPE' => {
                                                                                              'value' => '"COMB_NONSPEC"'
                                                                                            },
                                                                      'C' => {
@@ -1760,10 +1763,13 @@ For XILINX FPGAs define it as "XILINX_JTAG_WB". In this case, the UART uses BSCA
                                                                           'ESCAP_VC_MASK' => {
                                                                                                'value' => 'Parameter'
                                                                                              },
-                                                                          'BYTE_EN' => {
-                                                                                         'value' => 'Parameter'
-                                                                                       },
-                                                                          'VC_REALLOCATION_TYPE' => {
+                                                                           'HDR_OPTION_WIDTH' => {
+                                                                                          'value' => 'Parameter'
+                                                                                        },
+                                                                           'BYTE_EN' => {
+                                                                                          'value' => 'Parameter'
+                                                                                        },
+                                                                           'VC_REALLOCATION_TYPE' => {
                                                                                                       'value' => 'Parameter'
                                                                                                     },
                                                                           'FIRST_ARBITER_EXT_P_EN' => {

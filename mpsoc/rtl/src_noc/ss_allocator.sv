@@ -265,6 +265,7 @@ module ssa_per_vc #(
     ) extractor (
         .flit(flit_in),
         .hdr_flit(hdr_flit),
+        .option_o(),
         .data_o()
     );
 

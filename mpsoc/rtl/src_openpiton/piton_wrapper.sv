@@ -391,6 +391,7 @@ module piton_to_pronoc_wrapper  #(
         .weight_in(win), 
         .vc_num_in(1'b1),
         .be_in(1'b0),
+        .option_in({OPTIONw{1'b0}}),
         .data_in(head_data)
     );
     
@@ -480,6 +481,7 @@ module pronoc_to_piton_wrapper #(
     )extract(
         .flit(chan_in.flit_chanel.flit),
         .hdr_flit(hdr_flit),
+        .option_o(),
         .data_o(head_dat)
     );
     

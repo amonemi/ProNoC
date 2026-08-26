@@ -523,6 +523,7 @@ void ${IP}_receive (unsigned int v, unsigned int data_start_addr,  unsigned int 
 #define CORE_PHY_ADDR   PHY_ADDR_ENDP_${CORE_ID}
 #define ${IP}_NUM_VCs	${V}
 #define ${IP}_HDATA_PRECAPw     ${HDATA_PRECAPw}
+#define ${IP}_HDR_OPTION_WIDTH  ${HDR_OPTION_WIDTH}
 #define ${IP}_BYTE_EN     ${BYTE_EN}  
 
 //general registers
