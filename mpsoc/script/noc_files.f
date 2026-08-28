@@ -1,4 +1,4 @@
- ${workspace_loc}/mpsoc/rtl/arbiter.v 
+ ${workspace_loc}/mpsoc/rtl/arbiter.sv 
  ${workspace_loc}/mpsoc/rtl/src_noc/fattree.v              
  ${workspace_loc}/mpsoc/rtl/src_noc/route_mesh.v
  ${workspace_loc}/mpsoc/rtl/src_noc/baseline.v               
@@ -6,7 +6,7 @@
  ${workspace_loc}/mpsoc/rtl/src_noc/router_bypass.sv
  ${workspace_loc}/mpsoc/rtl/src_noc/canonical_credit_count.v
  ${workspace_loc}/mpsoc/rtl/src_noc/flit_buffer.v
- ${workspace_loc}/mpsoc/rtl/src_noc/router.v
+ ${workspace_loc}/mpsoc/rtl/src_noc/router.sv
  ${workspace_loc}/mpsoc/rtl/src_noc/class_table.v
  ${workspace_loc}/mpsoc/rtl/src_noc/header_flit.v
  ${workspace_loc}/mpsoc/rtl/src_noc/route_torus.v
@@ -20,7 +20,7 @@
  ${workspace_loc}/mpsoc/rtl/src_noc/iport_reg_base.v
  ${workspace_loc}/mpsoc/rtl/src_noc/test_topology_genvar.v
  ${workspace_loc}/mpsoc/rtl/src_noc/comb_spec2.v
- ${workspace_loc}/mpsoc/rtl/main_comp.v
+ ${workspace_loc}/mpsoc/rtl/main_comp.sv
  ${workspace_loc}/mpsoc/rtl/src_noc/congestion_analyzer.v
  ${workspace_loc}/mpsoc/rtl/src_noc/mesh_torus_noc.v
  ${workspace_loc}/mpsoc/rtl/src_noc/traffic_gen.v

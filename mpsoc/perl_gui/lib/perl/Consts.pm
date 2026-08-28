@@ -1,4 +1,4 @@
-#This file is created by /home/alireza/work/git/hca_git/git-hub/ProNoC/mpsoc/intsall.sh
+#This file is created by /home/alireza/work/git/openpiton/DARE/noc_sim/modules/ProNoC/mpsoc/intsall.sh
 package Consts;
 
 use constant VERSION  => '2.2.0'; 

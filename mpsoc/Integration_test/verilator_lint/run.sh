@@ -44,7 +44,7 @@ verilator_lint () {
     done
 
     # Lint using Verilator
-    verilator --xml-output $xml_file --lint-only -Wall $ignore_flags -Wno-fatal -f "$file_list_f" --top-module noc_top_v > "$log_file" 2>&1
+    verilator --xml-output $xml_file --lint-only -Wall $ignore_flags -Wno-fatal -f "$file_list_f" +define+SIMULATION --top-module noc_top_v > "$log_file" 2>&1
     perl "${SCRPT_DIR_PATH}/src/instant_export.pl" "$xml_file"  >> "$log_file" 
 
 }

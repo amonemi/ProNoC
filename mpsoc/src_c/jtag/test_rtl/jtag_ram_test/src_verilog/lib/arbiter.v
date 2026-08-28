@@ -1,6 +1,6 @@
 `include "pronoc_def.v"
 /**********************************************************************
-**    File: arbiter.v
+**    File: arbiter.sv
 **    
 **    Copyright (C) 2014-2017  Alireza Monemi
 **    

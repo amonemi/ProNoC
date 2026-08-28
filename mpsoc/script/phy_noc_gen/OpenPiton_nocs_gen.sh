@@ -61,8 +61,8 @@ if [ ! "$intermediate_pronoc_dir" -ef "$pronoc_dir" ]; then
     mkdir -p "$intermediate_pronoc_dir"
     cp -r "$pronoc_dir/"* "$intermediate_pronoc_dir"
     cp "$pronoc_dir/../pronoc_def.v" "$intermediate_pronoc_dir/../"
-    cp "$pronoc_dir/../arbiter.v"    "$intermediate_pronoc_dir/../"
-    cp "$pronoc_dir/../main_comp.v"  "$intermediate_pronoc_dir/../"
+    cp "$pronoc_dir/../arbiter.sv"    "$intermediate_pronoc_dir/../"
+    cp "$pronoc_dir/../main_comp.sv"  "$intermediate_pronoc_dir/../"
 fi
 
 # If Multi-mesh is used, launch the generation of the sources

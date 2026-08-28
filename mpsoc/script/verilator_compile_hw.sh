@@ -30,12 +30,12 @@ echo "split all verilog modules in separate  files"
 
 find  $src_verilator_path -name \*.sv -exec cp '{}' processed_rtl/ \;
 
- 
+
 cd processed_rtl
 
-verilator  --cc router_verilator.v --profile-cfuncs --prefix "Vrouter" -O3  -CFLAGS -O3
-verilator  --cc noc_connection.sv --prefix "Vnoc" -O3 -CFLAGS -O3
-verilator  --cc --profile-cfuncs traffic_gen_verilator.v --prefix "Vtraffic" -O3 -CFLAGS -O3
+verilator +define+SIMULATION --cc router_verilator.v --profile-cfuncs --prefix "Vrouter" -O3  -CFLAGS -O3
+verilator +define+SIMULATION --cc noc_connection.sv --prefix "Vnoc" -O3 -CFLAGS -O3
+verilator +define+SIMULATION --cc --profile-cfuncs traffic_gen_verilator.v --prefix "Vtraffic" -O3 -CFLAGS -O3
 
 
 cp $script_path/Makefile	obj_dir/

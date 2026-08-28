@@ -316,8 +316,8 @@ void ${IP}_transfer (unsigned int chanel, unsigned int read_start_addr,  unsigne
                              },
                   'version' => 6,
                   'hdl_files' => [
-                                   '/mpsoc/rtl/main_comp.v',
-                                   '/mpsoc/rtl/arbiter.v',
+                                   '/mpsoc/rtl/main_comp.sv',
+                                   '/mpsoc/rtl/arbiter.sv',
 								   '/mpsoc/rtl/pronoc_def.v',
                                    '/mpsoc/rtl/src_peripheral/DMA/dma_multi_chanel_wb.v'
                                  ],

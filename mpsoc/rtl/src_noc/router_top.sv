@@ -321,35 +321,6 @@ module router_top #(
     end
     endgenerate
     
-//`ifdef VERILATOR
-//    logic  nb_router_active [P-1 : 0] /*verilator public_flat_rd*/ ;
-//    logic  router_is_ideal /*verilator public_flat_rd*/ ;
-//    logic  not_ideal_next,not_ideal;
-//    integer ii,jj;
-//    always_comb begin
-//        router_is_ideal = 1'b1;
-//        not_ideal_next  = 1'b0;
-//        for(ii=0; ii<P; ii=ii+1) begin
-//            nb_router_active[ii]= 1'b0;
-//            if(chan_out[ii].flit_chanel.flit_wr) nb_router_active[ii]=1'b1;
-//            if(chan_out[ii].flit_chanel.credit > {V{1'b0}}) nb_router_active[ii]=1'b1;
-//            if(chan_out[ii].smart_chanel.requests > {SMART_NUM{1'b0}}) nb_router_active[ii]=1'b1;
-//            
-//            for(jj=0; jj<V; jj=jj+1) begin
-//                //no active request is in any input queues
-//                if(ivc_info[ii][jj].ivc_req)begin
-//                    router_is_ideal=1'b0;
-//                    not_ideal_next=1'b1;
-//                end
-//            end
-//            //no output flit wr
-//            if(r2_chan_out[ii].flit_wr)  router_is_ideal=1'b0;
-//        end
-//        if(not_ideal) router_is_ideal =1'b0; // delay one clock cycle if the input req exist in last clock cycle bot not on the current one
-//    end
-//    pronoc_register #(    .W(1)) no_ideal_register(.D_in(not_ideal_next), .reset(reset),  .clk(clk), .Q_out(not_ideal));
-//`endif
-    
 `endif //SIMULATION
     
 endmodule

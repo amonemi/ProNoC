@@ -1509,7 +1509,7 @@ vlib rtl_work
 vmap work rtl_work
 
 
-vlog  +acc=rn  -F $target_dir/Modelsim/file_list.f
+vlog +define+SIMULATION +acc=rn  -F $target_dir/Modelsim/file_list.f
 
 vsim -t 1ps  -L rtl_work -L work -voptargs=\"+acc\"  testbench
 
@@ -1627,8 +1627,8 @@ cd \"$verilator\"
     my $length = scalar (keys %tops);
     foreach my $top (sort keys %tops) {
         add_colored_info($outtext,"Generate $top Verilator model from $tops{$top} file\n",'green');
-        $cmd.= "verilator -DNO_HETRO_IVC=1 -f ./file_list.f --cc $tops{$top}  --prefix \"$top\" $flag -O3  -CFLAGS -O3 & ";
-        $vrun.="verilator -DNO_HETRO_IVC=1 -f ./file_list.f --cc $tops{$top}  --prefix \"$top\" $flag -O3  -CFLAGS -O3 &\n";
+        $cmd.= "verilator -DNO_HETRO_IVC=1 -f ./file_list.f +define+SIMULATION --cc $tops{$top}  --prefix \"$top\" $flag -O3  -CFLAGS -O3 & ";
+        $vrun.="verilator -DNO_HETRO_IVC=1 -f ./file_list.f +define+SIMULATION --cc $tops{$top}  --prefix \"$top\" $flag -O3  -CFLAGS -O3 &\n";
         
         $make_lib.="make lib$jobs &\n";
         $jobs++;

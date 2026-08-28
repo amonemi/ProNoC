@@ -1,6 +1,6 @@
 `include "pronoc_def.v"
 /**********************************************************************
-**    File: main_comp.v
+**    File: main_comp.sv
 **    
 **    Copyright (C) 2014-2017  Alireza Monemi
 **    

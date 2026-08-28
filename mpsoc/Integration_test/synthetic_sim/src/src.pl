@@ -286,7 +286,7 @@ sub gen_verilator_sh{
     fi
 ';
     foreach my $top (sort keys %tops) {
-        $cmd.= "verilator  $ignore_flags -DNO_HETRO_IVC=1 -f \$SCRPT_DIR_PATH/file_list.f --cc $tops{$top}  --prefix \"$top\" \$cmn & \n";
+        $cmd.= "verilator  $ignore_flags -DNO_HETRO_IVC=1 -f \$SCRPT_DIR_PATH/file_list.f +define+SIMULATION --cc $tops{$top}  --prefix \"$top\" \$cmn & \n";
     }
     $cmd.="wait\n";
     foreach my $top (sort keys %tops) {

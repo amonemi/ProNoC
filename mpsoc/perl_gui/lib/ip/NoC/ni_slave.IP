@@ -784,10 +784,10 @@ void ${IP}_receive (unsigned int v, unsigned int data_start_addr,  unsigned int 
                                                          }
                              },
                   'hdl_files' => [
-                                   '/mpsoc/src_noc/arbiter.v',
+                                   '/mpsoc/src_noc/arbiter.sv',
                                    '/mpsoc/src_noc/flit_buffer.v',
                                    '/mpsoc/src_noc/input_ports.v',
-                                   '/mpsoc/src_noc/main_comp.v',
+                                   '/mpsoc/src_noc/main_comp.sv',
                                    '/mpsoc/src_noc/route_mesh.v',
                                    '/mpsoc/src_noc/route_torus.v',
                                    '/mpsoc/src_noc/routing.v',

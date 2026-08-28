@@ -26,7 +26,7 @@ vlib $rtl_work
 vmap work $rtl_work
 
 
-vlog  +acc=rn  -F $::env(LM_FILE_LIST)
+vlog  +acc=rn +define+SIMULATION -F $::env(LM_FILE_LIST)
 
 vsim -t 1ps  -L $rtl_work -L work -voptargs="+acc"  $top
 

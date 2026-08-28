@@ -33,13 +33,13 @@ for i in "${arr[@]}"; do
     LIST+="-F ./noc_${i}/noc_filelist_${i}.f\n"
     LIST+="./noc_${i}/chi_wrapper_${i}.sv\n"
     #remove common files from noc_filelist_${i}.f
-    sed -i '/arbiter.v/d' "$op_nocs_dir/nocs/noc_$i/noc_filelist_${i}.f"
-    sed -i '/main_comp.v/d' "$op_nocs_dir/nocs/noc_$i/noc_filelist_${i}.f"
+    sed -i '/arbiter.sv/d' "$op_nocs_dir/nocs/noc_$i/noc_filelist_${i}.f"
+    sed -i '/main_comp.sv/d' "$op_nocs_dir/nocs/noc_$i/noc_filelist_${i}.f"
 done
 
 # Add common files to the file list
-LIST+="./arbiter.v\n"
-LIST+="./main_comp.v\n"
+LIST+="./arbiter.sv\n"
+LIST+="./main_comp.sv\n"
 
 # Clean up and restore the original file
 rm "$pronoc_dir/chi_wrapper.sv"
