@@ -169,7 +169,6 @@ module multicast_injector (
     ) extractor (
         .flit(chan_in.flit_chanel.flit),
         .hdr_flit(hdr_flit_i),
-        .option_o(),
         .data_o(hdr_data_o)
     );
     wire [PCK_INJ_Dw-1 : 0]  pck_data_o [V-1 : 0];

@@ -242,7 +242,6 @@ module pronoc_to_chi_wrapper (
     )extr(
         .flit(pronoc_chan_in.flit_chanel.flit),
         .hdr_flit(),
-        .option_o(),
         .data_o(chi_flit_o)
     );
 endmodule
