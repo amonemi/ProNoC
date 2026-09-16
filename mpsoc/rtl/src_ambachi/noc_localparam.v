@@ -40,6 +40,7 @@
     localparam ROUTE_MODE="LOOKAHEAD";
     localparam PCK_TYPE="SINGLE_FLIT";
     localparam MIN_PCK_SIZE=1;
+    localparam HDR_OPTION_WIDTH=0;
     localparam BYTE_EN=0;
     localparam SSA_EN="NO";
     localparam SMART_MAX=0;

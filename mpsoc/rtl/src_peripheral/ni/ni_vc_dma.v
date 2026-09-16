@@ -39,6 +39,7 @@ module ni_vc_dma #(
     parameter CRC_EN = "NO",// "YES","NO" if CRC is enable then the CRC32 of all packet data is calculated and sent via tail flit. 
     parameter Fpay=32,
     parameter BYTE_EN = 0,
+    parameter HDR_OPTION_WIDTH = 0,
     //wishbone port parameters
     parameter Dw            =   32,
     parameter M_Aw          =   32,

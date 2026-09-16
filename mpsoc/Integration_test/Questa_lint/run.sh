@@ -38,7 +38,7 @@ questa_lint () {
     rm -rf work
     vlib work
     # Lint the design
-    vlog -sv -lint -f ${file_list_f} >> $log_file
+    vlog +define+SIMULATION -sv -lint -f ${file_list_f} >> $log_file
     vsim -suppress vopt-14408,vsim-16154 -c work.noc_top -do "quit"  >> $log_file
 }
 
