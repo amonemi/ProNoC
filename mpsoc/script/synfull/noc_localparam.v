@@ -41,6 +41,7 @@
     localparam ROUTE_NAME="DOR";
     localparam PCK_TYPE="MULTI_FLIT";
     localparam MIN_PCK_SIZE=1;
+    localparam HDR_OPTION_WIDTH=0;
     localparam BYTE_EN=0;
     localparam SSA_EN=0;
     localparam SMART_MAX=0;

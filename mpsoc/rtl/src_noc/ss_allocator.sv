@@ -179,7 +179,7 @@ module  ss_allocator #(
 endmodule
 
 /*************
- *  ssa_per_vc 
+ *  ssa_per_vc
  * ***********/
 module ssa_per_vc #(
     parameter P=5,
@@ -209,22 +209,22 @@ module ssa_per_vc #(
     ,clk
     `endif
 );
-    
+
     import pronoc_pkg::*;
     //header packet filds width
-    localparam  
+    localparam
         SW_LOC = V_GLOBAL/V,
         V_LOCAL = V_GLOBAL%V;
     localparam logic [V-1:0] MASKED_LOCAL_VC = V'((1 << V_LOCAL)) & ~ (V'(ESCAP_VC_MASK));
     localparam SSA_EN_IN_PORT = (((IS_MESH | IS_TORUS) & IS_FULL_ADAPTIVE) && (SS_PORT == 2 || SS_PORT == 4) && ( MASKED_LOCAL_VC != {V{1'b0}}) ) ? 1'b0 : 1'b1;
-    
+
     input [Fw-1 : 0]  flit_in;
     input flit_in_wr;
     input any_ovc_granted_in_ss_port;
     input any_ivc_sw_request_granted;
     input ovc_avalable_in_ss_port;
-    input ivc_request; 
-    input assigned_ovc_not_full;  
+    input ivc_request;
+    input assigned_ovc_not_full;
     input [DSTPw-1 : 0]  destport_encoded;//exsited packet destination port
     input assigned_to_ssovc;
     input ovc_is_assigned;
@@ -241,80 +241,74 @@ module ssa_per_vc #(
     input clk;
 `endif
 /*
-*    1) If no ivc is granted in the input port 
-*    2) The ss output port is not granted for any other input port 
+*    1) If no ivc is granted in the input port
+*    2) The ss output port is not granted for any other input port
 *    3) Incomming packet destionation port match with ss port
-*    4) In non-atomic Vc reallocation check if IVC is empty 
-*    5) The requested output VC is available in ss port 
+*    4) In non-atomic Vc reallocation check if IVC is empty
+*    5) The requested output VC is available in ss port
 * The predicted ports for each input potrt must be diffrent with the rest
 */
-    wire    [DSTPw-1 : 0] destport_in_encoded;//incomming packet destination port
+    hdr_flit_t hdr_flit;
     wire    [V-1 : 0] vc_num_in;
     wire    hdr_flg;
     wire    tail_flg;
-    assign  single_flit_pck = 
+    assign  single_flit_pck =
         (IS_SINGLE_FLIT)? 1'b1 :
-        (MIN_PCK_SIZE==1)?  hdr_flg & tail_flg : 1'b0; 
+        (MIN_PCK_SIZE==1)?  hdr_flg & tail_flg : 1'b0;
+    assign hdr_flg  = (IS_MULTI_FLIT) ? flit_in [Fw-1]  : 1'b1;
+    assign tail_flg = (IS_MULTI_FLIT) ? flit_in [Fw-2]  : 1'b1;
+    assign vc_num_in = flit_in [FPAYw+V-1 : FPAYw];
     wire   condition_1_2_valid;
-    wire [DAw-1 : 0]  dest_e_addr_in;
-    extract_header_flit_info #(
+
+    header_flit_info #(
         .DATA_w(0)
     ) extractor (
-        .flit_in(flit_in),
-        .flit_in_wr(flit_in_wr),
-        .class_o(),
-        .destport_o(destport_in_encoded),
-        .src_e_addr_o( ),
-        .dest_e_addr_o(dest_e_addr_in ),
-        .vc_num_o(vc_num_in),
-        .hdr_flit_wr_o( ),
-        .hdr_flg_o(hdr_flg),
-        .tail_flg_o(tail_flg),
-        .weight_o( ),
-        .be_o( ),
-        .data_o( )
+        .flit(flit_in),
+        .hdr_flit(hdr_flit),
+        .data_o()
     );
+
     // check condition 1 & 2
     assign condition_1_2_valid = ~(any_ovc_granted_in_ss_port  | any_ivc_sw_request_granted);
     //check destination port is ss
     wire ss_port_hdr_flit, ss_port_nonhdr_flit;
-    
+
     ssa_check_destport #(
         .SW_LOC(SW_LOC),
         .SS_PORT(SS_PORT)
     ) check_destport (
         .destport_encoded(destport_encoded),
-        .destport_in_encoded(destport_in_encoded),
+        .destport_in_encoded(hdr_flit.destport), //destport_in_encoded
         .destport_one_hot(destport_one_hot),
         .ss_port_hdr_flit(ss_port_hdr_flit),
-        .dest_e_addr_in(dest_e_addr_in),
+        .dest_e_addr_in(hdr_flit.dest_e_addr), //dest_e_addr_in
         .ss_port_nonhdr_flit(ss_port_nonhdr_flit)
     `ifdef SIMULATION
         ,.clk(clk),
         .ivc_num_getting_sw_grant(ivc_num_getting_sw_grant),
         .hdr_flg(hdr_flg)
     `endif
-    );    
-    
+    );
+
     // check if ss_ovc is ready
     wire ss_ovc_ready;
     wire assigned_ss_ovc_ready;
     assign assigned_ss_ovc_ready= ss_port_nonhdr_flit & assigned_to_ssovc & assigned_ovc_not_full;
-    assign ss_ovc_ready = (ovc_is_assigned)?assigned_ss_ovc_ready : ovc_avalable_in_ss_port; 
+    assign ss_ovc_ready = (ovc_is_assigned)?assigned_ss_ovc_ready : ovc_avalable_in_ss_port;
     // check if ssa is permited by input port
     wire ssa_permited_by_iport;
-    assign ssa_permited_by_iport =  (SSA_EN_IN_PORT)?  
+    assign ssa_permited_by_iport =  (SSA_EN_IN_PORT)?
         ss_ovc_ready & (~ivc_request) & condition_1_2_valid :
         1'b0;
     /*********************************
-    * check incomming packet conditions 
+    * check incomming packet conditions
     *********************************/
     wire ss_vc_wr, decrease_credit_pre,allocate_ss_ovc_pre,release_ss_ovc_pre;
     assign ss_vc_wr = flit_in_wr & vc_num_in[V_LOCAL];
     assign decrease_credit_pre= ~(hdr_flg & (~ss_port_hdr_flit));
     assign allocate_ss_ovc_pre= hdr_flg & ss_port_hdr_flit;
     assign release_ss_ovc_pre= (single_flit_pck)? decrease_credit_pre : tail_flg;
-    
+
     // generate output signals
     assign ivc_reset =  release_ss_ovc_pre & ss_vc_wr & ssa_permited_by_iport  ;
     assign decreased_credit_in_ss_ovc= decrease_credit_pre & ss_vc_wr & ssa_permited_by_iport;
@@ -322,11 +316,11 @@ module ssa_per_vc #(
     assign ivc_num_getting_ovc_grant= allocate_ss_ovc_pre & ss_vc_wr & ssa_permited_by_iport;
     assign ovc_released = ivc_reset & ~single_flit_pck;
     assign ovc_allocated= ivc_num_getting_ovc_grant & ~single_flit_pck;
-    
+
     always_comb begin
         granted_ovc_num={V{1'b0}};
-        granted_ovc_num[V_LOCAL]= ivc_num_getting_ovc_grant;   
-    end   
+        granted_ovc_num[V_LOCAL]= ivc_num_getting_ovc_grant;
+    end
 endmodule
 
 

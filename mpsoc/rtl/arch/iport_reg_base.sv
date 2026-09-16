@@ -67,6 +67,7 @@ module iport_reg_base  #(
     parameter PPSw=4,
     parameter MIN_PCK_SIZE=2, //minimum packet size in flits. The minimum value is 1.
     parameter BYTE_EN=0,
+    parameter HDR_OPTION_WIDTH=0,
     parameter CAST_TYPE= "UNICAST"
 
 )(
