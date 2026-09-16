@@ -321,6 +321,7 @@ module piton_to_pronoc_multimesh_wrapper
         .weight_in(pronoc_win),
         .vc_num_in(pronoc_vc_num_in),
         .be_in(1'b0),
+        .option_in({OPTIONw{1'b0}}),
         .data_in(pronoc_hdr_data)
     );
 

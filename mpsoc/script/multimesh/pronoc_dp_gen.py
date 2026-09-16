@@ -398,6 +398,7 @@ def gen_noc_localparam():
         'ROUTE_NAME': '\"DEPTH_FIRST\"',
         'PCK_TYPE': '\"MULTI_FLIT\"',
         'MIN_PCK_SIZE': 1,
+        'HDR_OPTION_WIDTH': 0,
         'BYTE_EN': 0,
         'SSA_EN': '\"NO\"',
         "SMART_MAX": 0,

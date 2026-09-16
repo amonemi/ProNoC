@@ -14,30 +14,6 @@
      *  Uncomment this line to enable an active-low reset.
      */
     
-    /******************
-     * Define SIMULATION for supported RTL simulators
-     *******************/
-    
-    `ifdef VERILATOR
-        `define SIMULATION
-    `endif
-    
-    `ifdef MODEL_TECH  // ModelSim/Questa
-        `define SIMULATION  
-    `endif  
-    
-    `ifdef VCS  // Synopsys VCS
-        `define SIMULATION
-    `endif  
-    
-    `ifdef XCELIUM  // Cadence Xcelium
-        `define SIMULATION
-    `endif
-    
-    `ifdef RIVIERA  // Aldec Riviera-PRO
-        `define SIMULATION
-    `endif
-    
     `ifdef SIMULATION
         `timescale 1ns/1ps
     `endif

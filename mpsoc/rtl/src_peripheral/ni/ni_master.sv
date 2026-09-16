@@ -461,7 +461,8 @@ Shared registers for all VCs
             .Dw(Dw),
             .S_Aw(chanel_REGw),
             .WEIGHTw(WEIGHTw),
-            .BYTE_EN(BYTE_EN)
+            .BYTE_EN(BYTE_EN),
+            .HDR_OPTION_WIDTH(HDR_OPTION_WIDTH)
         )  wb_slave_registers (
             `ifdef SIMULATION
             .current_e_addr(current_e_addr),
@@ -515,7 +516,8 @@ Shared registers for all VCs
             .TAGw(TAGw),
             .SELw(SELw),
             .Fpay(Fpay),
-            .BYTE_EN(BYTE_EN)
+            .BYTE_EN(BYTE_EN),
+            .HDR_OPTION_WIDTH(HDR_OPTION_WIDTH)
         )   vc_dma   (
             .reset(reset),
             .clk(clk),
@@ -727,6 +729,7 @@ Shared registers for all VCs
         .vc_num_in(send_vc_enable),
         .weight_in(weight),
         .be_in(be_in),
+        .option_in({OPTIONw{1'b0}}),
         .data_in(hdr_data)
     );
     

@@ -731,6 +731,17 @@ sub noc_config{
     }else{
         $mpsoc->object_add_attribute($noc_param,'MIN_PCK_SIZE',1);   
     }
+    # HDR_OPTION_WIDTH
+    $label='Header Option Width';
+    $param='HDR_OPTION_WIDTH';
+    $default= 0;
+    $info='Width of the optional header flit field in bits. 
+    Set to 0 to disable the option field. When enabled, this field is placed
+    between the weight and byte-enable fields in the header flit.'; 
+    $content='0';
+    $type="Entry";
+    $noc_param_comment{$param}="$info";
+    ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param);
     # BYTE_EN
     $label='Byte Enable';
     $param='BYTE_EN';

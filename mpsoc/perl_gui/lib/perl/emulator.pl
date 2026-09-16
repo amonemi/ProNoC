@@ -662,8 +662,8 @@ sub generate_sof_file {
 '/mpsoc/rtl/src_emulate/rtl/',
 '/mpsoc/rtl/src_peripheral/jtag/jtag_wb/',
 '/mpsoc/rtl/src_peripheral/ram/',
-'/mpsoc/rtl/main_comp.v',
-'/mpsoc/rtl/arbiter.v',
+'/mpsoc/rtl/main_comp.sv',
+'/mpsoc/rtl/arbiter.sv',
 '/mpsoc/rtl/pronoc_def.v',
 '/mpsoc/rtl/src_topology/',
 '/mpsoc/rtl/src_noc/');

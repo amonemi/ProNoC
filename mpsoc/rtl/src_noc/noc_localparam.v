@@ -94,6 +94,11 @@
             //    - For non-atomic VC reallocation, this value defines buffer behavior.
             //    Note: Setting a value smaller than received packet size may cause crashes.
 
+	localparam HDR_OPTION_WIDTH=0;
+            //HDR_OPTION_WIDTH : Width of the optional header flit field in bits. 
+            //    Set to 0 to disable the option field. When enabled, this field is placed
+            //    between the weight and byte-enable fields in the header flit.
+
 	localparam BYTE_EN=0;
             //BYTE_EN : 0 - Disable, 1 - Enable. 
             //    Adds a Byte Enable (BE) field to the header flit, indicating the location of 

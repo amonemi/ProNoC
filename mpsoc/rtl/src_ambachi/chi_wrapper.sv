@@ -5,11 +5,18 @@
 * Date:2019-05-03
 * Author: alireza
 *
-* Description: 
+* Description:
 ***************************************/
 
 
-module chi_to_pronoc_wrapper (
+module chi_to_pronoc_wrapper #(
+    // Number of CHI request nodes sharing a single router port.
+    //
+    // If > 1, the lower $clog2(DEVICE_PER_ROUTER_PORT) bits of src_id
+    // are carried in the ProNoC header option field, while the remaining
+    // bits are used as the ProNoC source/destination ID.
+    parameter DEVICE_PER_ROUTER_PORT = 1
+)(
     chi_flit_i,
     chi_flitpend_i,
     chi_flitv_i,
@@ -21,36 +28,45 @@ module chi_to_pronoc_wrapper (
 );
     import pronoc_pkg::*;
     import amba_5_chi_pkg::*;
-    
-    input chi_flitpend_i, chi_flitv_i, chi_lcrdv_i, clk,reset;  
+
+    input chi_flitpend_i, chi_flitv_i, chi_lcrdv_i, clk,reset;
     input [Fpay-1 : 0]  chi_flit_i;
     input [RAw-1 : 0] current_r_addr_i;
     output smartflit_chanel_t pronoc_chan_out;
-    
-    wire [QOS_REQ-1 : 0] qos;
-    wire [TGTID_REQ-1 : 0] target_id;
-    wire [SRCID_REQ-1 : 0] src_id;
-    wire [Fpay-QOS_REQ-TGTID_REQ-SRCID_REQ-1 : 0] rest_flit;
-    assign {qos,target_id,src_id,rest_flit} = chi_flit_i;    
-    
+
+    wire [QoS_Width-1 : 0] qos;
+    wire [NodeID_Width-1 : 0] target_id;
+    wire [NodeID_Width-1 : 0] src_id;
+    wire [Fpay-QoS_Width-NodeID_Width-NodeID_Width-1 : 0] rest_flit;
+    assign {qos,target_id,src_id,rest_flit} = chi_flit_i;
+
     wire [ EAw-1 : 0] dest_e_addr;// = target_id[ EAw-1 : 0];//TODO need to check how they code the destiation adreeses
     wire [ EAw-1 : 0] src_e_addr;// = src_id[ EAw-1 : 0];//TODO need to check how they code the source adreeses
-    wire [DSTPw-1: 0] destport;   
+    wire [DSTPw-1: 0] destport;
     wire [Fw-1 : 0] pronoc_hdr_flit;
-    
+
+    localparam
+        DEV_ID_WIDTH =(DEVICE_PER_ROUTER_PORT>1)? $clog2(DEVICE_PER_ROUTER_PORT) : 1,
+        RID_LSB = (DEVICE_PER_ROUTER_PORT>1)? DEV_ID_WIDTH : 0;
+    wire [DEV_ID_WIDTH-1:0] dev_target_id,dev_src_id;
+    wire [NodeID_Width-RID_LSB-1 : 0] router_target_id,router_src_id;
+    assign router_target_id = target_id[NodeID_Width-1: RID_LSB];
+    assign router_src_id = src_id[NodeID_Width-1: RID_LSB];
+    assign dev_target_id = target_id[DEV_ID_WIDTH:0];
+    assign dev_src_id = src_id[DEV_ID_WIDTH:0];
     endp_addr_encoder des_addr_encoder (
-        .id_in(target_id[NEw-1:0]),
+        .id_in(router_target_id[NEw-1:0]),
         .code_out(dest_e_addr)
     );
-    
+
     endp_addr_encoder src_addr_encoder (
-        .id_in(src_id[NEw-1:0]),
+        .id_in(router_src_id[NEw-1:0]),
         .code_out(src_e_addr)
     );
-    
-    generate 
+
+    generate
     if((CAST_TYPE == "UNICAST") && (IS_LOOKAHEAD==1'b1)) begin : uni
-    //The router is configured with lookaheadrouting. 
+    //The router is configured with lookaheadrouting.
     //The header flit is supposed to carry the destinaion output port
         conventional_routing #(
             .LOCATED_IN_NI(1)
@@ -63,9 +79,9 @@ module chi_to_pronoc_wrapper (
             .destport(destport)
         );
     end
-    endgenerate 
+    endgenerate
     localparam [WEIGHTw-1 : 0] WINIT = 1;
-    
+
     header_flit_generator #(
         .DATA_w(Fpay)
     ) hdr_flit_gen (
@@ -77,9 +93,10 @@ module chi_to_pronoc_wrapper (
         .vc_num_in(1'b0),
         .weight_in(WINIT),
         .data_in(chi_flit_i),
-        .be_in(1'b0)
+        .be_in(1'b0),
+        .option_in(dev_target_id)
     );
-    
+
     assign  pronoc_chan_out.flit_chanel.flit_wr = chi_flitv_i;
     assign  pronoc_chan_out.flit_chanel.credit = chi_lcrdv_i;
     assign  pronoc_chan_out.flit_chanel.flit.hdr_flag = 1'b1;
@@ -88,11 +105,11 @@ module chi_to_pronoc_wrapper (
     assign  pronoc_chan_out.flit_chanel.flit.payload = pronoc_hdr_flit[FPAYw-1 : 0];
     //credit release should be asserted externaly via register. For simulation we just use a counter to set it few cycles after reset
     reg [3:0] counter;
-    always @(posedge clk or posedge reset)begin 
+    always @(posedge clk or posedge reset)begin
         if(reset)  counter<=0;
         else if(counter<4) counter<=counter+1'b1;
     end
-    
+
     wire credit_release = counter==4;
     genvar i;
     generate
@@ -101,10 +118,10 @@ module chi_to_pronoc_wrapper (
         assign pronoc_chan_out.ctrl_chanel.credit_release_en[i]= credit_release;
     end
     endgenerate
-    
+
     `ifdef SIMULATION
-    always @(posedge clk) begin 
-        if((dest_e_addr == src_e_addr ) & chi_flitv_i ) begin 
+    always @(posedge clk) begin
+        if((dest_e_addr == src_e_addr ) & chi_flitv_i ) begin
             $display("%t:Error: The src and destination address of injected packet is the same in core (%d) %m",$time,src_id);
             $stop;
         end
@@ -113,8 +130,15 @@ module chi_to_pronoc_wrapper (
 endmodule
 
 
-//snoop chanel doesnot have target id. our home node does not support broad casting so we need to add target id from home node  
-module  snp_chi_to_pronoc_wrapper (
+//snoop chanel doesnot have target id. our home node does not support broad casting so we need to add target id from home node
+module  snp_chi_to_pronoc_wrapper #(
+    // Number of CHI request nodes sharing a single router port.
+    //
+    // If > 1, the lower $clog2(DEVICE_PER_ROUTER_PORT) bits of src_id
+    // are carried in the ProNoC header option field, while the remaining
+    // bits are used as the ProNoC source/destination ID.
+    parameter DEVICE_PER_ROUTER_PORT = 1
+)(
     chi_flit_i,
     chi_flitpend_i,
     chi_flitv_i,
@@ -127,36 +151,46 @@ module  snp_chi_to_pronoc_wrapper (
 );
     import pronoc_pkg::*;
     import amba_5_chi_pkg::*;
-    
-    input chi_flitpend_i, chi_flitv_i, chi_lcrdv_i, clk, reset;  
+
+    input chi_flitpend_i, chi_flitv_i, chi_lcrdv_i, clk, reset;
     input [Fpay-1 : 0]  chi_flit_i;
     input [RAw-1 : 0] current_r_addr_i;
-    input [TGTID_DAT-1 : 0] snp_target_id;
+    input [NodeID_Width-1 : 0] snp_target_id;
     output smartflit_chanel_t pronoc_chan_out;
-    
-    wire [QOS_SNP-1 : 0] qos;
-    wire [TGTID_REQ-1 : 0] target_id =  snp_target_id;
-    wire [SRCID_SNP-1 : 0] src_id;
-    wire [Fpay-QOS_SNP-SRCID_SNP-1 : 0] rest_flit;
+
+    wire [QoS_Width-1 : 0] qos;
+    wire [NodeID_Width-1 : 0] target_id =  snp_target_id;
+    wire [NodeID_Width-1 : 0] src_id;
+    wire [Fpay-QoS_Width-NodeID_Width-1 : 0] rest_flit;
     assign {qos,src_id,rest_flit} = chi_flit_i;
-    
+
     wire [ EAw-1 : 0] dest_e_addr;
     wire [ EAw-1 : 0] src_e_addr;// = src_id[ EAw-1 : 0];//TODO need to check how they code the source adreeses
     wire [DSTPw-1: 0] destport;
     wire [Fw-1 : 0] pronoc_hdr_flit;
-    
+
+    localparam
+        DEV_ID_WIDTH =(DEVICE_PER_ROUTER_PORT>1)? $clog2(DEVICE_PER_ROUTER_PORT) : 1,
+        RID_LSB = (DEVICE_PER_ROUTER_PORT>1)? DEV_ID_WIDTH : 0;
+    wire [DEV_ID_WIDTH-1:0] dev_target_id,dev_src_id;
+    wire [NodeID_Width-RID_LSB-1 : 0] router_target_id,router_src_id;
+    assign router_target_id = target_id[NodeID_Width-1: RID_LSB];
+    assign router_src_id = src_id[NodeID_Width-1: RID_LSB];
+    assign dev_target_id = target_id[DEV_ID_WIDTH:0];
+    assign dev_src_id = src_id[DEV_ID_WIDTH:0];
+
     endp_addr_encoder  des_addr_encoder  (
-        .id_in(target_id[NEw-1:0]),
+        .id_in(router_target_id[NEw-1:0]),
         .code_out(dest_e_addr)
     );
-    
+
     endp_addr_encoder src_addr_encoder (
-        .id_in(src_id[NEw-1:0]),
+        .id_in(router_src_id[NEw-1:0]),
         .code_out(src_e_addr)
     );
-    generate 
+    generate
     if((CAST_TYPE == "UNICAST") && (IS_LOOKAHEAD==1'b1)) begin : uni
-    //The router is configured with lookaheadrouting. 
+    //The router is configured with lookaheadrouting.
     //The header flit is supposed to carry the destinaion output port
         conventional_routing #(
             .LOCATED_IN_NI(1)
@@ -171,7 +205,7 @@ module  snp_chi_to_pronoc_wrapper (
     end
     endgenerate
     localparam [WEIGHTw-1 : 0] WINIT = 1;
-    
+
     header_flit_generator #(
         .DATA_w(Fpay)
     ) hdr_flit_gen (
@@ -183,23 +217,24 @@ module  snp_chi_to_pronoc_wrapper (
         .vc_num_in(1'b0),
         .weight_in(WINIT),
         .data_in(chi_flit_i),
-        .be_in(1'b0)
+        .be_in(1'b0),
+        .option_in({OPTIONw{1'b0}})
     );
-    
+
     assign  pronoc_chan_out.flit_chanel.flit_wr  = chi_flitv_i;
     assign  pronoc_chan_out.flit_chanel.credit   = chi_lcrdv_i;
     assign  pronoc_chan_out.flit_chanel.flit.hdr_flag = 1'b1;
     assign  pronoc_chan_out.flit_chanel.flit.tail_flag= 1'b1;
     assign  pronoc_chan_out.flit_chanel.flit.vc= 1'b1;
-    assign  pronoc_chan_out.flit_chanel.flit.payload= pronoc_hdr_flit[FPAYw-1 : 0];    
+    assign  pronoc_chan_out.flit_chanel.flit.payload= pronoc_hdr_flit[FPAYw-1 : 0];
     //credit release should be asserted externaly via register. For simulation we just use a counter to set it few cycles after reset
     reg [3:0] counter;
-    always @(posedge clk or posedge reset)begin 
+    always @(posedge clk or posedge reset)begin
         if(reset)  counter<=0;
         else if(counter<4) counter<=counter+1'b1;
     end
     wire credit_release = counter==4;
-    
+
     genvar i;
     generate
     for (i=0; i<V;i++) begin :V_
@@ -207,10 +242,10 @@ module  snp_chi_to_pronoc_wrapper (
         assign pronoc_chan_out.ctrl_chanel.credit_release_en[i]= credit_release;
     end
     endgenerate
-    
+
     `ifdef SIMULATION
-    always @(posedge clk) begin 
-        if((dest_e_addr == src_e_addr ) & chi_flitv_i ) begin 
+    always @(posedge clk) begin
+        if((dest_e_addr == src_e_addr ) & chi_flitv_i ) begin
             $display("%t:Error: The src and destination address of injected packet is the same in core (%d) %m",$time,src_id);
             $stop;
         end
@@ -226,15 +261,15 @@ module pronoc_to_chi_wrapper (
     chi_flitv_o,
     chi_lcrdv_o
 );
-    import pronoc_pkg::*; 
+    import pronoc_pkg::*;
     input smartflit_chanel_t pronoc_chan_in;
     output [Fpay-1 : 0]  chi_flit_o;
     output  chi_flitpend_o,   chi_flitv_o, chi_lcrdv_o;
-    
+
     assign chi_flitv_o = pronoc_chan_in.flit_chanel.flit_wr;
-    assign chi_lcrdv_o = pronoc_chan_in.flit_chanel.credit; 
+    assign chi_lcrdv_o = pronoc_chan_in.flit_chanel.credit;
     assign chi_flitpend_o = 1'b1;
-    
+
     header_flit_info #(
         .DATA_w(Fpay)
     )extr(
@@ -246,12 +281,19 @@ endmodule
 
 
 
-module  chi_noc (
+module  chi_noc #(
+    // Number of CHI request nodes sharing a single router port.
+    //
+    // If > 1, the lower $clog2(DEVICE_PER_ROUTER_PORT) bits of src_id
+    // are carried in the ProNoC header option field, while the remaining
+    // bits are used as the ProNoC source/destination ID.
+    parameter DEVICE_PER_ROUTER_PORT = 1
+)(
     reset,
     clk,
     /*--------- Interface with NoC ---------------------------------*/
     //TX // snoop tx home node
-    // wire   [TGTID_REQ-1 : 0] chi_noc_tx__target_id_all ; // we are not supporting braod casting on snoop chanel so need target ID
+    // wire   [NodeID_Width-1 : 0] chi_noc_tx__target_id_all ; // we are not supporting braod casting on snoop chanel so need target ID
     chi_noc_txflitpend,
     chi_noc_txflitv,
     chi_noc_txflit,
@@ -271,7 +313,7 @@ module  chi_noc (
 
     // Clock and Reset
     input clk,reset;
-    input [TGTID_DAT-1 : 0]  snp_target_id [NE-1 : 0];
+    input [NodeID_Width-1 : 0]  snp_target_id [NE-1 : 0];
 
     /*--------- Interface with NoC ---------------------------------*/
     // RX
@@ -305,7 +347,9 @@ module  chi_noc (
      //connected router encoded address
         assign router_current_addr[i] = pronoc_chan_out[i].ctrl_chanel.router_addr;
         if(NOC_ID == "snp") begin : _snp
-            snp_chi_to_pronoc_wrapper chi_to_pronoc (
+            snp_chi_to_pronoc_wrapper #(
+                .DEVICE_PER_ROUTER_PORT(DEVICE_PER_ROUTER_PORT)
+            ) chi_to_pronoc (
                 .chi_flitpend_i(chi_noc_txflitpend[i]),
                 .chi_flitv_i(chi_noc_txflitv[i]),
                 .chi_lcrdv_i(chi_noc_rxlcrdv[i]),
@@ -317,7 +361,9 @@ module  chi_noc (
                 .reset(reset)
             );
         end else begin
-            chi_to_pronoc_wrapper chi_to_pronoc (
+            chi_to_pronoc_wrapper #(
+                .DEVICE_PER_ROUTER_PORT(DEVICE_PER_ROUTER_PORT)
+            ) chi_to_pronoc (
                 .chi_flitpend_i(chi_noc_txflitpend[i]),
                 .chi_flitv_i(chi_noc_txflitv[i]),
                 .chi_lcrdv_i(chi_noc_rxlcrdv[i]),
