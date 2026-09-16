@@ -333,11 +333,15 @@ $nwmaker = bless( {
                                                          'value' => 2,
                                                          'param_name' => 'MIN_PCK_SIZE'
                                                        },
-                                                       {
-                                                         'param_name' => 'BYTE_EN',
-                                                         'value' => 0
-                                                       }
-                                                     ]
+                                                        {
+                                                          'param_name' => 'HDR_OPTION_WIDTH',
+                                                          'value' => 0
+                                                        },
+                                                        {
+                                                          'param_name' => 'BYTE_EN',
+                                                          'value' => 0
+                                                        }
+                                                      ]
                                  },
                     'ENDP_15' => {
                                    'TYPE' => 'ENDP',

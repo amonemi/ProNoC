@@ -91,7 +91,7 @@ foreach a [list $path]  {
 	foreach f $lib_file_list {
        
 		if { $last_compile_time < [file mtime $f] } {
-			vlog  -work  $work_path  +acc=rn +incdir+$a+$path0  $f
+			vlog -work  $work_path +define+SIMULATION +acc=rn +incdir+$a+$path0  $f
 			
 			 set last_compile_time 0
         	} else {
@@ -99,8 +99,8 @@ foreach a [list $path]  {
 		}    
         }
   }
-vlog  -work  $work_path  +acc=rn +incdir+$a+$path0  $uart	
-#vlog  -work  $work_path  +acc=rn +incdir+$a+$path0  $jtag			
+vlog  -work  $work_path +define+SIMULATION +acc=rn +incdir+$a+$path0  $uart	
+#vlog  -work  $work_path  +define+SIMULATION +acc=rn +incdir+$a+$path0  $jtag			
 		
 
 

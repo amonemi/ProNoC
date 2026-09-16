@@ -297,7 +297,8 @@ module  traffic_gen_top  #(
         .weight_in(init_weight),
         .destport_in(destport),
         .data_in(hdr_data_in),
-        .be_in({BEw{1'b1}} )// Be is not used in simulation as we dont sent real data
+        .be_in({BEw{1'b1}} ),// Be is not used in simulation as we dont sent real data
+        .option_in({OPTIONw{1'b0}})
     );
 
     assign flit_out_class = pck_class_in;

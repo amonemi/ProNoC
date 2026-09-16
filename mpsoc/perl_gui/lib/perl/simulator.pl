@@ -59,8 +59,8 @@ sub generate_sim_bin_file {
         push (@files,$p)    if(check_file_has_string($p,'module')); 
     }
     push (@files,$src_noc_dir);
-    push (@files,"$project_dir/rtl/arbiter.v");
-    push (@files,"$project_dir/rtl/main_comp.v");
+    push (@files,"$project_dir/rtl/arbiter.sv");
+    push (@files,"$project_dir/rtl/main_comp.sv");
     push (@files,"$project_dir/rtl/pronoc_def.v");   
     
     copy_file_and_folders (\@files,$project_dir,$target_verilog_dr);
@@ -897,7 +897,7 @@ vlib rtl_work
 vmap work rtl_work
 
 
-vlog  +acc=rn  -F $out/file_list.f
+vlog  +define+SIMULATION +acc=rn  -F $out/file_list.f
 
 $vsim -t 1ps  -L rtl_work -L work -voptargs=\"+acc\"  testbench_noc
 

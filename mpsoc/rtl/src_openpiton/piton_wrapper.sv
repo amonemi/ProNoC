@@ -391,6 +391,7 @@ module piton_to_pronoc_wrapper  #(
         .weight_in(win), 
         .vc_num_in(1'b1),
         .be_in(1'b0),
+        .option_in({OPTIONw{1'b0}}),
         .data_in(head_data)
     );
     

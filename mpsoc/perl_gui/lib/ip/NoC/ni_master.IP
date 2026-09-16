@@ -421,8 +421,8 @@ The NI releases the wishbone bus  each time one burst is completed or when the V
                                    '/mpsoc/rtl/src_peripheral/ni/ni_vc_wb_slave_regs.v',
                                    '/mpsoc/rtl/src_peripheral/ni/ni_master.sv',
                                    '/mpsoc/rtl/src_peripheral/ni/ni_crc32.v',
-                                   '/mpsoc/rtl/main_comp.v',
-                                   '/mpsoc/rtl/arbiter.v',
+                                   '/mpsoc/rtl/main_comp.sv',
+                                   '/mpsoc/rtl/arbiter.sv',
 								   '/mpsoc/rtl/pronoc_def.v',
                                    '/mpsoc/rtl/src_topology/',
                                    '/mpsoc/rtl/src_noc/'
@@ -523,6 +523,7 @@ void ${IP}_receive (unsigned int v, unsigned int data_start_addr,  unsigned int 
 #define CORE_PHY_ADDR   PHY_ADDR_ENDP_${CORE_ID}
 #define ${IP}_NUM_VCs	${V}
 #define ${IP}_HDATA_PRECAPw     ${HDATA_PRECAPw}
+#define ${IP}_HDR_OPTION_WIDTH  ${HDR_OPTION_WIDTH}
 #define ${IP}_BYTE_EN     ${BYTE_EN}  
 
 //general registers

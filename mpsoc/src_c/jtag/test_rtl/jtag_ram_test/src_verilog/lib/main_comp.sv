@@ -1,6 +1,6 @@
 `include "pronoc_def.v"
 /**********************************************************************
-**    File: main_comp.v
+**    File: main_comp.sv
 **    
 **    Copyright (C) 2014-2017  Alireza Monemi
 **    
@@ -28,79 +28,6 @@
 `ifndef PRONOC_COMMON
 `define PRONOC_COMMON
 
-module pronoc_register #(
-    parameter W=1,
-    parameter  RESET_TO={W{1'b0}}
-)( 
-    input [W-1: 0] D_in,
-    input reset,    
-    input clk,      
-    output reg [W-1: 0] Q_out
-);
-    always @ (`pronoc_clk_reset_edge )begin 
-        if(`pronoc_reset)   Q_out <= W'(RESET_TO);
-        else  Q_out <= D_in;
-    end
-endmodule
-
-
-module pronoc_register_reset_init #(
-    parameter W=1       
-)( 
-    input [W-1: 0] D_in,
-    input reset,    
-    input clk,      
-    output reg [W-1: 0] Q_out,
-    input [W-1 : 0] reset_to
-);
-    always @ (`pronoc_clk_reset_edge )begin 
-        if(`pronoc_reset)   Q_out<=reset_to;
-        else        Q_out<=D_in;
-    end   
-endmodule
-
-
-module pronoc_register_reset_init_ld_en   #(
-    parameter W=1       
-)( 
-    input [W-1: 0] D_in,
-    input reset,    
-    input clk, 
-    input ld,
-    output reg [W-1: 0] Q_out,
-    input [W-1 : 0] reset_to
-);    
-    always @ (`pronoc_clk_reset_edge )begin 
-        if(`pronoc_reset)   Q_out<=reset_to;
-        else  if(ld)      Q_out<=D_in;
-    end        
-endmodule
-
-
-module pronoc_register_ld_en  #(
-    parameter W=1,
-    parameter  RESET_TO={W{1'b0}}
-)( 
-    input [W-1: 0] D_in,
-    input reset,    
-    input clk,  
-    input ld,
-    output [W-1: 0] Q_out
-);
-    pronoc_register_reset_init_ld_en  #(
-        .W(W)           
-    )reg1( 
-        .D_in(D_in),
-        .reset(reset),  
-        .clk(clk),  
-        .ld(ld),
-        .Q_out(Q_out),
-        .reset_to(RESET_TO[W-1 : 0])
-    );
-endmodule
-
-
-
 /*********************************
 *   multiplexer
 ********************************/
@@ -115,7 +42,7 @@ module one_hot_mux #(
 );
     wire [IN_WIDTH-1 : 0] mask;
     wire [IN_WIDTH-1 : 0] masked_mux_in;
-    wire [SEL_WIDTH-1: 0]    mux_out_gen [OUT_WIDTH-1: 0]; 
+    wire [SEL_WIDTH-1: 0] mux_out_gen [OUT_WIDTH-1: 0]; 
     
     genvar i,j;
     //first selector masking

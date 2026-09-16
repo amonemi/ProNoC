@@ -490,14 +490,14 @@ set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_
  set_global_assignment -name VERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/ram_test_top.v
  set_global_assignment -name VERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/Top.v
  set_global_assignment -name VERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/lib/wb_bram_ctrl.v
- set_global_assignment -name VERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/lib/main_comp.v
+ set_global_assignment -name VERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/lib/main_comp.sv
  set_global_assignment -name VERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/lib/wb_single_port_ram.v
  set_global_assignment -name VERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/lib/clk_source.v
  set_global_assignment -name VERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/lib/generic_ram.v
  set_global_assignment -name VERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/lib/altera_reset_synchronizer.v
  set_global_assignment -name SYSTEMVERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/lib/byte_enabled_generic_ram.sv
  set_global_assignment -name VERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/lib/wishbone_bus.v
- set_global_assignment -name VERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/lib/arbiter.v
+ set_global_assignment -name VERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/lib/arbiter.sv
  set_global_assignment -name VERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/lib/jtag_wb/jtag_system_en.v
  set_global_assignment -name VERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/lib/jtag_wb/jtag_source_probe.v
  set_global_assignment -name VERILOG_FILE /home/alireza/mywork/mpsoc_work/SOC/ram_test/src_verilog/lib/jtag_wb/vjtag.v
