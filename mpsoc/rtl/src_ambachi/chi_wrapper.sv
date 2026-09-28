@@ -218,7 +218,7 @@ module  snp_chi_to_pronoc_wrapper #(
         .weight_in(WINIT),
         .data_in(chi_flit_i),
         .be_in(1'b0),
-        .option_in({OPTIONw{1'b0}})
+        .option_in(dev_target_id)
     );
 
     assign  pronoc_chan_out.flit_chanel.flit_wr  = chi_flitv_i;
@@ -254,29 +254,42 @@ module  snp_chi_to_pronoc_wrapper #(
 endmodule
 
 
-module pronoc_to_chi_wrapper (
+module pronoc_to_chi_wrapper #(
+    // Number of CHI request nodes sharing a single router port.
+    //
+    // If > 1, the lower $clog2(DEVICE_PER_ROUTER_PORT) bits of src_id
+    // are carried in the ProNoC header option field, while the remaining
+    // bits are used as the ProNoC source/destination ID.
+    parameter DEVICE_PER_ROUTER_PORT = 1
+    )(
     pronoc_chan_in,
     chi_flit_o,
     chi_flitpend_o,
     chi_flitv_o,
-    chi_lcrdv_o
+    chi_lcrdv_o,
+    dev_target_id_o
 );
     import pronoc_pkg::*;
+    localparam
+        DEV_ID_WIDTH =(DEVICE_PER_ROUTER_PORT>1)? $clog2(DEVICE_PER_ROUTER_PORT) : 1;
     input smartflit_chanel_t pronoc_chan_in;
     output [Fpay-1 : 0]  chi_flit_o;
     output  chi_flitpend_o,   chi_flitv_o, chi_lcrdv_o;
+    output [DEV_ID_WIDTH-1 : 0] dev_target_id_o;
 
     assign chi_flitv_o = pronoc_chan_in.flit_chanel.flit_wr;
     assign chi_lcrdv_o = pronoc_chan_in.flit_chanel.credit;
     assign chi_flitpend_o = 1'b1;
+    hdr_flit_t hdr_flit;
 
     header_flit_info #(
         .DATA_w(Fpay)
     )extr(
         .flit(pronoc_chan_in.flit_chanel.flit),
-        .hdr_flit(),
+        .hdr_flit(hdr_flit),
         .data_o(chi_flit_o)
     );
+    assign dev_target_id_o = hdr_flit.option;
 endmodule
 
 
@@ -379,7 +392,8 @@ module  chi_noc #(
             .chi_flitpend_o(noc_chi_rxflitpend[i]),
             .chi_flitv_o(noc_chi_rxflitv[i]),
             .chi_lcrdv_o(noc_chi_txlcrdv[i]),
-            .pronoc_chan_in(pronoc_chan_out[i])
+            .pronoc_chan_in(pronoc_chan_out[i]),
+            .dev_target_id_o()
         );
     end
     endgenerate
