@@ -153,16 +153,14 @@ module  snp_chi_to_pronoc_wrapper #(
     import amba_5_chi_pkg::*;
 
     input chi_flitpend_i, chi_flitv_i, chi_lcrdv_i, clk, reset;
-    input [Fpay-1 : 0]  chi_flit_i;
+    input snpflit_t  chi_flit_i;
     input [RAw-1 : 0] current_r_addr_i;
     input [NodeID_Width-1 : 0] snp_target_id;
     output smartflit_chanel_t pronoc_chan_out;
-
-    wire [QoS_Width-1 : 0] qos;
     wire [NodeID_Width-1 : 0] target_id =  snp_target_id;
+
     wire [NodeID_Width-1 : 0] src_id;
-    wire [Fpay-QoS_Width-NodeID_Width-1 : 0] rest_flit;
-    assign {qos,src_id,rest_flit} = chi_flit_i;
+    assign src_id =  chi_flit_i.SrcID;
 
     wire [ EAw-1 : 0] dest_e_addr;
     wire [ EAw-1 : 0] src_e_addr;// = src_id[ EAw-1 : 0];//TODO need to check how they code the source adreeses
