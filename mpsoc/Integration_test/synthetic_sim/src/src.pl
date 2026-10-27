@@ -221,7 +221,7 @@ sub copy_src_files {
     my $noc_localparam_file = "$rtl_dir/src_noc/noc_localparam.v";
     unlink $noc_localparam_file if -e $noc_localparam_file;
     # Copy individual Verilog files from root RTL directory
-    for my $file (glob "$root/rtl/*.v") {
+    for my $file (glob "$root/rtl/*.{v,sv}") {
         copy($file, $rtl_dir) or die "Error: Cannot copy $file to $rtl_dir: $!\n";
     }
     print "Source files copied successfully.\n";
