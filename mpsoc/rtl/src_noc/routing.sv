@@ -220,17 +220,15 @@ module look_ahead_routing #(
             .clk(clk)
         );
     end else if (IS_FULLY_CONNECTED) begin : fc_
-        fc_conventional_routing #(
+        fc_lkh_routing #(
             .NR(T1),
             .NL(T2)
         ) the_conventional_routing  (
-            .current_r_addr(current_r_addr),
-            .dest_e_addr(dest_e_addr),
-            .destport_encoded(destport_encoded),
-            .lkdestport_encoded(lkdestport_encoded)
+            .dest_e_addr_i(dest_e_addr),
+            .destport_o(lkdestport_encoded)
         );
     end else if (IS_STAR) begin : star
-        //look-ahead routing is not needed in star/fully_connected topology as there is only one router
+        //look-ahead routing is not needed in star topology as there is only one router
         assign  lkdestport_encoded={DSTPw{1'b0}};
     end else if (IS_MULTI_MESH) begin : multimesh
         assign  lkdestport_encoded={DSTPw{1'b0}};
@@ -272,13 +270,13 @@ module next_router_addr_selector_onehot #(
     localparam
         PRXw = P * RXw,
         PRYw = P * RYw;
-    
+
     input [P-1   : 0] destport_onehot;
     input [PRXw-1: 0] neighbors_rx;
     input [PRYw-1: 0] neighbors_ry;
     output logic [RXw-1 : 0] next_rx;
     output logic [RYw-1 : 0] next_ry;
-    
+
     wire [RXw-1:0] neighbors_rx_array [P-1: 0];
     wire [RYw-1:0] neighbors_ry_array [P-1: 0];
     genvar i;
@@ -286,7 +284,7 @@ module next_router_addr_selector_onehot #(
         assign neighbors_rx_array[i] = neighbors_rx[(i*RXw)+:RXw];
         assign neighbors_ry_array[i] = neighbors_ry[(i*RYw)+:RYw];
     end endgenerate
-    
+
     //Onehot mux to select available ovc
     always_comb begin
         next_rx = '0;
@@ -318,12 +316,12 @@ module next_router_addr_selector_bin #(
         end
     end
     endfunction // log2
-    
+
     localparam
         Pw = log2(P),
         PRXw = P * RXw,
         PRYw = P * RYw;
-    
+
     input [Pw-1 : 0] destport_bin;
     input [PRXw-1: 0] neighbors_rx;
     input [PRYw-1: 0] neighbors_ry;
@@ -355,24 +353,24 @@ module local_route_computation #(
     chan_out,
     clk,
     reset
-);  
+);
     import pronoc_pkg::*;
     input endp_port;
     input   [RAw-1 : 0]  current_r_addr;
     input   flit_chanel_t chan_in;
     input   clk,reset;
     output  flit_chanel_t chan_out;
-    
+
     flit_chanel_t chan_out_tmp;
     wire [DSTPw-1 :0] destport,destport_out;
-    always_comb begin 
+    always_comb begin
         chan_out_tmp=chan_in;
         if(chan_in.flit.hdr_flag == 1'b1) begin
             chan_out_tmp.flit [DST_P_MSB : DST_P_LSB] = destport_out;
         end
     end
-    
-    generate 
+
+    generate
     if(IS_UNICAST) begin : uni
         localparam LOCATED_IN_NI=
             (IS_3D_TOPO)? ((SW_LOC==LOCAL) || (SW_LOC > DOWN) ) :
@@ -405,7 +403,7 @@ module local_route_computation #(
                 .vc_num_delayed({V{1'b1}}),
                 .lk_dest(destport)
             );
-        end else begin 
+        end else begin
             assign destport_out = destport;
         end
         assign chan_out = chan_out_tmp;
@@ -424,53 +422,50 @@ module local_route_computation #(
     endgenerate
 endmodule
 
+
 module fc_conventional_routing #(
     parameter NR = 2,
     parameter NL = 1
 )(
     current_r_addr,
     dest_e_addr,
-    destport,
-    destport_encoded,
-    lkdestport_encoded
+    destport
 );
 
     import pronoc_pkg::*;
 
-    function integer log2;
-        input integer number; begin
-            log2=(number <=1) ? 1: 0;
-            while(2**log2<number) begin
-                log2=log2+1;
-            end
-        end
-    endfunction
-
-    localparam RAw = log2(NR);
-    localparam Lw = (NL==1) ? 0 : log2(NL);
-    localparam EAw = (NL==1) ? RAw : RAw + Lw;
-    localparam MAX_P = NR + NL - 1;
-    localparam DSTPw_out = log2(MAX_P);
-
     input   [RAw-1   :0] current_r_addr;
     input   [EAw-1   :0] dest_e_addr;
-    output  [DSTPw_out-1 :0] destport;
-    output  [DSTPw_out-1 :0] destport_encoded;
-    output  [DSTPw_out-1 :0] lkdestport_encoded;
+    output  [DSTPw-1 :0] destport;
 
-    wire [RAw-1 : 0] dest_r;
-    wire [Lw-1  : 0] dest_l;
-    assign dest_r = (NL==1) ? dest_e_addr[RAw-1:0] : dest_e_addr[EAw-1 : Lw];
-    assign dest_l = (NL==1) ? {Lw{1'b0}} : dest_e_addr[Lw-1 : 0];
+    fc_endp_addr_t dest_addr_struct;
+    always_comb begin
+        dest_addr_struct = '0;
+        dest_addr_struct[EAw-1 : 0] = dest_e_addr;
+    end
 
-    wire [DSTPw_out-1 : 0] destport_bin;
-    wire [DSTPw_out-1 : 0] lkdestport_bin;
+    assign destport =
+        ( dest_addr_struct.r == current_r_addr) ? DSTPw'(NR-1 + dest_addr_struct.l) : // endpoint is in the same router
+        ((dest_addr_struct.r < current_r_addr ) ? DSTPw'(dest_addr_struct.r) : // endpoint is in a lower router
+        DSTPw'(dest_addr_struct.r - 1)); // endpoint is in a higher router
+endmodule
 
-    assign destport_bin = (dest_r == current_r_addr) ? DSTPw_out'(NR-1 + dest_l) : ((dest_r < current_r_addr) ? DSTPw_out'(dest_r) : DSTPw_out'(dest_r - 1));
-    assign lkdestport_bin = (dest_r == current_r_addr) ? DSTPw_out'(NR-1 + dest_l) : DSTPw_out'(NR-1 + dest_l);
 
-    assign destport = destport_bin;
-    assign destport_encoded = destport_bin;
-    assign lkdestport_encoded = lkdestport_bin;
+module fc_lkh_routing #(
+    parameter NR = 2,
+    parameter NL = 1
+)(
+    dest_e_addr_i,
+    destport_o
+);
+    import pronoc_pkg::*;
+    input   [EAw-1   :0] dest_e_addr_i;
+    output  [DSTPw-1 :0] destport_o;
 
+    fc_endp_addr_t dest_addr_struct;
+    always_comb begin
+        dest_addr_struct = '0;
+        dest_addr_struct[EAw-1 : 0] = dest_e_addr_i;
+    end
+    assign destport_o =  DSTPw'(NR-1 + dest_addr_struct.l);
 endmodule

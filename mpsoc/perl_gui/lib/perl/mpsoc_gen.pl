@@ -494,9 +494,9 @@ sub noc_topology_setting_gui {
 
     #Topology T2 parameter
     if($topology eq '"MESH"' || $topology eq '"FMESH"' || $topology eq '"TORUS"' || $topology eq '"FATTREE"' || $topology eq '"TREE"' ||  $topology eq '"MESH_3D"' || $topology eq '"FULLY_CONNECTED"') {
-        $label= ($topology eq '"FATTREE"' || $topology eq '"TREE"')?  'L' : ($topology eq '"FULLY_CONNECTED"')? 'Router's endpoint number' : 'Routers per column';
+        $label= ($topology eq '"FATTREE"' || $topology eq '"TREE"')?  'L' : ($topology eq '"FULLY_CONNECTED"')? 'Endpoints per router' : 'Routers per column';
         $param= 'T2';
-        $default= ($topology eq '"FULLY_CONNECTED"')? '1', '2';
+        $default= ($topology eq '"FULLY_CONNECTED"')? '1' : '2';
         $content=  ($topology eq '"FMESH"')? '1,16,1': ($topology eq '"FULLY_CONNECTED"')? '1,16,1': '2,16,1';
         $info= ($topology eq '"FATTREE"' || $topology eq '"TREE"')? 'Fattree layer number (The height of FT)': ($topology eq '"FULLY_CONNECTED"')? 'Number of endpoints per router (local ports).': 'Number of NoC routers in column (Y dimension)';
         $type= 'Spin-button';

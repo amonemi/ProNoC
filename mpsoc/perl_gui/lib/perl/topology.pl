@@ -127,7 +127,7 @@ sub get_topology_info_sub {
         $NE= $T1*$T2;
         $NR= $T1;
         $RAw=log2($NR);
-        $EAw=($T2==1)? $RAw :$RAw + log2($T2);
+        $EAw= $RAw + log2($T2);
         $MAX_P = $NR+$T2-1;
     }else{ #custom
         $NE= $T1;
@@ -313,7 +313,7 @@ sub endp_addr_encoder{
         return fmesh_addrencode($id,$T1, $T2,$T3);
     }elsif ($topology eq '"FULLY_CONNECTED"' ){
         return fc_addrencode($id,$T1,$T2);
-    }else{#CUSTOM
+    }else{#CUSTOM & STAR
         return $id;
     }
 }
@@ -350,6 +350,22 @@ sub mask_gen{
         $mask|=0x1;
     }
     return $mask;
+}
+
+sub fc_addrencode {
+    my ($id,$T1,$T2)=@_;
+    my $r = int($id / $T2);
+    my $l = $id % $T2;
+    my $RAw = log2($T1);
+    return ($l << $RAw) | $r;   # local endpoint number is the most significant field
+}
+
+sub fc_endp_addr_decoder {
+    my ($code,$T1,$T2)=@_;
+    my $RAw = log2($T1);
+    my $r = $code & mask_gen($T1);
+    my $l = ($code >> $RAw) & mask_gen($T2);
+    return $r*$T2 + $l;
 }
 
 
@@ -523,16 +539,21 @@ sub get_noc_verilator_top_modules_info {
             "Vrouter1" => "--top-module  router_top_v  -GP=${ports} ",
             #  "Vnoc" => " --top-module noc_connection",
         );
-    }
-    elsif ($topology eq '"STAR"') {
-        $router_p=1;# number of router with different port number
+    }elsif ($topology eq '"STAR"') {
+        $router_p=1;
         my $ports= $T1;
         $nr_p{p1}=$ports;
         $nr_p{1}=1;
         %tops = (
-            #"Vrouter1" => "router_top_v_p${ports}.v",
             "Vrouter1" => "--top-module  router_top_v  -GP=${ports}  ",
-            #  "Vnoc" => " --top-module noc_connection",
+        );
+    }elsif ($topology eq '"FULLY_CONNECTED"') {
+        $router_p=1;
+        my $ports= $T1 + $T2 - 1;
+        $nr_p{p1}=$ports;
+        $nr_p{1}=$nr;
+        %tops = (
+            "Vrouter1" => "--top-module  router_top_v  -GP=${ports}  ",
         );
     }else {#custom
         my $dir =get_project_dir()."/mpsoc/rtl/src_topology";
@@ -813,6 +834,8 @@ sub get_endpoints_mah_distance {
         return mesh_tori_mah_distance($self, $router1,$router2);
     }elsif ($topology eq '"STAR"'){
         return 1;
+    }elsif ($topology eq '"FULLY_CONNECTED"'){
+        return ($router1 == $router2) ? 1 : 2;
     }else { #custom
         return undef;
     }

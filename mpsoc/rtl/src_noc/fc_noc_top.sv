@@ -45,13 +45,6 @@ module fc_noc_top (
     smartflit_chanel_t router_chan_in   [NR-1 : 0][MAX_P-1:0];
     smartflit_chanel_t router_chan_out  [NR-1 : 0][MAX_P-1:0];
 
-    typedef struct packed {
-        logic [RAw-1 : 0] r;
-        logic [Lw-1  : 0] l;
-    } fc_endp_addr_t;
-
-    localparam Lw = (T2==1)? 0 : log2(T2);
-
     fc_endp_addr_t endp_addr [NE-1:0];
     router_config_t router_config_in [NR-1 : 0];
 
@@ -85,7 +78,11 @@ module fc_noc_top (
                 for (le=0;le<NE_PER_R_FC;le++) begin: L_
                     localparam EID = RID*NE_PER_R_FC+le;
                     localparam LOCALP = le + NR-1;
-                    assign endp_addr[EID]= fc_endp_addr_t'( ((RID << ((T2==1)?0:log2(T2))) | ((T2==1)?0:le)));
+                    always_comb begin
+                        endp_addr[EID] = '0;
+                        endp_addr[EID].l = Lw_FC'(le);
+                        endp_addr[EID].r = RAw_FC'(RID);
+                    end
                     assign router_chan_in [r][LOCALP] = chan_in_all [EID];
                     assign chan_out_all [EID] = router_chan_out [r][LOCALP];
                     assign router_config_in[RID].endp_addrs[(le+1)*EAw -1 :  le*EAw] = EAw'(endp_addr[EID]);

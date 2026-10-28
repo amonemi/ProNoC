@@ -615,30 +615,33 @@ module multicast_routing_fc #(
 );
     import pronoc_pkg::*;
 
-    function integer log2;
-        input integer number; begin
-            log2=(number <=1) ? 1: 0;
-            while(2**log2<number) begin
-                log2=log2+1;
-            end
-        end
-    endfunction
-
-    localparam RAw = log2(T1);
-    localparam Lw = (T2==1)? 0 : log2(T2);
-    localparam EAw = (T2==1) ? RAw : RAw + Lw;
-    localparam MAX_P = T1 + T2 - 1;
-    localparam DSTPw_out = log2(MAX_P);
-
     input   [RAw-1 : 0]  current_r_addr;
     input   [DAw-1 : 0]  dest_e_addr;
-    output  [DSTPw_out-1 : 0]  destport;
+    output  [DSTPw-1 : 0]  destport;
 
+    wire [NE-1 : 0] dest_list;
     mcast_dest_list_decode decode (
         .dest_e_addr(dest_e_addr),
-        .dest_o(destport),
+        .dest_o(dest_list),
         .row_has_any_dest(),
         .is_unicast()
     );
 
+    // Map the destination endpoint list to the ports of this router:
+    // local port (NR-1+i) for each local endpoint i in the list, and
+    // the router port toward every remote router having at least one
+    // endpoint in the list.
+    logic [DSTPw-1 : 0] destport_next;
+    always_comb begin
+        destport_next = {DSTPw{1'b0}};
+        for (int i=0; i<T2; i++) begin
+            destport_next[NR-1+i] = dest_list[current_r_addr*T2 + i];
+        end
+        for (int rr=0; rr<T1; rr++) begin
+            if (rr != current_r_addr && |(dest_list[rr*T2 +: T2])) begin
+                destport_next[(rr < current_r_addr) ? rr : rr-1] = 1'b1;
+            end
+        end
+    end
+    assign destport = destport_next;
 endmodule

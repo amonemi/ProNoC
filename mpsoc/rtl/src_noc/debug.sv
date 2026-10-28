@@ -289,14 +289,10 @@ module  endp_addr_encoder (
             .addr_st_o(code_out)
         );
     end else if (IS_FULLY_CONNECTED) begin :fc
-        if(T2==1) begin
-            assign code_out = id_in[RAw-1:0];
-        end else begin
-            localparam Lw = log2(T2);
-            wire [RAw-1:0] r = id_in / T2;
-            wire [Lw-1:0]  l = id_in % T2;
-            assign code_out = {r,l};
-        end
+        localparam Lw = log2(T2);
+        wire [RAw-1:0] r = id_in / T2;
+        wire [Lw-1:0]  l = id_in % T2;
+        assign code_out = {l, r};   // local endpoint number is the most significant field
     end else begin :custom
         assign code_out =id_in;
     end
@@ -338,14 +334,10 @@ module endp_addr_decoder  (
             .addr_st_i(code_in)
         );
     end else if (IS_FULLY_CONNECTED) begin :fc
-        if(T2==1) begin
-            assign id_out = code_in;
-        end else begin
-            localparam Lw = log2(T2);
-            wire [RAw-1:0] r = code_in[EAw-1 : Lw];
-            wire [Lw-1:0]  l = code_in[Lw-1 : 0];
-            assign id_out = r*T2 + l;
-        end
+        localparam Lw = log2(T2);
+        wire [Lw-1:0]  l = code_in[EAw-1 : RAw];
+        wire [RAw-1:0] r = code_in[RAw-1 : 0];
+        assign id_out = r*T2 + l;
     end else begin :custom
         assign id_out = code_in;
     end

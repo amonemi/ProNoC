@@ -236,7 +236,8 @@
         NE_FC = T1*T2,  //total number of endpoints
         NR_FC = T1,  // total number of routers
         RAw_FC = log2(NR_FC),
-        EAw_FC = (T2==1)? RAw_FC :RAw_FC + log2(T2),
+        Lw_FC = log2(T2),
+        EAw_FC = RAw_FC + Lw_FC,
         MAX_P_FC = T1+T2-1,
         DSTPw_FC = (~IS_UNICAST) ? MAX_P_FC : log2(MAX_P_FC),
         DAw_MCAST_FC= NE_FC,
@@ -284,6 +285,11 @@
         logic [NYw-1 : 0] y;
         logic [NXw-1 : 0] x;
     } regular_topo_endp_addr_t;
+
+    typedef struct packed {
+        logic [Lw_FC-1 : 0] l;   // local endpoint number (most significant)
+        logic [RAw_FC-1 : 0] r;  // router number
+    } fc_endp_addr_t;
 
     localparam
         PPSw = PPSw_REGULAR,
@@ -348,6 +354,7 @@
             (IS_FMESH)? NE_PER_R_FMESH:
             (IS_STAR) ? NE_PER_R_STAR:
             (IS_FULLY_CONNECTED) ? NE_PER_R_FC:
+            (IS_MULTI_MESH) ? 1:
             NE_PER_R_CUSTOM,
        //Destination endpoint(s) address width
         DAw_OFFSETw  =  (IS_MESH || IS_TORUS ||  IS_FMESH)?  NX : 0,
@@ -366,11 +373,12 @@
             (IS_FATTREE)? NR_FATTREE:
             (IS_TREE)?  NR_TREE:
             (IS_REGULAR_TOPO)? NR_REGULAR:
-            (IS_FMESH)? NR_REGULAR:
+            (IS_FMESH)? NR_FMESH: 
             (IS_STAR) ? NR_STAR:
             (IS_FULLY_CONNECTED) ? NR_FC:
             (IS_MULTI_MESH) ? NR_MULTI_MESH:
             NR_CUSTOM,
+        //routing algorithm type
         ROUTE_TYPE =
             (IS_FATTREE)? ROUTE_TYPE_FATTREE:
             (IS_TREE)?  ROUTE_TYPE_TREE:
