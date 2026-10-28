@@ -115,6 +115,8 @@
         #include "tree.h"
     #elif  defined (IS_STAR)
         #include "star.h"
+    #elif  defined (IS_FULLY_CONNECTED)
+        #include "fc.h"
     #else
         //custom not coded
         unsigned int endp_addr_encoder ( unsigned int id){

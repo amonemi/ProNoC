@@ -953,7 +953,7 @@ module distance_gen (
             .distance(distance)
         );
     end else if (IS_FULLY_CONNECTED) begin 
-        assign distance =2;
+        assign distance = (src_e_addr==dest_e_addr)? 1 : 2;
     end else if (IS_STAR) begin 
         assign distance =1;
     end

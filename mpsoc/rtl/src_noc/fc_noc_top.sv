@@ -66,7 +66,7 @@ module fc_noc_top (
                 );
                 assign router_config_in[RID].router_addr=RID;
                 assign router_config_in[RID].router_id=RID;
-                for (p=0; p<MAX_P; p++) begin: P_
+                for (p=0; p<NR-1; p++) begin: P_
                     if(p<r) begin
                         assign router_chan_in[r][p] = router_chan_out[p][r-1];
                     end else begin
@@ -92,3 +92,43 @@ module fc_noc_top (
     endgenerate
 endmodule
 
+
+module  fc_endp_addr_encoder
+(
+    id_in,
+    code_out
+);
+    import pronoc_pkg::*;
+    input [NEw-1 :0] id_in;
+    output [EAw-1 : 0] code_out;
+    wire [EAw-1 : 0 ] codes [NE-1 : 0];
+    genvar i;
+    generate
+    for(i=0; i< NE; i=i+1) begin : endpoints
+        //Endpoint decoded address
+        localparam [EAw-1 : 0] ENDP = EAw'(fc_endp_addr(i));
+        assign codes[i] = ENDP;
+    end
+    endgenerate
+    assign code_out = codes[id_in];
+endmodule
+
+module  fc_endp_addr_decoder
+(
+    id_out,
+    code_in
+);
+    import pronoc_pkg::*;
+    output [NEw-1 :0] id_out;
+    input [EAw-1 : 0] code_in;
+    wire   [NEw-1 : 0]  codes   [(2**EAw)-1 : 0 ];
+    genvar i;
+    generate
+        for(i=0; i< NE; i=i+1) begin : endpoints
+            //Endpoint decoded address
+            localparam unsigned ENDP= fc_endp_addr(i);
+            assign codes[EAw'(ENDP)] = i;
+        end
+    endgenerate
+    assign id_out = codes[code_in];
+endmodule

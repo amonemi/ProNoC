@@ -365,6 +365,7 @@ sub fc_endp_addr_decoder {
     my $RAw = log2($T1);
     my $r = $code & mask_gen($T1);
     my $l = ($code >> $RAw) & mask_gen($T2);
+    return $r if ($T2==1);
     return $r*$T2 + $l;
 }
 

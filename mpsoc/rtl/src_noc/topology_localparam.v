@@ -493,6 +493,16 @@
     end
     endfunction // addrencode
 
+    function automatic  integer fc_endp_addr;
+    input integer endp_id;
+    integer l,r;
+    begin
+        r = endp_id / T2;
+        l = endp_id % T2;
+        fc_endp_addr = l<<RAw | r;
+    end
+    endfunction
+
     function automatic  integer fmesh_router_id;
     input integer x,y;
     begin
