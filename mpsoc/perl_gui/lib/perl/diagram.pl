@@ -976,6 +976,74 @@ sub generate_star_dot_file{
 }
 
 
+sub generate_fully_connected_dot_file{
+    my $self=shift;
+    my $T1=$self->object_get_attribute('noc_param','T1');
+    my $T2=$self->object_get_attribute('noc_param','T2');
+    $T1=1 if(!defined $T1 || $T1<1);
+    $T2=1 if(!defined $T2 || $T2<1);
+    my $pi=atan2(0,-1);
+    my $dotfile=
+"digraph G {
+    graph [layout = neato, fontsize=3, rankdir = LR , splines = true, overlap = false];     
+    node[shape=record];    
+    ";
+    #add routers on a circle
+    my $radius=1.5*$T1;
+    for(my $i=0; $i<$T1; $i++){
+        my $angle=2.0*$pi*$i/$T1;
+        my $x=sprintf("%.2f",$radius*cos($angle));
+        my $y=sprintf("%.2f",$radius*sin($angle));
+        $dotfile.="R$i\[
+    label = \"R$i\"
+    pos = \"$x,$y!\"
+    shape=circle
+    color=blue
+    style=filled
+    fillcolor=blue
+];
+";
+    }
+    #add endpoints of each router radially outside the circle
+    for(my $i=0; $i<$T1; $i++){
+        my $angle=2.0*$pi*$i/$T1;
+        my $er=$radius+1.6;
+        for(my $l=0; $l<$T2; $l++){
+            my $id=$i*$T2+$l;
+            my $spread=($T2>1)? ($l-($T2-1)/2)*($pi/(3.0*$T1)) : 0;
+            my $eangle=$angle+$spread;
+            my $x=sprintf("%.2f",$er*cos($eangle));
+            my $y=sprintf("%.2f",$er*sin($eangle));
+            $dotfile.="T$id\[
+    label = \"T$id\"
+    pos = \"$x,$y!\"
+    shape=box
+    margin=0
+    color=orange
+    style=filled
+    fillcolor=orange
+];
+";
+        }
+    }
+    #connect every router to all other routers
+    for(my $i=0; $i<$T1; $i++){
+        for(my $j=$i+1; $j<$T1; $j++){
+            $dotfile.="R$i -> R$j [dir=none];\n";
+        }
+    }
+    #connect each endpoint to its local router
+    for(my $i=0; $i<$T1; $i++){
+        for(my $l=0; $l<$T2; $l++){
+            my $id=$i*$T2+$l;
+            $dotfile.="T$id -> R$i [dir=none];\n";
+        }
+    }
+    $dotfile.="\n}\n";
+    return $dotfile;
+}
+
+
 sub generate_tree_dot_file{
     my $self=shift;
     my $gtype=$self->object_get_attribute("tile_diagram","gtype");    
@@ -1155,6 +1223,7 @@ sub get_topology_dot_file{
     return generate_fattree_dot_file ($self) if($topology eq '"FATTREE"');
     return generate_tree_dot_file($self) if($topology eq '"TREE"');
     return generate_star_dot_file($self) if($topology eq '"STAR"');
+    return generate_fully_connected_dot_file($self) if($topology eq '"FULLY_CONNECTED"');
     return generate_3d_mesh_dot_file($self) if($topology eq '"MESH_3D"');
 }
 

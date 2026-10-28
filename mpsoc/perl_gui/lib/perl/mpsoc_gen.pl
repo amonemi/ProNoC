@@ -398,7 +398,7 @@ sub defualt_tilles_setting {
             $$entry_ref->set_text($file);
             $mpsoc->object_add_attribute('setting','soc_path',$file);
             $mpsoc->mpsoc_remove_all_soc();
-            set_gui_status($mpsoc,"ref",1);            
+            set_gui_status($mpsoc,"ref",1);
             #check_input_file($file,$socgen,$info);
             #print "file = $file\n";
         }
@@ -407,36 +407,36 @@ sub defualt_tilles_setting {
     $entry->signal_connect("activate"=>sub{
         my $file_name=$entry->get_text();
         $mpsoc->object_add_attribute('setting','soc_path',$file_name);
-        $mpsoc->mpsoc_remove_all_soc();    
-        set_gui_status($mpsoc,"ref",1);    
+        $mpsoc->mpsoc_remove_all_soc();
+        set_gui_status($mpsoc,"ref",1);
         #check_input_file($file_name,$socgen,$info);
     });
     if($show){
-        my $tmp=gen_label_in_left(" "); 
+        my $tmp=gen_label_in_left(" ");
         $table->attach  ($label, 0, 1 , $row,$row+1,'fill','shrink',2,2);
-        $table->attach ($tmp, 1, 2 , $row,$row+1,'fill','shrink',2,2);        
+        $table->attach ($tmp, 1, 2 , $row,$row+1,'fill','shrink',2,2);
         $table->attach ($entry, 2, 3 , $row,$row+1,'fill','shrink',2,2);
         $table->attach ($browse, 3, 4, $row,$row+1,'fill','shrink',2,2);
         $row++;
     }
     my @socs=$mpsoc->mpsoc_get_soc_list();
     if( scalar @socs == 0){
-        @socs=get_soc_list($mpsoc,$info); 
+        @socs=get_soc_list($mpsoc,$info);
     }
     @socs=$mpsoc->mpsoc_get_soc_list();
     my $lab1=gen_label_in_center(' Tile name');
     my $lab2=gen_label_help('Define the tile numbers that each IP is mapped to.
-you can add individual numbers or ranges as follow 
+you can add individual numbers or ranges as follow
     e.g. individual numbers: 5,6,7,8,9,10
-    e.g. range: 5:10 
+    e.g. range: 5:10
     ', ' Tile numbers ');
     if($show){
         $table->attach_defaults ($lab1 ,0,1, $row,$row+1);
         $table->attach_defaults ($lab2 ,2,3, $row,$row+1);$row++;
-    }    
+    }
     my $soc_num=0;
     foreach my $soc_name (@socs){
-        $row=tile_set_widget ($mpsoc,$soc_name,$soc_num,$table,$show,$row);    
+        $row=tile_set_widget ($mpsoc,$soc_name,$soc_num,$table,$show,$row);
         $soc_num++;
     }
     return $row;
@@ -455,10 +455,10 @@ sub noc_topology_setting_gui {
     my  $label='Topology';
     my  $param='TOPOLOGY';
     my  $default='"MESH"';
-    my  $content='"MESH","FMESH","MESH_3D","TORUS","RING","LINE","FATTREE","TREE","STAR","CUSTOM","MULTI_MESH"';
+    my  $content='"MESH","FMESH","MESH_3D","TORUS","RING","LINE","FATTREE","TREE","STAR","FULLY_CONNECTED","CUSTOM","MULTI_MESH"';
     my  $type='Combo-box';
-    my  $info="Specifies the NoC topology. 
-    Options include $content"; 
+    my  $info="Specifies the NoC topology.
+    Options include $content";
     $noc_param_comment{$param}="$info";
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
     my $topology=$mpsoc->object_get_attribute($noc_param,'TOPOLOGY');
@@ -474,34 +474,38 @@ sub noc_topology_setting_gui {
         ($row,$coltmp)= add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_type,1);
     } elsif ($topology ne '"CUSTOM"') {
     #topology T1 parameter
-        $label= 
+        $label=
             ($topology eq '"FATTREE"' || $topology eq '"TREE"')? 'K' :
-            ($topology eq '"STAR"')? "Total Endpoint number" : 'Routers per row';
+            ($topology eq '"STAR"')? "Total Endpoint number" : 
+            ($topology eq '"FULLY_CONNECTED"')? "Total number of routers" : 'Routers per row';
         $param= 'T1';
         $default= '2';
         $content=
         ($topology eq '"MESH"'  || $topology eq '"TORUS"' || $topology eq '"MESH_3D"') ? '2,16,1':
         ($topology eq '"FMESH"')? '1,16,1':
-        ($topology eq '"FATTREE"' || $topology eq '"TREE"' )? '2,6,1':'2,64,1';
-        $info= ($topology eq '"FATTREE"' || $topology eq '"TREE"' )? 'number of last level individual router`s endpoints.' :'Number of NoC routers in row (X dimension)';
-        $type= 'Spin-button'; 
+        ($topology eq '"FATTREE"' || $topology eq '"TREE"' )? '2,6,1':
+        ($topology eq '"STAR"' || $topology eq '"FULLY_CONNECTED"') ? '2,64,1':'2,64,1';
+        $info= ($topology eq '"FATTREE"' || $topology eq '"TREE"' )? 'number of last level individual router`s endpoints.' :
+               ($topology eq '"STAR"')? 'Total number of nodes/endpoints.' :
+               ($topology eq '"FULLY_CONNECTED"')? 'Total number of routers in fully connected topology.' : 'Number of NoC routers in row (X dimension)';
+        $type= 'Spin-button';
         $noc_param_comment{$param}="$info";
         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
-    
+
     #Topology T2 parameter
-    if($topology eq '"MESH"' || $topology eq '"FMESH"' || $topology eq '"TORUS"' || $topology eq '"FATTREE"' || $topology eq '"TREE"' ||  $topology eq '"MESH_3D"') {
-        $label= ($topology eq '"FATTREE"' || $topology eq '"TREE"')?  'L' :'Routers per column';
+    if($topology eq '"MESH"' || $topology eq '"FMESH"' || $topology eq '"TORUS"' || $topology eq '"FATTREE"' || $topology eq '"TREE"' ||  $topology eq '"MESH_3D"' || $topology eq '"FULLY_CONNECTED"') {
+        $label= ($topology eq '"FATTREE"' || $topology eq '"TREE"')?  'L' : ($topology eq '"FULLY_CONNECTED"')? 'Router's endpoint number' : 'Routers per column';
         $param= 'T2';
-        $default='2';
-        $content=  ($topology eq '"FMESH"')? '1,16,1': '2,16,1';
-        $info= ($topology eq '"FATTREE"' || $topology eq '"TREE"')? 'Fattree layer number (The height of FT)':'Number of NoC routers in column (Y dimension)';
-        $type= 'Spin-button'; 
+        $default= ($topology eq '"FULLY_CONNECTED"')? '1', '2';
+        $content=  ($topology eq '"FMESH"')? '1,16,1': ($topology eq '"FULLY_CONNECTED"')? '1,16,1': '2,16,1';
+        $info= ($topology eq '"FATTREE"' || $topology eq '"TREE"')? 'Fattree layer number (The height of FT)': ($topology eq '"FULLY_CONNECTED"')? 'Number of endpoints per router (local ports).': 'Number of NoC routers in column (Y dimension)';
+        $type= 'Spin-button';
         $noc_param_comment{$param}="$info";
         ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_noc,$noc_param,1);
     } else {
         $mpsoc->object_add_attribute($noc_param,'T2',1);
     }
-    
+
     #Topology T3 parameter
     if($topology eq '"MESH_3D"') {
         $label= 'Routers per layer';
@@ -653,7 +657,8 @@ sub noc_config{
                 ($topology eq '"RING"')? '"TRANC_DOR"' :
                 ($topology eq '"LINE"')?  '"DOR"':
                 ($topology eq '"FATTREE"')? '"NCA_RND_UP","NCA_STRAIGHT_UP","NCA_DST_UP"':
-                ($topology eq '"TREE"')? '"NCA"' : '"UNKNOWN"';
+                ($topology eq '"TREE"')? '"NCA"' :
+                ($topology eq '"STAR"' || $topology eq '"FULLY_CONNECTED"')? '"DIRECT"' : '"UNKNOWN"';
         }else{
             $content=
                 ($topology eq '"MESH_3D"') ? '"DOR"' :
@@ -662,13 +667,15 @@ sub noc_config{
                 ($topology eq '"RING"')? '"TRANC_DOR"' : 
                 ($topology eq '"LINE"')?  '"DOR"':
                 ($topology eq '"FATTREE"')? '"NCA_RND_UP","NCA_STRAIGHT_UP","NCA_DST_UP"' : 
-                ($topology eq '"TREE"')? '"NCA"' : '"UNKNOWN"';
+                ($topology eq '"TREE"')? '"NCA"' :
+                ($topology eq '"STAR"' || $topology eq '"FULLY_CONNECTED"')? '"DIRECT"' : '"UNKNOWN"';
         }
         $default=
             ($topology eq '"MESH"' || $topology eq '"FMESH"' || $topology eq '"LINE"'|| $topology eq '"MESH_3D"' )? '"DOR"':
             ($topology eq '"TORUS"'|| $topology eq '"RING"')?  '"TRANC_DOR"' : 
             ($topology eq '"FATTREE"')? '"NCA_STRAIGHT_UP"' :
-            ($topology eq '"TREE"')? '"NCA"' : '"UNKNOWN"';
+            ($topology eq '"TREE"')? '"NCA"' :
+            ($topology eq '"STAR"' || $topology eq '"FULLY_CONNECTED"')? '"DIRECT"' : '"UNKNOWN"';
     my $info_mesh="Select the routing algorithm. Options are: 
     - DOR: Dimension-Order Deterministic routing (XY).
     - WEST_FIRST, NORTH_LAST, NEGATIVE_FIRST, ODD_EVEN:  Partially adaptive routing algorithms based on turn model restrictions.
@@ -678,10 +685,11 @@ sub noc_config{
     of the port which has received the packet (STRAIGHT) "; 
     $info=
         ($topology eq '"FATTREE"')? $info_fat : 
-        ($topology eq '"TREE"') ? "Nearest common ancestor": $info_mesh;
+        ($topology eq '"TREE"') ? "Nearest common ancestor": 
+        ($topology eq '"STAR"' || $topology eq '"FULLY_CONNECTED"') ? "Direct routing": $info_mesh;
     $noc_param_comment{$param}="$info
     options are $content";
-    my $show_routing =($topology eq '"STAR"' )? 0 : $show_noc;
+    my $show_routing =($topology eq '"STAR"' || $topology eq '"FULLY_CONNECTED"' )? 0 : $show_noc;
     ($row,$coltmp)=add_param_widget ($mpsoc,$label,$param, $default,$type,$content,$info, $table,$row,undef,$show_routing,$noc_param,1);
     #routing_mode
     $label='Routing Mode';

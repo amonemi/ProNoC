@@ -952,6 +952,8 @@ module distance_gen (
             .dest_addr_encoded(dest_e_addr),
             .distance(distance)
         );
+    end else if (IS_FULLY_CONNECTED) begin 
+        assign distance =2;
     end else if (IS_STAR) begin 
         assign distance =1;
     end

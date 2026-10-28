@@ -1,12 +1,12 @@
 `include "pronoc_def.v"
 /**********************************************************************
 **    File:  noc_top.sv
-**    
-**    Copyright (C) 2014-2017  Alireza Monemi
-**    
-**    This file is part of ProNoC 
 **
-**    ProNoC ( stands for Prototype Network-on-chip)  is free software: 
+**    Copyright (C) 2014-2017  Alireza Monemi
+**
+**    This file is part of ProNoC
+**
+**    ProNoC ( stands for Prototype Network-on-chip)  is free software:
 **    you can redistribute it and/or modify it under the terms of the GNU
 **    Lesser General Public License as published by the Free Software Foundation,
 **    either version 2 of the License, or (at your option) any later version.
@@ -21,7 +21,7 @@
 **
 **
 **     Description:
-**     This is the top-level NoC (Network-on-Chip) module. It generates various network topologies, 
+**     This is the top-level NoC (Network-on-Chip) module. It generates various network topologies,
 **     including mesh, torus, ring, line, fattree, bintree or a user-defined custom topology,
 **     by interconnecting routers.
 **
@@ -34,71 +34,78 @@ module  noc_top (
     chan_out_all,
     router_event
 );
-    
+
     import pronoc_pkg::*;
-    
+
     input   clk,reset;
-    //Endpoints ports 
+    //Endpoints ports
     input   smartflit_chanel_t chan_in_all  [NE-1 : 0];
     output  smartflit_chanel_t chan_out_all [NE-1 : 0];
     //Events
     output  router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];
-    
-    generate 
-    if ((IS_REGULAR_TOPO | IS_FMESH) & ~IS_MESH_3D) begin : regular_ 
+
+    generate
+    if ((IS_REGULAR_TOPO | IS_FMESH) & ~IS_MESH_3D) begin : regular_
         regular_topo_noc_top noc_top (
-            .reset         (reset        ), 
-            .clk           (clk          ), 
-            .chan_in_all   (chan_in_all  ), 
+            .reset         (reset        ),
+            .clk           (clk          ),
+            .chan_in_all   (chan_in_all  ),
             .chan_out_all  (chan_out_all ),
             .router_event  (router_event )
         );
     end else if (IS_MESH_3D) begin : M3D_
         mesh_3d_noc_top noc_top (
-            .reset         (reset        ), 
-            .clk           (clk          ), 
-            .chan_in_all   (chan_in_all  ), 
+            .reset         (reset        ),
+            .clk           (clk          ),
+            .chan_in_all   (chan_in_all  ),
             .chan_out_all  (chan_out_all ),
             .router_event  (router_event )
         );
     end else if (IS_FATTREE) begin : fat_
         fattree_noc_top noc_top (
-            .reset         (reset        ), 
-            .clk           (clk          ), 
-            .chan_in_all   (chan_in_all  ), 
+            .reset         (reset        ),
+            .clk           (clk          ),
+            .chan_in_all   (chan_in_all  ),
             .chan_out_all  (chan_out_all ),
             .router_event  (router_event )
         );
     end else if (IS_TREE) begin : tree_
-        tree_noc_top  noc_top ( 
-            .reset         (reset        ), 
-            .clk           (clk          ), 
-            .chan_in_all   (chan_in_all  ), 
+        tree_noc_top  noc_top (
+            .reset         (reset        ),
+            .clk           (clk          ),
+            .chan_in_all   (chan_in_all  ),
             .chan_out_all  (chan_out_all ),
             .router_event  (router_event )
         );
     end else if (IS_STAR) begin : star_
-        star_noc_top  noc_top ( 
-                .reset         (reset        ), 
-                .clk           (clk          ), 
-                .chan_in_all   (chan_in_all  ), 
+        star_noc_top  noc_top (
+                .reset         (reset        ),
+                .clk           (clk          ),
+                .chan_in_all   (chan_in_all  ),
+                .chan_out_all  (chan_out_all ),
+                .router_event  (router_event )
+        );
+    end else if (IS_FULLY_CONNECTED) begin : fc_
+        fc_noc_top  noc_top (
+                .reset         (reset        ),
+                .clk           (clk          ),
+                .chan_in_all   (chan_in_all  ),
                 .chan_out_all  (chan_out_all ),
                 .router_event  (router_event )
         );
     end else if (IS_MULTI_MESH) begin : multimesh_
-        multi_mesh noc_top ( 
-                .reset         (reset        ), 
-                .clk           (clk          ), 
-                .chan_in_all   (chan_in_all  ), 
+        multi_mesh noc_top (
+                .reset         (reset        ),
+                .clk           (clk          ),
+                .chan_in_all   (chan_in_all  ),
                 .chan_out_all  (chan_out_all ),
                 .router_event  (router_event )
         );
     end else begin :custom_
-
-        custom_noc_top noc_top ( 
-            .reset         (reset        ), 
-            .clk           (clk          ), 
-            .chan_in_all   (chan_in_all  ), 
+        custom_noc_top noc_top (
+            .reset         (reset        ),
+            .clk           (clk          ),
+            .chan_in_all   (chan_in_all  ),
             .chan_out_all  (chan_out_all ),
             .router_event  (router_event )
         );
@@ -113,7 +120,7 @@ endmodule
  * It resolves the Verilator error caused by
  * noc_top being used in another module,
  * preventing it from being defined as the top module.
- **************************/ 
+ **************************/
 module  noc_top_v  (
     reset,
     clk,
@@ -121,16 +128,16 @@ module  noc_top_v  (
     chan_out_all,
     router_event
 );
-    
+
     import pronoc_pkg::*;
-    
+
     input   clk,reset;
-    //Endpoints ports 
+    //Endpoints ports
     input   smartflit_chanel_t chan_in_all  [NE-1 : 0];
     output  smartflit_chanel_t chan_out_all [NE-1 : 0];
     //Events
     output  router_event_t  router_event [NR-1 : 0][MAX_P-1 : 0];
-    
+
     noc_top  the_top(
         .reset(reset),
         .clk(clk),

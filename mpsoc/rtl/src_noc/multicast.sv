@@ -42,7 +42,7 @@ module multicast_routing # (
             .dest_e_addr(dest_e_addr),  // destination endpoint address
             .destport(destport)        
         );
-    end else if (IS_STAR) begin : star
+    end else if (IS_STAR ) begin : star
         multicast_routing_star #(
             .P(P) ,
             .SW_LOC(SW_LOC)        
@@ -51,7 +51,16 @@ module multicast_routing # (
             .dest_e_addr(dest_e_addr),  // destination endpoint address        
             .destport(destport)        
         );
-    end 
+    end else if (IS_FULLY_CONNECTED) begin : fc_
+        multicast_routing_fc #(
+            .P(P) ,
+            .SW_LOC(SW_LOC)
+        ) routing (
+            .current_r_addr(current_r_addr),  //current router  address
+            .dest_e_addr(dest_e_addr),  // destination endpoint address        
+            .destport(destport) 
+        );
+    end
     `ifdef SIMULATION
     else begin 
         initial begin 

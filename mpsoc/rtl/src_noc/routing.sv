@@ -22,7 +22,7 @@
 **
 **    Description:
 **    look-ahead and conventional routing algorithms for Mesh and Torus NoC
-**    
+**
 **
 **************************************************************/
 
@@ -39,13 +39,13 @@ module conventional_routing #(
 );
 
     import pronoc_pkg::*;
-    
+
     input  reset,clk;
     input   [RAw-1   :0] current_r_addr;
     input   [EAw-1   :0] src_e_addr;
     input   [DAw-1   :0] dest_e_addr;
     output  [DSTPw-1 :0] destport;
-    
+
     generate
     if( IS_REGULAR_TOPO | IS_FMESH ) begin : regular_topo
         regular_topo_router_addr_t dest_router_addr, current_router_addr;
@@ -63,7 +63,7 @@ module conventional_routing #(
     end else if(IS_FATTREE | IS_TREE ) begin : ftree
         wire [LKw-1 :0]    current_rx;
         wire [Lw-1  :0]    current_rl;
-        
+
         fattree_router_addr_decode router_addr_decode
         (
             .r_addr(current_r_addr),
@@ -99,6 +99,15 @@ module conventional_routing #(
             .dest_e_addr(dest_e_addr),
             .destport(destport)
         );
+    end else if (IS_FULLY_CONNECTED) begin:fc_
+	 fc_conventional_routing #(
+		.NR(T1),           
+		.NL(T2)
+        ) the_conventional_routing  (
+            .dest_e_addr(dest_e_addr),
+            .destport(destport)
+        );
+
     end else if (IS_MULTI_MESH) begin : multimesh
         mesh_cluster_route_xyz  the_conventional_routing  (
             .current_router_addr_i(current_r_addr),
@@ -140,7 +149,7 @@ module look_ahead_routing #(
     clk
 );
     import pronoc_pkg::*;
-    
+
     localparam
         PRAw= P * RAw,
         PLw = P * Lw,
@@ -154,10 +163,10 @@ module look_ahead_routing #(
     input   reset,clk;
     localparam  PP = ( IS_MESH | IS_FMESH | IS_TORUS ) ? 5 : (IS_MESH_3D) ? 7 : 3;
     logic [RAw-1 : 0]  neighbors_r_addr_array [PP-1 : 0];
-    
+
     genvar i;
     generate
-    for (i=0;i<PP;i++)begin :sep 
+    for (i=0;i<PP;i++)begin :sep
         assign neighbors_r_addr_array[i] = neighbors_r_addr[(i+1)*RAw-1 : i*RAw];
     end
     if(IS_REGULAR_TOPO | IS_FMESH ) begin : regular_fmesh
@@ -209,8 +218,11 @@ module look_ahead_routing #(
             .reset(reset),
             .clk(clk)
         );
+    end else if (IS_FULLY_CONNECTED) :fc_
+    // should select the endpoint if only one endpoint per router dest port is always P-1
+
     end else if (IS_STAR) begin : star
-        //look-ahead routing is not needed in star topology as there is only one router
+        //look-ahead routing is not needed in star/fully_connected topology as there is only one router
         assign  lkdestport_encoded={DSTPw{1'b0}};
     end else if (IS_MULTI_MESH) begin : multimesh
         assign  lkdestport_encoded={DSTPw{1'b0}};
