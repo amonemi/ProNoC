@@ -334,7 +334,7 @@ module mcast_dest_list_decode  (
     
     genvar i;
     generate
-    if(IS_STAR) begin :star
+    if(IS_STAR | IS_FULLY_CONNECTED) begin :star
         assign mcast_dst_coded=dest_e_addr;
     end else begin :no_star
         assign {row_has_any_dest,mcast_dst_coded}=dest_e_addr;
@@ -487,7 +487,7 @@ module multicast_chan_in_process #(
         end
         assign  destport_o = (endp_port) ?    destport : destport_tmp ;
         assign  row_has_any_dest = (endp_port) ? row_has_any_dest_endp_port : row_has_any_dest_in;
-    end else if (IS_STAR ) begin :star_
+    end else if (IS_STAR | IS_FULLY_CONNECTED ) begin :star_
         assign  destport_o =    destport;
         assign  dest_e_addr =   mcast_dst_coded;
     end   
@@ -603,4 +603,42 @@ module multicast_dst_sel  (
         .grant             (arb_out), 
         .any_grant         (   )
     );
+endmodule
+
+module multicast_routing_fc #(
+    parameter P=5,
+    parameter SW_LOC=0
+)(
+    current_r_addr,
+    dest_e_addr,
+    destport
+);
+    import pronoc_pkg::*;
+
+    function integer log2;
+        input integer number; begin
+            log2=(number <=1) ? 1: 0;
+            while(2**log2<number) begin
+                log2=log2+1;
+            end
+        end
+    endfunction
+
+    localparam RAw = log2(T1);
+    localparam Lw = (T2==1)? 0 : log2(T2);
+    localparam EAw = (T2==1) ? RAw : RAw + Lw;
+    localparam MAX_P = T1 + T2 - 1;
+    localparam DSTPw_out = log2(MAX_P);
+
+    input   [RAw-1 : 0]  current_r_addr;
+    input   [DAw-1 : 0]  dest_e_addr;
+    output  [DSTPw_out-1 : 0]  destport;
+
+    mcast_dest_list_decode decode (
+        .dest_e_addr(dest_e_addr),
+        .dest_o(destport),
+        .row_has_any_dest(),
+        .is_unicast()
+    );
+
 endmodule

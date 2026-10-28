@@ -100,10 +100,11 @@ module conventional_routing #(
             .destport(destport)
         );
     end else if (IS_FULLY_CONNECTED) begin:fc_
-	 fc_conventional_routing #(
-		.NR(T1),           
-		.NL(T2)
+        fc_conventional_routing #(
+            .NR(T1),
+            .NL(T2)
         ) the_conventional_routing  (
+            .current_r_addr(current_r_addr),
             .dest_e_addr(dest_e_addr),
             .destport(destport)
         );
@@ -218,9 +219,16 @@ module look_ahead_routing #(
             .reset(reset),
             .clk(clk)
         );
-    end else if (IS_FULLY_CONNECTED) :fc_
-    // should select the endpoint if only one endpoint per router dest port is always P-1
-
+    end else if (IS_FULLY_CONNECTED) begin : fc_
+        fc_conventional_routing #(
+            .NR(T1),
+            .NL(T2)
+        ) the_conventional_routing  (
+            .current_r_addr(current_r_addr),
+            .dest_e_addr(dest_e_addr),
+            .destport_encoded(destport_encoded),
+            .lkdestport_encoded(lkdestport_encoded)
+        );
     end else if (IS_STAR) begin : star
         //look-ahead routing is not needed in star/fully_connected topology as there is only one router
         assign  lkdestport_encoded={DSTPw{1'b0}};
@@ -414,4 +422,55 @@ module local_route_computation #(
         );
     end
     endgenerate
+endmodule
+
+module fc_conventional_routing #(
+    parameter NR = 2,
+    parameter NL = 1
+)(
+    current_r_addr,
+    dest_e_addr,
+    destport,
+    destport_encoded,
+    lkdestport_encoded
+);
+
+    import pronoc_pkg::*;
+
+    function integer log2;
+        input integer number; begin
+            log2=(number <=1) ? 1: 0;
+            while(2**log2<number) begin
+                log2=log2+1;
+            end
+        end
+    endfunction
+
+    localparam RAw = log2(NR);
+    localparam Lw = (NL==1) ? 0 : log2(NL);
+    localparam EAw = (NL==1) ? RAw : RAw + Lw;
+    localparam MAX_P = NR + NL - 1;
+    localparam DSTPw_out = log2(MAX_P);
+
+    input   [RAw-1   :0] current_r_addr;
+    input   [EAw-1   :0] dest_e_addr;
+    output  [DSTPw_out-1 :0] destport;
+    output  [DSTPw_out-1 :0] destport_encoded;
+    output  [DSTPw_out-1 :0] lkdestport_encoded;
+
+    wire [RAw-1 : 0] dest_r;
+    wire [Lw-1  : 0] dest_l;
+    assign dest_r = (NL==1) ? dest_e_addr[RAw-1:0] : dest_e_addr[EAw-1 : Lw];
+    assign dest_l = (NL==1) ? {Lw{1'b0}} : dest_e_addr[Lw-1 : 0];
+
+    wire [DSTPw_out-1 : 0] destport_bin;
+    wire [DSTPw_out-1 : 0] lkdestport_bin;
+
+    assign destport_bin = (dest_r == current_r_addr) ? DSTPw_out'(NR-1 + dest_l) : ((dest_r < current_r_addr) ? DSTPw_out'(dest_r) : DSTPw_out'(dest_r - 1));
+    assign lkdestport_bin = (dest_r == current_r_addr) ? DSTPw_out'(NR-1 + dest_l) : DSTPw_out'(NR-1 + dest_l);
+
+    assign destport = destport_bin;
+    assign destport_encoded = destport_bin;
+    assign lkdestport_encoded = lkdestport_bin;
+
 endmodule

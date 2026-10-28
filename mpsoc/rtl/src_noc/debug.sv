@@ -264,7 +264,6 @@ module  endp_addr_encoder (
     localparam NEw= log2(NE);
     input [NEw-1 :0] id_in;
     output [EAw-1 : 0] code_out;
-    
     generate 
     if( IS_FATTREE  | IS_TREE ) begin : tree
         fattree_addr_encoder #(
@@ -289,6 +288,15 @@ module  endp_addr_encoder (
             .rid_in(id_in),
             .addr_st_o(code_out)
         );
+    end else if (IS_FULLY_CONNECTED) begin :fc
+        if(T2==1) begin
+            assign code_out = id_in[RAw-1:0];
+        end else begin
+            localparam Lw = log2(T2);
+            wire [RAw-1:0] r = id_in / T2;
+            wire [Lw-1:0]  l = id_in % T2;
+            assign code_out = {r,l};
+        end
     end else begin :custom
         assign code_out =id_in;
     end
@@ -300,6 +308,7 @@ module endp_addr_decoder  (
     code_in,
     id_out
 );
+
     import pronoc_pkg::*;
     
     output [NEw-1 :0] id_out;
@@ -328,6 +337,15 @@ module endp_addr_decoder  (
             .rid_out(id_out),
             .addr_st_i(code_in)
         );
+    end else if (IS_FULLY_CONNECTED) begin :fc
+        if(T2==1) begin
+            assign id_out = code_in;
+        end else begin
+            localparam Lw = log2(T2);
+            wire [RAw-1:0] r = code_in[EAw-1 : Lw];
+            wire [Lw-1:0]  l = code_in[Lw-1 : 0];
+            assign id_out = r*T2 + l;
+        end
     end else begin :custom
         assign id_out = code_in;
     end

@@ -345,10 +345,9 @@
             (IS_FATTREE)? NE_PER_R_FATTREE:
             (IS_TREE)?  NE_PER_R_TREE:
             (IS_REGULAR_TOPO)? NE_PER_R_REGULAR:
-            (IS_FMESH)? NE_PER_R_REGULAR:
+            (IS_FMESH)? NE_PER_R_FMESH:
             (IS_STAR) ? NE_PER_R_STAR:
             (IS_FULLY_CONNECTED) ? NE_PER_R_FC:
-            (IS_MULTI_MESH) ? NE_PER_R_MULTI_MESH:
             NE_PER_R_CUSTOM,
        //Destination endpoint(s) address width
         DAw_OFFSETw  =  (IS_MESH || IS_TORUS ||  IS_FMESH)?  NX : 0,
