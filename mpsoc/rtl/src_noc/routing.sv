@@ -223,9 +223,11 @@ module look_ahead_routing #(
         fc_lkh_routing #(
             .NR(T1),
             .NL(T2)
-        ) the_conventional_routing  (
+        ) look_ahead_routing  (
             .dest_e_addr_i(dest_e_addr),
-            .destport_o(lkdestport_encoded)
+            .destport_o(lkdestport_encoded),
+            .reset(reset),
+            .clk(clk)
         );
     end else if (IS_STAR) begin : star
         //look-ahead routing is not needed in star topology as there is only one router
@@ -456,16 +458,27 @@ module fc_lkh_routing #(
     parameter NL = 1
 )(
     dest_e_addr_i,
-    destport_o
+    destport_o,
+    reset,
+    clk
 );
     import pronoc_pkg::*;
     input   [EAw-1   :0] dest_e_addr_i;
     output  [DSTPw-1 :0] destport_o;
+    input reset,clk;
 
     fc_endp_addr_t dest_addr_struct;
+    logic [EAw-1 :0] dest_e_addr_delayed;
+    always_ff @ (`pronoc_clk_reset_edge) begin
+        if (`pronoc_reset) begin
+            dest_e_addr_delayed <= '0;
+        end else begin
+            dest_e_addr_delayed <= dest_e_addr_i;
+        end
+    end
     always_comb begin
         dest_addr_struct = '0;
-        dest_addr_struct[EAw-1 : 0] = dest_e_addr_i;
+        dest_addr_struct[EAw-1 : 0] = dest_e_addr_delayed;
     end
     assign destport_o =  DSTPw'(NR-1 + dest_addr_struct.l);
 endmodule
