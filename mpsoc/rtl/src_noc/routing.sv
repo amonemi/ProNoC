@@ -445,11 +445,11 @@ module fc_conventional_routing #(
         dest_addr_struct = '0;
         dest_addr_struct[EAw-1 : 0] = dest_e_addr;
     end
-
+    localparam [DSTPw-1 : 0] ENDP0 = NR-1;
     assign destport =
-        ( dest_addr_struct.r == current_r_addr) ? DSTPw'(NR-1 + dest_addr_struct.l) : // endpoint is in the same router
+        ( dest_addr_struct.r == current_r_addr) ? ENDP0 + DSTPw'(dest_addr_struct.l) : // endpoint is in the same router
         ((dest_addr_struct.r < current_r_addr ) ? DSTPw'(dest_addr_struct.r) : // endpoint is in a lower router
-        DSTPw'(dest_addr_struct.r - 1)); // endpoint is in a higher router
+        DSTPw'(dest_addr_struct.r - 1'b1)); // endpoint is in a higher router
 endmodule
 
 
@@ -480,5 +480,6 @@ module fc_lkh_routing #(
         dest_addr_struct = '0;
         dest_addr_struct[EAw-1 : 0] = dest_e_addr_delayed;
     end
-    assign destport_o =  DSTPw'(NR-1 + dest_addr_struct.l);
+    localparam [DSTPw-1 : 0] ENDP0 = NR-1;
+    assign destport_o = ENDP0 + DSTPw'(dest_addr_struct.l);
 endmodule
