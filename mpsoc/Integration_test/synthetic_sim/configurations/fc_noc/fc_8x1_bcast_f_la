@@ -1,0 +1,9 @@
+$model = bless( {
+    'noc_param'=> {
+        "TOPOLOGY" => "\"FULLY_CONNECTED\"",
+        "T1" => "8",
+        "T2" => "1",
+        "CAST_TYPE" => "\"BROADCAST_FULL\"",
+        "ROUTE_MODE" => "\"LOOKAHEAD\"",
+    }
+}, 'ProNOC' );

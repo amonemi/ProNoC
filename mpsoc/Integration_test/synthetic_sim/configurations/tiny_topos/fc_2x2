@@ -1,0 +1,7 @@
+$model = bless( {
+    'noc_param'=> {
+        "TOPOLOGY" => "\"FULLY_CONNECTED\"",
+        "T1" => "2",
+        "T2" => "2",
+    }
+}, 'ProNOC' );
